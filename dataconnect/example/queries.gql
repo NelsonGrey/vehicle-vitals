@@ -1,78 +1,123 @@
-# Example queries for a simple movie app.
+# Vehicle Vitals queries
 
-# @auth() directives control who can call each operation.
-# Anyone should be able to list all movies, so the auth level is set to PUBLIC
-query ListMovies @auth(level: PUBLIC, insecureReason: "Anyone can list all movies.") {
-  movies {
-    id
-    title
-    imageUrl
-    genre
+# List all vehicles for the authenticated user
+query ListUserVehicles @auth(level: USER) {
+  vehicles(where: { user_expr: "auth.uid" }) {
+    vin
+    make
+    model
+    year
+    mileage
+    purchaseDate
+    nextDueByMiles
+    nextDueByDate
+    createdAt
+    updatedAt
   }
 }
 
-# List all users, only admins should be able to list all users, so we use NO_ACCESS
-query ListUsers @auth(level: NO_ACCESS) {
-  users {
-    id
-    username
-  }
-}
-
-# Logged in users can list all their reviews and movie titles associated with the review
-# Since the query uses the uid of the current authenticated user, we set auth level to USER
-query ListUserReviews @auth(level: USER) {
-  user(key: { id_expr: "auth.uid" }) {
-    id
-    username
-    # <field>_on_<foreign_key_field> makes it easy to grab info from another table
-    # Here, we use it to grab all the reviews written by the user.
-    reviews: reviews_on_user {
-      rating
-      reviewDate
-      reviewText
-      movie {
-        id
-        title
-      }
-    }
-  }
-}
-
-# Get movie by id
-query GetMovieById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Anyone can get a movie by id.") {
-  movie(id: $id) {
-    id
-    title
-    imageUrl
-    genre
-    metadata: movieMetadata_on_movie {
-      rating
-      releaseYear
+# Get a specific vehicle by VIN for the authenticated user
+query GetVehicleByVin($vin: String!) @auth(level: USER) {
+  vehicle(vin: $vin, user_expr: "auth.uid") {
+    vin
+    make
+    model
+    year
+    mileage
+    purchaseDate
+    nextDueByMiles
+    nextDueByDate
+    createdAt
+    updatedAt
+    maintenanceRecords: maintenanceRecords_on_vehicle {
+      id
+      serviceType
       description
-    }
-    reviews: reviews_on_movie {
-      reviewText
-      reviewDate
-      rating
-      user {
-        id
-        username
-      }
+      date
+      mileage
+      cost
+      provider
+      notes
+      createdAt
+      updatedAt
     }
   }
 }
 
-# Search for movies, actors, and reviews
-query SearchMovie($titleInput: String, $genre: String) @auth(level: PUBLIC, insecureReason: "Anyone can search for movies.") {
-  movies(
-    where: {
-      _and: [{ genre: { eq: $genre } }, { title: { contains: $titleInput } }]
+# List maintenance records for a specific vehicle
+query ListMaintenanceRecords($vehicleVin: String!) @auth(level: USER) {
+  maintenanceRecords(
+    where: { 
+      _and: [
+        { vehicle: { vin: { eq: $vehicleVin } } },
+        { user_expr: "auth.uid" }
+      ]
     }
+    orderBy: { date: DESC }
   ) {
     id
-    title
-    genre
-    imageUrl
+    serviceType
+    description
+    date
+    mileage
+    cost
+    provider
+    notes
+    createdAt
+    updatedAt
+    vehicle {
+      vin
+      make
+      model
+      year
+    }
+  }
+}
+
+# Get upcoming reminders for the authenticated user
+query ListUpcomingReminders @auth(level: USER) {
+  reminders(
+    where: { 
+      _and: [
+        { user_expr: "auth.uid" },
+        { isCompleted: { eq: false } }
+      ]
+    }
+    orderBy: { dueDate: ASC }
+  ) {
+    id
+    serviceType
+    dueDate
+    dueMileage
+    description
+    vehicle {
+      vin
+      make
+      model
+      year
+    }
+  }
+}
+
+# Get maintenance schedule templates
+query ListMaintenanceSchedules @auth(level: PUBLIC, insecureReason: "Maintenance schedules are public reference data.") {
+  maintenanceSchedules(orderBy: { serviceType: ASC }) {
+    id
+    serviceType
+    intervalMiles
+    intervalMonths
+    description
+    priority
+  }
+}
+
+# Get user profile
+query GetUserProfile @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) {
+    id
+    email
+    displayName
+    createdAt
+    updatedAt
   }
 }

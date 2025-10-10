@@ -8,10 +8,11 @@ export default defineConfig({
   resolve: {
     alias: {
       // allow imports like 'shared/...'
-      shared: path.resolve(__dirname, '../shared'),
-      // ensure firebase imports from shared files resolve to web's node_modules
-      firebase: path.resolve(__dirname, 'node_modules/firebase'),
+      shared: path.resolve(__dirname, '../shared/src'),
+      // ensure firebase imports from shared files resolve to root node_modules
+      firebase: path.resolve(__dirname, '../../node_modules/firebase'),
     },
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   build: {
     rollupOptions: {
@@ -31,5 +32,10 @@ export default defineConfig({
       // allow serving files from one level up
       allow: ['..'],
     },
+  },
+  esbuild: {
+    loader: 'tsx',
+    include: /src\/.*\.[tj]sx?$/,
+    exclude: [],
   },
 })

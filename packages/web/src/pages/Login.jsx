@@ -31,23 +31,54 @@ export default function Login() {
   };
 
   return (
-    <div>
-      <div className="container narrow">
-        <AdBanner />
-        <h1>Login</h1>
-        {error && <div className="alert alert-danger" role="alert">{error}</div>}
-        <form onSubmit={onSubmit} className="card p-3">
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label">Email address</label>
-            <input id="email" type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input id="password" type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </div>
-          <div className="d-flex gap-2 flex-wrap">
-            <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign In'}</button>
-            <button type="button" className="btn btn-outline-secondary" disabled={busy} onClick={async () => {
+    <div className="max-w-2xl mx-auto px-5 py-5">
+      <AdBanner />
+      <h1 className="font-serif font-bold text-4xl text-charcoal dark:text-light-cream mb-4">Login</h1>
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 p-3 rounded-lg mb-4" role="alert">
+          {error}
+        </div>
+      )}
+      <form onSubmit={onSubmit} className="bg-parchment dark:bg-dark-card p-4 rounded-xl border border-tan dark:border-dark-border">
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-sm font-medium text-charcoal dark:text-light-cream mb-2">
+            Email address
+          </label>
+          <input 
+            id="email" 
+            type="email" 
+            className="w-full px-3 py-2 border border-tan dark:border-dark-border rounded-lg bg-cream dark:bg-deep-brown text-charcoal dark:text-light-cream focus:ring-2 focus:ring-oxblood dark:focus:ring-rust focus:border-transparent outline-none" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="password" className="block text-sm font-medium text-charcoal dark:text-light-cream mb-2">
+            Password
+          </label>
+          <input 
+            id="password" 
+            type="password" 
+            className="w-full px-3 py-2 border border-tan dark:border-dark-border rounded-lg bg-cream dark:bg-deep-brown text-charcoal dark:text-light-cream focus:ring-2 focus:ring-oxblood dark:focus:ring-rust focus:border-transparent outline-none" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button 
+            type="submit" 
+            className="px-4 py-2.5 bg-oxblood text-primary-contrast dark:bg-rust dark:text-deep-brown rounded-lg border border-oxblood dark:border-rust hover:opacity-90 transition-opacity font-medium disabled:opacity-50" 
+            disabled={busy}
+          >
+            {busy ? 'Signing in…' : 'Sign In'}
+          </button>
+          <button 
+            type="button" 
+            className="px-4 py-2.5 bg-transparent border border-tan dark:border-dark-border text-charcoal dark:text-light-cream rounded-lg hover:bg-tan/10 dark:hover:bg-dark-border/20 transition-colors font-medium disabled:opacity-50" 
+            disabled={busy} 
+            onClick={async () => {
               setBusy(true);
               setError('');
               try {
@@ -58,11 +89,15 @@ export default function Login() {
               } finally {
                 setBusy(false);
               }
-            }}>Continue with Google</button>
-          </div>
-        </form>
-        <p className="mt-3">Don’t have an account? <Link to="/signup">Sign up</Link></p>
-      </div>
+            }}
+          >
+            Continue with Google
+          </button>
+        </div>
+      </form>
+      <p className="mt-4 text-warm-gray dark:text-light-gray">
+        Don't have an account? <Link to="/signup" className="text-oxblood dark:text-rust hover:underline">Sign up</Link>
+      </p>
     </div>
   );
 }

@@ -1,33 +1,149 @@
-# Example mutations for a simple movie app
+# Vehicle Vitals mutations
 
-# Create a movie based on user input
-mutation CreateMovie($title: String!, $genre: String!, $imageUrl: String!)
-@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Any email verified users can create a new movie.") {
-  movie_insert(data: { title: $title, genre: $genre, imageUrl: $imageUrl })
+# Create or update user profile
+mutation UpsertUser($email: String!, $displayName: String) @auth(level: USER) {
+  user_upsert(data: { 
+    id_expr: "auth.uid", 
+    email: $email, 
+    displayName: $displayName 
+  })
 }
 
-# Upsert (update or insert) a user's username based on their auth.uid
-mutation UpsertUser($username: String!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only register their own user.
-  user_upsert(data: { id_expr: "auth.uid", username: $username })
+# Add a new vehicle
+mutation AddVehicle(
+  $vin: String!, 
+  $make: String!, 
+  $model: String!, 
+  $year: String!, 
+  $mileage: String,
+  $purchaseDate: Date,
+  $nextDueByMiles: String,
+  $nextDueByDate: Date
+) @auth(level: USER) {
+  vehicle_insert(data: {
+    vin: $vin,
+    userId_expr: "auth.uid",
+    make: $make,
+    model: $model,
+    year: $year,
+    mileage: $mileage,
+    purchaseDate: $purchaseDate,
+    nextDueByMiles: $nextDueByMiles,
+    nextDueByDate: $nextDueByDate
+  })
 }
 
-# Add a review for a movie
-mutation AddReview($movieId: UUID!, $rating: Int!, $reviewText: String!)
-@auth(level: USER) {
-  review_upsert(
+# Update an existing vehicle
+mutation UpdateVehicle(
+  $vin: String!,
+  $make: String!,
+  $model: String!,
+  $year: String!,
+  $mileage: String,
+  $purchaseDate: Date,
+  $nextDueByMiles: String,
+  $nextDueByDate: Date
+) @auth(level: USER) {
+  vehicle_update(
+    key: { vin: $vin, userId_expr: "auth.uid" },
     data: {
-      userId_expr: "auth.uid"
-      movieId: $movieId
-      rating: $rating
-      reviewText: $reviewText
-      # reviewDate defaults to today in the schema. No need to set it manually.
+      make: $make,
+      model: $model,
+      year: $year,
+      mileage: $mileage,
+      purchaseDate: $purchaseDate,
+      nextDueByMiles: $nextDueByMiles,
+      nextDueByDate: $nextDueByDate
     }
   )
 }
 
-# Logged in user can delete their review for a movie
-mutation DeleteReview($movieId: UUID!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only delete their own reviews.
-  review_delete(key: { userId_expr: "auth.uid", movieId: $movieId })
+# Delete a vehicle
+mutation DeleteVehicle($vin: String!) @auth(level: USER) {
+  vehicle_delete(key: { vin: $vin, userId_expr: "auth.uid" })
+}
+
+# Add a maintenance record
+mutation AddMaintenanceRecord(
+  $vehicleVin: String!,
+  $serviceType: String!,
+  $description: String!,
+  $date: Date!,
+  $mileage: String,
+  $cost: Float,
+  $provider: String,
+  $notes: String
+) @auth(level: USER) {
+  maintenanceRecord_insert(data: {
+    vehicleVin: $vehicleVin,
+    userId_expr: "auth.uid",
+    serviceType: $serviceType,
+    description: $description,
+    date: $date,
+    mileage: $mileage,
+    cost: $cost,
+    provider: $provider,
+    notes: $notes
+  })
+}
+
+# Update a maintenance record
+mutation UpdateMaintenanceRecord(
+  $id: UUID!,
+  $serviceType: String!,
+  $description: String!,
+  $date: Date!,
+  $mileage: String,
+  $cost: Float,
+  $provider: String,
+  $notes: String
+) @auth(level: USER) {
+  maintenanceRecord_update(
+    key: { id: $id },
+    data: {
+      serviceType: $serviceType,
+      description: $description,
+      date: $date,
+      mileage: $mileage,
+      cost: $cost,
+      provider: $provider,
+      notes: $notes
+    }
+  )
+}
+
+# Delete a maintenance record
+mutation DeleteMaintenanceRecord($id: UUID!) @auth(level: USER) {
+  maintenanceRecord_delete(key: { id: $id })
+}
+
+# Create a reminder
+mutation CreateReminder(
+  $vehicleVin: String!,
+  $serviceType: String!,
+  $dueDate: Date,
+  $dueMileage: String,
+  $description: String!
+) @auth(level: USER) {
+  reminder_insert(data: {
+    vehicleVin: $vehicleVin,
+    userId_expr: "auth.uid",
+    serviceType: $serviceType,
+    dueDate: $dueDate,
+    dueMileage: $dueMileage,
+    description: $description
+  })
+}
+
+# Mark reminder as completed
+mutation CompleteReminder($id: UUID!) @auth(level: USER) {
+  reminder_update(
+    key: { id: $id },
+    data: { isCompleted: true }
+  )
+}
+
+# Delete a reminder
+mutation DeleteReminder($id: UUID!) @auth(level: USER) {
+  reminder_delete(key: { id: $id })
 }

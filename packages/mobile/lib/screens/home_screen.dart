@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../models/vehicle.dart';
+import '../theme/design_tokens.dart';
+import '../theme/tailwind_utilities.dart';
+import '../components/ad_banner.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,11 +19,8 @@ class HomeScreen extends StatelessWidget {
     // If not authenticated, show welcome screen
     if (authService.currentUser == null) {
       return Scaffold(
-        body: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Color(0xFFFFFAF3), // Light beige background
-          ),
+        body: TwContainer(
+          padding: EdgeInsets.all(TwSpace.s6),
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -29,10 +29,11 @@ class HomeScreen extends StatelessWidget {
                 Container(
                   width: 96,
                   height: 96,
-                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B),
-                    borderRadius: BorderRadius.circular(16),
+                    color: AppDesignTokens.colorScheme(
+                      Theme.of(context).brightness,
+                    ).primary,
+                    borderRadius: BorderRadius.circular(TwRadius.xl),
                   ),
                   child: const Icon(
                     Icons.directions_car,
@@ -40,21 +41,22 @@ class HomeScreen extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-                const Text(
+                const SizedBox(height: 16),
+                Text(
                   'Vehicle Vitals',
-                  style: TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2B2A27),
-                  ),
+                  style: Theme.of(context).textTheme.displayMedium,
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                const SizedBox(height: 8),
+                Text(
                   'Track your vehicles, log maintenance, and stay on schedule.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF7A6F66), fontSize: 16),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppDesignTokens.colorScheme(
+                      Theme.of(context).brightness,
+                    ).muted,
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -62,13 +64,9 @@ class HomeScreen extends StatelessWidget {
                       onPressed: () => context.go('/login'),
                       child: const Text('Log in'),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     ElevatedButton(
                       onPressed: () => context.go('/signup'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF59E0B),
-                        foregroundColor: Colors.white,
-                      ),
                       child: const Text('Sign up'),
                     ),
                   ],
@@ -194,6 +192,9 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          // Advertisement banner
+          const AdBanner(),
           // Vehicle list
           Expanded(
             child: StreamBuilder<List<Vehicle>>(

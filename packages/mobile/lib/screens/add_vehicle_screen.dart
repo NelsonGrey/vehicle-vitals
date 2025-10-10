@@ -1,10 +1,14 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/firestore_service.dart';
+
 import '../models/vehicle.dart';
+import '../services/firestore_service.dart';
 
 class AddVehicleScreen extends StatefulWidget {
-  const AddVehicleScreen({super.key});
+  const AddVehicleScreen({super.key, this.initialVin});
+
+  final String? initialVin;
 
   @override
   State<AddVehicleScreen> createState() => _AddVehicleScreenState();
@@ -26,6 +30,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   void initState() {
     super.initState();
     _yearController.text = DateTime.now().year.toString();
+    if (widget.initialVin != null) {
+      _vinController.text = widget.initialVin!;
+    }
   }
 
   @override
@@ -36,6 +43,61 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     _yearController.dispose();
     _mileageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _decodeVIN() async {
+    final vin = _vinController.text.trim().toUpperCase();
+    if (vin.length != 17) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final functions = FirebaseFunctions.instance;
+      final result = await functions.httpsCallable('decodeVIN').call({
+        'vin': vin,
+      });
+
+      if (result.data['success'] == true) {
+        final vehicle = result.data['vehicle'];
+        setState(() {
+          _makeController.text = vehicle['make'] ?? '';
+          _modelController.text = vehicle['model'] ?? '';
+          _yearController.text = vehicle['year'] ?? '';
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            // ignore: use_build_context_synchronously
+            const SnackBar(
+              content: Text('VIN decoded successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            // ignore: use_build_context_synchronously
+            SnackBar(
+              content: Text('Failed to decode VIN: ${result.data['error']}'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          // ignore: use_build_context_synchronously
+          SnackBar(
+            content: Text('Error decoding VIN: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _saveVehicle() async {
@@ -102,23 +164,41 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                   child: Column(
                     children: [
                       // VIN field
-                      TextFormField(
-                        controller: _vinController,
-                        decoration: const InputDecoration(
-                          labelText: 'VIN*',
-                          border: OutlineInputBorder(),
-                          hintText: '17-character VIN',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter the VIN';
-                          }
-                          if (value.length != 17) {
-                            return 'VIN must be 17 characters';
-                          }
-                          return null;
-                        },
-                        textCapitalization: TextCapitalization.characters,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _vinController,
+                              decoration: const InputDecoration(
+                                labelText: 'VIN*',
+                                border: OutlineInputBorder(),
+                                hintText: '17-character VIN',
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter the VIN';
+                                }
+                                if (value.length != 17) {
+                                  return 'VIN must be 17 characters';
+                                }
+                                return null;
+                              },
+                              textCapitalization: TextCapitalization.characters,
+                              onChanged: (value) {
+                                // Auto-decode when VIN is complete
+                                if (value.length == 17 && !_isLoading) {
+                                  _decodeVIN();
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: _isLoading ? null : _decodeVIN,
+                            icon: const Icon(Icons.search),
+                            tooltip: 'Decode VIN',
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
 

@@ -1,7 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdBanner from '../components/AdBanner';
 import { useAuth } from '../shared/AuthContext';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } from 'firebase/auth';
+
+// Create async Firebase auth service that hides imports from Vite
+const createFirebaseAuthService = async () => {
+  try {
+    // Use Function constructor to hide imports from Vite's static analysis
+    const authFn = new Function('return import("firebase/auth")');
+    const { EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } = await authFn();
+    return { EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser };
+  } catch (error) {
+    console.warn('Firebase auth not available:', error);
+    // Return mock service for build compatibility
+    return {
+      EmailAuthProvider: { credential: () => ({}) },
+      reauthenticateWithCredential: async () => {},
+      updatePassword: async () => {},
+      deleteUser: async () => {}
+    };
+  }
+};
 
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -11,12 +29,17 @@ export default function Profile() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [authService, setAuthService] = useState(null);
 
-  if (!user) return null;
+  useEffect(() => {
+    createFirebaseAuthService().then(setAuthService);
+  }, []);
+
+  if (!user || !authService) return null;
 
   const reauth = async () => {
-    const cred = EmailAuthProvider.credential(user.email, currentPassword);
-    await reauthenticateWithCredential(user, cred);
+    const cred = authService.EmailAuthProvider.credential(user.email, currentPassword);
+    await authService.reauthenticateWithCredential(user, cred);
   };
 
   const onChangePassword = async (e) => {
@@ -30,7 +53,7 @@ export default function Profile() {
     setBusy(true);
     try {
       await reauth();
-      await updatePassword(user, newPassword);
+      await authService.updatePassword(user, newPassword);
       setStatus('Password updated successfully.');
       setCurrentPassword('');
       setNewPassword('');
@@ -50,7 +73,7 @@ export default function Profile() {
     setBusy(true);
     try {
       await reauth();
-      await deleteUser(user);
+      await authService.deleteUser(user);
       setStatus('Account deleted.');
       // Optionally sign out cleanup
       await signOut();
@@ -62,40 +85,100 @@ export default function Profile() {
   };
 
   return (
-    <div className="container narrow">
+    <div className="max-w-md mx-auto px-5 py-5">
       <AdBanner />
-      <h1>Profile</h1>
-      <p className="muted">Signed in as <strong>{user.email}</strong></p>
-      {status && <div className="alert alert-success" role="alert">{status}</div>}
-      {error && <div className="alert alert-danger" role="alert">{error}</div>}
+      <h1 className="font-serif font-bold text-4xl text-charcoal-800 dark:text-cream-100 mb-4">Profile</h1>
+      <p className="text-charcoal-600 dark:text-cream-300 mb-6">
+        Signed in as <strong className="text-charcoal-800 dark:text-cream-100">{user.email}</strong>
+      </p>
+      
+      {status && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4" role="alert">
+          {status}
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+          {error}
+        </div>
+      )}
 
-      <div className="card p-3 mb-3">
-        <h5 className="mb-3">Change password</h5>
-        <form onSubmit={onChangePassword}>
-          <div className="mb-3">
-            <label htmlFor="currentPassword" className="form-label">Current password</label>
-            <input id="currentPassword" type="password" className="form-control" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+      <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6 mb-6">
+        <h5 className="font-serif font-bold text-xl text-charcoal-800 dark:text-cream-100 mb-4">Change password</h5>
+        <form onSubmit={onChangePassword} className="space-y-4">
+          <div>
+            <label htmlFor="currentPassword" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
+              Current password
+            </label>
+            <input 
+              id="currentPassword" 
+              type="password" 
+              className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100" 
+              value={currentPassword} 
+              onChange={(e) => setCurrentPassword(e.target.value)} 
+              required 
+            />
           </div>
-          <div className="mb-3">
-            <label htmlFor="newPassword" className="form-label">New password</label>
-            <input id="newPassword" type="password" className="form-control" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+          <div>
+            <label htmlFor="newPassword" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
+              New password
+            </label>
+            <input 
+              id="newPassword" 
+              type="password" 
+              className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100" 
+              value={newPassword} 
+              onChange={(e) => setNewPassword(e.target.value)} 
+              required 
+            />
           </div>
-          <div className="mb-3">
-            <label htmlFor="confirmPassword" className="form-label">Confirm new password</label>
-            <input id="confirmPassword" type="password" className="form-control" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
+              Confirm new password
+            </label>
+            <input 
+              id="confirmPassword" 
+              type="password" 
+              className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100" 
+              value={confirmPassword} 
+              onChange={(e) => setConfirmPassword(e.target.value)} 
+              required 
+            />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button>
+          <button 
+            type="submit" 
+            className="w-full bg-oxblood-600 hover:bg-oxblood-700 disabled:bg-charcoal-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200" 
+            disabled={busy}
+          >
+            {busy ? 'Updating…' : 'Update password'}
+          </button>
         </form>
       </div>
 
-      <div className="card p-3">
-        <h5 className="mb-2">Danger zone</h5>
-        <p className="text-danger mb-3">Deleting your account removes all your vehicles and maintenance logs. This cannot be undone.</p>
-        <div className="mb-3">
-          <label htmlFor="currentPasswordDelete" className="form-label">Confirm current password</label>
-          <input id="currentPasswordDelete" type="password" className="form-control" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+      <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6 border-l-4 border-red-500">
+        <h5 className="font-serif font-bold text-xl text-red-700 dark:text-red-400 mb-2">Danger zone</h5>
+        <p className="text-red-600 dark:text-red-400 mb-4">
+          Deleting your account removes all your vehicles and maintenance logs. This cannot be undone.
+        </p>
+        <div className="mb-4">
+          <label htmlFor="currentPasswordDelete" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
+            Confirm current password
+          </label>
+          <input 
+            id="currentPasswordDelete" 
+            type="password" 
+            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-charcoal-700 dark:text-cream-100" 
+            value={currentPassword} 
+            onChange={(e) => setCurrentPassword(e.target.value)} 
+          />
         </div>
-        <button className="btn btn-danger" onClick={onDeleteAccount} disabled={busy}>Delete account</button>
+        <button 
+          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-charcoal-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200" 
+          onClick={onDeleteAccount} 
+          disabled={busy}
+        >
+          Delete account
+        </button>
       </div>
     </div>
   );

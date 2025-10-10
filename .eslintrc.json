@@ -2,7 +2,7 @@
   "root": true,
   "extends": [
     "eslint:recommended",
-    "@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
@@ -26,7 +26,7 @@
       "files": ["packages/web/**/*.{js,jsx,ts,tsx}"],
       "extends": [
         "eslint:recommended",
-        "@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended",
         "plugin:react/recommended",
         "plugin:react-hooks/recommended"
       ],
@@ -36,8 +36,13 @@
       },
       "settings": {
         "react": {
-          "version": "detect"
+          "version": "detect",
+          "runtime": "automatic"
         }
+      },
+      "rules": {
+        "react/react-in-jsx-scope": "off",
+        "react/prop-types": "off"
       }
     }
   ]

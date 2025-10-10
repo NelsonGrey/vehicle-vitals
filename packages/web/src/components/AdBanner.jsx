@@ -48,27 +48,25 @@ export default function AdBanner({ style, className, slot: slotOverride }) {
   if (renderPlaceholder) {
     return (
       <div
-        style={{
-          background: '#f2f2f2',
-          border: '1px dashed #ccc',
-          padding: 12,
-          textAlign: 'center',
-          margin: '12px 0',
-          ...style,
-        }}
-        className={className}
+        style={style}
+        className={`bg-cream-200 dark:bg-charcoal-700 border border-dashed border-charcoal-300 dark:border-charcoal-500 p-3 text-center my-3 rounded-md ${className || ''}`}
       >
-        <small>Ad placeholder — set VITE_ADSENSE_CLIENT and VITE_ADSENSE_SLOT to enable ads</small>
+        <small className="text-charcoal-500 dark:text-cream-400 text-xs">
+          Ad placeholder — set VITE_ADSENSE_CLIENT and VITE_ADSENSE_SLOT to enable ads
+        </small>
       </div>
     );
   }
 
   // AdSense unit
   return (
-    <div style={{ margin: '12px 0', ...style }} className={className} ref={containerRef}>
+    <div 
+      style={style} 
+      className={`my-3 ${className || ''}`} 
+      ref={containerRef}
+    >
       <ins
-        className="adsbygoogle"
-        style={{ display: 'block' }}
+        className="adsbygoogle block"
         data-ad-client={client}
         data-ad-slot={slot}
         data-ad-format="auto"

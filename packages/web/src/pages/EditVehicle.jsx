@@ -69,89 +69,142 @@ export default function EditVehicle() {
     }
   };
 
-  if (!form) return <p>Loading...</p>;
+  if (!form) return (
+    <div className="max-w-2xl mx-auto px-5 py-5">
+      <p className="text-charcoal-600 dark:text-cream-300">Loading...</p>
+    </div>
+  );
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="max-w-2xl mx-auto px-5 py-5">
       <AdBanner />
-      <h2>Edit Vehicle</h2>
-      {/* Year dropdown */}
-      <div style={{ marginBottom: 12 }}>
-        <select name="year" value={form.year} onChange={handleChange} style={{ padding: 8, width: '100%' }}>
-          <option value="">Select Year</option>
-          {form.year && !years.includes(String(form.year)) && (
-            <option value={form.year}>Current: {form.year}</option>
-          )}
-          {years.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Make dropdown */}
-      <div style={{ marginBottom: 12 }}>
-        <select name="make" value={form.make} onChange={handleChange} style={{ padding: 8, width: '100%' }} disabled={loadingMakes}>
-          <option value="">{loadingMakes ? 'Loading makes…' : 'Select Make'}</option>
-          {form.make && !makes.includes(form.make) && (
-            <option value={form.make}>Current: {form.make}</option>
-          )}
-          {makes.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Model dropdown depends on year+make */}
-      <div style={{ marginBottom: 12 }}>
-        <select name="model" value={form.model} onChange={handleChange} style={{ padding: 8, width: '100%' }} disabled={!form.year || !form.make || loadingModels}>
-          <option value="">{loadingModels ? 'Loading models…' : (!form.year || !form.make ? 'Select year & make first' : 'Select Model')}</option>
-          {form.model && !models.includes(form.model) && (
-            <option value={form.model}>Current: {form.model}</option>
-          )}
-          {models.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* VIN and mileage text inputs */}
-      {['vin', 'mileage'].map((field) => (
-        <div key={field} style={{ marginBottom: 12 }}>
-          <input
-            type="text"
-            name={field}
-            value={form[field]}
-            onChange={handleChange}
-            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-            style={{ padding: 8, width: '100%' }}
-          />
-          {field === 'vin' && (
-            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-              Decode VIN uses the NHTSA VPIC database to prefill Year, Make, and Model. Changes aren’t saved until you click Save Changes.
-            </div>
-          )}
+      <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 mb-6">Edit Vehicle</h2>
+      
+      <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6 space-y-6">
+        {/* Year dropdown */}
+        <div>
+          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Year</label>
+          <select 
+            name="year" 
+            value={form.year} 
+            onChange={handleChange} 
+            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+          >
+            <option value="">Select Year</option>
+            {form.year && !years.includes(String(form.year)) && (
+              <option value={form.year}>Current: {form.year}</option>
+            )}
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
         </div>
-      ))}
-      <div style={{ marginBottom: 12 }}>
-        <button type="button" onClick={handleDecodeVin}>Decode VIN</button>
+
+        {/* Make dropdown */}
+        <div>
+          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Make</label>
+          <select 
+            name="make" 
+            value={form.make} 
+            onChange={handleChange} 
+            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100 disabled:bg-charcoal-100 disabled:cursor-not-allowed" 
+            disabled={loadingMakes}
+          >
+            <option value="">{loadingMakes ? 'Loading makes…' : 'Select Make'}</option>
+            {form.make && !makes.includes(form.make) && (
+              <option value={form.make}>Current: {form.make}</option>
+            )}
+            {makes.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Model dropdown depends on year+make */}
+        <div>
+          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Model</label>
+          <select 
+            name="model" 
+            value={form.model} 
+            onChange={handleChange} 
+            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100 disabled:bg-charcoal-100 disabled:cursor-not-allowed" 
+            disabled={!form.year || !form.make || loadingModels}
+          >
+            <option value="">{loadingModels ? 'Loading models…' : (!form.year || !form.make ? 'Select year & make first' : 'Select Model')}</option>
+            {form.model && !models.includes(form.model) && (
+              <option value={form.model}>Current: {form.model}</option>
+            )}
+            {models.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* VIN and mileage text inputs */}
+        {['vin', 'mileage'].map((field) => (
+          <div key={field}>
+            <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </label>
+            <input
+              type="text"
+              name={field}
+              value={form[field]}
+              onChange={handleChange}
+              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+              className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            />
+            {field === 'vin' && (
+              <p className="text-xs text-charcoal-600 dark:text-cream-400 mt-1">
+                Decode VIN uses the NHTSA VPIC database to prefill Year, Make, and Model. Changes aren't saved until you click Save Changes.
+              </p>
+            )}
+          </div>
+        ))}
+        
+        <div>
+          <button 
+            type="button" 
+            onClick={handleDecodeVin}
+            className="bg-charcoal-600 hover:bg-charcoal-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+          >
+            Decode VIN
+          </button>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Purchase Date</label>
+          <input
+            type="date"
+            name="purchaseDate"
+            value={form.purchaseDate || ''}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+          />
+        </div>
+        
+        <div className="flex gap-3 pt-4">
+          <button 
+            onClick={handleUpdate}
+            className="flex-1 bg-oxblood-600 hover:bg-oxblood-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
+          >
+            Save Changes
+          </button>
+          <button 
+            onClick={handleDelete}
+            className="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-md transition-colors duration-200 border border-red-300"
+          >
+            Delete Vehicle
+          </button>
+        </div>
       </div>
-      <div style={{ marginBottom: 12 }}>
-        <input
-          type="date"
-          name="purchaseDate"
-          value={form.purchaseDate || ''}
-          onChange={handleChange}
-          placeholder="Purchase Date"
-          style={{ padding: 8, width: '100%' }}
-        />
-      </div>
-      <button onClick={handleUpdate}>Save Changes</button>
-  <button onClick={handleDelete} style={{ marginLeft: 12, background: '#fcc' }}>Delete Vehicle</button>
-      <div style={{ marginTop: 18 }}>
+      
+      <div className="mt-6">
         <AdBanner />
       </div>
-      <div style={{ marginTop: 24 }}>
-        <h3>Maintenance</h3>
+      
+      <div className="mt-8">
+        <h3 className="font-serif font-bold text-2xl text-charcoal-800 dark:text-cream-100 mb-4">Maintenance</h3>
         <MaintenanceList vin={vin} />
       </div>
     </div>
@@ -188,23 +241,56 @@ function MaintenanceList({ vin }) {
   };
 
   return (
-    <div>
-      <ul>
+    <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6">
+      <ul className="space-y-4 mb-6">
         {entries.map((e) => (
-          <li key={e.id} style={{ marginBottom: 8 }}>
-            <strong>{e.title}</strong> — {e.date?.split('T')[0]} — ${e.cost}
-            <div style={{ fontSize: 12 }}>{e.notes}</div>
+          <li key={e.id} className="border-b border-charcoal-200 dark:border-charcoal-600 pb-3">
+            <div className="flex justify-between items-start mb-1">
+              <strong className="text-charcoal-800 dark:text-cream-100">{e.title}</strong>
+              <span className="text-sm text-charcoal-600 dark:text-cream-300">{e.date?.split('T')[0]}</span>
+            </div>
+            <div className="text-sm text-charcoal-600 dark:text-cream-300 mb-1">${e.cost}</div>
+            <div className="text-xs text-charcoal-500 dark:text-cream-400">{e.notes}</div>
           </li>
         ))}
       </ul>
-      <div style={{ marginTop: 12 }}>
-        <h4>Add Entry</h4>
-        <input name="title" placeholder="Title" value={form.title} onChange={handleChange} />
-        <input name="cost" placeholder="Cost" value={form.cost} onChange={handleChange} style={{ marginLeft: 8 }} />
-        <div>
-          <textarea name="notes" placeholder="Notes" value={form.notes} onChange={handleChange} style={{ width: '100%', height: 60 }} />
+      
+      <div className="border-t border-charcoal-200 dark:border-charcoal-600 pt-4">
+        <h4 className="font-serif font-bold text-xl text-charcoal-800 dark:text-cream-100 mb-4">Add Entry</h4>
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            <input 
+              name="title" 
+              placeholder="Title" 
+              value={form.title} 
+              onChange={handleChange} 
+              className="flex-1 px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            />
+            <input 
+              name="cost" 
+              placeholder="Cost" 
+              value={form.cost} 
+              onChange={handleChange} 
+              className="w-24 px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            />
+          </div>
+          <div>
+            <textarea 
+              name="notes" 
+              placeholder="Notes" 
+              value={form.notes} 
+              onChange={handleChange} 
+              rows={3}
+              className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            />
+          </div>
+          <button 
+            onClick={handleAdd}
+            className="bg-oxblood-600 hover:bg-oxblood-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+          >
+            Add Maintenance
+          </button>
         </div>
-        <button onClick={handleAdd} style={{ marginTop: 8 }}>Add Maintenance</button>
       </div>
     </div>
   );

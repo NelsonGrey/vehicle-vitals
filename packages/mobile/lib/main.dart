@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
+import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
@@ -18,10 +20,21 @@ import 'screens/contact_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/instructions_screen.dart';
+import 'components/ad_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Google Mobile Ads
+  await MobileAds.instance.initialize();
+
+  // Pre-load interstitial and rewarded ads
+  InterstitialAdHelper.loadAd();
+  RewardedAdHelper.loadAd();
+
   runApp(const VehicleVitalsApp());
 }
 
@@ -39,14 +52,9 @@ class VehicleVitalsApp extends StatelessWidget {
         builder: (context, authService, child) {
           return MaterialApp.router(
             title: 'Vehicle Vitals',
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFFF59E0B), // Amber color from RN app
-                brightness: Brightness.light,
-              ),
-              scaffoldBackgroundColor: const Color(0xFFFFFAF3), // Light beige
-              useMaterial3: true,
-            ),
+            theme: AppTheme.lightTheme(),
+            darkTheme: AppTheme.darkTheme(),
+            themeMode: ThemeMode.system,
             routerConfig: _createRouter(authService),
           );
         },
@@ -90,8 +98,9 @@ class VehicleVitalsApp extends StatelessWidget {
           builder: (context, state) => const SignUpScreen(),
         ),
         GoRoute(
-          path: '/add-vehicle',
-          builder: (context, state) => const AddVehicleScreen(),
+          path: '/add-vehicle/:vin?',
+          builder: (context, state) =>
+              AddVehicleScreen(initialVin: state.pathParameters['vin']),
         ),
         GoRoute(
           path: '/edit-vehicle/:vin',

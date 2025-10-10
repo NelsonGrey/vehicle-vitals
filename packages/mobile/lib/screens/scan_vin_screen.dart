@@ -32,9 +32,7 @@ class _ScanVINScreenState extends State<ScanVINScreen> {
       if (code != null && code.length == 17) {
         // Found a valid 17-character VIN
         Navigator.of(context).pop();
-        context.go('/add-vehicle');
-        // TODO: Pass the VIN to the AddVehicle screen
-        // You might want to modify the routing to pass VIN as a parameter
+        context.go('/add-vehicle/$code');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('VIN detected: $code'),

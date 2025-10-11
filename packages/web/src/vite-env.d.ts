@@ -4,6 +4,8 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_API_KEY: string
   readonly VITE_FIREBASE_AUTH_DOMAIN: string
   readonly VITE_FIREBASE_PROJECT_ID: string
+  readonly VITE_FIREBASE_AUTH_DOMAIN: string
+  readonly VITE_FIREBASE_PROJECT_ID: string
   readonly VITE_FIREBASE_STORAGE_BUCKET: string
   readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string
   readonly VITE_FIREBASE_APP_ID: string
@@ -15,4 +17,18 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv
+}
+
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+    firebase: {
+      app: unknown;
+      auth: unknown;
+      firestore: unknown;
+      functions: unknown;
+      messaging: unknown;
+      storage: unknown;
+    };
+  }
 }

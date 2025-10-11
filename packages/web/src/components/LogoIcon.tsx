@@ -1,6 +1,10 @@
-import React from 'react';
+interface LogoIconProps {
+  size?: number;
+  color?: string;
+  accent?: string;
+}
 
-export default function LogoIcon({ size = 20, color = 'currentColor', accent = '#334155' }) {
+export default function LogoIcon({ size = 20, color = 'currentColor', accent = '#334155' }: LogoIconProps) {
   const s = size;
   return (
     <svg

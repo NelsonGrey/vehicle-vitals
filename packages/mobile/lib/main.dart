@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:logging/logging.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
@@ -33,6 +34,14 @@ import 'screens/analytics_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize logging
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    debugPrint(
+      '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}',
+    );
+  });
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

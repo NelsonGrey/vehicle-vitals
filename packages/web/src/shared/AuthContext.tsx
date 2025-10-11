@@ -1,8 +1,32 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { firebaseConfig } from './firebaseConfig';
 
 // Production-safe auth context that uses globally loaded Firebase SDKs
-let firebaseAuth = null;
+
+interface FirebaseServices {
+  auth: any;
+  authFunctions: any;
+}
+
+interface AuthContextType {
+  user: any;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string) => Promise<any>;
+  signOut: () => Promise<any>;
+  signInWithGoogle: () => Promise<any>;
+  signInWithApple: () => Promise<any>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  signIn: async () => { throw new Error('Firebase not initialized'); },
+  signUp: async () => { throw new Error('Firebase not initialized'); },
+  signOut: async () => { throw new Error('Firebase not initialized'); },
+  signInWithGoogle: async () => { throw new Error('Firebase not initialized'); },
+  signInWithApple: async () => { throw new Error('Firebase not initialized'); },
+});
 
 // Initialize Firebase auth by checking for global Firebase objects
 const initializeFirebase = async () => {
@@ -29,10 +53,7 @@ const initializeFirebase = async () => {
   };
 
   try {
-    const firebase = await checkFirebase();
-
-    // Import config module for the config object
-    // const { firebaseConfig } = await import('./firebaseConfig');
+    const firebase = await checkFirebase() as typeof window.firebase;
 
     // Initialize Firebase app if not already initialized
     let app;
@@ -45,24 +66,21 @@ const initializeFirebase = async () => {
     const auth = firebase.auth.getAuth(app);
 
     return { auth, authFunctions: firebase.auth };
-  } catch (error) {
-    console.warn('Firebase not available:', error.message);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.warn('Firebase not available:', err.message);
     return null;
   }
-};const AuthContext = createContext({
-  user: null,
-  loading: true,
-  signIn: async () => { throw new Error('Firebase not initialized'); },
-  signUp: async () => { throw new Error('Firebase not initialized'); },
-  signOut: async () => { throw new Error('Firebase not initialized'); },
-  signInWithGoogle: async () => { throw new Error('Firebase not initialized'); },
-  signInWithApple: async () => { throw new Error('Firebase not initialized'); },
-});
+};
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [firebase, setFirebase] = useState(null);
+  const [firebase, setFirebase] = useState<FirebaseServices | null>(null);
 
   useEffect(() => {
     // Initialize Firebase asynchronously
@@ -72,7 +90,7 @@ export function AuthProvider({ children }) {
         setFirebase({ auth, authFunctions });
         
         // Set up auth state listener
-        const unsub = authFunctions.onAuthStateChanged(auth, (u) => {
+        const unsub = authFunctions.onAuthStateChanged(auth, (u: any) => {
           setUser(u || null);
           setLoading(false);
         });
@@ -104,8 +122,8 @@ export function AuthProvider({ children }) {
     return {
       user,
       loading,
-      signIn: (email, password) => authFunctions.signInWithEmailAndPassword(auth, email, password),
-      signUp: (email, password) => authFunctions.createUserWithEmailAndPassword(auth, email, password),
+      signIn: (email: string, password: string) => authFunctions.signInWithEmailAndPassword(auth, email, password),
+      signUp: (email: string, password: string) => authFunctions.createUserWithEmailAndPassword(auth, email, password),
       signOut: () => authFunctions.signOut(auth),
       signInWithGoogle: () => authFunctions.signInWithPopup(auth, googleProvider),
       signInWithApple: () => {

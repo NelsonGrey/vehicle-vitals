@@ -2,10 +2,12 @@ import 'package:add_2_calendar/add_2_calendar.dart' as add2cal;
 import 'package:device_calendar/device_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logging/logging.dart';
 
 class CalendarService {
   final DeviceCalendarPlugin _deviceCalendar = DeviceCalendarPlugin();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final Logger _logger = Logger('CalendarService');
 
   // Check if calendar permissions are granted
   Future<bool> hasCalendarPermissions() async {
@@ -53,7 +55,7 @@ class CalendarService {
       final result = await add2cal.Add2Calendar.addEvent2Cal(event);
       return result;
     } catch (e) {
-      print('Error adding to calendar: $e');
+      _logger.severe('Error adding to calendar', e);
       return false;
     }
   }

@@ -1,6 +1,6 @@
 // -----------------------------
-// File: web/pages/AddVehicle.jsx
-import React, { useState } from 'react';
+// File: web/pages/AddVehicle.tsx
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addOrUpdateVehicle } from '../shared/firestoreService';
 import AdBanner from '../components/AdBanner';
@@ -13,7 +13,7 @@ export default function AddVehicle() {
   const navigate = useNavigate();
   const { years, makes, models, loadingMakes, loadingModels } = useVehicleOptions({ year: form.year, make: form.make });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -21,10 +21,11 @@ export default function AddVehicle() {
   const handleSubmit = async () => {
     try {
       await addOrUpdateVehicle(form);
-  alert('Vehicle added successfully');
-  navigate('/app');
-    } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Vehicle added successfully');
+      navigate('/app');
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert('Error: ' + error.message);
     }
   };
 
@@ -42,8 +43,9 @@ export default function AddVehicle() {
         model: model || prev.model,
         year: year || prev.year,
       }));
-    } catch (e) {
-      alert(e?.message || 'Failed to decode VIN');
+    } catch (e: unknown) {
+      const error = e as Error;
+      alert(error?.message || 'Failed to decode VIN');
     }
   };
 
@@ -55,8 +57,9 @@ export default function AddVehicle() {
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-6">
         {/* Year dropdown */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Year</label>
+          <label htmlFor="year" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Year</label>
           <select 
+            id="year"
             name="year" 
             value={form.year} 
             onChange={handleChange} 
@@ -71,8 +74,9 @@ export default function AddVehicle() {
 
         {/* Make dropdown with fallback */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Make</label>
+          <label htmlFor="make" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Make</label>
           <select 
+            id="make"
             name="make" 
             value={form.make} 
             onChange={handleChange} 
@@ -88,8 +92,9 @@ export default function AddVehicle() {
 
         {/* Model dropdown depends on year+make */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Model</label>
+          <label htmlFor="model" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Model</label>
           <select 
+            id="model"
             name="model" 
             value={form.model} 
             onChange={handleChange} 
@@ -104,12 +109,13 @@ export default function AddVehicle() {
         </div>
 
         {/* VIN and mileage remain free-form */}
-        {['vin', 'mileage'].map((field) => (
+        {(['vin', 'mileage'] as const).map((field) => (
           <div key={field}>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+            <label htmlFor={field} className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
               {field.charAt(0).toUpperCase() + field.slice(1)}
             </label>
             <input
+              id={field}
               type="text"
               name={field}
               value={form[field]}
@@ -136,8 +142,9 @@ export default function AddVehicle() {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Purchase Date</label>
+          <label htmlFor="purchaseDate" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Purchase Date</label>
           <input
+            id="purchaseDate"
             type="date"
             name="purchaseDate"
             value={form.purchaseDate || ''}

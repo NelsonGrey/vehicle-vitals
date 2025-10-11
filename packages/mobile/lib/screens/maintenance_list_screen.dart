@@ -50,17 +50,17 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     try {
       final firestoreService = context.read<FirestoreService>();
       final vehicle = await firestoreService.getVehicle(widget.vin);
+      if (!mounted) return;
       setState(() {
         _vehicle = vehicle;
         _loadingVehicle = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loadingVehicle = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading vehicle: $e')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading vehicle: $e')));
     }
   }
 
@@ -69,17 +69,17 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     try {
       final firestoreService = context.read<FirestoreService>();
       final entries = await firestoreService.getMaintenanceEntries(widget.vin);
+      if (!mounted) return;
       setState(() {
         _entries = entries;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading maintenance entries: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading maintenance entries: $e')),
+      );
     }
   }
 
@@ -124,11 +124,10 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
 
       await _loadEntries();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Maintenance entry added')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Maintenance entry added')));
 
       // Show interstitial ad after adding maintenance entry (only for non-premium users)
       final premiumService = context.read<PremiumService>();
@@ -136,11 +135,10 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
         InterstitialAdHelper.showAd();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error adding entry: $e')));
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error adding entry: $e')));
     }
   }
 

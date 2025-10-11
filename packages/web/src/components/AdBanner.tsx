@@ -1,10 +1,24 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+
+// Declare AdSense global
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+  }
+}
 
 // Env-driven AdSense banner. Configure:
 // - VITE_ADSENSE_CLIENT: e.g., 'ca-pub-XXXXXXXXXXXXXXXX'
 // - VITE_ADSENSE_SLOT: numeric string for the ad slot
 // You can override slot per-instance via the `slot` prop.
-export default function AdBanner({ style, className, slot: slotOverride }) {
+
+interface AdBannerProps {
+  style?: React.CSSProperties;
+  className?: string;
+  slot?: string;
+}
+
+export default function AdBanner({ style, className, slot: slotOverride }: AdBannerProps) {
   const containerRef = useRef(null);
   const client = import.meta?.env?.VITE_ADSENSE_CLIENT;
   const slot = slotOverride || import.meta?.env?.VITE_ADSENSE_SLOT;

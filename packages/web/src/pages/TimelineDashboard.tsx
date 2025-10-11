@@ -1,8 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getVehicles, getMaintenanceEntries } from '../shared/firestoreService';
 
+interface Vehicle {
+  vin: string;
+  make: string;
+  model: string;
+  year: string;
+}
+
+interface MaintenanceEntry {
+  id?: string;
+  title: string;
+  notes?: string;
+  cost?: string;
+  date: string;
+  attachments?: Array<{
+    name: string;
+    url: string;
+    type?: string;
+  }>;
+  vehicle: Vehicle;
+}
+
 export default function TimelineDashboard() {
-  const [maintenanceEntries, setMaintenanceEntries] = useState([]);
+  const [maintenanceEntries, setMaintenanceEntries] = useState<MaintenanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11,10 +32,10 @@ export default function TimelineDashboard() {
         const vehiclesList = await getVehicles();
 
         // Load maintenance entries for all vehicles
-        const allEntries = [];
+        const allEntries: MaintenanceEntry[] = [];
         for (const vehicle of vehiclesList) {
           const entries = await getMaintenanceEntries(vehicle.vin);
-          allEntries.push(...entries.map(entry => ({
+          allEntries.push(...entries.map((entry: any): MaintenanceEntry => ({
             ...entry,
             vehicle: {
               vin: vehicle.vin,
@@ -26,7 +47,7 @@ export default function TimelineDashboard() {
         }
 
         // Sort by date (most recent first)
-        allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+        allEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setMaintenanceEntries(allEntries);
       } catch (error) {
         console.error('Error loading timeline data:', error);
@@ -83,7 +104,7 @@ export default function TimelineDashboard() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                          ${entry.cost?.toFixed(2) || '0.00'}
+                          ${(entry as MaintenanceEntry).cost || '0.00'}
                         </div>
                         <div className="text-sm text-slate-500 dark:text-slate-400">
                           {new Date(entry.date).toLocaleDateString()}

@@ -1,6 +1,6 @@
 // -----------------------------
 // File: web/pages/EditVehicle.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getVehicle, updateVehicle, getMaintenanceEntries, addMaintenanceEntry, deleteVehicle } from '../shared/firestoreService';
 import AdBanner from '../components/AdBanner';
@@ -10,10 +10,32 @@ import { getUpcomingMaintenance } from '../../../../shared/maintenanceSchedules'
 import { uploadFile, generateMaintenanceAttachmentPath } from '../shared/storageService';
 import { exportMaintenanceAsCSV, exportMaintenanceAsPDF } from '../utils/dataExport';
 
+interface Vehicle {
+  vin: string;
+  make: string;
+  model: string;
+  year: string;
+  mileage: string;
+  purchaseDate?: string;
+}
+
+interface MaintenanceEntry {
+  id: string;
+  title: string;
+  notes: string;
+  cost: string;
+  date: string;
+  attachments?: Array<{
+    name: string;
+    url: string;
+    type?: string;
+  }>;
+}
+
 export default function EditVehicle() {
   const { vin } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState(null);
+  const [form, setForm] = useState<Vehicle | null>(null);
   const { years, makes, models, loadingMakes, loadingModels } = useVehicleOptions({ year: form?.year, make: form?.make });
 
   useEffect(() => {
@@ -25,9 +47,9 @@ export default function EditVehicle() {
     fetchVehicle();
   }, [vin]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handleUpdate = async () => {
@@ -36,11 +58,12 @@ export default function EditVehicle() {
       alert('Vehicle updated successfully');
       navigate('/');
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
   const handleDecodeVin = async () => {
+    if (!form) return;
     const v = (form.vin || '').trim();
     if (!v) {
       alert('Enter a VIN first');
@@ -48,14 +71,14 @@ export default function EditVehicle() {
     }
     try {
       const { make, model, year } = await decodeVin(v);
-      setForm((prev) => ({
+      setForm((prev) => prev ? ({
         ...prev,
         make: make || prev.make,
         model: model || prev.model,
         year: year || prev.year,
-      }));
+      }) : null);
     } catch (e) {
-      alert(e?.message || 'Failed to decode VIN');
+      alert((e instanceof Error ? e.message : 'Failed to decode VIN'));
     }
   };
 
@@ -68,7 +91,7 @@ export default function EditVehicle() {
       alert('Vehicle deleted');
       navigate('/');
     } catch (err) {
-      alert('Error deleting: ' + err.message);
+      alert('Error deleting: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -86,8 +109,9 @@ export default function EditVehicle() {
       <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6 space-y-6">
         {/* Year dropdown */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Year</label>
+          <label htmlFor="year" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Year</label>
           <select 
+            id="year"
             name="year" 
             value={form.year} 
             onChange={handleChange} 
@@ -105,8 +129,9 @@ export default function EditVehicle() {
 
         {/* Make dropdown */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Make</label>
+          <label htmlFor="make" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Make</label>
           <select 
+            id="make"
             name="make" 
             value={form.make} 
             onChange={handleChange} 
@@ -114,7 +139,7 @@ export default function EditVehicle() {
             disabled={loadingMakes}
           >
             <option value="">{loadingMakes ? 'Loading makes…' : 'Select Make'}</option>
-            {form.make && !makes.includes(form.make) && (
+            {form.make && !(makes as string[]).includes(form.make) && (
               <option value={form.make}>Current: {form.make}</option>
             )}
             {makes.map((m) => (
@@ -125,8 +150,9 @@ export default function EditVehicle() {
 
         {/* Model dropdown depends on year+make */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Model</label>
+          <label htmlFor="model" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Model</label>
           <select 
+            id="model"
             name="model" 
             value={form.model} 
             onChange={handleChange} 
@@ -134,7 +160,7 @@ export default function EditVehicle() {
             disabled={!form.year || !form.make || loadingModels}
           >
             <option value="">{loadingModels ? 'Loading models…' : (!form.year || !form.make ? 'Select year & make first' : 'Select Model')}</option>
-            {form.model && !models.includes(form.model) && (
+            {form.model && !(models as string[]).includes(form.model) && (
               <option value={form.model}>Current: {form.model}</option>
             )}
             {models.map((m) => (
@@ -146,20 +172,21 @@ export default function EditVehicle() {
         {/* VIN and mileage text inputs */}
         {['vin', 'mileage'].map((field) => (
           <div key={field}>
-            <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
+            <label htmlFor={field} className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
               {field.charAt(0).toUpperCase() + field.slice(1)}
             </label>
             <input
+              id={field}
               type="text"
               name={field}
-              value={form[field]}
+              value={form[field as keyof Vehicle] || ''}
               onChange={handleChange}
               placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
               className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
             />
             {field === 'vin' && (
               <p className="text-xs text-charcoal-600 dark:text-cream-400 mt-1">
-                Decode VIN uses the NHTSA VPIC database to prefill Year, Make, and Model. Changes aren't saved until you click Save Changes.
+                Decode VIN uses the NHTSA VPIC database to prefill Year, Make, and Model. Changes aren&apos;t saved until you click Save Changes.
               </p>
             )}
           </div>
@@ -176,8 +203,9 @@ export default function EditVehicle() {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Purchase Date</label>
+          <label htmlFor="purchaseDate" className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Purchase Date</label>
           <input
+            id="purchaseDate"
             type="date"
             name="purchaseDate"
             value={form.purchaseDate || ''}
@@ -208,16 +236,16 @@ export default function EditVehicle() {
       
       <div className="mt-8">
         <h3 className="font-serif font-bold text-2xl text-charcoal-800 dark:text-cream-100 mb-4">Maintenance</h3>
-        <MaintenanceList vin={vin} />
+        {vin && <MaintenanceList vin={vin} />}
       </div>
     </div>
   );
 }
 
-function MaintenanceList({ vin }) {
-  const [entries, setEntries] = useState([]);
-  const [form, setForm] = useState({ title: '', notes: '', cost: '', attachments: [] });
-  const [vehicle, setVehicle] = useState(null);
+function MaintenanceList({ vin }: { vin: string }) {
+  const [entries, setEntries] = useState<MaintenanceEntry[]>([]);
+  const [form, setForm] = useState({ title: '', notes: '', cost: '', attachments: [] as Array<{name: string, url: string, type?: string}> });
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -230,13 +258,13 @@ function MaintenanceList({ vin }) {
     load();
   }, [vin]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
   };
 
-  const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
     setUploading(true);
@@ -255,13 +283,13 @@ function MaintenanceList({ vin }) {
         attachments: [...(p.attachments || []), ...uploadedFiles]
       }));
     } catch (error) {
-      alert('Error uploading files: ' + error.message);
+      alert('Error uploading files: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setUploading(false);
     }
   };
 
-  const removeAttachment = (index) => {
+  const removeAttachment = (index: number) => {
     setForm((p) => ({
       ...p,
       attachments: p.attachments.filter((_, i) => i !== index)
@@ -280,7 +308,7 @@ function MaintenanceList({ vin }) {
       setEntries(list);
       setForm({ title: '', notes: '', cost: '', attachments: [] });
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -359,20 +387,30 @@ function MaintenanceList({ vin }) {
         <h4 className="font-serif font-bold text-xl text-charcoal-800 dark:text-cream-100 mb-4">Add Entry</h4>
         <div className="space-y-4">
           <div className="flex gap-3">
-            <input 
-              name="title" 
-              placeholder="Title" 
-              value={form.title} 
-              onChange={handleChange} 
-              className="flex-1 px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
-            />
-            <input 
-              name="cost" 
-              placeholder="Cost" 
-              value={form.cost} 
-              onChange={handleChange} 
-              className="w-24 px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
-            />
+            <div className="flex-1">
+              <label htmlFor="title" className="sr-only">Maintenance Title</label>
+              <input 
+                id="title"
+                name="title" 
+                placeholder="Title" 
+                value={form.title} 
+                onChange={handleChange} 
+                aria-label="Maintenance Title"
+                className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+              />
+            </div>
+            <div className="w-24">
+              <label htmlFor="cost" className="sr-only">Cost</label>
+              <input 
+                id="cost"
+                name="cost" 
+                placeholder="Cost" 
+                value={form.cost} 
+                onChange={handleChange} 
+                aria-label="Cost"
+                className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+              />
+            </div>
           </div>
           <div>
             <textarea 
@@ -394,6 +432,7 @@ function MaintenanceList({ vin }) {
               accept="image/*,.pdf"
               onChange={handleFileChange}
               disabled={uploading}
+              aria-label="Upload photos or receipts"
               className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-oxblood-50 file:text-oxblood-700 hover:file:bg-oxblood-100"
             />
             {uploading && (

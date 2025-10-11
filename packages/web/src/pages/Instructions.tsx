@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import AdBanner from '../components/AdBanner';
 // Header and footer provided by Layout

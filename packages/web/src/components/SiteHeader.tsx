@@ -1,10 +1,13 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import StackedVLogo from './StackedVLogo';
 import { useAuth } from '../shared/AuthContext';
 
-export default function SiteHeader({ overlay = false }) {
+interface SiteHeaderProps {
+  overlay?: boolean;
+}
+
+export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
   const { user, signOut } = useAuth();
   return (
     <header className={`fixed top-0 left-0 right-0 h-20 flex items-end z-10 border-b ${

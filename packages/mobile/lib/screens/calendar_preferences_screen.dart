@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:device_calendar/device_calendar.dart';
 import '../services/calendar_service.dart';
 
 class CalendarPreferencesScreen extends StatefulWidget {
@@ -16,7 +15,6 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _hasPermissions = false;
-  List<Calendar> _availableCalendars = [];
   String? _selectedCalendarId;
 
   @override
@@ -33,9 +31,6 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       _hasPermissions = await _calendarService.hasCalendarPermissions();
 
       if (_hasPermissions) {
-        // Load available calendars
-        _availableCalendars = await _calendarService.getAvailableCalendars();
-
         // Load user preferences
         final preferences = await _calendarService.getCalendarPreferences();
         _calendarSyncEnabled = preferences['calendarSyncEnabled'];

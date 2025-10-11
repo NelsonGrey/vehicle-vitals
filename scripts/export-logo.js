@@ -8,8 +8,8 @@ const path = require('node:path');
 const sharp = require('sharp');
 
 const root = path.resolve(__dirname, '..');
-const svgPath = path.join(root, 'web', 'public', 'assets', 'vehicle-vitals-logo.svg');
-const outDir = path.join(root, 'web', 'public', 'assets', 'exports');
+const svgPath = path.join(root, 'packages', 'web', 'public', 'assets', 'vehicle-vitals-logo.svg');
+const outDir = path.join(root, 'packages', 'web', 'public', 'assets', 'exports');
 
 async function main() {
   if (!fs.existsSync(svgPath)) {

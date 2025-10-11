@@ -1,9 +1,12 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 
-export default function ProtectedRoute({ children }) {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -12,7 +15,7 @@ export default function ProtectedRoute({ children }) {
     const to = `/login?redirect=${encodeURIComponent(location.pathname + location.search)}`;
     return <Navigate to={to} replace />;
   }
-  return children;
+  return <>{children}</>;
 }
 
 ProtectedRoute.propTypes = {

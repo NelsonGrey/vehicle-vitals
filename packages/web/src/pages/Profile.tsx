@@ -1,6 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AdBanner from '../components/AdBanner';
 import { useAuth } from '../shared/AuthContext';
+
+// Declare Firebase global
+declare global {
+  interface Window {
+    firebase: {
+      app: any;
+      auth: any;
+      firestore: any;
+      functions: any;
+      messaging: any;
+      storage: any;
+    };
+  }
+}
+
+interface AuthService {
+  EmailAuthProvider: {
+    credential: (email: string, password: string) => unknown;
+  };
+  reauthenticateWithCredential: (user: unknown, credential: unknown) => Promise<void>;
+  updatePassword: (user: unknown, newPassword: string) => Promise<void>;
+  deleteUser: (user: unknown) => Promise<void>;
+}
 
 // Create async Firebase auth service using global Firebase objects
 const createFirebaseAuthService = async () => {
@@ -25,7 +48,7 @@ const createFirebaseAuthService = async () => {
       });
     };
 
-    const firebase = await checkFirebase();
+    const firebase = await checkFirebase() as typeof window.firebase;
     return {
       EmailAuthProvider: firebase.auth.EmailAuthProvider,
       reauthenticateWithCredential: firebase.auth.reauthenticateWithCredential,
@@ -52,7 +75,7 @@ export default function Profile() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [authService, setAuthService] = useState(null);
+  const [authService, setAuthService] = useState<AuthService | null>(null);
 
   useEffect(() => {
     createFirebaseAuthService().then(setAuthService);
@@ -65,7 +88,7 @@ export default function Profile() {
     await authService.reauthenticateWithCredential(user, cred);
   };
 
-  const onChangePassword = async (e) => {
+  const onChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setStatus('');
@@ -76,13 +99,13 @@ export default function Profile() {
     setBusy(true);
     try {
       await reauth();
-      await authService.updatePassword(user, newPassword);
+      await authService!.updatePassword(user, newPassword);
       setStatus('Password updated successfully.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError(err?.message || 'Failed to update password');
+      setError((err instanceof Error ? err.message : 'Failed to update password'));
     } finally {
       setBusy(false);
     }
@@ -96,12 +119,12 @@ export default function Profile() {
     setBusy(true);
     try {
       await reauth();
-      await authService.deleteUser(user);
+      await authService!.deleteUser(user);
       setStatus('Account deleted.');
       // Optionally sign out cleanup
       await signOut();
     } catch (err) {
-      setError(err?.message || 'Failed to delete account');
+      setError((err instanceof Error ? err.message : 'Failed to delete account'));
     } finally {
       setBusy(false);
     }

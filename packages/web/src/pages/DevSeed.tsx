@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../shared/AuthContext';
 import {
   addOrUpdateVehicle,
@@ -8,13 +8,18 @@ import {
 } from '../shared/firestoreService';
 import { defaultVehicle } from '@vehicle-vitals/shared/types';
 
+interface SeedDetails {
+  vehiclesCount: number;
+  maintenanceCount: number;
+}
+
 export default function DevSeed() {
   const { user } = useAuth();
   const [status, setStatus] = useState('Idle');
-  const [details, setDetails] = useState(null);
+  const [details, setDetails] = useState<SeedDetails | null>(null);
 
   if (!import.meta.env.DEV) {
-    return <div style={{ padding: 20 }}>This seeding page is only available in development builds.</div>;
+    return <div className="dev-seed-container">This seeding page is only available in development builds.</div>;
   }
 
   const uid = user?.uid || '(not signed in)';
@@ -51,24 +56,24 @@ export default function DevSeed() {
       setStatus('Seed complete');
     } catch (err) {
       console.error(err);
-      setStatus('Error: ' + (err?.message || String(err)));
+      setStatus('Error: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="dev-seed-container">
       <h2>Dev Seed</h2>
       <p>UID: {uid}</p>
       <button onClick={runSeed}>Seed sample data</button>
-      <p style={{ marginTop: 12 }}>Status: {status}</p>
+      <p className="dev-seed-status">Status: {status}</p>
       {details && (
-        <pre style={{ background: '#f7f7f7', padding: 12 }}>
+        <pre className="dev-seed-pre">
 {JSON.stringify(details, null, 2)}
         </pre>
       )}
-      <p style={{ marginTop: 8, color: '#777' }}>
+      <p className="dev-seed-note">
         This page writes to Firestore to create the expected collections (users/uid/vehicles, .../maintenance).
-        Remove this route before production if you don’t want it exposed.
+        Remove this route before production if you don&apos;t want it exposed.
       </p>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AdBanner from '../components/AdBanner';
 import { useAuth } from '../shared/AuthContext';
@@ -14,15 +14,15 @@ export default function Login() {
   const location = useLocation();
   const redirect = new URLSearchParams(location.search).get('redirect') || '/app';
 
-  const onSubmit = async (e) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
       await signIn(email, password);
       navigate(redirect, { replace: true });
-    } catch (err) {
-      const msg = String(err?.message || 'Failed to sign in');
+    } catch (err: unknown) {
+      const msg = String((err as Error)?.message || 'Failed to sign in');
       const hint = msg.includes('api-key-not-valid') ? ' (Check VITE_FIREBASE_* env vars; see web/.env.example)' : '';
       setError(msg + hint);
     } finally {
@@ -84,8 +84,9 @@ export default function Login() {
               try {
                 await signInWithGoogle();
                 navigate(redirect, { replace: true });
-              } catch (err) {
-                setError(String(err?.message || 'Google sign-in failed'));
+              } catch (err: unknown) {
+                const error = err as Error;
+                setError(String(error?.message || 'Google sign-in failed'));
               } finally {
                 setBusy(false);
               }
@@ -103,8 +104,9 @@ export default function Login() {
               try {
                 await signInWithApple();
                 navigate(redirect, { replace: true });
-              } catch (err) {
-                setError(String(err?.message || 'Apple sign-in failed'));
+              } catch (err: unknown) {
+                const error = err as Error;
+                setError(String(error?.message || 'Apple sign-in failed'));
               } finally {
                 setBusy(false);
               }

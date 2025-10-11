@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AdBanner from '../components/AdBanner';
 import { useAuth } from '../shared/AuthContext';
@@ -11,15 +11,16 @@ export default function SignUp() {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
-  const onSubmit = async (e) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
       await signUp(email, password);
       navigate('/app', { replace: true });
-    } catch (err) {
-      const msg = String(err?.message || 'Failed to create account');
+    } catch (err: unknown) {
+      const error = err as Error;
+      const msg = String(error?.message || 'Failed to create account');
       const hint = msg.includes('api-key-not-valid') ? ' (Check VITE_FIREBASE_* env vars; see web/.env.example)' : '';
       setError(msg + hint);
     } finally {
@@ -74,8 +75,9 @@ export default function SignUp() {
               try {
                 await signInWithGoogle();
                 navigate('/app', { replace: true });
-              } catch (err) {
-                setError(String(err?.message || 'Google sign-in failed'));
+              } catch (err: unknown) {
+                const error = err as Error;
+                setError(String(error?.message || 'Google sign-in failed'));
               } finally {
                 setBusy(false);
               }
@@ -93,8 +95,9 @@ export default function SignUp() {
               try {
                 await signInWithApple();
                 navigate('/app', { replace: true });
-              } catch (err) {
-                setError(String(err?.message || 'Apple sign-in failed'));
+              } catch (err: unknown) {
+                const error = err as Error;
+                setError(String(error?.message || 'Apple sign-in failed'));
               } finally {
                 setBusy(false);
               }

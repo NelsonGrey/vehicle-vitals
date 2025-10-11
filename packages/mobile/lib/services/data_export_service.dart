@@ -42,6 +42,7 @@ class DataExportService {
     await file.writeAsString(csvString);
 
     // Share the file
+    // ignore: deprecated_member_use
     await Share.shareXFiles([
       XFile(file.path),
     ], text: 'Maintenance history for vehicle $vin');
@@ -74,7 +75,7 @@ class DataExportService {
             ),
             pw.Text('VIN: $vin', style: const pw.TextStyle(fontSize: 16)),
             pw.SizedBox(height: 20),
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headers: ['Date', 'Title', 'Cost', 'Mileage', 'Notes'],
               data: maintenanceData
                   .map(
@@ -104,6 +105,7 @@ class DataExportService {
     await file.writeAsBytes(await pdf.save());
 
     // Share the file
+    // ignore: deprecated_member_use
     await Share.shareXFiles([
       XFile(file.path),
     ], text: 'Maintenance history for vehicle $vin');
@@ -153,7 +155,7 @@ class DataExportService {
               style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 10),
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headers: ['VIN', 'Make', 'Model', 'Year', 'Mileage'],
               data: vehiclesSnapshot.docs.map((doc) {
                 final data = doc.data();
@@ -202,6 +204,7 @@ class DataExportService {
     await file.writeAsBytes(await pdf.save());
 
     // Share the file
+    // ignore: deprecated_member_use
     await Share.shareXFiles([
       XFile(file.path),
     ], text: 'Complete vehicle report');

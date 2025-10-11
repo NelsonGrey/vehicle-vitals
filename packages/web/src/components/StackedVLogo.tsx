@@ -1,12 +1,27 @@
-import React from 'react';
+interface HexProps {
+  cx: number;
+  cy: number;
+  r?: number;
+  fill?: string;
+  stroke?: string;
+}
 
-function Hex({ cx, cy, r = 3, fill = 'currentColor', stroke = 'none' }) {
+function Hex({ cx, cy, r = 3, fill = 'currentColor', stroke = 'none' }: HexProps) {
   const points = [];
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i + Math.PI / 6; // flat-top hex
     points.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
   }
   return <polygon points={points.join(' ')} fill={fill} stroke={stroke} />;
+}
+
+interface StackedVLogoProps {
+  size?: number;
+  color?: string;
+  accent?: string;
+  showText?: boolean;
+  compact?: boolean;
+  wordmarkColor?: string;
 }
 
 export default function StackedVLogo({
@@ -16,18 +31,18 @@ export default function StackedVLogo({
   showText = true,
   compact = false,
   wordmarkColor = '#64748b'
-}) {
+}: StackedVLogoProps) {
   const width = Math.round(size * 2.1);
   const height = size;
 
   const wordmark = (
-    <div style={{ fontSize: compact ? 10 : 11, letterSpacing: 2, marginTop: compact ? 0 : 4, color: wordmarkColor, fontWeight: 700, textAlign: 'center', textShadow: wordmarkColor === '#64748b' ? 'none' : '0 1px 6px rgba(0,0,0,0.35)' }}>
+    <div className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`} style={{ color: wordmarkColor }}>
       VEHICLE<br />VITALS
     </div>
   );
 
   return (
-    <div style={{ display: 'inline-flex', flexDirection: compact ? 'row' : 'column', alignItems: compact ? 'center' : 'center', gap: compact ? 8 : 2 }}>
+    <div className={`stacked-v-logo-container ${compact ? 'compact' : ''}`}>
       <svg
         width={width}
         height={height}

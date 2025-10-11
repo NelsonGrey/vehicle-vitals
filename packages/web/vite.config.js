@@ -18,8 +18,7 @@ export default defineConfig({
     target: 'es2015',
     rollupOptions: {
       output: {
-        format: 'umd', // Use UMD format for better browser compatibility
-        name: 'VehicleVitalsApp', // Required for UMD
+        format: 'es', // Use ES modules for better tree shaking
         manualChunks: undefined,
       },
     },

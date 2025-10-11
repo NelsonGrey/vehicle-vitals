@@ -39,45 +39,7 @@
       }
     </script>
 
-    <!-- Firebase SDKs - loaded from CDN for development -->
-    <script type="module">
-      import { initializeApp, getApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-      import {
-        getAuth,
-        onAuthStateChanged,
-        signInWithEmailAndPassword,
-        createUserWithEmailAndPassword,
-        signOut,
-        signInWithPopup,
-        GoogleAuthProvider,
-        OAuthProvider
-      } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-      import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-      import { getFunctions } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
-      import { getMessaging } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
-      import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
-
-      // Make Firebase available globally
-      window.firebase = {
-        app: { initializeApp, getApp },
-        auth: {
-          getAuth,
-          onAuthStateChanged,
-          signInWithEmailAndPassword,
-          createUserWithEmailAndPassword,
-          signOut,
-          signInWithPopup,
-          GoogleAuthProvider,
-          OAuthProvider
-        },
-        firestore: { getFirestore },
-        functions: { getFunctions },
-        messaging: { getMessaging },
-        storage: { getStorage }
-      };
-
-      console.log('Firebase SDKs loaded from CDN');
-    </script>
+    <!-- Firebase SDKs are now bundled with the app -->
   </head>
   <body>
     <div id="root"></div>

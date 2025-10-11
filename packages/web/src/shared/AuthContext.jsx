@@ -56,6 +56,7 @@ const initializeFirebase = async () => {
   signUp: async () => { throw new Error('Firebase not initialized'); },
   signOut: async () => { throw new Error('Firebase not initialized'); },
   signInWithGoogle: async () => { throw new Error('Firebase not initialized'); },
+  signInWithApple: async () => { throw new Error('Firebase not initialized'); },
 });
 
 export function AuthProvider({ children }) {
@@ -93,6 +94,7 @@ export function AuthProvider({ children }) {
         signUp: async () => { throw new Error('Firebase not available'); },
         signOut: async () => { throw new Error('Firebase not available'); },
         signInWithGoogle: async () => { throw new Error('Firebase not available'); },
+        signInWithApple: async () => { throw new Error('Firebase not available'); },
       };
     }
 
@@ -106,6 +108,12 @@ export function AuthProvider({ children }) {
       signUp: (email, password) => authFunctions.createUserWithEmailAndPassword(auth, email, password),
       signOut: () => authFunctions.signOut(auth),
       signInWithGoogle: () => authFunctions.signInWithPopup(auth, googleProvider),
+      signInWithApple: () => {
+        const appleProvider = new authFunctions.OAuthProvider('apple.com');
+        appleProvider.addScope('email');
+        appleProvider.addScope('name');
+        return authFunctions.signInWithPopup(auth, appleProvider);
+      },
     };
   }, [user, loading, firebase]);
 

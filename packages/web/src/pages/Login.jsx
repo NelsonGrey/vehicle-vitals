@@ -5,7 +5,7 @@ import { useAuth } from '../shared/AuthContext';
 // Header and footer provided by Layout
 
 export default function Login() {
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -92,6 +92,25 @@ export default function Login() {
             }}
           >
             Continue with Google
+          </button>
+          <button 
+            type="button" 
+            className="px-4 py-2.5 bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-medium disabled:opacity-50" 
+            disabled={busy} 
+            onClick={async () => {
+              setBusy(true);
+              setError('');
+              try {
+                await signInWithApple();
+                navigate(redirect, { replace: true });
+              } catch (err) {
+                setError(String(err?.message || 'Apple sign-in failed'));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Continue with Apple
           </button>
         </div>
       </form>

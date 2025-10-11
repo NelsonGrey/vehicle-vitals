@@ -6,6 +6,10 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
+import 'services/notification_service.dart';
+import 'services/premium_service.dart';
+import 'services/offline_service.dart';
+import 'services/analytics_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
@@ -20,7 +24,12 @@ import 'screens/contact_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/instructions_screen.dart';
+import 'screens/email_preferences_screen.dart';
+import 'screens/calendar_preferences_screen.dart';
 import 'components/ad_banner.dart';
+import 'screens/premium_screen.dart';
+import 'screens/offline_settings_screen.dart';
+import 'screens/analytics_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,15 +40,21 @@ void main() async {
   // Initialize Google Mobile Ads
   await MobileAds.instance.initialize();
 
+  // Initialize notifications
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
   // Pre-load interstitial and rewarded ads
   InterstitialAdHelper.loadAd();
   RewardedAdHelper.loadAd();
 
-  runApp(const VehicleVitalsApp());
+  runApp(VehicleVitalsApp(notificationService: notificationService));
 }
 
 class VehicleVitalsApp extends StatelessWidget {
-  const VehicleVitalsApp({super.key});
+  final NotificationService notificationService;
+
+  const VehicleVitalsApp({super.key, required this.notificationService});
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +62,10 @@ class VehicleVitalsApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => AuthService()),
         Provider(create: (context) => FirestoreService()),
+        Provider(create: (context) => notificationService),
+        ChangeNotifierProvider(create: (context) => PremiumService()),
+        ChangeNotifierProvider(create: (context) => OfflineService()),
+        ChangeNotifierProvider(create: (context) => AnalyticsService()),
       ],
       child: Consumer<AuthService>(
         builder: (context, authService, child) {
@@ -128,6 +147,10 @@ class VehicleVitalsApp extends StatelessWidget {
           builder: (context, state) => const AccountScreen(),
         ),
         GoRoute(
+          path: '/email-preferences',
+          builder: (context, state) => const EmailPreferencesScreen(),
+        ),
+        GoRoute(
           path: '/contact',
           builder: (context, state) => const ContactScreen(),
         ),
@@ -142,6 +165,22 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/instructions',
           builder: (context, state) => const InstructionsScreen(),
+        ),
+        GoRoute(
+          path: '/calendar-preferences',
+          builder: (context, state) => const CalendarPreferencesScreen(),
+        ),
+        GoRoute(
+          path: '/premium',
+          builder: (context, state) => const PremiumScreen(),
+        ),
+        GoRoute(
+          path: '/offline-settings',
+          builder: (context, state) => const OfflineSettingsScreen(),
+        ),
+        GoRoute(
+          path: '/analytics',
+          builder: (context, state) => const AnalyticsScreen(),
         ),
       ],
     );

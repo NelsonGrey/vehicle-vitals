@@ -6,13 +6,18 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:vehicle_vitals_flutter/main.dart';
+import 'package:vehicle_vitals_flutter/services/notification_service.dart';
 
 void main() {
   testWidgets('Vehicle Vitals app smoke test', (WidgetTester tester) async {
+    // Create a mock notification service for testing
+    final mockNotificationService = NotificationService();
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const VehicleVitalsApp());
+    await tester.pumpWidget(
+      VehicleVitalsApp(notificationService: mockNotificationService),
+    );
 
     // Verify that we can see the app title or login screen
     expect(find.textContaining('Vehicle Vitals'), findsOneWidget);

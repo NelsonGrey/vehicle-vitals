@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -109,6 +110,62 @@ class _AccountScreenState extends State<AccountScreen> {
                     ] else ...[
                       const Text('Not signed in'),
                     ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Notifications',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      leading: const Icon(Icons.email),
+                      title: const Text('Email Preferences'),
+                      subtitle: const Text('Manage maintenance reminders'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/email-preferences'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.calendar_today),
+                      title: const Text('Calendar Preferences'),
+                      subtitle: const Text('Sync maintenance to calendar'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/calendar-preferences'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.star),
+                      title: const Text('Premium Features'),
+                      subtitle: const Text(
+                        'Remove ads and unlock advanced features',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/premium'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.wifi_off),
+                      title: const Text('Offline Settings'),
+                      subtitle: const Text('Manage offline data access'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/offline-settings'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.analytics),
+                      title: const Text('Analytics'),
+                      subtitle: const Text('View usage insights'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/analytics'),
+                    ),
                   ],
                 ),
               ),

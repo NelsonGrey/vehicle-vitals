@@ -19,6 +19,7 @@ import AddVehicle from './pages/AddVehicle';
 import EditVehicle from './pages/EditVehicle';
 import Profile from './pages/Profile';
 import DevSeed from './pages/DevSeed';
+import TimelineDashboard from './pages/TimelineDashboard';
 
 function App() {
   console.log('App component rendering with full routing');
@@ -59,6 +60,11 @@ function App() {
             <Route path="profile" element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="timeline" element={
+              <ProtectedRoute>
+                <TimelineDashboard />
               </ProtectedRoute>
             } />
           </Route>

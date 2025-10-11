@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
+import '../services/data_export_service.dart';
+import '../services/calendar_service.dart';
+import '../services/premium_service.dart';
 import '../models/maintenance.dart';
+import '../models/maintenance_schedule.dart';
+import '../models/vehicle.dart';
+import '../components/ad_banner.dart';
 import 'maintenance_detail_screen.dart';
 
 class MaintenanceListScreen extends StatefulWidget {
@@ -17,12 +23,17 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
+  final DataExportService _exportService = DataExportService();
+  final CalendarService _calendarService = CalendarService();
   List<Maintenance> _entries = [];
+  Vehicle? _vehicle;
   bool _loading = true;
+  bool _loadingVehicle = true;
 
   @override
   void initState() {
     super.initState();
+    _loadVehicle();
     _loadEntries();
   }
 
@@ -32,6 +43,25 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     _notesController.dispose();
     _costController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadVehicle() async {
+    setState(() => _loadingVehicle = true);
+    try {
+      final firestoreService = context.read<FirestoreService>();
+      final vehicle = await firestoreService.getVehicle(widget.vin);
+      setState(() {
+        _vehicle = vehicle;
+        _loadingVehicle = false;
+      });
+    } catch (e) {
+      setState(() => _loadingVehicle = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading vehicle: $e')));
+      }
+    }
   }
 
   Future<void> _loadEntries() async {
@@ -99,6 +129,12 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           const SnackBar(content: Text('Maintenance entry added')),
         );
       }
+
+      // Show interstitial ad after adding maintenance entry (only for non-premium users)
+      final premiumService = context.read<PremiumService>();
+      if (!premiumService.isPremium) {
+        InterstitialAdHelper.showAd();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -108,10 +144,99 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     }
   }
 
+  Future<void> exportAsCSV() async {
+    try {
+      await _exportService.exportMaintenanceAsCSV(widget.vin);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Maintenance data exported as CSV')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> exportAsPDF() async {
+    try {
+      await _exportService.exportMaintenanceAsPDF(widget.vin);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Maintenance data exported as PDF')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _syncToCalendar() async {
+    try {
+      final eventsAdded = await _calendarService
+          .syncUpcomingMaintenanceToCalendar();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added $eventsAdded maintenance events to calendar'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Calendar sync failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Maintenance - ${widget.vin}')),
+      appBar: AppBar(
+        title: Text('Maintenance - ${widget.vin}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            tooltip: 'Sync to Calendar',
+            onPressed: _syncToCalendar,
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'export_csv':
+                  exportAsCSV();
+                  break;
+                case 'export_pdf':
+                  exportAsPDF();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'export_csv',
+                child: Text('Export as CSV'),
+              ),
+              const PopupMenuItem(
+                value: 'export_pdf',
+                child: Text('Export as PDF'),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Add new entry form
@@ -162,6 +287,66 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
               ),
             ),
           ),
+          // Manufacturer schedules section
+          if (!_loadingVehicle && _vehicle != null) ...[
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Recommended Maintenance',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_vehicle!.make} ${_vehicle!.model} (${_vehicle!.year})',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        final schedules =
+                            MaintenanceSchedule.getUpcomingMaintenance(
+                              _vehicle!.make,
+                              _vehicle!.model,
+                              _vehicle!.mileage,
+                            );
+                        if (schedules.isEmpty) {
+                          return const Text(
+                            'No manufacturer schedules available for this vehicle.',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: schedules.take(3).map((schedule) {
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.build, size: 20),
+                              title: Text(schedule['description']),
+                              subtitle: Text(
+                                'Due: ${schedule['nextDueMileage']} miles (${schedule['milesUntilDue']} miles)',
+                              ),
+                              trailing: Text(schedule['frequency']),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           // Entries list
           Expanded(
             child: _loading
@@ -218,6 +403,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const AdBanner(),
     );
   }
 }

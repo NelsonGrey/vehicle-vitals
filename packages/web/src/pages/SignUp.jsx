@@ -4,7 +4,7 @@ import AdBanner from '../components/AdBanner';
 import { useAuth } from '../shared/AuthContext';
 
 export default function SignUp() {
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, signInWithApple } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -82,6 +82,25 @@ export default function SignUp() {
             }}
           >
             Continue with Google
+          </button>
+          <button 
+            type="button" 
+            className="flex-1 border border-charcoal-300 dark:border-charcoal-600 hover:bg-charcoal-50 dark:hover:bg-charcoal-700 disabled:bg-charcoal-100 text-charcoal-700 dark:text-cream-200 font-medium py-2 px-4 rounded-md transition-colors duration-200" 
+            disabled={busy} 
+            onClick={async () => {
+              setBusy(true);
+              setError('');
+              try {
+                await signInWithApple();
+                navigate('/app', { replace: true });
+              } catch (err) {
+                setError(String(err?.message || 'Apple sign-in failed'));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Continue with Apple
           </button>
         </div>
       </form>

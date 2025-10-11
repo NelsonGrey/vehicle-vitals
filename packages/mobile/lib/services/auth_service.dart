@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -67,6 +68,28 @@ class AuthService extends ChangeNotifier {
       await _auth.sendPasswordResetEmail(email: email);
     } catch (e) {
       debugPrint('Reset password error: $e');
+      rethrow;
+    }
+  }
+
+  Future<UserCredential?> signInWithApple() async {
+    try {
+      final appleCredential = await apple.SignInWithApple.getAppleIDCredential(
+        scopes: [
+          apple.AppleIDAuthorizationScopes.email,
+          apple.AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final userCredential = await _auth.signInWithCredential(oauthCredential);
+      return userCredential;
+    } catch (e) {
+      debugPrint('Apple sign-in error: $e');
       rethrow;
     }
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
+import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
 /// AdMob banner widget for mobile apps
@@ -94,44 +96,53 @@ class _AdBannerState extends State<AdBanner> {
       vertical: AppDesignTokens.space3,
     );
 
-    // Show placeholder when no ads configured or failed to load
-    if (_showPlaceholder || _bannerAd == null) {
-      return Container(
-        margin: widget.margin ?? defaultMargin,
-        padding: EdgeInsets.all(AppDesignTokens.space3),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border.all(color: colorScheme.border, width: 1.0),
-          borderRadius: BorderRadius.circular(AppDesignTokens.radiusBase),
-        ),
-        child: Center(
-          child: Text(
-            'Ad placeholder — configure ADMOB_BANNER_UNIT_ID to enable ads',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colorScheme.muted),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
+    // Check if user is premium - hide ads for premium users
+    return Consumer<PremiumService>(
+      builder: (context, premiumService, child) {
+        if (premiumService.isPremium) {
+          return const SizedBox.shrink(); // Hide ads for premium users
+        }
 
-    // Show loading state
-    if (!_isLoaded) {
-      return Container(
-        margin: widget.margin ?? defaultMargin,
-        height: widget.adSize.height.toDouble(),
-        child: const Center(child: CircularProgressIndicator()),
-      );
-    }
+        // Show placeholder when no ads configured or failed to load
+        if (_showPlaceholder || _bannerAd == null) {
+          return Container(
+            margin: widget.margin ?? defaultMargin,
+            padding: EdgeInsets.all(AppDesignTokens.space3),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              border: Border.all(color: colorScheme.border, width: 1.0),
+              borderRadius: BorderRadius.circular(AppDesignTokens.radiusBase),
+            ),
+            child: Center(
+              child: Text(
+                'Ad placeholder — configure ADMOB_BANNER_UNIT_ID to enable ads',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colorScheme.muted),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
 
-    // Show the actual ad
-    return Container(
-      margin: widget.margin ?? defaultMargin,
-      alignment: Alignment.center,
-      width: _bannerAd!.size.width.toDouble(),
-      height: _bannerAd!.size.height.toDouble(),
-      child: AdWidget(ad: _bannerAd!),
+        // Show loading state
+        if (!_isLoaded) {
+          return Container(
+            margin: widget.margin ?? defaultMargin,
+            height: widget.adSize.height.toDouble(),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Show the actual ad
+        return Container(
+          margin: widget.margin ?? defaultMargin,
+          alignment: Alignment.center,
+          width: _bannerAd!.size.width.toDouble(),
+          height: _bannerAd!.size.height.toDouble(),
+          child: AdWidget(ad: _bannerAd!),
+        );
+      },
     );
   }
 }
@@ -191,6 +202,9 @@ class InterstitialAdHelper {
   }
 
   static void showAd() {
+    // Check if user is premium - don't show ads for premium users
+    // Note: This would need to be called from a context where PremiumService is available
+    // For now, we'll keep the existing logic but this should be updated in the calling code
     if (_isLoaded && _interstitialAd != null) {
       _interstitialAd!.show();
       _isLoaded = false;

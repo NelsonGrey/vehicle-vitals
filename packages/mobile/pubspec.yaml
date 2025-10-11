@@ -36,6 +36,7 @@ dependencies:
   firebase_auth: ^6.1.0
   cloud_firestore: ^6.0.2
   cloud_functions: ^6.0.2
+  firebase_messaging: ^16.0.2
   
   # Navigation
   go_router: ^16.2.4
@@ -51,6 +52,16 @@ dependencies:
   
   # AdMob integration
   google_mobile_ads: ^5.2.0
+  
+  # Apple Sign-In
+  sign_in_with_apple: ^6.1.0
+  csv: ^6.0.0
+  pdf: ^3.11.3
+  share_plus: ^12.0.0
+  device_calendar: ^4.3.3
+  add_2_calendar: ^3.0.1
+  in_app_purchase: ^3.2.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

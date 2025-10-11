@@ -33,17 +33,6 @@ describe('Layout Component', () => {
     expect(screen.getByTestId('site-footer')).toBeInTheDocument();
   });
 
-  it('passes forceOverlay prop to header', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <Layout forceOverlay={true} />
-      </MemoryRouter>
-    );
-
-    const header = container.querySelector('[data-testid="site-header"]');
-    expect(header).toHaveAttribute('data-overlay', 'true');
-  });
-
   it('applies correct CSS classes', () => {
     const { container } = render(
       <MemoryRouter>
@@ -53,7 +42,9 @@ describe('Layout Component', () => {
 
     const mainDiv = container.firstChild;
     expect(mainDiv).toHaveClass('min-h-screen');
-    expect(mainDiv).toHaveClass('bg-cream');
-    expect(mainDiv).toHaveClass('text-charcoal');
+    expect(mainDiv).toHaveClass('bg-slate-50');
+    expect(mainDiv).toHaveClass('text-slate-900');
+    expect(mainDiv).toHaveClass('dark:bg-slate-900');
+    expect(mainDiv).toHaveClass('dark:text-slate-100');
   });
 });

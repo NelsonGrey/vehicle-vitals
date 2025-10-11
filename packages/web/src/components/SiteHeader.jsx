@@ -40,6 +40,11 @@ export default function SiteHeader({ overlay = false }) {
                 }`}>
                   My Garage
                 </Link>
+                <Link to="/timeline" className={`hover:opacity-75 transition-opacity ${
+                  overlay ? 'text-gray-100 hover:text-white' : ''
+                }`}>
+                  Timeline
+                </Link>
                 <Link to="/profile" className={`hover:opacity-75 transition-opacity ${
                   overlay ? 'text-gray-100 hover:text-white' : ''
                 }`}>

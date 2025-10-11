@@ -34,10 +34,10 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         <main>
           <div className="flex items-end justify-between mb-3">
-            <h1 className="font-serif font-bold text-4xl text-charcoal dark:text-light-cream m-0">Vehicle Vitals</h1>
+            <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">Vehicle Vitals</h1>
             <Link 
               to="/add-vehicle" 
-              className="inline-block px-4 py-2.5 bg-oxblood text-primary-contrast dark:bg-rust dark:text-deep-brown rounded-lg border border-oxblood dark:border-rust hover:opacity-90 transition-opacity no-underline font-medium"
+              className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
             >
               Add Vehicle
             </Link>
@@ -46,12 +46,12 @@ export default function Home() {
             <AdBanner />
           </div>
           {vehicles.length === 0 ? (
-            <div className="bg-parchment dark:bg-dark-card p-4 rounded-xl border border-tan dark:border-dark-border my-4">
-              <h3 className="font-serif font-semibold text-xl text-charcoal dark:text-light-cream mb-2">No vehicles yet</h3>
-              <p className="text-warm-gray dark:text-light-gray mb-3">Get started by adding your first vehicle. You can use VIN decode to speed things up.</p>
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 my-4">
+              <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-2">No vehicles yet</h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-3">Get started by adding your first vehicle. You can use VIN decode to speed things up.</p>
               <Link 
                 to="/add-vehicle" 
-                className="inline-block px-4 py-2.5 bg-oxblood text-primary-contrast dark:bg-rust dark:text-deep-brown rounded-lg border border-oxblood dark:border-rust hover:opacity-90 transition-opacity no-underline font-medium"
+                className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
               >
                 Add your first vehicle
               </Link>
@@ -59,20 +59,20 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 my-4">
               {vehicles.map((v) => (
-                <div key={v.vin} className="bg-parchment dark:bg-dark-card p-4 rounded-xl border border-tan dark:border-dark-border flex flex-col gap-2">
+                <div key={v.vin} className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2">
                   <div>
-                    <div className="font-semibold text-lg text-charcoal dark:text-light-cream">{v.year} {v.make} {v.model}</div>
-                    <div className="text-warm-gray dark:text-light-gray text-sm">VIN: {v.vin}{v.mileage ? ` • ${v.mileage} mi` : ''}</div>
+                    <div className="font-semibold text-lg text-slate-900 dark:text-slate-100">{v.year} {v.make} {v.model}</div>
+                    <div className="text-slate-600 dark:text-slate-400 text-sm">VIN: {v.vin}{v.mileage ? ` • ${v.mileage} mi` : ''}</div>
                   </div>
                   <div className="flex gap-2 mt-auto">
                     <Link 
                       to={`/edit-vehicle/${v.vin}`} 
-                      className="inline-block px-3 py-2 bg-transparent border border-tan dark:border-dark-border text-charcoal dark:text-light-cream rounded-lg hover:bg-tan/10 dark:hover:bg-dark-border/20 transition-colors no-underline text-sm"
+                      className="inline-block px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors no-underline text-sm"
                     >
                       Open
                     </Link>
                     <button 
-                      className="px-3 py-2 bg-danger text-white border border-danger rounded-lg hover:opacity-90 transition-opacity text-sm font-medium cursor-pointer" 
+                      className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white border border-red-500 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium cursor-pointer" 
                       onClick={() => handleDelete(v.vin)}
                     >
                       Delete

@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import * as firestoreHelpers from 'firebase/firestore';
 
-import { createFirestoreService } from '../../shared/firestoreServiceFactory.js';
-import { defaultVehicle as _defaultVehicle } from '../../shared/types.js';
+import { createFirestoreService } from '../../shared/src/firestoreServiceFactory.js';
+import { defaultVehicle as _defaultVehicle } from '../../shared/src/types.js';
 
 let testEnv;
 let db;

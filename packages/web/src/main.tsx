@@ -1,24 +1,21 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles.css'
-import { AuthProvider } from './shared/AuthContext'
 
-// Dev-only: auto anonymous sign-in to enable local Firestore writes
-// Import conditionally to avoid build-time resolution issues
-if (import.meta.env.DEV) {
-  import('./shared/devAuth').catch(() => {
-    console.debug('devAuth not available');
-  });
+console.log('main.tsx loaded - starting React app');
+
+const container = document.getElementById('root')
+if (!container) {
+  console.error('Root element not found!');
+  throw new Error('Root element not found')
 }
 
-const container = document.getElementById('root')!
+console.log('Root element found, creating React root');
+
 const root = createRoot(container)
 
-root.render(
-  <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </StrictMode>
-)
+console.log('Rendering React app');
+
+root.render(<App />)
+
+console.log('React app rendered');

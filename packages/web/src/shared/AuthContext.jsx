@@ -1,34 +1,55 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { firebaseConfig } from './firebaseConfig';
 
-// Production-safe auth context that loads Firebase dynamically
+// Production-safe auth context that uses globally loaded Firebase SDKs
 let firebaseAuth = null;
-let firebaseConfig = null;
 
-// Initialize Firebase auth asynchronously
+// Initialize Firebase auth by checking for global Firebase objects
 const initializeFirebase = async () => {
   if (typeof window === 'undefined') return null;
-  
+
+  // Wait for Firebase to be available globally
+  const checkFirebase = () => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds max
+
+      const check = () => {
+        attempts++;
+        if (window.firebase && window.firebase.auth && window.firebase.app) {
+          resolve(window.firebase);
+        } else if (attempts >= maxAttempts) {
+          reject(new Error('Firebase SDKs failed to load within timeout'));
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  };
+
   try {
-    // Use Function constructor to completely hide imports from Vite
-    const importFn = new Function('specifier', 'return import(specifier)');
-    
-    const [configModule, authModule] = await Promise.all([
-      importFn('./firebaseConfig'),
-      importFn('firebase' + '/auth')
-    ]);
-    
-    firebaseConfig = configModule;
-    firebaseAuth = authModule;
-    
-    const auth = await configModule.getFirebaseAuth();
-    return { auth, authFunctions: authModule };
+    const firebase = await checkFirebase();
+
+    // Import config module for the config object
+    // const { firebaseConfig } = await import('./firebaseConfig');
+
+    // Initialize Firebase app if not already initialized
+    let app;
+    try {
+      app = firebase.app.getApp();
+    } catch {
+      app = firebase.app.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth.getAuth(app);
+
+    return { auth, authFunctions: firebase.auth };
   } catch (error) {
     console.warn('Firebase not available:', error.message);
     return null;
   }
-};
-
-const AuthContext = createContext({
+};const AuthContext = createContext({
   user: null,
   loading: true,
   signIn: async () => { throw new Error('Firebase not initialized'); },

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import StackedVLogo from './StackedVLogo';
 import { useAuth } from '../shared/AuthContext';
 
@@ -9,7 +10,7 @@ export default function SiteHeader({ overlay = false }) {
     <header className={`fixed top-0 left-0 right-0 h-20 flex items-end z-10 border-b ${
       overlay 
         ? 'bg-transparent border-white/25' 
-        : 'bg-cream dark:bg-deep-brown border-tan dark:border-dark-border'
+        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'
     }`}>
       <div className="max-w-6xl mx-auto px-5 pb-2 w-full">
         <nav className="flex items-center justify-between w-full">
@@ -19,8 +20,8 @@ export default function SiteHeader({ overlay = false }) {
                 size={34}
                 showText
                 color={overlay ? '#ffffff' : 'currentColor'}
-                accent={overlay ? 'var(--gold)' : 'var(--primary)'}
-                wordmarkColor={overlay ? '#ffffff' : 'var(--muted)'}
+                accent={overlay ? '#10b981' : '#334155'}
+                wordmarkColor={overlay ? '#ffffff' : '#64748b'}
               />
             </Link>
           </div>
@@ -73,3 +74,7 @@ export default function SiteHeader({ overlay = false }) {
     </header>
   );
 }
+
+SiteHeader.propTypes = {
+  overlay: PropTypes.bool,
+};

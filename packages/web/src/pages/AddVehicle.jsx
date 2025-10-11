@@ -50,17 +50,17 @@ export default function AddVehicle() {
   return (
     <div className="max-w-2xl mx-auto px-5 py-5">
       <AdBanner />
-      <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 mb-6">Add Vehicle</h2>
+      <h2 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">Add Vehicle</h2>
       
-      <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6 space-y-6">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-6">
         {/* Year dropdown */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Year</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Year</label>
           <select 
             name="year" 
             value={form.year} 
             onChange={handleChange} 
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
           >
             <option value="">Select Year</option>
             {years.map((y) => (
@@ -71,12 +71,12 @@ export default function AddVehicle() {
 
         {/* Make dropdown with fallback */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Make</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Make</label>
           <select 
             name="make" 
             value={form.make} 
             onChange={handleChange} 
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100 disabled:bg-charcoal-100 disabled:cursor-not-allowed" 
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100 disabled:bg-slate-100 disabled:cursor-not-allowed" 
             disabled={loadingMakes}
           >
             <option value="">{loadingMakes ? 'Loading makes…' : 'Select Make'}</option>
@@ -88,12 +88,12 @@ export default function AddVehicle() {
 
         {/* Model dropdown depends on year+make */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Model</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Model</label>
           <select 
             name="model" 
             value={form.model} 
             onChange={handleChange} 
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100 disabled:bg-charcoal-100 disabled:cursor-not-allowed" 
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100 disabled:bg-slate-100 disabled:cursor-not-allowed" 
             disabled={!form.year || !form.make || loadingModels}
           >
             <option value="">{loadingModels ? 'Loading models…' : (!form.year || !form.make ? 'Select year & make first' : 'Select Model')}</option>
@@ -106,7 +106,7 @@ export default function AddVehicle() {
         {/* VIN and mileage remain free-form */}
         {['vin', 'mileage'].map((field) => (
           <div key={field}>
-            <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
               {field.charAt(0).toUpperCase() + field.slice(1)}
             </label>
             <input
@@ -115,10 +115,10 @@ export default function AddVehicle() {
               value={form[field]}
               onChange={handleChange}
               placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-              className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
             />
             {field === 'vin' && (
-              <p className="text-xs text-charcoal-600 dark:text-cream-400 mt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 Decode VIN uses the NHTSA VPIC database to prefill Year, Make, and Model. No data is saved until you click Add Vehicle.
               </p>
             )}
@@ -129,27 +129,27 @@ export default function AddVehicle() {
           <button 
             type="button" 
             onClick={handleDecodeVin}
-            className="bg-charcoal-600 hover:bg-charcoal-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            className="bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
           >
             Decode VIN
           </button>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">Purchase Date</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Purchase Date</label>
           <input
             type="date"
             name="purchaseDate"
             value={form.purchaseDate || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
           />
         </div>
         
         <div className="pt-4">
           <button 
             onClick={handleSubmit}
-            className="w-full bg-oxblood-600 hover:bg-oxblood-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
+            className="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
           >
             Add Vehicle
           </button>

@@ -12,16 +12,16 @@ function Hex({ cx, cy, r = 3, fill = 'currentColor', stroke = 'none' }) {
 export default function StackedVLogo({
   size = 32,
   color = 'currentColor',
-  accent = 'var(--primary)',
+  accent = '#334155',
   showText = true,
   compact = false,
-  wordmarkColor = 'var(--muted)'
+  wordmarkColor = '#64748b'
 }) {
   const width = Math.round(size * 2.1);
   const height = size;
 
   const wordmark = (
-    <div style={{ fontSize: compact ? 10 : 11, letterSpacing: 2, marginTop: compact ? 0 : 4, color: wordmarkColor, fontWeight: 700, textAlign: 'center', textShadow: wordmarkColor === 'var(--muted)' ? 'none' : '0 1px 6px rgba(0,0,0,0.35)' }}>
+    <div style={{ fontSize: compact ? 10 : 11, letterSpacing: 2, marginTop: compact ? 0 : 4, color: wordmarkColor, fontWeight: 700, textAlign: 'center', textShadow: wordmarkColor === '#64748b' ? 'none' : '0 1px 6px rgba(0,0,0,0.35)' }}>
       VEHICLE<br />VITALS
     </div>
   );

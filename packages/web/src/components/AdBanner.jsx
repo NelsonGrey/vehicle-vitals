@@ -49,9 +49,9 @@ export default function AdBanner({ style, className, slot: slotOverride }) {
     return (
       <div
         style={style}
-        className={`bg-cream-200 dark:bg-charcoal-700 border border-dashed border-charcoal-300 dark:border-charcoal-500 p-3 text-center my-3 rounded-md ${className || ''}`}
+        className={`bg-slate-100 dark:bg-slate-700 border border-dashed border-slate-300 dark:border-slate-500 p-3 text-center my-3 rounded-md ${className || ''}`}
       >
-        <small className="text-charcoal-500 dark:text-cream-400 text-xs">
+        <small className="text-slate-500 dark:text-slate-400 text-xs">
           Ad placeholder — set VITE_ADSENSE_CLIENT and VITE_ADSENSE_SLOT to enable ads
         </small>
       </div>

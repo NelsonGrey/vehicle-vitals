@@ -4,27 +4,50 @@
 // -----------------------------
 // File: web/src/utils/vehicleService.js
 
-// Create async Firebase service that hides imports from Vite
+// -----------------------------
+// File: web/src/utils/vehicleService.js
+
+// Create async Firebase service using global Firebase objects
 const createFirebaseService = async () => {
   try {
-    // Use Function constructor to hide imports from Vite's static analysis
-    const firestoreFn = new Function('return import("firebase/firestore")');
-    const functionsFn = new Function('return import("firebase/functions")');
-    const configFn = new Function('return import("../shared/firebaseConfig")');
-    
-    const [{ doc, setDoc }, { httpsCallable }, { getFirebaseDb, getFirebaseAuth, getFirebaseFunctions }] = await Promise.all([
-      firestoreFn(),
-      functionsFn(),
-      configFn()
-    ]);
+    // Wait for global Firebase to be available
+    const checkFirebase = () => {
+      return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max
 
-    const [db, auth, functions] = await Promise.all([
-      getFirebaseDb(),
-      getFirebaseAuth(),
-      getFirebaseFunctions()
-    ]);
+        const check = () => {
+          attempts++;
+          if (window.firebase && window.firebase.firestore && window.firebase.functions && window.firebase.auth) {
+            resolve(window.firebase);
+          } else if (attempts >= maxAttempts) {
+            reject(new Error('Firebase SDKs failed to load within timeout'));
+          } else {
+            setTimeout(check, 100);
+          }
+        };
+        check();
+      });
+    };
 
-    return { db, auth, functions, doc, setDoc, httpsCallable };
+    const firebase = await checkFirebase();
+
+    // Import config
+    const { firebaseConfig } = await import('../shared/firebaseConfig');
+
+    // Initialize Firebase app if not already initialized
+    let app;
+    try {
+      app = firebase.app.getApp();
+    } catch {
+      app = firebase.app.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.firestore.getFirestore(app);
+    const auth = firebase.auth.getAuth(app);
+    const functions = firebase.functions.getFunctions(app);
+
+    return { db, auth, functions, doc: firebase.firestore.doc, setDoc: firebase.firestore.setDoc, httpsCallable: firebase.functions.httpsCallable };
   } catch (error) {
     console.warn('Firebase service not available:', error);
     // Return mock service for build compatibility

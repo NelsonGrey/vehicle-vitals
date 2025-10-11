@@ -7,26 +7,85 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Custom color palette matching the existing design tokens
-        cream: '#fffaf3',
-        charcoal: '#2b2b2b',
-        'warm-gray': '#7a6f66',
-        parchment: '#fff6e6',
-        tan: '#e8decf',
-        oxblood: '#8b1e2b',
-        'primary-contrast': '#fff9f4',
-        forest: '#0b5d3b',
-        gold: '#b68c2c',
-        danger: '#b42318',
-        // Dark mode colors
-        'deep-brown': '#14110f',
-        'light-cream': '#f3efe7',
-        'light-gray': '#c9c3b8',
-        'dark-card': '#1d1916',
-        'dark-border': '#2b2622',
-        rust: '#e07a5f',
-        'mint-green': '#81b29a',
-        'light-gold': '#f2cc8f',
+        // Slate Auto - Primary color palette
+        slate: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+          950: '#020617',
+        },
+        // Semantic colors using slate palette
+        primary: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b', // Main primary
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+        // Accent colors
+        accent: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e', // Main accent
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+        },
+        // Warning/Danger colors
+        warning: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b', // Main warning
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+        danger: {
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#ef4444', // Main danger
+          600: '#dc2626',
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
+        },
+        // Custom brand colors
+        cream: '#fef7ed', // warm cream
+        'deep-brown': '#2d1810', // deep brown
+        'light-cream': '#fef7ed', // light cream
+        parchment: '#fef7ed', // parchment
+        'dark-card': '#2d1810', // dark card
+        'dark-border': '#5d4037', // dark border
+        tan: '#d2b48c', // tan
+        'warm-gray': '#a1887f', // warm gray
+        'light-gray': '#d7ccc8', // light gray
+        charcoal: '#3e2723', // charcoal
+        oxblood: '#722f37', // oxblood
+        rust: '#8d4f3f', // rust
+        gold: '#d4af37', // gold
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],

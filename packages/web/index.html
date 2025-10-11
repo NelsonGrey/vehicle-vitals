@@ -5,6 +5,73 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vehicle Vitals</title>
+    <!-- Tailwind CSS from CDN for immediate styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        content: [
+          "./index.html",
+          "./src/**/*.{js,ts,jsx,tsx}",
+        ],
+        theme: {
+          extend: {
+            colors: {
+              slate: {
+                50: '#f8fafc',
+                100: '#f1f5f9',
+                200: '#e2e8f0',
+                300: '#cbd5e1',
+                400: '#94a3b8',
+                500: '#64748b',
+                600: '#475569',
+                700: '#334155',
+                800: '#1e293b',
+                900: '#0f172a',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+              serif: ['Playfair Display', 'Georgia', 'Times New Roman', 'serif'],
+            },
+          },
+        },
+        darkMode: 'media',
+      }
+    </script>
+
+    <!-- Firebase SDKs - loaded from CDN for development -->
+    <script type="module">
+      import { initializeApp, getApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
+        signOut,
+        signInWithPopup,
+        GoogleAuthProvider
+      } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+      import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+      import { getFunctions } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
+
+      // Make Firebase available globally
+      window.firebase = {
+        app: { initializeApp, getApp },
+        auth: {
+          getAuth,
+          onAuthStateChanged,
+          signInWithEmailAndPassword,
+          createUserWithEmailAndPassword,
+          signOut,
+          signInWithPopup,
+          GoogleAuthProvider
+        },
+        firestore: { getFirestore },
+        functions: { getFunctions }
+      };
+
+      console.log('Firebase SDKs loaded from CDN');
+    </script>
   </head>
   <body>
     <div id="root"></div>

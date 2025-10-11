@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { auth } from '../shared/firebaseConfig';
+import { useAuth } from '../shared/AuthContext';
 import {
   addOrUpdateVehicle,
   addMaintenanceEntry,
@@ -9,6 +9,7 @@ import {
 import { defaultVehicle } from '@vehicle-vitals/shared/types';
 
 export default function DevSeed() {
+  const { user } = useAuth();
   const [status, setStatus] = useState('Idle');
   const [details, setDetails] = useState(null);
 
@@ -16,11 +17,11 @@ export default function DevSeed() {
     return <div style={{ padding: 20 }}>This seeding page is only available in development builds.</div>;
   }
 
-  const uid = auth.currentUser?.uid || '(not signed in)';
+  const uid = user?.uid || '(not signed in)';
 
   const runSeed = async () => {
     try {
-      if (!auth.currentUser?.uid) {
+      if (!user?.uid) {
         setStatus('Please sign in (enable Anonymous sign-in for dev), then reload this page.');
         return;
       }

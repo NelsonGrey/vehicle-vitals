@@ -20,10 +20,10 @@ beforeAll(async () => {
     const fakeAuth = { currentUser: { uid: UID } };
 
     // Mock the firebaseConfig module the service imports so the service uses the emulator DB and fake auth
-    vi.mock('../../shared/firebaseConfig', () => ({ db: testDb, auth: fakeAuth }));
+    vi.mock('../../shared/src/firebaseConfig', () => ({ db: testDb, auth: fakeAuth }));
 
     // import the service after mocking
-    service = await import('../../shared/firestoreService');
+    service = await import('../../shared/src/firestoreService');
   } catch (err) {
     // If emulator isn't running or initialize fails, skip emulator-dependent tests
     console.warn('Firestore emulator not available; emulator-dependent tests will be skipped.', err?.message || err);

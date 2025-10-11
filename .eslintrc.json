@@ -36,8 +36,7 @@
       },
       "settings": {
         "react": {
-          "version": "detect",
-          "runtime": "automatic"
+          "version": "detect"
         }
       },
       "rules": {

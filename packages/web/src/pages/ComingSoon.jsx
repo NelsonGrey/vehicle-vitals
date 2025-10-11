@@ -2,19 +2,15 @@ import React from 'react';
 import AdBanner from '../components/AdBanner';
 
 export default function ComingSoon() {
-  const heroSrc = import.meta.env.VITE_HERO_IMAGE_URL || '/images/hero-garage.jpg';
   return (
-    <section className="hero hero-full" style={{ '--hero-image': `url(${heroSrc})` }}>
-      <div className="hero-overlay" />
-      <div className="hero-content d-flex align-items-center" style={{ minHeight: 'calc(100vh - var(--header-h))' }}>
-        <div className="container d-flex justify-content-center">
-          <div className="hero-inner text-center">
-            <div className="kicker">Vehicle Vitals</div>
-            <div className="title">Coming Soon!</div>
-            <div className="subtitle">We’re putting the finishing touches on Vehicle Vitals. Check back soon.</div>
-            <div className="spacing-lg">
-              <AdBanner />
-            </div>
+    <section className="bg-slate-100 dark:bg-slate-800 py-20 min-h-[calc(100vh-200px)]">
+      <div className="container flex justify-center items-center min-h-full">
+        <div className="text-center max-w-2xl">
+          <div className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-4">Vehicle Vitals</div>
+          <div className="text-slate-900 dark:text-slate-100 text-4xl font-bold mb-6">Coming Soon!</div>
+          <div className="text-slate-700 dark:text-slate-300 text-lg mb-8">We&apos;re putting the finishing touches on Vehicle Vitals. Check back soon.</div>
+          <div className="mt-8">
+            <AdBanner />
           </div>
         </div>
       </div>

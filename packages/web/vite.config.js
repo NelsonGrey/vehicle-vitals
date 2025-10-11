@@ -15,21 +15,20 @@ export default defineConfig({
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   build: {
+    target: 'es2015',
     rollupOptions: {
-      external: [],
       output: {
-        manualChunks: {
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
-        },
+        format: 'umd', // Use UMD format for better browser compatibility
+        name: 'VehicleVitalsApp', // Required for UMD
+        manualChunks: undefined,
       },
     },
   },
   optimizeDeps: {
-    include: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'tslib'],
+    include: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions'],
   },
   server: {
     fs: {
-      // allow serving files from one level up
       allow: ['..'],
     },
   },

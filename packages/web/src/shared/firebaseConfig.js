@@ -1,5 +1,5 @@
-// Dynamic Firebase initialization that hides imports from Vite
-let firebaseInitPromise = null;
+// Simplified Firebase configuration for production
+// Firebase SDKs are loaded globally via Firebase Hosting
 
 const createFirebaseConfig = () => {
   const env = import.meta.env || {};
@@ -20,72 +20,31 @@ const createFirebaseConfig = () => {
     firebaseConfig.authDomain === 'YOUR_AUTH_DOMAIN' ||
     firebaseConfig.projectId === 'YOUR_PROJECT_ID'
   ) {
-    // eslint-disable-next-line no-console
-    console.warn('[Firebase] Missing or placeholder Firebase config detected. Set VITE_FIREBASE_* env vars. See web/.env.example.');
+    console.warn('[Firebase] Missing or placeholder Firebase config detected. Set VITE_FIREBASE_* env vars.');
   }
 
   return firebaseConfig;
 };
 
-const initializeFirebase = async () => {
-  if (firebaseInitPromise) return firebaseInitPromise;
+// Export the config object directly
+export const firebaseConfig = createFirebaseConfig();
 
-  firebaseInitPromise = (async () => {
-    try {
-      // Use Function constructor to hide imports from Vite's static analysis
-      const appFn = new Function('return import("firebase/app")');
-      const authFn = new Function('return import("firebase/auth")');
-      const firestoreFn = new Function('return import("firebase/firestore")');
-      const functionsFn = new Function('return import("firebase/functions")');
+// For compatibility, export getters that return the config
+export const getFirebaseConfig = () => firebaseConfig;
 
-      const [{ initializeApp }, { getAuth }, { getFirestore }, { getFunctions }] = await Promise.all([
-        appFn(),
-        authFn(),
-        firestoreFn(),
-        functionsFn()
-      ]);
-
-      const firebaseConfig = createFirebaseConfig();
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-      const functions = getFunctions(app);
-
-      return { auth, db, app, functions };
-    } catch (error) {
-      console.warn('Firebase initialization failed:', error);
-      // Return mock services for build compatibility
-      return {
-        auth: { currentUser: null },
-        db: null,
-        app: null,
-        functions: null
-      };
-    }
-  })();
-
-  return firebaseInitPromise;
+// Legacy exports
+export const getFirebaseAuth = async () => {
+  throw new Error('Firebase auth should be accessed via global firebase object');
 };
 
-// Export async getters
-export const getFirebaseAuth = async () => {
-  const firebase = await initializeFirebase();
-  return firebase.auth;
+export const getFirebaseApp = async () => {
+  throw new Error('Firebase app should be accessed via global firebase object');
 };
 
 export const getFirebaseFunctions = async () => {
-  const firebase = await initializeFirebase();
-  return firebase.functions;
+  throw new Error('Firebase functions should be accessed via global firebase object');
 };
 
-// Legacy sync exports for compatibility (will be null during build)
+// Legacy sync exports
 export let auth = null;
 export let db = null;
-
-// Initialize for runtime if we're not in build
-if (typeof window !== 'undefined') {
-  initializeFirebase().then(firebase => {
-    auth = firebase.auth;
-    db = firebase.db;
-  });
-}

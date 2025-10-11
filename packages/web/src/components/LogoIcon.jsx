@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function LogoIcon({ size = 20, color = 'currentColor', accent = 'var(--primary)' }) {
+export default function LogoIcon({ size = 20, color = 'currentColor', accent = '#334155' }) {
   const s = size;
   return (
     <svg

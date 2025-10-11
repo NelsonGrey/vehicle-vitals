@@ -5,23 +5,48 @@ const initializeFirestoreService = async () => {
   if (service) return service;
   
   try {
-    const importFn = new Function('specifier', 'return import(specifier)');
-    
-    const [firestoreHelpers, sharedFactory, firebaseConfig] = await Promise.all([
-      importFn('firebase' + '/firestore'),
-      importFn('@vehicle-vitals/shared/firestore'),
-      importFn('./firebaseConfig')
-    ]);
-    
-    const [db, auth] = await Promise.all([
-      firebaseConfig.getFirebaseDb(),
-      firebaseConfig.getFirebaseAuth()
-    ]);
-    
+    // Wait for global Firebase to be available
+    const checkFirebase = () => {
+      return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max
+
+        const check = () => {
+          attempts++;
+          if (window.firebase && window.firebase.firestore && window.firebase.auth && window.firebase.app) {
+            resolve(window.firebase);
+          } else if (attempts >= maxAttempts) {
+            reject(new Error('Firebase SDKs failed to load within timeout'));
+          } else {
+            setTimeout(check, 100);
+          }
+        };
+        check();
+      });
+    };
+
+    const firebase = await checkFirebase();
+
+    // Import config and factory
+    const { firebaseConfig } = await import('./firebaseConfig');
+    const sharedFactory = await import('@vehicle-vitals/shared/firestore');
+
+    // Initialize Firebase app if not already initialized
+    let app;
+    try {
+      app = firebase.app.getApp();
+    } catch {
+      app = firebase.app.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.firestore.getFirestore(app);
+    const auth = firebase.auth.getAuth(app);
+    const helpers = firebase.firestore;
+
     service = sharedFactory.createFirestoreService({ 
       db, 
       auth, 
-      helpers: firestoreHelpers 
+      helpers 
     });
     
     return service;

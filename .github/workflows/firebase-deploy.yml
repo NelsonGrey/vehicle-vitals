@@ -76,8 +76,25 @@ jobs:
       - name: Deploy to Firebase Hosting
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          FIREBASE_PROJECT: ${{ secrets[format('FIREBASE_PROJECT_{0}', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
         run: |
+          # Determine Firebase project based on environment
+          ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production') || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'development') || 'production' }}"
+          
+          case "$ENVIRONMENT" in
+            production)
+              FIREBASE_PROJECT="vehicle-vitals-prod"
+              ;;
+            staging)
+              FIREBASE_PROJECT="vehicle-vitals-staging"
+              ;;
+            development)
+              FIREBASE_PROJECT="vehicle-vitals-development"
+              ;;
+            *)
+              FIREBASE_PROJECT="vehicle-vitals-prod"
+              ;;
+          esac
+
           # Ensure build exists
           if [ ! -d "packages/web/dist" ]; then
             echo "❌ Build directory packages/web/dist not found!"

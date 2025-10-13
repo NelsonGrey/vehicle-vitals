@@ -154,14 +154,14 @@ See `DEPLOY.md` for detailed deployment instructions and GitHub Actions setup.
 
 The Android app can be built and distributed to testers using Firebase App Distribution.
 
-### Manual Distribution
+#### Manual Distribution
 
 ```bash
 cd packages/mobile
 ./distribute-android.sh [debug|release] "Release notes"
 ```
 
-### Automated Distribution
+#### Automated Distribution
 
 Push to `main` or `develop` branches to trigger automated distribution via GitHub Actions:
 
@@ -170,18 +170,57 @@ Push to `main` or `develop` branches to trigger automated distribution via GitHu
 
 Or use manual workflow dispatch in GitHub Actions → "Android App Distribution".
 
-### Required GitHub Secrets
+#### Required GitHub Secrets
 
 Add these to your repository secrets:
 - `FIREBASE_SERVICE_ACCOUNT_KEY`: Service account JSON key with Firebase App Distribution permissions
 - `ANDROID_STORE_PASSWORD`: Android keystore password  
 - `ANDROID_KEY_PASSWORD`: Android key password
 
-### Tester Groups
+#### Tester Groups
 
 Configure tester groups in Firebase Console under App Distribution:
 - `internal-testers`: Development and testing builds
 - `production-testers`: Release candidate builds
+
+## 🍎 iOS App Distribution
+
+The iOS app can be built and distributed to testers using Firebase App Distribution with Fastlane.
+
+#### Manual Distribution
+
+```bash
+cd packages/mobile
+./distribute-ios.sh [debug|release] "Release notes"
+```
+
+#### Automated Distribution
+
+Push to `main` or `develop` branches to trigger automated distribution via GitHub Actions:
+
+- `main` → Production testers (`production-testers` group)
+- `develop` → Internal testers (`internal-testers` group)
+
+Or use manual workflow dispatch in GitHub Actions → "iOS App Distribution".
+
+#### Required GitHub Secrets
+
+Add these to your repository secrets:
+- `IOS_SERVICE_ACCOUNT_KEY`: Service account JSON key with Firebase App Distribution permissions
+- `IOS_APP_ID`: iOS app ID from Firebase (e.g., `1:489413148337:ios:...`)
+
+#### Setup Requirements
+
+1. **Install Fastlane**: The workflow will install Fastlane automatically
+2. **Code Signing**: Configure code signing certificates if distributing release builds
+3. **Tester Groups**: Configure tester groups in Firebase Console (same as Android)
+
+#### Fastlane Configuration
+
+The iOS distribution uses Fastlane with the following lanes:
+- `fastlane ios debug` - Debug builds for internal testing
+- `fastlane ios release` - Release builds for production testing
+- `fastlane ios distribute` - Custom distribution with parameters
 
 ## Conventions and patterns
 - Auth: components read `auth.currentUser?.uid` directly. Avoid changing this auth model without updating all consumers.

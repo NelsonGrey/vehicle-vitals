@@ -3,6 +3,6 @@
     "default": "vehicle-vitals-prod",
     "production": "vehicle-vitals-prod",
     "staging": "vehicle-vitals-staging",
-    "development": "vehicle-vitals-dev"
+    "development": "vehicle-vitals-development"
   }
 }

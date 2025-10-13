@@ -15,6 +15,22 @@ echo "Release notes: $RELEASE_NOTES"
 # Navigate to mobile directory
 cd "$(dirname "$0")/.."
 
+# Determine environment (default to development for manual builds)
+ENVIRONMENT=${ENVIRONMENT:-development}
+
+echo "🌍 Building for environment: $ENVIRONMENT"
+
+# Copy appropriate Firebase config
+echo "📋 Copying Firebase config for $ENVIRONMENT..."
+if [ -f "config/$ENVIRONMENT/android/google-services.json" ]; then
+    cp "config/$ENVIRONMENT/android/google-services.json" "android/app/"
+    echo "✅ Copied google-services.json for $ENVIRONMENT"
+else
+    echo "❌ google-services.json not found for $ENVIRONMENT environment"
+    echo "Please download it from Firebase Console and place it in config/$ENVIRONMENT/android/"
+    exit 1
+fi
+
 # Clean previous builds
 echo "🧹 Cleaning previous builds..."
 flutter clean

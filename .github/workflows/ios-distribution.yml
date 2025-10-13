@@ -54,8 +54,7 @@ jobs:
 
       - name: Build and distribute iOS app
         env:
-          IOS_APP_ID: ${{ secrets.IOS_APP_ID }}
-          IOS_SERVICE_ACCOUNT_KEY_FILE: service-account-key.json
+          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
         run: |
           cd packages/mobile
           ./distribute-ios.sh ${{ github.event.inputs.build_type || 'debug' }} "${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"

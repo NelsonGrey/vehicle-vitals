@@ -222,6 +222,54 @@ The iOS distribution uses Fastlane with the following lanes:
 - `fastlane ios release` - Release builds for production testing
 - `fastlane ios distribute` - Custom distribution with parameters
 
+## 🔧 Mobile App Configuration
+
+### Environment-Specific Firebase Config Files
+
+Mobile apps require different Firebase configuration files for each environment. These are stored in:
+
+```
+packages/mobile/config/
+├── development/
+│   ├── android/
+│   │   └── google-services.json          # vehicle-vitals-development
+│   └── ios/
+│       └── GoogleService-Info.plist      # vehicle-vitals-development
+├── staging/
+│   ├── android/
+│   │   └── google-services.json          # vehicle-vitals-staging
+│   └── ios/
+│       └── GoogleService-Info.plist      # vehicle-vitals-staging
+└── production/
+    ├── android/
+    │       └── google-services.json          # vehicle-vitals-prod
+    └── ios/
+        └── GoogleService-Info.plist      # vehicle-vitals-prod
+```
+
+#### How to Set Up Config Files
+
+1. **Download from Firebase Console**:
+   - Go to [Firebase Console](https://console.firebase.google.com)
+   - Select the appropriate project for each environment
+   - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
+
+2. **Place files in correct directories**:
+   - Development files → `config/development/`
+   - Staging files → `config/staging/`
+   - Production files → `config/production/`
+
+3. **Build scripts automatically copy** the correct config based on environment
+
+#### Important Notes
+
+- **Never commit actual config files** - They contain sensitive API keys
+- **Files are gitignored** - Only placeholder files are tracked
+- **Environment mapping**:
+  - `main` branch → Production config
+  - `develop` branch → Development config
+  - Manual builds default to Development config
+
 ## Conventions and patterns
 - Auth: components read `auth.currentUser?.uid` directly. Avoid changing this auth model without updating all consumers.
 - Data shape: use `shared/types.js` `defaultVehicle` when creating/updating vehicles.

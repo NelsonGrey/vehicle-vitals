@@ -55,12 +55,10 @@ jobs:
 
       - name: Build and distribute Android app
         env:
-          ANDROID_SERVICE_ACCOUNT_KEY_FILE: service-account-key.json
-          RELEASE_NOTES: ${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}
-          TESTER_GROUPS: ${{ github.ref == 'refs/heads/main' && 'production-testers' || 'internal-testers' }}
+          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
         run: |
           cd packages/mobile
-          ./distribute-android.sh ${{ github.event.inputs.build_type || 'debug' }} "$RELEASE_NOTES"
+          ./distribute-android.sh ${{ github.event.inputs.build_type || 'debug' }} "${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"
 
       - name: Clean up service account key
         if: always()

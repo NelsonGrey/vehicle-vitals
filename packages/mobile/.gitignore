@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase configuration files (actual files - DO NOT COMMIT)
+config/*/android/google-services.json
+config/*/ios/GoogleService-Info.plist
+
+# Keep placeholder files tracked
+!config/*/*/config.placeholder

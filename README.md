@@ -114,8 +114,41 @@ See setup guides:
 - User data is stored under `users/${userId}/vehicles/${vin}`
 - Preserve this path structure when modifying database code
 
-## Azure & backend notes
-- `shared/azureConfig.js` contains an MSAL instance and example helper functions that call `/api/*` endpoints. These are placeholders — only update them when a backend exists.
+## 🚀 Deployment & Environments
+
+This project supports multiple Firebase environments for development, staging, and production.
+
+### Environments
+- **Production**: `vehicle-vitals-prod` - Live application
+- **Staging**: `vehicle-vitals-staging` - Testing environment
+- **Development**: `vehicle-vitals-dev` - Development environment
+
+### Quick Deploy
+Use the deployment script for easy environment switching:
+
+```bash
+# Deploy to production
+./deploy.sh production
+
+# Deploy to staging
+./deploy.sh staging
+
+# Deploy to development
+./deploy.sh development
+```
+
+### Manual Deployment
+```bash
+# Build for specific environment
+cd packages/web
+npm run build:staging    # or build:development
+
+# Deploy using Firebase CLI
+firebase use staging     # or development
+firebase deploy --only hosting
+```
+
+See `DEPLOY.md` for detailed deployment instructions and GitHub Actions setup.
 
 ## Conventions and patterns
 - Auth: components read `auth.currentUser?.uid` directly. Avoid changing this auth model without updating all consumers.

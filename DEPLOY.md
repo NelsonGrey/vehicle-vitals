@@ -1,32 +1,77 @@
 # Deploying the web app to Firebase Hosting
 
-This repository includes a GitHub Action (`.github/workflows/firebase-deploy.yml`) that builds the `web` app and deploys `web/dist` to Firebase Hosting. To enable automatic deployments you'll need to add two repository secrets.
+This repository supports multiple Firebase environments: Production, Staging, and Development. Each environment has its own Firebase project and configuration.
 
-1) Create a CI token
+## Environment Setup
 
-- Install Firebase CLI locally (if not already installed):
+### 1. Firebase Projects
+- **Production**: `vehicle-vitals-prod`
+- **Staging**: `vehicle-vitals-staging`
+- **Development**: `vehicle-vitals-dev`
 
+### 2. Environment Configuration
+Each environment has its own `.env` file:
+- `.env` - Production (default)
+- `.env.staging` - Staging environment
+- `.env.development` - Development environment
+
+Update the placeholder values in `.env.staging` and `.env.development` with your actual Firebase project configurations.
+
+## Deployment Methods
+
+### Option A: GitHub Actions (Recommended)
+
+The repository includes a GitHub Action (`.github/workflows/firebase-deploy.yml`) that automatically deploys based on the target environment.
+
+#### Setup GitHub Secrets
+In your repository settings -> Secrets -> Actions, add:
+- `FIREBASE_TOKEN` = your CI token from `firebase login:ci`
+- `FIREBASE_PROJECT_PROD` = `vehicle-vitals-prod`
+- `FIREBASE_PROJECT_STAGING` = `vehicle-vitals-staging`
+- `FIREBASE_PROJECT_DEV` = `vehicle-vitals-dev`
+
+#### Automatic Deployment Triggers
+- **Production**: Push to `main` branch
+- **Staging**: Push to `staging` branch or create PR to `main`
+- **Development**: Push to `develop` branch
+
+### Option B: Manual Deployment
+
+#### Build for specific environment:
 ```bash
-npm install -g firebase-tools
+# Production (default)
+npm run build
+
+# Staging
+npm run build:staging
+
+# Development
+npm run build:development
 ```
 
-- Login and create a CI token:
-
+#### Deploy to specific environment:
 ```bash
-firebase login:ci
-# copy the printed token
+# Production
+firebase use production
+firebase deploy --only hosting
+
+# Staging
+firebase use staging
+firebase deploy --only hosting
+
+# Development
+firebase use development
+firebase deploy --only hosting
 ```
 
-2) Add GitHub secrets
+## Environment URLs
 
-- In your repository settings -> Secrets -> Actions, add:
-  - `FIREBASE_TOKEN` = the token from `firebase login:ci`
-  - `FIREBASE_PROJECT` = your Firebase project id (e.g. `vehicle-vitals-prod`)
+- **Production**: https://vehicle-vitals-prod.web.app
+- **Staging**: https://vehicle-vitals-staging.web.app
+- **Development**: https://vehicle-vitals-dev.web.app
 
-3) Trigger a deploy
+## Notes
 
-- Pushing to the `main` branch will automatically run the workflow and deploy the `web/dist` to the specified hosting site.
-
-Notes
-- The workflow installs dependencies and runs `npm run build` in the `web` folder. Ensure `web/build` succeeds locally first.
-- For staging/test deploys: create a separate Firebase project and set `FIREBASE_PROJECT` accordingly.
+- Always test builds locally before deploying: `npm run build:staging` etc.
+- The workflow installs dependencies and runs the appropriate build command based on the target environment.
+- For manual deployments, ensure you're using the correct Firebase project with `firebase use <environment>`.

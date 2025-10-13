@@ -7,6 +7,9 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "build:production": "npm run build --workspace=@vehicle-vitals/web",
+    "build:staging": "npm run build:staging --workspace=@vehicle-vitals/web",
+    "build:development": "npm run build:development --workspace=@vehicle-vitals/web",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",

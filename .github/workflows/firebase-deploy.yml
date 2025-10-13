@@ -37,38 +37,60 @@ jobs:
           npm install
 
       - name: Build web
-        env:
-          VITE_FIREBASE_API_KEY: ${{ secrets[format('{0}_VITE_FIREBASE_API_KEY', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets[format('{0}_VITE_FIREBASE_AUTH_DOMAIN', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
-          VITE_FIREBASE_PROJECT_ID: ${{ secrets[format('{0}_VITE_FIREBASE_PROJECT_ID', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets[format('{0}_VITE_FIREBASE_STORAGE_BUCKET', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets[format('{0}_VITE_FIREBASE_MESSAGING_SENDER_ID', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
-          VITE_FIREBASE_APP_ID: ${{ secrets[format('{0}_VITE_FIREBASE_APP_ID', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
-          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets[format('{0}_VITE_FIREBASE_MEASUREMENT_ID', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'PROD') || (github.ref == 'refs/heads/staging' && 'STAGING') || (github.ref == 'refs/heads/develop' && 'DEV') || 'PROD')] }}
-          # Optional AdSense keys (shared across environments)
-          VITE_ADSENSE_CLIENT: ${{ secrets.VITE_ADSENSE_CLIENT }}
-          VITE_ADSENSE_SLOT: ${{ secrets.VITE_ADSENSE_SLOT }}
         run: |
-          # Determine build mode based on environment
+          # Determine build mode and environment variables based on environment
           ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production') || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'development') || 'production' }}"
-
+          
           echo "Building for environment: $ENVIRONMENT"
 
+          # Set environment variables based on environment
           case "$ENVIRONMENT" in
             production)
+              export VITE_FIREBASE_API_KEY="${{ secrets.PROD_VITE_FIREBASE_API_KEY }}"
+              export VITE_FIREBASE_AUTH_DOMAIN="${{ secrets.PROD_VITE_FIREBASE_AUTH_DOMAIN }}"
+              export VITE_FIREBASE_PROJECT_ID="${{ secrets.PROD_VITE_FIREBASE_PROJECT_ID }}"
+              export VITE_FIREBASE_STORAGE_BUCKET="${{ secrets.PROD_VITE_FIREBASE_STORAGE_BUCKET }}"
+              export VITE_FIREBASE_MESSAGING_SENDER_ID="${{ secrets.PROD_VITE_FIREBASE_MESSAGING_SENDER_ID }}"
+              export VITE_FIREBASE_APP_ID="${{ secrets.PROD_VITE_FIREBASE_APP_ID }}"
+              export VITE_FIREBASE_MEASUREMENT_ID="${{ secrets.PROD_VITE_FIREBASE_MEASUREMENT_ID }}"
               npm run build
               ;;
             staging)
+              export VITE_FIREBASE_API_KEY="${{ secrets.STAGING_VITE_FIREBASE_API_KEY }}"
+              export VITE_FIREBASE_AUTH_DOMAIN="${{ secrets.STAGING_VITE_FIREBASE_AUTH_DOMAIN }}"
+              export VITE_FIREBASE_PROJECT_ID="${{ secrets.STAGING_VITE_FIREBASE_PROJECT_ID }}"
+              export VITE_FIREBASE_STORAGE_BUCKET="${{ secrets.STAGING_VITE_FIREBASE_STORAGE_BUCKET }}"
+              export VITE_FIREBASE_MESSAGING_SENDER_ID="${{ secrets.STAGING_VITE_FIREBASE_MESSAGING_SENDER_ID }}"
+              export VITE_FIREBASE_APP_ID="${{ secrets.STAGING_VITE_FIREBASE_APP_ID }}"
+              export VITE_FIREBASE_MEASUREMENT_ID="${{ secrets.STAGING_VITE_FIREBASE_MEASUREMENT_ID }}"
               npm run build:staging
               ;;
             development)
+              export VITE_FIREBASE_API_KEY="${{ secrets.DEV_VITE_FIREBASE_API_KEY }}"
+              export VITE_FIREBASE_AUTH_DOMAIN="${{ secrets.DEV_VITE_FIREBASE_AUTH_DOMAIN }}"
+              export VITE_FIREBASE_PROJECT_ID="${{ secrets.DEV_VITE_FIREBASE_PROJECT_ID }}"
+              export VITE_FIREBASE_STORAGE_BUCKET="${{ secrets.DEV_VITE_FIREBASE_STORAGE_BUCKET }}"
+              export VITE_FIREBASE_MESSAGING_SENDER_ID="${{ secrets.DEV_VITE_FIREBASE_MESSAGING_SENDER_ID }}"
+              export VITE_FIREBASE_APP_ID="${{ secrets.DEV_VITE_FIREBASE_APP_ID }}"
+              export VITE_FIREBASE_MEASUREMENT_ID="${{ secrets.DEV_VITE_FIREBASE_MEASUREMENT_ID }}"
               npm run build:development
               ;;
             *)
               echo "Unknown environment '$ENVIRONMENT', defaulting to production build"
+              export VITE_FIREBASE_API_KEY="${{ secrets.PROD_VITE_FIREBASE_API_KEY }}"
+              export VITE_FIREBASE_AUTH_DOMAIN="${{ secrets.PROD_VITE_FIREBASE_AUTH_DOMAIN }}"
+              export VITE_FIREBASE_PROJECT_ID="${{ secrets.PROD_VITE_FIREBASE_PROJECT_ID }}"
+              export VITE_FIREBASE_STORAGE_BUCKET="${{ secrets.PROD_VITE_FIREBASE_STORAGE_BUCKET }}"
+              export VITE_FIREBASE_MESSAGING_SENDER_ID="${{ secrets.PROD_VITE_FIREBASE_MESSAGING_SENDER_ID }}"
+              export VITE_FIREBASE_APP_ID="${{ secrets.PROD_VITE_FIREBASE_APP_ID }}"
+              export VITE_FIREBASE_MEASUREMENT_ID="${{ secrets.PROD_VITE_FIREBASE_MEASUREMENT_ID }}"
               npm run build
               ;;
           esac
+
+          # Optional AdSense keys (shared across environments)
+          export VITE_ADSENSE_CLIENT="${{ secrets.VITE_ADSENSE_CLIENT }}"
+          export VITE_ADSENSE_SLOT="${{ secrets.VITE_ADSENSE_SLOT }}"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@11

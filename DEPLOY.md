@@ -7,7 +7,7 @@ This repository supports multiple Firebase environments: Production, Staging, an
 ### 1. Firebase Projects
 - **Production**: `vehicle-vitals-prod`
 - **Staging**: `vehicle-vitals-staging`
-- **Development**: `vehicle-vitals-dev`
+- **Development**: `vehicle-vitals-development`
 
 ### 2. Environment Configuration
 Each environment has its own `.env` file:
@@ -28,7 +28,7 @@ In your repository settings -> Secrets -> Actions, add:
 - `FIREBASE_TOKEN` = your CI token from `firebase login:ci`
 - `FIREBASE_PROJECT_PROD` = `vehicle-vitals-prod`
 - `FIREBASE_PROJECT_STAGING` = `vehicle-vitals-staging`
-- `FIREBASE_PROJECT_DEV` = `vehicle-vitals-dev`
+- `FIREBASE_PROJECT_DEV` = `vehicle-vitals-development`
 
 #### Automatic Deployment Triggers
 - **Production**: Push to `main` branch
@@ -68,7 +68,7 @@ firebase deploy --only hosting
 
 - **Production**: https://vehicle-vitals-prod.web.app
 - **Staging**: https://vehicle-vitals-staging.web.app
-- **Development**: https://vehicle-vitals-dev.web.app
+- **Development**: https://vehicle-vitals-development.web.app
 
 ## Notes
 

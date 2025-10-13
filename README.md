@@ -150,6 +150,39 @@ firebase deploy --only hosting
 
 See `DEPLOY.md` for detailed deployment instructions and GitHub Actions setup.
 
+## 📱 Android App Distribution
+
+The Android app can be built and distributed to testers using Firebase App Distribution.
+
+### Manual Distribution
+
+```bash
+cd packages/mobile
+./distribute-android.sh [debug|release] "Release notes"
+```
+
+### Automated Distribution
+
+Push to `main` or `develop` branches to trigger automated distribution via GitHub Actions:
+
+- `main` → Production testers (`production-testers` group)
+- `develop` → Internal testers (`internal-testers` group)
+
+Or use manual workflow dispatch in GitHub Actions → "Android App Distribution".
+
+### Required GitHub Secrets
+
+Add these to your repository secrets:
+- `FIREBASE_SERVICE_ACCOUNT_KEY`: Service account JSON key with Firebase App Distribution permissions
+- `ANDROID_STORE_PASSWORD`: Android keystore password  
+- `ANDROID_KEY_PASSWORD`: Android key password
+
+### Tester Groups
+
+Configure tester groups in Firebase Console under App Distribution:
+- `internal-testers`: Development and testing builds
+- `production-testers`: Release candidate builds
+
 ## Conventions and patterns
 - Auth: components read `auth.currentUser?.uid` directly. Avoid changing this auth model without updating all consumers.
 - Data shape: use `shared/types.js` `defaultVehicle` when creating/updating vehicles.

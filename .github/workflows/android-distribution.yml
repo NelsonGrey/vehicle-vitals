@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Android App Distribution
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type to distribute'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+        - debug
+        - release
+      release_notes:
+        description: 'Release notes for this build'
+        required: false
+        type: string
+
+jobs:
+  distribute-android:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Create service account key file
+        env:
+          SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          echo "$SERVICE_ACCOUNT_KEY" > packages/mobile/android/app/service-account-key.json
+
+      - name: Make distribution script executable
+        run: chmod +x packages/mobile/distribute-android.sh
+
+      - name: Build and distribute Android app
+        env:
+          ANDROID_SERVICE_ACCOUNT_KEY_FILE: service-account-key.json
+          RELEASE_NOTES: ${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}
+          TESTER_GROUPS: ${{ github.ref == 'refs/heads/main' && 'production-testers' || 'internal-testers' }}
+        run: |
+          cd packages/mobile
+          ./distribute-android.sh ${{ github.event.inputs.build_type || 'debug' }} "$RELEASE_NOTES"
+
+      - name: Clean up service account key
+        if: always()
+        run: rm -f packages/mobile/android/app/service-account-key.json

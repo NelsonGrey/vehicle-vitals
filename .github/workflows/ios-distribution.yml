@@ -43,10 +43,16 @@ jobs:
       - name: Install Fastlane
         run: gem install fastlane
 
+      - name: Generate iOS platform files
+        run: |
+          cd packages/mobile
+          flutter create --platforms=ios .
+
       - name: Create service account key file
         env:
           IOS_SERVICE_ACCOUNT_KEY: ${{ secrets.IOS_SERVICE_ACCOUNT_KEY }}
         run: |
+          mkdir -p packages/mobile/ios
           echo "$IOS_SERVICE_ACCOUNT_KEY" > packages/mobile/ios/service-account-key.json
 
       - name: Make distribution script executable

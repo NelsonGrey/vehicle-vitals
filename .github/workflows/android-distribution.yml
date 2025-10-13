@@ -44,10 +44,16 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Generate Android platform files
+        run: |
+          cd packages/mobile
+          flutter create --platforms=android .
+
       - name: Create service account key file
         env:
           SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         run: |
+          mkdir -p packages/mobile/android/app
           echo "$SERVICE_ACCOUNT_KEY" > packages/mobile/android/app/service-account-key.json
 
       - name: Make distribution script executable

@@ -13,7 +13,7 @@ echo "Build type: $BUILD_TYPE"
 echo "Release notes: $RELEASE_NOTES"
 
 # Navigate to mobile directory
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")"
 
 # Determine environment (default to development for manual builds)
 ENVIRONMENT=${ENVIRONMENT:-development}

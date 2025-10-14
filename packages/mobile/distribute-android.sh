@@ -59,6 +59,14 @@ echo "✅ APK built successfully: $APK_PATH"
 # Set environment variables for Firebase App Distribution
 export RELEASE_NOTES="$RELEASE_NOTES"
 
+# Check if we should skip distribution (for local testing)
+if [ "$SKIP_DISTRIBUTION" = "true" ]; then
+    echo "⏭️  Skipping Firebase App Distribution (SKIP_DISTRIBUTION=true)"
+    echo "✅ Android app built successfully!"
+    echo "📱 APK available at: build/app/outputs/flutter-apk/app-$BUILD_TYPE.apk"
+    exit 0
+fi
+
 # Distribute using Gradle task
 echo "📤 Distributing to Firebase App Distribution..."
 cd android

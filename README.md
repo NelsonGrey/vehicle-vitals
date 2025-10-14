@@ -317,3 +317,4 @@ If you want, I can:
 - Add exact `package.json`-driven run commands after reading `package.json` files.
 - Add a minimal `.env.example` and local Firebase setup guide.
 - Create a small smoke-test script that asserts the shared `defaultVehicle` shape and that Firestore path functions build expected IDs.
+# Test commit to trigger CI/CD workflows

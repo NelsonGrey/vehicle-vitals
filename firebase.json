@@ -1,6 +1,9 @@
 {
   "firestore": {
-    "rules": "firebase/firestore.rules"
+    "database": "(default)",
+    "location": "us-central1",
+    "rules": "firebase/firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "hosting": {
     "public": "packages/web/dist",

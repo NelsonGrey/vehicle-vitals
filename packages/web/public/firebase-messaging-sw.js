@@ -1,6 +1,7 @@
 // Firebase Messaging Service Worker
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js');
+/* eslint-disable no-undef */
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js');
 
 // Initialize Firebase in service worker
 firebase.initializeApp({
@@ -28,3 +29,4 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
+/* eslint-enable no-undef */

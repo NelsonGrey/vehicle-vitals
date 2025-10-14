@@ -9,7 +9,7 @@ export interface Vehicle {
   purchaseDate: string;
   nextDueByMiles?: string;
   nextDueByDate?: string;
-  services?: any[];
+  services?: MaintenanceRecord[];
 }
 
 export interface MaintenanceRecord {

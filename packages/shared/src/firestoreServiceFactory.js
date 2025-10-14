@@ -92,20 +92,20 @@ export function createFirestoreService({ db, auth, helpers }) {
     return { id: null, ...reminder };
   }
 
-  async function getReminders(vin) {
+  async function getReminders(vin) { // eslint-disable-line @typescript-eslint/no-unused-vars
     const userId = auth.currentUser?.uid;
     if (!userId) return [];
     // no-op stub: return empty list for now
     return [];
   }
 
-  async function completeReminder(vin, reminderId) {
+  async function completeReminder(vin, reminderId) { // eslint-disable-line @typescript-eslint/no-unused-vars
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
     // no-op stub
   }
 
-  async function snoozeReminder(vin, reminderId, untilDateISO) {
+  async function snoozeReminder(vin, reminderId, untilDateISO) { // eslint-disable-line @typescript-eslint/no-unused-vars
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
     // no-op stub

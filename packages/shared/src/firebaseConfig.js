@@ -1,8 +1,7 @@
 // -----------------------------
 // File: shared/firebaseConfig.js
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+// Note: This file provides configuration only. Platform-specific code should initialize Firebase.
+// Imports are kept for reference but not used here to avoid bundling issues.
 
 // Read env vars
 // - Web (Vite): do not reference import.meta here; web has its own config file.
@@ -10,7 +9,7 @@ import { getFirestore } from 'firebase/firestore';
 let env = (typeof process !== 'undefined' && process.env) ? { ...process.env } : {};
 try {
   // Lazy require to avoid bundling in web
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Constants = require('expo-constants');
   const extra = (Constants?.expoConfig?.extra) || (Constants?.manifest?.extra) || {};
   env = { ...env, ...extra };
@@ -36,7 +35,6 @@ let messaging = null;
 try {
   // dynamic import so native bundles don't try to resolve web-only module
   // (consumer code can import { messaging } from './firebaseConfig' and check for null)
-  // eslint-disable-next-line import/no-extraneous-dependencies
   // Note: this will only work in environments that support dynamic import; keep try/catch to be safe.
   // We intentionally don't export getMessaging directly to avoid bundling issues in native.
   // If you need push notifications on native, set up the native SDKs and export a native-capable messaging instance.

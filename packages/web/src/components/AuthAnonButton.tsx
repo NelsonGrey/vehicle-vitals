@@ -31,16 +31,16 @@ export default function AuthAnonButton() {
   const [error, setError] = useState('');
   const [firebaseAuth, setFirebaseAuth] = useState<{
     auth: unknown;
-    onAuthStateChanged: unknown;
-    signInAnonymously: unknown;
+    onAuthStateChanged: (auth: unknown, callback: (user: unknown) => void) => () => void;
+    signInAnonymously: (auth: unknown) => Promise<void>;
   } | null>(null);
 
   useEffect(() => {
     createFirebaseAuth().then(service => {
       setFirebaseAuth(service);
-      setAuthed(!!(service as any).auth.currentUser);
+      setAuthed(!!service.auth.currentUser);
       
-      const unsub = (service as any).onAuthStateChanged((service as any).auth, (user: unknown) => setAuthed(!!user));
+      const unsub = service.onAuthStateChanged(service.auth, (user: unknown) => setAuthed(!!user));
       return () => unsub();
     });
   }, []);
@@ -53,7 +53,7 @@ export default function AuthAnonButton() {
     setBusy(true);
     setError('');
     try {
-      await (firebaseAuth as any).signInAnonymously((firebaseAuth as any).auth);
+      await firebaseAuth.signInAnonymously(firebaseAuth.auth);
     } catch (e: unknown) {
       const error = e as Error;
       setError(error?.message || 'Failed to sign in');

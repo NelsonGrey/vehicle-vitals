@@ -1,7 +1,7 @@
 import { firebaseConfig } from './firebaseConfig';
 
 // Notification service for Firebase Cloud Messaging
-let messaging = null;
+let messaging = null; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 // Initialize Firebase messaging
 const initializeMessaging = async () => {
@@ -46,7 +46,7 @@ const initializeMessaging = async () => {
     // Register service worker for background messages
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => {
+        .then((registration) => { // eslint-disable-line @typescript-eslint/no-unused-vars
           console.log('Service Worker registered for FCM');
         })
         .catch((error) => {

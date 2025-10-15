@@ -29,7 +29,7 @@ config/
 
 1. Go to [Firebase Console](https://console.firebase.google.com)
 2. Select the appropriate project:
-   - **Development**: `vehicle-vitals-development`
+   - **Development**: `vehicle-vitals-dev`
    - **Staging**: `vehicle-vitals-staging`
    - **Production**: `vehicle-vitals-prod`
 3. Go to Project Settings → General → Your apps
@@ -59,6 +59,6 @@ The build scripts automatically copy the correct configuration files based on th
 - **Never commit actual config files** - They contain sensitive API keys
 - **Add to .gitignore**: Ensure `config/*/android/google-services.json` and `config/*/ios/GoogleService-Info.plist` are ignored
 - **Environment mapping**:
-  - Development → `vehicle-vitals-development`
+  - Development → `vehicle-vitals-dev`
   - Staging → `vehicle-vitals-staging`
   - Production → `vehicle-vitals-prod`

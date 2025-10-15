@@ -121,7 +121,7 @@ This project supports multiple Firebase environments for development, staging, a
 ### Environments
 - **Production**: `vehicle-vitals-prod` - Live application
 - **Staging**: `vehicle-vitals-staging` - Testing environment
-- **Development**: `vehicle-vitals-development` - Development environment
+- **Development**: `vehicle-vitals-dev` - Development environment
 
 ### Quick Deploy
 Use the deployment script for easy environment switching:

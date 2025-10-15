@@ -17,7 +17,7 @@ The following Firebase projects have been set up:
 |-------------|-------------------|---------|
 | Production | `vehicle-vitals-prod` | Live production environment |
 | Staging | `vehicle-vitals-staging` | Pre-production testing |
-| Development | `vehicle-vitals-development` | Development and feature testing |
+| Development | `vehicle-vitals-dev` | Development and feature testing |
 
 # Environment Setup Guide
 
@@ -40,7 +40,7 @@ The following Firebase projects have been set up:
 |-------------|-------------------|---------|
 | Production | `vehicle-vitals-prod` | Live production environment |
 | Staging | `vehicle-vitals-staging` | Pre-production testing |
-| Development | `vehicle-vitals-development` | Development and feature testing |
+| Development | `vehicle-vitals-dev` | Development and feature testing |
 
 ## GitHub Secrets Configuration
 
@@ -144,8 +144,8 @@ The CI/CD pipeline will automatically use these secrets to create the `.env` fil
 - **Mobile PWA**: https://vehicle-vitals-staging.web.app
 
 ### Development Environment:
-- **Web App**: https://vehicle-vitals-development.web.app
-- **Mobile PWA**: https://vehicle-vitals-development.web.app
+- **Web App**: https://vehicle-vitals-dev.web.app
+- **Mobile PWA**: https://vehicle-vitals-dev.web.app
 
 ## CI/CD Pipeline
 
@@ -210,9 +210,9 @@ cat > .env << EOF
 
 # Firebase Configuration (use development project values)
 VITE_FIREBASE_API_KEY=your_dev_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=vehicle-vitals-development.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=vehicle-vitals-development
-VITE_FIREBASE_STORAGE_BUCKET=vehicle-vitals-development.firebasestorage.app
+VITE_FIREBASE_AUTH_DOMAIN=vehicle-vitals-dev.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=vehicle-vitals-dev
+VITE_FIREBASE_STORAGE_BUCKET=vehicle-vitals-dev.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_dev_sender_id
 VITE_FIREBASE_APP_ID=your_dev_app_id
 VITE_FIREBASE_MEASUREMENT_ID=your_dev_measurement_id

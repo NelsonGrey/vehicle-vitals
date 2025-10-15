@@ -12,6 +12,7 @@ import Instructions from './pages/Instructions';
 import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import ComingSoon from './pages/ComingSoon';
 
 // Protected pages
 import Home from './pages/Home';
@@ -22,6 +23,14 @@ import DevSeed from './pages/DevSeed';
 import TimelineDashboard from './pages/TimelineDashboard';
 
 function App() {
+  // Check if we're in production environment
+  const isProduction = import.meta.env.VITE_ENVIRONMENT === 'production';
+
+  // In production, show Coming Soon page
+  if (isProduction) {
+    return <ComingSoon />;
+  }
+
   console.log('App component rendering with full routing');
 
   return (

@@ -28,7 +28,11 @@ function App() {
 
   // In production, show Coming Soon page
   if (isProduction) {
-    return <ComingSoon />;
+    return (
+      <BrowserRouter>
+        <ComingSoon />
+      </BrowserRouter>
+    );
   }
 
   console.log('App component rendering with full routing');

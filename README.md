@@ -121,7 +121,7 @@ This project supports multiple Firebase environments for development, staging, a
 ### Environments
 - **Production**: `vehicle-vitals-prod` - Live application
 - **Staging**: `vehicle-vitals-staging` - Testing environment
-- **Development**: `vehicle-vitals-development` - Development environment
+- **Development**: `vehicle-vitals-dev` - Development environment
 
 ### Quick Deploy
 Use the deployment script for easy environment switching:
@@ -317,3 +317,4 @@ If you want, I can:
 - Add exact `package.json`-driven run commands after reading `package.json` files.
 - Add a minimal `.env.example` and local Firebase setup guide.
 - Create a small smoke-test script that asserts the shared `defaultVehicle` shape and that Firestore path functions build expected IDs.
+# Test commit to trigger CI/CD workflows

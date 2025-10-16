@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: 🚀 CI/CD Pipeline - Build, Test & Deploy All Deliverables
 
 on:
@@ -35,7 +34,6 @@ jobs:
         id: set-env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # Convert uppercase input to lowercase for internal use
             INPUT_ENV=$(echo "${{ github.event.inputs.environment }}" | tr '[:upper:]' '[:lower:]')
             echo "environment=$INPUT_ENV" >> $GITHUB_OUTPUT
             echo "should-deploy=true" >> $GITHUB_OUTPUT
@@ -266,7 +264,7 @@ jobs:
           name: web-build
           path: packages/web/dist/
 
-      - name: 🔥 Deploy to Firebase Hosting
+      - name: �� Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -303,7 +301,7 @@ jobs:
 
   # 📊 Deployment Summary
   deployment-summary:
-    name: 📊 Deployment Summary (${{ needs.determine-environment.outputs.environment }})
+    name: �� Deployment Summary (${{ needs.determine-environment.outputs.environment }})
     runs-on: ubuntu-latest
     needs: [determine-environment, deploy-web, deploy-mobile-pwa]
     if: always() && needs.determine-environment.outputs.should-deploy == 'true'
@@ -316,7 +314,6 @@ jobs:
           echo "| Component | Status | URL |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|-----|" >> $GITHUB_STEP_SUMMARY
 
-          # Web App URLs (Firebase Hosting)
           if [[ "$ENVIRONMENT" == "production" ]]; then
             WEB_URL="https://vehicle-vitals-prod.web.app"
             MOBILE_URL="https://vehicle-vitals-prod.web.app"

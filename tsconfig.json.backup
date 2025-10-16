@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "files": [],
+  "references": [
+    { "path": "./packages/web" },
+    { "path": "./packages/shared" },
+    { "path": "./packages/api-server" },
+    { "path": "./packages/api-shared" }
+  ]
+}

@@ -72,3 +72,8 @@ serviceAccountKey.json
 # Misc
 Thumbs.db
 coverage/
+
+# Environment variables
+.env
+.env.*
+!.env.example

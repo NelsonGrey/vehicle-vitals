@@ -16,7 +16,7 @@ packages/
 ## Quick overview
 - Web: React app with pages in `web/src/pages/` and a router wired in `App.jsx`.
 - Mobile: Flutter app under `mobile/` with screens in `lib/screens/` and go_router navigation.
-- Shared: `shared/firebaseConfig.js`, `shared/azureConfig.js`, and `shared/types.js` contain cross-cutting config and types.
+- Shared: `shared/firebaseConfig.js` and `shared/types.js` contain cross-cutting config and types.
 
 ## Project structure (important files)
 - `App.jsx` — web entry that registers routes to `web/src/pages/*`.
@@ -25,7 +25,6 @@ packages/
 - `mobile/lib/main.dart` — Flutter app entry with go_router navigation and Provider state management.
 - `mobile/lib/screens/` — Flutter screens (HomeScreen, AddVehicleScreen, EditVehicleScreen, ScanVINScreen, MaintenanceListScreen, etc.).
 - `shared/firebaseConfig.js` — Firebase initialization exporting `auth`, `db`, and `messaging`.
-- `shared/azureConfig.js` — Azure/MSAL placeholders and example backend helpers (`/api/data`, `/api/notify`).
 - `shared/types.js` — `defaultVehicle` shape used across the app.
 
 ## Setup & run (developer notes)

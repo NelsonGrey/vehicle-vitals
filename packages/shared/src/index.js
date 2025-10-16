@@ -8,8 +8,5 @@ export { default as firestoreService } from './firestoreService.js';
 // Types and utilities
 export * from './types.js';
 
-// Azure configuration (when implemented)
-export { default as azureConfig } from './azureConfig.js';
-
 // Re-export common utilities
 export { serverTimestamp } from 'firebase/firestore';

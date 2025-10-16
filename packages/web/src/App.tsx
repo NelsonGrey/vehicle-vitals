@@ -21,6 +21,7 @@ import EditVehicle from './pages/EditVehicle';
 import Profile from './pages/Profile';
 import DevSeed from './pages/DevSeed';
 import TimelineDashboard from './pages/TimelineDashboard';
+import UpcomingTasks from './pages/UpcomingTasks';
 
 function App() {
   // Check if we're in production environment
@@ -78,6 +79,11 @@ function App() {
             <Route path="timeline" element={
               <ProtectedRoute>
                 <TimelineDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="upcoming" element={
+              <ProtectedRoute>
+                <UpcomingTasks />
               </ProtectedRoute>
             } />
           </Route>

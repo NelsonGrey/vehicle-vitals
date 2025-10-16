@@ -48,6 +48,11 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 }`}>
                   Timeline
                 </Link>
+                <Link to="/upcoming" className={`hover:opacity-75 transition-opacity ${
+                  overlay ? 'text-gray-100 hover:text-white' : ''
+                }`}>
+                  Upcoming
+                </Link>
                 <Link to="/profile" className={`hover:opacity-75 transition-opacity ${
                   overlay ? 'text-gray-100 hover:text-white' : ''
                 }`}>

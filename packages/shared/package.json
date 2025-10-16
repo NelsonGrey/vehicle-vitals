@@ -8,8 +8,7 @@
     ".": "./src/index.js",
     "./firebase": "./src/firebaseConfig.js",
     "./firestore": "./src/firestoreServiceFactory.js",
-    "./types": "./src/types.js",
-    "./azure": "./src/azureConfig.js"
+    "./types": "./src/types.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

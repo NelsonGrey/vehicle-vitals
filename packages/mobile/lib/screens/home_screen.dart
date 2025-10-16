@@ -89,6 +89,9 @@ class HomeScreen extends StatelessWidget {
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
+                case 'upcoming':
+                  context.go('/upcoming');
+                  break;
                 case 'account':
                   context.go('/account');
                   break;
@@ -110,6 +113,16 @@ class HomeScreen extends StatelessWidget {
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'upcoming',
+                child: Row(
+                  children: [
+                    Icon(Icons.upcoming),
+                    SizedBox(width: 8),
+                    Text('Upcoming Tasks'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'account',
                 child: Row(

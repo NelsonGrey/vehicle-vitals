@@ -49,7 +49,7 @@
   },
   "functions": [
     {
-      "source": "functions",
+      "source": "packages/functions",
       "codebase": "default",
       "ignore": [
         "node_modules",

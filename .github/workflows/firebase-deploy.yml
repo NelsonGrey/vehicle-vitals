@@ -111,6 +111,9 @@ jobs:
           VITE_ENVIRONMENT=production
           VITE_DEBUG=${{ secrets.VITE_DEBUG_PRODUCTION }}
 
+          # Coming Soon Page Control
+          VITE_SHOW_COMING_SOON=${{ secrets.VITE_SHOW_COMING_SOON_PRODUCTION }}
+
           # Analytics & Monitoring
           VITE_ANALYTICS_ID=${{ secrets.VITE_ANALYTICS_ID_PRODUCTION }}
           VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN_PRODUCTION }}
@@ -144,6 +147,9 @@ jobs:
           VITE_ENVIRONMENT=staging
           VITE_DEBUG=${{ secrets.VITE_DEBUG_STAGING }}
 
+          # Coming Soon Page Control
+          VITE_SHOW_COMING_SOON=${{ secrets.VITE_SHOW_COMING_SOON_STAGING }}
+
           # Analytics & Monitoring
           VITE_ANALYTICS_ID=${{ secrets.VITE_ANALYTICS_ID_STAGING }}
           VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN_STAGING }}
@@ -176,6 +182,9 @@ jobs:
           # Environment
           VITE_ENVIRONMENT=development
           VITE_DEBUG=${{ secrets.VITE_DEBUG_DEVELOPMENT }}
+
+          # Coming Soon Page Control
+          VITE_SHOW_COMING_SOON=${{ secrets.VITE_SHOW_COMING_SOON_DEVELOPMENT }}
 
           # Analytics & Monitoring
           VITE_ANALYTICS_ID=${{ secrets.VITE_ANALYTICS_ID_DEVELOPMENT }}

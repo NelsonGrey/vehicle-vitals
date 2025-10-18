@@ -58,6 +58,7 @@ VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION
 VITE_FIREBASE_APP_ID_PRODUCTION
 VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION
 VITE_DEBUG_PRODUCTION
+VITE_SHOW_COMING_SOON_PRODUCTION
 VITE_ANALYTICS_ID_PRODUCTION
 VITE_SENTRY_DSN_PRODUCTION
 VITE_ADSENSE_CLIENT
@@ -77,6 +78,7 @@ VITE_FIREBASE_MESSAGING_SENDER_ID_STAGING
 VITE_FIREBASE_APP_ID_STAGING
 VITE_FIREBASE_MEASUREMENT_ID_STAGING
 VITE_DEBUG_STAGING
+VITE_SHOW_COMING_SOON_STAGING
 VITE_ANALYTICS_ID_STAGING
 VITE_SENTRY_DSN_STAGING
 VITE_ADSENSE_CLIENT
@@ -96,6 +98,7 @@ VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT
 VITE_FIREBASE_APP_ID_DEVELOPMENT
 VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT
 VITE_DEBUG_DEVELOPMENT
+VITE_SHOW_COMING_SOON_DEVELOPMENT
 VITE_ANALYTICS_ID_DEVELOPMENT
 VITE_SENTRY_DSN_DEVELOPMENT
 VITE_ADSENSE_CLIENT
@@ -170,16 +173,19 @@ You can also trigger manual deployments using the workflow dispatch:
 - Debug tools: Disabled
 - Analytics: Enabled
 - Error reporting: Enabled
+- **Coming Soon Page: Controlled by VITE_SHOW_COMING_SOON_PRODUCTION**
 
 ### Staging Environment:
 - Debug tools: Enabled
 - Analytics: Disabled
 - Error reporting: Enabled
+- **Coming Soon Page: Controlled by VITE_SHOW_COMING_SOON_STAGING**
 
 ### Development Environment:
 - Debug tools: Enabled
 - Analytics: Disabled
 - Error reporting: Disabled
+- **Coming Soon Page: Controlled by VITE_SHOW_COMING_SOON_DEVELOPMENT**
 
 ## Firebase Service Account Setup
 
@@ -274,14 +280,22 @@ cat packages/web/.env
 
 For CI/CD deployments, the environment variables are automatically created from GitHub secrets, so no manual validation is needed.
 
-## Security Notes
+## Coming Soon Page Control
 
-- All sensitive configuration is stored securely in GitHub repository secrets
-- Environment files (`.env`) are dynamically generated during CI/CD and never committed to git
-- Local development `.env` files should never be committed (they are already in `.gitignore`)
-- Regularly rotate service account keys and API tokens
-- Use environment-specific service accounts with minimal required permissions
-- GitHub secrets are encrypted and only accessible to the repository
+The `VITE_SHOW_COMING_SOON_*` environment variables control whether the Coming Soon page is displayed instead of the full application. This allows you to:
+
+- Show a landing page to collect email signups during pre-launch
+- Control access to the full app independently of the environment
+- Gradually roll out access to different user groups
+
+### Setting Values:
+- `true`: Show Coming Soon page (blocks access to full app)
+- `false`: Show full application
+
+### Recommended Settings:
+- **Production**: `true` (during pre-launch), `false` (after launch)
+- **Staging**: `false` (for testing full functionality)
+- **Development**: `false` (for development work)
 
 ## Next Steps
 

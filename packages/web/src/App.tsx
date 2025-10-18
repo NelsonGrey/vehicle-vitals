@@ -24,11 +24,11 @@ import TimelineDashboard from './pages/TimelineDashboard';
 import UpcomingTasks from './pages/UpcomingTasks';
 
 function App() {
-  // Check if we're in production environment
-  const isProduction = import.meta.env.VITE_ENVIRONMENT === 'production';
+  // Check if we should show the coming soon page
+  const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
 
-  // In production, show Coming Soon page
-  if (isProduction) {
+  // Show Coming Soon page if flag is enabled
+  if (showComingSoon) {
     return (
       <BrowserRouter>
         <ComingSoon />

@@ -76,7 +76,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
     if (milesUntilDue <= 5000) return Colors.orange.shade50;
     return AppDesignTokens.colorScheme(
       Theme.of(context).brightness,
-    ).primary.withOpacity(0.1);
+    ).primary.withValues(alpha: 0.1);
   }
 
   String _getUrgencyLabel(int milesUntilDue) {
@@ -132,7 +132,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+              ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -176,12 +176,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         vertical: TwSpace.s1,
                       ),
                       decoration: BoxDecoration(
-                        color: _getUrgencyColor(milesUntilDue).withOpacity(0.1),
+                        color: _getUrgencyColor(milesUntilDue).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(TwRadius.sm),
                         border: Border.all(
                           color: _getUrgencyColor(
                             milesUntilDue,
-                          ).withOpacity(0.3),
+                          ).withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
@@ -201,7 +201,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   ),
                 ),
                 SizedBox(height: TwSpace.s1),
@@ -210,7 +210,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
-                    ).textTheme.bodySmall?.color?.withOpacity(0.7),
+                    ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                   ),
                 ),
                 SizedBox(height: TwSpace.s3),
@@ -222,11 +222,15 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         children: [
                           Text(
                             'Due at: ${(item['nextDueMileage'] as int).toStringAsFixed(0)} miles',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                            ),
                           ),
                           Text(
                             'Miles until due: ${milesUntilDue.toStringAsFixed(0)}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                            ),
                           ),
                         ],
                       ),
@@ -268,7 +272,10 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
             'Legend',
             style: Theme.of(
               context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.titleSmall?.color?.withValues(alpha: 0.7),
+            ),
           ),
           SizedBox(height: TwSpace.s2),
           Row(

@@ -29,7 +29,7 @@ const initializeFirestoreService = async () => {
 
     // Import config and factory
     const { firebaseConfig } = await import('./firebaseConfig');
-    const sharedFactory = await import('@vehicle-vitals/shared/firestore');
+    const { createFirestoreService } = await import('@vehicle-vitals/shared');
 
     // Initialize Firebase app if not already initialized
     let app;
@@ -43,7 +43,7 @@ const initializeFirestoreService = async () => {
     const auth = firebase.auth.getAuth(app);
     const helpers = firebase.firestore;
 
-    service = sharedFactory.createFirestoreService({ 
+    service = createFirestoreService({ 
       db, 
       auth, 
       helpers 

@@ -147,6 +147,16 @@ firebase use staging     # or development
 firebase deploy --only hosting
 ```
 
+### Coming Soon Page Control
+
+The application includes configurable Coming Soon page functionality that can be controlled via environment variables:
+
+- **Production**: `VITE_SHOW_COMING_SOON_PRODUCTION` - Set to `true` during pre-launch, `false` after launch
+- **Staging**: `VITE_SHOW_COMING_SOON_STAGING` - Typically `false` for testing full functionality
+- **Development**: `VITE_SHOW_COMING_SOON_DEVELOPMENT` - Typically `false` for development work
+
+When enabled, the Coming Soon page displays instead of the full application, allowing you to collect email signups during pre-launch periods.
+
 See `DEPLOY.md` for detailed deployment instructions and GitHub Actions setup.
 
 ## 📱 Android App Distribution

@@ -60,15 +60,10 @@ jobs:
       - name: Extract AdMob configuration for production
         if: github.ref == 'refs/heads/main'
         run: |
-          # Read AdMob unit IDs from .env.production file
-          ADMOB_BANNER_IOS=$(grep "^ADMOB_BANNER_UNIT_ID_IOS=" .env.production | cut -d '=' -f2)
-          ADMOB_INTERSTITIAL_IOS=$(grep "^ADMOB_INTERSTITIAL_UNIT_ID_IOS=" .env.production | cut -d '=' -f2)
-          ADMOB_REWARDED_IOS=$(grep "^ADMOB_REWARDED_UNIT_ID_IOS=" .env.production | cut -d '=' -f2)
-          
-          # Export as environment variables for the build script
-          echo "ADMOB_BANNER_UNIT_ID=$ADMOB_BANNER_IOS" >> $GITHUB_ENV
-          echo "ADMOB_INTERSTITIAL_UNIT_ID=$ADMOB_INTERSTITIAL_IOS" >> $GITHUB_ENV
-          echo "ADMOB_REWARDED_UNIT_ID=$ADMOB_REWARDED_IOS" >> $GITHUB_ENV
+          # Use GitHub secrets for AdMob configuration
+          echo "ADMOB_BANNER_UNIT_ID=${{ secrets.ADMOB_BANNER_UNIT_ID_IOS }}" >> $GITHUB_ENV
+          echo "ADMOB_INTERSTITIAL_UNIT_ID=${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_IOS }}" >> $GITHUB_ENV
+          echo "ADMOB_REWARDED_UNIT_ID=${{ secrets.ADMOB_REWARDED_UNIT_ID_IOS }}" >> $GITHUB_ENV
 
       - name: Build and distribute iOS app
         env:

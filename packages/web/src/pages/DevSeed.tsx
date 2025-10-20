@@ -6,7 +6,7 @@ import {
   getVehicles,
   getMaintenanceEntries,
 } from '../shared/firestoreService';
-import { defaultVehicle } from '@vehicle-vitals/shared/types';
+import { defaultVehicle } from '@vehicle-vitals/shared';
 
 interface SeedDetails {
   vehiclesCount: number;

@@ -1,6 +1,6 @@
 // -----------------------------
 // File: web/pages/AddVehicle.tsx
-import { defaultVehicle } from '@vehicle-vitals/shared/types';
+import { defaultVehicle } from '@vehicle-vitals/shared';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdBanner from '../components/AdBanner';

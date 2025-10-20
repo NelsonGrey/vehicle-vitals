@@ -15,11 +15,12 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write .",
+    "check": "tsc --noEmit",
     "clean": "rm -rf node_modules dist"
   },
   "dependencies": {
     "@vehicle-vitals/shared": "file:../shared",
-    "firebase": "^10.14.1",
+    "firebase": "^12.3.0",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
     "papaparse": "^5.5.3",
@@ -43,8 +44,8 @@
     "jsdom": "^27.0.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.18",
-    "typescript": "5.3.3",
-    "vite": "^5.0.0",
-    "vitest": "^1.0.0"
+    "typescript": "^5.6.3",
+    "vite": "^7.1.11",
+    "vitest": "^3.2.4"
   }
 }

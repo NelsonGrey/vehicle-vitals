@@ -16,7 +16,7 @@ packages/
 ## Quick overview
 - Web: React app with pages in `web/src/pages/` and a router wired in `App.jsx`.
 - Mobile: Flutter app under `mobile/` with screens in `lib/screens/` and go_router navigation.
-- Shared: `shared/firebaseConfig.js`, `shared/azureConfig.js`, and `shared/types.js` contain cross-cutting config and types.
+- Shared: `shared/firebaseConfig.js` and `shared/types.js` contain cross-cutting config and types.
 
 ## Project structure (important files)
 - `App.jsx` — web entry that registers routes to `web/src/pages/*`.
@@ -25,7 +25,6 @@ packages/
 - `mobile/lib/main.dart` — Flutter app entry with go_router navigation and Provider state management.
 - `mobile/lib/screens/` — Flutter screens (HomeScreen, AddVehicleScreen, EditVehicleScreen, ScanVINScreen, MaintenanceListScreen, etc.).
 - `shared/firebaseConfig.js` — Firebase initialization exporting `auth`, `db`, and `messaging`.
-- `shared/azureConfig.js` — Azure/MSAL placeholders and example backend helpers (`/api/data`, `/api/notify`).
 - `shared/types.js` — `defaultVehicle` shape used across the app.
 
 ## Setup & run (developer notes)
@@ -147,6 +146,16 @@ npm run build:staging    # or build:development
 firebase use staging     # or development
 firebase deploy --only hosting
 ```
+
+### Coming Soon Page Control
+
+The application includes configurable Coming Soon page functionality that can be controlled via environment variables:
+
+- **Production**: `VITE_SHOW_COMING_SOON_PRODUCTION` - Set to `true` during pre-launch, `false` after launch
+- **Staging**: `VITE_SHOW_COMING_SOON_STAGING` - Typically `false` for testing full functionality
+- **Development**: `VITE_SHOW_COMING_SOON_DEVELOPMENT` - Typically `false` for development work
+
+When enabled, the Coming Soon page displays instead of the full application, allowing you to collect email signups during pre-launch periods.
 
 See `DEPLOY.md` for detailed deployment instructions and GitHub Actions setup.
 

@@ -35,7 +35,6 @@ Two frontends (web + mobile) share Firebase-backed utilities in `shared/`. Follo
 
 - Integration points
   - VIN decode: `web/src/utils/vehicleService.js` `fetchVehicleByVINAndSave(vin)` calls NHTSA VPIC, then writes to `users/${uid}/vehicles/${vin}` (web-config path).
-  - Azure placeholders: `shared/azureConfig.js` exposes MSAL config and example `/api/*` helpers; treat as non-functional until a backend exists.
 
 - Editing rules (project-specific)
   - Preserve Firestore document paths and the VIN-as-id convention (vehicles and maintenance).

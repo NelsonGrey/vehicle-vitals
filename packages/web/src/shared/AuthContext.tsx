@@ -1,25 +1,45 @@
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  User,
+  UserCredential,
+} from 'firebase/auth';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, OAuthProvider } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 
 interface AuthContextType {
-  user: any;
+  user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<any>;
-  signInWithGoogle: () => Promise<any>;
-  signInWithApple: () => Promise<any>;
+  signIn: (email: string, password: string) => Promise<UserCredential>;
+  signUp: (email: string, password: string) => Promise<UserCredential>;
+  signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<UserCredential>;
+  signInWithApple: () => Promise<UserCredential>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  signIn: async () => { throw new Error('Firebase not initialized'); },
-  signUp: async () => { throw new Error('Firebase not initialized'); },
-  signOut: async () => { throw new Error('Firebase not initialized'); },
-  signInWithGoogle: async () => { throw new Error('Firebase not initialized'); },
-  signInWithApple: async () => { throw new Error('Firebase not initialized'); },
+  signIn: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  signUp: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  signOut: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  signInWithGoogle: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  signInWithApple: async () => {
+    throw new Error('Firebase not initialized');
+  },
 });
 
 interface AuthProviderProps {
@@ -27,11 +47,11 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
       setUser(user);
       setLoading(false);
     });
@@ -45,8 +65,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return {
       user,
       loading,
-      signIn: (email: string, password: string) => signInWithEmailAndPassword(auth, email, password),
-      signUp: (email: string, password: string) => createUserWithEmailAndPassword(auth, email, password),
+      signIn: (email: string, password: string) =>
+        signInWithEmailAndPassword(auth, email, password),
+      signUp: (email: string, password: string) =>
+        createUserWithEmailAndPassword(auth, email, password),
       signOut: () => signOut(auth),
       signInWithGoogle: () => signInWithPopup(auth, googleProvider),
       signInWithApple: () => {
@@ -58,11 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [user, loading]);
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

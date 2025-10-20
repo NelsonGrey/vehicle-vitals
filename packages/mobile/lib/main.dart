@@ -31,6 +31,7 @@ import 'components/ad_banner.dart';
 import 'screens/premium_screen.dart';
 import 'screens/offline_settings_screen.dart';
 import 'screens/analytics_screen.dart';
+import 'screens/upcoming_tasks_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -190,6 +191,10 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/analytics',
           builder: (context, state) => const AnalyticsScreen(),
+        ),
+        GoRoute(
+          path: '/upcoming',
+          builder: (context, state) => const UpcomingTasksScreen(),
         ),
       ],
     );

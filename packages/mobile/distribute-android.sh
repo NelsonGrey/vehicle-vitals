@@ -42,7 +42,15 @@ flutter pub get
 # Build Android APK
 echo "🔨 Building Android APK ($BUILD_TYPE)..."
 if [ "$BUILD_TYPE" = "release" ]; then
-    flutter build apk --release --target-platform android-arm64
+    # Build with AdMob configuration for production
+    if [ "$ENVIRONMENT" = "production" ] && [ -n "$ADMOB_BANNER_UNIT_ID" ]; then
+        flutter build apk --release --target-platform android-arm64 \
+          --dart-define=ADMOB_BANNER_UNIT_ID="$ADMOB_BANNER_UNIT_ID" \
+          --dart-define=ADMOB_INTERSTITIAL_UNIT_ID="$ADMOB_INTERSTITIAL_UNIT_ID" \
+          --dart-define=ADMOB_REWARDED_UNIT_ID="$ADMOB_REWARDED_UNIT_ID"
+    else
+        flutter build apk --release --target-platform android-arm64
+    fi
 else
     flutter build apk --debug --target-platform android-arm64
 fi

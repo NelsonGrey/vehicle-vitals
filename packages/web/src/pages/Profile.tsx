@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AdBanner from '../components/AdBanner';
 import { useAuth } from '../shared/AuthContext';
 
@@ -20,7 +20,10 @@ interface AuthService {
   EmailAuthProvider: {
     credential: (email: string, password: string) => unknown;
   };
-  reauthenticateWithCredential: (user: unknown, credential: unknown) => Promise<void>;
+  reauthenticateWithCredential: (
+    user: unknown,
+    credential: unknown
+  ) => Promise<void>;
   updatePassword: (user: unknown, newPassword: string) => Promise<void>;
   deleteUser: (user: unknown) => Promise<void>;
 }
@@ -48,12 +51,12 @@ const createFirebaseAuthService = async () => {
       });
     };
 
-    const firebase = await checkFirebase() as typeof window.firebase;
+    const firebase = (await checkFirebase()) as typeof window.firebase;
     return {
       EmailAuthProvider: firebase.auth.EmailAuthProvider,
       reauthenticateWithCredential: firebase.auth.reauthenticateWithCredential,
       updatePassword: firebase.auth.updatePassword,
-      deleteUser: firebase.auth.deleteUser
+      deleteUser: firebase.auth.deleteUser,
     };
   } catch (error) {
     console.warn('Firebase auth not available:', error);
@@ -62,7 +65,7 @@ const createFirebaseAuthService = async () => {
       EmailAuthProvider: { credential: () => ({}) },
       reauthenticateWithCredential: async () => {},
       updatePassword: async () => {},
-      deleteUser: async () => {}
+      deleteUser: async () => {},
     };
   }
 };
@@ -84,7 +87,13 @@ export default function Profile() {
   if (!user || !authService) return null;
 
   const reauth = async () => {
-    const cred = authService.EmailAuthProvider.credential(user.email, currentPassword);
+    if (!user.email) {
+      throw new Error('User email is required for reauthentication');
+    }
+    const cred = authService.EmailAuthProvider.credential(
+      user.email,
+      currentPassword
+    );
     await authService.reauthenticateWithCredential(user, cred);
   };
 
@@ -105,14 +114,18 @@ export default function Profile() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError((err instanceof Error ? err.message : 'Failed to update password'));
+      setError(
+        err instanceof Error ? err.message : 'Failed to update password'
+      );
     } finally {
       setBusy(false);
     }
   };
 
   const onDeleteAccount = async () => {
-    const sure = window.confirm('This will permanently delete your account and all your vehicles. Continue?');
+    const sure = window.confirm(
+      'This will permanently delete your account and all your vehicles. Continue?'
+    );
     if (!sure) return;
     setError('');
     setStatus('');
@@ -124,7 +137,7 @@ export default function Profile() {
       // Optionally sign out cleanup
       await signOut();
     } catch (err) {
-      setError((err instanceof Error ? err.message : 'Failed to delete account'));
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
     } finally {
       setBusy(false);
     }
@@ -133,67 +146,89 @@ export default function Profile() {
   return (
     <div className="max-w-md mx-auto px-5 py-5">
       <AdBanner />
-      <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 mb-4">Profile</h1>
+      <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 mb-4">
+        Profile
+      </h1>
       <p className="text-slate-600 dark:text-slate-300 mb-6">
-        Signed in as <strong className="text-slate-900 dark:text-slate-100">{user.email}</strong>
+        Signed in as{' '}
+        <strong className="text-slate-900 dark:text-slate-100">
+          {user.email}
+        </strong>
       </p>
-      
+
       {status && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4" role="alert">
+        <div
+          className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4"
+          role="alert"
+        >
           {status}
         </div>
       )}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+        <div
+          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4"
+          role="alert"
+        >
           {error}
         </div>
       )}
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">
-        <h5 className="font-serif font-bold text-xl text-slate-900 dark:text-slate-100 mb-4">Change password</h5>
+        <h5 className="font-serif font-bold text-xl text-slate-900 dark:text-slate-100 mb-4">
+          Change password
+        </h5>
         <form onSubmit={onChangePassword} className="space-y-4">
           <div>
-            <label htmlFor="currentPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+            <label
+              htmlFor="currentPassword"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+            >
               Current password
             </label>
-            <input 
-              id="currentPassword" 
-              type="password" 
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100" 
-              value={currentPassword} 
-              onChange={(e) => setCurrentPassword(e.target.value)} 
-              required 
+            <input
+              id="currentPassword"
+              type="password"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+              value={currentPassword}
+              onChange={e => setCurrentPassword(e.target.value)}
+              required
             />
           </div>
           <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+            <label
+              htmlFor="newPassword"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+            >
               New password
             </label>
-            <input 
-              id="newPassword" 
-              type="password" 
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100" 
-              value={newPassword} 
-              onChange={(e) => setNewPassword(e.target.value)} 
-              required 
+            <input
+              id="newPassword"
+              type="password"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              required
             />
           </div>
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+            >
               Confirm new password
             </label>
-            <input 
-              id="confirmPassword" 
-              type="password" 
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100" 
-              value={confirmPassword} 
-              onChange={(e) => setConfirmPassword(e.target.value)} 
-              required 
+            <input
+              id="confirmPassword"
+              type="password"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
             />
           </div>
-          <button 
-            type="submit" 
-            className="w-full bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200" 
+          <button
+            type="submit"
+            className="w-full bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
             disabled={busy}
           >
             {busy ? 'Updating…' : 'Update password'}
@@ -202,25 +237,31 @@ export default function Profile() {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border-l-4 border-red-500">
-        <h5 className="font-serif font-bold text-xl text-red-700 dark:text-red-400 mb-2">Danger zone</h5>
+        <h5 className="font-serif font-bold text-xl text-red-700 dark:text-red-400 mb-2">
+          Danger zone
+        </h5>
         <p className="text-red-600 dark:text-red-400 mb-4">
-          Deleting your account removes all your vehicles and maintenance logs. This cannot be undone.
+          Deleting your account removes all your vehicles and maintenance logs.
+          This cannot be undone.
         </p>
         <div className="mb-4">
-          <label htmlFor="currentPasswordDelete" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+          <label
+            htmlFor="currentPasswordDelete"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+          >
             Confirm current password
           </label>
-          <input 
-            id="currentPasswordDelete" 
-            type="password" 
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-slate-700 dark:text-slate-100" 
-            value={currentPassword} 
-            onChange={(e) => setCurrentPassword(e.target.value)} 
+          <input
+            id="currentPasswordDelete"
+            type="password"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-slate-700 dark:text-slate-100"
+            value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
           />
         </div>
-        <button 
-          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200" 
-          onClick={onDeleteAccount} 
+        <button
+          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+          onClick={onDeleteAccount}
           disabled={busy}
         >
           Delete account

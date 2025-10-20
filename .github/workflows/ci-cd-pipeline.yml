@@ -150,6 +150,9 @@ jobs:
           # Coming Soon Page Control
           VITE_SHOW_COMING_SOON=${{ secrets.VITE_SHOW_COMING_SOON_STAGING }}
 
+          # Environment Access Control
+          VITE_STAGING_ACCESS_PASSWORD=${{ secrets.VITE_ACCESS_PASSWORD_STAGING }}
+
           # Analytics & Monitoring
           VITE_ANALYTICS_ID=${{ secrets.VITE_ANALYTICS_ID_STAGING }}
           VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN_STAGING }}
@@ -185,6 +188,9 @@ jobs:
 
           # Coming Soon Page Control
           VITE_SHOW_COMING_SOON=${{ secrets.VITE_SHOW_COMING_SOON_DEVELOPMENT }}
+
+          # Environment Access Control
+          VITE_DEV_ACCESS_PASSWORD=${{ secrets.VITE_ACCESS_PASSWORD_DEVELOPMENT }}
 
           # Analytics & Monitoring
           VITE_ANALYTICS_ID=${{ secrets.VITE_ANALYTICS_ID_DEVELOPMENT }}

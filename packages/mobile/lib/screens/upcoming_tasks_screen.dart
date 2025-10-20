@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/firestore_service.dart';
-import '../models/vehicle.dart';
+
 import '../models/maintenance_schedule.dart';
+import '../models/vehicle.dart';
+import '../services/firestore_service.dart';
 import '../theme/design_tokens.dart';
 import '../theme/tailwind_utilities.dart';
+import 'maintenance_list_screen.dart';
 
 class UpcomingTasksScreen extends StatefulWidget {
   const UpcomingTasksScreen({super.key});
@@ -176,7 +178,9 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         vertical: TwSpace.s1,
                       ),
                       decoration: BoxDecoration(
-                        color: _getUrgencyColor(milesUntilDue).withValues(alpha: 0.1),
+                        color: _getUrgencyColor(
+                          milesUntilDue,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(TwRadius.sm),
                         border: Border.all(
                           color: _getUrgencyColor(
@@ -222,25 +226,36 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         children: [
                           Text(
                             'Due at: ${(item['nextDueMileage'] as int).toStringAsFixed(0)} miles',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withValues(alpha: 0.7),
+                                ),
                           ),
                           Text(
                             'Miles until due: ${milesUntilDue.toStringAsFixed(0)}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withValues(alpha: 0.7),
+                                ),
                           ),
                         ],
                       ),
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        // TODO: Navigate to maintenance logging
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Mark as complete - Coming soon!'),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MaintenanceListScreen(vin: vehicle.vin),
                           ),
                         );
                       },
@@ -270,11 +285,11 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         children: [
           Text(
             'Legend',
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).textTheme.titleSmall?.color?.withValues(alpha: 0.7),
+              color: Theme.of(
+                context,
+              ).textTheme.titleSmall?.color?.withValues(alpha: 0.7),
             ),
           ),
           SizedBox(height: TwSpace.s2),

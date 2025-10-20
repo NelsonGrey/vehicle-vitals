@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getVehicles, getMaintenanceEntries } from '../shared/firestoreService';
+import { useEffect, useState } from 'react';
+import { getMaintenanceEntries, getVehicles } from '../shared/firestoreService';
 
 interface Vehicle {
   vin: string;
@@ -22,8 +22,20 @@ interface MaintenanceEntry {
   vehicle: Vehicle;
 }
 
+// Type for raw data from Firestore service
+interface FirestoreMaintenanceEntry {
+  id: string;
+  title: string;
+  notes?: string;
+  cost?: number;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
 export default function TimelineDashboard() {
-  const [maintenanceEntries, setMaintenanceEntries] = useState<MaintenanceEntry[]>([]);
+  const [maintenanceEntries, setMaintenanceEntries] = useState<
+    MaintenanceEntry[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,19 +47,29 @@ export default function TimelineDashboard() {
         const allEntries: MaintenanceEntry[] = [];
         for (const vehicle of vehiclesList) {
           const entries = await getMaintenanceEntries(vehicle.vin);
-          allEntries.push(...entries.map((entry: any): MaintenanceEntry => ({
-            ...entry,
-            vehicle: {
-              vin: vehicle.vin,
-              make: vehicle.make,
-              model: vehicle.model,
-              year: vehicle.year
-            }
-          })));
+          allEntries.push(
+            ...entries.map(
+              (entry: FirestoreMaintenanceEntry): MaintenanceEntry => ({
+                ...entry,
+                date:
+                  entry.createdAt?.toDate?.()?.toISOString() ||
+                  new Date().toISOString(),
+                cost: entry.cost?.toString(),
+                vehicle: {
+                  vin: vehicle.vin,
+                  make: vehicle.make,
+                  model: vehicle.model,
+                  year: vehicle.year,
+                },
+              })
+            )
+          );
         }
 
         // Sort by date (most recent first)
-        allEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        allEntries.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
         setMaintenanceEntries(allEntries);
       } catch (error) {
         console.error('Error loading timeline data:', error);
@@ -62,9 +84,13 @@ export default function TimelineDashboard() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-5 py-5">
-        <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">Maintenance Timeline</h1>
+        <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">
+          Maintenance Timeline
+        </h1>
         <div className="flex justify-center items-center h-64">
-          <div className="text-slate-600 dark:text-slate-400">Loading timeline...</div>
+          <div className="text-slate-600 dark:text-slate-400">
+            Loading timeline...
+          </div>
         </div>
       </div>
     );
@@ -72,12 +98,18 @@ export default function TimelineDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-5 py-5">
-      <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">Maintenance Timeline</h1>
+      <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">
+        Maintenance Timeline
+      </h1>
 
       {maintenanceEntries.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-slate-500 dark:text-slate-400 text-lg mb-2">No maintenance history yet</div>
-          <div className="text-slate-400 dark:text-slate-500">Add maintenance entries to your vehicles to see the timeline</div>
+          <div className="text-slate-500 dark:text-slate-400 text-lg mb-2">
+            No maintenance history yet
+          </div>
+          <div className="text-slate-400 dark:text-slate-500">
+            Add maintenance entries to your vehicles to see the timeline
+          </div>
         </div>
       ) : (
         <div className="relative">
@@ -86,7 +118,10 @@ export default function TimelineDashboard() {
 
           <div className="space-y-8">
             {maintenanceEntries.map((entry, index) => (
-              <div key={entry.id || index} className="relative flex items-start">
+              <div
+                key={entry.id || index}
+                className="relative flex items-start"
+              >
                 {/* Timeline dot */}
                 <div className="flex-shrink-0 w-4 h-4 bg-slate-500 dark:bg-slate-400 rounded-full mt-6 ml-6 border-4 border-white dark:border-slate-800"></div>
 
@@ -99,7 +134,8 @@ export default function TimelineDashboard() {
                           {entry.title}
                         </h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {entry.vehicle.make} {entry.vehicle.model} ({entry.vehicle.year}) • {entry.vehicle.vin}
+                          {entry.vehicle.make} {entry.vehicle.model} (
+                          {entry.vehicle.year}) • {entry.vehicle.vin}
                         </p>
                       </div>
                       <div className="text-right">
@@ -113,14 +149,19 @@ export default function TimelineDashboard() {
                     </div>
 
                     {entry.notes && (
-                      <p className="text-slate-700 dark:text-slate-300 mb-3">{entry.notes}</p>
+                      <p className="text-slate-700 dark:text-slate-300 mb-3">
+                        {entry.notes}
+                      </p>
                     )}
 
                     {entry.attachments && entry.attachments.length > 0 && (
                       <div className="border-t border-slate-200 dark:border-slate-600 pt-3">
                         <div className="flex flex-wrap gap-2">
                           {entry.attachments.map((attachment, attIndex) => (
-                            <div key={attIndex} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-700 rounded-md">
+                            <div
+                              key={attIndex}
+                              className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-700 rounded-md"
+                            >
                               {attachment.type?.startsWith('image/') ? (
                                 <img
                                   src={attachment.url}
@@ -132,7 +173,9 @@ export default function TimelineDashboard() {
                                   <span className="text-xs">📄</span>
                                 </div>
                               )}
-                              <span className="text-sm text-slate-700 dark:text-slate-300">{attachment.name}</span>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                                {attachment.name}
+                              </span>
                             </div>
                           ))}
                         </div>

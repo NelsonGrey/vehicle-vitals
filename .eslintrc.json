@@ -1,9 +1,6 @@
 {
   "root": true,
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
   "parserOptions": {
@@ -14,13 +11,7 @@
     "node": true,
     "es2022": true
   },
-  "ignorePatterns": [
-    "node_modules/",
-    "dist/",
-    "build/",
-    "*.generated.*",
-    "dataconnect-generated/"
-  ],
+  "ignorePatterns": ["node_modules/", "dist/", "build/", "*.generated.*", "dataconnect-generated/"],
   "overrides": [
     {
       "files": ["packages/web/**/*.{js,jsx,ts,tsx}"],
@@ -41,7 +32,9 @@
       },
       "rules": {
         "react/react-in-jsx-scope": "off",
-        "react/prop-types": "off"
+        "react/prop-types": "off",
+        "react/no-unescaped-entities": "off",
+        "@typescript-eslint/no-explicit-any": "off"
       }
     }
   ]

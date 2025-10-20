@@ -1,10 +1,5 @@
-// Firebase configuration for web app
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
-import { getMessaging } from 'firebase/messaging';
-import { getStorage } from 'firebase/storage';
+// Firebase configuration for web app using shared utilities
+import { FirebaseClient } from '@shared/firebase-utils';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,15 +11,20 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase using shared client
+const firebaseClient = FirebaseClient.initialize(firebaseConfig);
 
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const functions = getFunctions(app);
-export const messaging = getMessaging(app);
-export const storage = getStorage(app);
+// Connect to emulators in development
+if (import.meta.env.DEV) {
+  firebaseClient.connectToEmulators();
+}
+
+// Export Firebase services
+export const auth = firebaseClient.auth;
+export const db = firebaseClient.firestore;
+export const functions = firebaseClient.functions;
+export const storage = firebaseClient.storage;
+export const app = firebaseClient.app;
 
 // Legacy exports for compatibility
 export const getFirebaseConfig = () => firebaseConfig;

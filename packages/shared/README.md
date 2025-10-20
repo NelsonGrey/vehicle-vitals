@@ -7,7 +7,6 @@ Shared utilities and Firebase services for the Vehicle Vitals monorepo.
 - 🔥 Firebase configuration and services
 - 📊 Firestore service factory with authentication
 - 🏷️ TypeScript types and interfaces
-- ☁️ Azure integration utilities (placeholder)
 
 ## Usage
 
@@ -27,7 +26,6 @@ const newVehicle = { ...defaultVehicle, vin: 'ABC123' };
 - `createFirestoreService` - Factory for Firestore service
 - `firebaseConfig` - Firebase configuration
 - `defaultVehicle` - Default vehicle object structure
-- `azureConfig` - Azure configuration (when implemented)
 
 ## Development
 

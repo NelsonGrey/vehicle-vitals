@@ -21,14 +21,14 @@ Update the placeholder values in `.env.staging` and `.env.development` with your
 
 ### Option A: GitHub Actions (Recommended)
 
-The repository includes a GitHub Action (`.github/workflows/firebase-deploy.yml`) that automatically deploys based on the target environment.
+The repository includes a GitHub Action (`.github/workflows/ci-cd-pipeline.yml`) that automatically deploys based on the target environment.
 
 #### Setup GitHub Secrets
 In your repository settings -> Secrets -> Actions, add:
 - `FIREBASE_TOKEN` = your CI token from `firebase login:ci`
 - `FIREBASE_PROJECT_PROD` = `vehicle-vitals-prod`
 - `FIREBASE_PROJECT_STAGING` = `vehicle-vitals-staging`
-- `FIREBASE_PROJECT_DEV` = `vehicle-vitals-development`
+- `FIREBASE_PROJECT_DEV` = `vehicle-vitals-dev`
 
 #### Automatic Deployment Triggers
 - **Production**: Push to `main` branch

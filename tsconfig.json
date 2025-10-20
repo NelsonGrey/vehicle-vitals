@@ -1,14 +1,23 @@
 {
+  "include": ["packages/*/src/**/*"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
+    "noEmit": true,
+    "module": "ESNext",
     "strict": true,
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler",
+    "ignoreDeprecations": "5.0",
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
-  },
-  "files": [],
-  "references": [
-    { "path": "./packages/web" },
-    { "path": "./packages/shared" },
-    { "path": "./packages/api-server" },
-    { "path": "./packages/api-shared" }
-  ]
+    "paths": {
+      "@vehicle-vitals/shared": ["./packages/shared/src"],
+      "@vehicle-vitals/shared/*": ["./packages/shared/src/*"]
+    }
+  }
 }

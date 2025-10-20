@@ -9,8 +9,17 @@ function normalizeName(s) {
   return (s || '').trim();
 }
 
+export function clearCache() {
+  makesCache.list = null;
+  makesCache.fetchedAt = 0;
+  modelsCache.clear();
+}
+
 export async function fetchAllMakes() {
-  if (makesCache.list && Date.now() - makesCache.fetchedAt < 24 * 60 * 60 * 1000) {
+  if (
+    makesCache.list &&
+    Date.now() - makesCache.fetchedAt < 24 * 60 * 60 * 1000
+  ) {
     return makesCache.list;
   }
   const url = `${VPIC_BASE}/GetAllMakes?format=json`;
@@ -18,7 +27,7 @@ export async function fetchAllMakes() {
   if (!res.ok) throw new Error('Failed to load makes');
   const data = await res.json();
   const list = (data?.Results || [])
-    .map((r) => normalizeName(r?.Make_Name))
+    .map(r => normalizeName(r?.Make_Name))
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b));
   makesCache.list = list;
@@ -32,7 +41,8 @@ export async function fetchModelsForMakeYear(make, year) {
   if (!m || !y) return [];
   const key = `${m}|${y}`;
   const cached = modelsCache.get(key);
-  if (cached && Date.now() - cached.fetchedAt < 24 * 60 * 60 * 1000) return cached.list;
+  if (cached && Date.now() - cached.fetchedAt < 24 * 60 * 60 * 1000)
+    return cached.list;
 
   const url = `${VPIC_BASE}/GetModelsForMakeYear/make/${encodeURIComponent(m)}/modelyear/${encodeURIComponent(y)}?format=json`;
   const res = await fetch(url);
@@ -41,7 +51,7 @@ export async function fetchModelsForMakeYear(make, year) {
   const list = Array.from(
     new Set(
       (data?.Results || [])
-        .map((r) => normalizeName(r?.Model_Name))
+        .map(r => normalizeName(r?.Model_Name))
         .filter(Boolean)
     )
   ).sort((a, b) => a.localeCompare(b));

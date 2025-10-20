@@ -58,6 +58,14 @@ jobs:
       - name: Make distribution script executable
         run: chmod +x packages/mobile/distribute-android.sh
 
+      - name: Extract AdMob configuration for production
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Use GitHub secrets for AdMob configuration
+          echo "ADMOB_BANNER_UNIT_ID=${{ secrets.ADMOB_BANNER_UNIT_ID_ANDROID }}" >> $GITHUB_ENV
+          echo "ADMOB_INTERSTITIAL_UNIT_ID=${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_ANDROID }}" >> $GITHUB_ENV
+          echo "ADMOB_REWARDED_UNIT_ID=${{ secrets.ADMOB_REWARDED_UNIT_ID_ANDROID }}" >> $GITHUB_ENV
+
       - name: Build and distribute Android app
         env:
           ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}

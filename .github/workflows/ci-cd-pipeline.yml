@@ -74,11 +74,23 @@ jobs:
       - name: 🏗️ Build Shared Package First
         run: npm run build --workspace=@vehicle-vitals/shared
 
-      - name: 🔧 TypeScript Check
-        run: npm run check --workspaces --if-present
+      - name: 🔧 TypeScript Check (Shared)
+        run: npm run check --workspace=@vehicle-vitals/shared
 
-      - name: 🧪 Run Tests
-        run: npm run test --workspaces --if-present
+      - name: 🔧 TypeScript Check (Web)
+        run: npm run check --workspace=@vehicle-vitals/web
+
+      - name: 🔧 TypeScript Check (Firebase Utils)
+        run: npm run check --workspace=@shared/firebase-utils
+
+      - name: 🧪 Run Tests (Shared)
+        run: npm run test --workspace=@vehicle-vitals/shared
+
+      - name: 🧪 Run Tests (Web)
+        run: npm run test --workspace=@vehicle-vitals/web
+
+      - name: 🧪 Run Tests (Firebase Utils)
+        run: npm run test --workspace=@shared/firebase-utils
 
       - name: 🛡️ Security Audit
         run: npm audit --audit-level=high

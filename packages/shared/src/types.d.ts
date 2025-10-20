@@ -21,7 +21,3 @@ export interface MaintenanceRecord {
   provider: string;
   notes: string;
 }
-
-export const defaultVehicle: Vehicle;
-export const defaultMaintenanceRecord: MaintenanceRecord;
-export const MAINTENANCE_TYPES: string[];

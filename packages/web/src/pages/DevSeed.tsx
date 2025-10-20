@@ -1,12 +1,12 @@
+import { defaultVehicle } from '@vehicle-vitals/shared';
 import { useState } from 'react';
 import { useAuth } from '../shared/AuthContext';
 import {
-  addOrUpdateVehicle,
   addMaintenanceEntry,
-  getVehicles,
+  addOrUpdateVehicle,
   getMaintenanceEntries,
+  getVehicles,
 } from '../shared/firestoreService';
-import { defaultVehicle } from '@vehicle-vitals/shared';
 
 interface SeedDetails {
   vehiclesCount: number;
@@ -19,7 +19,11 @@ export default function DevSeed() {
   const [details, setDetails] = useState<SeedDetails | null>(null);
 
   if (!import.meta.env.DEV) {
-    return <div className="dev-seed-container">This seeding page is only available in development builds.</div>;
+    return (
+      <div className="dev-seed-container">
+        This seeding page is only available in development builds.
+      </div>
+    );
   }
 
   const uid = user?.uid || '(not signed in)';
@@ -27,7 +31,9 @@ export default function DevSeed() {
   const runSeed = async () => {
     try {
       if (!user?.uid) {
-        setStatus('Please sign in (enable Anonymous sign-in for dev), then reload this page.');
+        setStatus(
+          'Please sign in (enable Anonymous sign-in for dev), then reload this page.'
+        );
         return;
       }
       setStatus('Seeding...');
@@ -52,7 +58,10 @@ export default function DevSeed() {
 
       const vehicles = await getVehicles();
       const maint = await getMaintenanceEntries(vehicle.vin);
-      setDetails({ vehiclesCount: vehicles.length, maintenanceCount: maint.length });
+      setDetails({
+        vehiclesCount: vehicles.length,
+        maintenanceCount: maint.length,
+      });
       setStatus('Seed complete');
     } catch (err) {
       console.error(err);
@@ -67,13 +76,12 @@ export default function DevSeed() {
       <button onClick={runSeed}>Seed sample data</button>
       <p className="dev-seed-status">Status: {status}</p>
       {details && (
-        <pre className="dev-seed-pre">
-{JSON.stringify(details, null, 2)}
-        </pre>
+        <pre className="dev-seed-pre">{JSON.stringify(details, null, 2)}</pre>
       )}
       <p className="dev-seed-note">
-        This page writes to Firestore to create the expected collections (users/uid/vehicles, .../maintenance).
-        Remove this route before production if you don&apos;t want it exposed.
+        This page writes to Firestore to create the expected collections
+        (users/uid/vehicles, .../maintenance). Remove this route before
+        production if you don&apos;t want it exposed.
       </p>
     </div>
   );

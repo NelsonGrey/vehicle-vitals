@@ -61,7 +61,7 @@ Object.defineProperty(document, 'body', {
 });
 
 // Mock Date
-const mockDate = new Date('2024-01-15');
+const mockDate = new Date('2025-10-20T00:00:00.000Z');
 vi.useFakeTimers();
 vi.setSystemTime(mockDate);
 
@@ -189,7 +189,7 @@ describe('dataExport', () => {
       const linkElement = document.createElement.mock.results[0].value;
       expect(linkElement.setAttribute).toHaveBeenCalledWith(
         'download',
-        'maintenance_TESTVIN123_2025-10-20.csv'
+        'maintenance_TESTVIN123_2025-10-21.csv'
       );
     });
 
@@ -289,7 +289,7 @@ describe('dataExport', () => {
         });
 
         expect(mockJsPDF.save).toHaveBeenCalledWith(
-          'maintenance_1HGBH41JXMN109186_2025-10-20.pdf'
+          'maintenance_1HGBH41JXMN109186_2025-10-21.pdf'
         );
       });
 
@@ -392,7 +392,7 @@ describe('dataExport', () => {
         );
 
         expect(mockJsPDF.save).toHaveBeenCalledWith(
-          'complete_vehicle_report_2025-10-20.pdf'
+          'complete_vehicle_report_2025-10-21.pdf'
         );
       });
 

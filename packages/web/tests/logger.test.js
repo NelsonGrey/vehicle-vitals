@@ -88,7 +88,8 @@ describe('Logger', () => {
 
       expect(consoleSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('[ERROR] Test error message - Test error'),
-        testError
+        testError,
+        expect.any(Object)
       );
       expect(consoleSpy.error).toHaveBeenCalledWith(
         'Error tracked:',
@@ -110,7 +111,8 @@ describe('Logger', () => {
         expect.stringContaining(
           '[CRITICAL] Test critical message - Critical error'
         ),
-        testError
+        testError,
+        expect.any(Object)
       );
       expect(consoleSpy.error).toHaveBeenCalledWith(
         'Error tracked:',
@@ -200,7 +202,11 @@ describe('Logger', () => {
 
       expect(consoleSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('[ERROR] Exception captured - Test exception'),
-        testError
+        testError,
+        expect.objectContaining({
+          category: 'error',
+          context: { component: 'TestComponent' },
+        })
       );
       expect(consoleSpy.error).toHaveBeenCalledWith(
         'Error tracked:',
@@ -224,7 +230,14 @@ describe('Logger', () => {
 
       expect(consoleSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('[ERROR] Exception captured - Boundary error'),
-        testError
+        testError,
+        expect.objectContaining({
+          category: 'error',
+          context: expect.objectContaining({
+            componentStack: 'Test stack',
+            errorBoundary: true,
+          }),
+        })
       );
       expect(consoleSpy.error).toHaveBeenCalledWith(
         'Error tracked:',
@@ -259,6 +272,7 @@ describe('Logger', () => {
       );
       expect(consoleSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('[ERROR] Convenience error'),
+        expect.any(Error),
         expect.any(Object)
       );
     });

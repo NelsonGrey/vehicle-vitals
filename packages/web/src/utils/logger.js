@@ -154,7 +154,7 @@ class Logger {
         break;
       case LogLevel.ERROR:
       case LogLevel.CRITICAL:
-        console.error(message, entry.error || logData);
+        console.error(message, entry.error, logData);
         break;
     }
   }

@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Firebase App Distribution Script for iOS
-# Usage: ./distribute-ios.sh [debug|release] [release-notes]
+#!/bin/bash
+
+# iOS Distribution Script (Firebase App Distribution or TestFlight)
+# Usage: ./distribute-ios.sh [debug|release|testflight] [release-notes]
 
 set -e
 
@@ -13,7 +15,7 @@ echo "Build type: $BUILD_TYPE"
 echo "Release notes: $RELEASE_NOTES"
 
 # Navigate to mobile directory
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")"
 
 # Determine environment (default to development for manual builds)
 ENVIRONMENT=${ENVIRONMENT:-development}
@@ -33,23 +35,27 @@ fi
 
 # Check if Fastlane is installed
 if ! command -v fastlane &> /dev/null; then
-    echo "� Installing Fastlane..."
+    echo "💎 Installing Fastlane..."
     gem install fastlane
 fi
 
 # Install Fastlane plugins
 echo "🔌 Installing Fastlane plugins..."
 cd ios
-bundle install 2>/dev/null || echo "No Gemfile found, installing firebase plugin directly..."
+bundle install 2>/dev/null || echo "No Gemfile found, installing plugins directly..."
 fastlane add_plugin firebase_app_distribution
 
-# Run Fastlane distribution
-echo "🏃 Running Fastlane distribution..."
-if [ "$BUILD_TYPE" = "release" ]; then
+# Run appropriate distribution
+echo "🏃 Running distribution..."
+if [ "$BUILD_TYPE" = "testflight" ]; then
+    echo "📱 Deploying to TestFlight..."
+    fastlane ios testflight release_notes:"$RELEASE_NOTES"
+    echo "🎉 iOS app uploaded to TestFlight successfully!"
+    echo "📱 Beta testers will receive notifications via TestFlight app"
+elif [ "$BUILD_TYPE" = "release" ]; then
     fastlane ios release release_notes:"$RELEASE_NOTES"
+    echo "🎉 iOS app distributed to production testers!"
 else
     fastlane ios debug release_notes:"$RELEASE_NOTES"
+    echo "🎉 iOS debug app distributed to internal testers!"
 fi
-
-echo "🎉 iOS app distributed successfully!"
-echo "📱 Testers will receive notifications via email"

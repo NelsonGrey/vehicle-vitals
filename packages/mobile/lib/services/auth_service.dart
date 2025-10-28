@@ -1,9 +1,31 @@
 import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
+
+// Mock User class for TestFlight build
+class User {
+  final String uid;
+  final String? email;
+  final String? displayName;
+  final bool emailVerified;
+
+  User({
+    required this.uid,
+    this.email,
+    this.displayName,
+    this.emailVerified = true,
+  });
+}
+
+// Mock UserCredential class for TestFlight build
+class UserCredential {
+  final User user;
+
+  UserCredential({required this.user});
+}
 
 class AuthService extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _currentUser;
   bool _isLoading = true;
 
@@ -15,82 +37,58 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   void _init() {
-    _auth.authStateChanges().listen((User? user) {
-      _currentUser = user;
-      _isLoading = false;
-      notifyListeners();
-    });
+    // Mock auth state - always signed in for TestFlight
+    _currentUser = User(
+      uid: 'testflight-user',
+      email: 'test@example.com',
+      displayName: 'TestFlight User',
+    );
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<UserCredential?> signInWithEmailAndPassword(
     String email,
     String password,
   ) async {
-    try {
-      final credential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return credential;
-    } catch (e) {
-      debugPrint('Sign in error: $e');
-      rethrow;
-    }
+    // Mock successful sign in
+    final user = User(uid: 'testflight-user', email: email);
+    _currentUser = user;
+    notifyListeners();
+    return UserCredential(user: user);
   }
 
   Future<UserCredential?> createUserWithEmailAndPassword(
     String email,
     String password,
   ) async {
-    try {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return credential;
-    } catch (e) {
-      debugPrint('Sign up error: $e');
-      rethrow;
-    }
+    // Mock successful sign up
+    final user = User(uid: 'testflight-user', email: email);
+    _currentUser = user;
+    notifyListeners();
+    return UserCredential(user: user);
   }
 
   Future<void> signOut() async {
-    try {
-      await _auth.signOut();
-    } catch (e) {
-      debugPrint('Sign out error: $e');
-      rethrow;
-    }
+    // Mock sign out
+    _currentUser = null;
+    notifyListeners();
   }
 
   Future<void> resetPassword(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-    } catch (e) {
-      debugPrint('Reset password error: $e');
-      rethrow;
-    }
+    // Mock password reset - do nothing
+    debugPrint('Mock password reset for: $email');
   }
 
   Future<UserCredential?> signInWithApple() async {
-    try {
-      final appleCredential = await apple.SignInWithApple.getAppleIDCredential(
-        scopes: [
-          apple.AppleIDAuthorizationScopes.email,
-          apple.AppleIDAuthorizationScopes.fullName,
-        ],
-      );
-
-      final oauthCredential = OAuthProvider('apple.com').credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
-
-      final userCredential = await _auth.signInWithCredential(oauthCredential);
-      return userCredential;
-    } catch (e) {
-      debugPrint('Apple sign-in error: $e');
-      rethrow;
-    }
+    // Mock Apple sign in
+    final user = User(
+      uid: 'testflight-apple-user',
+      email: 'apple@example.com',
+      displayName: 'Apple User',
+    );
+    _currentUser = user;
+    notifyListeners();
+    return UserCredential(user: user);
   }
 }

@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+// import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,38 +52,38 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final functions = FirebaseFunctions.instance;
-      final result = await functions.httpsCallable('decodeVIN').call({
-        'vin': vin,
+      // Mock VIN decoding for TestFlight - disabled Firebase Functions
+      // final functions = FirebaseFunctions.instance;
+      // final result = await functions.httpsCallable('decodeVIN').call({
+      //   'vin': vin,
+      // });
+
+      // Mock response for TestFlight
+      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+
+      // Mock vehicle data based on VIN
+      final mockVehicleData = {
+        'make': 'Honda',
+        'model': 'Civic',
+        'year': '2020',
+      };
+
+      setState(() {
+        _makeController.text = mockVehicleData['make'] ?? '';
+        _modelController.text = mockVehicleData['model'] ?? '';
+        _yearController.text = mockVehicleData['year'] ?? '';
       });
 
-      if (result.data['success'] == true) {
-        final vehicle = result.data['vehicle'];
-        setState(() {
-          _makeController.text = vehicle['make'] ?? '';
-          _modelController.text = vehicle['model'] ?? '';
-          _yearController.text = vehicle['year'] ?? '';
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            // ignore: use_build_context_synchronously
-            const SnackBar(
-              content: Text('VIN decoded successfully!'),
-              backgroundColor: Colors.green,
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          // ignore: use_build_context_synchronously
+          const SnackBar(
+            content: Text(
+              'VIN decoded successfully! (Mock data for TestFlight)',
             ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            // ignore: use_build_context_synchronously
-            SnackBar(
-              content: Text('Failed to decode VIN: ${result.data['error']}'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

@@ -16,10 +16,6 @@ import {
   generateMaintenanceAttachmentPath,
   uploadFile,
 } from '../shared/storageService';
-import {
-  exportMaintenanceAsCSV,
-  exportMaintenanceAsPDF,
-} from '../utils/dataExport';
 import { decodeVin } from '../utils/vehicleService';
 
 interface Vehicle {
@@ -454,13 +450,23 @@ function MaintenanceList({ vin }: { vin: string }) {
         </h3>
         <div className="flex gap-2">
           <button
-            onClick={() => exportMaintenanceAsCSV(entries, form)}
+            onClick={async () => {
+              const { exportMaintenanceAsCSV } = await import(
+                '../utils/dataExport'
+              );
+              exportMaintenanceAsCSV(entries, form);
+            }}
             className="bg-slate-600 hover:bg-slate-700 text-white font-medium py-1 px-3 rounded-md transition-colors duration-200 text-sm"
           >
             Export CSV
           </button>
           <button
-            onClick={() => exportMaintenanceAsPDF(entries, form)}
+            onClick={async () => {
+              const { exportMaintenanceAsPDF } = await import(
+                '../utils/dataExport'
+              );
+              exportMaintenanceAsPDF(entries, form);
+            }}
             className="bg-slate-600 hover:bg-slate-700 text-white font-medium py-1 px-3 rounded-md transition-colors duration-200 text-sm"
           >
             Export PDF

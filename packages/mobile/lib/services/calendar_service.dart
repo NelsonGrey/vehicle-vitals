@@ -1,37 +1,28 @@
-import 'package:add_2_calendar/add_2_calendar.dart' as add2cal;
-import 'package:device_calendar/device_calendar.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:device_calendar/device_calendar.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logging/logging.dart';
 
 class CalendarService {
-  final DeviceCalendarPlugin _deviceCalendar = DeviceCalendarPlugin();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // final DeviceCalendarPlugin _deviceCalendar = DeviceCalendarPlugin();
+  // final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final Logger _logger = Logger('CalendarService');
 
   // Check if calendar permissions are granted
   Future<bool> hasCalendarPermissions() async {
-    final permissionsGranted = await _deviceCalendar.hasPermissions();
-    return permissionsGranted.isSuccess && permissionsGranted.data == true;
+    // Mock: always return false for TestFlight
+    return false;
   }
 
   // Request calendar permissions
   Future<bool> requestCalendarPermissions() async {
-    final permissionsGranted = await _deviceCalendar.requestPermissions();
-    return permissionsGranted.isSuccess && permissionsGranted.data == true;
+    // Mock: always return false for TestFlight
+    return false;
   }
 
   // Get available calendars
-  Future<List<Calendar>> getAvailableCalendars() async {
-    final calendarsResult = await _deviceCalendar.retrieveCalendars();
-    if (calendarsResult.isSuccess && calendarsResult.data != null) {
-      return calendarsResult.data!
-          .where(
-            (calendar) =>
-                calendar.isReadOnly == false && calendar.isDefault == true,
-          )
-          .toList();
-    }
+  Future<List<dynamic>> getAvailableCalendars() async {
+    // Mock: return empty list for TestFlight
     return [];
   }
 
@@ -42,36 +33,16 @@ class CalendarService {
     required DateTime dueDate,
     required String vehicleInfo,
   }) async {
-    try {
-      final event = add2cal.Event(
-        title: 'Vehicle Maintenance: $title',
-        description:
-            '$description\n\nVehicle: $vehicleInfo\n\nAdded by Vehicle Vitals',
-        startDate: dueDate,
-        endDate: dueDate.add(const Duration(hours: 1)), // 1 hour duration
-        location: 'Vehicle Service Center',
-      );
-
-      final result = await add2cal.Add2Calendar.addEvent2Cal(event);
-      return result;
-    } catch (e) {
-      _logger.severe('Error adding to calendar', e);
-      return false;
-    }
+    // Calendar integration intentionally disabled for TestFlight build
+    // to avoid SPM plugin archiving issues. Will be re-implemented post-TestFlight.
+    _logger.info('Calendar integration disabled for TestFlight build');
+    return false;
   }
 
   // Get user's calendar preferences
   Future<Map<String, dynamic>> getCalendarPreferences() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-
-    final doc = await _firestore.collection('users').doc(user.uid).get();
-    final data = doc.data() ?? {};
-
-    return {
-      'calendarSyncEnabled': data['calendarSyncEnabled'] ?? false,
-      'calendarId': data['calendarId'],
-    };
+    // Mock data for TestFlight
+    return {'calendarSyncEnabled': false, 'calendarId': null};
   }
 
   // Update calendar preferences
@@ -79,75 +50,14 @@ class CalendarService {
     bool enabled, {
     String? calendarId,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-
-    final updateData = <String, dynamic>{'calendarSyncEnabled': enabled};
-    if (calendarId != null) {
-      updateData['calendarId'] = calendarId;
-    }
-
-    await _firestore.collection('users').doc(user.uid).update(updateData);
+    // Mock: do nothing for TestFlight
+    _logger.info('Mock update calendar preferences - TestFlight build');
   }
 
   // Sync upcoming maintenance to calendar
   Future<int> syncUpcomingMaintenanceToCalendar() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-
-    final preferences = await getCalendarPreferences();
-    if (!(preferences['calendarSyncEnabled'] as bool? ?? false)) {
-      throw Exception('Calendar sync is disabled');
-    }
-
-    // Get all user's vehicles
-    final vehiclesSnapshot = await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('vehicles')
-        .get();
-
-    int eventsAdded = 0;
-
-    for (final vehicleDoc in vehiclesSnapshot.docs) {
-      final vehicle = vehicleDoc.data();
-      final vin = vehicleDoc.id;
-
-      // Get maintenance entries due in next 30 days
-      final maintenanceSnapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('vehicles')
-          .doc(vin)
-          .collection('maintenance')
-          .get();
-
-      final now = DateTime.now();
-      final thirtyDaysFromNow = now.add(const Duration(days: 30));
-
-      for (final maintenanceDoc in maintenanceSnapshot.docs) {
-        final maintenance = maintenanceDoc.data();
-        final dueDate = maintenance['date']?.toDate();
-
-        if (dueDate != null &&
-            dueDate.isAfter(now) &&
-            dueDate.isBefore(thirtyDaysFromNow)) {
-          final vehicleInfo =
-              '${vehicle['make']} ${vehicle['model']} (${vehicle['year']})';
-          final success = await addMaintenanceToCalendar(
-            title: maintenance['title'] ?? 'Maintenance',
-            description: maintenance['notes'] ?? '',
-            dueDate: dueDate,
-            vehicleInfo: vehicleInfo,
-          );
-
-          if (success) {
-            eventsAdded++;
-          }
-        }
-      }
-    }
-
-    return eventsAdded;
+    // Mock: return 0 for TestFlight
+    _logger.info('Mock sync upcoming maintenance - TestFlight build');
+    return 0;
   }
 }

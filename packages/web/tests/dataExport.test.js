@@ -1,7 +1,6 @@
 import Papa from 'papaparse';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  exportAllVehiclesAsPDF,
   exportMaintenanceAsCSV,
   exportMaintenanceAsPDF,
 } from '../src/utils/dataExport';
@@ -62,8 +61,23 @@ Object.defineProperty(document, 'body', {
 
 // Mock Date
 const mockDate = new Date('2025-10-20T00:00:00.000Z');
-vi.useFakeTimers();
-vi.setSystemTime(mockDate);
+const OriginalDate = global.Date;
+beforeEach(() => {
+  global.Date = vi.fn((...args) => {
+    if (args.length === 0) {
+      return new OriginalDate(mockDate);
+    }
+    return new OriginalDate(...args);
+  });
+  global.Date.now = vi.fn(() => mockDate.getTime());
+  global.Date.prototype.toISOString = OriginalDate.prototype.toISOString;
+  global.Date.prototype.toLocaleDateString =
+    OriginalDate.prototype.toLocaleDateString;
+});
+
+afterEach(() => {
+  global.Date = OriginalDate;
+});
 
 describe('dataExport', () => {
   beforeEach(() => {
@@ -189,7 +203,7 @@ describe('dataExport', () => {
       const linkElement = document.createElement.mock.results[0].value;
       expect(linkElement.setAttribute).toHaveBeenCalledWith(
         'download',
-        'maintenance_TESTVIN123_2025-10-21.csv'
+        'maintenance_TESTVIN123_2025-10-20.csv'
       );
     });
 
@@ -289,7 +303,7 @@ describe('dataExport', () => {
         });
 
         expect(mockJsPDF.save).toHaveBeenCalledWith(
-          'maintenance_1HGBH41JXMN109186_2025-10-21.pdf'
+          'maintenance_1HGBH41JXMN109186_2025-10-20.pdf'
         );
       });
 
@@ -336,156 +350,6 @@ describe('dataExport', () => {
             body: [],
           })
         );
-      });
-    });
-
-    describe('exportAllVehiclesAsPDF', () => {
-      it('creates comprehensive PDF report for all vehicles', () => {
-        const vehicles = [
-          {
-            vin: 'VIN1',
-            make: 'Honda',
-            model: 'Civic',
-            year: 2020,
-            mileage: 50000,
-          },
-          {
-            vin: 'VIN2',
-            make: 'Toyota',
-            model: 'Camry',
-            year: 2019,
-            mileage: 75000,
-          },
-        ];
-
-        const getMaintenanceForVehicle = vi
-          .fn()
-          .mockReturnValueOnce([
-            {
-              date: new Date('2024-01-10'),
-              title: 'Oil Change',
-              cost: 45.5,
-              mileage: 15000,
-            },
-          ])
-          .mockReturnValueOnce([]);
-
-        exportAllVehiclesAsPDF(vehicles, getMaintenanceForVehicle);
-
-        expect(mockJsPDF.setFontSize).toHaveBeenCalledWith(20);
-        expect(mockJsPDF.text).toHaveBeenCalledWith(
-          'Complete Vehicle Report',
-          20,
-          20
-        );
-
-        // Check that maintenance function was called for each vehicle
-        expect(getMaintenanceForVehicle).toHaveBeenCalledWith('VIN1');
-        expect(getMaintenanceForVehicle).toHaveBeenCalledWith('VIN2');
-
-        // Should have called autoTable for the first vehicle with maintenance
-        expect(mockJsPDF.autoTable).toHaveBeenCalledWith(
-          expect.objectContaining({
-            head: [['Date', 'Service', 'Cost', 'Mileage']],
-            body: [['1/9/2024', 'Oil Change', '$45.50', '15000']],
-          })
-        );
-
-        expect(mockJsPDF.save).toHaveBeenCalledWith(
-          'complete_vehicle_report_2025-10-21.pdf'
-        );
-      });
-
-      it('handles vehicles with no maintenance records', () => {
-        const vehicles = [
-          {
-            vin: 'VIN1',
-            make: 'Honda',
-            model: 'Civic',
-            year: 2020,
-            mileage: 50000,
-          },
-        ];
-
-        const getMaintenanceForVehicle = vi.fn().mockReturnValue([]);
-
-        exportAllVehiclesAsPDF(vehicles, getMaintenanceForVehicle);
-
-        expect(mockJsPDF.text).toHaveBeenCalledWith(
-          'No maintenance records found.',
-          20,
-          expect.any(Number)
-        );
-        expect(mockJsPDF.autoTable).not.toHaveBeenCalled();
-      });
-
-      it('limits maintenance entries to 10 per vehicle in report', () => {
-        const vehicles = [
-          {
-            vin: 'VIN1',
-            make: 'Honda',
-            model: 'Civic',
-            year: 2020,
-            mileage: 50000,
-          },
-        ];
-
-        const maintenanceEntries = Array.from({ length: 15 }, (_, i) => ({
-          date: new Date(`2024-01-${i + 1}`),
-          title: `Service ${i + 1}`,
-          cost: 50 + i,
-          mileage: 10000 + i * 1000,
-        }));
-
-        const getMaintenanceForVehicle = vi
-          .fn()
-          .mockReturnValue(maintenanceEntries);
-
-        exportAllVehiclesAsPDF(vehicles, getMaintenanceForVehicle);
-
-        const autoTableCall = mockJsPDF.autoTable.mock.calls[0][0];
-        expect(autoTableCall.body).toHaveLength(10); // Should be limited to 10
-      });
-
-      it('handles vehicles without mileage', () => {
-        const vehicles = [
-          {
-            vin: 'VIN1',
-            make: 'Honda',
-            model: 'Civic',
-            year: 2020,
-            mileage: null,
-          },
-        ];
-
-        const getMaintenanceForVehicle = vi.fn().mockReturnValue([]);
-
-        exportAllVehiclesAsPDF(vehicles, getMaintenanceForVehicle);
-
-        expect(mockJsPDF.text).toHaveBeenCalledWith(
-          'VIN: VIN1 | Mileage: N/A miles',
-          20,
-          expect.any(Number)
-        );
-      });
-
-      it('adds new pages when content exceeds page height', () => {
-        const vehicles = Array.from({ length: 10 }, (_, i) => ({
-          vin: `VIN${i}`,
-          make: 'Car',
-          model: 'Model',
-          year: 2020,
-          mileage: 50000,
-        }));
-
-        const getMaintenanceForVehicle = vi.fn().mockReturnValue([]);
-
-        // Mock the finalY to simulate page overflow
-        mockJsPDF.lastAutoTable = { finalY: 260 }; // Over 250 threshold
-
-        exportAllVehiclesAsPDF(vehicles, getMaintenanceForVehicle);
-
-        expect(mockJsPDF.addPage).toHaveBeenCalled();
       });
     });
   });

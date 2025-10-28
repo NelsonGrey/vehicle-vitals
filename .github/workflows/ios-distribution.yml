@@ -48,6 +48,7 @@ jobs:
           flutter create --platforms=ios .
 
       - name: Create service account key file
+        if: github.event.inputs.build_type != 'testflight'
         env:
           IOS_SERVICE_ACCOUNT_KEY: ${{ secrets.IOS_SERVICE_ACCOUNT_KEY }}
         run: |

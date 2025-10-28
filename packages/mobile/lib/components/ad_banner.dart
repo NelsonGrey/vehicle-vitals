@@ -1,8 +1,105 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
+
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
+
+// Stub classes for AdMob when package is not available
+class AdSize {
+  static const AdSize banner = AdSize._(320, 50);
+  const AdSize._(this.width, this.height);
+  final int width;
+  final int height;
+}
+
+class AdRequest {
+  const AdRequest();
+}
+
+class BannerAd {
+  BannerAd({
+    required String adUnitId,
+    required AdRequest request,
+    required AdSize size,
+    required BannerAdListener listener,
+  });
+
+  AdSize get size => AdSize.banner;
+  void load() {}
+  void dispose() {}
+}
+
+class BannerAdListener {
+  BannerAdListener({
+    void Function(dynamic ad)? onAdLoaded,
+    void Function(dynamic ad, dynamic err)? onAdFailedToLoad,
+  });
+}
+
+class AdWidget extends StatelessWidget {
+  const AdWidget({super.key, required dynamic ad});
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+class InterstitialAd {
+  static void load({
+    required String adUnitId,
+    required AdRequest request,
+    required InterstitialAdLoadCallback adLoadCallback,
+  }) {}
+  void show() {}
+  void dispose() {}
+  FullScreenContentCallback? fullScreenContentCallback;
+}
+
+class InterstitialAdLoadCallback {
+  InterstitialAdLoadCallback({
+    void Function(InterstitialAd ad)? onAdLoaded,
+    void Function(LoadAdError error)? onAdFailedToLoad,
+  });
+}
+
+class LoadAdError {
+  const LoadAdError(this.message);
+  final String message;
+}
+
+class FullScreenContentCallback {
+  FullScreenContentCallback({
+    void Function(dynamic ad)? onAdShowedFullScreenContent,
+    void Function(dynamic ad)? onAdDismissedFullScreenContent,
+    void Function(dynamic ad, AdError error)? onAdFailedToShowFullScreenContent,
+  });
+}
+
+class AdError {
+  const AdError(this.message);
+  final String message;
+}
+
+class RewardedAd {
+  static void load({
+    required String adUnitId,
+    required AdRequest request,
+    required RewardedAdLoadCallback rewardedAdLoadCallback,
+  }) {}
+  Future<void> show({
+    required OnUserEarnedRewardCallback onUserEarnedReward,
+  }) async {}
+  void dispose() {}
+  FullScreenContentCallback? fullScreenContentCallback;
+}
+
+class RewardedAdLoadCallback {
+  RewardedAdLoadCallback({
+    void Function(RewardedAd ad)? onAdLoaded,
+    void Function(LoadAdError error)? onAdFailedToLoad,
+  });
+}
+
+typedef OnUserEarnedRewardCallback = void Function(dynamic reward);
 
 /// AdMob banner widget for mobile apps
 /// Configure with environment variables or fallback to placeholder
@@ -186,14 +283,14 @@ class InterstitialAdHelper {
 
   static void _setFullScreenContentCallback() {
     _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) =>
+      onAdShowedFullScreenContent: (dynamic ad) =>
           debugPrint('$ad onAdShowedFullScreenContent.'),
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+      onAdDismissedFullScreenContent: (dynamic ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         loadAd(); // Load the next ad
       },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+      onAdFailedToShowFullScreenContent: (dynamic ad, AdError error) {
         debugPrint('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         loadAd(); // Load the next ad
@@ -260,14 +357,14 @@ class RewardedAdHelper {
 
   static void _setFullScreenContentCallback() {
     _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) =>
+      onAdShowedFullScreenContent: (dynamic ad) =>
           debugPrint('$ad onAdShowedFullScreenContent.'),
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
+      onAdDismissedFullScreenContent: (dynamic ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         loadAd(); // Load the next ad
       },
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+      onAdFailedToShowFullScreenContent: (dynamic ad, AdError error) {
         debugPrint('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         loadAd(); // Load the next ad

@@ -1,37 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:logging/logging.dart';
-import 'firebase_options.dart';
+// import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+
+import 'screens/account_screen.dart';
+import 'screens/add_vehicle_screen.dart';
+import 'screens/analytics_screen.dart';
+import 'screens/calendar_preferences_screen.dart';
+import 'screens/contact_screen.dart';
+import 'screens/edit_vehicle_screen.dart';
+import 'screens/email_preferences_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/instructions_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/maintenance_detail_screen.dart';
+import 'screens/maintenance_list_screen.dart';
+import 'screens/offline_settings_screen.dart';
+// import 'components/ad_banner.dart';
+import 'screens/premium_screen.dart';
+import 'screens/privacy_screen.dart';
+import 'screens/scan_vin_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/terms_screen.dart';
+import 'screens/upcoming_tasks_screen.dart';
+import 'services/analytics_service.dart';
+// import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
-import 'services/premium_service.dart';
 import 'services/offline_service.dart';
-import 'services/analytics_service.dart';
+import 'services/premium_service.dart';
 import 'theme/app_theme.dart';
-import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
-import 'screens/add_vehicle_screen.dart';
-import 'screens/edit_vehicle_screen.dart';
-import 'screens/scan_vin_screen.dart';
-import 'screens/maintenance_list_screen.dart';
-import 'screens/maintenance_detail_screen.dart';
-import 'screens/account_screen.dart';
-import 'screens/contact_screen.dart';
-import 'screens/privacy_screen.dart';
-import 'screens/terms_screen.dart';
-import 'screens/instructions_screen.dart';
-import 'screens/email_preferences_screen.dart';
-import 'screens/calendar_preferences_screen.dart';
-import 'components/ad_banner.dart';
-import 'screens/premium_screen.dart';
-import 'screens/offline_settings_screen.dart';
-import 'screens/analytics_screen.dart';
-import 'screens/upcoming_tasks_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,19 +45,19 @@ void main() async {
     );
   });
 
-  // Initialize Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Initialize Firebase - DISABLED FOR TESTFLIGHT
+  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Initialize Google Mobile Ads
-  await MobileAds.instance.initialize();
+  // Initialize Google Mobile Ads - DISABLED FOR TESTFLIGHT
+  // await MobileAds.instance.initialize();
 
-  // Initialize notifications
+  // Initialize notifications - DISABLED FOR TESTFLIGHT
   final notificationService = NotificationService();
-  await notificationService.initialize();
+  // await notificationService.initialize();
 
-  // Pre-load interstitial and rewarded ads
-  InterstitialAdHelper.loadAd();
-  RewardedAdHelper.loadAd();
+  // Pre-load interstitial and rewarded ads - DISABLED FOR TESTFLIGHT
+  // InterstitialAdHelper.loadAd();
+  // RewardedAdHelper.loadAd();
 
   runApp(VehicleVitalsApp(notificationService: notificationService));
 }

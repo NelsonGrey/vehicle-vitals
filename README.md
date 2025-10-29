@@ -14,11 +14,13 @@ packages/
 ```
 
 ## Quick overview
+
 - Web: React app with pages in `web/src/pages/` and a router wired in `App.jsx`.
 - Mobile: Flutter app under `mobile/` with screens in `lib/screens/` and go_router navigation.
 - Shared: `shared/firebaseConfig.js` and `shared/types.js` contain cross-cutting config and types.
 
 ## Project structure (important files)
+
 - `App.jsx` — web entry that registers routes to `web/src/pages/*`.
 - `web/src/pages/Home.jsx` — example page that lists Firestore vehicles for the current user.
 - `web/src/utils/vehicleService.js` — VIN decoding against NHTSA VPIC and example `fetchVehicleByVINAndSave(vin)` that writes to Firestore.
@@ -28,9 +30,11 @@ packages/
 - `shared/types.js` — `defaultVehicle` shape used across the app.
 
 ## Setup & run (developer notes)
+
 The repository contains a web app and a Flutter mobile app. Check each folder for setup instructions.
 
 Web
+
 1. **Optimized Installation (Recommended)**: Use the memory-optimized installation script:
 
 ```bash
@@ -62,6 +66,7 @@ npm run build:web
 **Note**: This project uses a dual-installation approach (root + web) to prevent npm hanging and memory issues. Each workspace manages its own dependencies independently.
 
 Mobile (Flutter)
+
 1. Navigate to mobile directory and install dependencies:
 
 ```bash
@@ -87,6 +92,7 @@ flutter run -d android  # Android is ready!
 ```
 
 See setup guides:
+
 - `mobile/iOS-Firebase-Setup.md` for iOS instructions
 - `mobile/Android-Firebase-Setup.md` for Android instructions
 
@@ -95,6 +101,7 @@ See setup guides:
 **⚠️ IMPORTANT: Firebase is not configured yet!** The project uses placeholder values and will not connect to Firebase until properly configured.
 
 ### Quick Firebase Setup:
+
 1. **Run the setup helper**: `./setup-firebase.sh` (provides step-by-step guidance)
 2. **Or follow manual setup**:
    - Create a Firebase project at https://console.firebase.google.com/
@@ -105,11 +112,13 @@ See setup guides:
    - Replace placeholder values with your Firebase config
 
 ### Configuration Files:
+
 - **Web**: `web/.env.local` (create from `web/.env.example`)
 - **Mobile**: Run `flutterfire configure` in the `mobile/` directory
 - **Firestore Rules**: `firebase/firestore.rules` (deploy with `firebase deploy --only firestore:rules`)
 
 ### Data Convention:
+
 - User data is stored under `users/${userId}/vehicles/${vin}`
 - Preserve this path structure when modifying database code
 
@@ -118,11 +127,13 @@ See setup guides:
 This project supports multiple Firebase environments for development, staging, and production.
 
 ### Environments
+
 - **Production**: `vehicle-vitals-prod` - Live application
 - **Staging**: `vehicle-vitals-staging` - Testing environment
 - **Development**: `vehicle-vitals-dev` - Development environment
 
 ### Quick Deploy
+
 Use the deployment script for easy environment switching:
 
 ```bash
@@ -137,6 +148,7 @@ Use the deployment script for easy environment switching:
 ```
 
 ### Manual Deployment
+
 ```bash
 # Build for specific environment
 cd packages/web
@@ -182,13 +194,15 @@ Or use manual workflow dispatch in GitHub Actions → "Android App Distribution"
 #### Required GitHub Secrets
 
 Add these to your repository secrets:
+
 - `FIREBASE_SERVICE_ACCOUNT_KEY`: Service account JSON key with Firebase App Distribution permissions
-- `ANDROID_STORE_PASSWORD`: Android keystore password  
+- `ANDROID_STORE_PASSWORD`: Android keystore password
 - `ANDROID_KEY_PASSWORD`: Android key password
 
 #### Tester Groups
 
 Configure tester groups in Firebase Console under App Distribution:
+
 - `internal-testers`: Development and testing builds
 - `production-testers`: Release candidate builds
 
@@ -215,6 +229,7 @@ Or use manual workflow dispatch in GitHub Actions → "iOS App Distribution".
 #### Required GitHub Secrets
 
 Add these to your repository secrets:
+
 - `IOS_SERVICE_ACCOUNT_KEY`: Service account JSON key with Firebase App Distribution permissions
 - `IOS_APP_ID`: iOS app ID from Firebase (e.g., `1:489413148337:ios:...`)
 
@@ -227,6 +242,7 @@ Add these to your repository secrets:
 #### Fastlane Configuration
 
 The iOS distribution uses Fastlane with the following lanes:
+
 - `fastlane ios debug` - Debug builds for internal testing
 - `fastlane ios release` - Release builds for production testing
 - `fastlane ios distribute` - Custom distribution with parameters
@@ -280,11 +296,13 @@ packages/mobile/config/
   - Manual builds default to Development config
 
 ## Conventions and patterns
+
 - Auth: components read `auth.currentUser?.uid` directly. Avoid changing this auth model without updating all consumers.
 - Data shape: use `shared/types.js` `defaultVehicle` when creating/updating vehicles.
 - VIN lookup: `web/src/utils/vehicleService.js` demonstrates using the NHTSA VPIC API and persisting a decoded vehicle object keyed by VIN.
 
 ## Useful files to open first
+
 - `web/src/pages/Home.jsx`
 - `web/src/utils/vehicleService.js`
 - `mobile/lib/main.dart`
@@ -292,38 +310,43 @@ packages/mobile/config/
 - `shared/firebaseConfig.js`
 
 ## Troubleshooting
+
 - If Firestore calls silently fail, confirm `auth.currentUser` is set and your Firebase config is valid.
 - If Flutter commands fail, verify your development machine has the required native toolchains (Xcode for iOS, Android SDK for Android).
 
 ### Git push gotchas (GitHub)
+
 - Symptom: `git push` fails with `HTTP 400` / `send-pack: unexpected disconnect`.
-	- Cause: Some Git/libcurl versions over HTTP/2 can error on large pushes.
-	- Fix (safe, reversible):
-		```bash
-		git config --global http.version HTTP/1.1
-		git config --global http.postBuffer 524288000
-		```
-		Revert later with:
-		```bash
-		git config --global --unset http.version
-		git config --global --unset http.postBuffer
-		```
+  - Cause: Some Git/libcurl versions over HTTP/2 can error on large pushes.
+  - Fix (safe, reversible):
+    ```bash
+    git config --global http.version HTTP/1.1
+    git config --global http.postBuffer 524288000
+    ```
+    Revert later with:
+    ```bash
+    git config --global --unset http.version
+    git config --global --unset http.postBuffer
+    ```
 
 - Auth options:
-	- HTTPS with a GitHub Personal Access Token (PAT)
-	- SSH (recommended if you prefer key-based auth)
+  - HTTPS with a GitHub Personal Access Token (PAT)
+  - SSH (recommended if you prefer key-based auth)
 
 - Switch `origin` to SSH (optional):
-	```bash
-	git remote set-url origin git@github.com:mnelson3/vehicle-vitals-react-project.git
-	# test
-	ssh -T git@github.com
-	git push -u origin main
-	```
+  ```bash
+  git remote set-url origin git@github.com:mnelson3/vehicle-vitals.git
+  # test
+  ssh -T git@github.com
+  git push -u origin main
+  ```
 
 ## How to help next
+
 If you want, I can:
+
 - Add exact `package.json`-driven run commands after reading `package.json` files.
 - Add a minimal `.env.example` and local Firebase setup guide.
 - Create a small smoke-test script that asserts the shared `defaultVehicle` shape and that Firestore path functions build expected IDs.
+
 # Test commit to trigger CI/CD workflows

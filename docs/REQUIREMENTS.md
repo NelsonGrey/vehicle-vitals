@@ -19,7 +19,7 @@
 
 ### Package Structure
 ```
-vehicle-vitals-react-project/
+vehicle-vitals/
 ├── web/                    # React web application
 ├── mobile/                 # Flutter mobile application  
 ├── shared/                 # Cross-platform utilities

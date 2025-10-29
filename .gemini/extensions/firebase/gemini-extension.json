@@ -4,7 +4,7 @@
   "mcpServers": {
     "firebase": {
       "command": "npx",
-      "args": ["-y", "firebase-tools", "experimental:mcp", "--dir", "/Users/marknelson/Circus/Repositories/vehicle-vitals-react-project"]
+      "args": ["-y", "firebase-tools", "experimental:mcp", "--dir", "/Users/marknelson/Circus/Repositories/vehicle-vitals"]
     }
   },
   "contextFileName": "FIREBASE.md"

@@ -38,9 +38,9 @@ if ! command -v gh &> /dev/null; then
 fi
 
 # Check if we're in the right repository
-if ! gh repo view --json name | grep -q "vehicle-vitals-react-project"; then
+if ! gh repo view --json name | grep -q "vehicle-vitals"; then
     echo -e "${RED}❌ Not in the correct repository${NC}"
-    echo "Please run this script from the vehicle-vitals-react-project repository"
+    echo "Please run this script from the vehicle-vitals repository"
     exit 1
 fi
 

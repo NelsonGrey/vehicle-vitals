@@ -4,13 +4,16 @@ This repository supports multiple Firebase environments: Production, Staging, an
 
 ## Environment Setup
 
-### 1. Firebase Projects
+### 2. Firebase Projects
+
 - **Production**: `vehicle-vitals-prod`
 - **Staging**: `vehicle-vitals-staging`
-- **Development**: `vehicle-vitals-development`
+- **Development**: `vehicle-vitals-dev`
 
 ### 2. Environment Configuration
+
 Each environment has its own `.env` file:
+
 - `.env` - Production (default)
 - `.env.staging` - Staging environment
 - `.env.development` - Development environment
@@ -24,13 +27,16 @@ Update the placeholder values in `.env.staging` and `.env.development` with your
 The repository includes a GitHub Action (`.github/workflows/ci-cd-pipeline.yml`) that automatically deploys based on the target environment.
 
 #### Setup GitHub Secrets
+
 In your repository settings -> Secrets -> Actions, add:
+
 - `FIREBASE_TOKEN` = your CI token from `firebase login:ci`
 - `FIREBASE_PROJECT_PROD` = `vehicle-vitals-prod`
 - `FIREBASE_PROJECT_STAGING` = `vehicle-vitals-staging`
 - `FIREBASE_PROJECT_DEV` = `vehicle-vitals-dev`
 
 #### Automatic Deployment Triggers
+
 - **Production**: Push to `main` branch
 - **Staging**: Push to `staging` branch or create PR to `main`
 - **Development**: Push to `develop` branch
@@ -38,6 +44,7 @@ In your repository settings -> Secrets -> Actions, add:
 ### Option B: Manual Deployment
 
 #### Build for specific environment:
+
 ```bash
 # Production (default)
 npm run build
@@ -50,6 +57,7 @@ npm run build:development
 ```
 
 #### Deploy to specific environment:
+
 ```bash
 # Production
 firebase use production
@@ -68,7 +76,7 @@ firebase deploy --only hosting
 
 - **Production**: https://vehicle-vitals-prod.web.app
 - **Staging**: https://vehicle-vitals-staging.web.app
-- **Development**: https://vehicle-vitals-development.web.app
+- **Development**: https://vehicle-vitals-dev.web.app
 
 ## Notes
 

@@ -1,4 +1,4 @@
-# Vehicle Vitals Monorepo
+# Vehicle Vitals
 
 A modern vehicle management application with web and mobile clients, built with React, Flutter, and Firebase.
 
@@ -12,6 +12,21 @@ packages/
 ├── web/             # React web application (Vite + React 18)
 └── mobile/          # Flutter mobile application (iOS + Android)
 ```
+
+## 📚 Documentation
+
+Comprehensive project documentation is available in the [`docs/`](/docs) folder:
+
+- **[REQUIREMENTS.md](/docs/REQUIREMENTS.md)** - Complete project requirements, feature status, and implementation roadmap
+- **[DEPLOY.md](/docs/DEPLOY.md)** - Detailed deployment guide for all environments (dev/staging/prod)
+- **[ENVIRONMENT_SETUP.md](/docs/ENVIRONMENT_SETUP.md)** - Environment configuration and GitHub secrets setup
+- **[DEPLOYMENT_STATUS.md](/docs/DEPLOYMENT_STATUS.md)** - Current deployment status and environment details
+- **[FIREBASE_CONFIG.md](/docs/FIREBASE_CONFIG.md)** - Firebase configuration patterns and best practices
+- **[PROD_SETUP_GUIDE.md](/docs/PROD_SETUP_GUIDE.md)** - Production environment setup and secrets management
+- **[BETA_TESTING_GUIDE.md](/docs/BETA_TESTING_GUIDE.md)** - Beta testing preparation and distribution guide
+- **[SECURE_ENVIRONMENTS.md](/docs/SECURE_ENVIRONMENTS.md)** - Security practices for environment management
+- **[FIREBASE_FIRST_STANDARD_ARCHIVED.md](/docs/FIREBASE_FIRST_STANDARD_ARCHIVED.md)** - Firebase Functions architecture (legacy)
+- **[TECHNICAL_DEBT_REPORT.md](/docs/TECHNICAL_DEBT_REPORT.md)** - Technical debt tracking and resolution status
 
 ## Quick overview
 

@@ -25,7 +25,8 @@ Comprehensive project documentation is available in the [`docs/`](/docs) folder:
 - **[PROD_SETUP_GUIDE.md](/docs/PROD_SETUP_GUIDE.md)** - Production environment setup and secrets management
 - **[BETA_TESTING_GUIDE.md](/docs/BETA_TESTING_GUIDE.md)** - Beta testing preparation and distribution guide
 - **[SECURE_ENVIRONMENTS.md](/docs/SECURE_ENVIRONMENTS.md)** - Security practices for environment management
-- **[FIREBASE_FIRST_STANDARD_ARCHIVED.md](/docs/FIREBASE_FIRST_STANDARD_ARCHIVED.md)** - Firebase Functions architecture (legacy)
+- **[ACT_TESTING_GUIDE.md](/docs/ACT_TESTING_GUIDE.md)** - Local GitHub Actions testing with act CLI
+- **[COST_EFFECTIVE_CICD.md](/docs/COST_EFFECTIVE_CICD.md)** - CI/CD cost optimization and testing strategies
 - **[TECHNICAL_DEBT_REPORT.md](/docs/TECHNICAL_DEBT_REPORT.md)** - Technical debt tracking and resolution status
 
 ## Quick overview
@@ -137,7 +138,58 @@ See setup guides:
 - User data is stored under `users/${userId}/vehicles/${vin}`
 - Preserve this path structure when modifying database code
 
-## 🚀 Deployment & Environments
+## 🧪 Testing & CI/CD
+
+This project uses a cost-effective CI/CD strategy that emphasizes local testing to minimize GitHub Actions usage.
+
+### Local Testing (Recommended - 0 Actions minutes)
+
+Test your changes locally before pushing to avoid costly GitHub Actions failures:
+
+```bash
+# Interactive local testing menu
+./scripts/test-cicd-local.sh
+
+# Interactive act testing (GitHub Actions simulation)
+./scripts/test-act.sh
+
+# Test specific workflows
+./scripts/test-act.sh  # Then select option 1 for quality checks
+```
+
+### GitHub Actions Testing (Minimal usage)
+
+- **Triggers**: Only on `main` and `staging` branches to control costs
+- **Dry-run**: Use `[DRY-RUN]` in commit messages for safe testing
+- **Manual**: Use workflow dispatch for controlled testing
+
+### Testing Documentation
+
+- **[ACT_TESTING_GUIDE.md](/docs/ACT_TESTING_GUIDE.md)** - Complete guide for local GitHub Actions testing
+- **[COST_EFFECTIVE_CICD.md](/docs/COST_EFFECTIVE_CICD.md)** - Cost optimization strategies and best practices
+
+### Prerequisites for Local Testing
+
+```bash
+# Install act CLI
+brew install act
+
+# Ensure Docker Desktop is running
+docker info
+
+# Setup test secrets (safe for commits)
+./scripts/test-act.sh  # Select option 7 to setup Docker images
+```
+
+### Testing Workflow
+
+```
+Local Development → Local Scripts → Act Testing → GitHub Dry-Run → Production
+     ↓                    ↓            ↓              ↓              ↓
+   0 minutes          0 minutes    0 minutes    Minimal minutes  Full deployment
+```
+
+See `COST_EFFECTIVE_CICD.md` for detailed cost savings and testing strategies.
 
 This project supports multiple Firebase environments for development, staging, and production.
 

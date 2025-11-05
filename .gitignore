@@ -69,6 +69,10 @@ fastlane/screenshots/
 # Firebase service account keys
 serviceAccountKey.json
 
+# Act CLI secrets (real secrets should not be committed)
+.act-secrets/real-secrets
+.act-secrets/secrets
+
 # Misc
 Thumbs.db
 coverage/

@@ -120,7 +120,13 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🔐 Create Environment File (Production)
+      - name: 📥 Download Shared Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: shared-build
+          path: packages/shared/dist/
+
+      - name: � Create Environment File (Production)
         if: needs.determine-environment.outputs.should-deploy == 'true' && needs.determine-environment.outputs.environment == 'production'
         run: |
           cat > packages/web/.env << EOF

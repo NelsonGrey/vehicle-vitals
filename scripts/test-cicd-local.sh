@@ -56,18 +56,6 @@ check_prerequisites() {
         echo -e "${YELLOW}⚠️  Firebase CLI not found - some tests may be limited${NC}"
     fi
 
-    # Create .env.local if it doesn't exist
-    if [ ! -f ".env.local" ]; then
-        echo -e "${YELLOW}Creating .env.local for local testing...${NC}"
-        cat > .env.local << EOF
-# Local testing environment variables
-# Copy values from your actual environment files
-FIREBASE_TOKEN=your_firebase_token_here
-FIREBASE_SERVICE_ACCOUNT_KEY="{}"
-EOF
-        echo -e "${YELLOW}⚠️  Please update .env.local with your actual secrets${NC}"
-    fi
-
     # Create act secrets file
     mkdir -p .act-secrets
     cat > .act-secrets/secrets << EOF
@@ -261,7 +249,6 @@ main() {
     echo ""
     echo -e "${GREEN}✅ Local testing complete!${NC}"
     echo -e "${BLUE}💡 Tips:${NC}"
-    echo "  - Update .env.local with real secrets for accurate testing"
     echo "  - Use DRY_RUN=true to test without actual deployments"
     echo "  - Run ./scripts/test-act.sh for interactive act testing"
     echo "  - Check act documentation: https://github.com/nektos/act"

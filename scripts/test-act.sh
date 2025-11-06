@@ -115,14 +115,14 @@ test_workflow() {
     # Use lightweight image for Node.js jobs
     if [[ "$workflow" == "ci-cd-pipeline" && "$job" == "quality-check" ]]; then
         act_cmd="$act_cmd --container-options=\"--memory=1g --cpus=1\""
-        act_cmd="$act_cmd -P ubuntu-latest=node:18-alpine"
+        act_cmd="$act_cmd -P ubuntu-latest=node:18-slim"
     elif [[ "$workflow" == "ci-cd-pipeline" && "$job" =~ ^(build-packages|deploy-web)$ ]]; then
         act_cmd="$act_cmd --container-options=\"--memory=2g --cpus=2\""
         act_cmd="$act_cmd -P ubuntu-latest=node:18-slim"
     elif [[ "$workflow" =~ ^(android-distribution|ios-distribution)$ ]]; then
         act_cmd="$act_cmd --container-options=\"--memory=2g --cpus=2\""
-        # Use node:18-alpine for Flutter jobs to avoid architecture issues
-        act_cmd="$act_cmd -P ubuntu-latest=node:18-alpine"
+        # Use node:18-slim for Flutter jobs to avoid architecture issues
+        act_cmd="$act_cmd -P ubuntu-latest=node:18-slim"
     fi
 
     # Add event-specific options

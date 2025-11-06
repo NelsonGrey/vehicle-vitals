@@ -17,9 +17,11 @@ This guide outlines a cost-effective approach to CI/CD testing that minimizes Gi
 | Workflow             | Trigger                         | Estimated Cost  | Frequency |
 | -------------------- | ------------------------------- | --------------- | --------- |
 | CI/CD Pipeline       | Push/PR to main/staging/develop | $2-5 per run    | Daily     |
-| Android Distribution | Push to main/develop            | $5-10 per run   | Daily     |
-| iOS Distribution     | Push to main/develop            | $10-20 per run  | Daily     |
+| Android Distribution | Push to main/staging/develop    | $5-10 per run   | Daily     |
+| iOS Distribution     | Push to main/staging/develop    | $10-20 per run  | Daily     |
 | **Total Monthly**    |                                 | **$500-1,000+** |           |
+
+_Note: Local testing with act CLI reduces unnecessary GitHub Actions runs and provides immediate feedback_
 
 ## 🧪 Testing Strategies
 
@@ -84,8 +86,7 @@ git commit -m "Deploy feature"
 
 1. **act CLI**: `brew install act`
 2. **Docker Desktop**: For running containers locally
-3. **Local secrets**: Create `.env.local` with test values
-4. **Firebase CLI**: `npm install -g firebase-tools` (optional)
+3. **Firebase CLI**: `npm install -g firebase-tools` (optional)
 
 ## 📝 Best Practices
 
@@ -129,7 +130,7 @@ act -W .github/workflows/ci-cd-pipeline.yml --job deploy-web
 
 ## 🚀 Deployment Workflow
 
-### Development Phase
+### Development Phase (Local Testing First)
 
 ```bash
 # 1. Local testing (0 minutes)
@@ -138,8 +139,8 @@ act -W .github/workflows/ci-cd-pipeline.yml --job deploy-web
 # 2. Act testing (0 minutes)
 ./scripts/test-act.sh
 
-# 3. Dry-run push to develop (minimal minutes)
-git commit -m "Feature complete [DRY-RUN]"
+# 3. Push to develop (triggers GitHub Actions for DEVELOPMENT environment)
+git commit -m "Feature complete"
 git push origin develop
 ```
 
@@ -149,11 +150,7 @@ git push origin develop
 # 1. Test staging deployment locally
 ./scripts/test-cicd-local.sh staging
 
-# 2. Dry-run staging deployment
-# Use GitHub UI: Actions → CI/CD Pipeline → Run workflow
-# Set environment=staging, dry_run=true
-
-# 3. Live staging deployment
+# 2. Push to staging (triggers GitHub Actions for STAGING environment)
 git checkout staging
 git merge develop
 git push origin staging
@@ -221,9 +218,10 @@ npm run test -- --coverage
 
 ### Cost Reduction Goals
 
-- **Target**: 80% reduction in Actions minutes
-- **Current**: ~500 minutes/month
-- **Goal**: <100 minutes/month
+- **Target**: 50-70% reduction in Actions minutes through local testing
+- **Strategy**: Use act CLI for development validation, reserve GitHub Actions for actual deployments
+- **Current**: ~500 minutes/month (with local testing adoption)
+- **Goal**: <250 minutes/month (through reduced unnecessary runs)
 
 ### Quality Improvements
 
@@ -236,12 +234,12 @@ npm run test -- --coverage
 ### Modified Triggers
 
 ```yaml
-# Only trigger on main/staging for cost control
+# All branches trigger workflows with proper environment mapping
 on:
   push:
-    branches: [main, staging] # Removed develop
+    branches: [main, staging, develop] # develop → DEVELOPMENT, staging → STAGING, main → PRODUCTION
   workflow_dispatch:
-    # Manual testing with dry-run option
+    # Manual testing with environment selection
 ```
 
 ### Environment-Specific Secrets

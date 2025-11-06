@@ -56,6 +56,33 @@ jobs:
           mkdir -p packages/mobile/android/app
           echo "$SERVICE_ACCOUNT_KEY" > packages/mobile/android/app/service-account-key.json
 
+      - name: Set Android service account environment variable
+        run: echo "ANDROID_SERVICE_ACCOUNT_KEY_FILE=app/service-account-key.json" >> $GITHUB_ENV
+
+      - name: Set Firebase App ID for development
+        if: github.ref == 'refs/heads/develop'
+        run: echo "FIREBASE_APP_ID_ANDROID=${{ secrets.FIREBASE_APP_ID_ANDROID_DEVELOPMENT }}" >> $GITHUB_ENV
+
+      - name: Set Firebase App ID for staging
+        if: github.ref == 'refs/heads/staging'
+        run: echo "FIREBASE_APP_ID_ANDROID=${{ secrets.FIREBASE_APP_ID_ANDROID_STAGING }}" >> $GITHUB_ENV
+
+      - name: Set Firebase App ID for production
+        if: github.ref == 'refs/heads/main'
+        run: echo "FIREBASE_APP_ID_ANDROID=${{ secrets.FIREBASE_APP_ID_ANDROID_PRODUCTION }}" >> $GITHUB_ENV
+
+      - name: Set tester groups for development
+        if: github.ref == 'refs/heads/develop'
+        run: echo "TESTER_GROUPS=internal-testers,developers" >> $GITHUB_ENV
+
+      - name: Set tester groups for staging
+        if: github.ref == 'refs/heads/staging'
+        run: echo "TESTER_GROUPS=internal-testers,qa-team" >> $GITHUB_ENV
+
+      - name: Set tester groups for production
+        if: github.ref == 'refs/heads/main'
+        run: echo "TESTER_GROUPS=beta-testers" >> $GITHUB_ENV
+
       - name: Create google-services.json for development
         if: github.ref == 'refs/heads/develop'
         env:

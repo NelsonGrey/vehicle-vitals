@@ -108,12 +108,37 @@ VITE_ENABLE_ANALYTICS_DEVELOPMENT
 VITE_ENABLE_ERROR_REPORTING_DEVELOPMENT
 ```
 
-#### Deployment Secrets (Environment-Specific):
+#### Mobile App Secrets (Environment-Specific):
 ```
-FIREBASE_SERVICE_ACCOUNT_PRODUCTION
-FIREBASE_SERVICE_ACCOUNT_STAGING
-FIREBASE_SERVICE_ACCOUNT_DEVELOPMENT
+FIREBASE_SERVICE_ACCOUNT_KEY (shared across environments)
+GOOGLE_SERVICES_JSON_DEVELOPMENT
+GOOGLE_SERVICES_JSON_STAGING  
+GOOGLE_SERVICES_JSON_PRODUCTION
 ```
+
+### Mobile Firebase Configuration
+
+#### Google Services JSON Files
+
+The mobile app requires `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) files for Firebase integration. These files contain sensitive API keys and must be stored as GitHub secrets.
+
+##### Setting up Google Services JSON Secrets:
+
+1. **Download from Firebase Console:**
+   - Go to Firebase Console → Project Settings → General → Your apps
+   - Download `google-services.json` for Android app
+   - Download `GoogleService-Info.plist` for iOS app
+
+2. **Convert to GitHub Secrets:**
+   - Copy the entire JSON/PLIST content as a single line
+   - Add as repository secrets:
+     - `GOOGLE_SERVICES_JSON_DEVELOPMENT`
+     - `GOOGLE_SERVICES_JSON_STAGING`
+     - `GOOGLE_SERVICES_JSON_PRODUCTION`
+
+3. **CI/CD Pipeline:**
+   - The Android workflow automatically creates `google-services.json` from the secret during build
+   - The iOS workflow automatically creates `GoogleService-Info.plist` from the secret during build
 
 ## Firebase Configuration
 

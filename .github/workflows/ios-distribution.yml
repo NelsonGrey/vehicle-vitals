@@ -48,6 +48,14 @@ jobs:
           cd packages/mobile
           flutter create --platforms=ios .
 
+      - name: Create App Store Connect API key
+        if: github.event.inputs.build_type == 'testflight' || github.ref == 'refs/heads/main'
+        env:
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          mkdir -p packages/mobile/ios/fastlane
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > packages/mobile/ios/fastlane/AuthKey.p8
+
       - name: Create service account key file
         if: github.event.inputs.build_type != 'testflight'
         env:
@@ -55,6 +63,16 @@ jobs:
         run: |
           mkdir -p packages/mobile/ios
           echo "$IOS_SERVICE_ACCOUNT_KEY" > packages/mobile/ios/service-account-key.json
+
+      - name: Set Fastlane environment variables
+        run: |
+          echo "FASTLANE_APPLE_ID=${{ secrets.FASTLANE_APPLE_ID }}" >> $GITHUB_ENV
+          echo "FASTLANE_ITC_TEAM_ID=${{ secrets.FASTLANE_ITC_TEAM_ID }}" >> $GITHUB_ENV
+          echo "FASTLANE_TEAM_ID=${{ secrets.FASTLANE_TEAM_ID }}" >> $GITHUB_ENV
+          echo "APP_STORE_CONNECT_PRIVATE_KEY_ID=${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY_ID }}" >> $GITHUB_ENV
+          echo "APP_STORE_CONNECT_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
+          echo "IOS_APP_ID=${{ secrets.IOS_APP_ID }}" >> $GITHUB_ENV
+          echo "IOS_SERVICE_ACCOUNT_KEY_FILE=service-account-key.json" >> $GITHUB_ENV
 
       - name: Create GoogleService-Info.plist for development
         if: github.ref == 'refs/heads/develop'
@@ -100,4 +118,4 @@ jobs:
 
       - name: Clean up service account key
         if: always()
-        run: rm -f packages/mobile/ios/service-account-key.json
+        run: rm -f packages/mobile/ios/service-account-key.json packages/mobile/ios/fastlane/AuthKey.p8

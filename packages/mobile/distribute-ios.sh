@@ -43,7 +43,9 @@ fi
 echo "🔌 Installing Fastlane plugins..."
 cd ios
 bundle install 2>/dev/null || echo "No Gemfile found, installing plugins directly..."
-fastlane add_plugin firebase_app_distribution
+if [ "$BUILD_TYPE" != "testflight" ]; then
+    fastlane add_plugin firebase_app_distribution
+fi
 
 # Run appropriate distribution
 echo "🏃 Running distribution..."

@@ -25,7 +25,7 @@ jobs:
           CI: true
         run: |
           # Install web dependencies and run tests inside the emulator so emulator-dependent tests run
-          cd web
+          cd packages/web
           npm ci --legacy-peer-deps
           # Run tests inside the emulator context so the rules-unit-testing code can auto-discover it
           # Using firebase emulators:exec ensures emulator host/port are provided to tests.

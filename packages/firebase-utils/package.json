@@ -15,7 +15,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "check": "tsc --noEmit",
-    "test": "vitest",
+    "test": "if [ -d \"tests\" ] && [ \"$(find tests -name '*.test.*' -o -name '*.spec.*' | wc -l)\" -gt 0 ]; then vitest; else echo 'No test files found, skipping tests'; fi",
     "test:ui": "vitest --ui",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",

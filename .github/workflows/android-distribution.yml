@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - staging
       - develop
   workflow_dispatch:
     inputs:
@@ -25,7 +26,7 @@ jobs:
   distribute-android:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -68,7 +69,7 @@ jobs:
 
       - name: Build and distribute Android app
         env:
-          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
         run: |
           cd packages/mobile
           ./distribute-android.sh ${{ github.event.inputs.build_type || 'debug' }} "${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"

@@ -124,12 +124,9 @@ See setup guides:
    - Enable Authentication (Email/Password + Google)
    - Create Firestore Database
    - Get your web app config from Project Settings
-   - Copy `web/.env.example` to `web/.env.local`
-   - Replace placeholder values with your Firebase config
 
 ### Configuration Files:
 
-- **Web**: `web/.env.local` (create from `web/.env.example`)
 - **Mobile**: Run `flutterfire configure` in the `mobile/` directory
 - **Firestore Rules**: `firebase/firestore.rules` (deploy with `firebase deploy --only firestore:rules`)
 

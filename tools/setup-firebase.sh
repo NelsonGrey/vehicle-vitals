@@ -38,12 +38,7 @@ echo "   • Register app as 'Vehicle Vitals Web'"
 echo "   • Copy the config object"
 echo ""
 
-echo "4️⃣ Setup Environment Variables:"
-echo "   • Copy web/.env.example to web/.env.local"
-echo "   • Replace placeholder values with your Firebase config"
-echo ""
-
-echo "5️⃣ Configure Flutter (Optional):"
+echo "4️⃣ Configure Flutter (Optional):"
 echo "   • Run: cd mobile && flutter pub global activate flutterfire_cli"
 echo "   • Run: flutterfire configure"
 echo "   • Select your Firebase project"

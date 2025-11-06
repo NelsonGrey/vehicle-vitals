@@ -62,6 +62,7 @@ Object.defineProperty(document, 'body', {
 // Mock Date
 const mockDate = new Date('2025-10-20T00:00:00.000Z');
 const OriginalDate = global.Date;
+const originalToLocaleDateString = Date.prototype.toLocaleDateString;
 beforeEach(() => {
   global.Date = vi.fn((...args) => {
     if (args.length === 0) {
@@ -71,14 +72,21 @@ beforeEach(() => {
   });
   global.Date.now = vi.fn(() => mockDate.getTime());
   global.Date.prototype.toISOString = OriginalDate.prototype.toISOString;
-  global.Date.prototype.toLocaleDateString =
-    OriginalDate.prototype.toLocaleDateString;
+
+  // Mock toLocaleDateString to return consistent format regardless of timezone
+  global.Date.prototype.toLocaleDateString = function () {
+    const date = this;
+    const utcYear = date.getUTCFullYear();
+    const utcMonth = date.getUTCMonth();
+    const utcDay = date.getUTCDate();
+    return `${utcMonth + 1}/${utcDay}/${utcYear}`;
+  };
 });
 
 afterEach(() => {
   global.Date = OriginalDate;
+  global.Date.prototype.toLocaleDateString = originalToLocaleDateString;
 });
-
 describe('dataExport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -92,14 +100,14 @@ describe('dataExport', () => {
     it('exports maintenance entries as CSV with correct data format', () => {
       const maintenanceEntries = [
         {
-          date: new Date('2024-01-10'),
+          date: new Date(2024, 0, 10), // January 10, 2024 (local time)
           title: 'Oil Change',
           cost: 45.5,
           mileage: 15000,
           notes: 'Regular maintenance',
         },
         {
-          date: new Date('2024-01-05'),
+          date: new Date(2024, 0, 5), // January 5, 2024 (local time)
           title: 'Tire Rotation',
           cost: 25.0,
           mileage: 14500,
@@ -116,14 +124,14 @@ describe('dataExport', () => {
 
       const expectedCsvData = [
         {
-          Date: '1/9/2024',
+          Date: '1/10/2024',
           Title: 'Oil Change',
           Cost: '45.50',
           Mileage: 15000,
           Notes: 'Regular maintenance',
         },
         {
-          Date: '1/4/2024',
+          Date: '1/5/2024',
           Title: 'Tire Rotation',
           Cost: '25.00',
           Mileage: 14500,
@@ -161,7 +169,7 @@ describe('dataExport', () => {
 
       const expectedCsvData = [
         {
-          Date: '1/9/2024',
+          Date: '1/10/2024',
           Title: 'Brake Check',
           Cost: '0.00',
           Mileage: '',
@@ -180,7 +188,7 @@ describe('dataExport', () => {
     it('generates correct filename with VIN and date', () => {
       const maintenanceEntries = [
         {
-          date: new Date('2024-01-10'),
+          date: new Date(2024, 0, 10),
           title: 'Oil Change',
           cost: 45.5,
           mileage: 15000,
@@ -228,14 +236,14 @@ describe('dataExport', () => {
       it('creates PDF with vehicle info and maintenance table', () => {
         const maintenanceEntries = [
           {
-            date: new Date('2024-01-10'),
+            date: new Date(2024, 0, 10),
             title: 'Oil Change',
             cost: 45.5,
             mileage: 15000,
             notes: 'Regular maintenance',
           },
           {
-            date: new Date('2024-01-05'),
+            date: new Date(2024, 0, 5),
             title: 'Tire Rotation',
             cost: 25.0,
             mileage: 14500,
@@ -273,14 +281,14 @@ describe('dataExport', () => {
           head: [['Date', 'Title', 'Cost', 'Mileage', 'Notes']],
           body: [
             [
-              '1/9/2024',
+              '1/10/2024',
               'Oil Change',
               '$45.50',
               '15000',
               'Regular maintenance',
             ],
             [
-              '1/4/2024',
+              '1/5/2024',
               'Tire Rotation',
               '$25.00',
               '14500',
@@ -310,7 +318,7 @@ describe('dataExport', () => {
       it('handles entries with missing cost and mileage in PDF', () => {
         const maintenanceEntries = [
           {
-            date: new Date('2024-01-10'),
+            date: new Date(2024, 0, 10),
             title: 'Brake Check',
             cost: null,
             mileage: null,
@@ -329,7 +337,9 @@ describe('dataExport', () => {
 
         expect(mockJsPDF.autoTable).toHaveBeenCalledWith(
           expect.objectContaining({
-            body: [['1/9/2024', 'Brake Check', '$0.00', '', 'No issues found']],
+            body: [
+              ['1/10/2024', 'Brake Check', '$0.00', '', 'No issues found'],
+            ],
           })
         );
       });

@@ -5,6 +5,7 @@ This guide explains how to set up and configure the three Firebase environments 
 ## Overview
 
 The project supports three environments:
+
 - **Production**: Live environment for end users
 - **Staging**: Pre-production environment for testing
 - **Development**: Development environment for active development
@@ -13,11 +14,11 @@ The project supports three environments:
 
 The following Firebase projects have been set up:
 
-| Environment | Firebase Project ID | Purpose |
-|-------------|-------------------|---------|
-| Production | `vehicle-vitals-prod` | Live production environment |
-| Staging | `vehicle-vitals-staging` | Pre-production testing |
-| Development | `vehicle-vitals-dev` | Development and feature testing |
+| Environment | Firebase Project ID      | Purpose                         |
+| ----------- | ------------------------ | ------------------------------- |
+| Production  | `vehicle-vitals-prod`    | Live production environment     |
+| Staging     | `vehicle-vitals-staging` | Pre-production testing          |
+| Development | `vehicle-vitals-dev`     | Development and feature testing |
 
 # Environment Setup Guide
 
@@ -26,6 +27,7 @@ This guide explains how to set up and configure the three Firebase environments 
 ## Overview
 
 The project supports three environments:
+
 - **Production**: Live environment for end users
 - **Staging**: Pre-production environment for testing
 - **Development**: Development environment for active development
@@ -36,11 +38,11 @@ Environment variables are stored as GitHub secrets with environment-specific nam
 
 The following Firebase projects have been set up:
 
-| Environment | Firebase Project ID | Purpose |
-|-------------|-------------------|---------|
-| Production | `vehicle-vitals-prod` | Live production environment |
-| Staging | `vehicle-vitals-staging` | Pre-production testing |
-| Development | `vehicle-vitals-dev` | Development and feature testing |
+| Environment | Firebase Project ID      | Purpose                         |
+| ----------- | ------------------------ | ------------------------------- |
+| Production  | `vehicle-vitals-prod`    | Live production environment     |
+| Staging     | `vehicle-vitals-staging` | Pre-production testing          |
+| Development | `vehicle-vitals-dev`     | Development and feature testing |
 
 ## GitHub Secrets Configuration
 
@@ -49,6 +51,7 @@ The following Firebase projects have been set up:
 All environment variables are stored as GitHub repository secrets with the naming pattern: `{VARIABLE_NAME}_{ENVIRONMENT}`
 
 #### Production Environment Secrets:
+
 ```
 VITE_FIREBASE_API_KEY_PRODUCTION
 VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION
@@ -69,6 +72,7 @@ VITE_ENABLE_ERROR_REPORTING_PRODUCTION
 ```
 
 #### Staging Environment Secrets:
+
 ```
 VITE_FIREBASE_API_KEY_STAGING
 VITE_FIREBASE_AUTH_DOMAIN_STAGING
@@ -89,6 +93,7 @@ VITE_ENABLE_ERROR_REPORTING_STAGING
 ```
 
 #### Development Environment Secrets:
+
 ```
 VITE_FIREBASE_API_KEY_DEVELOPMENT
 VITE_FIREBASE_AUTH_DOMAIN_DEVELOPMENT
@@ -109,11 +114,16 @@ VITE_ENABLE_ERROR_REPORTING_DEVELOPMENT
 ```
 
 #### Mobile App Secrets (Environment-Specific):
+
 ```
 FIREBASE_SERVICE_ACCOUNT_KEY (shared across environments)
+IOS_SERVICE_ACCOUNT_KEY (for iOS distribution)
 GOOGLE_SERVICES_JSON_DEVELOPMENT
-GOOGLE_SERVICES_JSON_STAGING  
+GOOGLE_SERVICES_JSON_STAGING
 GOOGLE_SERVICES_JSON_PRODUCTION
+GOOGLE_SERVICE_INFO_PLIST_DEVELOPMENT
+GOOGLE_SERVICE_INFO_PLIST_STAGING
+GOOGLE_SERVICE_INFO_PLIST_PRODUCTION
 ```
 
 ### Mobile Firebase Configuration
@@ -132,9 +142,12 @@ The mobile app requires `google-services.json` (Android) and `GoogleService-Info
 2. **Convert to GitHub Secrets:**
    - Copy the entire JSON/PLIST content as a single line
    - Add as repository secrets:
-     - `GOOGLE_SERVICES_JSON_DEVELOPMENT`
-     - `GOOGLE_SERVICES_JSON_STAGING`
-     - `GOOGLE_SERVICES_JSON_PRODUCTION`
+     - `GOOGLE_SERVICES_JSON_DEVELOPMENT` (Android)
+     - `GOOGLE_SERVICES_JSON_STAGING` (Android)
+     - `GOOGLE_SERVICES_JSON_PRODUCTION` (Android)
+     - `GOOGLE_SERVICE_INFO_PLIST_DEVELOPMENT` (iOS)
+     - `GOOGLE_SERVICE_INFO_PLIST_STAGING` (iOS)
+     - `GOOGLE_SERVICE_INFO_PLIST_PRODUCTION` (iOS)
 
 3. **CI/CD Pipeline:**
    - The Android workflow automatically creates `google-services.json` from the secret during build
@@ -164,14 +177,17 @@ The CI/CD pipeline will automatically use these secrets to create the `.env` fil
 ## Deployment URLs
 
 ### Production Environment:
+
 - **Web App**: https://vehicle-vitals-prod.web.app
 - **Mobile PWA**: https://vehicle-vitals-prod.web.app
 
 ### Staging Environment:
+
 - **Web App**: https://vehicle-vitals-staging.web.app
 - **Mobile PWA**: https://vehicle-vitals-staging.web.app
 
 ### Development Environment:
+
 - **Web App**: https://vehicle-vitals-dev.web.app
 - **Mobile PWA**: https://vehicle-vitals-dev.web.app
 
@@ -195,18 +211,21 @@ You can also trigger manual deployments using the workflow dispatch:
 ## Environment-Specific Settings
 
 ### Production Environment:
+
 - Debug tools: Disabled
 - Analytics: Enabled
 - Error reporting: Enabled
 - **Coming Soon Page: Controlled by VITE_SHOW_COMING_SOON_PRODUCTION**
 
 ### Staging Environment:
+
 - Debug tools: Enabled
 - Analytics: Disabled
 - Error reporting: Enabled
 - **Coming Soon Page: Controlled by VITE_SHOW_COMING_SOON_STAGING**
 
 ### Development Environment:
+
 - Debug tools: Enabled
 - Analytics: Disabled
 - Error reporting: Disabled
@@ -314,10 +333,12 @@ The `VITE_SHOW_COMING_SOON_*` environment variables control whether the Coming S
 - Gradually roll out access to different user groups
 
 ### Setting Values:
+
 - `true`: Show Coming Soon page (blocks access to full app)
 - `false`: Show full application
 
 ### Recommended Settings:
+
 - **Production**: `true` (during pre-launch), `false` (after launch)
 - **Staging**: `false` (for testing full functionality)
 - **Development**: `false` (for development work)

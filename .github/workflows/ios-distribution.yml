@@ -56,6 +56,30 @@ jobs:
           mkdir -p packages/mobile/ios
           echo "$IOS_SERVICE_ACCOUNT_KEY" > packages/mobile/ios/service-account-key.json
 
+      - name: Create GoogleService-Info.plist for development
+        if: github.ref == 'refs/heads/develop'
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_DEVELOPMENT }}
+        run: |
+          mkdir -p packages/mobile/config/development/ios
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > packages/mobile/config/development/ios/GoogleService-Info.plist
+
+      - name: Create GoogleService-Info.plist for staging
+        if: github.ref == 'refs/heads/staging'
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_STAGING }}
+        run: |
+          mkdir -p packages/mobile/config/staging/ios
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > packages/mobile/config/staging/ios/GoogleService-Info.plist
+
+      - name: Create GoogleService-Info.plist for production
+        if: github.ref == 'refs/heads/main'
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_PRODUCTION }}
+        run: |
+          mkdir -p packages/mobile/config/production/ios
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > packages/mobile/config/production/ios/GoogleService-Info.plist
+
       - name: Make distribution script executable
         run: chmod +x packages/mobile/distribute-ios.sh
 

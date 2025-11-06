@@ -56,6 +56,30 @@ jobs:
           mkdir -p packages/mobile/android/app
           echo "$SERVICE_ACCOUNT_KEY" > packages/mobile/android/app/service-account-key.json
 
+      - name: Create google-services.json for development
+        if: github.ref == 'refs/heads/develop'
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_DEVELOPMENT }}
+        run: |
+          mkdir -p packages/mobile/config/development/android
+          echo "$GOOGLE_SERVICES_JSON" > packages/mobile/config/development/android/google-services.json
+
+      - name: Create google-services.json for staging
+        if: github.ref == 'refs/heads/staging'
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_STAGING }}
+        run: |
+          mkdir -p packages/mobile/config/staging/android
+          echo "$GOOGLE_SERVICES_JSON" > packages/mobile/config/staging/android/google-services.json
+
+      - name: Create google-services.json for production
+        if: github.ref == 'refs/heads/main'
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_PRODUCTION }}
+        run: |
+          mkdir -p packages/mobile/config/production/android
+          echo "$GOOGLE_SERVICES_JSON" > packages/mobile/config/production/android/google-services.json
+
       - name: Make distribution script executable
         run: chmod +x packages/mobile/distribute-android.sh
 

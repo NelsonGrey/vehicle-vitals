@@ -68,6 +68,10 @@ fastlane/screenshots/
 # Firebase service account keys
 serviceAccountKey.json
 
+# Firebase config files (contain sensitive API keys)
+packages/mobile/config/*/android/google-services.json
+packages/mobile/config/*/ios/GoogleService-Info.plist
+
 # Act CLI secrets (real secrets should not be committed)
 .act-secrets/real-secrets
 .act-secrets/secrets

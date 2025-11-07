@@ -6,7 +6,6 @@ on:
     branches:
       - main
       - staging
-      - develop
   workflow_dispatch:
     inputs:
       build_type:
@@ -24,11 +23,21 @@ on:
 
 jobs:
   distribute-ios:
-    runs-on: macos-latest
+    runs-on: [self-hosted, macos]
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: 🔍 Check Dry-Run Mode
+        id: dry-run-check
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" == *"[DRY-RUN]"* ]]; then
+            echo "dry-run=true" >> $GITHUB_OUTPUT
+            echo "🚫 Dry-run mode detected - iOS distribution will be simulated"
+          else
+            echo "dry-run=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -110,11 +119,19 @@ jobs:
           echo "ADMOB_REWARDED_UNIT_ID=${{ secrets.ADMOB_REWARDED_UNIT_ID_IOS }}" >> $GITHUB_ENV
 
       - name: Build and distribute iOS app
+        if: steps.dry-run-check.outputs.dry-run == 'false'
         env:
           ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
         run: |
           cd packages/mobile
           ./distribute-ios.sh ${{ github.event.inputs.build_type || 'debug' }} "${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"
+
+      - name: 🚫 Dry-Run iOS Distribution Skipped
+        if: steps.dry-run-check.outputs.dry-run == 'true'
+        run: |
+          echo "🔍 Dry-run mode: iOS distribution simulation completed"
+          echo "📋 Build would be distributed to TestFlight/Firebase App Distribution"
+          echo "💡 To deploy for real, remove [DRY-RUN] from commit message"
 
       - name: Clean up service account key
         if: always()

@@ -185,7 +185,7 @@ act --env ENVIRONMENT=development \
 # Use local Firebase emulator for testing
 ```
 
-### 4. Cost-Aware Testing
+## 🎯 Cost-Aware Testing
 
 ```bash
 # Always test locally first
@@ -194,8 +194,11 @@ act --env ENVIRONMENT=development \
 # Use act for workflow logic testing
 ./scripts/test-act.sh
 
-# Only push to GitHub when confident
-git push origin develop  # Only triggers on main/staging now
+# Use safe commits to avoid unnecessary triggers
+./scripts/safe-commit.sh
+
+# Only push to main/staging when confident
+git push origin staging  # Only main/staging trigger Actions now
 ```
 
 ## 🚨 Common Issues & Solutions
@@ -238,10 +241,21 @@ cat .act-secrets/test-secrets
 ## 📈 Testing Workflow
 
 ```
-Local Development → Local Scripts → Act Testing → GitHub Dry-Run → Production
-     ↓                    ↓            ↓              ↓              ↓
-   0 minutes          0 minutes    0 minutes    Minimal minutes  Full deployment
+Local Development → Local Scripts → Act Testing → Safe Commit → Manual Test (develop) → Auto Deploy (main/staging)
+     ↓                    ↓            ↓              ↓              ↓                      ↓
+   0 minutes          0 minutes    0 minutes    0 minutes    Manual trigger          Auto trigger
 ```
+
+### Development Workflow
+
+1. **Make changes** in feature branch
+2. **Test locally** with `./scripts/test-cicd-local.sh`
+3. **Test workflows** with `./scripts/test-act.sh`
+4. **Safe commit** with `./scripts/safe-commit.sh`
+5. **Merge to develop** (no automatic triggers)
+6. **Manual testing** via GitHub Actions workflow_dispatch (if needed)
+7. **Merge to staging** → automatic deployment
+8. **Merge to main** → automatic production deployment
 
 ## 🆘 Emergency Testing
 

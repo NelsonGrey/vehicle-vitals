@@ -75,12 +75,41 @@ act -W .github/workflows/ci-cd-pipeline.yml --job quality-check --container-arch
 # act workflow test
 ./scripts/test-act.sh
 
+# Safe commit with menu (recommended)
+./scripts/safe-commit.sh
+
 # Dry-run commit
-git commit -m "Update feature [DRY-RUN]"
+git commit -m "test: add new feature [DRY-RUN]"
 
 # Live deployment
-git commit -m "Deploy feature"
+git commit -m "feat: add new feature"
 ```
+
+## 🔒 Safe Commit Types
+
+### Production Commits (trigger GitHub Actions on main/staging)
+
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `perf:` - Performance improvements
+- `refactor:` - Code refactoring
+- `style:` - Code style changes
+- `test:` - Adding/modifying tests
+- `ci:` - CI/CD changes
+- `docs:` - Documentation changes
+- `chore:` - Maintenance tasks
+
+### Development Commits (safe, no Actions trigger)
+
+- `feat/wip:` - Work in progress features [SAFE]
+- `experiment:` - Experimental changes [SAFE]
+- `spike:` - Investigation/spike [SAFE]
+- `draft:` - Draft implementation [SAFE]
+
+### Testing Commits (minimal Actions usage)
+
+- `test:` with `[DRY-RUN]` - Test deployment logic
+- `deploy:` with `[TEST-DEPLOY]` - Test deploy to dev environment
 
 ## 🔧 Setup Requirements
 
@@ -139,9 +168,11 @@ act -W .github/workflows/ci-cd-pipeline.yml --job deploy-web
 # 2. Act testing (0 minutes)
 ./scripts/test-act.sh
 
-# 3. Push to develop (triggers GitHub Actions for DEVELOPMENT environment)
-git commit -m "Feature complete"
-git push origin develop
+# 3. Safe commit to develop (no automatic triggers)
+./scripts/safe-commit.sh  # Choose safe commit type
+
+# 4. Optional: Manual testing on develop via workflow_dispatch
+# Go to GitHub Actions → Select workflow → Run workflow
 ```
 
 ### Staging Phase
@@ -150,7 +181,7 @@ git push origin develop
 # 1. Test staging deployment locally
 ./scripts/test-cicd-local.sh staging
 
-# 2. Push to staging (triggers GitHub Actions for STAGING environment)
+# 2. Merge develop to staging (triggers automatic deployment)
 git checkout staging
 git merge develop
 git push origin staging
@@ -162,10 +193,18 @@ git push origin staging
 # 1. Final testing
 ./scripts/test-cicd-local.sh production
 
-# 2. Production deployment
+# 2. Merge staging to main (triggers automatic production deployment)
 git checkout main
 git merge staging
 git push origin main
+```
+
+### Dry-Run Testing
+
+```bash
+# Test deployment logic without actual deployment
+./scripts/safe-commit.sh  # Choose "14. dry-run" option
+git push origin staging   # Will build but skip actual deployment
 ```
 
 ## 📊 Monitoring & Optimization
@@ -234,13 +273,20 @@ npm run test -- --coverage
 ### Modified Triggers
 
 ```yaml
-# All branches trigger workflows with proper environment mapping
+# Only main and staging branches trigger workflows automatically
 on:
   push:
-    branches: [main, staging, develop] # develop → DEVELOPMENT, staging → STAGING, main → PRODUCTION
-  workflow_dispatch:
-    # Manual testing with environment selection
+    branches: [main, staging] # develop excluded for cost savings
+  pull_request:
+    branches: [main, staging]
+  workflow_dispatch: # Manual testing available
 ```
+
+### Branch-Based Deployment
+
+- **main branch**: Production deployment 🚀
+- **staging branch**: Staging deployment 🧪
+- **develop branch**: No automatic triggers 💰 (use workflow_dispatch for manual testing)
 
 ### Environment-Specific Secrets
 

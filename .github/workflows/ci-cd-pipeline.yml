@@ -2,9 +2,9 @@ name: 🚀 CI/CD Pipeline - Build, Test & Deploy All Deliverables
 
 on:
   push:
-    branches: [ main, staging, develop ]
+    branches: [ main, staging ]
   pull_request:
-    branches: [ main, staging, develop ]
+    branches: [ main, staging ]
   workflow_dispatch:
     inputs:
       environment:
@@ -25,10 +25,11 @@ jobs:
   # 🔍 Determine Environment
   determine-environment:
     name: 🔍 Determine Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
       should-deploy: ${{ steps.set-env.outputs.should-deploy }}
+      is-dry-run: ${{ steps.set-env.outputs.is-dry-run }}
     steps:
       - name: 📋 Set Environment Variables
         id: set-env
@@ -37,24 +38,39 @@ jobs:
             INPUT_ENV=$(echo "${{ github.event.inputs.environment }}" | tr '[:upper:]' '[:lower:]')
             echo "environment=$INPUT_ENV" >> $GITHUB_OUTPUT
             echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "is-dry-run=false" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "environment=production" >> $GITHUB_OUTPUT
             echo "should-deploy=true" >> $GITHUB_OUTPUT
+            # Check for dry-run in commit message
+            if [[ "${{ github.event.head_commit.message }}" == *"[DRY-RUN]"* ]]; then
+              echo "is-dry-run=true" >> $GITHUB_OUTPUT
+            else
+              echo "is-dry-run=false" >> $GITHUB_OUTPUT
+            fi
           elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             echo "environment=staging" >> $GITHUB_OUTPUT
             echo "should-deploy=true" >> $GITHUB_OUTPUT
+            # Check for dry-run in commit message
+            if [[ "${{ github.event.head_commit.message }}" == *"[DRY-RUN]"* ]]; then
+              echo "is-dry-run=true" >> $GITHUB_OUTPUT
+            else
+              echo "is-dry-run=false" >> $GITHUB_OUTPUT
+            fi
           elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
             echo "environment=development" >> $GITHUB_OUTPUT
             echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "is-dry-run=true" >> $GITHUB_OUTPUT
           else
             echo "environment=development" >> $GITHUB_OUTPUT
             echo "should-deploy=false" >> $GITHUB_OUTPUT
+            echo "is-dry-run=true" >> $GITHUB_OUTPUT
           fi
 
   # 🔍 Code Quality & Testing
   quality-check:
     name: 🔍 Quality Check & Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: determine-environment
     outputs:
       should-deploy: ${{ needs.determine-environment.outputs.should-deploy }}
@@ -86,7 +102,7 @@ jobs:
   # 🏗️ Build Shared Package
   build-shared:
     name: 🏗️ Build Shared Package
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [determine-environment, quality-check]
     steps:
       - name: 📥 Checkout Code
@@ -111,11 +127,38 @@ jobs:
           path: packages/shared/dist/
           retention-days: 7
 
-    # 🏗️ Build Web Package
+  # 🏗️ Build Firebase Utils Package
+  build-firebase-utils:
+    name: 🏗️ Build Firebase Utils Package
+    runs-on: self-hosted
+    needs: [determine-environment, quality-check]
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🏗️ Build Firebase Utils Package
+        run: npm run build --workspace=@shared/firebase-utils
+
+      - name: 📤 Upload Firebase Utils Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-utils-build
+          path: packages/firebase-utils/dist/
+          retention-days: 7
+  # 🏗️ Build Web Package
   build-web:
     name: 🏗️ Build Web Package
-    runs-on: ubuntu-latest
-    needs: [determine-environment, quality-check, build-shared]
+    runs-on: self-hosted
+    needs: [determine-environment, quality-check, build-shared, build-firebase-utils]
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -125,6 +168,12 @@ jobs:
         with:
           name: shared-build
           path: packages/shared/dist/
+
+      - name: 📥 Download Firebase Utils Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: firebase-utils-build
+          path: packages/firebase-utils/dist/
 
       - name: � Create Environment File (Production)
         if: needs.determine-environment.outputs.should-deploy == 'true' && needs.determine-environment.outputs.environment == 'production'
@@ -262,7 +311,7 @@ jobs:
   #  Deploy Web App to Firebase Hosting
   deploy-web:
     name: 🔥 Deploy Web App to Firebase (${{ needs.determine-environment.outputs.environment }})
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [determine-environment, quality-check, build-web]
     if: needs.determine-environment.outputs.should-deploy == 'true'
     environment: ${{ needs.determine-environment.outputs.environment }}
@@ -276,27 +325,52 @@ jobs:
           name: web-build
           path: packages/web/dist/
 
-      - name: �� Deploy to Firebase Hosting
+      - name: 🔍 Check Dry-Run Mode
+        id: dry-run-check
+        run: |
+          if [[ "${{ needs.determine-environment.outputs.is-dry-run }}" == "true" ]]; then
+            echo "dry-run=true" >> $GITHUB_OUTPUT
+            echo "🚫 Dry-run mode detected - skipping actual deployment"
+          else
+            echo "dry-run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🔥 Deploy to Firebase Hosting
+        if: steps.dry-run-check.outputs.dry-run == 'false'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets[format('FIREBASE_SERVICE_ACCOUNT_{0}', needs.determine-environment.outputs.environment)] }}
+          firebaseServiceAccount: ${{ secrets[format('FIREBASE_SERVICE_ACCOUNT_KEY_{0}', needs.determine-environment.outputs.environment)] }}
           channelId: ${{ needs.determine-environment.outputs.environment == 'production' && 'live' || 'preview' }}
           projectId: ${{ needs.determine-environment.outputs.environment == 'production' && 'vehicle-vitals-prod' || needs.determine-environment.outputs.environment == 'staging' && 'vehicle-vitals-staging' || 'vehicle-vitals-dev' }}
           entryPoint: ./
 
+      - name: 🚫 Dry-Run Deployment Skipped
+        if: steps.dry-run-check.outputs.dry-run == 'true'
+        run: |
+          echo "🔍 Dry-run mode: Deployment simulation completed"
+          echo "📋 Build artifacts are ready but not deployed"
+          echo "💡 To deploy for real, remove [DRY-RUN] from commit message"
+
   #  Deployment Summary
   deployment-summary:
     name: 📊 Deployment Summary (${{ needs.determine-environment.outputs.environment }})
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [determine-environment, deploy-web]
     if: always() && needs.deploy-web.result != 'skipped'
     steps:
       - name: 📊 Generate Deployment Report
         run: |
           ENVIRONMENT="${{ needs.determine-environment.outputs.environment }}"
+          IS_DRY_RUN="${{ needs.determine-environment.outputs.is-dry-run }}"
           echo "## 🔥 Firebase Deployment Summary - $ENVIRONMENT Environment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "$IS_DRY_RUN" == "true" ]]; then
+            echo "🚫 **DRY-RUN MODE** - No actual deployment performed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "| Component | Status | URL |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|-----|" >> $GITHUB_STEP_SUMMARY
 
@@ -308,10 +382,21 @@ jobs:
             WEB_URL="https://vehicle-vitals-dev.web.app"
           fi
 
-          echo "| 🌐 Web App | ${{ needs.deploy-web.result }} | $WEB_URL |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📱 Mobile Apps | Distributed via Firebase App Distribution | N/A |" >> $GITHUB_STEP_SUMMARY
+          if [[ "$IS_DRY_RUN" == "true" ]]; then
+            echo "| 🌐 Web App | 🚫 Dry-run (not deployed) | $WEB_URL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📱 Mobile Apps | 🚫 Dry-run (not distributed) | N/A |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🌐 Web App | ${{ needs.deploy-web.result }} | $WEB_URL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📱 Mobile Apps | Distributed via Firebase App Distribution | N/A |" >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Build Date**: $(date)" >> $GITHUB_STEP_SUMMARY
           echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: $ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
           echo "**Platform**: 🔥 Firebase (Hosting + App Distribution)" >> $GITHUB_STEP_SUMMARY
+          if [[ "$IS_DRY_RUN" == "true" ]]; then
+            echo "**Mode**: 🚫 Dry-Run (Testing Only)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Mode**: 🚀 Live Deployment" >> $GITHUB_STEP_SUMMARY
+          fi

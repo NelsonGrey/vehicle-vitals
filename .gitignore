@@ -84,3 +84,8 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Self-hosted runner binaries and large files
+actions-runner/externals/node*/bin/node
+actions-runner/actions-runner-*.tar.gz
+actions-runner/*.tar.gz

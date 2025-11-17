@@ -86,16 +86,16 @@ This automation suite eliminates manual interactions between Visual Studio Code,
 
 ### Main Commands
 
-| Command | Description |
-|---------|-------------|
-| `setup` | Complete system setup and configuration |
-| `deploy` | Automated deployments to all platforms |
-| `monitor` | 24/7 monitoring and alerting system |
-| `tokens` | Token rotation and credential management |
-| `environment` | Multi-environment configuration |
-| `backup` | Backup and disaster recovery |
-| `health` | System health checks |
-| `docker` | Docker image and container management |
+| Command       | Description                              |
+| ------------- | ---------------------------------------- |
+| `setup`       | Complete system setup and configuration  |
+| `deploy`      | Automated deployments to all platforms   |
+| `monitor`     | 24/7 monitoring and alerting system      |
+| `tokens`      | Token rotation and credential management |
+| `environment` | Multi-environment configuration          |
+| `backup`      | Backup and disaster recovery             |
+| `health`      | System health checks                     |
+| `docker`      | Docker image and container management    |
 
 ### Usage Examples
 
@@ -133,7 +133,7 @@ Create a `.env.automation` file in the project root:
 
 ```bash
 # Notification Settings
-ALERT_EMAIL=admin@wishlist-wizard.com
+ALERT_EMAIL=admin@your-domain.com
 SLACK_WEBHOOK=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 
 # Docker Configuration
@@ -158,6 +158,7 @@ BACKUP_SCHEDULE=daily
 For production deployments, add these secrets to your GitHub repository:
 
 #### Firebase
+
 - `FIREBASE_SERVICE_ACCOUNT_KEY_PRODUCTION`
 - `FIREBASE_SERVICE_ACCOUNT_KEY_STAGING`
 - `VITE_FIREBASE_API_KEY_PRODUCTION`
@@ -165,6 +166,7 @@ For production deployments, add these secrets to your GitHub repository:
 - etc.
 
 #### Apple Store Connect
+
 - `ASC_KEY_ID`
 - `ASC_ISSUER_ID`
 - `ASC_PRIVATE_KEY`
@@ -172,6 +174,7 @@ For production deployments, add these secrets to your GitHub repository:
 - `FASTLANE_TEAM_ID`
 
 #### Chrome Web Store
+
 - `CHROME_EXTENSION_ID`
 - `CHROME_CLIENT_ID`
 - `CHROME_CLIENT_SECRET`
@@ -180,6 +183,7 @@ For production deployments, add these secrets to your GitHub repository:
 ## 🔐 Security Features
 
 ### Automated Token Rotation
+
 - **GitHub Runner Tokens**: Rotate every 30 days
 - **Firebase Tokens**: Refresh weekly
 - **API Secrets**: Rotate every 90 days
@@ -187,12 +191,14 @@ For production deployments, add these secrets to your GitHub repository:
 - **Encryption Keys**: Rotate every 180 days
 
 ### Secret Management
+
 - Environment-isolated secrets
 - GitHub repository secrets sync
 - Encrypted storage with rotation
 - Audit logging for all access
 
 ### Access Control
+
 - Role-based access to environments
 - IP whitelisting for deployments
 - Two-factor authentication for critical operations
@@ -256,6 +262,7 @@ For production deployments, add these secrets to your GitHub repository:
 ## 🔄 Token & Credential Automation
 
 ### GitHub Integration
+
 ```bash
 # Automatic runner token rotation
 ./automate.sh tokens github
@@ -265,6 +272,7 @@ For production deployments, add these secrets to your GitHub repository:
 ```
 
 ### Firebase Integration
+
 ```bash
 # Service account key rotation
 ./automate.sh tokens rotate
@@ -274,6 +282,7 @@ firebase deploy --only hosting,functions
 ```
 
 ### Apple Store Connect
+
 ```bash
 # Certificate and profile management
 fastlane match development  # Automatic provisioning
@@ -281,6 +290,7 @@ fastlane beta             # TestFlight deployment
 ```
 
 ### Chrome Web Store
+
 ```bash
 # Extension publishing
 mnao305/chrome-extension-upload@v5.0.0
@@ -289,11 +299,13 @@ mnao305/chrome-extension-upload@v5.0.0
 ## 📈 Performance & Cost Optimization
 
 ### Resource Optimization
+
 - **Self-Hosted Runners**: 90% cost reduction vs GitHub-hosted
 - **Intelligent Scaling**: Auto-scale based on load
 - **Resource Monitoring**: Prevent over-provisioning
 
 ### Cost Savings
+
 - **GitHub Actions**: ~$500/month savings
 - **Firebase**: Optimized function cold starts
 - **Docker**: Efficient image layers and caching
@@ -303,6 +315,7 @@ mnao305/chrome-extension-upload@v5.0.0
 ### Common Issues
 
 #### Monitoring Not Starting
+
 ```bash
 # Check system resources
 ./automate.sh health
@@ -312,15 +325,17 @@ tail -f monitoring.log
 ```
 
 #### Deployment Failures
+
 ```bash
 # Check environment configuration
 ./automate.sh environment status production
 
 # Verify secrets
-gh secret list --repo mnelson3/wishlist-wizard
+gh secret list --repo your-org/your-repo
 ```
 
 #### Token Issues
+
 ```bash
 # Force token rotation
 ./automate.sh tokens rotate
@@ -364,13 +379,13 @@ Set up cron jobs for regular maintenance:
 
 ```bash
 # Daily token rotation
-0 2 * * * /path/to/wishlist-wizard/automate.sh tokens rotate
+0 2 * * * /path/to/your-repo/automate.sh tokens rotate
 
 # Weekly full backup
-0 3 * * 0 /path/to/wishlist-wizard/automate.sh backup create
+0 3 * * 0 /path/to/your-repo/automate.sh backup create
 
 # Health monitoring
-*/5 * * * * /path/to/wishlist-wizard/automate.sh monitor once
+*/5 * * * * /path/to/your-repo/automate.sh monitor once
 ```
 
 ### API Integration
@@ -415,8 +430,8 @@ Ready to eliminate manual DevOps tasks? Here's your quick start:
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/mnelson3/wishlist-wizard.git
-cd wishlist-wizard
+git clone https://github.com/your-org/your-repo.git
+cd your-repo
 
 # 2. Configure your environment
 cp .env.automation.example .env.automation
@@ -432,8 +447,8 @@ cp .env.automation.example .env.automation
 git push origin main
 ```
 
-**That's it!** Your Wishlist Wizard now deploys automatically across all platforms with zero manual intervention. 🎯
+**That's it!** Your project now deploys automatically across all platforms with zero manual intervention. 🎯
 
 ---
 
-*Built with ❤️ for the Wishlist Wizard team - Zero-touch DevOps achieved!* 🚀
+_Built with ❤️ for automated DevOps - Zero-touch deployment achieved!_ 🚀

@@ -9,25 +9,29 @@ All projects implement a **Firebase-first** approach where client applications (
 ## Current Implementation Status
 
 ### ✅ Completed
+
 - **Mobile Config Standardization**: All projects have environment-specific Firebase configs with symlinks
 - **Shared Utilities Package**: `@shared/firebase-utils` created and linked across projects
-- **Client-Side Adoption**: Vehicle-vitals and wishlist-wizard use `FirebaseClient` for initialization
-- **Auth Standardization**: `FunctionsAuthHelpers` implemented in wishlist-wizard functions
-- **CRUD Standardization**: `FirestoreCrudHelpers` implemented in wishlist-wizard functions
-- **Wishlist-Wizard Migration**: Complete migration from Express API to Firebase Functions
+- **Client-Side Adoption**: Vehicle-vitals and other projects use `FirebaseClient` for initialization
+- **Auth Standardization**: `FunctionsAuthHelpers` implemented in vehicle-vitals functions
+- **CRUD Standardization**: `FirestoreCrudHelpers` implemented in vehicle-vitals functions
+- **Vehicle-Vitals Migration**: Complete migration from Express API to Firebase Functions
 
 ### 🔄 In Progress
-- **Modulo-Squares Migration**: JavaScript functions need shared utilities integration
+
+- **Vehicle-Vitals Migration**: JavaScript functions need shared utilities integration
 - **Package Publishing**: `@shared/firebase-utils` needs npm publication
 
 ## Architecture Components
 
 ### 1. Client Applications
+
 - **Web Apps**: React/Vite applications using `FirebaseClient` from shared utilities
 - **Mobile Apps**: Flutter applications (Dart SDK)
 - **Communication**: Direct Firebase SDK calls only
 
 ### 2. Firebase Services (Required)
+
 - **Firebase Auth**: User authentication and authorization
 - **Firestore**: Primary database for all data storage
 - **Firebase Functions**: All business logic and API endpoints
@@ -38,6 +42,7 @@ All projects implement a **Firebase-first** approach where client applications (
 ### 3. Shared Utilities Package (`@shared/firebase-utils`)
 
 #### Installation
+
 ```bash
 # Development linking
 npm link @shared/firebase-utils
@@ -47,7 +52,9 @@ npm install @shared/firebase-utils
 ```
 
 #### FirebaseClient (Client-side)
+
 Singleton Firebase app initialization with emulator support:
+
 ```typescript
 import { FirebaseClient } from '@shared/firebase-utils';
 
@@ -58,29 +65,37 @@ if (import.meta.env.DEV) {
 ```
 
 #### FunctionsAuthHelpers (Server-side)
+
 Standardized authentication checking:
+
 ```typescript
 import { FunctionsAuthHelpers } from '@shared/firebase-utils';
 
-export const myFunction = onCall(async (request) => {
+export const myFunction = onCall(async request => {
   const user = FunctionsAuthHelpers.verifyAuthenticated(request);
   // User is authenticated, proceed...
 });
 ```
 
 #### FirestoreCrudHelpers (Server-side)
+
 Consistent CRUD operations with automatic metadata:
+
 ```typescript
 import { FirestoreCrudHelpers } from '@shared/firebase-utils';
 
 // Create with automatic createdBy/createdAt/updatedAt
-const result = await FirestoreCrudHelpers.createDocument('collection', data, userId);
+const result = await FirestoreCrudHelpers.createDocument(
+  'collection',
+  data,
+  userId
+);
 
 // Query with filters and pagination
 const documents = await FirestoreCrudHelpers.queryDocuments('collection', {
   filters: [{ field: 'userId', operator: '==', value: userId }],
   orderBy: { field: 'createdAt', direction: 'desc' },
-  limit: 50
+  limit: 50,
 });
 ```
 
@@ -89,34 +104,41 @@ const documents = await FirestoreCrudHelpers.queryDocuments('collection', {
 All projects must implement these core function patterns:
 
 #### Authentication Functions
+
 ```typescript
 // User profile management using shared helpers
-export const createUserProfile = onCall(async (request) => {
+export const createUserProfile = onCall(async request => {
   const user = FunctionsAuthHelpers.verifyAuthenticated(request);
   // Ensure user can only create their own profile
   if (user.uid !== request.data.userId) {
-    throw new Error("Cannot create profile for another user");
+    throw new Error('Cannot create profile for another user');
   }
   // ... implementation
 });
 ```
 
 #### Data CRUD Functions
+
 ```typescript
 // Generic CRUD operations using shared helpers
-export const createDocument = onCall(async (request) => {
+export const createDocument = onCall(async request => {
   const user = FunctionsAuthHelpers.verifyAuthenticated(request);
   const { collection, data } = request.data;
 
-  const result = await FirestoreCrudHelpers.createDocument(collection, data, user.uid);
+  const result = await FirestoreCrudHelpers.createDocument(
+    collection,
+    data,
+    user.uid
+  );
   return { success: true, ...result };
 });
 ```
 
 #### Business Logic Functions
+
 ```typescript
 // Project-specific business logic
-export const [projectSpecificFunction] = onCall(async (request) => {
+export const [projectSpecificFunction] = onCall(async request => {
   const user = FunctionsAuthHelpers.verifyAuthenticated(request);
   // ... project-specific logic
 });
@@ -124,19 +146,22 @@ export const [projectSpecificFunction] = onCall(async (request) => {
 
 ## Project-Specific Status
 
-### Modulo-Squares (Flutter + JavaScript Functions)
+### Vehicle-Vitals (Flutter + JavaScript Functions)
+
 - **Status**: Firebase-first implemented, shared utilities integration pending
 - **Functions**: Direct Firestore operations with manual auth checks
 - **Client**: Flutter app using Firebase Flutter SDK
 - **Next Steps**: Integrate shared auth helpers in JavaScript functions
 
 ### Vehicle-Vitals (React + TypeScript Functions)
+
 - **Status**: Firebase-first implemented
 - **Functions**: `onRequest` pattern for VIN decoding and email services
 - **Client**: React web app using `FirebaseClient` from shared utilities
 - **Auth Pattern**: Manual auth checks (different from onCall pattern)
 
-### Wishlist-Wizard (React + TypeScript Functions)
+### Vehicle-Vitals (React + TypeScript Functions)
+
 - **Status**: Fully migrated from Express API to Firebase Functions
 - **Functions**: `onCall` pattern with modular auth/crud/business functions using shared helpers
 - **Client**: React web/mobile apps using `FirebaseClient` from shared utilities
@@ -145,6 +170,7 @@ export const [projectSpecificFunction] = onCall(async (request) => {
 ## Implementation Rules
 
 ### ✅ ALLOWED
+
 - Direct Firebase SDK calls from clients
 - Firebase Functions for business logic
 - Firestore security rules for data validation
@@ -153,6 +179,7 @@ export const [projectSpecificFunction] = onCall(async (request) => {
 - Shared utilities package for consistency
 
 ### ❌ NOT ALLOWED
+
 - Custom Express/Koa/Fastify API servers
 - Direct database connections from clients
 - Server-side rendering with custom backends
@@ -193,6 +220,7 @@ Client App → Firebase SDK → Firebase Functions → Firestore
 ## Migration Guide
 
 ### From Custom API Server
+
 1. ✅ Move all Express routes to Firebase Functions
 2. ✅ Convert middleware to function decorators using shared helpers
 3. ✅ Replace database queries with `FirestoreCrudHelpers`
@@ -200,6 +228,7 @@ Client App → Firebase SDK → Firebase Functions → Firestore
 5. ✅ Remove API server package entirely
 
 ### From Direct Database Access
+
 1. ✅ Move business logic to Firebase Functions
 2. ✅ Implement proper security rules
 3. ✅ Update clients to use Functions instead of direct DB access
@@ -222,12 +251,14 @@ Client App → Firebase SDK → Firebase Functions → Firestore
 ## Future Enhancements
 
 ### Immediate Priorities
+
 - Publish `@shared/firebase-utils` to npm registry
-- Complete modulo-squares shared utilities integration
+- Complete vehicle-vitals shared utilities integration
 - Add comprehensive error handling patterns
 - Implement function performance monitoring
 
 ### Long-term Goals
+
 - Add storage helpers to shared utilities
 - Implement caching strategies
 - Add comprehensive testing utilities
@@ -236,11 +267,13 @@ Client App → Firebase SDK → Firebase Functions → Firestore
 ## Architecture Components
 
 ### 1. Client Applications
+
 - **Web Apps**: React/Vite applications
 - **Mobile Apps**: Flutter applications
 - **Communication**: Direct Firebase SDK calls only
 
 ### 2. Firebase Services (Required)
+
 - **Firebase Auth**: User authentication and authorization
 - **Firestore**: Primary database for all data storage
 - **Firebase Functions**: All business logic and API endpoints
@@ -249,9 +282,11 @@ Client App → Firebase SDK → Firebase Functions → Firestore
 - **Firebase Cloud Messaging**: Push notifications
 
 ### 3. Firebase Functions (Standardized)
+
 All projects must implement these core function patterns:
 
 #### Authentication Functions
+
 ```typescript
 // User profile management
 export const createUserProfile = functions.https.onCall(async (data, context) => { ... });
@@ -260,6 +295,7 @@ export const getUserProfile = functions.https.onCall(async (data, context) => { 
 ```
 
 #### Data CRUD Functions
+
 ```typescript
 // Generic CRUD operations
 export const createDocument = functions.https.onCall(async (data, context) => { ... });
@@ -270,12 +306,14 @@ export const listDocuments = functions.https.onCall(async (data, context) => { .
 ```
 
 #### Business Logic Functions
+
 ```typescript
 // Project-specific business logic
 export const [projectSpecificFunction] = functions.https.onCall(async (data, context) => { ... });
 ```
 
 ### 4. Shared Utilities Package
+
 All projects must use a shared Firebase utilities package (`@shared/firebase-utils`) that provides:
 
 - Common Firebase initialization
@@ -288,6 +326,7 @@ All projects must use a shared Firebase utilities package (`@shared/firebase-uti
 ## Implementation Rules
 
 ### ✅ ALLOWED
+
 - Direct Firebase SDK calls from clients
 - Firebase Functions for business logic
 - Firestore security rules for data validation
@@ -295,6 +334,7 @@ All projects must use a shared Firebase utilities package (`@shared/firebase-uti
 - Client-side data caching with Firebase SDK
 
 ### ❌ NOT ALLOWED
+
 - Custom Express/Koa/Fastify API servers
 - Direct database connections from clients
 - Server-side rendering with custom backends
@@ -362,6 +402,7 @@ Client App → Firebase SDK → Firebase Functions → Firestore
 ## Migration Guide
 
 ### From Custom API Server
+
 1. Move all Express routes to Firebase Functions
 2. Convert middleware to function decorators
 3. Replace database queries with Firestore calls
@@ -369,6 +410,7 @@ Client App → Firebase SDK → Firebase Functions → Firestore
 5. Remove API server package entirely
 
 ### From Direct Database Access
+
 1. Move business logic to Firebase Functions
 2. Implement proper security rules
 3. Update clients to use Functions instead of direct DB access

@@ -1,11 +1,13 @@
 # 🚀 Zero-Touch DevOps Automation Suite - Implementation Guide
 
 ## Overview
+
 This document provides a complete implementation guide for deploying the Wishlist Wizard zero-touch DevOps automation suite to new projects. This suite eliminates manual credential management and provides automated CI/CD, monitoring, and deployment capabilities.
 
 ## 🎯 Solution Architecture
 
 ### Core Components
+
 1. **Master Automation Controller** (`automate.sh`) - Unified interface for all operations
 2. **Environment Management** (`scripts/manage-environments.sh`) - Multi-environment configuration
 3. **Token Rotation System** (`scripts/token-rotation.sh`) - Automated credential management
@@ -14,6 +16,7 @@ This document provides a complete implementation guide for deploying the Wishlis
 6. **GitHub Self-Hosted Runners** - Linux Docker and macOS runners for CI/CD
 
 ### Technology Stack
+
 - **Shell**: Bash (3.2+ compatible for macOS)
 - **Containerization**: Docker & Docker Compose
 - **CI/CD**: GitHub Actions with self-hosted runners
@@ -25,6 +28,7 @@ This document provides a complete implementation guide for deploying the Wishlis
 ## 📋 Prerequisites Checklist
 
 ### System Requirements
+
 - [ ] macOS or Linux development environment
 - [ ] Bash 3.2+ (macOS default) or Bash 4.0+ (Linux)
 - [ ] GitHub CLI (`gh`) installed and authenticated
@@ -35,6 +39,7 @@ This document provides a complete implementation guide for deploying the Wishlis
 - [ ] OpenSSL for certificate generation
 
 ### Accounts & Permissions
+
 - [ ] GitHub repository with Actions enabled
 - [ ] GitHub Personal Access Token with repo/admin permissions
 - [ ] Firebase project with billing enabled
@@ -44,6 +49,7 @@ This document provides a complete implementation guide for deploying the Wishlis
 - [ ] Chrome Web Store developer account
 
 ### Network & Security
+
 - [ ] HTTPS certificates for production domains
 - [ ] SMTP server for email alerts
 - [ ] Slack webhook URL for notifications
@@ -52,13 +58,16 @@ This document provides a complete implementation guide for deploying the Wishlis
 ## 🛠️ Implementation Steps
 
 ### Phase 1: Repository Setup
+
 1. **Clone target repository**
+
    ```bash
    git clone <repository-url>
    cd <repository-name>
    ```
 
 2. **Create automation directory structure**
+
    ```bash
    mkdir -p scripts
    mkdir -p docker
@@ -68,7 +77,9 @@ This document provides a complete implementation guide for deploying the Wishlis
 3. **Copy automation files** (see templates below)
 
 ### Phase 2: Configuration Setup
+
 1. **Create `.env.automation` file**
+
    ```bash
    cp .env.automation.example .env.automation
    # Edit with actual credentials
@@ -86,25 +97,30 @@ This document provides a complete implementation guide for deploying the Wishlis
    ```
 
 ### Phase 3: Runner Deployment
+
 1. **Deploy Linux Docker runner**
+
    ```bash
    ./automate.sh docker runner
    ```
 
 2. **Configure macOS runner** (CRITICAL: Install OUTSIDE project directory)
+
    ```bash
    # ❌ WRONG - Causes ES module conflicts
    ~/Projects/my-project/actions-runner/
-   
-   # ✅ CORRECT - Isolated environment  
+
+   # ✅ CORRECT - Isolated environment
    ~/actions-runner-my-project/
-   
+
    # Reason: Projects with "type": "module" in package.json cause
    # "ReferenceError: require is not defined in ES module scope" errors
    ```
 
 ### Phase 4: Environment Configuration
+
 1. **Initialize environments**
+
    ```bash
    ./automate.sh environment setup development
    ./automate.sh environment setup staging
@@ -117,7 +133,9 @@ This document provides a complete implementation guide for deploying the Wishlis
    ```
 
 ### Phase 5: Monitoring & Alerting
+
 1. **Start monitoring system**
+
    ```bash
    ./automate.sh monitor start
    ```
@@ -126,7 +144,9 @@ This document provides a complete implementation guide for deploying the Wishlis
    - Update `.env.automation` with email/Slack settings
 
 ### Phase 6: Deployment Pipeline
+
 1. **Test deployment**
+
    ```bash
    ./automate.sh deploy web development
    ```
@@ -139,6 +159,7 @@ This document provides a complete implementation guide for deploying the Wishlis
 ## 📁 File Templates
 
 ### Master Controller (`automate.sh`)
+
 ```bash
 #!/bin/bash
 # 🚀 Wishlist Wizard - Master Automation Controller
@@ -235,6 +256,7 @@ main "$@"
 ```
 
 ### Environment Manager (`scripts/manage-environments.sh`)
+
 ```bash
 #!/bin/bash
 # 🌍 Environment & Secret Management System
@@ -257,9 +279,9 @@ log_header() { echo -e "${PURPLE}🌍 $1${NC}"; echo -e "${PURPLE}$(printf '%.0s
 
 # CRITICAL: Bash 3.2 compatibility - NO associative arrays
 # Use variable naming convention: CONFIGS_<environment>_<key>
-ENV_CONFIGS_development="wishlist-wizard-dev"
-ENV_CONFIGS_staging="wishlist-wizard-staging"
-ENV_CONFIGS_production="wishlist-wizard-prod"
+ENV_CONFIGS_development="vehicle-vitals-dev"
+ENV_CONFIGS_staging="vehicle-vitals-staging"
+ENV_CONFIGS_production="vehicle-vitals-prod"
 
 # Validate environment
 validate_environment() {
@@ -309,6 +331,7 @@ main "$@"
 ```
 
 ### Monitoring System (`scripts/monitoring.sh`)
+
 ```bash
 #!/bin/bash
 # 📊 Monitoring & Alerting System
@@ -338,9 +361,9 @@ log_header() { echo -e "${PURPLE}🚀 $1${NC}"; echo -e "${PURPLE}$(printf '%.0s
 
 # CRITICAL: Bash 3.2 compatibility - NO associative arrays
 # Use variable naming: ENDPOINTS_<environment>
-ENDPOINTS_production="https://api.wishlist-wizard-prod.web.app"
-ENDPOINTS_staging="https://api.wishlist-wizard-staging.web.app"
-ENDPOINTS_development="http://localhost:5001/wishlist-wizard-dev/us-central1/api"
+ENDPOINTS_production="https://api.vehicle-vitals-prod.web.app"
+ENDPOINTS_staging="https://api.vehicle-vitals-staging.web.app"
+ENDPOINTS_development="http://localhost:5001/vehicle-vitals-dev/us-central1/api"
 
 # Send alerts
 send_alert() {
@@ -366,7 +389,7 @@ monitor_github_actions() {
 
 # Main monitoring loop
 main() {
-    log_header "🚀 Wishlist Wizard - Monitoring & Alerting System"
+    log_header "🚀 Vehicle Vitals - Monitoring & Alerting System"
 
     cd "$PROJECT_ROOT"
 
@@ -400,6 +423,7 @@ main "$@"
 ## ⚙️ Configuration Templates
 
 ### `.env.automation.example`
+
 ```bash
 # 🎯 Automation Configuration Template
 # Copy to .env.automation and fill in actual values
@@ -443,7 +467,7 @@ DOCKER_PASSWORD=your-password
 # ==========================================
 
 # GitHub repository
-GITHUB_REPO=mnelson3/wishlist-wizard
+GITHUB_REPO=mnelson3/vehicle-vitals
 GITHUB_TOKEN=your-github-token
 
 # ==========================================
@@ -458,14 +482,14 @@ FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"..."}
 # ==========================================
 
 # Web app domains
-WEB_DEV_DOMAIN=https://wishlist-wizard-dev.web.app
-WEB_STAGING_DOMAIN=https://wishlist-wizard-staging.web.app
-WEB_PROD_DOMAIN=https://wishlist-wizard-prod.web.app
+WEB_DEV_DOMAIN=https://vehicle-vitals-dev.web.app
+WEB_STAGING_DOMAIN=https://vehicle-vitals-staging.web.app
+WEB_PROD_DOMAIN=https://vehicle-vitals-prod.web.app
 
 # API endpoints
-API_DEV_ENDPOINT=https://us-central1-wishlist-wizard-dev.cloudfunctions.net/api
-API_STAGING_ENDPOINT=https://us-central1-wishlist-wizard-staging.cloudfunctions.net/api
-API_PROD_ENDPOINT=https://us-central1-wishlist-wizard-prod.cloudfunctions.net/api
+API_DEV_ENDPOINT=https://us-central1-vehicle-vitals-dev.cloudfunctions.net/api
+API_STAGING_ENDPOINT=https://us-central1-vehicle-vitals-staging.cloudfunctions.net/api
+API_PROD_ENDPOINT=https://us-central1-vehicle-vitals-prod.cloudfunctions.net/api
 
 # ==========================================
 # MOBILE APP CONFIGURATION
@@ -533,16 +557,17 @@ LOCAL_WEB_PORT=3000
 ```
 
 ### `docker-compose.runner.yml`
+
 ```yaml
 version: '3.8'
 
 services:
   github-runner:
     image: myoung34/github-runner:latest
-    container_name: wishlist-wizard-github-runner
+    container_name: vehicle-vitals-github-runner
     environment:
-      REPO_URL: https://github.com/mnelson3/wishlist-wizard
-      RUNNER_NAME: wishlist-wizard-runner
+      REPO_URL: https://github.com/mnelson3/vehicle-vitals
+      RUNNER_NAME: vehicle-vitals-runner
       RUNNER_TOKEN: ${RUNNER_TOKEN}
       RUNNER_WORKDIR: /tmp/runner/work
       RUNNER_GROUP: default
@@ -557,9 +582,9 @@ services:
 
   runner-monitor:
     image: nginx:alpine
-    container_name: wishlist-wizard-runner-monitor
+    container_name: vehicle-vitals-runner-monitor
     ports:
-      - "8080:80"
+      - '8080:80'
     volumes:
       - ./docker/monitoring.html:/usr/share/nginx/html/index.html:ro
     restart: unless-stopped
@@ -582,8 +607,10 @@ networks:
 ### Common Issues & Solutions
 
 #### 1. Bash Compatibility Errors
+
 **Error:** `declare: -A: invalid option`
 **Solution:** Replace associative arrays with variable naming convention
+
 ```bash
 # ❌ Wrong (Bash 4.0+ only)
 declare -A CONFIGS
@@ -594,8 +621,10 @@ CONFIGS_dev="project-dev"
 ```
 
 #### 2. GitHub CLI Authentication
+
 **Error:** `To get started with GitHub CLI, please run: gh auth login`
 **Solution:** Add authentication checks before GitHub operations
+
 ```bash
 if ! gh auth status > /dev/null 2>&1; then
     log_warning "GitHub CLI not authenticated - skipping..."
@@ -604,8 +633,10 @@ fi
 ```
 
 #### 3. Docker Runner Token Issues
+
 **Error:** `Failed to register runner`
 **Solution:** Ensure token is valid and has correct permissions
+
 ```bash
 # Check token validity
 curl -H "Authorization: token YOUR_TOKEN" \
@@ -613,16 +644,20 @@ curl -H "Authorization: token YOUR_TOKEN" \
 ```
 
 #### 4. Firebase Permission Errors
+
 **Error:** `FirebaseError: Insufficient permission`
 **Solution:** Verify service account has required roles
+
 - `Firebase Admin`
 - `Cloud Functions Admin`
 - `Storage Admin`
 
 #### 5. macOS Runner ES Module Conflicts
+
 **Error:** `ReferenceError: require is not defined in ES module scope`
 **Cause:** macOS runner installed inside project with `"type": "module"` in `package.json`
 **Solution:** Move runner outside project directory
+
 ```bash
 # Move to isolated location
 mv ~/Projects/my-project/actions-runner ~/actions-runner-my-project
@@ -633,6 +668,7 @@ cd ~/actions-runner-my-project
 ```
 
 ### Debug Commands
+
 ```bash
 # Check all services
 ./automate.sh health
@@ -653,6 +689,7 @@ firebase projects:list
 ## 📊 Success Metrics
 
 ### Implementation Checklist
+
 - [ ] All prerequisites installed
 - [ ] Configuration files created
 - [ ] GitHub runners operational
@@ -663,6 +700,7 @@ firebase projects:list
 - [ ] Documentation updated
 
 ### Performance Benchmarks
+
 - **Deployment Time**: < 5 minutes for web app
 - **Monitoring Interval**: 5 minutes (configurable)
 - **Uptime Target**: 99.9% for critical services
@@ -670,7 +708,7 @@ firebase projects:list
 
 ## 🎯 Next Steps for New Projects
 
-1. **Adapt Project Names**: Update all `wishlist-wizard` references
+1. **Adapt Project Names**: Update all `vehicle-vitals` references
 2. **Configure Environments**: Set up Firebase projects for each environment
 3. **Update Domains**: Modify API endpoints and domains
 4. **Configure Secrets**: Set up service accounts and API keys
@@ -681,12 +719,14 @@ firebase projects:list
 ## 📞 Support & Maintenance
 
 ### Regular Maintenance Tasks
+
 - **Weekly**: Review monitoring logs and alerts
 - **Monthly**: Rotate tokens and certificates
 - **Quarterly**: Update dependencies and security patches
 - **Annually**: Review and update automation scripts
 
 ### Emergency Procedures
+
 1. **Service Down**: Check `./automate.sh health`
 2. **Deployment Failed**: Review GitHub Actions logs
 3. **Security Alert**: Rotate all tokens immediately
@@ -697,4 +737,4 @@ firebase projects:list
 **Implementation Time Estimate**: 4-8 hours for experienced developer
 **Maintenance Overhead**: 2-4 hours/month
 **Reliability**: 99.9% uptime with automated recovery</content>
-<parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/ZERO_TOUCH_DEVOPS_IMPLEMENTATION_GUIDE.md
+<parameter name="filePath">/Users/marknelson/Circus/Repositories/vehicle-vitals/ZERO_TOUCH_DEVOPS_IMPLEMENTATION_GUIDE.md

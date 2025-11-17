@@ -5,6 +5,7 @@ This repository contains a complete self-hosted CI/CD infrastructure that can be
 ## 🎯 Overview
 
 The setup includes:
+
 - **Self-hosted GitHub Actions runners** (macOS + Linux Docker)
 - **Automated workflows** for CI/CD, testing, and deployment
 - **Cost monitoring** and infrastructure management
@@ -18,15 +19,15 @@ The setup includes:
 
 ```bash
 # Clone this repository
-git clone https://github.com/mnelson3/wishlist-wizard.git
-cd wishlist-wizard
+git clone https://github.com/mnelson3/vehicle-vitals.git
+cd vehicle-vitals
 
 # Run the setup script for your target repository
-./apply-cicd-setup.sh https://github.com/mnelson3/modulo-squares
-./apply-cicd-setup.sh https://github.com/mnelson3/vehicle-vitals
+./apply-cicd-setup.sh https://github.com/your-org/your-repo
 ```
 
 The script will:
+
 - Clone the target repository
 - Copy all CI/CD files with repository-specific customizations
 - Create setup documentation
@@ -57,6 +58,7 @@ find /path/to/target/repo -name "*.yml" -o -name "*.sh" | xargs sed -i '' "s/wis
 ## 📋 What's Included
 
 ### Workflows (`.github/workflows/`)
+
 - `ci-cd-pipeline.yml` - Main CI/CD pipeline with build, test, deploy
 - `ios-distribution.yml` - iOS app distribution to TestFlight/App Store
 - `android-distribution.yml` - Android app distribution to Play Store
@@ -65,6 +67,7 @@ find /path/to/target/repo -name "*.yml" -o -name "*.sh" | xargs sed -i '' "s/wis
 - `test-secrets.yml` - Secret validation testing
 
 ### Scripts (`scripts/`)
+
 - `setup-macos-runner.sh` - macOS runner installation
 - `manage-macos-runner.sh` - macOS runner lifecycle management
 - `setup-linux-runner.sh` - Linux Docker runner setup
@@ -72,10 +75,12 @@ find /path/to/target/repo -name "*.yml" -o -name "*.sh" | xargs sed -i '' "s/wis
 - `monitor-github-actions-costs.sh` - Cost analysis and monitoring
 
 ### Docker Configuration
+
 - `docker-compose.runner.yml` - Linux runner container setup
 - `.env.runner.template` - Environment configuration template
 
 ### Documentation (`docs/`)
+
 - `SELF_HOSTED_RUNNERS.md` - Complete setup guide
 - `COST_EFFECTIVE_CICD.md` - Cost analysis and benefits
 - `SELF_HOSTED_RUNNER_SETUP.md` - Detailed setup instructions
@@ -87,15 +92,17 @@ After applying the setup, customize for your repository:
 ### 1. Update Workflow Configuration
 
 Edit `.github/workflows/ci-cd-pipeline.yml`:
+
 ```yaml
 env:
-  NODE_VERSION: '18'  # Adjust for your tech stack
+  NODE_VERSION: '18' # Adjust for your tech stack
   # Add your environment variables
 ```
 
 ### 2. Modify Build Commands
 
 Update build steps to match your tech stack:
+
 ```yaml
 - name: 🏗️ Build Your App
   run: |
@@ -110,6 +117,7 @@ Update build steps to match your tech stack:
 ### 3. Configure Deployment
 
 Update deployment targets in workflow files:
+
 ```yaml
 - name: 🔥 Deploy to Firebase
   uses: FirebaseExtended/action-hosting-deploy@v0
@@ -120,6 +128,7 @@ Update deployment targets in workflow files:
 ### 4. Update Runner Labels
 
 Ensure workflow labels match your runner configuration:
+
 ```yaml
 runs-on: [self-hosted, macos-latest, your-repo-name]
 ```
@@ -149,17 +158,17 @@ docker-compose -f docker-compose.runner.yml logs
 
 ```bash
 # 1. Create isolated runner directory (outside project)
-mkdir ~/actions-runner-wishlist-wizard
-cd ~/actions-runner-wishlist-wizard
+mkdir ~/actions-runner-your-repo
+cd ~/actions-runner-your-repo
 
 # 2. Download and extract GitHub runner
 # (Download from: https://github.com/actions/runner/releases)
 
 # 3. Configure with GitHub token
-./config.sh --url https://github.com/mnelson3/wishlist-wizard \
+./config.sh --url https://github.com/your-org/your-repo \
             --token YOUR_TOKEN \
-            --labels "self-hosted,macos-latest,wishlist-wizard" \
-            --name "wishlist-wizard-macos-runner"
+            --labels "self-hosted,macos-latest,your-repo" \
+            --name "your-repo-macos-runner"
 
 # 4. Install as service (auto-restart on reboot)
 ./svc.sh install
@@ -182,22 +191,24 @@ Projects with `"type": "module"` in `package.json` cause runner failures:
 
 ## 💰 Cost Analysis
 
-| Runner Type | GitHub-Hosted Cost | Self-Hosted Cost | Savings |
-|-------------|-------------------|------------------|---------|
-| macOS (per minute) | $0.08 | ~$0.001 | 98% |
-| Linux (per minute) | $0.008 | ~$0.0003 | 96% |
-| **Monthly (1000 min)** | **$64** | **$2.50** | **96%** |
+| Runner Type            | GitHub-Hosted Cost | Self-Hosted Cost | Savings |
+| ---------------------- | ------------------ | ---------------- | ------- |
+| macOS (per minute)     | $0.08              | ~$0.001          | 98%     |
+| Linux (per minute)     | $0.008             | ~$0.0003         | 96%     |
+| **Monthly (1000 min)** | **$64**            | **$2.50**        | **96%** |
 
 **Annual Savings**: ~$700+ per repository
 
 ## 🔧 Troubleshooting
 
 ### Runner Not Connecting
+
 - Verify GitHub token has `repo` scope
 - Check runner labels match workflow requirements
 - Ensure firewall allows outbound connections
 
 ### ES Module Conflicts (macOS Runner)
+
 - **Error**: `ReferenceError: require is not defined in ES module scope`
 - **Cause**: macOS runner installed inside project with `"type": "module"` in `package.json`
 - **Solution**: Move runner to isolated directory outside project
@@ -206,11 +217,13 @@ Projects with `"type": "module"` in `package.json` cause runner failures:
   ```
 
 ### Workflow Failures
+
 - Check runner status: `./scripts/infrastructure-status.sh`
 - View runner logs: `./scripts/manage-macos-runner.sh logs`
 - Verify required tools are installed on runners
 
 ### Permission Issues
+
 - macOS runner needs admin access for Xcode
 - Linux runner needs Docker socket access
 - Ensure proper file permissions on runner directories
@@ -218,6 +231,7 @@ Projects with `"type": "module"` in `package.json` cause runner failures:
 ## 📊 Monitoring & Maintenance
 
 ### Regular Tasks
+
 ```bash
 # Weekly: Check runner health
 ./scripts/infrastructure-status.sh
@@ -230,6 +244,7 @@ Projects with `"type": "module"` in `package.json` cause runner failures:
 ```
 
 ### Auto-Restart Configuration
+
 - **macOS**: Installed as launchd service (restarts on reboot)
 - **Linux**: Docker container with `restart: unless-stopped`
 

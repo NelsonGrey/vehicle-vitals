@@ -253,4 +253,4 @@ bash --version  # Must be 3.2+ for macOS
 ---
 
 **Remember**: This solution was built specifically to work across different projects. Focus on Bash 3.2 compatibility and the master controller pattern. The full implementation guide contains all detailed code templates.</content>
-<parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/ZERO_TOUCH_DEVOPS_QUICK_REFERENCE.md
+<parameter name="filePath">/Users/marknelson/Circus/Repositories/vehicle-vitals/ZERO_TOUCH_DEVOPS_QUICK_REFERENCE.md

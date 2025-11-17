@@ -1,138 +1,105 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: iOS App Distribution
-
+name: iOS Distribution
 on:
   push:
-    branches:
-      - main
-      - staging
+    branches: [ main, develop ]
+    paths:
+      - 'packages/mobile/**'
+      - '.github/workflows/ios-distribution.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'packages/mobile/**'
   workflow_dispatch:
     inputs:
-      build_type:
-        description: 'Build type to distribute'
+      release_type:
+        description: 'Release type'
         required: true
-        default: 'debug'
+        default: 'beta'
         type: choice
         options:
-        - debug
-        - release
-      release_notes:
-        description: 'Release notes for this build'
-        required: false
-        type: string
+          - beta
+          - production
 
 jobs:
   distribute-ios:
-    runs-on: [self-hosted, macos]
-    environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
-    steps:
-      - uses: actions/checkout@v4
+    runs-on: [self-hosted, macos, vehicle-vitals]
+    environment: ${{ github.event.inputs.release_type || 'development' }}
 
-      - name: 🔍 Check Dry-Run Mode
-        id: dry-run-check
-        run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"[DRY-RUN]"* ]]; then
-            echo "dry-run=true" >> $GITHUB_OUTPUT
-            echo "🚫 Dry-run mode detected - iOS distribution will be simulated"
-          else
-            echo "dry-run=false" >> $GITHUB_OUTPUT
-          fi
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.0'
+          flutter-version: '3.35.7'
+          cache: true
 
       - name: Install Fastlane
-        run: gem install fastlane
-
-      - name: Generate iOS platform files
         run: |
-          cd packages/mobile
-          flutter create --platforms=ios .
+          gem install fastlane -v 2.228.0
+          gem install bundler
 
-      - name: Create App Store Connect API key
-        if: github.event.inputs.build_type == 'testflight' || github.ref == 'refs/heads/main'
+      - name: Install Flutter dependencies
+        run: flutter pub get
+        working-directory: packages/mobile
+
+      - name: Install iOS dependencies
+        run: |
+          cd packages/mobile/ios
+          bundle install || true  # Continue if no Gemfile
+
+      - name: Set up code signing
+        run: |
+          cd packages/mobile/ios
+          fastlane sync_signing
         env:
-          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-        run: |
-          mkdir -p packages/mobile/ios/fastlane
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > packages/mobile/ios/fastlane/AuthKey.p8
+          FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
+          FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
+          FASTLANE_ITC_TEAM_ID: ${{ secrets.FASTLANE_ITC_TEAM_ID }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
-      - name: Create service account key file
-        if: github.event.inputs.build_type != 'testflight'
+      - name: Build Flutter iOS
+        run: |
+          flutter build ipa --release --no-codesign
+        working-directory: packages/mobile
+
+      - name: Sign and package for TestFlight
+        run: |
+          cd packages/mobile/ios
+          fastlane build_testflight
         env:
-          IOS_SERVICE_ACCOUNT_KEY: ${{ secrets.IOS_SERVICE_ACCOUNT_KEY }}
-        run: |
-          mkdir -p packages/mobile/ios
-          echo "$IOS_SERVICE_ACCOUNT_KEY" > packages/mobile/ios/service-account-key.json
+          FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
+          FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
+          FASTLANE_ITC_TEAM_ID: ${{ secrets.FASTLANE_ITC_TEAM_ID }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
-      - name: Set Fastlane environment variables
+      - name: Upload to TestFlight
+        if: github.event.inputs.release_type != 'production' || github.ref == 'refs/heads/main'
         run: |
-          echo "FASTLANE_APPLE_ID=${{ secrets.FASTLANE_APPLE_ID }}" >> $GITHUB_ENV
-          echo "FASTLANE_ITC_TEAM_ID=${{ secrets.FASTLANE_ITC_TEAM_ID }}" >> $GITHUB_ENV
-          echo "FASTLANE_TEAM_ID=${{ secrets.FASTLANE_TEAM_ID }}" >> $GITHUB_ENV
-          echo "APP_STORE_CONNECT_PRIVATE_KEY_ID=${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY_ID }}" >> $GITHUB_ENV
-          echo "APP_STORE_CONNECT_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
-          echo "IOS_APP_ID=${{ secrets.IOS_APP_ID }}" >> $GITHUB_ENV
-          echo "IOS_SERVICE_ACCOUNT_KEY_FILE=service-account-key.json" >> $GITHUB_ENV
-
-      - name: Create GoogleService-Info.plist for development
-        if: github.ref == 'refs/heads/develop'
+          cd packages/mobile/ios
+          fastlane beta
         env:
-          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_DEVELOPMENT }}
-        run: |
-          mkdir -p packages/mobile/config/development/ios
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > packages/mobile/config/development/ios/GoogleService-Info.plist
+          FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
+          FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
+          FASTLANE_ITC_TEAM_ID: ${{ secrets.FASTLANE_ITC_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          BETA_FEEDBACK_EMAIL: ${{ secrets.BETA_FEEDBACK_EMAIL }}
 
-      - name: Create GoogleService-Info.plist for staging
-        if: github.ref == 'refs/heads/staging'
-        env:
-          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_STAGING }}
-        run: |
-          mkdir -p packages/mobile/config/staging/ios
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > packages/mobile/config/staging/ios/GoogleService-Info.plist
-
-      - name: Create GoogleService-Info.plist for production
-        if: github.ref == 'refs/heads/main'
-        env:
-          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_PRODUCTION }}
-        run: |
-          mkdir -p packages/mobile/config/production/ios
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > packages/mobile/config/production/ios/GoogleService-Info.plist
-
-      - name: Make distribution script executable
-        run: chmod +x packages/mobile/distribute-ios.sh
-
-      - name: Extract AdMob configuration for production
-        if: github.ref == 'refs/heads/main'
-        run: |
-          # Use GitHub secrets for AdMob configuration
-          echo "ADMOB_BANNER_UNIT_ID=${{ secrets.ADMOB_BANNER_UNIT_ID_IOS }}" >> $GITHUB_ENV
-          echo "ADMOB_INTERSTITIAL_UNIT_ID=${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_IOS }}" >> $GITHUB_ENV
-          echo "ADMOB_REWARDED_UNIT_ID=${{ secrets.ADMOB_REWARDED_UNIT_ID_IOS }}" >> $GITHUB_ENV
-
-      - name: Build and distribute iOS app
-        if: steps.dry-run-check.outputs.dry-run == 'false'
-        env:
-          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
-        run: |
-          cd packages/mobile
-          ./distribute-ios.sh ${{ github.event.inputs.build_type || 'debug' }} "${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"
-
-      - name: 🚫 Dry-Run iOS Distribution Skipped
-        if: steps.dry-run-check.outputs.dry-run == 'true'
-        run: |
-          echo "🔍 Dry-run mode: iOS distribution simulation completed"
-          echo "📋 Build would be distributed to TestFlight/Firebase App Distribution"
-          echo "💡 To deploy for real, remove [DRY-RUN] from commit message"
-
-      - name: Clean up service account key
+      - name: Upload build artifacts
         if: always()
-        run: rm -f packages/mobile/ios/service-account-key.json packages/mobile/ios/fastlane/AuthKey.p8
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-${{ github.run_number }}
+          path: |
+            packages/mobile/build/ios/ipa/
+            packages/mobile/ios/fastlane/report.xml
+          retention-days: 30

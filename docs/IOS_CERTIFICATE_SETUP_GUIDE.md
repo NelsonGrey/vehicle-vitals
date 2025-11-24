@@ -31,7 +31,7 @@ This guide provides a complete, reusable setup for iOS code signing certificates
 
    ```bash
    # Repository naming convention: {project-name}-certificates
-   # Example: vehicle-vitals-certificates
+   # Example: nelson-grey-certificates
    ```
 
 2. **Generate GitHub Personal Access Token**
@@ -42,7 +42,7 @@ This guide provides a complete, reusable setup for iOS code signing certificates
 3. **Set Repository URL**
    ```bash
    # Format: https://oauth2:{token}@github.com/{username}/{repo-name}.git
-   CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN_HERE@github.com/mnelson3/vehicle-vitals-certificates.git"
+   CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN_HERE@github.com/mnelson3/nelson-grey-certificates.git"
    ```
 
 ### Step 2: Initialize Fastlane Match
@@ -109,7 +109,7 @@ ASC_ISSUER_ID=YOUR_ISSUER_ID
 ASC_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----
 
 # Match Configuration
-MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/vehicle-vitals-certificates.git
+MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/nelson-grey-certificates.git
 MATCH_PASSWORD=your_match_password
 
 # TestFlight Configuration

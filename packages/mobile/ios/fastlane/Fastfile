@@ -18,6 +18,10 @@ ENV["FASTLANE_SKIP_UPDATE_CHECK"] = "1"
 ENV["FASTLANE_HIDE_CHANGELOG"] = "1"
 ENV["FASTLANE_DISABLE_COLORS"] = "0"
 
+# Load environment variables from .env file for local development
+require 'dotenv'
+Dotenv.load('.env') if File.exist?('.env')
+
 default_platform(:ios)
 
 platform :ios do
@@ -71,10 +75,11 @@ platform :ios do
   desc "Sync code signing certificates"
   lane :sync_signing do
     # Set up API key authentication to avoid interactive prompts
-    # Handle the private key content - it may contain null bytes if not properly stored
     private_key_content = ENV["ASC_PRIVATE_KEY"]
     if private_key_content.nil? || private_key_content.empty?
       UI.error("ASC_PRIVATE_KEY environment variable is not set or empty")
+      UI.error("For local development, copy fastlane/.env.example to fastlane/.env and fill in your values")
+      UI.error("For CI/CD, ensure the ASC_PRIVATE_KEY secret is set in GitHub repository settings")
       raise "Missing ASC_PRIVATE_KEY"
     end
 
@@ -87,6 +92,15 @@ platform :ios do
       key_content: private_key_content,
       is_key_content_base64: true
     )
+
+    match(
+      type: "appstore",
+      readonly: true,
+      api_key: api_key,
+      keychain_name: "fastlane_tmp_keychain",
+      keychain_password: ENV["MATCH_PASSWORD"]
+    )
+  end
 
     match(
       type: "appstore",

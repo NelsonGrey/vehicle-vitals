@@ -1,0 +1,187 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out:
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+# Zero-touch DevOps: Disable interactive prompts
+ENV["FASTLANE_SKIP_UPDATE_CHECK"] = "1"
+ENV["FASTLANE_HIDE_CHANGELOG"] = "1"
+ENV["FASTLANE_DISABLE_COLORS"] = "0"
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Distribute iOS app to Firebase App Distribution"
+  lane :distribute do |options|
+    build_type = options[:build_type] || "debug"
+    release_notes = options[:release_notes] || "Automated build from CI/CD"
+    tester_groups = options[:tester_groups] || "internal-testers"
+
+    # Build the Flutter iOS app with AdMob configuration
+    build_cmd = "cd ../.. && flutter build ios --#{build_type} --no-codesign"
+    
+    # Add AdMob environment variables for production builds
+    if ENV["ADMOB_BANNER_UNIT_ID"] && build_type == "release"
+      build_cmd += " --dart-define=ADMOB_BANNER_UNIT_ID=\"#{ENV["ADMOB_BANNER_UNIT_ID"]}\""
+      build_cmd += " --dart-define=ADMOB_INTERSTITIAL_UNIT_ID=\"#{ENV["ADMOB_INTERSTITIAL_UNIT_ID"]}\""
+      build_cmd += " --dart-define=ADMOB_REWARDED_UNIT_ID=\"#{ENV["ADMOB_REWARDED_UNIT_ID"]}\""
+    end
+    
+    sh(build_cmd)
+
+    # Create IPA using Xcode build
+    build_app(
+      scheme: "Runner",
+      configuration: build_type.capitalize,
+      export_method: "development",
+      output_directory: "./fastlane/builds",
+      output_name: "VehicleVitals-#{build_type}.ipa",
+      clean: true,
+      skip_package_ipa: false
+    )
+
+    # Distribute to Firebase App Distribution
+    firebase_app_distribution(
+      app: ENV["IOS_APP_ID"] || "1:489413148337:ios:b55d0b37718e299368ac90",
+      service_credentials_file: ENV["IOS_SERVICE_ACCOUNT_KEY_FILE"] || "../service-account-key.json",
+      groups: tester_groups,
+      release_notes: release_notes
+    )
+  end
+
+  desc "Distribute debug build to internal testers"
+  lane :debug do
+    distribute(
+      build_type: "debug",
+      tester_groups: "internal-testers",
+      release_notes: "Debug build for internal testing"
+    )
+  end
+
+  desc "Sync code signing certificates"
+  lane :sync_signing do
+    # Set up API key authentication to avoid interactive prompts
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["ASC_PRIVATE_KEY"],
+      is_key_content_base64: true
+    )
+
+    match(
+      type: "appstore",
+      readonly: true,
+      api_key: api_key,
+      keychain_name: "fastlane_tmp_keychain",
+      keychain_password: ENV["MATCH_PASSWORD"]
+    )
+  end
+
+  desc "Generate development certificates"
+  lane :certificates_development do
+    match(
+      type: "development",
+      force: true
+    )
+  end
+
+  desc "Generate distribution certificates and profiles"
+  lane :certificates_appstore do
+    match(
+      type: "appstore",
+      force: true
+    )
+  end
+
+  desc "Generate all certificates (development + distribution)"
+  lane :certificates_all do
+    certificates_development
+    certificates_appstore
+  end
+
+  desc "Build iOS app for TestFlight distribution"
+  lane :build_testflight do
+    # Set up API key authentication
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["ASC_PRIVATE_KEY"],
+      is_key_content_base64: true
+    )
+
+    # Create temporary keychain to avoid system keychain prompts
+    keychain_name = "fastlane_tmp_keychain"
+    keychain_password = ENV["MATCH_PASSWORD"] || "temporary_password_123"
+
+    create_keychain(
+      name: keychain_name,
+      password: keychain_password,
+      unlock: true,
+      timeout: 3600
+    )
+
+    # Sync certificates and provisioning profiles
+    match(
+      type: "appstore",
+      readonly: true,
+      api_key: api_key,
+      keychain_name: keychain_name,
+      keychain_password: keychain_password
+    )
+
+    # Build the Flutter iOS app
+    sh("cd ../.. && flutter build ios --release --no-codesign")
+
+    # Create IPA for TestFlight
+    build_app(
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "./fastlane/builds",
+      output_name: "VehicleVitals.ipa",
+      clean: true,
+      skip_package_ipa: false,
+      export_options: {
+        provisioningProfiles: {
+          "com.nelsongrey.vehiclevitals.app.ios" => "match AppStore com.nelsongrey.vehiclevitals.app.ios"
+        }
+      }
+    )
+
+    # Clean up temporary keychain
+    delete_keychain(name: keychain_name)
+  end
+
+  desc "Upload to TestFlight"
+  lane :beta do |options|
+    release_notes = options[:release_notes] || "Automated build for TestFlight"
+    feedback_email = ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com"
+
+    # Set up API key authentication
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["ASC_PRIVATE_KEY"],
+      is_key_content_base64: true
+    )
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      changelog: release_notes,
+      beta_app_feedback_email: feedback_email,
+      beta_app_description: "Vehicle Vitals iOS App - Automated Build"
+    )
+  end
+end

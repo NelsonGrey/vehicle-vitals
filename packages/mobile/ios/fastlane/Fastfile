@@ -251,6 +251,15 @@ platform :ios do
     UI.message("Note: This app is not code signed and can only be installed on jailbroken devices or with manual signing")
   end
 
+  desc "Build iOS app for TestFlight with proper code signing"
+  lane :build_testflight do
+    # Build the Flutter iOS app for release
+    sh("cd ../.. && flutter build ipa --release")
+
+    UI.message("✅ Flutter iOS build completed successfully")
+    UI.message("📦 IPA file ready for TestFlight upload")
+  end
+
   desc "Upload to TestFlight"
   lane :beta do |options|
     release_notes = options[:release_notes] || "Automated build for TestFlight"

@@ -31,6 +31,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify repository structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Repository contents:"
+          ls -la
+          echo "Checking for mobile package:"
+          if [ -d "packages/mobile" ]; then
+            echo "✅ packages/mobile exists"
+            if [ -d "packages/mobile/ios" ]; then
+              echo "✅ packages/mobile/ios exists"
+            else
+              echo "❌ packages/mobile/ios missing"
+              exit 1
+            fi
+          else
+            echo "❌ packages/mobile missing"
+            exit 1
+          fi
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -66,9 +85,19 @@ jobs:
         run: flutter pub get
         working-directory: packages/mobile
 
-      - name: Install iOS dependencies
+      - name: Verify checkout and directory structure
         run: |
-          cd packages/mobile/ios
+          pwd
+          ls -la
+          ls -la packages/ || echo "packages/ not found"
+          ls -la packages/mobile/ || echo "packages/mobile/ not found"
+          ls -la packages/mobile/ios/ || echo "packages/mobile/ios/ not found"
+
+      - name: Install iOS dependencies
+        working-directory: packages/mobile/ios
+        run: |
+          pwd
+          ls -la
           bundle install || true  # Continue if no Gemfile
 
       - name: Setup macOS CI Environment
@@ -79,9 +108,8 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
       - name: Set up code signing
-        run: |
-          cd packages/mobile/ios
-          fastlane sync_signing
+        working-directory: packages/mobile/ios
+        run: fastlane sync_signing
         env:
           FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
@@ -98,9 +126,8 @@ jobs:
         working-directory: packages/mobile
 
       - name: Sign and package for TestFlight
-        run: |
-          cd packages/mobile/ios
-          fastlane build_testflight
+        working-directory: packages/mobile/ios
+        run: fastlane build_testflight
         env:
           FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
@@ -113,9 +140,8 @@ jobs:
 
       - name: Upload to TestFlight
         if: github.event.inputs.release_type != 'production' || github.ref == 'refs/heads/main'
-        run: |
-          cd packages/mobile/ios
-          fastlane beta
+        working-directory: packages/mobile/ios
+        run: fastlane beta
         env:
           FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}

@@ -102,15 +102,6 @@ platform :ios do
     )
   end
 
-    match(
-      type: "appstore",
-      readonly: true,
-      api_key: api_key,
-      keychain_name: "fastlane_tmp_keychain",
-      keychain_password: ENV["MATCH_PASSWORD"]
-    )
-  end
-
   desc "Generate development certificates"
   lane :certificates_development do
     match(

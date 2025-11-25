@@ -18,8 +18,12 @@ ENV["FASTLANE_SKIP_UPDATE_CHECK"] = "1"
 ENV["FASTLANE_HIDE_CHANGELOG"] = "1"
 ENV["FASTLANE_DISABLE_COLORS"] = "0"
 
-# Load environment variables from .env file for local development
+# Load environment variables from .env.local file in repository root for local development
 require 'dotenv'
+# Load from repository root
+repo_root = File.expand_path('../../../..', __dir__)
+Dotenv.load(File.join(repo_root, '.env.local')) if File.exist?(File.join(repo_root, '.env.local'))
+# Also load from fastlane directory if it exists
 Dotenv.load('.env') if File.exist?('.env')
 
 default_platform(:ios)
@@ -65,38 +69,40 @@ platform :ios do
 
   desc "Distribute debug build to internal testers"
   lane :debug do
-    distribute(
-      build_type: "debug",
-      tester_groups: "internal-testers",
-      release_notes: "Debug build for internal testing"
-    )
+    # Build without code signing for development
+    build_development
+
+    UI.message("Development build completed successfully!")
+    UI.message("Note: Code signing setup is pending. The app can be:")
+    UI.message("1. Installed on jailbroken devices")
+    UI.message("2. Manually signed for testing")
+    UI.message("3. Deployed once proper certificates are available")
+
+    # Skip Firebase distribution for now due to code signing requirements
+    # TODO: Re-enable once certificates are properly configured
+    # firebase_app_distribution(
+    #   app: ENV["IOS_APP_ID"] || "1:489413148337:ios:b55d0b37718e299368ac90",
+    #   service_credentials_file: ENV["IOS_SERVICE_ACCOUNT_KEY_FILE"] || "../service-account-key.json",
+    #   groups: "internal-testers",
+    #   release_notes: "Debug build for internal testing (no code signing)",
+    #   ipa_path: "./fastlane/builds/VehicleVitals-debug.ipa"
+    # )
   end
 
   desc "Sync code signing certificates"
   lane :sync_signing do
-    # Set up API key authentication to avoid interactive prompts
-    private_key_content = ENV["ASC_PRIVATE_KEY"]
-    if private_key_content.nil? || private_key_content.empty?
-      UI.error("ASC_PRIVATE_KEY environment variable is not set or empty")
-      UI.error("For local development, copy fastlane/.env.example to fastlane/.env and fill in your values")
-      UI.error("For CI/CD, ensure the ASC_PRIVATE_KEY secret is set in GitHub repository settings")
-      raise "Missing ASC_PRIVATE_KEY"
-    end
+    # Debug: Print environment variables
+    UI.message("MATCH_GIT_URL: #{ENV["MATCH_GIT_URL"]}")
+    UI.message("FASTLANE_APPLE_ID: #{ENV["FASTLANE_APPLE_ID"]}")
+    UI.message("FASTLANE_TEAM_ID: #{ENV["FASTLANE_TEAM_ID"]}")
 
-    # Clean the private key content to remove any null bytes or invalid characters
-    private_key_content = private_key_content.gsub("\0", "").strip
-
-    api_key = app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: private_key_content,
-      is_key_content_base64: true
-    )
-
+    # For now, use username/password authentication due to spaceship OpenSSL compatibility issues
+    # TODO: Switch back to API key authentication once spaceship is fixed
     match(
       type: "appstore",
       readonly: true,
-      api_key: api_key,
+      username: ENV["FASTLANE_APPLE_ID"],
+      team_id: ENV["FASTLANE_TEAM_ID"],
       keychain_name: "fastlane_tmp_keychain",
       keychain_password: ENV["MATCH_PASSWORD"]
     )
@@ -104,84 +110,142 @@ platform :ios do
 
   desc "Generate development certificates"
   lane :certificates_development do
-    match(
-      type: "development",
-      force: true
-    )
+    # Try API key authentication first (works better with 2FA)
+    private_key_content = ENV["ASC_PRIVATE_KEY"]
+    if private_key_content && !private_key_content.empty? && private_key_content != "your_asc_private_key"
+      private_key_content = private_key_content.gsub("\0", "").gsub("%", "").strip
+
+      api_key = app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_content: private_key_content,
+        is_key_content_base64: true
+      )
+
+      match(
+        type: "development",
+        force: true,
+        api_key: api_key,
+        keychain_name: "fastlane_tmp_keychain",
+        keychain_password: ENV["MATCH_PASSWORD"]
+      )
+    else
+      # Fall back to username/password authentication
+      UI.message("API key not available, using username/password authentication")
+      UI.message("Note: If you have 2FA enabled, use an app-specific password")
+      match(
+        type: "development",
+        force: true,
+        username: ENV["FASTLANE_APPLE_ID"],
+        team_id: ENV["FASTLANE_TEAM_ID"],
+        keychain_name: "fastlane_tmp_keychain",
+        keychain_password: ENV["MATCH_PASSWORD"]
+      )
+    end
   end
 
-  desc "Generate distribution certificates and profiles"
+  desc "Zero-touch certificate management - automatically handles certificate acquisition and sharing"
   lane :certificates_appstore do
-    match(
-      type: "appstore",
-      force: true
-    )
-  end
+    # Zero-touch DevOps: Most efficient certificate strategy
+    # 1. Check for existing valid certificates in shared repo
+    # 2. Reuse certificates across multiple apps (most efficient)
+    # 3. Only create new certificates when necessary
+    # 4. Support certificate sharing across all projects
 
-  desc "Generate all certificates (development + distribution)"
+    private_key_content = ENV["ASC_PRIVATE_KEY"]
+    if private_key_content && !private_key_content.empty? && private_key_content != "your_asc_private_key"
+      private_key_content = private_key_content.gsub("\0", "").gsub("%", "").strip
+
+      api_key = app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_content: private_key_content,
+        is_key_content_base64: true
+      )
+
+      # Most efficient zero-touch strategy: Smart certificate reuse
+      # Try readonly first (maximum efficiency), fall back to creation if needed
+      UI.message("🚀 Most efficient zero-touch: Smart certificate reuse strategy")
+
+      begin
+        # Step 1: Try to use existing certificates (most efficient - no API calls)
+        match(
+          type: "appstore",
+          readonly: true,
+          app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+          api_key: api_key,
+          keychain_name: "fastlane_tmp_keychain",
+          keychain_password: ENV["MATCH_PASSWORD"]
+        )
+        UI.success("✅ Zero-touch success: Reused existing certificates from shared repository")
+        UI.message("💡 Maximum efficiency achieved: No new certificates or API calls")
+
+      rescue => e
+        UI.message("⚠️  No existing setup found. Checking certificate availability...")
+
+        # Step 2: Check if we can create new certificates
+        begin
+          match(
+            type: "appstore",
+            readonly: false,
+            force: false,
+            include_all_certificates: true,
+            app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+            api_key: api_key,
+            keychain_name: "fastlane_tmp_keychain",
+            keychain_password: ENV["MATCH_PASSWORD"]
+          )
+          UI.success("✅ Zero-touch success: Created new certificates for vehicle-vitals")
+          UI.message("💡 Efficient resource usage: New certificates created only when necessary")
+
+        rescue => cert_error
+          if cert_error.message.include?("reached the maximum number of available Distribution certificates")
+            UI.error("🚫 Apple Certificate Limit Reached (3 certificates maximum)")
+            UI.message("📋 To resolve this zero-touch issue:")
+            UI.message("   1. Visit https://developer.apple.com/account/resources/certificates/list")
+            UI.message("   2. Delete unused Distribution certificates")
+            UI.message("   3. Re-run this lane")
+            UI.message("💡 Alternative: Use existing certificates from other projects")
+            raise cert_error
+          else
+            raise cert_error
+          end
+        end
+      end
+    else
+      # Fallback for when API key is not available
+      UI.message("🔑 API key not available, using username/password authentication")
+      UI.message("📝 Note: For zero-touch efficiency, configure ASC_PRIVATE_KEY environment variable")
+
+      match(
+        type: "appstore",
+        force: true,
+        username: ENV["FASTLANE_APPLE_ID"],
+        team_id: ENV["FASTLANE_TEAM_ID"],
+        keychain_name: "fastlane_tmp_keychain",
+        keychain_password: ENV["MATCH_PASSWORD"]
+      )
+    end
+  end
   lane :certificates_all do
     certificates_development
     certificates_appstore
   end
 
-  desc "Build iOS app for TestFlight distribution"
-  lane :build_testflight do
-    # Set up API key authentication
-    private_key_content = ENV["ASC_PRIVATE_KEY"]
-    if private_key_content.nil? || private_key_content.empty?
-      UI.error("ASC_PRIVATE_KEY environment variable is not set or empty")
-      raise "Missing ASC_PRIVATE_KEY"
-    end
-    private_key_content = private_key_content.gsub("\0", "").strip
+  desc "Build iOS app for development without code signing"
+  lane :build_development do
+    # Build the Flutter iOS app without code signing for development
+    sh("cd ../.. && flutter build ios --debug --no-codesign")
 
-    api_key = app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: private_key_content,
-      is_key_content_base64: true
-    )
+    # For development builds without certificates, just copy the .app file
+    # Firebase App Distribution can accept .app files for development
+    app_path = "../../build/ios/iphoneos/Runner.app"
+    output_dir = "./fastlane/builds"
+    sh("mkdir -p #{output_dir}")
+    sh("cp -r #{app_path} #{output_dir}/")
 
-    # Create temporary keychain to avoid system keychain prompts
-    keychain_name = "fastlane_tmp_keychain"
-    keychain_password = ENV["MATCH_PASSWORD"] || "temporary_password_123"
-
-    create_keychain(
-      name: keychain_name,
-      password: keychain_password,
-      unlock: true,
-      timeout: 3600
-    )
-
-    # Sync certificates and provisioning profiles
-    match(
-      type: "appstore",
-      readonly: true,
-      api_key: api_key,
-      keychain_name: keychain_name,
-      keychain_password: keychain_password
-    )
-
-    # Build the Flutter iOS app
-    sh("cd ../.. && flutter build ios --release --no-codesign")
-
-    # Create IPA for TestFlight
-    build_app(
-      scheme: "Runner",
-      configuration: "Release",
-      export_method: "app-store",
-      output_directory: "./fastlane/builds",
-      output_name: "VehicleVitals.ipa",
-      clean: true,
-      skip_package_ipa: false,
-      export_options: {
-        provisioningProfiles: {
-          "com.nelsongrey.vehiclevitals.app.ios" => "match AppStore com.nelsongrey.vehiclevitals.app.ios"
-        }
-      }
-    )
-
-    # Clean up temporary keychain
-    delete_keychain(name: keychain_name)
+    UI.message("Development build completed. App available at: #{output_dir}/Runner.app")
+    UI.message("Note: This app is not code signed and can only be installed on jailbroken devices or with manual signing")
   end
 
   desc "Upload to TestFlight"
@@ -195,13 +259,13 @@ platform :ios do
       UI.error("ASC_PRIVATE_KEY environment variable is not set or empty")
       raise "Missing ASC_PRIVATE_KEY"
     end
-    private_key_content = private_key_content.gsub("\0", "").strip
+    private_key_content = private_key_content.gsub("\0", "").gsub("%", "").strip
 
     api_key = app_store_connect_api_key(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
       key_content: private_key_content,
-      is_key_content_base64: true
+      is_key_content_base64: false
     )
 
     # Upload to TestFlight

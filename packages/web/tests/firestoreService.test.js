@@ -44,14 +44,14 @@ beforeAll(async () => {
     };
 
     // Mock the FirebaseClient to return test environment BEFORE importing the service
-    vi.mock('../src/shared/firebaseConfig.js', () => ({
+    vi.mock('../../../shared/src/firebaseConfig.js', () => ({
       auth: fakeAuth,
       db: testDb,
     }));
 
     // Import the service factory and create service with test environment
     const { createFirestoreService } = await import(
-      '../src/shared/firestoreServiceFactory.js'
+      '../../../shared/src/firestoreServiceFactory.js'
     );
     service = createFirestoreService({ db: testDb, auth: fakeAuth, helpers });
   } catch (err) {

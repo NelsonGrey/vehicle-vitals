@@ -18,6 +18,14 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install Java (required for Firebase emulators)
+        run: |
+          brew update
+          brew install openjdk@17
+          echo 'export PATH="/usr/local/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
+          export PATH="/usr/local/opt/openjdk@17/bin:$PATH"
+          java -version
+
       - name: Install firebase-tools
         run: |
           cd packages/web

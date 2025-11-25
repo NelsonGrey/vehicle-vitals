@@ -253,8 +253,8 @@ platform :ios do
 
   desc "Build iOS app for TestFlight with proper code signing"
   lane :build_testflight do
-    # Sync code signing certificates for TestFlight
-    certificates_appstore
+    # Sync code signing certificates for TestFlight (both development and distribution)
+    certificates_all
 
     # Install CocoaPods dependencies first
     sh("cd ../ && pod install")

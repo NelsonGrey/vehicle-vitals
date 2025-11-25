@@ -1,8 +1,8 @@
 extend type Query {
   """
-  ✨ Look up a single `Movie` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  ✨ Look up a single `MaintenanceRecord` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
-  movie(
+  maintenanceRecord(
     """
     The unique ID of the object.
     """
@@ -11,17 +11,17 @@ extend type Query {
     """
     The key used to identify the object.
     """
-    key: Movie_Key
+    key: MaintenanceRecord_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Movie_FirstRow
-  ): Movie @fdc_generated(from: "Movie", purpose: QUERY_SINGLE)
+    first: MaintenanceRecord_FirstRow
+  ): MaintenanceRecord @fdc_generated(from: "MaintenanceRecord", purpose: QUERY_SINGLE)
   """
-  ✨ Look up a single `MovieMetadata` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  ✨ Look up a single `MaintenanceSchedule` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
-  movieMetadata(
+  maintenanceSchedule(
     """
     The unique ID of the object.
     """
@@ -30,27 +30,32 @@ extend type Query {
     """
     The key used to identify the object.
     """
-    key: MovieMetadata_Key
+    key: MaintenanceSchedule_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: MovieMetadata_FirstRow
-  ): MovieMetadata @fdc_generated(from: "MovieMetadata", purpose: QUERY_SINGLE)
+    first: MaintenanceSchedule_FirstRow
+  ): MaintenanceSchedule @fdc_generated(from: "MaintenanceSchedule", purpose: QUERY_SINGLE)
   """
-  ✨ Look up a single `Review` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  ✨ Look up a single `Reminder` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
-  review(
+  reminder(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
     """
     The key used to identify the object.
     """
-    key: Review_Key
+    key: Reminder_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Review_FirstRow
-  ): Review @fdc_generated(from: "Review", purpose: QUERY_SINGLE)
+    first: Reminder_FirstRow
+  ): Reminder @fdc_generated(from: "Reminder", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -76,18 +81,32 @@ extend type Query {
     first: User_FirstRow
   ): User @fdc_generated(from: "User", purpose: QUERY_SINGLE)
   """
-  ✨ List `Movie` objects in the table and return selected fields, optionally filtered by `where` conditions
+  ✨ Look up a single `Vehicle` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
-  movies(
+  vehicle(
+    """
+    The key used to identify the object.
+    """
+    key: Vehicle_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Vehicle_FirstRow
+  ): Vehicle @fdc_generated(from: "Vehicle", purpose: QUERY_SINGLE)
+  """
+  ✨ List `MaintenanceRecord` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  maintenanceRecords(
     """
     Filter condition to narrow down the query results.
     """
-    where: Movie_Filter
+    where: MaintenanceRecord_Filter
 
     """
     Order the query results by specific fields.
     """
-    orderBy: [Movie_Order!]
+    orderBy: [MaintenanceRecord_Order!]
 
     """
     Number of rows to skip before starting to return the results.
@@ -107,21 +126,21 @@ extend type Query {
     """
     Filter condition to apply to the groups of aggregate queries.
     """
-    having: Movie_Having
-  ): [Movie!]! @fdc_generated(from: "Movie", purpose: QUERY_MULTIPLE)
+    having: MaintenanceRecord_Having
+  ): [MaintenanceRecord!]! @fdc_generated(from: "MaintenanceRecord", purpose: QUERY_MULTIPLE)
   """
-  ✨ List `MovieMetadata` objects in the table and return selected fields, optionally filtered by `where` conditions
+  ✨ List `MaintenanceSchedule` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
-  movieMetadatas(
+  maintenanceSchedules(
     """
     Filter condition to narrow down the query results.
     """
-    where: MovieMetadata_Filter
+    where: MaintenanceSchedule_Filter
 
     """
     Order the query results by specific fields.
     """
-    orderBy: [MovieMetadata_Order!]
+    orderBy: [MaintenanceSchedule_Order!]
 
     """
     Number of rows to skip before starting to return the results.
@@ -141,21 +160,21 @@ extend type Query {
     """
     Filter condition to apply to the groups of aggregate queries.
     """
-    having: MovieMetadata_Having
-  ): [MovieMetadata!]! @fdc_generated(from: "MovieMetadata", purpose: QUERY_MULTIPLE)
+    having: MaintenanceSchedule_Having
+  ): [MaintenanceSchedule!]! @fdc_generated(from: "MaintenanceSchedule", purpose: QUERY_MULTIPLE)
   """
-  ✨ List `Review` objects in the table and return selected fields, optionally filtered by `where` conditions
+  ✨ List `Reminder` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
-  reviews(
+  reminders(
     """
     Filter condition to narrow down the query results.
     """
-    where: Review_Filter
+    where: Reminder_Filter
 
     """
     Order the query results by specific fields.
     """
-    orderBy: [Review_Order!]
+    orderBy: [Reminder_Order!]
 
     """
     Number of rows to skip before starting to return the results.
@@ -175,8 +194,8 @@ extend type Query {
     """
     Filter condition to apply to the groups of aggregate queries.
     """
-    having: Review_Having
-  ): [Review!]! @fdc_generated(from: "Review", purpose: QUERY_MULTIPLE)
+    having: Reminder_Having
+  ): [Reminder!]! @fdc_generated(from: "Reminder", purpose: QUERY_MULTIPLE)
   """
   ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -211,4 +230,38 @@ extend type Query {
     """
     having: User_Having
   ): [User!]! @fdc_generated(from: "User", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Vehicle` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  vehicles(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Vehicle_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Vehicle_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Vehicle_Having
+  ): [Vehicle!]! @fdc_generated(from: "Vehicle", purpose: QUERY_MULTIPLE)
 }

@@ -1,31 +1,31 @@
 extend type Mutation {
   """
-  ✨ Insert a single `Movie` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  ✨ Insert a single `MaintenanceRecord` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
-  movie_insert(
+  maintenanceRecord_insert(
     """
     Data object to insert into the table.
     """
-    data: Movie_Data!
-  ): Movie_KeyOutput! @fdc_generated(from: "Movie", purpose: INSERT_SINGLE)
+    data: MaintenanceRecord_Data!
+  ): MaintenanceRecord_KeyOutput! @fdc_generated(from: "MaintenanceRecord", purpose: INSERT_SINGLE)
   """
-  ✨ Insert a single `MovieMetadata` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  ✨ Insert a single `MaintenanceSchedule` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
-  movieMetadata_insert(
+  maintenanceSchedule_insert(
     """
     Data object to insert into the table.
     """
-    data: MovieMetadata_Data!
-  ): MovieMetadata_KeyOutput! @fdc_generated(from: "MovieMetadata", purpose: INSERT_SINGLE)
+    data: MaintenanceSchedule_Data!
+  ): MaintenanceSchedule_KeyOutput! @fdc_generated(from: "MaintenanceSchedule", purpose: INSERT_SINGLE)
   """
-  ✨ Insert a single `Review` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  ✨ Insert a single `Reminder` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
-  review_insert(
+  reminder_insert(
     """
     Data object to insert into the table.
     """
-    data: Review_Data!
-  ): Review_KeyOutput! @fdc_generated(from: "Review", purpose: INSERT_SINGLE)
+    data: Reminder_Data!
+  ): Reminder_KeyOutput! @fdc_generated(from: "Reminder", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -36,32 +36,41 @@ extend type Mutation {
     data: User_Data!
   ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
   """
-  ✨ Insert `Movie` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  ✨ Insert a single `Vehicle` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
-  movie_insertMany(
+  vehicle_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Vehicle_Data!
+  ): Vehicle_KeyOutput! @fdc_generated(from: "Vehicle", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `MaintenanceRecord` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  maintenanceRecord_insertMany(
     """
     List of data objects to insert into the table.
     """
-    data: [Movie_Data!]!
-  ): [Movie_KeyOutput!]! @fdc_generated(from: "Movie", purpose: INSERT_MULTIPLE)
+    data: [MaintenanceRecord_Data!]!
+  ): [MaintenanceRecord_KeyOutput!]! @fdc_generated(from: "MaintenanceRecord", purpose: INSERT_MULTIPLE)
   """
-  ✨ Insert `MovieMetadata` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  ✨ Insert `MaintenanceSchedule` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
-  movieMetadata_insertMany(
+  maintenanceSchedule_insertMany(
     """
     List of data objects to insert into the table.
     """
-    data: [MovieMetadata_Data!]!
-  ): [MovieMetadata_KeyOutput!]! @fdc_generated(from: "MovieMetadata", purpose: INSERT_MULTIPLE)
+    data: [MaintenanceSchedule_Data!]!
+  ): [MaintenanceSchedule_KeyOutput!]! @fdc_generated(from: "MaintenanceSchedule", purpose: INSERT_MULTIPLE)
   """
-  ✨ Insert `Review` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  ✨ Insert `Reminder` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
-  review_insertMany(
+  reminder_insertMany(
     """
     List of data objects to insert into the table.
     """
-    data: [Review_Data!]!
-  ): [Review_KeyOutput!]! @fdc_generated(from: "Review", purpose: INSERT_MULTIPLE)
+    data: [Reminder_Data!]!
+  ): [Reminder_KeyOutput!]! @fdc_generated(from: "Reminder", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -72,32 +81,41 @@ extend type Mutation {
     data: [User_Data!]!
   ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
   """
-  ✨ Insert or update a single `Movie` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Movie`.
+  ✨ Insert `Vehicle` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
-  movie_upsert(
+  vehicle_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Vehicle_Data!]!
+  ): [Vehicle_KeyOutput!]! @fdc_generated(from: "Vehicle", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `MaintenanceRecord` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MaintenanceRecord`.
+  """
+  maintenanceRecord_upsert(
     """
     Data object to insert or update if it already exists.
     """
-    data: Movie_Data!
-  ): Movie_KeyOutput! @fdc_generated(from: "Movie", purpose: UPSERT_SINGLE)
+    data: MaintenanceRecord_Data!
+  ): MaintenanceRecord_KeyOutput! @fdc_generated(from: "MaintenanceRecord", purpose: UPSERT_SINGLE)
   """
-  ✨ Insert or update a single `MovieMetadata` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MovieMetadata`.
+  ✨ Insert or update a single `MaintenanceSchedule` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MaintenanceSchedule`.
   """
-  movieMetadata_upsert(
+  maintenanceSchedule_upsert(
     """
     Data object to insert or update if it already exists.
     """
-    data: MovieMetadata_Data!
-  ): MovieMetadata_KeyOutput! @fdc_generated(from: "MovieMetadata", purpose: UPSERT_SINGLE)
+    data: MaintenanceSchedule_Data!
+  ): MaintenanceSchedule_KeyOutput! @fdc_generated(from: "MaintenanceSchedule", purpose: UPSERT_SINGLE)
   """
-  ✨ Insert or update a single `Review` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Review`.
+  ✨ Insert or update a single `Reminder` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Reminder`.
   """
-  review_upsert(
+  reminder_upsert(
     """
     Data object to insert or update if it already exists.
     """
-    data: Review_Data!
-  ): Review_KeyOutput! @fdc_generated(from: "Review", purpose: UPSERT_SINGLE)
+    data: Reminder_Data!
+  ): Reminder_KeyOutput! @fdc_generated(from: "Reminder", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
   """
@@ -108,32 +126,41 @@ extend type Mutation {
     data: User_Data!
   ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
   """
-  ✨ Insert or update `Movie` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Movie`.
+  ✨ Insert or update a single `Vehicle` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Vehicle`.
   """
-  movie_upsertMany(
+  vehicle_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Vehicle_Data!
+  ): Vehicle_KeyOutput! @fdc_generated(from: "Vehicle", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `MaintenanceRecord` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MaintenanceRecord`.
+  """
+  maintenanceRecord_upsertMany(
     """
     List of data objects to insert or update if it already exists.
     """
-    data: [Movie_Data!]!
-  ): [Movie_KeyOutput!]! @fdc_generated(from: "Movie", purpose: UPSERT_MULTIPLE)
+    data: [MaintenanceRecord_Data!]!
+  ): [MaintenanceRecord_KeyOutput!]! @fdc_generated(from: "MaintenanceRecord", purpose: UPSERT_MULTIPLE)
   """
-  ✨ Insert or update `MovieMetadata` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MovieMetadata`.
+  ✨ Insert or update `MaintenanceSchedule` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MaintenanceSchedule`.
   """
-  movieMetadata_upsertMany(
+  maintenanceSchedule_upsertMany(
     """
     List of data objects to insert or update if it already exists.
     """
-    data: [MovieMetadata_Data!]!
-  ): [MovieMetadata_KeyOutput!]! @fdc_generated(from: "MovieMetadata", purpose: UPSERT_MULTIPLE)
+    data: [MaintenanceSchedule_Data!]!
+  ): [MaintenanceSchedule_KeyOutput!]! @fdc_generated(from: "MaintenanceSchedule", purpose: UPSERT_MULTIPLE)
   """
-  ✨ Insert or update `Review` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Review`.
+  ✨ Insert or update `Reminder` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Reminder`.
   """
-  review_upsertMany(
+  reminder_upsertMany(
     """
     List of data objects to insert or update if it already exists.
     """
-    data: [Review_Data!]!
-  ): [Review_KeyOutput!]! @fdc_generated(from: "Review", purpose: UPSERT_MULTIPLE)
+    data: [Reminder_Data!]!
+  ): [Reminder_KeyOutput!]! @fdc_generated(from: "Reminder", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
   """
@@ -144,9 +171,18 @@ extend type Mutation {
     data: [User_Data!]!
   ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
   """
-  ✨ Update a single `Movie` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Movie` or `null` if not found.
+  ✨ Insert or update `Vehicle` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Vehicle`.
   """
-  movie_update(
+  vehicle_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Vehicle_Data!]!
+  ): [Vehicle_KeyOutput!]! @fdc_generated(from: "Vehicle", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `MaintenanceRecord` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `MaintenanceRecord` or `null` if not found.
+  """
+  maintenanceRecord_update(
     """
     The unique ID of the object.
     """
@@ -155,22 +191,22 @@ extend type Mutation {
     """
     The key used to identify the object.
     """
-    key: Movie_Key
+    key: MaintenanceRecord_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Movie_FirstRow
+    first: MaintenanceRecord_FirstRow
 
     """
     Data object containing fields to be updated.
     """
-    data: Movie_Data!
-  ): Movie_KeyOutput @fdc_generated(from: "Movie", purpose: UPDATE_SINGLE)
+    data: MaintenanceRecord_Data!
+  ): MaintenanceRecord_KeyOutput @fdc_generated(from: "MaintenanceRecord", purpose: UPDATE_SINGLE)
   """
-  ✨ Update a single `MovieMetadata` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `MovieMetadata` or `null` if not found.
+  ✨ Update a single `MaintenanceSchedule` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `MaintenanceSchedule` or `null` if not found.
   """
-  movieMetadata_update(
+  maintenanceSchedule_update(
     """
     The unique ID of the object.
     """
@@ -179,37 +215,42 @@ extend type Mutation {
     """
     The key used to identify the object.
     """
-    key: MovieMetadata_Key
+    key: MaintenanceSchedule_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: MovieMetadata_FirstRow
+    first: MaintenanceSchedule_FirstRow
 
     """
     Data object containing fields to be updated.
     """
-    data: MovieMetadata_Data!
-  ): MovieMetadata_KeyOutput @fdc_generated(from: "MovieMetadata", purpose: UPDATE_SINGLE)
+    data: MaintenanceSchedule_Data!
+  ): MaintenanceSchedule_KeyOutput @fdc_generated(from: "MaintenanceSchedule", purpose: UPDATE_SINGLE)
   """
-  ✨ Update a single `Review` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Review` or `null` if not found.
+  ✨ Update a single `Reminder` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Reminder` or `null` if not found.
   """
-  review_update(
+  reminder_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
     """
     The key used to identify the object.
     """
-    key: Review_Key
+    key: Reminder_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Review_FirstRow
+    first: Reminder_FirstRow
 
     """
     Data object containing fields to be updated.
     """
-    data: Review_Data!
-  ): Review_KeyOutput @fdc_generated(from: "Review", purpose: UPDATE_SINGLE)
+    data: Reminder_Data!
+  ): Reminder_KeyOutput @fdc_generated(from: "Reminder", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
   """
@@ -240,13 +281,32 @@ extend type Mutation {
     data: User_Data!
   ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
   """
-  ✨ Update `Movie` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  ✨ Update a single `Vehicle` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Vehicle` or `null` if not found.
   """
-  movie_updateMany(
+  vehicle_update(
+    """
+    The key used to identify the object.
+    """
+    key: Vehicle_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Vehicle_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Vehicle_Data!
+  ): Vehicle_KeyOutput @fdc_generated(from: "Vehicle", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `MaintenanceRecord` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  maintenanceRecord_updateMany(
     """
     Filter condition to specify which rows to update.
     """
-    where: Movie_Filter
+    where: MaintenanceRecord_Filter
 
     """
     Set to true to update all rows.
@@ -256,16 +316,16 @@ extend type Mutation {
     """
     Data object containing fields to update.
     """
-    data: Movie_Data!
-  ): Int! @fdc_generated(from: "Movie", purpose: UPDATE_MULTIPLE)
+    data: MaintenanceRecord_Data!
+  ): Int! @fdc_generated(from: "MaintenanceRecord", purpose: UPDATE_MULTIPLE)
   """
-  ✨ Update `MovieMetadata` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  ✨ Update `MaintenanceSchedule` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
-  movieMetadata_updateMany(
+  maintenanceSchedule_updateMany(
     """
     Filter condition to specify which rows to update.
     """
-    where: MovieMetadata_Filter
+    where: MaintenanceSchedule_Filter
 
     """
     Set to true to update all rows.
@@ -275,16 +335,16 @@ extend type Mutation {
     """
     Data object containing fields to update.
     """
-    data: MovieMetadata_Data!
-  ): Int! @fdc_generated(from: "MovieMetadata", purpose: UPDATE_MULTIPLE)
+    data: MaintenanceSchedule_Data!
+  ): Int! @fdc_generated(from: "MaintenanceSchedule", purpose: UPDATE_MULTIPLE)
   """
-  ✨ Update `Review` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  ✨ Update `Reminder` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
-  review_updateMany(
+  reminder_updateMany(
     """
     Filter condition to specify which rows to update.
     """
-    where: Review_Filter
+    where: Reminder_Filter
 
     """
     Set to true to update all rows.
@@ -294,8 +354,8 @@ extend type Mutation {
     """
     Data object containing fields to update.
     """
-    data: Review_Data!
-  ): Int! @fdc_generated(from: "Review", purpose: UPDATE_MULTIPLE)
+    data: Reminder_Data!
+  ): Int! @fdc_generated(from: "Reminder", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -316,9 +376,28 @@ extend type Mutation {
     data: User_Data!
   ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
   """
-  ✨ Delete a single `Movie` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  ✨ Update `Vehicle` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
-  movie_delete(
+  vehicle_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Vehicle_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Vehicle_Data!
+  ): Int! @fdc_generated(from: "Vehicle", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `MaintenanceRecord` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  maintenanceRecord_delete(
     """
     The unique ID of the object.
     """
@@ -327,17 +406,17 @@ extend type Mutation {
     """
     The key used to identify the object.
     """
-    key: Movie_Key
+    key: MaintenanceRecord_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Movie_FirstRow
-  ): Movie_KeyOutput @fdc_generated(from: "Movie", purpose: DELETE_SINGLE)
+    first: MaintenanceRecord_FirstRow
+  ): MaintenanceRecord_KeyOutput @fdc_generated(from: "MaintenanceRecord", purpose: DELETE_SINGLE)
   """
-  ✨ Delete a single `MovieMetadata` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  ✨ Delete a single `MaintenanceSchedule` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
-  movieMetadata_delete(
+  maintenanceSchedule_delete(
     """
     The unique ID of the object.
     """
@@ -346,27 +425,32 @@ extend type Mutation {
     """
     The key used to identify the object.
     """
-    key: MovieMetadata_Key
+    key: MaintenanceSchedule_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: MovieMetadata_FirstRow
-  ): MovieMetadata_KeyOutput @fdc_generated(from: "MovieMetadata", purpose: DELETE_SINGLE)
+    first: MaintenanceSchedule_FirstRow
+  ): MaintenanceSchedule_KeyOutput @fdc_generated(from: "MaintenanceSchedule", purpose: DELETE_SINGLE)
   """
-  ✨ Delete a single `Review` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  ✨ Delete a single `Reminder` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
-  review_delete(
+  reminder_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
     """
     The key used to identify the object.
     """
-    key: Review_Key
+    key: Reminder_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Review_FirstRow
-  ): Review_KeyOutput @fdc_generated(from: "Review", purpose: DELETE_SINGLE)
+    first: Reminder_FirstRow
+  ): Reminder_KeyOutput @fdc_generated(from: "Reminder", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -392,47 +476,61 @@ extend type Mutation {
     first: User_FirstRow
   ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
   """
-  ✨ Delete `Movie` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  ✨ Delete a single `Vehicle` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
-  movie_deleteMany(
+  vehicle_delete(
+    """
+    The key used to identify the object.
+    """
+    key: Vehicle_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Vehicle_FirstRow
+  ): Vehicle_KeyOutput @fdc_generated(from: "Vehicle", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `MaintenanceRecord` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  maintenanceRecord_deleteMany(
     """
     Filter condition to specify which rows to delete.
     """
-    where: Movie_Filter
+    where: MaintenanceRecord_Filter
 
     """
     Set to true to delete all rows.
     """
     all: Boolean = false
-  ): Int! @fdc_generated(from: "Movie", purpose: DELETE_MULTIPLE)
+  ): Int! @fdc_generated(from: "MaintenanceRecord", purpose: DELETE_MULTIPLE)
   """
-  ✨ Delete `MovieMetadata` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  ✨ Delete `MaintenanceSchedule` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
-  movieMetadata_deleteMany(
+  maintenanceSchedule_deleteMany(
     """
     Filter condition to specify which rows to delete.
     """
-    where: MovieMetadata_Filter
+    where: MaintenanceSchedule_Filter
 
     """
     Set to true to delete all rows.
     """
     all: Boolean = false
-  ): Int! @fdc_generated(from: "MovieMetadata", purpose: DELETE_MULTIPLE)
+  ): Int! @fdc_generated(from: "MaintenanceSchedule", purpose: DELETE_MULTIPLE)
   """
-  ✨ Delete `Review` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  ✨ Delete `Reminder` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
-  review_deleteMany(
+  reminder_deleteMany(
     """
     Filter condition to specify which rows to delete.
     """
-    where: Review_Filter
+    where: Reminder_Filter
 
     """
     Set to true to delete all rows.
     """
     all: Boolean = false
-  ): Int! @fdc_generated(from: "Review", purpose: DELETE_MULTIPLE)
+  ): Int! @fdc_generated(from: "Reminder", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
@@ -447,4 +545,18 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Vehicle` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  vehicle_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Vehicle_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Vehicle", purpose: DELETE_MULTIPLE)
 }

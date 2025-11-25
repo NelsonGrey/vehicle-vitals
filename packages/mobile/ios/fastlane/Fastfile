@@ -272,7 +272,12 @@ platform :ios do
       clean: false,  # Don't clean since we just built
       skip_package_ipa: false,
       include_bitcode: false,
-      include_symbols: true
+      include_symbols: true,
+      export_options: {
+        provisioningProfiles: {
+          "com.nelsongrey.vehiclevitals.app.ios" => "match AppStore com.nelsongrey.vehiclevitals.app.ios"
+        }
+      }
     )
 
     UI.message("✅ Flutter iOS build completed successfully")

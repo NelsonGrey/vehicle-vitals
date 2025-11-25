@@ -253,8 +253,21 @@ platform :ios do
 
   desc "Build iOS app for TestFlight with proper code signing"
   lane :build_testflight do
-    # Build the Flutter iOS app for release
-    sh("cd ../.. && flutter build ipa --release")
+    # Build the Flutter iOS app without code signing first
+    sh("cd ../.. && flutter build ios --release --no-codesign")
+
+    # Then use fastlane to archive and export with proper code signing for TestFlight
+    build_app(
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "./fastlane/builds",
+      output_name: "VehicleVitals-TestFlight",
+      clean: false,  # Don't clean since we just built
+      skip_package_ipa: false,
+      include_bitcode: false,
+      include_symbols: true
+    )
 
     UI.message("✅ Flutter iOS build completed successfully")
     UI.message("📦 IPA file ready for TestFlight upload")

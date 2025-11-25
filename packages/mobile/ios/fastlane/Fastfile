@@ -253,6 +253,9 @@ platform :ios do
 
   desc "Build iOS app for TestFlight with proper code signing"
   lane :build_testflight do
+    # Install CocoaPods dependencies first
+    sh("cd ../ && pod install")
+
     # Build the Flutter iOS app without code signing first
     sh("cd ../.. && flutter build ios --release --no-codesign")
 

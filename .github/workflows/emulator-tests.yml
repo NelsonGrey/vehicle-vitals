@@ -29,10 +29,7 @@ jobs:
           echo "$FIREBASE_SERVICE_ACCOUNT_KEY" > service-account-key.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json" >> $GITHUB_ENV
         env:
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-
-      - name: Set Firebase project
-        run: npx firebase use default
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}
 
       - name: Run tests with Firestore emulator
         env:

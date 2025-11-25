@@ -1,4 +1,4 @@
-# Matchfile - Code signing configuration for Vehicle Vitals
+# Matchfile - Zero-touch certificate management for all projects
 git_url(ENV["MATCH_GIT_URL"])
 git_branch("main")
 storage_mode("git")
@@ -6,9 +6,12 @@ type("appstore")  # development, adhoc, appstore, enterprise
 username(ENV["FASTLANE_APPLE_ID"])
 team_id(ENV["FASTLANE_TEAM_ID"])
 
+# Zero-touch DevOps: Certificate sharing across projects
+# Remove specific app_identifier to enable certificate reuse
+# All projects (wishlist-wizard, modulo-squares, vehicle-vitals) share certificates
+
 # Zero-touch DevOps: Avoid keychain prompts
 keychain_name("fastlane_tmp_keychain")
 keychain_password(ENV["MATCH_PASSWORD"])
 force_for_new_devices(true)
-skip_certificate_verification(true)
 skip_set_partition_list(true)

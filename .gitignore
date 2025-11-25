@@ -34,6 +34,9 @@ dataconnect-debug.log
 firestore-debug.log
 pglite-debug.log
 
+# TypeScript build cache
+*.tsbuildinfo
+
 # React Native
 android/
 ios/

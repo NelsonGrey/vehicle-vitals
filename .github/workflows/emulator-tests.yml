@@ -18,7 +18,7 @@ jobs:
           node-version: 22
 
       - name: Install firebase-tools
-        run: npm install -g firebase-tools@13
+        run: npm install -g firebase-tools
 
       - name: Authenticate Firebase CLI
         run: |
@@ -37,9 +37,19 @@ jobs:
           # Install web dependencies and run tests inside the emulator so emulator-dependent tests run
           cd packages/web
           npm ci --legacy-peer-deps
+
+          # Debug: Check firebase version and available commands
+          echo "Firebase version:"
+          firebase --version
+          echo "Node version:"
+          node --version
+          echo "NPM version:"
+          npm --version
+
           # Run tests inside the emulator context so the rules-unit-testing code can auto-discover it
           # Using firebase emulators:exec ensures emulator host/port are provided to tests.
-          firebase emulators:exec --project vehicle-vitals-dev "npm test"
+          echo "Starting emulators and running tests..."
+          firebase emulators:exec --only firestore --project vehicle-vitals-dev "npm run test"
 
       - name: Clean up service account key
         if: always()

@@ -74,3 +74,9 @@ export const MAINTENANCE_TYPES = [
 
 // Re-export common utilities
 export { serverTimestamp } from 'firebase/firestore';
+
+// Maintenance schedules
+export {
+  getUpcomingMaintenance,
+  manufacturerSchedules,
+} from './maintenanceSchedules.js';

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
+import { useEffect, useState } from 'react';
 import { getVehicles } from '../shared/firestoreService';
-import { getUpcomingMaintenance } from '../../../../shared/maintenanceSchedules';
 
 interface UpcomingMaintenanceItem {
   id: string;
@@ -43,23 +43,29 @@ export default function UpcomingTasks() {
 
         for (const vehicle of vehicles) {
           const currentMileage = parseInt(vehicle.mileage || '0') || 0;
-          const upcoming = getUpcomingMaintenance(vehicle.make, vehicle.model, currentMileage);
+          const upcoming = getUpcomingMaintenance(
+            vehicle.make,
+            vehicle.model,
+            currentMileage
+          );
 
-          allUpcoming.push(...upcoming.map((item: UpcomingMaintenanceItem) => ({
-            id: item.id,
-            serviceType: item.id,
-            description: item.description,
-            frequency: item.frequency,
-            interval: item.interval,
-            nextDueMileage: item.nextDueMileage,
-            milesUntilDue: item.milesUntilDue,
-            vehicle: {
-              vin: vehicle.vin,
-              make: vehicle.make,
-              model: vehicle.model,
-              year: vehicle.year
-            }
-          })));
+          allUpcoming.push(
+            ...upcoming.map((item: UpcomingMaintenanceItem) => ({
+              id: item.id,
+              serviceType: item.id,
+              description: item.description,
+              frequency: item.frequency,
+              interval: item.interval,
+              nextDueMileage: item.nextDueMileage,
+              milesUntilDue: item.milesUntilDue,
+              vehicle: {
+                vin: vehicle.vin,
+                make: vehicle.make,
+                model: vehicle.model,
+                year: vehicle.year,
+              },
+            }))
+          );
         }
 
         // Sort by miles until due (most urgent first)
@@ -78,7 +84,8 @@ export default function UpcomingTasks() {
 
   const getUrgencyColor = (milesUntilDue: number) => {
     if (milesUntilDue <= 1000) return 'text-red-600 bg-red-50 border-red-200';
-    if (milesUntilDue <= 5000) return 'text-orange-600 bg-orange-50 border-orange-200';
+    if (milesUntilDue <= 5000)
+      return 'text-orange-600 bg-orange-50 border-orange-200';
     return 'text-green-600 bg-green-50 border-green-200';
   };
 
@@ -106,7 +113,8 @@ export default function UpcomingTasks() {
           Upcoming Tasks
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Stay ahead of maintenance with upcoming service recommendations for all your vehicles.
+          Stay ahead of maintenance with upcoming service recommendations for
+          all your vehicles.
         </p>
       </div>
 
@@ -117,7 +125,8 @@ export default function UpcomingTasks() {
             All caught up!
           </h3>
           <p className="text-slate-600 dark:text-slate-400">
-            No upcoming maintenance tasks found. Your vehicles are well maintained.
+            No upcoming maintenance tasks found. Your vehicles are well
+            maintained.
           </p>
         </div>
       ) : (
@@ -130,28 +139,39 @@ export default function UpcomingTasks() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">{item.description}</h3>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      item.milesUntilDue <= 1000 ? 'bg-red-100 text-red-800' :
-                      item.milesUntilDue <= 5000 ? 'bg-orange-100 text-orange-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
+                    <h3 className="font-semibold text-lg">
+                      {item.description}
+                    </h3>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        item.milesUntilDue <= 1000
+                          ? 'bg-red-100 text-red-800'
+                          : item.milesUntilDue <= 5000
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-green-100 text-green-800'
+                      }`}
+                    >
                       {getUrgencyLabel(item.milesUntilDue)}
                     </span>
                   </div>
 
                   <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                    <span className="font-medium">{item.vehicle.year} {item.vehicle.make} {item.vehicle.model}</span>
+                    <span className="font-medium">
+                      {item.vehicle.year} {item.vehicle.make}{' '}
+                      {item.vehicle.model}
+                    </span>
                     <span className="mx-2">•</span>
                     <span>{item.frequency}</span>
                   </div>
 
                   <div className="flex items-center gap-4 text-sm">
                     <div>
-                      <span className="font-medium">Due at:</span> {item.nextDueMileage.toLocaleString()} miles
+                      <span className="font-medium">Due at:</span>{' '}
+                      {item.nextDueMileage.toLocaleString()} miles
                     </div>
                     <div>
-                      <span className="font-medium">Miles until due:</span> {item.milesUntilDue.toLocaleString()}
+                      <span className="font-medium">Miles until due:</span>{' '}
+                      {item.milesUntilDue.toLocaleString()}
                     </div>
                   </div>
                 </div>

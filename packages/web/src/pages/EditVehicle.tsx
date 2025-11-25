@@ -1,8 +1,8 @@
 // -----------------------------
 // File: web/pages/EditVehicle.jsx
+import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getUpcomingMaintenance } from '../../../../shared/maintenanceSchedules';
 import AdBanner from '../components/AdBanner';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import {

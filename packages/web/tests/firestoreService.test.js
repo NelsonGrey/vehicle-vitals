@@ -1,5 +1,5 @@
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 let testEnv;
 let service;
@@ -43,16 +43,8 @@ beforeAll(async () => {
       serverTimestamp: () => new Date(),
     };
 
-    // Mock the FirebaseClient to return test environment BEFORE importing the service
-    vi.mock('../../../shared/src/firebaseConfig.js', () => ({
-      auth: fakeAuth,
-      db: testDb,
-    }));
-
     // Import the service factory and create service with test environment
-    const { createFirestoreService } = await import(
-      '../../../shared/src/firestoreServiceFactory.js'
-    );
+    const { createFirestoreService } = await import('@vehicle-vitals/shared');
     service = createFirestoreService({ db: testDb, auth: fakeAuth, helpers });
   } catch (err) {
     // If emulator isn't running or initialize fails, skip emulator-dependent tests

@@ -41,6 +41,11 @@ jobs:
           cd packages/web
           npm ci --legacy-peer-deps
 
+          # Build shared package first
+          cd ../shared
+          npm run build
+          cd ../web
+
           # Debug: Check firebase version and available commands
           echo "Firebase version:"
           npx firebase --version

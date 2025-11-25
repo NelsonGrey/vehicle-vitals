@@ -1,21 +1,21 @@
 """
-✨ `Movie_KeyOutput` returns the primary key fields of table type `Movie`.
+✨ `MaintenanceRecord_KeyOutput` returns the primary key fields of table type `MaintenanceRecord`.
 
-It has the same format as `Movie_Key`, but is only used as mutation return value.
+It has the same format as `MaintenanceRecord_Key`, but is only used as mutation return value.
 """
-scalar Movie_KeyOutput
+scalar MaintenanceRecord_KeyOutput
 """
-✨ `MovieMetadata_KeyOutput` returns the primary key fields of table type `MovieMetadata`.
+✨ `MaintenanceSchedule_KeyOutput` returns the primary key fields of table type `MaintenanceSchedule`.
 
-It has the same format as `MovieMetadata_Key`, but is only used as mutation return value.
+It has the same format as `MaintenanceSchedule_Key`, but is only used as mutation return value.
 """
-scalar MovieMetadata_KeyOutput
+scalar MaintenanceSchedule_KeyOutput
 """
-✨ `Review_KeyOutput` returns the primary key fields of table type `Review`.
+✨ `Reminder_KeyOutput` returns the primary key fields of table type `Reminder`.
 
-It has the same format as `Review_Key`, but is only used as mutation return value.
+It has the same format as `Reminder_Key`, but is only used as mutation return value.
 """
-scalar Review_KeyOutput
+scalar Reminder_KeyOutput
 """
 ✨ `User_KeyOutput` returns the primary key fields of table type `User`.
 
@@ -23,638 +23,242 @@ It has the same format as `User_Key`, but is only used as mutation return value.
 """
 scalar User_KeyOutput
 """
-✨ Generated data input type for table 'Movie'. It includes all necessary fields for creating or upserting rows into table.
+✨ `Vehicle_KeyOutput` returns the primary key fields of table type `Vehicle`.
+
+It has the same format as `Vehicle_Key`, but is only used as mutation return value.
 """
-input Movie_Data {
+scalar Vehicle_KeyOutput
+"""
+✨ Generated data input type for table 'MaintenanceRecord'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input MaintenanceRecord_Data {
   """
-  ✨ Generated from Field `Movie`.`id` of type `UUID!`
+  ✨ Generated from Field `MaintenanceRecord`.`id` of type `UUID!`
   """
   id: UUID
   """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Movie`.`id` of type `UUID!`)
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `MaintenanceRecord`.`id` of type `UUID!`)
   """
   id_expr: UUID_Expr
   """
-  ✨ Generated from Field `Movie`.`genre` of type `String`
-  """
-  genre: String
-  """
-  ✨ `_expr` server value variant of `genre` (✨ Generated from Field `Movie`.`genre` of type `String`)
-  """
-  genre_expr: String_Expr
-  """
-  ✨ Generated from Field `Movie`.`imageUrl` of type `String!`
-  """
-  imageUrl: String
-  """
-  ✨ `_expr` server value variant of `imageUrl` (✨ Generated from Field `Movie`.`imageUrl` of type `String!`)
-  """
-  imageUrl_expr: String_Expr
-  """
-  ✨ Generated from Field `Movie`.`title` of type `String!`
-  """
-  title: String
-  """
-  ✨ `_expr` server value variant of `title` (✨ Generated from Field `Movie`.`title` of type `String!`)
-  """
-  title_expr: String_Expr
-}
-"""
-✨ Generated filter input type for table 'Movie'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
-"""
-input Movie_Filter {
-  """
-  Apply multiple filter conditions using `AND` logic.
-  """
-  _and: [Movie_Filter!]
-  """
-  Negate the result of the provided filter condition.
-  """
-  _not: Movie_Filter
-  """
-  Apply multiple filter conditions using `OR` logic.
-  """
-  _or: [Movie_Filter!]
-  """
-  ✨ Generated from Field `Movie`.`id` of type `UUID!`
-  """
-  id: UUID_Filter
-  """
-  ✨ Generated from Field `Movie`.`genre` of type `String`
-  """
-  genre: String_Filter
-  """
-  ✨ Generated from Field `Movie`.`imageUrl` of type `String!`
-  """
-  imageUrl: String_Filter
-  """
-  ✨ Generated from Field `Movie`.`title` of type `String!`
-  """
-  title: String_Filter
-  """
-  ✨ Generated from Field `Movie`.`reviews_on_movie` of type `[Review!]!`
-  """
-  reviews_on_movie: Review_ListFilter
-  """
-  ✨ Generated from Field `Movie`.`movieMetadata_on_movie` of type `MovieMetadata`
-  """
-  movieMetadata_on_movie: MovieMetadata_Filter
-  """
-  ✨ Generated from Field `Movie`.`users_via_Review` of type `[User!]!`
-  """
-  users_via_Review: User_ListFilter
-}
-"""
-✨ Generated first-row input type for table 'Movie'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
-"""
-input Movie_FirstRow {
-  """
-  Order the result by the specified fields.
-  """
-  orderBy: [Movie_Order!]
-  """
-  Filters rows based on the specified conditions.
-  """
-  where: Movie_Filter
-}
-"""
-✨ Generated having input type for table 'Movie'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
-"""
-input Movie_Having {
-  """
-  Apply multiple Having conditions using `AND` logic.
-  """
-  _and: [Movie_Having!]
-  """
-  Whether to apply DISTINCT to the aggregate function.
-  """
-  _distinct: Boolean
-  """
-  Negate the result of the provided Having condition.
-  """
-  _not: Movie_Having
-  """
-  Apply multiple Having conditions using `OR` logic.
-  """
-  _or: [Movie_Having!]
-  """
-  ✨ Generated from Field `Movie`.`_count` of type `Int!`
-  """
-  _count: Int_Filter
-  """
-  ✨ Generated from Field `Movie`.`genre_count` of type `Int!`
-  """
-  genre_count: Int_Filter
-  """
-  ✨ Generated from Field `Movie`.`id_count` of type `Int!`
-  """
-  id_count: Int_Filter
-  """
-  ✨ Generated from Field `Movie`.`imageUrl_count` of type `Int!`
-  """
-  imageUrl_count: Int_Filter
-  """
-  ✨ Generated from Field `Movie`.`title_count` of type `Int!`
-  """
-  title_count: Int_Filter
-}
-"""
-✨ Generated key input type for table 'Movie'. It represents the primary key fields used to uniquely identify a row in the table.
-"""
-input Movie_Key {
-  """
-  ✨ Generated from Field `Movie`.`id` of type `UUID!`
-  """
-  id: UUID
-  """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Movie`.`id` of type `UUID!`)
-  """
-  id_expr: UUID_Expr
-}
-"""
-✨ Generated list filter input type for table 'Movie'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
-"""
-input Movie_ListFilter {
-  """
-  The desired number of objects that match the condition (defaults to at least one).
-  """
-  count: Int_Filter = {gt:0}
-  """
-  Condition of the related objects to filter for.
-  """
-  exist: Movie_Filter
-}
-"""
-✨ Generated order input type for table 'Movie'. This input defines the sorting order of rows in query results based on one or more fields.
-"""
-input Movie_Order {
-  """
-  ✨ Generated from Field `Movie`.`id` of type `UUID!`
-  """
-  id: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`genre` of type `String`
-  """
-  genre: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`imageUrl` of type `String!`
-  """
-  imageUrl: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`title` of type `String!`
-  """
-  title: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`_count` of type `Int!`
-  """
-  _count: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`genre_count` of type `Int!`
-  """
-  genre_count: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`id_count` of type `Int!`
-  """
-  id_count: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`imageUrl_count` of type `Int!`
-  """
-  imageUrl_count: OrderDirection
-  """
-  ✨ Generated from Field `Movie`.`title_count` of type `Int!`
-  """
-  title_count: OrderDirection
-}
-"""
-✨ Generated data input type for table 'MovieMetadata'. It includes all necessary fields for creating or upserting rows into table.
-"""
-input MovieMetadata_Data {
-  """
-  ✨ Generated from Field `MovieMetadata`.`id` of type `UUID!`
-  """
-  id: UUID
-  """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `MovieMetadata`.`id` of type `UUID!`)
-  """
-  id_expr: UUID_Expr
-  """
-  ✨ Generated from Field `MovieMetadata`.`movieId` of type `UUID!`
-  """
-  movieId: UUID
-  """
-  ✨ `_expr` server value variant of `movieId` (✨ Generated from Field `MovieMetadata`.`movieId` of type `UUID!`)
-  """
-  movieId_expr: UUID_Expr
-  """
-  ✨ Generated from Field `MovieMetadata`.`movie` of type `Movie!`
-  """
-  movie: Movie_Key
-  """
-  ✨ Generated from Field `MovieMetadata`.`description` of type `String`
-  """
-  description: String
-  """
-  ✨ `_expr` server value variant of `description` (✨ Generated from Field `MovieMetadata`.`description` of type `String`)
-  """
-  description_expr: String_Expr
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating` of type `Float`
-  """
-  rating: Float
-  """
-  ✨ `_expr` server value variant of `rating` (✨ Generated from Field `MovieMetadata`.`rating` of type `Float`)
-  """
-  rating_expr: Float_Expr
-  """
-  ✨ `_update` server value variant of `rating` (✨ Generated from Field `MovieMetadata`.`rating` of type `Float`)
-  """
-  rating_update: [Float_Update!]
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear` of type `Int`
-  """
-  releaseYear: Int
-  """
-  ✨ `_expr` server value variant of `releaseYear` (✨ Generated from Field `MovieMetadata`.`releaseYear` of type `Int`)
-  """
-  releaseYear_expr: Int_Expr
-  """
-  ✨ `_update` server value variant of `releaseYear` (✨ Generated from Field `MovieMetadata`.`releaseYear` of type `Int`)
-  """
-  releaseYear_update: [Int_Update!]
-}
-"""
-✨ Generated filter input type for table 'MovieMetadata'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
-"""
-input MovieMetadata_Filter {
-  """
-  Apply multiple filter conditions using `AND` logic.
-  """
-  _and: [MovieMetadata_Filter!]
-  """
-  Negate the result of the provided filter condition.
-  """
-  _not: MovieMetadata_Filter
-  """
-  Apply multiple filter conditions using `OR` logic.
-  """
-  _or: [MovieMetadata_Filter!]
-  """
-  ✨ Generated from Field `MovieMetadata`.`id` of type `UUID!`
-  """
-  id: UUID_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`movieId` of type `UUID!`
-  """
-  movieId: UUID_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`movie` of type `Movie!`
-  """
-  movie: Movie_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`description` of type `String`
-  """
-  description: String_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating` of type `Float`
-  """
-  rating: Float_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear` of type `Int`
-  """
-  releaseYear: Int_Filter
-}
-"""
-✨ Generated first-row input type for table 'MovieMetadata'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
-"""
-input MovieMetadata_FirstRow {
-  """
-  Order the result by the specified fields.
-  """
-  orderBy: [MovieMetadata_Order!]
-  """
-  Filters rows based on the specified conditions.
-  """
-  where: MovieMetadata_Filter
-}
-"""
-✨ Generated having input type for table 'MovieMetadata'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
-"""
-input MovieMetadata_Having {
-  """
-  Apply multiple Having conditions using `AND` logic.
-  """
-  _and: [MovieMetadata_Having!]
-  """
-  Whether to apply DISTINCT to the aggregate function.
-  """
-  _distinct: Boolean
-  """
-  Negate the result of the provided Having condition.
-  """
-  _not: MovieMetadata_Having
-  """
-  Apply multiple Having conditions using `OR` logic.
-  """
-  _or: [MovieMetadata_Having!]
-  """
-  ✨ Generated from Field `MovieMetadata`.`_count` of type `Int!`
-  """
-  _count: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`description_count` of type `Int!`
-  """
-  description_count: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`id_count` of type `Int!`
-  """
-  id_count: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`movieId_count` of type `Int!`
-  """
-  movieId_count: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_count` of type `Int!`
-  """
-  rating_count: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_count` of type `Int!`
-  """
-  releaseYear_count: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_sum` of type `Float`
-  """
-  rating_sum: Float_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_sum` of type `Int`
-  """
-  releaseYear_sum: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_avg` of type `Float`
-  """
-  rating_avg: Float_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_avg` of type `Float`
-  """
-  releaseYear_avg: Float_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_min` of type `Float`
-  """
-  rating_min: Float_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_min` of type `Int`
-  """
-  releaseYear_min: Int_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_max` of type `Float`
-  """
-  rating_max: Float_Filter
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_max` of type `Int`
-  """
-  releaseYear_max: Int_Filter
-}
-"""
-✨ Generated key input type for table 'MovieMetadata'. It represents the primary key fields used to uniquely identify a row in the table.
-"""
-input MovieMetadata_Key {
-  """
-  ✨ Generated from Field `MovieMetadata`.`id` of type `UUID!`
-  """
-  id: UUID
-  """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `MovieMetadata`.`id` of type `UUID!`)
-  """
-  id_expr: UUID_Expr
-}
-"""
-✨ Generated list filter input type for table 'MovieMetadata'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
-"""
-input MovieMetadata_ListFilter {
-  """
-  The desired number of objects that match the condition (defaults to at least one).
-  """
-  count: Int_Filter = {gt:0}
-  """
-  Condition of the related objects to filter for.
-  """
-  exist: MovieMetadata_Filter
-}
-"""
-✨ Generated order input type for table 'MovieMetadata'. This input defines the sorting order of rows in query results based on one or more fields.
-"""
-input MovieMetadata_Order {
-  """
-  ✨ Generated from Field `MovieMetadata`.`id` of type `UUID!`
-  """
-  id: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`movieId` of type `UUID!`
-  """
-  movieId: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`movie` of type `Movie!`
-  """
-  movie: Movie_Order
-  """
-  ✨ Generated from Field `MovieMetadata`.`description` of type `String`
-  """
-  description: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating` of type `Float`
-  """
-  rating: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear` of type `Int`
-  """
-  releaseYear: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`_count` of type `Int!`
-  """
-  _count: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`description_count` of type `Int!`
-  """
-  description_count: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`id_count` of type `Int!`
-  """
-  id_count: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`movieId_count` of type `Int!`
-  """
-  movieId_count: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_count` of type `Int!`
-  """
-  rating_count: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_count` of type `Int!`
-  """
-  releaseYear_count: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_sum` of type `Float`
-  """
-  rating_sum: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_sum` of type `Int`
-  """
-  releaseYear_sum: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_avg` of type `Float`
-  """
-  rating_avg: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_avg` of type `Float`
-  """
-  releaseYear_avg: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_min` of type `Float`
-  """
-  rating_min: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_min` of type `Int`
-  """
-  releaseYear_min: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`rating_max` of type `Float`
-  """
-  rating_max: OrderDirection
-  """
-  ✨ Generated from Field `MovieMetadata`.`releaseYear_max` of type `Int`
-  """
-  releaseYear_max: OrderDirection
-}
-"""
-✨ Generated data input type for table 'Review'. It includes all necessary fields for creating or upserting rows into table.
-"""
-input Review_Data {
-  """
-  ✨ Generated from Field `Review`.`movieId` of type `UUID!`
-  """
-  movieId: UUID
-  """
-  ✨ `_expr` server value variant of `movieId` (✨ Generated from Field `Review`.`movieId` of type `UUID!`)
-  """
-  movieId_expr: UUID_Expr
-  """
-  ✨ Generated from Field `Review`.`userId` of type `String!`
+  ✨ Generated from Field `MaintenanceRecord`.`userId` of type `String!`
   """
   userId: String
   """
-  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Review`.`userId` of type `String!`)
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `MaintenanceRecord`.`userId` of type `String!`)
   """
   userId_expr: String_Expr
   """
-  ✨ Generated from Field `Review`.`movie` of type `Movie!`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicleVin` of type `String!`
   """
-  movie: Movie_Key
+  vehicleVin: String
   """
-  ✨ Generated from Field `Review`.`user` of type `User!`
+  ✨ `_expr` server value variant of `vehicleVin` (✨ Generated from Field `MaintenanceRecord`.`vehicleVin` of type `String!`)
+  """
+  vehicleVin_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`user` of type `User!`
   """
   user: User_Key
   """
-  ✨ Generated from Field `Review`.`rating` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicle` of type `Vehicle!`
   """
-  rating: Int
+  vehicle: Vehicle_Key
   """
-  ✨ `_expr` server value variant of `rating` (✨ Generated from Field `Review`.`rating` of type `Int`)
+  ✨ Generated from Field `MaintenanceRecord`.`cost` of type `Float`
   """
-  rating_expr: Int_Expr
+  cost: Float
   """
-  ✨ `_update` server value variant of `rating` (✨ Generated from Field `Review`.`rating` of type `Int`)
+  ✨ `_expr` server value variant of `cost` (✨ Generated from Field `MaintenanceRecord`.`cost` of type `Float`)
   """
-  rating_update: [Int_Update!]
+  cost_expr: Float_Expr
   """
-  ✨ Generated from Field `Review`.`reviewDate` of type `Date!`
+  ✨ `_update` server value variant of `cost` (✨ Generated from Field `MaintenanceRecord`.`cost` of type `Float`)
   """
-  reviewDate: Date
+  cost_update: [Float_Update!]
   """
-  ✨ `_date` server value variant of `reviewDate` (✨ Generated from Field `Review`.`reviewDate` of type `Date!`)
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt` of type `Timestamp!`
   """
-  reviewDate_date: Date_Relative
+  createdAt: Timestamp
   """
-  ✨ `_expr` server value variant of `reviewDate` (✨ Generated from Field `Review`.`reviewDate` of type `Date!`)
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `MaintenanceRecord`.`createdAt` of type `Timestamp!`)
   """
-  reviewDate_expr: Date_Expr
+  createdAt_expr: Timestamp_Expr
   """
-  ✨ `_update` server value variant of `reviewDate` (✨ Generated from Field `Review`.`reviewDate` of type `Date!`)
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `MaintenanceRecord`.`createdAt` of type `Timestamp!`)
   """
-  reviewDate_update: [Date_Update!]
+  createdAt_time: Timestamp_Relative
   """
-  ✨ Generated from Field `Review`.`reviewText` of type `String`
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `MaintenanceRecord`.`createdAt` of type `Timestamp!`)
   """
-  reviewText: String
+  createdAt_update: [Timestamp_Update!]
   """
-  ✨ `_expr` server value variant of `reviewText` (✨ Generated from Field `Review`.`reviewText` of type `String`)
+  ✨ Generated from Field `MaintenanceRecord`.`date` of type `Date!`
   """
-  reviewText_expr: String_Expr
+  date: Date
+  """
+  ✨ `_date` server value variant of `date` (✨ Generated from Field `MaintenanceRecord`.`date` of type `Date!`)
+  """
+  date_date: Date_Relative
+  """
+  ✨ `_expr` server value variant of `date` (✨ Generated from Field `MaintenanceRecord`.`date` of type `Date!`)
+  """
+  date_expr: Date_Expr
+  """
+  ✨ `_update` server value variant of `date` (✨ Generated from Field `MaintenanceRecord`.`date` of type `Date!`)
+  """
+  date_update: [Date_Update!]
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`description` of type `String!`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `MaintenanceRecord`.`description` of type `String!`)
+  """
+  description_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`mileage` of type `String`
+  """
+  mileage: String
+  """
+  ✨ `_expr` server value variant of `mileage` (✨ Generated from Field `MaintenanceRecord`.`mileage` of type `String`)
+  """
+  mileage_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`notes` of type `String`
+  """
+  notes: String
+  """
+  ✨ `_expr` server value variant of `notes` (✨ Generated from Field `MaintenanceRecord`.`notes` of type `String`)
+  """
+  notes_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`provider` of type `String`
+  """
+  provider: String
+  """
+  ✨ `_expr` server value variant of `provider` (✨ Generated from Field `MaintenanceRecord`.`provider` of type `String`)
+  """
+  provider_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`serviceType` of type `String!`
+  """
+  serviceType: String
+  """
+  ✨ `_expr` server value variant of `serviceType` (✨ Generated from Field `MaintenanceRecord`.`serviceType` of type `String!`)
+  """
+  serviceType_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `MaintenanceRecord`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `MaintenanceRecord`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `MaintenanceRecord`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!]
 }
 """
-✨ Generated filter input type for table 'Review'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+✨ Generated filter input type for table 'MaintenanceRecord'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
 """
-input Review_Filter {
+input MaintenanceRecord_Filter {
   """
   Apply multiple filter conditions using `AND` logic.
   """
-  _and: [Review_Filter!]
+  _and: [MaintenanceRecord_Filter!]
   """
   Negate the result of the provided filter condition.
   """
-  _not: Review_Filter
+  _not: MaintenanceRecord_Filter
   """
   Apply multiple filter conditions using `OR` logic.
   """
-  _or: [Review_Filter!]
+  _or: [MaintenanceRecord_Filter!]
   """
-  ✨ Generated from Field `Review`.`movieId` of type `UUID!`
+  ✨ Generated from Field `MaintenanceRecord`.`id` of type `UUID!`
   """
-  movieId: UUID_Filter
+  id: UUID_Filter
   """
-  ✨ Generated from Field `Review`.`userId` of type `String!`
+  ✨ Generated from Field `MaintenanceRecord`.`userId` of type `String!`
   """
   userId: String_Filter
   """
-  ✨ Generated from Field `Review`.`movie` of type `Movie!`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicleVin` of type `String!`
   """
-  movie: Movie_Filter
+  vehicleVin: String_Filter
   """
-  ✨ Generated from Field `Review`.`user` of type `User!`
+  ✨ Generated from Field `MaintenanceRecord`.`user` of type `User!`
   """
   user: User_Filter
   """
-  ✨ Generated from Field `Review`.`rating` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicle` of type `Vehicle!`
   """
-  rating: Int_Filter
+  vehicle: Vehicle_Filter
   """
-  ✨ Generated from Field `Review`.`reviewDate` of type `Date!`
+  ✨ Generated from Field `MaintenanceRecord`.`cost` of type `Float`
   """
-  reviewDate: Date_Filter
+  cost: Float_Filter
   """
-  ✨ Generated from Field `Review`.`reviewText` of type `String`
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt` of type `Timestamp!`
   """
-  reviewText: String_Filter
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`date` of type `Date!`
+  """
+  date: Date_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`description` of type `String!`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`mileage` of type `String`
+  """
+  mileage: String_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`notes` of type `String`
+  """
+  notes: String_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`provider` of type `String`
+  """
+  provider: String_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`serviceType` of type `String!`
+  """
+  serviceType: String_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
 }
 """
-✨ Generated first-row input type for table 'Review'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+✨ Generated first-row input type for table 'MaintenanceRecord'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
 """
-input Review_FirstRow {
+input MaintenanceRecord_FirstRow {
   """
   Order the result by the specified fields.
   """
-  orderBy: [Review_Order!]
+  orderBy: [MaintenanceRecord_Order!]
   """
   Filters rows based on the specified conditions.
   """
-  where: Review_Filter
+  where: MaintenanceRecord_Filter
 }
 """
-✨ Generated having input type for table 'Review'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+✨ Generated having input type for table 'MaintenanceRecord'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
 """
-input Review_Having {
+input MaintenanceRecord_Having {
   """
   Apply multiple Having conditions using `AND` logic.
   """
-  _and: [Review_Having!]
+  _and: [MaintenanceRecord_Having!]
   """
   Whether to apply DISTINCT to the aggregate function.
   """
@@ -662,85 +266,121 @@ input Review_Having {
   """
   Negate the result of the provided Having condition.
   """
-  _not: Review_Having
+  _not: MaintenanceRecord_Having
   """
   Apply multiple Having conditions using `OR` logic.
   """
-  _or: [Review_Having!]
+  _or: [MaintenanceRecord_Having!]
   """
-  ✨ Generated from Field `Review`.`_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`_count` of type `Int!`
   """
   _count: Int_Filter
   """
-  ✨ Generated from Field `Review`.`movieId_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_count` of type `Int!`
   """
-  movieId_count: Int_Filter
+  cost_count: Int_Filter
   """
-  ✨ Generated from Field `Review`.`rating_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt_count` of type `Int!`
   """
-  rating_count: Int_Filter
+  createdAt_count: Int_Filter
   """
-  ✨ Generated from Field `Review`.`reviewDate_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`date_count` of type `Int!`
   """
-  reviewDate_count: Int_Filter
+  date_count: Int_Filter
   """
-  ✨ Generated from Field `Review`.`reviewText_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`description_count` of type `Int!`
   """
-  reviewText_count: Int_Filter
+  description_count: Int_Filter
   """
-  ✨ Generated from Field `Review`.`userId_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`mileage_count` of type `Int!`
+  """
+  mileage_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`notes_count` of type `Int!`
+  """
+  notes_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`provider_count` of type `Int!`
+  """
+  provider_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`serviceType_count` of type `Int!`
+  """
+  serviceType_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`userId_count` of type `Int!`
   """
   userId_count: Int_Filter
   """
-  ✨ Generated from Field `Review`.`rating_sum` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicleVin_count` of type `Int!`
   """
-  rating_sum: Int_Filter
+  vehicleVin_count: Int_Filter
   """
-  ✨ Generated from Field `Review`.`rating_avg` of type `Float`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_sum` of type `Float`
   """
-  rating_avg: Float_Filter
+  cost_sum: Float_Filter
   """
-  ✨ Generated from Field `Review`.`rating_min` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_avg` of type `Float`
   """
-  rating_min: Int_Filter
+  cost_avg: Float_Filter
   """
-  ✨ Generated from Field `Review`.`reviewDate_min` of type `Date`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_min` of type `Float`
   """
-  reviewDate_min: Date_Filter
+  cost_min: Float_Filter
   """
-  ✨ Generated from Field `Review`.`rating_max` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt_min` of type `Timestamp`
   """
-  rating_max: Int_Filter
+  createdAt_min: Timestamp_Filter
   """
-  ✨ Generated from Field `Review`.`reviewDate_max` of type `Date`
+  ✨ Generated from Field `MaintenanceRecord`.`date_min` of type `Date`
   """
-  reviewDate_max: Date_Filter
+  date_min: Date_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`cost_max` of type `Float`
+  """
+  cost_max: Float_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`date_max` of type `Date`
+  """
+  date_max: Date_Filter
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
 }
 """
-✨ Generated key input type for table 'Review'. It represents the primary key fields used to uniquely identify a row in the table.
+✨ Generated key input type for table 'MaintenanceRecord'. It represents the primary key fields used to uniquely identify a row in the table.
 """
-input Review_Key {
+input MaintenanceRecord_Key {
   """
-  ✨ Generated from Field `Review`.`movieId` of type `UUID!`
+  ✨ Generated from Field `MaintenanceRecord`.`id` of type `UUID!`
   """
-  movieId: UUID
+  id: UUID
   """
-  ✨ `_expr` server value variant of `movieId` (✨ Generated from Field `Review`.`movieId` of type `UUID!`)
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `MaintenanceRecord`.`id` of type `UUID!`)
   """
-  movieId_expr: UUID_Expr
-  """
-  ✨ Generated from Field `Review`.`userId` of type `String!`
-  """
-  userId: String
-  """
-  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Review`.`userId` of type `String!`)
-  """
-  userId_expr: String_Expr
+  id_expr: UUID_Expr
 }
 """
-✨ Generated list filter input type for table 'Review'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+✨ Generated list filter input type for table 'MaintenanceRecord'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
 """
-input Review_ListFilter {
+input MaintenanceRecord_ListFilter {
   """
   The desired number of objects that match the condition (defaults to at least one).
   """
@@ -748,88 +388,902 @@ input Review_ListFilter {
   """
   Condition of the related objects to filter for.
   """
-  exist: Review_Filter
+  exist: MaintenanceRecord_Filter
 }
 """
-✨ Generated order input type for table 'Review'. This input defines the sorting order of rows in query results based on one or more fields.
+✨ Generated order input type for table 'MaintenanceRecord'. This input defines the sorting order of rows in query results based on one or more fields.
 """
-input Review_Order {
+input MaintenanceRecord_Order {
   """
-  ✨ Generated from Field `Review`.`movieId` of type `UUID!`
+  ✨ Generated from Field `MaintenanceRecord`.`id` of type `UUID!`
   """
-  movieId: OrderDirection
+  id: OrderDirection
   """
-  ✨ Generated from Field `Review`.`userId` of type `String!`
+  ✨ Generated from Field `MaintenanceRecord`.`userId` of type `String!`
   """
   userId: OrderDirection
   """
-  ✨ Generated from Field `Review`.`movie` of type `Movie!`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicleVin` of type `String!`
   """
-  movie: Movie_Order
+  vehicleVin: OrderDirection
   """
-  ✨ Generated from Field `Review`.`user` of type `User!`
+  ✨ Generated from Field `MaintenanceRecord`.`user` of type `User!`
   """
   user: User_Order
   """
-  ✨ Generated from Field `Review`.`rating` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicle` of type `Vehicle!`
   """
-  rating: OrderDirection
+  vehicle: Vehicle_Order
   """
-  ✨ Generated from Field `Review`.`reviewDate` of type `Date!`
+  ✨ Generated from Field `MaintenanceRecord`.`cost` of type `Float`
   """
-  reviewDate: OrderDirection
+  cost: OrderDirection
   """
-  ✨ Generated from Field `Review`.`reviewText` of type `String`
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt` of type `Timestamp!`
   """
-  reviewText: OrderDirection
+  createdAt: OrderDirection
   """
-  ✨ Generated from Field `Review`.`_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`date` of type `Date!`
+  """
+  date: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`description` of type `String!`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`mileage` of type `String`
+  """
+  mileage: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`notes` of type `String`
+  """
+  notes: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`provider` of type `String`
+  """
+  provider: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`serviceType` of type `String!`
+  """
+  serviceType: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`_count` of type `Int!`
   """
   _count: OrderDirection
   """
-  ✨ Generated from Field `Review`.`movieId_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_count` of type `Int!`
   """
-  movieId_count: OrderDirection
+  cost_count: OrderDirection
   """
-  ✨ Generated from Field `Review`.`rating_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt_count` of type `Int!`
   """
-  rating_count: OrderDirection
+  createdAt_count: OrderDirection
   """
-  ✨ Generated from Field `Review`.`reviewDate_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`date_count` of type `Int!`
   """
-  reviewDate_count: OrderDirection
+  date_count: OrderDirection
   """
-  ✨ Generated from Field `Review`.`reviewText_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`description_count` of type `Int!`
   """
-  reviewText_count: OrderDirection
+  description_count: OrderDirection
   """
-  ✨ Generated from Field `Review`.`userId_count` of type `Int!`
+  ✨ Generated from Field `MaintenanceRecord`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`mileage_count` of type `Int!`
+  """
+  mileage_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`notes_count` of type `Int!`
+  """
+  notes_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`provider_count` of type `Int!`
+  """
+  provider_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`serviceType_count` of type `Int!`
+  """
+  serviceType_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`userId_count` of type `Int!`
   """
   userId_count: OrderDirection
   """
-  ✨ Generated from Field `Review`.`rating_sum` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`vehicleVin_count` of type `Int!`
   """
-  rating_sum: OrderDirection
+  vehicleVin_count: OrderDirection
   """
-  ✨ Generated from Field `Review`.`rating_avg` of type `Float`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_sum` of type `Float`
   """
-  rating_avg: OrderDirection
+  cost_sum: OrderDirection
   """
-  ✨ Generated from Field `Review`.`rating_min` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_avg` of type `Float`
   """
-  rating_min: OrderDirection
+  cost_avg: OrderDirection
   """
-  ✨ Generated from Field `Review`.`reviewDate_min` of type `Date`
+  ✨ Generated from Field `MaintenanceRecord`.`cost_min` of type `Float`
   """
-  reviewDate_min: OrderDirection
+  cost_min: OrderDirection
   """
-  ✨ Generated from Field `Review`.`rating_max` of type `Int`
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt_min` of type `Timestamp`
   """
-  rating_max: OrderDirection
+  createdAt_min: OrderDirection
   """
-  ✨ Generated from Field `Review`.`reviewDate_max` of type `Date`
+  ✨ Generated from Field `MaintenanceRecord`.`date_min` of type `Date`
   """
-  reviewDate_max: OrderDirection
+  date_min: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`cost_max` of type `Float`
+  """
+  cost_max: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`date_max` of type `Date`
+  """
+  date_max: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceRecord`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'MaintenanceSchedule'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input MaintenanceSchedule_Data {
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `MaintenanceSchedule`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`description` of type `String!`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `MaintenanceSchedule`.`description` of type `String!`)
+  """
+  description_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles` of type `Int`
+  """
+  intervalMiles: Int
+  """
+  ✨ `_expr` server value variant of `intervalMiles` (✨ Generated from Field `MaintenanceSchedule`.`intervalMiles` of type `Int`)
+  """
+  intervalMiles_expr: Int_Expr
+  """
+  ✨ `_update` server value variant of `intervalMiles` (✨ Generated from Field `MaintenanceSchedule`.`intervalMiles` of type `Int`)
+  """
+  intervalMiles_update: [Int_Update!]
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths` of type `Int`
+  """
+  intervalMonths: Int
+  """
+  ✨ `_expr` server value variant of `intervalMonths` (✨ Generated from Field `MaintenanceSchedule`.`intervalMonths` of type `Int`)
+  """
+  intervalMonths_expr: Int_Expr
+  """
+  ✨ `_update` server value variant of `intervalMonths` (✨ Generated from Field `MaintenanceSchedule`.`intervalMonths` of type `Int`)
+  """
+  intervalMonths_update: [Int_Update!]
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`priority` of type `String!`
+  """
+  priority: String
+  """
+  ✨ `_expr` server value variant of `priority` (✨ Generated from Field `MaintenanceSchedule`.`priority` of type `String!`)
+  """
+  priority_expr: String_Expr
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`serviceType` of type `String!`
+  """
+  serviceType: String
+  """
+  ✨ `_expr` server value variant of `serviceType` (✨ Generated from Field `MaintenanceSchedule`.`serviceType` of type `String!`)
+  """
+  serviceType_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'MaintenanceSchedule'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input MaintenanceSchedule_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [MaintenanceSchedule_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: MaintenanceSchedule_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [MaintenanceSchedule_Filter!]
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`description` of type `String!`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles` of type `Int`
+  """
+  intervalMiles: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths` of type `Int`
+  """
+  intervalMonths: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`priority` of type `String!`
+  """
+  priority: String_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`serviceType` of type `String!`
+  """
+  serviceType: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'MaintenanceSchedule'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input MaintenanceSchedule_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [MaintenanceSchedule_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: MaintenanceSchedule_Filter
+}
+"""
+✨ Generated having input type for table 'MaintenanceSchedule'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input MaintenanceSchedule_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [MaintenanceSchedule_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: MaintenanceSchedule_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [MaintenanceSchedule_Having!]
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_count` of type `Int!`
+  """
+  intervalMiles_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_count` of type `Int!`
+  """
+  intervalMonths_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`priority_count` of type `Int!`
+  """
+  priority_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`serviceType_count` of type `Int!`
+  """
+  serviceType_count: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_sum` of type `Int`
+  """
+  intervalMiles_sum: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_sum` of type `Int`
+  """
+  intervalMonths_sum: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_avg` of type `Float`
+  """
+  intervalMiles_avg: Float_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_avg` of type `Float`
+  """
+  intervalMonths_avg: Float_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_min` of type `Int`
+  """
+  intervalMiles_min: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_min` of type `Int`
+  """
+  intervalMonths_min: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_max` of type `Int`
+  """
+  intervalMiles_max: Int_Filter
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_max` of type `Int`
+  """
+  intervalMonths_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'MaintenanceSchedule'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input MaintenanceSchedule_Key {
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `MaintenanceSchedule`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+}
+"""
+✨ Generated list filter input type for table 'MaintenanceSchedule'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input MaintenanceSchedule_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: MaintenanceSchedule_Filter
+}
+"""
+✨ Generated order input type for table 'MaintenanceSchedule'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input MaintenanceSchedule_Order {
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`description` of type `String!`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles` of type `Int`
+  """
+  intervalMiles: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths` of type `Int`
+  """
+  intervalMonths: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`priority` of type `String!`
+  """
+  priority: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`serviceType` of type `String!`
+  """
+  serviceType: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_count` of type `Int!`
+  """
+  intervalMiles_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_count` of type `Int!`
+  """
+  intervalMonths_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`priority_count` of type `Int!`
+  """
+  priority_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`serviceType_count` of type `Int!`
+  """
+  serviceType_count: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_sum` of type `Int`
+  """
+  intervalMiles_sum: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_sum` of type `Int`
+  """
+  intervalMonths_sum: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_avg` of type `Float`
+  """
+  intervalMiles_avg: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_avg` of type `Float`
+  """
+  intervalMonths_avg: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_min` of type `Int`
+  """
+  intervalMiles_min: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_min` of type `Int`
+  """
+  intervalMonths_min: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMiles_max` of type `Int`
+  """
+  intervalMiles_max: OrderDirection
+  """
+  ✨ Generated from Field `MaintenanceSchedule`.`intervalMonths_max` of type `Int`
+  """
+  intervalMonths_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Reminder'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Reminder_Data {
+  """
+  ✨ Generated from Field `Reminder`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Reminder`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Reminder`.`userId` of type `String!`
+  """
+  userId: String
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Reminder`.`userId` of type `String!`)
+  """
+  userId_expr: String_Expr
+  """
+  ✨ Generated from Field `Reminder`.`vehicleVin` of type `String!`
+  """
+  vehicleVin: String
+  """
+  ✨ `_expr` server value variant of `vehicleVin` (✨ Generated from Field `Reminder`.`vehicleVin` of type `String!`)
+  """
+  vehicleVin_expr: String_Expr
+  """
+  ✨ Generated from Field `Reminder`.`user` of type `User!`
+  """
+  user: User_Key
+  """
+  ✨ Generated from Field `Reminder`.`vehicle` of type `Vehicle!`
+  """
+  vehicle: Vehicle_Key
+  """
+  ✨ Generated from Field `Reminder`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Reminder`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Reminder`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Reminder`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Reminder`.`description` of type `String!`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `Reminder`.`description` of type `String!`)
+  """
+  description_expr: String_Expr
+  """
+  ✨ Generated from Field `Reminder`.`dueDate` of type `Date`
+  """
+  dueDate: Date
+  """
+  ✨ `_date` server value variant of `dueDate` (✨ Generated from Field `Reminder`.`dueDate` of type `Date`)
+  """
+  dueDate_date: Date_Relative
+  """
+  ✨ `_expr` server value variant of `dueDate` (✨ Generated from Field `Reminder`.`dueDate` of type `Date`)
+  """
+  dueDate_expr: Date_Expr
+  """
+  ✨ `_update` server value variant of `dueDate` (✨ Generated from Field `Reminder`.`dueDate` of type `Date`)
+  """
+  dueDate_update: [Date_Update!]
+  """
+  ✨ Generated from Field `Reminder`.`dueMileage` of type `String`
+  """
+  dueMileage: String
+  """
+  ✨ `_expr` server value variant of `dueMileage` (✨ Generated from Field `Reminder`.`dueMileage` of type `String`)
+  """
+  dueMileage_expr: String_Expr
+  """
+  ✨ Generated from Field `Reminder`.`isCompleted` of type `Boolean!`
+  """
+  isCompleted: Boolean
+  """
+  ✨ `_expr` server value variant of `isCompleted` (✨ Generated from Field `Reminder`.`isCompleted` of type `Boolean!`)
+  """
+  isCompleted_expr: Boolean_Expr
+  """
+  ✨ Generated from Field `Reminder`.`serviceType` of type `String!`
+  """
+  serviceType: String
+  """
+  ✨ `_expr` server value variant of `serviceType` (✨ Generated from Field `Reminder`.`serviceType` of type `String!`)
+  """
+  serviceType_expr: String_Expr
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `Reminder`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `Reminder`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `Reminder`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!]
+}
+"""
+✨ Generated filter input type for table 'Reminder'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Reminder_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Reminder_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Reminder_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Reminder_Filter!]
+  """
+  ✨ Generated from Field `Reminder`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Reminder`.`userId` of type `String!`
+  """
+  userId: String_Filter
+  """
+  ✨ Generated from Field `Reminder`.`vehicleVin` of type `String!`
+  """
+  vehicleVin: String_Filter
+  """
+  ✨ Generated from Field `Reminder`.`user` of type `User!`
+  """
+  user: User_Filter
+  """
+  ✨ Generated from Field `Reminder`.`vehicle` of type `Vehicle!`
+  """
+  vehicle: Vehicle_Filter
+  """
+  ✨ Generated from Field `Reminder`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Reminder`.`description` of type `String!`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `Reminder`.`dueDate` of type `Date`
+  """
+  dueDate: Date_Filter
+  """
+  ✨ Generated from Field `Reminder`.`dueMileage` of type `String`
+  """
+  dueMileage: String_Filter
+  """
+  ✨ Generated from Field `Reminder`.`isCompleted` of type `Boolean!`
+  """
+  isCompleted: Boolean_Filter
+  """
+  ✨ Generated from Field `Reminder`.`serviceType` of type `String!`
+  """
+  serviceType: String_Filter
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'Reminder'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Reminder_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Reminder_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Reminder_Filter
+}
+"""
+✨ Generated having input type for table 'Reminder'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Reminder_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Reminder_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Reminder_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Reminder_Having!]
+  """
+  ✨ Generated from Field `Reminder`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`dueDate_count` of type `Int!`
+  """
+  dueDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`dueMileage_count` of type `Int!`
+  """
+  dueMileage_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`isCompleted_count` of type `Int!`
+  """
+  isCompleted_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`serviceType_count` of type `Int!`
+  """
+  serviceType_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`vehicleVin_count` of type `Int!`
+  """
+  vehicleVin_count: Int_Filter
+  """
+  ✨ Generated from Field `Reminder`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Reminder`.`dueDate_min` of type `Date`
+  """
+  dueDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Reminder`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Reminder`.`dueDate_max` of type `Date`
+  """
+  dueDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'Reminder'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Reminder_Key {
+  """
+  ✨ Generated from Field `Reminder`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Reminder`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+}
+"""
+✨ Generated list filter input type for table 'Reminder'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Reminder_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Reminder_Filter
+}
+"""
+✨ Generated order input type for table 'Reminder'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Reminder_Order {
+  """
+  ✨ Generated from Field `Reminder`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`userId` of type `String!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`vehicleVin` of type `String!`
+  """
+  vehicleVin: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`user` of type `User!`
+  """
+  user: User_Order
+  """
+  ✨ Generated from Field `Reminder`.`vehicle` of type `Vehicle!`
+  """
+  vehicle: Vehicle_Order
+  """
+  ✨ Generated from Field `Reminder`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`description` of type `String!`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`dueDate` of type `Date`
+  """
+  dueDate: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`dueMileage` of type `String`
+  """
+  dueMileage: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`isCompleted` of type `Boolean!`
+  """
+  isCompleted: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`serviceType` of type `String!`
+  """
+  serviceType: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`dueDate_count` of type `Int!`
+  """
+  dueDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`dueMileage_count` of type `Int!`
+  """
+  dueMileage_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`isCompleted_count` of type `Int!`
+  """
+  isCompleted_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`serviceType_count` of type `Int!`
+  """
+  serviceType_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`vehicleVin_count` of type `Int!`
+  """
+  vehicleVin_count: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`dueDate_min` of type `Date`
+  """
+  dueDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`dueDate_max` of type `Date`
+  """
+  dueDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Reminder`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'User'. It includes all necessary fields for creating or upserting rows into table.
@@ -844,13 +1298,53 @@ input User_Data {
   """
   id_expr: String_Expr
   """
-  ✨ Generated from Field `User`.`username` of type `String!`
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
   """
-  username: String
+  createdAt: Timestamp
   """
-  ✨ `_expr` server value variant of `username` (✨ Generated from Field `User`.`username` of type `String!`)
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
   """
-  username_expr: String_Expr
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String`
+  """
+  displayName: String
+  """
+  ✨ `_expr` server value variant of `displayName` (✨ Generated from Field `User`.`displayName` of type `String`)
+  """
+  displayName_expr: String_Expr
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: String
+  """
+  ✨ `_expr` server value variant of `email` (✨ Generated from Field `User`.`email` of type `String!`)
+  """
+  email_expr: String_Expr
+  """
+  ✨ Generated from Field `User`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `User`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `User`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `User`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!]
 }
 """
 ✨ Generated filter input type for table 'User'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -873,17 +1367,33 @@ input User_Filter {
   """
   id: String_Filter
   """
-  ✨ Generated from Field `User`.`username` of type `String!`
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
   """
-  username: String_Filter
+  createdAt: Timestamp_Filter
   """
-  ✨ Generated from Field `User`.`reviews_on_user` of type `[Review!]!`
+  ✨ Generated from Field `User`.`displayName` of type `String`
   """
-  reviews_on_user: Review_ListFilter
+  displayName: String_Filter
   """
-  ✨ Generated from Field `User`.`movies_via_Review` of type `[Movie!]!`
+  ✨ Generated from Field `User`.`email` of type `String!`
   """
-  movies_via_Review: Movie_ListFilter
+  email: String_Filter
+  """
+  ✨ Generated from Field `User`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`maintenanceRecords_on_user` of type `[MaintenanceRecord!]!`
+  """
+  maintenanceRecords_on_user: MaintenanceRecord_ListFilter
+  """
+  ✨ Generated from Field `User`.`reminders_on_user` of type `[Reminder!]!`
+  """
+  reminders_on_user: Reminder_ListFilter
+  """
+  ✨ Generated from Field `User`.`vehicles_on_user` of type `[Vehicle!]!`
+  """
+  vehicles_on_user: Vehicle_ListFilter
 }
 """
 ✨ Generated first-row input type for table 'User'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
@@ -923,13 +1433,41 @@ input User_Having {
   """
   _count: Int_Filter
   """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`displayName_count` of type `Int!`
+  """
+  displayName_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`email_count` of type `Int!`
+  """
+  email_count: Int_Filter
+  """
   ✨ Generated from Field `User`.`id_count` of type `Int!`
   """
   id_count: Int_Filter
   """
-  ✨ Generated from Field `User`.`username_count` of type `Int!`
+  ✨ Generated from Field `User`.`updatedAt_count` of type `Int!`
   """
-  username_count: Int_Filter
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
 }
 """
 ✨ Generated key input type for table 'User'. It represents the primary key fields used to uniquely identify a row in the table.
@@ -966,19 +1504,534 @@ input User_Order {
   """
   id: OrderDirection
   """
-  ✨ Generated from Field `User`.`username` of type `String!`
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
   """
-  username: OrderDirection
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String`
+  """
+  displayName: OrderDirection
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: OrderDirection
+  """
+  ✨ Generated from Field `User`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
   """
   ✨ Generated from Field `User`.`_count` of type `Int!`
   """
   _count: OrderDirection
   """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`displayName_count` of type `Int!`
+  """
+  displayName_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`email_count` of type `Int!`
+  """
+  email_count: OrderDirection
+  """
   ✨ Generated from Field `User`.`id_count` of type `Int!`
   """
   id_count: OrderDirection
   """
-  ✨ Generated from Field `User`.`username_count` of type `Int!`
+  ✨ Generated from Field `User`.`updatedAt_count` of type `Int!`
   """
-  username_count: OrderDirection
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `User`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Vehicle'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Vehicle_Data {
+  """
+  ✨ Generated from Field `Vehicle`.`vin` of type `String!`
+  """
+  vin: String
+  """
+  ✨ `_expr` server value variant of `vin` (✨ Generated from Field `Vehicle`.`vin` of type `String!`)
+  """
+  vin_expr: String_Expr
+  """
+  ✨ Generated from Field `Vehicle`.`userId` of type `String!`
+  """
+  userId: String
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Vehicle`.`userId` of type `String!`)
+  """
+  userId_expr: String_Expr
+  """
+  ✨ Generated from Field `Vehicle`.`user` of type `User!`
+  """
+  user: User_Key
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Vehicle`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Vehicle`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Vehicle`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Vehicle`.`make` of type `String!`
+  """
+  make: String
+  """
+  ✨ `_expr` server value variant of `make` (✨ Generated from Field `Vehicle`.`make` of type `String!`)
+  """
+  make_expr: String_Expr
+  """
+  ✨ Generated from Field `Vehicle`.`mileage` of type `String`
+  """
+  mileage: String
+  """
+  ✨ `_expr` server value variant of `mileage` (✨ Generated from Field `Vehicle`.`mileage` of type `String`)
+  """
+  mileage_expr: String_Expr
+  """
+  ✨ Generated from Field `Vehicle`.`model` of type `String!`
+  """
+  model: String
+  """
+  ✨ `_expr` server value variant of `model` (✨ Generated from Field `Vehicle`.`model` of type `String!`)
+  """
+  model_expr: String_Expr
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate` of type `Date`
+  """
+  nextDueByDate: Date
+  """
+  ✨ `_date` server value variant of `nextDueByDate` (✨ Generated from Field `Vehicle`.`nextDueByDate` of type `Date`)
+  """
+  nextDueByDate_date: Date_Relative
+  """
+  ✨ `_expr` server value variant of `nextDueByDate` (✨ Generated from Field `Vehicle`.`nextDueByDate` of type `Date`)
+  """
+  nextDueByDate_expr: Date_Expr
+  """
+  ✨ `_update` server value variant of `nextDueByDate` (✨ Generated from Field `Vehicle`.`nextDueByDate` of type `Date`)
+  """
+  nextDueByDate_update: [Date_Update!]
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByMiles` of type `String`
+  """
+  nextDueByMiles: String
+  """
+  ✨ `_expr` server value variant of `nextDueByMiles` (✨ Generated from Field `Vehicle`.`nextDueByMiles` of type `String`)
+  """
+  nextDueByMiles_expr: String_Expr
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate` of type `Date`
+  """
+  purchaseDate: Date
+  """
+  ✨ `_date` server value variant of `purchaseDate` (✨ Generated from Field `Vehicle`.`purchaseDate` of type `Date`)
+  """
+  purchaseDate_date: Date_Relative
+  """
+  ✨ `_expr` server value variant of `purchaseDate` (✨ Generated from Field `Vehicle`.`purchaseDate` of type `Date`)
+  """
+  purchaseDate_expr: Date_Expr
+  """
+  ✨ `_update` server value variant of `purchaseDate` (✨ Generated from Field `Vehicle`.`purchaseDate` of type `Date`)
+  """
+  purchaseDate_update: [Date_Update!]
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `Vehicle`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `Vehicle`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `Vehicle`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Vehicle`.`year` of type `String!`
+  """
+  year: String
+  """
+  ✨ `_expr` server value variant of `year` (✨ Generated from Field `Vehicle`.`year` of type `String!`)
+  """
+  year_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'Vehicle'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Vehicle_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Vehicle_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Vehicle_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Vehicle_Filter!]
+  """
+  ✨ Generated from Field `Vehicle`.`vin` of type `String!`
+  """
+  vin: String_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`userId` of type `String!`
+  """
+  userId: String_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`user` of type `User!`
+  """
+  user: User_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`make` of type `String!`
+  """
+  make: String_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`mileage` of type `String`
+  """
+  mileage: String_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`model` of type `String!`
+  """
+  model: String_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate` of type `Date`
+  """
+  nextDueByDate: Date_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByMiles` of type `String`
+  """
+  nextDueByMiles: String_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate` of type `Date`
+  """
+  purchaseDate: Date_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`year` of type `String!`
+  """
+  year: String_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`maintenanceRecords_on_vehicle` of type `[MaintenanceRecord!]!`
+  """
+  maintenanceRecords_on_vehicle: MaintenanceRecord_ListFilter
+  """
+  ✨ Generated from Field `Vehicle`.`reminders_on_vehicle` of type `[Reminder!]!`
+  """
+  reminders_on_vehicle: Reminder_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Vehicle'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Vehicle_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Vehicle_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Vehicle_Filter
+}
+"""
+✨ Generated having input type for table 'Vehicle'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Vehicle_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Vehicle_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Vehicle_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Vehicle_Having!]
+  """
+  ✨ Generated from Field `Vehicle`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`make_count` of type `Int!`
+  """
+  make_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`mileage_count` of type `Int!`
+  """
+  mileage_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`model_count` of type `Int!`
+  """
+  model_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate_count` of type `Int!`
+  """
+  nextDueByDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByMiles_count` of type `Int!`
+  """
+  nextDueByMiles_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate_count` of type `Int!`
+  """
+  purchaseDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`vin_count` of type `Int!`
+  """
+  vin_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`year_count` of type `Int!`
+  """
+  year_count: Int_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate_min` of type `Date`
+  """
+  nextDueByDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate_min` of type `Date`
+  """
+  purchaseDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate_max` of type `Date`
+  """
+  nextDueByDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate_max` of type `Date`
+  """
+  purchaseDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'Vehicle'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Vehicle_Key {
+  """
+  ✨ Generated from Field `Vehicle`.`vin` of type `String!`
+  """
+  vin: String
+  """
+  ✨ `_expr` server value variant of `vin` (✨ Generated from Field `Vehicle`.`vin` of type `String!`)
+  """
+  vin_expr: String_Expr
+}
+"""
+✨ Generated list filter input type for table 'Vehicle'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Vehicle_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Vehicle_Filter
+}
+"""
+✨ Generated order input type for table 'Vehicle'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Vehicle_Order {
+  """
+  ✨ Generated from Field `Vehicle`.`vin` of type `String!`
+  """
+  vin: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`userId` of type `String!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`user` of type `User!`
+  """
+  user: User_Order
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`make` of type `String!`
+  """
+  make: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`mileage` of type `String`
+  """
+  mileage: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`model` of type `String!`
+  """
+  model: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate` of type `Date`
+  """
+  nextDueByDate: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByMiles` of type `String`
+  """
+  nextDueByMiles: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate` of type `Date`
+  """
+  purchaseDate: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`year` of type `String!`
+  """
+  year: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`make_count` of type `Int!`
+  """
+  make_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`mileage_count` of type `Int!`
+  """
+  mileage_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`model_count` of type `Int!`
+  """
+  model_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate_count` of type `Int!`
+  """
+  nextDueByDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByMiles_count` of type `Int!`
+  """
+  nextDueByMiles_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate_count` of type `Int!`
+  """
+  purchaseDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`vin_count` of type `Int!`
+  """
+  vin_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`year_count` of type `Int!`
+  """
+  year_count: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate_min` of type `Date`
+  """
+  nextDueByDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate_min` of type `Date`
+  """
+  purchaseDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`nextDueByDate_max` of type `Date`
+  """
+  nextDueByDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`purchaseDate_max` of type `Date`
+  """
+  purchaseDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Vehicle`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
 }

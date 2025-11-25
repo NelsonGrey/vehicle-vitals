@@ -1,26 +1,26 @@
-extend type Movie {
+extend type MaintenanceRecord {
   """
-  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  ✨ Implicit foreign key field based on `MaintenanceRecord`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
   """
-  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Movie", purpose: IMPLICIT_KEY_FIELD)
+  userId: String! @fdc_generated(from: "MaintenanceRecord.user", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `MaintenanceRecord`.`vehicle`. It must match the value of `Vehicle`.`vin`. See `@ref` for how to customize it.
+  """
+  vehicleVin: String! @fdc_generated(from: "MaintenanceRecord.vehicle", purpose: IMPLICIT_REF_FIELD)
 }
-extend type MovieMetadata {
+extend type Reminder {
   """
-  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  ✨ Implicit foreign key field based on `Reminder`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
   """
-  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "MovieMetadata", purpose: IMPLICIT_KEY_FIELD)
+  userId: String! @fdc_generated(from: "Reminder.user", purpose: IMPLICIT_REF_FIELD)
   """
-  ✨ Implicit foreign key field based on `MovieMetadata`.`movie`. It must match the value of `Movie`.`id`. See `@ref` for how to customize it.
+  ✨ Implicit foreign key field based on `Reminder`.`vehicle`. It must match the value of `Vehicle`.`vin`. See `@ref` for how to customize it.
   """
-  movieId: UUID! @fdc_generated(from: "MovieMetadata.movie", purpose: IMPLICIT_REF_FIELD)
+  vehicleVin: String! @fdc_generated(from: "Reminder.vehicle", purpose: IMPLICIT_REF_FIELD)
 }
-extend type Review {
+extend type Vehicle {
   """
-  ✨ Implicit foreign key field based on `Review`.`movie`. It must match the value of `Movie`.`id`. See `@ref` for how to customize it.
+  ✨ Implicit foreign key field based on `Vehicle`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
   """
-  movieId: UUID! @fdc_generated(from: "Review.movie", purpose: IMPLICIT_REF_FIELD)
-  """
-  ✨ Implicit foreign key field based on `Review`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
-  """
-  userId: String! @fdc_generated(from: "Review.user", purpose: IMPLICIT_REF_FIELD)
+  userId: String! @fdc_generated(from: "Vehicle.user", purpose: IMPLICIT_REF_FIELD)
 }

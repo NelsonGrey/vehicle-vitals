@@ -152,7 +152,7 @@ describe('dataExport', () => {
     it('handles entries with missing cost and mileage', () => {
       const maintenanceEntries = [
         {
-          date: new Date('2024-01-10'),
+          date: new Date(2024, 0, 10), // January 10, 2024 (local time)
           title: 'Brake Check',
           cost: null,
           mileage: null,

@@ -273,6 +273,7 @@ platform :ios do
       skip_package_ipa: false,
       include_bitcode: false,
       include_symbols: true,
+      codesigning_identity: "iPhone Distribution",
       export_options: {
         provisioningProfiles: {
           "com.nelsongrey.vehiclevitals.app.ios" => "match AppStore com.nelsongrey.vehiclevitals.app.ios"

@@ -81,17 +81,16 @@ export function createFirestoreService({ db, auth, helpers }) {
   async function getMaintenanceEntry(vin, entryId) {
     const userId = auth.currentUser?.uid;
     if (!userId) return null;
-    const ref = doc(
+    const collRef = collection(
       db,
-      `users/${userId}/vehicles/${vin}/maintenance/${entryId}`
+      `users/${userId}/vehicles/${vin}/maintenance`
     );
-    const snap = await getDoc(ref);
-    if (snap && typeof snap.exists === 'function') {
-      return snap.exists() ? { id: snap.id, ...snap.data() } : null;
-    } else {
-      // Assume snap is the document data directly (for test environment)
-      return snap ? { id: entryId, ...snap } : null;
+    const snap = await getDocs(collRef);
+    const doc = snap.docs.find(d => d.id === entryId);
+    if (doc) {
+      return { id: doc.id, ...doc.data() };
     }
+    return null;
   }
 
   async function updateMaintenanceEntry(vin, entryId, updates) {

@@ -259,28 +259,21 @@ platform :ios do
     # Install CocoaPods dependencies first
     sh("cd ../ && pod install")
 
-    # Build the Flutter iOS app without code signing first
-    sh("cd ../.. && flutter build ios --release --no-codesign")
+    # Build the Flutter iOS app with code signing enabled
+    # Let fastlane handle the signing completely
+    sh("cd ../.. && flutter build ios --release")
 
-    # Then use fastlane to archive and export with proper code signing for TestFlight
+    # Package the already-signed app for TestFlight
     build_app(
       scheme: "Runner",
       configuration: "Release",
       export_method: "app-store",
       output_directory: "./fastlane/builds",
       output_name: "VehicleVitals-TestFlight",
-      clean: false,  # Don't clean since we just built
+      skip_build_archive: true,  # Skip building since we already built
       skip_package_ipa: false,
       include_bitcode: false,
-      include_symbols: true,
-      codesigning_identity: "iPhone Distribution",
-      export_options: {
-        provisioningProfiles: {
-          "com.nelsongrey.vehiclevitals.app.ios" => "match AppStore com.nelsongrey.vehiclevitals.app.ios"
-        },
-        signingCertificate: "iPhone Distribution",
-        teamID: ENV["FASTLANE_TEAM_ID"]
-      }
+      include_symbols: true
     )
 
     UI.message("✅ Flutter iOS build completed successfully")

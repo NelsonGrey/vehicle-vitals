@@ -39,5 +39,4 @@ export CI=true
 export FASTLANE_CI=true
 
 echo "✅ macOS environment configured for zero-touch operations"
-echo "🔒 Keychain dialogs should no longer appear"</content>
-<parameter name="filePath">/Users/marknelson/Circus/Repositories/vehicle-vitals/scripts/setup-macos-ci.sh
+echo "🔒 Keychain dialogs should no longer appear"

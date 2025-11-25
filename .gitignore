@@ -37,6 +37,8 @@ pglite-debug.log
 # React Native
 android/
 ios/
+!packages/mobile/android/
+!packages/mobile/ios/
 *.keystore
 *.jks
 android/.gradle/

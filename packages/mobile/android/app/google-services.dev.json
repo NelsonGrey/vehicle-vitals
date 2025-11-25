@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "919227980868",
+    "project_id": "vehicle-vitals-dev",
+    "storage_bucket": "vehicle-vitals-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:919227980868:android:afb6329906f754c6b5f011",
+        "android_client_info": {
+          "package_name": "com.nelsongrey.vehiclevitals.app.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "919227980868-tuenu6h2df1km03blnn0i8kqa4dinm6u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFYAlutFG6V_h2CpzYbeq4QGjVpV4S52M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "919227980868-tuenu6h2df1km03blnn0i8kqa4dinm6u.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "919227980868-aj9r7328ah5j2fd1tq5tc8ogj5p2007r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.nelsongrey.vehiclevitals.app.ios",
+                "app_store_id": "6753732665"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -109,7 +109,7 @@ jobs:
 
       - name: Set up code signing
         working-directory: packages/mobile/ios
-        run: fastlane sync_signing
+        run: fastlane certificates_appstore
         env:
           FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}

@@ -19,11 +19,11 @@ jobs:
 
       - name: Install firebase-tools
         run: |
-          # Clean up any existing firebase-tools installation
-          rm -rf /Users/marknelson/Circus/Repositories/vehicle-vitals-actions-runner/_work/_tool/node/*/arm64/lib/node_modules/firebase-tools || true
-          rm -rf /Users/marknelson/Circus/Repositories/vehicle-vitals-actions-runner/_work/_tool/node/*/x64/lib/node_modules/firebase-tools || true
-          npm cache clean --force || true
-          npm install -g firebase-tools@13
+          # Clean up any existing firebase-tools installation with sudo
+          sudo rm -rf /Users/marknelson/Circus/Repositories/vehicle-vitals-actions-runner/_work/_tool/node/*/arm64/lib/node_modules/firebase-tools || true
+          sudo rm -rf /Users/marknelson/Circus/Repositories/vehicle-vitals-actions-runner/_work/_tool/node/*/x64/lib/node_modules/firebase-tools || true
+          sudo npm cache clean --force || true
+          sudo npm install -g firebase-tools@13
 
       - name: Authenticate Firebase CLI
         run: |

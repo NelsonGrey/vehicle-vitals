@@ -276,7 +276,9 @@ platform :ios do
       export_options: {
         provisioningProfiles: {
           "com.nelsongrey.vehiclevitals.app.ios" => "match AppStore com.nelsongrey.vehiclevitals.app.ios"
-        }
+        },
+        signingCertificate: "iPhone Distribution",
+        teamID: ENV["FASTLANE_TEAM_ID"]
       }
     )
 

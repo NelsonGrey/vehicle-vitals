@@ -19,11 +19,9 @@ jobs:
 
       - name: Install firebase-tools
         run: |
-          # Clean up any existing firebase-tools installation with sudo
-          sudo rm -rf /Users/marknelson/Circus/Repositories/vehicle-vitals-actions-runner/_work/_tool/node/*/arm64/lib/node_modules/firebase-tools || true
-          sudo rm -rf /Users/marknelson/Circus/Repositories/vehicle-vitals-actions-runner/_work/_tool/node/*/x64/lib/node_modules/firebase-tools || true
-          sudo npm cache clean --force || true
-          sudo npm install -g firebase-tools@13
+          cd packages/web
+          npm install firebase-tools@13 --save-dev
+          npx firebase --version
 
       - name: Authenticate Firebase CLI
         run: |
@@ -33,7 +31,7 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
       - name: Set Firebase project
-        run: firebase use default
+        run: npx firebase use default
 
       - name: Run tests with Firestore emulator
         env:
@@ -45,7 +43,7 @@ jobs:
 
           # Debug: Check firebase version and available commands
           echo "Firebase version:"
-          firebase --version
+          npx firebase --version
           echo "Node version:"
           node --version
           echo "NPM version:"
@@ -54,7 +52,7 @@ jobs:
           # Run tests inside the emulator context so the rules-unit-testing code can auto-discover it
           # Using firebase emulators:exec ensures emulator host/port are provided to tests.
           echo "Starting emulators and running tests..."
-          firebase emulators:exec --only firestore --project vehicle-vitals-dev "npm run test"
+          npx firebase emulators:exec --only firestore --project vehicle-vitals-dev "npm run test"
 
       - name: Clean up service account key
         if: always()

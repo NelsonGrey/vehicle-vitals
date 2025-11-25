@@ -51,6 +51,13 @@ jobs:
           cd packages/mobile/ios
           bundle install || true  # Continue if no Gemfile
 
+      - name: Setup macOS CI Environment
+        run: |
+          chmod +x scripts/setup-macos-ci.sh
+          ./scripts/setup-macos-ci.sh
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
       - name: Set up code signing
         run: |
           cd packages/mobile/ios
@@ -61,6 +68,9 @@ jobs:
           FASTLANE_ITC_TEAM_ID: ${{ secrets.FASTLANE_ITC_TEAM_ID }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
 
       - name: Build Flutter iOS
         run: |
@@ -77,6 +87,9 @@ jobs:
           FASTLANE_ITC_TEAM_ID: ${{ secrets.FASTLANE_ITC_TEAM_ID }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
 
       - name: Upload to TestFlight
         if: github.event.inputs.release_type != 'production' || github.ref == 'refs/heads/main'

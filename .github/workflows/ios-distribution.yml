@@ -39,8 +39,28 @@ jobs:
 
       - name: Install Fastlane
         run: |
-          gem install fastlane -v 2.228.0
-          gem install bundler
+          # Install Fastlane to user directory for self-hosted runner permissions
+          gem install --user-install fastlane -v 2.228.0
+          gem install --user-install bundler
+
+          # Add user gem bin to PATH
+          echo "$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin" >> $GITHUB_PATH
+
+      - name: Verify Fastlane Installation
+        run: |
+          fastlane --version
+          bundle --version
+
+      - name: Setup iOS Environment
+        run: |
+          # Ensure Xcode command line tools are available
+          xcode-select -p || xcode-select --install
+
+          # Accept Xcode license if needed
+          sudo xcodebuild -license accept || true
+
+          # List available Xcode versions
+          ls /Applications | grep Xcode || echo "Xcode not found in /Applications"
 
       - name: Install Flutter dependencies
         run: flutter pub get

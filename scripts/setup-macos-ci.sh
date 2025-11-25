@@ -6,6 +6,12 @@ set -e
 
 echo "🍎 Setting up macOS environment for zero-touch iOS builds..."
 
+# Debug: Check current user and environment
+echo "👤 Current user: $(whoami)"
+echo "🏠 Home directory: $HOME"
+echo "🔑 Keychains available:"
+security list-keychains 2>/dev/null || echo "Unable to list keychains"
+
 # Unlock the default keychain to avoid prompts
 if [ -n "$MATCH_PASSWORD" ]; then
     echo "🔓 Unlocking keychain..."
@@ -25,7 +31,19 @@ if [ -n "$MATCH_PASSWORD" ]; then
     
     # Set the fastlane keychain as the default and add to search list
     security default-keychain -s fastlane_tmp_keychain 2>/dev/null || true
-    security list-keychains -s fastlane_tmp_keychain 2>/dev/null || true
+    security list-keychains -s fastlane_tmp_keychain login.keychain 2>/dev/null || true
+    
+    # Import certificates to the keychain (if any exist)
+    if [ -d "ios/certs" ]; then
+        echo "📜 Importing certificates..."
+        for cert in ios/certs/*.cer ios/certs/*.p12; do
+            if [ -f "$cert" ]; then
+                security import "$cert" -k fastlane_tmp_keychain -P "$MATCH_PASSWORD" 2>/dev/null || true
+            fi
+        done
+    fi
+else
+    echo "⚠️  MATCH_PASSWORD not set, skipping keychain setup"
 fi
 
 # Disable keychain prompts for codesign
@@ -34,6 +52,15 @@ security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MATCH_PA
 
 # Also disable prompts for the login keychain
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MATCH_PASSWORD" login.keychain 2>/dev/null || true
+
+# Additional security settings to prevent dialogs
+echo "🔐 Configuring additional security settings..."
+# Allow codesign to access keychain without prompts
+security set-key-partition-list -S apple: -k "$MATCH_PASSWORD" fastlane_tmp_keychain 2>/dev/null || true
+security set-key-partition-list -S apple: -k "$MATCH_PASSWORD" login.keychain 2>/dev/null || true
+
+# Set codesign to use the keychain
+export CODESIGN_ALLOCATE="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/codesign_allocate"
 
 # Configure git to avoid interactive prompts
 echo "🔧 Configuring git..."
@@ -58,3 +85,8 @@ export MATCH_KEYCHAIN_PASSWORD="$MATCH_PASSWORD"
 
 echo "✅ macOS environment configured for zero-touch operations"
 echo "🔒 Keychain dialogs should no longer appear"
+
+# Final verification
+echo "🔍 Verifying keychain setup..."
+security default-keychain 2>/dev/null || echo "No default keychain set"
+security list-keychains 2>/dev/null | head -5 || echo "Unable to verify keychains"

@@ -280,7 +280,7 @@ platform :ios do
 
     # Build the Flutter iOS app with code signing enabled
     # Let fastlane handle the signing completely
-    sh("cd ../.. && flutter build ios --release")
+    sh("cd ../.. && CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE='#{ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore']}' CODE_SIGN_IDENTITY='#{ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name']}' DEVELOPMENT_TEAM='#{ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']}' flutter build ios --release")
 
     # Package the already-signed app for TestFlight
     build_app(

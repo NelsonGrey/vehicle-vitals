@@ -283,13 +283,14 @@ platform :ios do
 
     # Create unsigned IPA from the app
     sh("mkdir -p ./builds")
-    sh("zip -r ./builds/VehicleVitals.ipa ../../build/ios/iphoneos/Runner.app")
 
-    # Sign the IPA using fastlane resign
+    # Sign the app using fastlane resign to create the IPA
     resign(
-      ipa: "./fastlane/builds/VehicleVitals.ipa",
+      app: "../../build/ios/iphoneos/Runner.app",
       signing_identity: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'],
-      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
+      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path'],
+      output_name: "VehicleVitals.ipa",
+      output_path: "./builds"
     )
 
     # Upload to TestFlight

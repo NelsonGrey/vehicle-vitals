@@ -283,7 +283,7 @@ platform :ios do
 
     # Create unsigned IPA from the app
     sh("mkdir -p ./builds")
-    sh("cd ../../build/ios/iphoneos && zip -r ../../../../packages/mobile/ios/fastlane/builds/VehicleVitals.ipa Runner.app")
+    sh("zip -r ./builds/VehicleVitals.ipa ../../build/ios/iphoneos/Runner.app")
 
     # Sign the IPA using fastlane resign
     resign(

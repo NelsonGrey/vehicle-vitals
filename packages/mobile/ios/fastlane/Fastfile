@@ -281,16 +281,18 @@ platform :ios do
     # Build the Flutter iOS app without code signing
     sh("cd ../.. && flutter build ios --release --no-codesign")
 
-    # Create unsigned IPA from the app
+    # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")
+    sh("mkdir -p Payload")
+    sh("cp -r ../../build/ios/iphoneos/Runner.app Payload/")
+    sh("zip -r ./builds/VehicleVitals.ipa Payload/")
+    sh("rm -rf Payload")
 
-    # Sign the app using fastlane resign to create the IPA
+    # Sign the IPA using fastlane resign
     resign(
-      app: "../../build/ios/iphoneos/Runner.app",
+      ipa: "./builds/VehicleVitals.ipa",
       signing_identity: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'],
-      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path'],
-      output_name: "VehicleVitals.ipa",
-      output_path: "./builds"
+      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
     )
 
     # Upload to TestFlight

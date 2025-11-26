@@ -282,6 +282,7 @@ platform :ios do
     sh("cd ../.. && flutter build ios --release --no-codesign")
 
     # Create unsigned IPA from the app
+    sh("mkdir -p ./builds")
     sh("cd ../../build/ios/iphoneos && zip -r ../../../../packages/mobile/ios/fastlane/builds/VehicleVitals.ipa Runner.app")
 
     # Sign the IPA using fastlane resign

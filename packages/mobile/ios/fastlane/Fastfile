@@ -53,7 +53,7 @@ platform :ios do
       configuration: build_type.capitalize,
       export_method: "development",
       output_directory: "./fastlane/builds",
-      output_name: "VehicleVitals-#{build_type}.ipa",
+      output_name: "Vehicle-Vitals-#{build_type}.ipa",
       clean: true,
       skip_package_ipa: false
     )
@@ -85,7 +85,7 @@ platform :ios do
     #   service_credentials_file: ENV["IOS_SERVICE_ACCOUNT_KEY_FILE"] || "../service-account-key.json",
     #   groups: "internal-testers",
     #   release_notes: "Debug build for internal testing (no code signing)",
-    #   ipa_path: "./fastlane/builds/VehicleVitals-debug.ipa"
+    #   ipa_path: "./fastlane/builds/Vehicle-Vitals-debug.ipa"
     # )
   end
 
@@ -285,14 +285,14 @@ platform :ios do
     sh("mkdir -p ./builds")
     sh("mkdir -p Payload")
     sh("cp -r ../../build/ios/iphoneos/Runner.app Payload/")
-    sh("zip -r ./builds/VehicleVitals.ipa Payload/")
+    sh("zip -r ./builds/Vehicle-Vitals.ipa Payload/")
     sh("rm -rf Payload")
 
     # Wait for IPA to be fully written
-    sh("while [ ! -f ./builds/VehicleVitals.ipa ] || [ ! -s ./builds/VehicleVitals.ipa ]; do sleep 1; done")
+    sh("while [ ! -f ./builds/Vehicle-Vitals.ipa ] || [ ! -s ./builds/Vehicle-Vitals.ipa ]; do sleep 1; done")
 
     # Sign the IPA using fastlane resign
-    ipa_path = File.expand_path("./builds/VehicleVitals.ipa")
+    ipa_path = File.expand_path("./builds/Vehicle-Vitals.ipa")
     resign(
       ipa: ipa_path,
       signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",
@@ -346,14 +346,14 @@ platform :ios do
     sh("mkdir -p ./builds")
     sh("mkdir -p Payload")
     sh("cp -r ../../build/ios/iphoneos/Runner.app Payload/")
-    sh("zip -r ./builds/VehicleVitals.ipa Payload/")
+    sh("zip -r ./builds/Vehicle-Vitals.ipa Payload/")
     sh("rm -rf Payload")
 
     # Wait for IPA to be fully written
-    sh("while [ ! -f ./builds/VehicleVitals.ipa ] || [ ! -s ./builds/VehicleVitals.ipa ]; do sleep 1; done")
+    sh("while [ ! -f ./builds/Vehicle-Vitals.ipa ] || [ ! -s ./builds/Vehicle-Vitals.ipa ]; do sleep 1; done")
 
     # Sign the IPA using fastlane resign
-    ipa_path = File.expand_path("./builds/VehicleVitals.ipa")
+    ipa_path = File.expand_path("./builds/Vehicle-Vitals.ipa")
     resign(
       ipa: ipa_path,
       signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",

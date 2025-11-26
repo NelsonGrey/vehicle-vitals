@@ -71,6 +71,14 @@ Zero-touch certificate management - automatically handles certificate acquisitio
 
 Build iOS app for development without code signing
 
+### ios build_testflight
+
+```sh
+[bundle exec] fastlane ios build_testflight
+```
+
+Build iOS app for TestFlight with proper code signing
+
 ### ios beta
 
 ```sh

@@ -124,7 +124,7 @@ platform :ios do
 
       match(
         type: "development",
-        force: true,
+        readonly: true,
         api_key: api_key,
         keychain_name: "fastlane_tmp_keychain",
         keychain_password: ENV["MATCH_PASSWORD"]
@@ -135,7 +135,7 @@ platform :ios do
       UI.message("Note: If you have 2FA enabled, use an app-specific password")
       match(
         type: "development",
-        force: true,
+        readonly: true,
         username: ENV["FASTLANE_APPLE_ID"],
         team_id: ENV["FASTLANE_TEAM_ID"],
         keychain_name: "fastlane_tmp_keychain",
@@ -164,11 +164,10 @@ platform :ios do
       )
 
       # Most efficient zero-touch strategy: Smart certificate reuse
-      # Try readonly first (maximum efficiency), fall back to creation if needed
-      UI.message("🚀 Most efficient zero-touch: Smart certificate reuse strategy")
+      # Use readonly mode to avoid creating new certificates
+      UI.message("🚀 Most efficient zero-touch: Using existing certificates (readonly mode)")
 
       begin
-        # Step 1: Try to use existing certificates (most efficient - no API calls)
         match(
           type: "appstore",
           readonly: true,
@@ -177,42 +176,22 @@ platform :ios do
           keychain_name: "fastlane_tmp_keychain",
           keychain_password: ENV["MATCH_PASSWORD"]
         )
-        UI.success("✅ Zero-touch success: Reused existing certificates from shared repository")
-        UI.message("💡 Maximum efficiency achieved: No new certificates or API calls")
-
+        UI.success("✅ Zero-touch success: Using existing certificates from shared repository")
+        UI.message("💡 Maximum efficiency achieved: No new certificates created")
       rescue => e
-        UI.message("⚠️  No existing setup found. Attempting to use available certificates...")
-
-        # Step 2: Try to use any available certificates without creating new ones
-        begin
+        if e.message.include?("No code signing identity found")
+          UI.message("⚠️  No existing certificates found. Creating new ones...")
           match(
             type: "appstore",
             readonly: false,
-            force: false,
-            include_all_certificates: true,
-            force_for_new_certificates: false,
             app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
             api_key: api_key,
             keychain_name: "fastlane_tmp_keychain",
             keychain_password: ENV["MATCH_PASSWORD"]
           )
-          UI.success("✅ Zero-touch success: Used available certificates")
-          UI.message("💡 Efficient resource usage: Existing certificates utilized")
-
-        rescue => cert_error
-          if cert_error.message.include?("reached the maximum number of available Distribution certificates")
-            UI.error("🚫 Apple Certificate Limit Reached (3 certificates maximum)")
-            UI.message("📋 To resolve this zero-touch issue:")
-            UI.message("   1. Visit https://developer.apple.com/account/resources/certificates/list")
-            UI.message("   2. Delete unused Distribution certificates")
-            UI.message("   3. Re-run this lane")
-            UI.message("💡 Alternative: Use existing certificates from other projects")
-            UI.message("🔧 CI/CD Workaround: The build will continue with available certificates")
-            # Don't raise error - allow CI/CD to continue with whatever certificates are available
-            UI.message("⚠️  Continuing with available certificates (may fail if none are valid)")
-          else
-            raise cert_error
-          end
+          UI.success("✅ Created new certificates successfully")
+        else
+          raise e
         end
       end
     else

@@ -1,16 +1,9 @@
-# Matchfile - Zero-touch certificate management for all projects
-git_url(ENV["MATCH_GIT_URL"])
+git_url("https://oauth2:REDACTED_GITHUB_TOKEN@github.com/mnelson3/nelson-grey-certificates")
 git_branch("main")
 storage_mode("git")
-type("appstore")  # development, adhoc, appstore, enterprise
-username(ENV["FASTLANE_APPLE_ID"])
-team_id(ENV["FASTLANE_TEAM_ID"])
-
-# Zero-touch DevOps: Certificate sharing across projects
-# Remove specific app_identifier to enable certificate reuse
-# All projects (wishlist-wizard, modulo-squares, vehicle-vitals) share certificates
-
-# Zero-touch DevOps: Avoid keychain prompts
+type("appstore")
+username("mark.a.nelson@outlook.com")
+team_id("0c24c11e-7780-4f95-9dab-7b59328f0315")
 keychain_name("fastlane_tmp_keychain")
 keychain_password(ENV["MATCH_PASSWORD"])
 force_for_new_devices(true)

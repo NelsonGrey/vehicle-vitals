@@ -267,60 +267,9 @@ platform :ios do
 
   desc "Build iOS app for TestFlight with proper code signing"
   lane :build_testflight do
-    # Sync code signing certificates for TestFlight (both development and distribution)
-    certificates_all
-
-    # Set environment variables for manual code signing in Flutter build
-    ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore']
-    ENV['CODE_SIGN_IDENTITY'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name']
-    ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
-
-    # Install CocoaPods dependencies first
-    sh("cd ../ && pod install")
-
-    # Build the Flutter iOS app without code signing
-    sh("cd ../.. && flutter build ios --release --no-codesign")
-
-    # Create unsigned IPA from the app with proper structure
-    sh("mkdir -p ./builds")
-    sh("mkdir -p Payload")
-    sh("cp -r ../../build/ios/iphoneos/Runner.app Payload/")
-    sh("zip -r ./builds/Vehicle-Vitals.ipa Payload/")
-    sh("rm -rf Payload")
-
-    # Wait for IPA to be fully written
-    sh("while [ ! -f ./builds/Vehicle-Vitals.ipa ] || [ ! -s ./builds/Vehicle-Vitals.ipa ]; do sleep 1; done")
-
-    # Sign the IPA using fastlane resign
-    ipa_path = File.expand_path("./builds/Vehicle-Vitals.ipa")
-    resign(
-      ipa: ipa_path,
-      signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",
-      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
-    )
-
-    # Upload to TestFlight
-    private_key_content = ENV["ASC_PRIVATE_KEY"]
-    private_key_content = private_key_content.gsub("\0", "").gsub("%", "").strip
-
-    api_key = app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: private_key_content,
-      is_key_content_base64: true
-    )
-
-    upload_to_testflight(
-      api_key: api_key,
-      ipa: ipa_path,
-      skip_waiting_for_build_processing: true,
-      changelog: "Automated build from CI/CD",
-      beta_app_feedback_email: ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com",
-      beta_app_description: "Vehicle Vitals iOS App - Automated Build"
-    )
-
-    UI.message("✅ Flutter iOS build completed successfully")
-    UI.message("📦 IPA file ready for TestFlight upload")
+    UI.important("⚠️  This lane is deprecated. Use 'beta' lane instead for complete TestFlight upload.")
+    UI.message("The 'beta' lane now handles both building and uploading to TestFlight.")
+    UI.message("This lane will be removed in a future update.")
   end
 
   desc "Upload to TestFlight"
@@ -379,7 +328,7 @@ platform :ios do
     upload_to_testflight(
       api_key: api_key,
       ipa: ipa_path,
-      skip_waiting_for_build_processing: true,
+      skip_waiting_for_build_processing: false,
       changelog: release_notes,
       beta_app_feedback_email: feedback_email,
       beta_app_description: "Vehicle Vitals iOS App - Automated Build"

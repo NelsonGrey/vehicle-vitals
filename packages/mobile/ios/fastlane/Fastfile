@@ -296,7 +296,7 @@ platform :ios do
     resign(
       ipa: ipa_path,
       signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",
-      provisioning_profile: "2f5b492b-1a03-45e9-953d-45ebc447c657"
+      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
     )
 
     # Upload to TestFlight

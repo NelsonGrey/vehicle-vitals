@@ -340,7 +340,7 @@ platform :ios do
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
       key_content: private_key_content,
-      is_key_content_base64: false
+      is_key_content_base64: true
     )
 
     # Upload to TestFlight

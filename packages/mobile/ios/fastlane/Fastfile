@@ -270,6 +270,9 @@ platform :ios do
     # Sync code signing certificates for TestFlight (both development and distribution)
     certificates_all
 
+    # Set the provisioning profile specifier for Flutter to use the correct profile
+    ENV['PROVISIONING_PROFILE_SPECIFIER'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-name']
+
     # Install CocoaPods dependencies first
     sh("cd ../ && pod install")
 

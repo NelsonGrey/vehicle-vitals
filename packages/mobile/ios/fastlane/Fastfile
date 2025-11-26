@@ -281,15 +281,15 @@ platform :ios do
     # Build the Flutter iOS app without code signing
     sh("cd ../.. && flutter build ios --release --no-codesign")
 
-    # Sign the app using fastlane resign
+    # Create unsigned IPA from the app
+    sh("cd ../../build/ios/iphoneos && zip -r ../../../../packages/mobile/ios/fastlane/builds/VehicleVitals.ipa Runner.app")
+
+    # Sign the IPA using fastlane resign
     resign(
-      app_path: "../../build/ios/iphoneos/Runner.app",
+      ipa: "./fastlane/builds/VehicleVitals.ipa",
       signing_identity: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'],
       provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
     )
-
-    # Create IPA from the signed app
-    sh("cd ../../build/ios/iphoneos && zip -r ../../../../packages/mobile/ios/fastlane/builds/VehicleVitals.ipa Runner.app")
 
     # Upload to TestFlight
     private_key_content = ENV["ASC_PRIVATE_KEY"]

@@ -17,7 +17,6 @@ web/build/
 # Env files
 .env
 .env.*
-!.env.example
 
 # macOS
 .DS_Store
@@ -51,15 +50,6 @@ android/build/
 ios/Pods/
 ios/build/
 
-# Flutter
-.dart_tool/
-packages/mobile/.dart_tool/
-packages/mobile/build/
-packages/mobile/pubspec.lock
-packages/mobile/.flutter-plugins
-packages/mobile/.flutter-plugins-dependencies
-packages/mobile/.packages
-
 # Expo leftover (local)
 mobile/app.json
 mobile/.expo/
@@ -73,8 +63,6 @@ mobile/.expo/
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/
-packages/mobile/ios/fastlane/builds/
-packages/mobile/ios/fastlane/Payload/
 
 # Metro cache
 .metro-cache/
@@ -93,28 +81,19 @@ packages/mobile/config/*/ios/GoogleService-Info.plist
 .act-secrets/real-secrets
 .act-secrets/secrets
 
-# Self-hosted runner binaries and large files
-actions-runner/
-externals/node*/bin/node
-actions-runner/externals/node*/bin/node
-actions-runner/*.tar.gz
-
-# Monitoring runtime files
-monitoring/*.pid
-
-# Backup files
-*.backup
-package.json.backup
-packages/*/package.json.backup
-
 # Misc
 Thumbs.db
 coverage/
 
-# DataConnect local data
-dataconnect/.dataconnect/
+# Environment variables
+.env
+.env.*
+!.env.example
 
-# Temporary files
-*.tmp
-*.temp
-*~
+# Self-hosted runner binaries and large files
+actions-runner/externals/node*/bin/node
+actions-runner/actions-runner-*.tar.gz
+actions-runner/*.tar.gz
+
+# Monitoring runtime files
+monitoring/*.pid

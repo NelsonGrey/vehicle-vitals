@@ -288,11 +288,14 @@ platform :ios do
     sh("zip -r ./builds/VehicleVitals.ipa Payload/")
     sh("rm -rf Payload")
 
+    # Wait for IPA to be fully written
+    sh("while [ ! -f ./builds/VehicleVitals.ipa ] || [ ! -s ./builds/VehicleVitals.ipa ]; do sleep 1; done")
+
     # Sign the IPA using fastlane resign
     resign(
       ipa: "./builds/VehicleVitals.ipa",
-      signing_identity: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'],
-      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
+      signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",
+      provisioning_profile: "2f5b492b-1a03-45e9-953d-45ebc447c657"
     )
 
     # Upload to TestFlight

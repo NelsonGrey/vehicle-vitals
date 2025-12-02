@@ -8,7 +8,7 @@ services:
       - .env.runner
     environment:
       REPO_URL: https://github.com/mnelson3/vehicle-vitals
-      RUNNER_NAME: vehicle-vitals-docker-runner-${HOSTNAME:-local}
+      RUNNER_NAME: vehicle-vitals-docker-runner
       RUNNER_TOKEN: ${RUNNER_TOKEN}
       RUNNER_WORKDIR: /tmp/runner/work
       LABELS: self-hosted,ubuntu-latest,docker,vehicle-vitals

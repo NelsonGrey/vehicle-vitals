@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  github-runner-vehicles-vitals:
+  github-runner-vehicle-vitals:
     build:
       context: .
       dockerfile: Dockerfile.runner
@@ -50,19 +48,18 @@ services:
   # Monitoring container (optional)
   runner-monitor:
     build:
-      context: contextPath
+      context: .
       dockerfile: Dockerfile.monitor
     container_name: vehicle-vitals-runner-monitor
     ports:
-      - "8081:80"
+      - "8082:80"
     volumes:
-      - ./monitoring/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./monitoring/status.html:/usr/share/nginx/html/index.html:ro
     networks:
       - runner-network
     restart: unless-stopped
     depends_on:
-      - github-runner-vehicles-vitals
+      - github-runner-vehicle-vitals
 
 volumes:
   runner-work:

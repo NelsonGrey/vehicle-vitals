@@ -69,7 +69,7 @@ get_runner_token() {
         -H "Accept: application/vnd.github.v3+json" \
         https://api.github.com/repos/mnelson3/vehicle-vitals/actions/runners/registration-token)
 
-    RUNNER_TOKEN=$(echo "$response" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+    RUNNER_TOKEN=$(echo "$response" | grep -o '"token":\s*"[^"]*"' | cut -d'"' -f4)
 
     if [ -z "$RUNNER_TOKEN" ]; then
         echo -e "${RED}❌ Failed to generate registration token${NC}"

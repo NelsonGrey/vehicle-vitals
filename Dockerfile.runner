@@ -3,22 +3,22 @@ FROM ubuntu:latest
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    curl \
-    jq \
-    git \
-    unzip \
-    ca-certificates \
-    libicu70 \
-    && rm -rf /var/lib/apt/lists/*
+  curl \
+  jq \
+  git \
+  unzip \
+  ca-certificates \
+  libicu74 \
+  && rm -rf /var/lib/apt/lists/*
 
 # Create runner user
 RUN useradd -m -s /bin/bash runner && \
-    usermod -aG sudo runner && \
-    echo 'runner ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+  usermod -aG sudo runner && \
+  echo 'runner ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Create work directory structure
 RUN mkdir -p /tmp/runner/work && \
-    chown -R runner:runner /tmp/runner
+  chown -R runner:runner /tmp/runner
 
 # Switch to runner user
 USER runner
@@ -27,9 +27,9 @@ WORKDIR /home/runner
 # Download and extract GitHub runner
 ARG RUNNER_VERSION=2.311.0
 RUN curl -o actions-runner-linux-arm64-${RUNNER_VERSION}.tar.gz -L \
-    https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-arm64-${RUNNER_VERSION}.tar.gz \
-    && tar xzf ./actions-runner-linux-arm64-${RUNNER_VERSION}.tar.gz \
-    && rm actions-runner-linux-arm64-${RUNNER_VERSION}.tar.gz
+  https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-arm64-${RUNNER_VERSION}.tar.gz \
+  && tar xzf ./actions-runner-linux-arm64-${RUNNER_VERSION}.tar.gz \
+  && rm actions-runner-linux-arm64-${RUNNER_VERSION}.tar.gz
 
 # Copy entrypoint script and make it executable
 COPY --chmod=755 docker-entrypoint.sh /home/runner/entrypoint.sh

@@ -1,9 +1,11 @@
 version: '3.8'
 
 services:
-  github-runner:
-    image: myoung34/github-runner:latest
-    container_name: vehicle-vitals-runner
+  github-runner-vehicles-vitals:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    container_name: github-runner-vehicle-vitals
     env_file:
       - .env.runner
     environment:
@@ -11,7 +13,7 @@ services:
       RUNNER_NAME: vehicle-vitals-docker-runner
       RUNNER_TOKEN: ${RUNNER_TOKEN}
       RUNNER_WORKDIR: /tmp/runner/work
-      LABELS: self-hosted,ubuntu-latest,docker,vehicle-vitals
+      LABELS: self-hosted,ARM64,linux,ubuntu-latest,docker,vehicle-vitals
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - runner-work:/tmp/runner/work
@@ -47,7 +49,9 @@ services:
 
   # Monitoring container (optional)
   runner-monitor:
-    image: nginx:alpine
+    build:
+      context: contextPath
+      dockerfile: Dockerfile.monitor
     container_name: vehicle-vitals-runner-monitor
     ports:
       - "8081:80"
@@ -58,7 +62,7 @@ services:
       - runner-network
     restart: unless-stopped
     depends_on:
-      - github-runner
+      - github-runner-vehicles-vitals
 
 volumes:
   runner-work:

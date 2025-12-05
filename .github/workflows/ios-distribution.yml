@@ -1,12 +1,15 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: 🍎 iOS App Distribution
+name: iOS App Distribution
+
+# iOS builds using self-hosted macOS runner
+# Automatic builds are enabled for all environments
 
 on:
   push:
     branches:
       - main
-      - develop
       - staging
+      - develop
     paths:
       - "mobile/**"
       - ".github/workflows/ios-distribution.yml"

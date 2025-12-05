@@ -18,7 +18,7 @@ on:
         type: choice
         options:
           - beta
-          - production
+          - release
 
 jobs:
   distribute-ios:
@@ -130,7 +130,18 @@ jobs:
 
       - name: Sign and package for TestFlight
         working-directory: packages/mobile/ios
-        run: fastlane beta
+        run: |
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+          
+          if [[ "$RELEASE_TYPE" == "release" ]]; then
+            # Release: Build and upload to TestFlight
+            echo "🚀 Building and uploading to TestFlight..."
+            fastlane beta
+          else
+            # Beta: Just build, skip TestFlight upload
+            echo "🔨 Building for beta testing (skipping TestFlight upload)..."
+            fastlane build_development
+          fi
         env:
           FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}

@@ -12,7 +12,7 @@ on:
       - develop
     paths:
       - "mobile/**"
-      - ".github/workflows/ios-distribution.yml"
+      - ".github/workflows/ios-app-distribution.yml"
       - ".github/actions/**"
       - "pubspec.yaml"
       - "firebase*.json"

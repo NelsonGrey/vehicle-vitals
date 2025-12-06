@@ -2,15 +2,15 @@ name: 🚀 CI/CD Pipeline - Build, Test & Deploy All Deliverables
 
 on:
   push:
-    branches: [ main, staging ]
+    branches: [main, staging]
   pull_request:
-    branches: [ main, staging ]
+    branches: [main, staging]
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
-        default: 'STAGING'
+        default: "STAGING"
         type: choice
         options:
           - PRODUCTION
@@ -18,8 +18,8 @@ on:
           - DEVELOPMENT
 
 env:
-  NODE_VERSION: '20'
-  FLUTTER_VERSION: '3.35.5'
+  NODE_VERSION: "20"
+  FLUTTER_VERSION: "3.38.1"
 
 jobs:
   # 🔍 Determine Environment
@@ -82,7 +82,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📦 Install Dependencies
         run: npm ci
@@ -112,7 +112,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📦 Install Dependencies
         run: npm ci
@@ -140,7 +140,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📦 Install Dependencies
         run: npm ci
@@ -158,7 +158,8 @@ jobs:
   build-web:
     name: 🏗️ Build Web Package
     runs-on: self-hosted
-    needs: [determine-environment, quality-check, build-shared, build-firebase-utils]
+    needs:
+      [determine-environment, quality-check, build-shared, build-firebase-utils]
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -293,7 +294,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📦 Install Dependencies
         run: npm ci

@@ -1,8 +1,6 @@
 services:
   github-runner-vehicle-vitals:
-    build:
-      context: .
-      dockerfile: Dockerfile.runner
+    image: myoung34/github-runner:latest
     container_name: github-runner-vehicle-vitals
     env_file:
       - .env.runner

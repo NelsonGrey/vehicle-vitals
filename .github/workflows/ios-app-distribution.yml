@@ -131,7 +131,7 @@ jobs:
         run: |
           echo "🔄 Setting up Firebase service account key..."
           mkdir -p mobile/ios
-          echo '${{ github.ref == ''refs/heads/main'' && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_PRODUCTION || github.ref == ''refs/heads/staging'' && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_STAGING || secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > mobile/ios/service-account-key.json
+          echo '${{ github.ref == "refs/heads/main" && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_PRODUCTION || github.ref == "refs/heads/staging" && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_STAGING || secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > mobile/ios/service-account-key.json
           echo "✅ Service account key configured"
 
       - name: 🔐 Decode iOS Distribution Certificate
@@ -195,7 +195,7 @@ jobs:
           # Execute Fastlane based on release type
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
 
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/staging" ]] || [[ "$RELEASE_TYPE" == "release" ]]; then
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]] || [[ "$GITHUB_REF" == "refs/heads/staging" ]] || [[ "$RELEASE_TYPE" == "release" ]]; then
             # Production/Staging OR manual release: Upload to TestFlight
             echo "🚀 Building and uploading to TestFlight..."
             fastlane beta

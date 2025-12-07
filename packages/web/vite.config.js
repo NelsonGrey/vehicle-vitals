@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -19,12 +19,38 @@ export default defineConfig({
     rollupOptions: {
       output: {
         format: 'es', // Use ES modules for better tree shaking
-        manualChunks: undefined,
+        manualChunks: id => {
+          // Vendor chunks for better caching
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('firebase')) {
+              return 'firebase-vendor';
+            }
+            if (id.includes('jspdf') || id.includes('papaparse')) {
+              return 'utils-vendor';
+            }
+            return 'vendor';
+          }
+          // Feature-based chunks
+          if (id.includes('pages/')) {
+            return 'pages';
+          }
+          if (id.includes('components/')) {
+            return 'components';
+          }
+        },
       },
     },
   },
   optimizeDeps: {
-    include: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions'],
+    include: [
+      'firebase/app',
+      'firebase/auth',
+      'firebase/firestore',
+      'firebase/functions',
+    ],
   },
   server: {
     fs: {
@@ -36,4 +62,4 @@ export default defineConfig({
     include: /src\/.*\.[tj]sx?$/,
     exclude: [],
   },
-})
+});

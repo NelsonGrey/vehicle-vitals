@@ -11,7 +11,7 @@ on:
       - staging
       - develop
     paths:
-      - "mobile/**"
+      - 'packages/mobile/**'
       - ".github/workflows/ios-app-distribution.yml"
       - ".github/actions/**"
       - "pubspec.yaml"

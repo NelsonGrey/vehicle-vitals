@@ -47,7 +47,7 @@ jobs:
           echo "💰 Using self-hosted runner (cost savings)"
           echo "🖥️  macOS version: $(sw_vers -productVersion)"
           echo "🛠️  Xcode version: $(xcodebuild -version | head -1)"
-          
+
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 

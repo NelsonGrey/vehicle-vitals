@@ -21,10 +21,10 @@ on:
       release_type:
         description: "Release type to distribute"
         required: true
-        default: "beta"
+        default: "debug"
         type: choice
         options:
-          - beta
+          - debug
           - release
       release_notes:
         description: "Release notes for this build"
@@ -195,11 +195,13 @@ jobs:
           # Execute Fastlane based on release type
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
 
-          if [[ "$RELEASE_TYPE" == "release" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/staging" ]] || [[ "$RELEASE_TYPE" == "release" ]]; then
+            # Production/Staging OR manual release: Upload to TestFlight
             echo "🚀 Building and uploading to TestFlight..."
             fastlane beta
           else
-            echo "🔨 Building for beta testing (skipping TestFlight upload)..."
+            # Development: Just build and test
+            echo "🔨 Building for development testing..."
             fastlane build_development
           fi
 

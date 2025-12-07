@@ -59,6 +59,9 @@ packages/mobile/pubspec.lock
 packages/mobile/.flutter-plugins
 packages/mobile/.flutter-plugins-dependencies
 packages/mobile/.packages
+packages/mobile/linux/flutter/
+packages/mobile/macos/Flutter/
+packages/mobile/windows/flutter/
 
 # Expo leftover (local)
 mobile/app.json

@@ -18,8 +18,8 @@ on:
       - "firebase*.json"
   workflow_dispatch:
     inputs:
-      release_type:
-        description: "Release type to distribute"
+      build_type:
+        description: "Build type to distribute"
         required: true
         default: "debug"
         type: choice
@@ -40,6 +40,14 @@ jobs:
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'PRODUCTION' || github.ref == 'refs/heads/staging' && 'STAGING' || 'DEVELOPMENT' }}
     steps:
+      - name: iOS Build Environment Check
+        run: |
+          echo "🍎 Running on self-hosted macOS runner"
+          echo "📍 Hostname: $(hostname)"
+          echo "💰 Using self-hosted runner (cost savings)"
+          echo "🖥️  macOS version: $(sw_vers -productVersion)"
+          echo "🛠️  Xcode version: $(xcodebuild -version | head -1)"
+          
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 

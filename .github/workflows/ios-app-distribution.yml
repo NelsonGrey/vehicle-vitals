@@ -27,12 +27,9 @@ on:
           - debug
           - release
       release_notes:
-        description: "Release notes for this build"
+        description: 'Release notes for this build'
         required: false
         type: string
-
-env:
-  FLUTTER_VERSION: "stable"
 
 jobs:
   distribute-ios:

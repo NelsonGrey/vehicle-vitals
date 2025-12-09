@@ -76,7 +76,7 @@ jobs:
         run: npm run build --workspace=packages/web
 
       - name: 🦋 Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@v2.21.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           architecture: arm64

@@ -9,15 +9,15 @@ on:
   workflow_dispatch:
     inputs:
       build_type:
-        description: 'Build type to distribute'
+        description: "Build type to distribute"
         required: true
-        default: 'debug'
+        default: "debug"
         type: choice
         options:
-        - debug
-        - release
+          - debug
+          - release
       release_notes:
-        description: 'Release notes for this build'
+        description: "Release notes for this build"
         required: false
         type: string
 
@@ -42,13 +42,14 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: arm64
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3

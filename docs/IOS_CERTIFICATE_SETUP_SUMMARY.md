@@ -4,7 +4,7 @@
 
 ### 1. Certificate Repository Created
 
-- **Repository**: `https://github.com/mnelson3/nelson-grey-certificates`
+- **Repository**: `https://github.com/mnelson3/nelson-grey`
 - **Status**: Private repository created and initialized
 - **Contents**: README.md, .gitignore, setup script
 
@@ -71,7 +71,7 @@ FASTLANE_ITC_TEAM_ID=YOUR_ITC_TEAM_ID
 ASC_KEY_ID=YOUR_API_KEY_ID
 ASC_ISSUER_ID=YOUR_ISSUER_ID
 ASC_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----
-MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/nelson-grey-certificates.git
+MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/nelson-grey.git
 MATCH_PASSWORD=your_match_password
 BETA_FEEDBACK_EMAIL=feedback@nelsongrey.com
 ```
@@ -92,7 +92,7 @@ fastlane beta
 ### Repository Structure
 
 ```
-nelson-grey-certificates/
+nelson-grey/
 ├── README.md
 ├── .gitignore
 └── certs/ (created by Fastlane Match)
@@ -142,4 +142,4 @@ If you encounter issues:
 
 **Generated**: $(date)
 **Project**: Vehicle Vitals
-**Certificate Repository**: https://github.com/mnelson3/nelson-grey-certificates
+**Certificate Repository**: https://github.com/mnelson3/nelson-grey

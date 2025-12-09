@@ -36,7 +36,7 @@ read -p "Enter your GitHub Personal Access Token: " -s GITHUB_TOKEN
 echo ""
 
 # Set the MATCH_GIT_URL environment variable
-MATCH_URL="https://oauth2:${GITHUB_TOKEN}@github.com/mnelson3/nelson-grey-certificates.git"
+MATCH_URL="https://oauth2:${GITHUB_TOKEN}@github.com/mnelson3/nelson-grey.git"
 export MATCH_GIT_URL="$MATCH_URL"
 
 echo "📝 Please provide your Apple Developer credentials:"

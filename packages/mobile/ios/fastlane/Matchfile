@@ -1,4 +1,4 @@
-git_url("https://oauth2:REDACTED_GITHUB_TOKEN@github.com/mnelson3/nelson-grey-certificates")
+git_url("https://oauth2:REDACTED_GITHUB_TOKEN@github.com/mnelson3/nelson-grey")
 git_branch("main")
 storage_mode("git")
 type("appstore")

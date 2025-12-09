@@ -1,7 +1,7 @@
 name: 🌐 Web Deployment
 
 # This workflow deploys the web app to Firebase Hosting
-# 
+#
 # Required Secrets:
 # - FIREBASE_TOKEN: Firebase CI token for deployment
 #   To generate: firebase login:ci
@@ -12,17 +12,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy'
+        description: "Environment to deploy"
         required: true
-        default: 'staging'
+        default: "staging"
         type: choice
         options:
-        - staging
-        - production
-        - development
+          - staging
+          - production
+          - development
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: "18"
 
 jobs:
   deploy-web:

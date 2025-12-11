@@ -75,8 +75,10 @@ jobs:
           cache: false
           architecture: arm64
 
-      - name: � Get Flutter Dependencies
+      - name: 📦 Get Flutter Dependencies
         run: flutter pub get
+
+      - name: 🔧 Install GMP (Ruby dependency)
         run: |
           echo '📦 Installing GMP library...'
           brew install gmp

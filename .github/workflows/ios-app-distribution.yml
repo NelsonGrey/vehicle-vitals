@@ -72,11 +72,11 @@ jobs:
         uses: subosito/flutter-action@v2.21.0
         with:
           channel: stable
-          cache: true
+          cache: false
           architecture: arm64
-          path: packages/mobile
 
-      - name: 🔧 Install GMP (Ruby dependency)
+      - name: � Get Flutter Dependencies
+        run: flutter pub get
         run: |
           echo '📦 Installing GMP library...'
           brew install gmp

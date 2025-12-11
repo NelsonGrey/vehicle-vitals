@@ -74,7 +74,7 @@ jobs:
           channel: stable
           cache: true
           architecture: arm64
-        working-directory: packages/mobile
+          path: packages/mobile
 
       - name: 🔧 Install GMP (Ruby dependency)
         run: |

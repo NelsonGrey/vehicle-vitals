@@ -41,7 +41,7 @@ jobs:
   distribute-ios:
     runs-on: [self-hosted, vehicle-vitals]
     environment:
-      name: ${{ (github.event.inputs.release_type == 'app_store' || github.event.inputs.release_type == 'full_pipeline') && 'PRODUCTION' || 'DEVELOPMENT' }}
+      name: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.release_type == 'app_store' || github.event.inputs.release_type == 'full_pipeline') && 'PRODUCTION' || 'DEVELOPMENT' }}
     steps:
       - name: iOS Build Environment Check
         run: |

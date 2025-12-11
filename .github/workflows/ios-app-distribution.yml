@@ -1,41 +1,47 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: 🍎 iOS App Distribution
 
-# iOS builds using self-hosted macOS runner
-# Automatic builds are enabled for all environments
+# Simplified iOS workflow for builds and releases
+# Handles local builds, TestFlight distribution, and App Store releases
 
 on:
-  push:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Type of build/release"
+        required: true
+        type: choice
+        options:
+          - build_only
+          - testflight
+          - app_store
+          - full_pipeline
+      release_notes:
+        description: "Release notes for this build/release"
+        required: false
+        type: string
+      beta_group_name:
+        description: "Name of TestFlight beta group (for full pipeline)"
+        required: false
+        default: "Internal Testers"
+        type: string
+  pull_request:
     branches:
-      - main
-      - staging
       - develop
+      - staging
+      - main
     paths:
       - "packages/mobile/**"
       - ".github/workflows/ios-app-distribution.yml"
       - ".github/actions/**"
       - "pubspec.yaml"
       - "firebase*.json"
-  workflow_dispatch:
-    inputs:
-      build_type:
-        description: "Build type to distribute"
-        required: true
-        default: "debug"
-        type: choice
-        options:
-          - debug
-          - release
-      release_notes:
-        description: "Release notes for this build"
-        required: false
-        type: string
 
 jobs:
   distribute-ios:
     runs-on: [self-hosted, vehicle-vitals]
     environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'PRODUCTION' || github.ref == 'refs/heads/staging' && 'STAGING' || 'DEVELOPMENT' }}
+      name: ${{ (github.event.inputs.release_type == 'app_store' || github.event.inputs.release_type == 'full_pipeline') && 'PRODUCTION' || 'DEVELOPMENT' }}
     steps:
       - name: iOS Build Environment Check
         run: |
@@ -108,12 +114,12 @@ jobs:
         run: |
           echo '🔄 Testing App Store Connect JWT authentication...'
           ruby -e '
-          require 'jwt'
-          require 'openssl'
+          require '\''jwt'\''
+          require '\''openssl'\''
 
-          key_id = ENV['ASC_KEY_ID']
-          issuer_id = ENV['ASC_ISSUER_ID']
-          private_key_path = '#{ENV['HOME']}/.private_keys/AuthKey_#{key_id}.p8'
+          key_id = ENV['\''ASC_KEY_ID'\'']
+          issuer_id = ENV['\''ASC_ISSUER_ID'\'']
+          private_key_path = "#{ENV['\''HOME'\'']}/.private_keys/AuthKey_#{key_id}.p8"
 
           private_key = OpenSSL::PKey::EC.new(File.read(private_key_path))
 
@@ -121,19 +127,19 @@ jobs:
           payload = {
             iss: issuer_id,
             exp: now + 1200,
-            aud: 'appstoreconnect-v1'
+            aud: '\''appstoreconnect-v1'\''
           }
 
           headers = {
             kid: key_id
           }
 
-          token = JWT.encode(payload, private_key, 'ES256', headers)
-          puts '✅ JWT token generated successfully'
-          puts '🔄 Testing API connectivity...'
+          token = JWT.encode(payload, private_key, '\''ES256'\'', headers)
+          puts '\''✅ JWT token generated successfully'\''
+          puts '\''🔄 Testing API connectivity...'\''
 
           # Test API call
-          system(\'curl -H 'Authorization: Bearer #{token}' 'https://api.appstoreconnect.apple.com/v1/apps' -o /dev/null -s -w '%{http_code}' | grep -q '200' && echo '✅ App Store Connect API accessible' || echo '⚠️ App Store Connect API test inconclusive'\')
+          system("curl -H '\''Authorization: Bearer #{token}'\'' '\''https://api.appstoreconnect.apple.com/v1/apps'\'' -o /dev/null -s -w '\''%{http_code}'\'' | grep -q '\''200'\'' && echo '\''✅ App Store Connect API accessible'\'' || echo '\''⚠️ App Store Connect API test inconclusive'\'")
           '
 
       - name: 📱 Generate iOS Platform Files
@@ -147,7 +153,7 @@ jobs:
         run: |
           echo '🔄 Setting up Firebase service account key...'
           mkdir -p packages/mobile/ios
-          echo '${{ github.ref == 'refs/heads/main' && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_PRODUCTION || github.ref == 'refs/heads/staging' && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_STAGING || secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > mobile/ios/service-account-key.json
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > packages/mobile/ios/service-account-key.json
           echo '✅ Service account key configured'
 
       - name: 🔑 Setup SSH Key for Certificate Repository
@@ -175,7 +181,7 @@ jobs:
           echo '🚀 Building and distributing iOS app...'
 
           # Set release notes
-          RELEASE_NOTES='${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}'
+          RELEASE_NOTES='${{ github.event.inputs.release_notes || format('\''Build from {0} - {1}'\'', github.ref_name, github.sha) }}'
           echo 'RELEASE_NOTES=$RELEASE_NOTES' >> $GITHUB_ENV
 
           cd packages/mobile/ios
@@ -191,17 +197,38 @@ jobs:
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 
-          # Execute Fastlane based on release type
-          RELEASE_TYPE='${{ github.event.inputs.release_type }}'
-
-          if [[ '$GITHUB_REF' == 'refs/heads/main' ]] || [[ '$GITHUB_REF' == 'refs/heads/staging' ]] || [[ '$RELEASE_TYPE' == 'release' ]]; then
-            # Production/Staging OR manual release: Upload to TestFlight
-            echo '🚀 Building and uploading to TestFlight...'
-            fastlane beta
-          else
-            # Development: Just build and test
-            echo '🔨 Building for development testing...'
+          # Determine mode and execute appropriate Fastlane command
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            # PR: Just build and test
+            echo '🔨 Building for PR testing...'
             fastlane build_development
+          else
+            # Manual dispatch: execute based on release_type input
+            RELEASE_TYPE='${{ github.event.inputs.release_type }}'
+            BETA_GROUP_NAME='${{ github.event.inputs.beta_group_name || '\''Internal Testers'\'' }}'
+
+            case "$RELEASE_TYPE" in
+              "build_only")
+                echo '🔨 Building for local testing...'
+                fastlane build_development
+                ;;
+              "testflight")
+                echo '🎯 Running TestFlight release...'
+                bundle exec fastlane beta
+                ;;
+              "app_store")
+                echo '🏪 Running App Store submission...'
+                bundle exec fastlane submit_to_app_store release_notes:"$RELEASE_NOTES"
+                ;;
+              "full_pipeline")
+                echo '🚀 Running complete release pipeline...'
+                bundle exec fastlane full_release_pipeline release_notes:"$RELEASE_NOTES" manage_beta:true beta_group_name:"$BETA_GROUP_NAME" submit_to_app_store:true
+                ;;
+              *)
+                echo "❌ Unknown release type: $RELEASE_TYPE"
+                exit 1
+                ;;
+            esac
           fi
 
       - name: 🧹 Clean Up
@@ -216,6 +243,6 @@ jobs:
           rm -rf ~/.ssh
 
           # Clean up service account files
-          rm -f mobile/ios/service-account-key.json
+          rm -f packages/mobile/ios/service-account-key.json
 
           echo '✅ Cleanup complete'

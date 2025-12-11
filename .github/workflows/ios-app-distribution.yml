@@ -39,7 +39,7 @@ on:
 
 jobs:
   distribute-ios:
-    runs-on: [self-hosted, vehicle-vitals]
+    runs-on: [self-hosted, macos-arm64, vehicle-vitals]
     environment:
       name: ${{ github.event_name == 'workflow_dispatch' && (inputs.release_type == 'app_store' || inputs.release_type == 'full_pipeline') && 'PRODUCTION' || 'DEVELOPMENT' }}
     steps:

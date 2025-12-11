@@ -191,6 +191,9 @@ jobs:
 
           cd ios
 
+          # Install Ruby dependencies
+          bundle install
+
           # Configure Fastlane environment
           export FASTLANE_APPLE_ID='${{ secrets.FASTLANE_APPLE_ID }}'
           export FASTLANE_TEAM_ID='${{ secrets.FASTLANE_TEAM_ID }}'

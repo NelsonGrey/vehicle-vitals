@@ -337,4 +337,116 @@ platform :ios do
     UI.message("✅ Flutter iOS build completed successfully")
     UI.message("📦 IPA file uploaded to TestFlight")
   end
+
+  desc "Submit app to App Store"
+  lane :submit_to_app_store do |options|
+    release_notes = options[:release_notes] || "Automated App Store submission"
+
+    # Sync code signing certificates for App Store
+    certificates_appstore
+
+    # Set environment variables for manual code signing in Flutter build
+    ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore']
+    ENV['CODE_SIGN_IDENTITY'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name']
+    ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
+
+    # Install CocoaPods dependencies first
+    sh("cd ../ && pod install")
+
+    # Build the Flutter iOS app without code signing
+    sh("cd ../.. && flutter build ios --release --no-codesign")
+
+    # Create unsigned IPA from the app with proper structure
+    sh("mkdir -p ./builds")
+    sh("mkdir -p Payload")
+    sh("cp -r ../../build/ios/iphoneos/Runner.app Payload/")
+    sh("zip -r ./builds/Vehicle-Vitals-AppStore.ipa Payload/")
+    sh("rm -rf Payload")
+
+    # Wait for IPA to be fully written
+    sh("while [ ! -f ./builds/Vehicle-Vitals-AppStore.ipa ] || [ ! -s ./builds/Vehicle-Vitals-AppStore.ipa ]; do sleep 1; done")
+
+    # Sign the IPA using fastlane resign
+    ipa_path = File.expand_path("./builds/Vehicle-Vitals-AppStore.ipa")
+    resign(
+      ipa: ipa_path,
+      signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",
+      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
+    )
+
+    # Set up API key authentication
+    private_key_content = ENV["ASC_PRIVATE_KEY"]
+    if private_key_content.nil? || private_key_content.empty?
+      UI.error("ASC_PRIVATE_KEY environment variable is not set or empty")
+      raise "Missing ASC_PRIVATE_KEY"
+    end
+    private_key_content = private_key_content.gsub("\0", "").gsub("%", "").strip
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: private_key_content,
+      is_key_content_base64: true
+    )
+
+    # Submit to App Store
+    deliver(
+      api_key: api_key,
+      ipa: ipa_path,
+      skip_screenshots: true,
+      skip_metadata: true,
+      skip_app_version_update: false,
+      force: true,
+      submit_for_review: true,
+      automatic_release: false,
+      release_notes: release_notes
+    )
+
+    UI.message("✅ App submitted to App Store successfully")
+  end
+
+  desc "Complete release pipeline: TestFlight + App Store"
+  lane :full_release_pipeline do |options|
+    release_notes = options[:release_notes] || "Automated full release"
+    manage_beta = options[:manage_beta] || false
+    beta_group_name = options[:beta_group_name] || "Internal Testers"
+    submit_to_app_store = options[:submit_to_app_store] || false
+
+    UI.message("🚀 Starting full release pipeline...")
+
+    # Always upload to TestFlight
+    beta(release_notes: release_notes)
+
+    if manage_beta
+      UI.message("📝 Managing TestFlight beta groups...")
+      # Set up API key authentication for beta management
+      private_key_content = ENV["ASC_PRIVATE_KEY"]
+      private_key_content = private_key_content.gsub("\0", "").gsub("%", "").strip
+
+      api_key = app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_content: private_key_content,
+        is_key_content_base64: true
+      )
+
+      # Add to beta group if specified
+      if beta_group_name && !beta_group_name.empty?
+        pilot(
+          api_key: api_key,
+          distribute_external: true,
+          groups: [beta_group_name],
+          skip_waiting_for_build_processing: false,
+          changelog: release_notes
+        )
+      end
+    end
+
+    if submit_to_app_store
+      UI.message("🏪 Submitting to App Store...")
+      submit_to_app_store(release_notes: release_notes)
+    end
+
+    UI.message("✅ Full release pipeline completed successfully")
+  end
 end

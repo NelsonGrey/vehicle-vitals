@@ -42,6 +42,9 @@ jobs:
     runs-on: [self-hosted, macOS, vehicle-vitals]
     environment:
       name: ${{ github.event_name == 'workflow_dispatch' && (inputs.release_type == 'app_store' || inputs.release_type == 'full_pipeline') && 'PRODUCTION' || 'DEVELOPMENT' }}
+    defaults:
+      run:
+        working-directory: packages/mobile
     steps:
       - name: iOS Build Environment Check
         run: |
@@ -145,15 +148,14 @@ jobs:
       - name: 📱 Generate iOS Platform Files
         run: |
           echo '🔄 Generating iOS platform files...'
-          cd packages/mobile
           flutter create --platforms=ios .
           echo '✅ iOS platform files generated'
 
       - name: 🔐 Setup Service Account Key
         run: |
           echo '🔄 Setting up Firebase service account key...'
-          mkdir -p packages/mobile/ios
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > packages/mobile/ios/service-account-key.json
+          mkdir -p ios
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > ios/service-account-key.json
           echo '✅ Service account key configured'
 
       - name: 🔑 Setup SSH Key for Certificate Repository
@@ -184,7 +186,7 @@ jobs:
           RELEASE_NOTES="${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"
           echo 'RELEASE_NOTES=$RELEASE_NOTES' >> $GITHUB_ENV
 
-          cd packages/mobile/ios
+          cd ios
 
           # Configure Fastlane environment
           export FASTLANE_APPLE_ID='${{ secrets.FASTLANE_APPLE_ID }}'
@@ -243,6 +245,5 @@ jobs:
           rm -rf ~/.ssh
 
           # Clean up service account files
-          rm -f packages/mobile/ios/service-account-key.json
-
+rm -f ios/service-account-key.json
           echo '✅ Cleanup complete'

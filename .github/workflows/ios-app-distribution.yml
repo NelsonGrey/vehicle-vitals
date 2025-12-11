@@ -204,8 +204,8 @@ jobs:
             fastlane build_development
           else
             # Manual dispatch: execute based on release_type input
-            RELEASE_TYPE='${{ github.event.inputs.release_type }}'
-            BETA_GROUP_NAME='${{ github.event.inputs.beta_group_name || '\''Internal Testers'\'' }}'
+            RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+            BETA_GROUP_NAME="${{ github.event.inputs.beta_group_name || 'Internal Testers' }}"
 
             case "$RELEASE_TYPE" in
               "build_only")

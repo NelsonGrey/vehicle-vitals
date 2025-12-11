@@ -119,13 +119,13 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           echo '🔄 Testing App Store Connect JWT authentication...'
-          ruby -e '
-          require '\''jwt'\''
-          require '\''openssl'\''
+          cat << 'EOF' | ruby
+          require 'jwt'
+          require 'openssl'
 
-          key_id = ENV['\''ASC_KEY_ID'\'']
-          issuer_id = ENV['\''ASC_ISSUER_ID'\'']
-          private_key_path = "#{ENV['\''HOME'\'']}/.private_keys/AuthKey_#{key_id}.p8"
+          key_id = ENV['ASC_KEY_ID']
+          issuer_id = ENV['ASC_ISSUER_ID']
+          private_key_path = "#{ENV['HOME']}/.private_keys/AuthKey_#{key_id}.p8"
 
           private_key = OpenSSL::PKey::EC.new(File.read(private_key_path))
 
@@ -133,20 +133,20 @@ jobs:
           payload = {
             iss: issuer_id,
             exp: now + 1200,
-            aud: '\''appstoreconnect-v1'\''
+            aud: 'appstoreconnect-v1'
           }
 
           headers = {
             kid: key_id
           }
 
-          token = JWT.encode(payload, private_key, '\''ES256'\'', headers)
-          puts '\''✅ JWT token generated successfully'\''
-          puts '\''🔄 Testing API connectivity...'\''
+          token = JWT.encode(payload, private_key, 'ES256', headers)
+          puts '✅ JWT token generated successfully'
+          puts '🔄 Testing API connectivity...'
 
           # Test API call
-          system("curl -H '\''Authorization: Bearer #{token}'\'' '\''https://api.appstoreconnect.apple.com/v1/apps'\'' -o /dev/null -s -w '\''%{http_code}'\'' | grep -q '\''200'\'' && echo '\''✅ App Store Connect API accessible'\'' || echo '\''⚠️ App Store Connect API test inconclusive'\'")
-          '
+          system("curl -H 'Authorization: Bearer #{token}' 'https://api.appstoreconnect.apple.com/v1/apps' -o /dev/null -s -w '%{http_code}' | grep -q '200' && echo '✅ App Store Connect API accessible' || echo '⚠️ App Store Connect API test inconclusive'")
+          EOF
 
       - name: 📱 Generate iOS Platform Files
         run: |

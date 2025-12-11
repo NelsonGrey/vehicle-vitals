@@ -245,5 +245,5 @@ jobs:
           rm -rf ~/.ssh
 
           # Clean up service account files
-rm -f ios/service-account-key.json
+          rm -f ios/service-account-key.json
           echo '✅ Cleanup complete'

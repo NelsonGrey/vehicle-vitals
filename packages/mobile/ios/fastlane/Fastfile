@@ -286,7 +286,7 @@ platform :ios do
     ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
 
     # Install CocoaPods dependencies first
-    sh("cd ../ && /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/pod install")
+    sh("export PATH='/Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin:$PATH' && cd ../ && pod install")
 
     # Build the Flutter iOS app without code signing
     sh("cd ../.. && flutter build ios --release --no-codesign")
@@ -351,7 +351,7 @@ platform :ios do
     ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
 
     # Install CocoaPods dependencies first
-    sh("cd ../ && /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/pod install")
+    sh("export PATH='/Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin:$PATH' && cd ../ && pod install")
 
     # Build the Flutter iOS app without code signing
     sh("cd ../.. && flutter build ios --release --no-codesign")

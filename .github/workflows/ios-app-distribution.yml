@@ -195,7 +195,7 @@ jobs:
           cd ios
 
           # Install Ruby dependencies
-          bundle install
+          /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle install
 
           # Configure Fastlane environment
           export FASTLANE_APPLE_ID='${{ secrets.FASTLANE_APPLE_ID }}'
@@ -225,15 +225,15 @@ jobs:
                 ;;
               "testflight")
                 echo '🎯 Running TestFlight release...'
-                bundle exec fastlane beta
+                /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle exec fastlane beta
                 ;;
               "app_store")
                 echo '🏪 Running App Store submission...'
-                bundle exec fastlane submit_to_app_store release_notes:"$RELEASE_NOTES"
+                /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle exec fastlane submit_to_app_store release_notes:"$RELEASE_NOTES"
                 ;;
               "full_pipeline")
                 echo '🚀 Running complete release pipeline...'
-                bundle exec fastlane full_release_pipeline release_notes:"$RELEASE_NOTES" manage_beta:true beta_group_name:"$BETA_GROUP_NAME" submit_to_app_store:true
+                /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle exec fastlane full_release_pipeline release_notes:"$RELEASE_NOTES" manage_beta:true beta_group_name:"$BETA_GROUP_NAME" submit_to_app_store:true
                 ;;
               *)
                 echo "❌ Unknown release type: $RELEASE_TYPE"

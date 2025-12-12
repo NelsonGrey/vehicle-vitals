@@ -88,15 +88,17 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
-          bundler: '2.4.22'
+          bundler: "2.4.22"
           bundler-cache: true
 
       - name: 🔧 Install Fastlane
         run: |
           echo '📦 Installing Fastlane 2.229.0...'
           gem install fastlane -v 2.229.0
+          echo '📦 Installing CocoaPods...'
+          gem install cocoapods
           fastlane --version
-          echo '✅ Fastlane installed successfully'
+          echo '✅ Fastlane and CocoaPods installed successfully'
 
       - name: 🔐 Setup App Store Connect Authentication
         run: |

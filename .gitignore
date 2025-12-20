@@ -4,6 +4,9 @@
 !.act-secrets/secrets
 .act-secrets/real-secrets
 
+# Local tooling artifacts
+.git-filter-repo/
+
 # Android build files
 packages/mobile/android/app/build/
 packages/mobile/android/build/

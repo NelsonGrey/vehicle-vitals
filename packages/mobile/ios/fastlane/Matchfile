@@ -1,8 +1,11 @@
-git_url("https://oauth2:REDACTED_GITHUB_TOKEN@github.com/mnelson3/nelson-grey")
-git_branch("main")
+git_url(ENV["MATCH_GIT_URL"] || "https://github.com/mnelson3/nelson-grey")
+git_branch(ENV["MATCH_GIT_BRANCH"] || "main")
 storage_mode("git")
-type("appstore")
-username("mark.a.nelson@outlook.com")
-team_id("0c24c11e-7780-4f95-9dab-7b59328f0315")
+type(ENV["MATCH_TYPE"] || "appstore")
+
+# Avoid hard-coding Apple identifiers in-repo; prefer workflow secrets.
+username(ENV["FASTLANE_APPLE_ID"]) if ENV["FASTLANE_APPLE_ID"]
+team_id(ENV["FASTLANE_TEAM_ID"]) if ENV["FASTLANE_TEAM_ID"]
+
 force_for_new_devices(true)
 skip_set_partition_list(true)

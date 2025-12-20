@@ -161,28 +161,8 @@ jobs:
         run: |
           echo '🔄 Setting up Firebase service account key...'
           mkdir -p ios
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > ios/service-account-key.json
+          echo '${{ github.ref == 'refs/heads/main' && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_PRODUCTION || github.ref == 'refs/heads/staging' && secrets.FIREBASE_SERVICE_ACCOUNT_KEY_STAGING || secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEVELOPMENT }}' > ios/service-account-key.json
           echo '✅ Service account key configured'
-
-      - name: 🔑 Setup SSH Key for Certificate Repository
-        run: |
-          echo '🔄 Setting up SSH key for certificate repository access...'
-
-          # Create SSH directory
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          # Add SSH private key
-          echo '${{ secrets.MATCH_SSH_PRIVATE_KEY }}' | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-          # Add GitHub to known hosts
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-
-          # Configure git to use SSH for the certificate repository only
-          git config --global url."git@github.com:mnelson3/nelson-grey.git".insteadOf "https://github.com/mnelson3/nelson-grey.git"
-
-          echo '✅ SSH key setup complete'
 
       - name: 🏗️ Build and Distribute iOS App
         run: |
@@ -190,12 +170,15 @@ jobs:
 
           # Set release notes
           RELEASE_NOTES="${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"
-          echo 'RELEASE_NOTES=$RELEASE_NOTES' >> $GITHUB_ENV
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
           cd ios
 
           # Install Ruby dependencies
-          /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle install
+          bundle install
+
+          # Ensure ephemeral keychain helper is executable
+          chmod +x ../../../scripts/ephemeral_keychain_fastlane_fixed.sh
 
           # Configure Fastlane environment
           export FASTLANE_APPLE_ID='${{ secrets.FASTLANE_APPLE_ID }}'
@@ -204,7 +187,7 @@ jobs:
           export ASC_KEY_ID='${{ secrets.ASC_KEY_ID }}'
           export ASC_ISSUER_ID='${{ secrets.ASC_ISSUER_ID }}'
           export ASC_PRIVATE_KEY='${{ secrets.ASC_PRIVATE_KEY }}'
-          export MATCH_GIT_URL='git@github.com:mnelson3/nelson-grey.git'
+          export MATCH_GIT_URL='https://oauth2:${{ secrets.MATCH_GIT_URL_TOKEN }}@github.com/mnelson3/nelson-grey.git'
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 
@@ -212,7 +195,7 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             # PR: Just build and test
             echo '🔨 Building for PR testing...'
-            fastlane build_development
+            ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane build_development"
           else
             # Manual dispatch: execute based on release_type input
             RELEASE_TYPE="${{ github.event.inputs.release_type }}"
@@ -221,19 +204,19 @@ jobs:
             case "$RELEASE_TYPE" in
               "build_only")
                 echo '🔨 Building for local testing...'
-                fastlane build_development
+                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane build_development"
                 ;;
               "testflight")
                 echo '🎯 Running TestFlight release...'
-                /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle exec fastlane beta
+                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane beta"
                 ;;
               "app_store")
                 echo '🏪 Running App Store submission...'
-                /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle exec fastlane submit_to_app_store release_notes:"$RELEASE_NOTES"
+                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane submit_to_app_store release_notes:\"$RELEASE_NOTES\""
                 ;;
               "full_pipeline")
                 echo '🚀 Running complete release pipeline...'
-                /Users/runner/hostedtoolcache/Ruby/3.2.9/arm64/bin/bundle exec fastlane full_release_pipeline release_notes:"$RELEASE_NOTES" manage_beta:true beta_group_name:"$BETA_GROUP_NAME" submit_to_app_store:true
+                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane full_release_pipeline release_notes:\"$RELEASE_NOTES\" manage_beta:true beta_group_name:\"$BETA_GROUP_NAME\" submit_to_app_store:true"
                 ;;
               *)
                 echo "❌ Unknown release type: $RELEASE_TYPE"
@@ -249,9 +232,6 @@ jobs:
 
           # Clean up private keys
           rm -rf ~/.private_keys
-
-          # Clean up SSH keys
-          rm -rf ~/.ssh
 
           # Clean up service account files
           rm -f ios/service-account-key.json

@@ -189,6 +189,9 @@ jobs:
           export ASC_PRIVATE_KEY='${{ secrets.ASC_PRIVATE_KEY }}'
           export MATCH_GIT_URL='${{ secrets.MATCH_GIT_URL }}'
           export NELSON_GREY_PAT='${{ secrets.NELSON_GREY_PAT }}'
+          # Secrets can include a trailing newline if pasted accidentally; strip CR/LF.
+          MATCH_GIT_URL="$(printf %s "$MATCH_GIT_URL" | tr -d '\r\n')"
+          NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"
           # If MATCH_GIT_URL isn't provided with credentials, build one using NELSON_GREY_PAT
           if [[ -z "$MATCH_GIT_URL" || "$MATCH_GIT_URL" != *"@"* ]]; then
             if [[ -z "$NELSON_GREY_PAT" ]]; then

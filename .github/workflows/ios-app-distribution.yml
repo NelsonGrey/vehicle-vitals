@@ -189,10 +189,27 @@ jobs:
           export ASC_PRIVATE_KEY='${{ secrets.ASC_PRIVATE_KEY }}'
           export MATCH_GIT_URL='${{ secrets.MATCH_GIT_URL }}'
           export NELSON_GREY_PAT='${{ secrets.NELSON_GREY_PAT }}'
+          export MATCH_SSH_PRIVATE_KEY='${{ secrets.MATCH_SSH_PRIVATE_KEY }}'
           # Secrets can include a trailing newline if pasted accidentally; strip CR/LF.
           MATCH_GIT_URL="$(printf %s "$MATCH_GIT_URL" | tr -d '\r\n')"
           NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"
+          MATCH_SSH_PRIVATE_KEY="$(printf %s "$MATCH_SSH_PRIVATE_KEY" | tr -d '\r\n')"
 
+          # Prefer SSH for match repo access if a key is available.
+          if [[ -n "$MATCH_SSH_PRIVATE_KEY" ]]; then
+            echo '🔐 Using SSH key for match repo access'
+            mkdir -p "$HOME/.ssh"
+            chmod 700 "$HOME/.ssh"
+            MATCH_SSH_KEY_FILE="$HOME/.ssh/match_repo_key"
+            printf '%s' "$MATCH_SSH_PRIVATE_KEY" > "$MATCH_SSH_KEY_FILE"
+            chmod 600 "$MATCH_SSH_KEY_FILE"
+            ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
+            export GIT_SSH_COMMAND="ssh -i $MATCH_SSH_KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+
+            BASE_MATCH_URL="git@github.com:mnelson3/nelson-grey-certificates.git"
+            MATCH_GIT_URL="$BASE_MATCH_URL"
+            export MATCH_GIT_URL
+          else
           # Build a usable match repo URL. Prefer an explicitly-configured MATCH_GIT_URL.
           BASE_MATCH_URL="$MATCH_GIT_URL"
           if [[ -z "$BASE_MATCH_URL" ]]; then
@@ -213,6 +230,7 @@ jobs:
             fi
           fi
           export MATCH_GIT_URL
+          fi
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 

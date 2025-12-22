@@ -142,7 +142,8 @@ jobs:
           MATCH_SSH_PRIVATE_KEY='${{ secrets.MATCH_SSH_PRIVATE_KEY }}'
           MATCH_GIT_URL_VALUE="$(printf %s "$MATCH_GIT_URL_VALUE" | tr -d '\r\n')"
           NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"
-          MATCH_SSH_PRIVATE_KEY="$(printf %s "$MATCH_SSH_PRIVATE_KEY" | tr -d '\r\n')"
+          # SSH private keys must keep newlines; only strip CR (Windows line endings).
+          MATCH_SSH_PRIVATE_KEY="$(printf %s "$MATCH_SSH_PRIVATE_KEY" | tr -d '\r')"
 
           if [[ -n "$MATCH_SSH_PRIVATE_KEY" ]]; then
             echo '🔐 Using SSH key for match repo access'

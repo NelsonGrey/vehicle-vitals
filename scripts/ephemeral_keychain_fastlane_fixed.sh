@@ -115,6 +115,16 @@ security default-keychain -s "$KC_PATH" 2>/dev/null || true
 security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
 security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null || true
 
+# Ensure the temporary keychain is in the search list so tools like
+# `security find-identity` and `codesign` can locate identities/keys.
+NEW_KEYCHAIN_LIST=("$KC_PATH")
+for existing in "${ORIG_KEYCHAIN_LIST[@]}"; do
+  if [ -n "$existing" ] && [ "$existing" != "$KC_PATH" ]; then
+    NEW_KEYCHAIN_LIST+=("$existing")
+  fi
+done
+security list-keychains -d user -s "${NEW_KEYCHAIN_LIST[@]}" 2>/dev/null || true
+
 if [ -n "${CERT_P12_PATH:-}" ]; then
   if [ ! -f "$CERT_P12_PATH" ]; then
     echo "[ephemeral-keychain] ERROR: CERT_P12_PATH set but file not found: $CERT_P12_PATH"
@@ -126,11 +136,12 @@ if [ -n "${CERT_P12_PATH:-}" ]; then
   security set-key-partition-list -S apple-tool:,apple: -s -k "$KC_PASS" "$KC_PATH" 2>/dev/null || true
 fi
 
-export MATCH_KEYCHAIN_NAME="$KC_BASENAME"
+export MATCH_KEYCHAIN_NAME="$KC_PATH"
 export MATCH_KEYCHAIN_PASSWORD="$KC_PASS"
+export MATCH_KEYCHAIN_PATH="$KC_PATH"
 
 if [ -n "${GITHUB_ENV:-}" ] && [ -w "$GITHUB_ENV" ]; then
-  echo "MATCH_KEYCHAIN_NAME=$KC_BASENAME" >> "$GITHUB_ENV"
+  echo "MATCH_KEYCHAIN_NAME=$KC_PATH" >> "$GITHUB_ENV"
   echo "MATCH_KEYCHAIN_PASSWORD=$KC_PASS" >> "$GITHUB_ENV"
   echo "MATCH_KEYCHAIN_PATH=$KC_PATH" >> "$GITHUB_ENV"
 fi

@@ -29,6 +29,16 @@ Dotenv.load('.env') if File.exist?('.env')
 default_platform(:ios)
 
 platform :ios do
+  def match_keychain_name
+    ENV["MATCH_KEYCHAIN_NAME"].to_s.empty? ? "fastlane_tmp_keychain" : ENV["MATCH_KEYCHAIN_NAME"]
+  end
+
+  def match_keychain_password
+    return ENV["MATCH_KEYCHAIN_PASSWORD"] unless ENV["MATCH_KEYCHAIN_PASSWORD"].to_s.empty?
+    return ENV["MATCH_PASSWORD"] unless ENV["MATCH_PASSWORD"].to_s.empty?
+    ""
+  end
+
   desc "Distribute iOS app to Firebase App Distribution"
   lane :distribute do |options|
     build_type = options[:build_type] || "debug"
@@ -103,8 +113,8 @@ platform :ios do
       readonly: true,
       username: ENV["FASTLANE_APPLE_ID"],
       team_id: ENV["FASTLANE_TEAM_ID"],
-      keychain_name: "fastlane_tmp_keychain",
-      keychain_password: ENV["MATCH_PASSWORD"]
+      keychain_name: match_keychain_name,
+      keychain_password: match_keychain_password
     )
   end
 
@@ -127,8 +137,8 @@ platform :ios do
           type: "development",
           readonly: true,
           api_key: api_key,
-          keychain_name: "fastlane_tmp_keychain",
-          keychain_password: ENV["MATCH_PASSWORD"]
+          keychain_name: match_keychain_name,
+          keychain_password: match_keychain_password
         )
         UI.success("✅ Zero-touch success: Using existing development certificates")
       rescue => e
@@ -138,8 +148,8 @@ platform :ios do
             type: "development",
             readonly: false,
             api_key: api_key,
-            keychain_name: "fastlane_tmp_keychain",
-            keychain_password: ENV["MATCH_PASSWORD"]
+            keychain_name: match_keychain_name,
+            keychain_password: match_keychain_password
           )
           UI.success("✅ Created new development certificates successfully")
         else
@@ -156,8 +166,8 @@ platform :ios do
           readonly: true,
           username: ENV["FASTLANE_APPLE_ID"],
           team_id: ENV["FASTLANE_TEAM_ID"],
-          keychain_name: "fastlane_tmp_keychain",
-          keychain_password: ENV["MATCH_PASSWORD"]
+          keychain_name: match_keychain_name,
+          keychain_password: match_keychain_password
         )
         UI.success("✅ Zero-touch success: Using existing development certificates")
       rescue => e
@@ -168,8 +178,8 @@ platform :ios do
             readonly: false,
             username: ENV["FASTLANE_APPLE_ID"],
             team_id: ENV["FASTLANE_TEAM_ID"],
-            keychain_name: "fastlane_tmp_keychain",
-            keychain_password: ENV["MATCH_PASSWORD"]
+            keychain_name: match_keychain_name,
+            keychain_password: match_keychain_password
           )
           UI.success("✅ Created new development certificates successfully")
         else
@@ -208,8 +218,8 @@ platform :ios do
           readonly: true,
           app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
           api_key: api_key,
-          keychain_name: "fastlane_tmp_keychain",
-          keychain_password: ENV["MATCH_PASSWORD"]
+          keychain_name: match_keychain_name,
+          keychain_password: match_keychain_password
         )
         UI.success("✅ Zero-touch success: Using existing certificates from shared repository")
         UI.message("💡 Maximum efficiency achieved: No new certificates created")
@@ -221,8 +231,8 @@ platform :ios do
             readonly: false,
             app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
             api_key: api_key,
-            keychain_name: "fastlane_tmp_keychain",
-            keychain_password: ENV["MATCH_PASSWORD"]
+            keychain_name: match_keychain_name,
+            keychain_password: match_keychain_password
           )
           UI.success("✅ Created new certificates successfully")
         else
@@ -239,8 +249,8 @@ platform :ios do
         readonly: true,  # Be conservative with certificate creation
         username: ENV["FASTLANE_APPLE_ID"],
         team_id: ENV["FASTLANE_TEAM_ID"],
-        keychain_name: "fastlane_tmp_keychain",
-        keychain_password: ENV["MATCH_PASSWORD"]
+        keychain_name: match_keychain_name,
+        keychain_password: match_keychain_password
       )
     end
   end
@@ -300,6 +310,16 @@ platform :ios do
 
     # Wait for IPA to be fully written
     sh("while [ ! -f ./builds/Vehicle-Vitals.ipa ] || [ ! -s ./builds/Vehicle-Vitals.ipa ]; do sleep 1; done")
+
+    # Diagnostics: keychain + signing identities just before resign
+    UI.message("MATCH_KEYCHAIN_NAME: #{ENV['MATCH_KEYCHAIN_NAME']}")
+    UI.message("MATCH_KEYCHAIN_PATH: #{ENV['MATCH_KEYCHAIN_PATH']}")
+    sh("security default-keychain -d user || true")
+    sh("security list-keychains -d user || true")
+    sh("security find-identity -v -p codesigning || true")
+    if ENV['MATCH_KEYCHAIN_PATH'] && !ENV['MATCH_KEYCHAIN_PATH'].empty?
+      sh("security find-identity -v -p codesigning \"#{ENV['MATCH_KEYCHAIN_PATH']}\" || true")
+    end
 
     # Sign the IPA using fastlane resign
     ipa_path = File.expand_path("./builds/Vehicle-Vitals.ipa")

@@ -187,7 +187,7 @@ jobs:
           export ASC_KEY_ID='${{ secrets.ASC_KEY_ID }}'
           export ASC_ISSUER_ID='${{ secrets.ASC_ISSUER_ID }}'
           export ASC_PRIVATE_KEY='${{ secrets.ASC_PRIVATE_KEY }}'
-          export MATCH_GIT_URL='https://oauth2:${{ secrets.MATCH_GIT_URL_TOKEN }}@github.com/mnelson3/nelson-grey.git'
+          export MATCH_GIT_URL='https://x-access-token:${{ secrets.MATCH_GIT_URL_TOKEN }}@github.com/mnelson3/nelson-grey.git'
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 

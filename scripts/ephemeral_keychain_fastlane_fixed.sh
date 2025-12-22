@@ -42,7 +42,22 @@ fi
 
 KC_NAME="fastlane_tmp_$(date +%s)_$$.keychain-db"
 KC_PATH="$HOME/Library/Keychains/$KC_NAME"
-KC_PASS=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24 || echo "fastlane-pass")
+
+# NOTE: Avoid using a `tr </dev/urandom | head` pipeline here.
+# On some macOS runner setups, `tr` can get stuck and never terminates,
+# which stalls the entire GitHub Actions job.
+if command -v python3 >/dev/null 2>&1; then
+  KC_PASS=$(python3 - <<'PY'
+import secrets
+import string
+
+alphabet = string.ascii_letters + string.digits
+print(''.join(secrets.choice(alphabet) for _ in range(24)))
+PY
+)
+else
+  KC_PASS=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24 || echo "fastlane-pass")
+fi
 
 echo "[ephemeral-keychain] Creating temporary keychain: $KC_NAME"
 security create-keychain -p "$KC_PASS" "$KC_PATH"

@@ -191,6 +191,14 @@ jobs:
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 
+          # Preflight: verify the token can read the match repo
+          echo '🔐 Verifying access to match certificates repo...'
+          if ! GIT_TERMINAL_PROMPT=0 git ls-remote "$MATCH_GIT_URL" HEAD >/dev/null 2>&1; then
+            echo '❌ Cannot access match repo using MATCH_GIT_URL. Check MATCH_GIT_URL_TOKEN permissions/validity.'
+            exit 1
+          fi
+          echo '✅ Match repo accessible'
+
           # Determine mode and execute appropriate Fastlane command
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             # PR: Just build and test

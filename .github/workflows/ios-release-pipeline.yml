@@ -108,15 +108,17 @@ jobs:
 
       - name: 🔍 Check Secrets
         run: |
-          TOKEN_LENGTH=${#MATCH_GIT_URL_TOKEN}
-          if [ "$TOKEN_LENGTH" -eq 0 ]; then
-            echo "❌ MATCH_GIT_URL_TOKEN secret is not set or empty"
-            exit 1
+          if [ -n "$MATCH_GIT_URL" ] && [[ "$MATCH_GIT_URL" == *"@"* ]]; then
+            echo "✅ MATCH_GIT_URL is set and appears to include credentials"
+          elif [ -n "$NELSON_GREY_PAT" ]; then
+            echo "✅ NELSON_GREY_PAT is set"
           else
-            echo "✅ MATCH_GIT_URL_TOKEN secret is set (length: $TOKEN_LENGTH)"
+            echo "❌ Neither MATCH_GIT_URL (with credentials) nor NELSON_GREY_PAT is set"
+            exit 1
           fi
         env:
-          MATCH_GIT_URL_TOKEN: ${{ secrets.MATCH_GIT_URL_TOKEN }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          NELSON_GREY_PAT: ${{ secrets.NELSON_GREY_PAT }}
 
       - name: 🔐 Create Service Account Key File
         env:
@@ -132,6 +134,16 @@ jobs:
         run: |
           cd packages/mobile/ios
 
+          MATCH_GIT_URL_VALUE='${{ secrets.MATCH_GIT_URL }}'
+          NELSON_GREY_PAT='${{ secrets.NELSON_GREY_PAT }}'
+          if [[ -z "$MATCH_GIT_URL_VALUE" || "$MATCH_GIT_URL_VALUE" != *"@"* ]]; then
+            if [[ -z "$NELSON_GREY_PAT" ]]; then
+              echo '❌ Neither MATCH_GIT_URL (with credentials) nor NELSON_GREY_PAT is set.'
+              exit 1
+            fi
+            MATCH_GIT_URL_VALUE="https://x-access-token:${NELSON_GREY_PAT}@github.com/mnelson3/nelson-grey.git"
+          fi
+
           # Create .env file for Fastlane with all required environment variables
           cat > .env << EOF
           # Apple Developer Account
@@ -146,7 +158,7 @@ jobs:
           ASC_PRIVATE_KEY=${{ secrets.ASC_PRIVATE_KEY }}
 
           # Match Configuration
-          MATCH_GIT_URL=https://x-access-token:${{ secrets.MATCH_GIT_URL_TOKEN }}@github.com/mnelson3/nelson-grey.git
+          MATCH_GIT_URL=$MATCH_GIT_URL_VALUE
           MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}
 
           # TestFlight Configuration

@@ -192,15 +192,27 @@ jobs:
           # Secrets can include a trailing newline if pasted accidentally; strip CR/LF.
           MATCH_GIT_URL="$(printf %s "$MATCH_GIT_URL" | tr -d '\r\n')"
           NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"
-          # If MATCH_GIT_URL isn't provided with credentials, build one using NELSON_GREY_PAT
-          if [[ -z "$MATCH_GIT_URL" || "$MATCH_GIT_URL" != *"@"* ]]; then
+
+          # Build a usable match repo URL. Prefer an explicitly-configured MATCH_GIT_URL.
+          BASE_MATCH_URL="$MATCH_GIT_URL"
+          if [[ -z "$BASE_MATCH_URL" ]]; then
+            BASE_MATCH_URL="https://github.com/mnelson3/nelson-grey-certificates.git"
+          fi
+
+          if [[ "$BASE_MATCH_URL" == *"@"* ]]; then
+            MATCH_GIT_URL="$BASE_MATCH_URL"
+          else
             if [[ -z "$NELSON_GREY_PAT" ]]; then
-              echo '❌ Neither MATCH_GIT_URL (with credentials) nor NELSON_GREY_PAT is set.'
+              echo '❌ MATCH_GIT_URL does not include credentials and NELSON_GREY_PAT is not set.'
               exit 1
             fi
-            MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@github.com/mnelson3/nelson-grey.git"
-            export MATCH_GIT_URL
+            if [[ "$BASE_MATCH_URL" == https://* ]]; then
+              MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@${BASE_MATCH_URL#https://}"
+            else
+              MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@github.com/${BASE_MATCH_URL#github.com/}"
+            fi
           fi
+          export MATCH_GIT_URL
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 

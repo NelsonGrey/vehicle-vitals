@@ -193,7 +193,8 @@ jobs:
           # Secrets can include a trailing newline if pasted accidentally; strip CR/LF.
           MATCH_GIT_URL="$(printf %s "$MATCH_GIT_URL" | tr -d '\r\n')"
           NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"
-          MATCH_SSH_PRIVATE_KEY="$(printf %s "$MATCH_SSH_PRIVATE_KEY" | tr -d '\r\n')"
+          # SSH private keys must keep newlines; only strip CR (Windows line endings).
+          MATCH_SSH_PRIVATE_KEY="$(printf %s "$MATCH_SSH_PRIVATE_KEY" | tr -d '\r')"
 
           # Prefer SSH for match repo access if a key is available.
           if [[ -n "$MATCH_SSH_PRIVATE_KEY" ]]; then

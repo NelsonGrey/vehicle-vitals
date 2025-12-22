@@ -141,7 +141,7 @@ jobs:
               echo '❌ Neither MATCH_GIT_URL (with credentials) nor NELSON_GREY_PAT is set.'
               exit 1
             fi
-            MATCH_GIT_URL_VALUE="https://x-access-token:${NELSON_GREY_PAT}@github.com/mnelson3/nelson-grey.git"
+            MATCH_GIT_URL_VALUE="https://mnelson3:${NELSON_GREY_PAT}@github.com/mnelson3/nelson-grey.git"
           fi
 
           # Create .env file for Fastlane with all required environment variables

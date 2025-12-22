@@ -195,7 +195,7 @@ jobs:
               echo '❌ Neither MATCH_GIT_URL (with credentials) nor NELSON_GREY_PAT is set.'
               exit 1
             fi
-            MATCH_GIT_URL="https://x-access-token:${NELSON_GREY_PAT}@github.com/mnelson3/nelson-grey.git"
+            MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@github.com/mnelson3/nelson-grey.git"
             export MATCH_GIT_URL
           fi
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
@@ -203,8 +203,9 @@ jobs:
 
           # Preflight: verify the token can read the match repo
           echo '🔐 Verifying access to match certificates repo...'
-          if ! GIT_TERMINAL_PROMPT=0 git ls-remote "$MATCH_GIT_URL" HEAD >/dev/null 2>&1; then
+          if ! ERR_OUT=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$MATCH_GIT_URL" HEAD 2>&1 >/dev/null); then
             echo '❌ Cannot access match repo using MATCH_GIT_URL. Check MATCH_GIT_URL / NELSON_GREY_PAT permissions/validity.'
+            echo "Git said: ${ERR_OUT}"
             exit 1
           fi
           echo '✅ Match repo accessible'

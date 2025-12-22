@@ -305,8 +305,9 @@ platform :ios do
     ipa_path = File.expand_path("./builds/Vehicle-Vitals.ipa")
     resign(
       ipa: ipa_path,
-      signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",
-      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
+      signing_identity: (ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'] || "Apple Distribution: Mark Nelson (P6YJUBML6P)"),
+      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path'],
+      keychain_path: ENV['MATCH_KEYCHAIN_PATH']
     )
 
     # Set up API key authentication
@@ -370,8 +371,9 @@ platform :ios do
     ipa_path = File.expand_path("./builds/Vehicle-Vitals-AppStore.ipa")
     resign(
       ipa: ipa_path,
-      signing_identity: "Apple Distribution: Mark Nelson (P6YJUBML6P)",
-      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path']
+      signing_identity: (ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'] || "Apple Distribution: Mark Nelson (P6YJUBML6P)"),
+      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path'],
+      keychain_path: ENV['MATCH_KEYCHAIN_PATH']
     )
 
     # Set up API key authentication

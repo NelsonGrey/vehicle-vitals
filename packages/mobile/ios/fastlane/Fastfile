@@ -29,6 +29,10 @@ Dotenv.load('.env') if File.exist?('.env')
 default_platform(:ios)
 
 platform :ios do
+  def match_keychain_path
+    match_keychain_name
+  end
+
   def match_keychain_name
     ENV["MATCH_KEYCHAIN_NAME"].to_s.empty? ? "fastlane_tmp_keychain" : ENV["MATCH_KEYCHAIN_NAME"]
   end
@@ -37,6 +41,46 @@ platform :ios do
     return ENV["MATCH_KEYCHAIN_PASSWORD"] unless ENV["MATCH_KEYCHAIN_PASSWORD"].to_s.empty?
     return ENV["MATCH_PASSWORD"] unless ENV["MATCH_PASSWORD"].to_s.empty?
     ""
+  end
+
+  def unlock_match_keychain
+    return if match_keychain_password.to_s.empty?
+    sh("security unlock-keychain -p \"#{match_keychain_password}\" \"#{match_keychain_path}\" || true")
+  end
+
+  def match_keychain_has_codesigning_identities?
+    output = sh("security find-identity -v -p codesigning \"#{match_keychain_path}\" || true", log: false)
+    return false if output.to_s.include?("0 valid identities found")
+    output.to_s.match?(/\b[1-9][0-9]*\b valid identities found/)
+  end
+
+  def ensure_match_installed_identity!(type:, app_identifier: nil, api_key: nil)
+    unlock_match_keychain
+    return if match_keychain_has_codesigning_identities?
+
+    UI.important("⚠️  No valid code signing identities found in keychain after match (#{type}). Re-running match with readonly: false to generate/import a certificate + private key.")
+
+    args = {
+      type: type,
+      readonly: false,
+      keychain_name: match_keychain_name,
+      keychain_password: match_keychain_password,
+      skip_set_partition_list: false
+    }
+    args[:app_identifier] = app_identifier if app_identifier
+    if api_key
+      args[:api_key] = api_key
+    else
+      args[:username] = ENV["FASTLANE_APPLE_ID"]
+      args[:team_id] = ENV["FASTLANE_TEAM_ID"]
+    end
+
+    match(**args)
+
+    unlock_match_keychain
+    unless match_keychain_has_codesigning_identities?
+      raise "match completed but no valid code signing identities are available in #{match_keychain_path}"
+    end
   end
 
   desc "Distribute iOS app to Firebase App Distribution"
@@ -114,8 +158,11 @@ platform :ios do
       username: ENV["FASTLANE_APPLE_ID"],
       team_id: ENV["FASTLANE_TEAM_ID"],
       keychain_name: match_keychain_name,
-      keychain_password: match_keychain_password
+      keychain_password: match_keychain_password,
+      skip_set_partition_list: false
     )
+
+    ensure_match_installed_identity!(type: "appstore")
   end
 
   desc "Generate development certificates"
@@ -138,7 +185,8 @@ platform :ios do
           readonly: true,
           api_key: api_key,
           keychain_name: match_keychain_name,
-          keychain_password: match_keychain_password
+          keychain_password: match_keychain_password,
+          skip_set_partition_list: false
         )
         UI.success("✅ Zero-touch success: Using existing development certificates")
       rescue => e
@@ -149,13 +197,16 @@ platform :ios do
             readonly: false,
             api_key: api_key,
             keychain_name: match_keychain_name,
-            keychain_password: match_keychain_password
+            keychain_password: match_keychain_password,
+            skip_set_partition_list: false
           )
           UI.success("✅ Created new development certificates successfully")
         else
           raise e
         end
       end
+
+      ensure_match_installed_identity!(type: "development", api_key: api_key)
     else
       # Fall back to username/password authentication
       UI.message("API key not available, using username/password authentication")
@@ -167,7 +218,8 @@ platform :ios do
           username: ENV["FASTLANE_APPLE_ID"],
           team_id: ENV["FASTLANE_TEAM_ID"],
           keychain_name: match_keychain_name,
-          keychain_password: match_keychain_password
+          keychain_password: match_keychain_password,
+          skip_set_partition_list: false
         )
         UI.success("✅ Zero-touch success: Using existing development certificates")
       rescue => e
@@ -179,13 +231,16 @@ platform :ios do
             username: ENV["FASTLANE_APPLE_ID"],
             team_id: ENV["FASTLANE_TEAM_ID"],
             keychain_name: match_keychain_name,
-            keychain_password: match_keychain_password
+            keychain_password: match_keychain_password,
+            skip_set_partition_list: false
           )
           UI.success("✅ Created new development certificates successfully")
         else
           raise e
         end
       end
+
+      ensure_match_installed_identity!(type: "development")
     end
   end
 
@@ -219,7 +274,8 @@ platform :ios do
           app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
           api_key: api_key,
           keychain_name: match_keychain_name,
-          keychain_password: match_keychain_password
+          keychain_password: match_keychain_password,
+          skip_set_partition_list: false
         )
         UI.success("✅ Zero-touch success: Using existing certificates from shared repository")
         UI.message("💡 Maximum efficiency achieved: No new certificates created")
@@ -232,13 +288,20 @@ platform :ios do
             app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
             api_key: api_key,
             keychain_name: match_keychain_name,
-            keychain_password: match_keychain_password
+            keychain_password: match_keychain_password,
+            skip_set_partition_list: false
           )
           UI.success("✅ Created new certificates successfully")
         else
           raise e
         end
       end
+
+      ensure_match_installed_identity!(
+        type: "appstore",
+        app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+        api_key: api_key
+      )
     else
       # Fallback for when API key is not available
       UI.message("🔑 API key not available, using username/password authentication")
@@ -250,8 +313,11 @@ platform :ios do
         username: ENV["FASTLANE_APPLE_ID"],
         team_id: ENV["FASTLANE_TEAM_ID"],
         keychain_name: match_keychain_name,
-        keychain_password: match_keychain_password
+        keychain_password: match_keychain_password,
+        skip_set_partition_list: false
       )
+
+      ensure_match_installed_identity!(type: "appstore")
     end
   end
   lane :certificates_all do

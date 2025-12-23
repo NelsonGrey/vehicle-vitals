@@ -241,6 +241,19 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   security find-identity -v -p codesigning 2>&1 || true
   security find-identity -p codesigning 2>&1 || true
 
+  echo "[ephemeral-keychain] Trust check for Apple Distribution certificate (policy: codeSign)"
+  DIST_CERT_TMP=$(mktemp /tmp/apple_distribution.XXXXXX.pem)
+  if security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" >"$DIST_CERT_TMP" 2>/dev/null; then
+    VERIFY_ARGS=(security verify-cert -c "$DIST_CERT_TMP" -p codeSign -v -k "$KC_PATH")
+    if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
+      VERIFY_ARGS+=( -k "$LOGIN_KC" )
+    fi
+    "${VERIFY_ARGS[@]}" 2>&1 || true
+  else
+    echo "[ephemeral-keychain] Unable to export Apple Distribution cert from $KC_PATH"
+  fi
+  rm -f "$DIST_CERT_TMP" 2>/dev/null || true
+
   echo "[ephemeral-keychain] Key inventory (filtered) in ephemeral keychain"
   # `dump-keychain` can be noisy; filter down to item labels/metadata.
   security dump-keychain "$KC_PATH" 2>/dev/null | egrep -i 'class:|keyclass|labl|alis|priv|public key|private key|Imported Private Key' | head -n 250 || true

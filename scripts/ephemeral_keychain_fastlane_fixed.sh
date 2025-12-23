@@ -236,6 +236,10 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   security find-identity -vv -p codesigning "$KC_PATH" 2>&1 || true
   echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid): $KC_PATH"
   security find-identity -p codesigning "$KC_PATH" 2>&1 || true
+  echo "[ephemeral-keychain] Identities in ephemeral keychain (macappstore policy): $KC_PATH"
+  security find-identity -p macappstore "$KC_PATH" 2>&1 || true
+  echo "[ephemeral-keychain] Identities in ephemeral keychain (macappstore policy, valid only): $KC_PATH"
+  security find-identity -v -p macappstore "$KC_PATH" 2>&1 || true
   echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid, very verbose): $KC_PATH"
   security find-identity -vv -p codesigning "$KC_PATH" 2>&1 || true
 

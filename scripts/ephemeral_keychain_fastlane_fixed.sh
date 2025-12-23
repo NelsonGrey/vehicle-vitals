@@ -241,9 +241,30 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Private keys in ephemeral keychain (sign-capable)"
   KEY_SIGNABLE_OUT=$(security find-key -t private -s "$KC_PATH" 2>&1 || true)
   echo "$KEY_SIGNABLE_OUT"
-  KEY_APP_LABEL_HEX=$(echo "$KEY_SIGNABLE_OUT" | sed -n 's/.*0x00000006 <blob>=0x\([0-9A-Fa-f]*\).*/\1/p' | head -n 1 | tr '[:lower:]' '[:upper:]')
-  if [ -n "${KEY_APP_LABEL_HEX:-}" ]; then
-    echo "[ephemeral-keychain] First sign-capable private key application label (hex): $KEY_APP_LABEL_HEX"
+  KEY_APP_LABELS_HEX=$(echo "$KEY_SIGNABLE_OUT" | sed -n 's/.*0x00000006 <blob>=0x\([0-9A-Fa-f]*\).*/\1/p' | tr '[:lower:]' '[:upper:]' | tr '\n' ' ' | xargs || true)
+  if [ -n "${KEY_APP_LABELS_HEX:-}" ]; then
+    echo "[ephemeral-keychain] Sign-capable private key application labels (hex): $KEY_APP_LABELS_HEX"
+  else
+    echo "[ephemeral-keychain] No sign-capable private key application labels found"
+  fi
+
+  echo "[ephemeral-keychain] Apple Distribution certificate public key hashes (hpky)"
+  DIST_CERT_Z_OUT=$(security find-certificate -a -c "Apple Distribution" -Z "$KC_PATH" 2>&1 || true)
+  echo "$DIST_CERT_Z_OUT"
+  CERT_HPKY_LIST=$(echo "$DIST_CERT_Z_OUT" | sed -n 's/.*"hpky"<blob>=0x\([0-9A-Fa-f]*\).*/\1/p' | tr '[:lower:]' '[:upper:]' | tr '\n' ' ' | xargs || true)
+  if [ -n "${CERT_HPKY_LIST:-}" ]; then
+    echo "[ephemeral-keychain] Apple Distribution hpky values: $CERT_HPKY_LIST"
+    if [ -n "${KEY_APP_LABELS_HEX:-}" ]; then
+      for hpky in $CERT_HPKY_LIST; do
+        for keylbl in $KEY_APP_LABELS_HEX; do
+          if [ "$hpky" = "$keylbl" ]; then
+            echo "[ephemeral-keychain] ✅ Found matching cert hpky == private key label: $hpky"
+          fi
+        done
+      done
+    fi
+  else
+    echo "[ephemeral-keychain] No Apple Distribution hpky values found"
   fi
   echo "[ephemeral-keychain] Private keys in ephemeral keychain (all private keys)"
   security find-key -t private "$KC_PATH" 2>&1 || true

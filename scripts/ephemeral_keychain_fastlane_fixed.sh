@@ -286,6 +286,11 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
       VERIFY_ARGS+=( -k "$LOGIN_KC" )
     fi
     "${VERIFY_ARGS[@]}" 2>&1 || true
+
+    if command -v security >/dev/null 2>&1; then
+      echo "[ephemeral-keychain] Trust check with revocation (OCSP + require)"
+      security verify-cert -c "$DIST_CERT_TMP" -p codeSign -v -k "$KC_PATH" -R ocsp -R require 2>&1 || true
+    fi
   else
     echo "[ephemeral-keychain] Unable to export Apple Distribution cert from $KC_PATH"
   fi

@@ -28,6 +28,30 @@ fi
 
 echo "[ephemeral-keychain] Running in CI; using ephemeral keychain"
 
+# Some runner setups can get left in a bad state where the default keychain
+# still points at a previously-created fastlane tmp keychain (which may have
+# been deleted). When that happens, Fastlane can end up generating/importing
+# keys into the login keychain while our keychain search list excludes it.
+# Normalize early so we always have a sane baseline.
+LOGIN_KC="$HOME/Library/Keychains/login.keychain-db"
+if [ ! -f "$LOGIN_KC" ]; then
+  LOGIN_KC="$HOME/Library/Keychains/login.keychain"
+fi
+if [ -f "$LOGIN_KC" ]; then
+  echo "[ephemeral-keychain] Detected login keychain: $LOGIN_KC"
+else
+  echo "[ephemeral-keychain] WARNING: No login keychain found at expected paths"
+  echo "[ephemeral-keychain] Keychains directory listing (top-level):"
+  ls -la "$HOME/Library/Keychains" 2>/dev/null | head -n 50 || true
+fi
+if [ -f "$LOGIN_KC" ]; then
+  CURRENT_DEFAULT_KC=$(security default-keychain -d user 2>/dev/null | tr -d '"' | xargs || true)
+  if [ -z "${CURRENT_DEFAULT_KC:-}" ] || [[ "$CURRENT_DEFAULT_KC" == *fastlane_tmp_* ]] || [ ! -f "$CURRENT_DEFAULT_KC" ]; then
+    security default-keychain -d user -s "$LOGIN_KC" 2>/dev/null || true
+    security list-keychains -d user -s "$LOGIN_KC" 2>/dev/null || true
+  fi
+fi
+
 # Best-effort cleanup of leftover ephemeral keychains from previous runs
 if command -v security >/dev/null 2>&1; then
   # Clean up both the legacy randomized keychains and the fixed-name keychain.
@@ -83,6 +107,12 @@ if [ -z "${ORIG_DEFAULT_KC:-}" ]; then
   echo "[ephemeral-keychain] WARNING: Unable to determine original default keychain"
 fi
 
+# If the runner was already misconfigured and points at a previous fastlane
+# temp keychain, treat login as the original default for restoration/search.
+if [[ "${ORIG_DEFAULT_KC:-}" == *fastlane_tmp_* ]] && [ -f "$LOGIN_KC" ]; then
+  ORIG_DEFAULT_KC="$LOGIN_KC"
+fi
+
 # Capture original keychain list so we can restore it
 ORIG_KEYCHAIN_LIST=()
 while IFS= read -r item; do
@@ -128,7 +158,10 @@ security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null
 # keychain (usually login.keychain-db) available so trust/intermediate certs
 # (e.g., WWDR) installed there are visible during identity validation.
 KEYCHAIN_ARGS=("$KC_PATH")
-if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ] && [ "$ORIG_DEFAULT_KC" != "$KC_PATH" ]; then
+if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
+  KEYCHAIN_ARGS+=("$LOGIN_KC")
+fi
+if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ] && [ "$ORIG_DEFAULT_KC" != "$KC_PATH" ] && [ "$ORIG_DEFAULT_KC" != "$LOGIN_KC" ]; then
   KEYCHAIN_ARGS+=("$ORIG_DEFAULT_KC")
 fi
 security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
@@ -189,12 +222,21 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   # Ensure the keychain is unlocked for diagnostics.
   security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
   security find-identity -v -p codesigning "$KC_PATH" 2>/dev/null || true
+  if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
+    echo "[ephemeral-keychain] Identities in login keychain: $LOGIN_KC"
+    security find-identity -v -p codesigning "$LOGIN_KC" 2>/dev/null || true
+  fi
   if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ]; then
     echo "[ephemeral-keychain] Identities in original default keychain: $ORIG_DEFAULT_KC"
     security find-identity -v -p codesigning "$ORIG_DEFAULT_KC" 2>/dev/null || true
   fi
   echo "[ephemeral-keychain] Identities across all keychains"
   security find-identity -v -p codesigning 2>/dev/null || true
+
+  echo "[ephemeral-keychain] Key inventory (filtered) in ephemeral keychain"
+  # `dump-keychain` can be noisy; filter down to item labels/metadata.
+  security dump-keychain "$KC_PATH" 2>/dev/null | egrep -i 'keyclass|labl|alis|priv|public key|private key' | head -n 200 || true
+
   security find-certificate -a -c "Apple Distribution" -Z "$KC_PATH" 2>/dev/null || true
   security find-certificate -a -c "Apple Worldwide Developer Relations" -Z "$KC_PATH" 2>/dev/null || true
 fi

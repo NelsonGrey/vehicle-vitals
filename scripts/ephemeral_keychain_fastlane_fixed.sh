@@ -333,6 +333,22 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
     security find-certificate -a -c "Apple Distribution" -Z "$KC_PATH" 2>&1 || true
     security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" \
       | openssl x509 -noout -subject -issuer -dates 2>/dev/null || true
+
+    echo "[ephemeral-keychain] Apple Distribution public key SHA-1 (for matching private key application label)"
+    CERT_PUB_SHA1_HEX=$(openssl x509 -in "$DIST_CERT_TMP" -pubkey -noout 2>/dev/null \
+      | openssl pkey -pubin -outform DER 2>/dev/null \
+      | openssl dgst -sha1 -binary 2>/dev/null \
+      | xxd -p -c 100 2>/dev/null \
+      | tr -d '\n' \
+      | tr '[:lower:]' '[:upper:]' || true)
+    if [ -n "${CERT_PUB_SHA1_HEX:-}" ]; then
+      echo "[ephemeral-keychain] CERT_PUB_SHA1_HEX=$CERT_PUB_SHA1_HEX"
+      echo "[ephemeral-keychain] Attempting to locate private key by application label (-a)"
+      security find-key -t private -a "$CERT_PUB_SHA1_HEX" "$KC_PATH" 2>&1 || true
+    else
+      echo "[ephemeral-keychain] Unable to compute CERT_PUB_SHA1_HEX"
+    fi
+
     security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" \
       | openssl x509 -noout -text 2>/dev/null \
       | egrep -A2 -i 'X509v3 Key Usage|Extended Key Usage|Authority Key Identifier|Subject Key Identifier|Basic Constraints' \

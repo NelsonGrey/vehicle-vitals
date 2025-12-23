@@ -66,10 +66,15 @@ platform :ios do
       keychain_name: match_keychain_name,
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
-      force_for_new_certificates: true,
       include_all_certificates: true,
       verbose: true
     }
+
+    # `force_for_new_certificates` is only meaningful for development.
+    # For appstore signing, Fastlane warns that this flag is ignored.
+    if type.to_s == "development"
+      args[:force_for_new_certificates] = true
+    end
     args[:app_identifier] = app_identifier if app_identifier
     if api_key
       args[:api_key] = api_key
@@ -92,6 +97,12 @@ platform :ios do
     end
 
     unlock_match_keychain
+    if !match_keychain_has_codesigning_identities? && type.to_s == "appstore"
+      UI.important("⚠️  Still no identities after appstore match recovery. Escalating to match(force: true) to renew signing assets.")
+      match(**args.merge(force: true))
+      unlock_match_keychain
+    end
+
     unless match_keychain_has_codesigning_identities?
       UI.important("⚠️  No valid identities found after match recovery. Collecting keychain diagnostics...")
       sh("security default-keychain -d user || true")

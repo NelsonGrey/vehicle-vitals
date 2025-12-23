@@ -156,22 +156,17 @@ echo "[ephemeral-keychain] Configuring temporary keychain"
 security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null
 security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null
 
-# Ensure the temporary keychain is in the search list so tools like
-# `security find-identity` and `codesign` can locate identities/keys.
-# IMPORTANT: In CI, avoid adding the entire ~/Library/Keychains directory to the
-# search list (it can cause `match` to decide items are already installed and
-# skip importing into the ephemeral keychain). However, keep the user's default
-# keychain (usually login.keychain-db) available so trust/intermediate certs
-# (e.g., WWDR) installed there are visible during identity validation.
+# Ensure the temporary keychain is the ONLY keychain in the search list during
+# the Fastlane run. We've observed repeated key/cert mismatches (cert pubkey SHA-1
+# does not match the sign-capable private key application label), which most often
+# happens when the private key is generated/imported into a different keychain
+# (typically login) even though the certificate lands in the ephemeral keychain.
+#
+# NOTE: If this causes trust-chain visibility issues, we can re-add login later,
+# but forcing key material into the ephemeral keychain is the priority.
 KEYCHAIN_ARGS=("$KC_PATH")
-if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
-  KEYCHAIN_ARGS+=("$LOGIN_KC")
-fi
-if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ] && [ "$ORIG_DEFAULT_KC" != "$KC_PATH" ] && [ "$ORIG_DEFAULT_KC" != "$LOGIN_KC" ]; then
-  KEYCHAIN_ARGS+=("$ORIG_DEFAULT_KC")
-fi
-security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
-security list-keychains -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
+security list-keychains -d user -s "$KC_PATH" 2>/dev/null || true
+security list-keychains -s "$KC_PATH" 2>/dev/null || true
 
 # Set ephemeral as default just for this script's lifetime (restored in cleanup).
 # This MUST succeed, otherwise `match` can generate the private key in the login
@@ -256,8 +251,8 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Codesign smoke test (uses identity hash if available)"
   echo "[ephemeral-keychain] Keychain search list (before codesign smoke test)"
   security list-keychains -d user 2>&1 || true
-  security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>&1 || true
-  security list-keychains -s "${KEYCHAIN_ARGS[@]}" 2>&1 || true
+  security list-keychains -d user -s "$KC_PATH" 2>&1 || true
+  security list-keychains -s "$KC_PATH" 2>&1 || true
   security default-keychain -d user -s "$KC_PATH" 2>&1 || true
   security default-keychain -s "$KC_PATH" 2>&1 || true
   security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>&1 || true
@@ -297,8 +292,8 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
       # Some tools (including `match`) verify identities using the keychain
       # search list (no explicit keychain argument). Re-assert the intended
       # default/search list before retrying.
-      security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
-      security list-keychains -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
+      security list-keychains -d user -s "$KC_PATH" 2>/dev/null || true
+      security list-keychains -s "$KC_PATH" 2>/dev/null || true
       security default-keychain -d user -s "$KC_PATH" 2>/dev/null || true
       security default-keychain -s "$KC_PATH" 2>/dev/null || true
       security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true

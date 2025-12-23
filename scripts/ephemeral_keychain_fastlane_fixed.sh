@@ -48,6 +48,7 @@ if [ -f "$LOGIN_KC" ]; then
   CURRENT_DEFAULT_KC=$(security default-keychain -d user 2>/dev/null | tr -d '"' | xargs || true)
   if [ -z "${CURRENT_DEFAULT_KC:-}" ] || [[ "$CURRENT_DEFAULT_KC" == *fastlane_tmp_* ]] || [ ! -f "$CURRENT_DEFAULT_KC" ]; then
     security default-keychain -d user -s "$LOGIN_KC" 2>/dev/null || true
+    security default-keychain -s "$LOGIN_KC" 2>/dev/null || true
     security list-keychains -d user -s "$LOGIN_KC" 2>/dev/null || true
     security list-keychains -s "$LOGIN_KC" 2>/dev/null || true
   fi
@@ -130,6 +131,7 @@ cleanup() {
   echo "[ephemeral-keychain] Cleaning up"
 
   if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ]; then
+    security default-keychain -d user -s "$ORIG_DEFAULT_KC" 2>/dev/null || true
     security default-keychain -s "$ORIG_DEFAULT_KC" 2>/dev/null || true
   fi
 
@@ -145,7 +147,8 @@ cleanup() {
     rm -f "$KC_PATH" 2>/dev/null || true
   fi
 }
-trap cleanup EXIT
+# Ensure cleanup runs on normal exit AND when the job is terminated.
+trap cleanup EXIT INT TERM HUP
 
 echo "[ephemeral-keychain] Configuring temporary keychain"
 # NOTE: We temporarily set the ephemeral keychain as the default during the

@@ -244,7 +244,12 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   security find-identity -vv -p codesigning "$KC_PATH" 2>&1 || true
 
   echo "[ephemeral-keychain] Private keys in ephemeral keychain (sign-capable)"
-  security find-key -t private -s "$KC_PATH" 2>&1 || true
+  KEY_SIGNABLE_OUT=$(security find-key -t private -s "$KC_PATH" 2>&1 || true)
+  echo "$KEY_SIGNABLE_OUT"
+  KEY_APP_LABEL_HEX=$(echo "$KEY_SIGNABLE_OUT" | sed -n 's/.*0x00000006 <blob>=0x\([0-9A-Fa-f]*\).*/\1/p' | head -n 1 | tr '[:lower:]' '[:upper:]')
+  if [ -n "${KEY_APP_LABEL_HEX:-}" ]; then
+    echo "[ephemeral-keychain] First sign-capable private key application label (hex): $KEY_APP_LABEL_HEX"
+  fi
   echo "[ephemeral-keychain] Private keys in ephemeral keychain (all private keys)"
   security find-key -t private "$KC_PATH" 2>&1 || true
 
@@ -364,13 +369,31 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
           | tr '[:lower:]' '[:upper:]' || true)
         if [ -n "${CERT_PUB_SHA1_HEX:-}" ]; then
           echo "[ephemeral-keychain] CERT_PUB_SHA1_HEX=$CERT_PUB_SHA1_HEX"
+          if [ -n "${KEY_APP_LABEL_HEX:-}" ] && [ "$KEY_APP_LABEL_HEX" != "$CERT_PUB_SHA1_HEX" ]; then
+            echo "[ephemeral-keychain] NOTE: private key label != cert pubkey sha1 (likely key/cert mismatch)"
+          fi
           echo "[ephemeral-keychain] Attempting to locate matching private key by application label (-a)"
           security find-key -t private -a "$CERT_PUB_SHA1_HEX" "$KC_PATH" 2>&1 || true
         else
           echo "[ephemeral-keychain] Unable to compute CERT_PUB_SHA1_HEX for matched cert"
         fi
       else
-        echo "[ephemeral-keychain] Unable to locate PEM for identity SHA-1 within exported Apple Distribution certs"
+        echo "[ephemeral-keychain] Unable to locate PEM for identity SHA-1 within exported Apple Distribution certs; falling back to first exported cert"
+        CERT_PUB_SHA1_HEX=$(openssl x509 -in "$DIST_CERT_TMP" -pubkey -noout 2>/dev/null \
+          | openssl pkey -pubin -outform DER 2>/dev/null \
+          | openssl dgst -sha1 -binary 2>/dev/null \
+          | xxd -p -c 100 2>/dev/null \
+          | tr -d '\n' \
+          | tr '[:lower:]' '[:upper:]' || true)
+        if [ -n "${CERT_PUB_SHA1_HEX:-}" ]; then
+          echo "[ephemeral-keychain] CERT_PUB_SHA1_HEX=$CERT_PUB_SHA1_HEX"
+          if [ -n "${KEY_APP_LABEL_HEX:-}" ] && [ "$KEY_APP_LABEL_HEX" != "$CERT_PUB_SHA1_HEX" ]; then
+            echo "[ephemeral-keychain] NOTE: private key label != cert pubkey sha1 (likely key/cert mismatch)"
+          fi
+          security find-key -t private -a "$CERT_PUB_SHA1_HEX" "$KC_PATH" 2>&1 || true
+        else
+          echo "[ephemeral-keychain] Unable to compute CERT_PUB_SHA1_HEX from first exported cert"
+        fi
       fi
 
       rm -rf "$CERT_SPLIT_DIR" 2>/dev/null || true

@@ -236,15 +236,23 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid, very verbose): $KC_PATH"
   security find-identity -vv -p codesigning "$KC_PATH" 2>&1 || true
 
-  echo "[ephemeral-keychain] Private keys matching Apple Distribution label"
-  security find-key -t private -s -l "Apple Distribution" "$KC_PATH" 2>&1 || true
+  echo "[ephemeral-keychain] Private keys in ephemeral keychain (sign-capable)"
+  security find-key -t private -s "$KC_PATH" 2>&1 || true
+  echo "[ephemeral-keychain] Private keys in ephemeral keychain (all private keys)"
+  security find-key -t private "$KC_PATH" 2>&1 || true
 
   echo "[ephemeral-keychain] Codesign smoke test (uses identity hash if available)"
   IDENTITY_SHA=$(security find-identity -p codesigning "$KC_PATH" 2>/dev/null | awk '/"Apple Distribution:/{print $2; exit}')
+  IDENTITY_NAME=$(security find-identity -p codesigning "$KC_PATH" 2>/dev/null | sed -n 's/.*"\(Apple Distribution:[^"]*\)".*/\1/p' | head -n 1)
   if [ -n "${IDENTITY_SHA:-}" ] && [ -x /usr/bin/codesign ]; then
     CS_TMP=$(mktemp /tmp/codesign_smoke.XXXXXX)
     cp /usr/bin/true "$CS_TMP" 2>/dev/null || true
+    echo "[ephemeral-keychain] codesign -s (sha1): $IDENTITY_SHA"
     /usr/bin/codesign -f -s "$IDENTITY_SHA" --keychain "$KC_PATH" --timestamp=none "$CS_TMP" 2>&1 || true
+    if [ -n "${IDENTITY_NAME:-}" ]; then
+      echo "[ephemeral-keychain] codesign -s (name): $IDENTITY_NAME"
+      /usr/bin/codesign -f -s "$IDENTITY_NAME" --keychain "$KC_PATH" --timestamp=none "$CS_TMP" 2>&1 || true
+    fi
     /usr/bin/codesign -dv "$CS_TMP" 2>&1 || true
     rm -f "$CS_TMP" 2>/dev/null || true
   else

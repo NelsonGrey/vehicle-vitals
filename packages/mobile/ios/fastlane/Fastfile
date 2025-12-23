@@ -414,9 +414,89 @@ platform :ios do
         UI.success("✅ Zero-touch success: Using existing certificates from shared repository")
         UI.message("💡 Maximum efficiency achieved: No new certificates created")
       rescue => e
+        quota_reached = e.message.to_s.match?(/Could not create another Distribution certificate|reached the maximum number of available Distribution certificates/i)
+
         if e.message.to_s.include?("stored in your storage") && e.message.to_s.include?("not available on the Developer Portal")
           UI.important("⚠️  match storage contains revoked certs. Purging appstore assets from match repo and regenerating.")
           purge_match_repo_appstore_assets!
+          begin
+            match(
+              type: "appstore",
+              readonly: false,
+              force: true,
+              app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+              api_key: api_key,
+              keychain_name: match_keychain_name,
+              keychain_password: match_keychain_password,
+              skip_set_partition_list: false
+            )
+            UI.success("✅ Repaired revoked certificates and regenerated signing assets")
+          rescue => regen_err
+            if regen_err.message.to_s.match?(/Could not create another Distribution certificate|reached the maximum number of available Distribution certificates/i)
+              UI.important("⚠️  Distribution certificate quota reached while regenerating. Nuking appstore signing assets on the Developer Portal and retrying match.")
+              match_nuke(
+                type: "appstore",
+                app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+                api_key: api_key
+              )
+              match(
+                type: "appstore",
+                readonly: false,
+                force: true,
+                app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+                api_key: api_key,
+                keychain_name: match_keychain_name,
+                keychain_password: match_keychain_password,
+                skip_set_partition_list: false
+              )
+              UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
+            else
+              raise regen_err
+            end
+          end
+        elsif e.message.include?("No code signing identity found")
+          UI.message("⚠️  No existing certificates found. Creating new ones...")
+          begin
+            match(
+              type: "appstore",
+              readonly: false,
+              app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+              api_key: api_key,
+              keychain_name: match_keychain_name,
+              keychain_password: match_keychain_password,
+              skip_set_partition_list: false
+            )
+            UI.success("✅ Created new certificates successfully")
+          rescue => regen_err
+            if regen_err.message.to_s.match?(/Could not create another Distribution certificate|reached the maximum number of available Distribution certificates/i)
+              UI.important("⚠️  Distribution certificate quota reached. Nuking appstore signing assets on the Developer Portal and retrying match.")
+              match_nuke(
+                type: "appstore",
+                app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+                api_key: api_key
+              )
+              match(
+                type: "appstore",
+                readonly: false,
+                force: true,
+                app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+                api_key: api_key,
+                keychain_name: match_keychain_name,
+                keychain_password: match_keychain_password,
+                skip_set_partition_list: false
+              )
+              UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
+            else
+              raise regen_err
+            end
+          end
+        elsif quota_reached
+          UI.important("⚠️  Distribution certificate quota reached. Nuking appstore signing assets on the Developer Portal and retrying match.")
+          match_nuke(
+            type: "appstore",
+            app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+            api_key: api_key
+          )
           match(
             type: "appstore",
             readonly: false,
@@ -427,19 +507,7 @@ platform :ios do
             keychain_password: match_keychain_password,
             skip_set_partition_list: false
           )
-          UI.success("✅ Repaired revoked certificates and regenerated signing assets")
-        elsif e.message.include?("No code signing identity found")
-          UI.message("⚠️  No existing certificates found. Creating new ones...")
-          match(
-            type: "appstore",
-            readonly: false,
-            app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
-            api_key: api_key,
-            keychain_name: match_keychain_name,
-            keychain_password: match_keychain_password,
-            skip_set_partition_list: false
-          )
-          UI.success("✅ Created new certificates successfully")
+          UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
         else
           raise e
         end

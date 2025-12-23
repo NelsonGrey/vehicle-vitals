@@ -310,7 +310,16 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
       echo "[ephemeral-keychain] Detected invalid identity; attempting partition list repair and retry"
       security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
       # Re-apply partition list to all sign-capable private keys in the keychain.
-      security set-key-partition-list -S apple-tool:,apple:,codesign: -s -t private -k "$KC_PASS" "$KC_PATH" 2>&1 || true
+      # Do this per-key (by application label) to avoid only updating the first match.
+      REPAIR_KEYS_OUT=$(security find-key -t private -s "$KC_PATH" 2>&1 || true)
+      REPAIR_KEY_LABELS=$(echo "$REPAIR_KEYS_OUT" | sed -n 's/.*0x00000006 <blob>=0x\([0-9A-Fa-f]*\).*/\1/p' | tr '[:lower:]' '[:upper:]' | xargs || true)
+      if [ -n "${REPAIR_KEY_LABELS:-}" ]; then
+        for keylbl in $REPAIR_KEY_LABELS; do
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -t private -a "$keylbl" -k "$KC_PASS" "$KC_PATH" 2>&1 || true
+        done
+      else
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -t private -k "$KC_PASS" "$KC_PATH" 2>&1 || true
+      fi
 
       # Some tools (including `match`) verify identities using the keychain
       # search list (no explicit keychain argument). Re-assert the intended

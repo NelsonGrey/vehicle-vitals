@@ -81,9 +81,11 @@ KC_PATH="$HOME/Library/Keychains/$KC_NAME"
 # NOTE: Avoid using a `tr </dev/urandom | head` pipeline here.
 # On some macOS runner setups, `tr` can get stuck and never terminates,
 # which stalls the entire GitHub Actions job.
-# Use MATCH_PASSWORD as the keychain password when available, because Fastlane
-# is configured to reference it as the keychain_password.
-KC_PASS="${MATCH_PASSWORD:-}"
+# IMPORTANT: Do NOT reuse MATCH_PASSWORD here.
+# MATCH_PASSWORD is for decrypting the match repo and may contain shell-special
+# characters or newlines that can break underlying `security` invocations.
+# Always use a dedicated keychain password.
+KC_PASS="${MATCH_KEYCHAIN_PASSWORD:-}"
 if [ -z "${KC_PASS}" ]; then
   if command -v python3 >/dev/null 2>&1; then
     KC_PASS=$(python3 - <<'PY'
@@ -196,7 +198,7 @@ if [ -n "${CERT_P12_PATH:-}" ]; then
 
   echo "[ephemeral-keychain] Importing certificate into temporary keychain"
   security import "$CERT_P12_PATH" -k "$KC_PATH" -P "${CERT_P12_PASSWORD:-}" -T /usr/bin/codesign -T /usr/bin/security 2>/dev/null || true
-  security set-key-partition-list -S apple-tool:,apple: -s -k "$KC_PASS" "$KC_PATH" 2>/dev/null || true
+  security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KC_PASS" "$KC_PATH" 2>/dev/null || true
 fi
 
 export MATCH_KEYCHAIN_NAME="$KC_PATH"

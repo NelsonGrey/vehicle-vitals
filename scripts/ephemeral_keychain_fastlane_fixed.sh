@@ -117,8 +117,8 @@ echo "[ephemeral-keychain] Configuring temporary keychain"
 # match_nuke), the private key generation can otherwise land in the login
 # keychain, leaving the certificate in the ephemeral keychain without its
 # matching private key ("no local code signing identities found").
-security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
-security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null || true
+security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null
+security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null
 
 # Set ephemeral as default just for this script's lifetime (restored in cleanup)
 security default-keychain -s "$KC_PATH" 2>/dev/null || true
@@ -135,6 +135,11 @@ if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ] && [ "$ORIG_DEFAUL
   KEYCHAIN_ARGS+=("$ORIG_DEFAULT_KC")
 fi
 security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
+
+echo "[ephemeral-keychain] Keychain preflight"
+security default-keychain -d user 2>/dev/null || true
+security list-keychains -d user 2>/dev/null || true
+security show-keychain-info "$KC_PATH" 2>/dev/null || true
 
 if [ -n "${CERT_P12_PATH:-}" ]; then
   if [ ! -f "$CERT_P12_PATH" ]; then
@@ -159,9 +164,19 @@ fi
 
 echo "[ephemeral-keychain] Running command: $FASTLANE_CMD"
 set -x
+set +e
 eval "$FASTLANE_CMD"
+CMD_STATUS=$?
+set -e
 set +x
+
+if [ "${CMD_STATUS:-1}" -ne 0 ]; then
+  echo "[ephemeral-keychain] Command failed (exit ${CMD_STATUS}); collecting keychain diagnostics"
+  security find-identity -v -p codesigning "$KC_PATH" 2>/dev/null || true
+  security find-certificate -a -c "Apple Distribution" -Z "$KC_PATH" 2>/dev/null || true
+  security find-certificate -a -c "Apple Worldwide Developer Relations" -Z "$KC_PATH" 2>/dev/null || true
+fi
 
 echo "[ephemeral-keychain] Command finished; cleanup via EXIT trap"
 
-exit 0
+exit "$CMD_STATUS"

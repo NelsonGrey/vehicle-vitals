@@ -144,7 +144,18 @@ platform :ios do
       message = e.message.to_s
       printable = e.to_s
 
-      if type.to_s == "appstore" && (message.include?("stored in your storage") || printable.include?("stored in your storage")) && (message.include?("not available on the Developer Portal") || printable.include?("not available on the Developer Portal"))
+      UI.important("⚠️  match(#{type}) raised #{e.class}: #{message}")
+
+      portal_drift = (
+        (message.include?("stored in your storage") || printable.include?("stored in your storage")) &&
+          (message.include?("not available on the Developer Portal") || printable.include?("not available on the Developer Portal"))
+      )
+
+      # match often emits a generic FastlaneError suggesting `match nuke` after printing
+      # the more specific portal drift details. Treat that as portal drift in CI.
+      portal_drift ||= message.match?(/reset the certificates of your apple account|fastlane match nuke/i)
+
+      if type.to_s == "appstore" && portal_drift
         UI.important("⚠️  match storage contains revoked certs. Purging appstore assets from match repo and regenerating.")
         begin
           purge_match_repo_appstore_assets!

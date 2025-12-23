@@ -66,7 +66,8 @@ platform :ios do
       keychain_name: match_keychain_name,
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
-      force_for_new_certificates: true
+      force_for_new_certificates: true,
+      include_all_certificates: true
     }
     args[:app_identifier] = app_identifier if app_identifier
     if api_key

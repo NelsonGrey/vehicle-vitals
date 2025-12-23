@@ -161,6 +161,7 @@ platform :ios do
         UI.important("⚠️  Distribution certificate quota reached. Nuking appstore signing assets on the Developer Portal and retrying match.")
         match_nuke_args = { type: type }
         match_nuke_args[:app_identifier] = app_identifier if app_identifier
+        match_nuke_args[:skip_confirmation] = true
         if api_key
           match_nuke_args[:api_key] = api_key
         else
@@ -169,6 +170,11 @@ platform :ios do
         end
 
         match_nuke(**match_nuke_args)
+        begin
+          purge_match_repo_appstore_assets!
+        rescue Exception => purge_err
+          UI.important("⚠️  Post-nuke match repo purge failed (#{purge_err.class}). Continuing...")
+        end
         match(**args.merge(force: true, skip_provisioning_profiles: false))
       elsif type.to_s == "appstore" && portal_drift
         UI.important("⚠️  match storage contains revoked certs. Purging appstore assets from match repo and regenerating.")
@@ -437,8 +443,14 @@ platform :ios do
               match_nuke(
                 type: "appstore",
                 app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
-                api_key: api_key
+                api_key: api_key,
+                skip_confirmation: true
               )
+              begin
+                purge_match_repo_appstore_assets!
+              rescue Exception => purge_err
+                UI.important("⚠️  Post-nuke match repo purge failed (#{purge_err.class}). Continuing...")
+              end
               match(
                 type: "appstore",
                 readonly: false,
@@ -473,8 +485,14 @@ platform :ios do
               match_nuke(
                 type: "appstore",
                 app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
-                api_key: api_key
+                api_key: api_key,
+                skip_confirmation: true
               )
+              begin
+                purge_match_repo_appstore_assets!
+              rescue Exception => purge_err
+                UI.important("⚠️  Post-nuke match repo purge failed (#{purge_err.class}). Continuing...")
+              end
               match(
                 type: "appstore",
                 readonly: false,
@@ -495,8 +513,14 @@ platform :ios do
           match_nuke(
             type: "appstore",
             app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
-            api_key: api_key
+            api_key: api_key,
+            skip_confirmation: true
           )
+          begin
+            purge_match_repo_appstore_assets!
+          rescue Exception => purge_err
+            UI.important("⚠️  Post-nuke match repo purge failed (#{purge_err.class}). Continuing...")
+          end
           match(
             type: "appstore",
             readonly: false,

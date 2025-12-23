@@ -87,7 +87,7 @@ fi
 ORIG_KEYCHAIN_LIST=()
 while IFS= read -r item; do
   trimmed=$(echo "$item" | tr -d '"' | xargs)
-  if [ -n "$trimmed" ]; then
+  if [ -n "$trimmed" ] && [ -f "$trimmed" ]; then
     ORIG_KEYCHAIN_LIST+=("$trimmed")
   fi
 done < <(security list-keychains -d user 2>/dev/null || true)

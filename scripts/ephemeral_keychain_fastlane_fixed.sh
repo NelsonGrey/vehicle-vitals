@@ -334,19 +334,48 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
     security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" \
       | openssl x509 -noout -subject -issuer -dates 2>/dev/null || true
 
-    echo "[ephemeral-keychain] Apple Distribution public key SHA-1 (for matching private key application label)"
-    CERT_PUB_SHA1_HEX=$(openssl x509 -in "$DIST_CERT_TMP" -pubkey -noout 2>/dev/null \
-      | openssl pkey -pubin -outform DER 2>/dev/null \
-      | openssl dgst -sha1 -binary 2>/dev/null \
-      | xxd -p -c 100 2>/dev/null \
-      | tr -d '\n' \
-      | tr '[:lower:]' '[:upper:]' || true)
-    if [ -n "${CERT_PUB_SHA1_HEX:-}" ]; then
-      echo "[ephemeral-keychain] CERT_PUB_SHA1_HEX=$CERT_PUB_SHA1_HEX"
-      echo "[ephemeral-keychain] Attempting to locate private key by application label (-a)"
-      security find-key -t private -a "$CERT_PUB_SHA1_HEX" "$KC_PATH" 2>&1 || true
+    echo "[ephemeral-keychain] Attempt to match identity certificate to private key"
+    # There may be multiple Apple Distribution certs in the keychain. We want the
+    # cert corresponding to the identity hash shown by `security find-identity`.
+    IDENTITY_SHA_LOCAL=$(security find-identity -p codesigning "$KC_PATH" 2>/dev/null | awk '/"Apple Distribution:/{print $2; exit}' | tr '[:lower:]' '[:upper:]')
+    if [ -n "${IDENTITY_SHA_LOCAL:-}" ]; then
+      echo "[ephemeral-keychain] Identity SHA-1 (from find-identity): $IDENTITY_SHA_LOCAL"
+      CERT_SPLIT_DIR=$(mktemp -d /tmp/apple_dist_certs.XXXXXX)
+      csplit -s -f "$CERT_SPLIT_DIR/cert_" -b "%03d.pem" "$DIST_CERT_TMP" '/-----BEGIN CERTIFICATE-----/' '{*}' >/dev/null 2>&1 || true
+      MATCHED_CERT_PATH=""
+      for cert_file in "$CERT_SPLIT_DIR"/cert_*.pem; do
+        if [ ! -s "$cert_file" ]; then
+          continue
+        fi
+        CERT_FPR=$(openssl x509 -in "$cert_file" -noout -fingerprint -sha1 2>/dev/null | sed 's/^SHA1 Fingerprint=//' | tr -d ':' | tr '[:lower:]' '[:upper:]')
+        if [ "$CERT_FPR" = "$IDENTITY_SHA_LOCAL" ]; then
+          MATCHED_CERT_PATH="$cert_file"
+          break
+        fi
+      done
+
+      if [ -n "$MATCHED_CERT_PATH" ]; then
+        echo "[ephemeral-keychain] Matched identity certificate PEM: $MATCHED_CERT_PATH"
+        CERT_PUB_SHA1_HEX=$(openssl x509 -in "$MATCHED_CERT_PATH" -pubkey -noout 2>/dev/null \
+          | openssl pkey -pubin -outform DER 2>/dev/null \
+          | openssl dgst -sha1 -binary 2>/dev/null \
+          | xxd -p -c 100 2>/dev/null \
+          | tr -d '\n' \
+          | tr '[:lower:]' '[:upper:]' || true)
+        if [ -n "${CERT_PUB_SHA1_HEX:-}" ]; then
+          echo "[ephemeral-keychain] CERT_PUB_SHA1_HEX=$CERT_PUB_SHA1_HEX"
+          echo "[ephemeral-keychain] Attempting to locate matching private key by application label (-a)"
+          security find-key -t private -a "$CERT_PUB_SHA1_HEX" "$KC_PATH" 2>&1 || true
+        else
+          echo "[ephemeral-keychain] Unable to compute CERT_PUB_SHA1_HEX for matched cert"
+        fi
+      else
+        echo "[ephemeral-keychain] Unable to locate PEM for identity SHA-1 within exported Apple Distribution certs"
+      fi
+
+      rm -rf "$CERT_SPLIT_DIR" 2>/dev/null || true
     else
-      echo "[ephemeral-keychain] Unable to compute CERT_PUB_SHA1_HEX"
+      echo "[ephemeral-keychain] Unable to determine identity SHA-1 from find-identity"
     fi
 
     security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" \

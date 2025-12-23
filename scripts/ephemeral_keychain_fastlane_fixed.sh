@@ -210,12 +210,12 @@ if [ -n "${CERT_P12_PATH:-}" ]; then
   security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KC_PASS" "$KC_PATH" 2>/dev/null || true
 fi
 
-export MATCH_KEYCHAIN_NAME="$KC_PATH"
+export MATCH_KEYCHAIN_NAME="$KC_BASENAME"
 export MATCH_KEYCHAIN_PASSWORD="$KC_PASS"
 export MATCH_KEYCHAIN_PATH="$KC_PATH"
 
 if [ -n "${GITHUB_ENV:-}" ] && [ -w "$GITHUB_ENV" ]; then
-  echo "MATCH_KEYCHAIN_NAME=$KC_PATH" >> "$GITHUB_ENV"
+  echo "MATCH_KEYCHAIN_NAME=$KC_BASENAME" >> "$GITHUB_ENV"
   echo "MATCH_KEYCHAIN_PASSWORD=$KC_PASS" >> "$GITHUB_ENV"
   echo "MATCH_KEYCHAIN_PATH=$KC_PATH" >> "$GITHUB_ENV"
 fi

@@ -221,21 +221,27 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Command failed (exit ${CMD_STATUS}); collecting keychain diagnostics"
   # Ensure the keychain is unlocked for diagnostics.
   security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
+  echo "[ephemeral-keychain] Identities in ephemeral keychain (valid only): $KC_PATH"
   security find-identity -v -p codesigning "$KC_PATH" 2>/dev/null || true
+  echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid): $KC_PATH"
+  security find-identity -v -a -p codesigning "$KC_PATH" 2>/dev/null || true
   if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
     echo "[ephemeral-keychain] Identities in login keychain: $LOGIN_KC"
     security find-identity -v -p codesigning "$LOGIN_KC" 2>/dev/null || true
+    security find-identity -v -a -p codesigning "$LOGIN_KC" 2>/dev/null || true
   fi
   if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ]; then
     echo "[ephemeral-keychain] Identities in original default keychain: $ORIG_DEFAULT_KC"
     security find-identity -v -p codesigning "$ORIG_DEFAULT_KC" 2>/dev/null || true
+    security find-identity -v -a -p codesigning "$ORIG_DEFAULT_KC" 2>/dev/null || true
   fi
   echo "[ephemeral-keychain] Identities across all keychains"
   security find-identity -v -p codesigning 2>/dev/null || true
+  security find-identity -v -a -p codesigning 2>/dev/null || true
 
   echo "[ephemeral-keychain] Key inventory (filtered) in ephemeral keychain"
   # `dump-keychain` can be noisy; filter down to item labels/metadata.
-  security dump-keychain "$KC_PATH" 2>/dev/null | egrep -i 'keyclass|labl|alis|priv|public key|private key' | head -n 200 || true
+  security dump-keychain "$KC_PATH" 2>/dev/null | egrep -i 'class:|keyclass|labl|alis|priv|public key|private key|Imported Private Key' | head -n 250 || true
 
   security find-certificate -a -c "Apple Distribution" -Z "$KC_PATH" 2>/dev/null || true
   security find-certificate -a -c "Apple Worldwide Developer Relations" -Z "$KC_PATH" 2>/dev/null || true

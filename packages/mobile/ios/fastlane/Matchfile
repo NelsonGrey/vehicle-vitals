@@ -8,4 +8,4 @@ username(ENV["FASTLANE_APPLE_ID"]) if ENV["FASTLANE_APPLE_ID"]
 team_id(ENV["FASTLANE_TEAM_ID"]) if ENV["FASTLANE_TEAM_ID"]
 
 force_for_new_devices(true)
-skip_set_partition_list(true)
+skip_set_partition_list(false)

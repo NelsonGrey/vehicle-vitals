@@ -49,6 +49,7 @@ if [ -f "$LOGIN_KC" ]; then
   if [ -z "${CURRENT_DEFAULT_KC:-}" ] || [[ "$CURRENT_DEFAULT_KC" == *fastlane_tmp_* ]] || [ ! -f "$CURRENT_DEFAULT_KC" ]; then
     security default-keychain -d user -s "$LOGIN_KC" 2>/dev/null || true
     security list-keychains -d user -s "$LOGIN_KC" 2>/dev/null || true
+    security list-keychains -s "$LOGIN_KC" 2>/dev/null || true
   fi
 fi
 
@@ -136,6 +137,7 @@ cleanup() {
   DID_RETRY=0
   if [ ${#ORIG_KEYCHAIN_LIST[@]} -gt 0 ]; then
     security list-keychains -d user -s "${ORIG_KEYCHAIN_LIST[@]}" 2>/dev/null || true
+    security list-keychains -s "${ORIG_KEYCHAIN_LIST[@]}" 2>/dev/null || true
   fi
 
   if [ -n "${KC_PATH:-}" ] && [ -f "$KC_PATH" ] && [[ "$KC_PATH" != *login.keychain* ]]; then
@@ -169,6 +171,7 @@ if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ] && [ "$ORIG_DEFAUL
   KEYCHAIN_ARGS+=("$ORIG_DEFAULT_KC")
 fi
 security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
+security list-keychains -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
 
 # Set ephemeral as default just for this script's lifetime (restored in cleanup).
 # This MUST succeed, otherwise `match` can generate the private key in the login
@@ -178,6 +181,10 @@ if ! security default-keychain -d user -s "$KC_PATH" 2>/dev/null; then
   echo "[ephemeral-keychain] ERROR: Failed to set default keychain to $KC_PATH"
   exit 4
 fi
+
+# Also set without `-d user` since some tools appear to follow the default
+# domain search list rather than the explicit user-domain list.
+security default-keychain -s "$KC_PATH" 2>/dev/null || true
 
 DEFAULT_KC_NOW=$(security default-keychain -d user 2>/dev/null | tr -d '"' | xargs || true)
 if [ -n "$DEFAULT_KC_NOW" ] && [ "$DEFAULT_KC_NOW" != "$KC_PATH" ]; then
@@ -245,7 +252,9 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Keychain search list (before codesign smoke test)"
   security list-keychains -d user 2>&1 || true
   security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>&1 || true
+  security list-keychains -s "${KEYCHAIN_ARGS[@]}" 2>&1 || true
   security default-keychain -d user -s "$KC_PATH" 2>&1 || true
+  security default-keychain -s "$KC_PATH" 2>&1 || true
   security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>&1 || true
   echo "[ephemeral-keychain] Identities via default search list (including invalid)"
   security find-identity -p codesigning 2>&1 || true
@@ -284,7 +293,9 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
       # search list (no explicit keychain argument). Re-assert the intended
       # default/search list before retrying.
       security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
+      security list-keychains -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
       security default-keychain -d user -s "$KC_PATH" 2>/dev/null || true
+      security default-keychain -s "$KC_PATH" 2>/dev/null || true
       security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
 
       DID_RETRY=1

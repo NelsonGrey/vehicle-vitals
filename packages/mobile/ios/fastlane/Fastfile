@@ -67,7 +67,8 @@ platform :ios do
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
       force_for_new_certificates: true,
-      include_all_certificates: true
+      include_all_certificates: true,
+      verbose: true
     }
     args[:app_identifier] = app_identifier if app_identifier
     if api_key
@@ -92,7 +93,13 @@ platform :ios do
 
     unlock_match_keychain
     unless match_keychain_has_codesigning_identities?
+      UI.important("⚠️  No valid identities found after match recovery. Collecting keychain diagnostics...")
+      sh("security default-keychain -d user || true")
+      sh("security list-keychains -d user || true")
+      sh("security find-identity -v -p codesigning || true")
       sh("security find-identity -v -p codesigning \"#{match_keychain_path}\" || true")
+      sh("security find-certificate -a -Z -c \"Apple Development\" \"#{match_keychain_path}\" || true")
+      sh("security find-certificate -a -Z -c \"Apple Distribution\" \"#{match_keychain_path}\" || true")
       raise "match completed but no valid code signing identities are available in #{match_keychain_path}"
     end
   end
@@ -367,8 +374,9 @@ platform :ios do
     release_notes = options[:release_notes] || "Automated build for TestFlight"
     feedback_email = ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com"
 
-    # Sync code signing certificates for TestFlight (both development and distribution)
-    certificates_all
+    # Sync code signing certificates for TestFlight (distribution/appstore).
+    # Development certificates are not required for an unsigned Flutter build + later resign.
+    certificates_appstore
 
     # Set environment variables for manual code signing in Flutter build
     ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore']

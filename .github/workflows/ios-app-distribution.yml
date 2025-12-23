@@ -260,6 +260,10 @@ jobs:
           export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 
+          # Zero-touch self-heal: allow Fastlane to nuke+regenerate signing assets
+          # when `match` cannot produce a usable local codesigning identity.
+          export VV_MATCH_NUKE_ON_IDENTITY_FAILURE='1'
+
           # Preflight: verify the token can read the match repo
           echo '🔐 Verifying access to match certificates repo...'
           if ! ERR_OUT=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$MATCH_GIT_URL" HEAD 2>&1 >/dev/null); then

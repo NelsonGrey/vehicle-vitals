@@ -243,6 +243,13 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
       security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
       security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KC_PASS" "$KC_PATH" 2>&1 || true
 
+      # Some tools (including `match`) verify identities using the keychain
+      # search list (no explicit keychain argument). Re-assert the intended
+      # default/search list before retrying.
+      security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
+      security default-keychain -d user -s "$KC_PATH" 2>/dev/null || true
+      security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
+
       DID_RETRY=1
       echo "[ephemeral-keychain] Retrying command once: $FASTLANE_CMD"
       set -x

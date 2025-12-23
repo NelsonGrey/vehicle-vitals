@@ -65,7 +65,8 @@ platform :ios do
       readonly: false,
       keychain_name: match_keychain_name,
       keychain_password: match_keychain_password,
-      skip_set_partition_list: false
+      skip_set_partition_list: false,
+      force_for_new_certificates: true
     }
     args[:app_identifier] = app_identifier if app_identifier
     if api_key
@@ -75,10 +76,22 @@ platform :ios do
       args[:team_id] = ENV["FASTLANE_TEAM_ID"]
     end
 
-    match(**args)
+    begin
+      match(**args)
+    rescue => e
+      # If CI only has read access to the match repo, still try to generate/import locally
+      # so the pipeline can proceed (this won't persist certs back to the repo).
+      if e.message.to_s.match?(/permission denied|publickey|access denied|push|write access/i)
+        UI.important("⚠️  match failed while trying to write to the certificates repo. Retrying once with skip_git_push: true so CI can proceed.")
+        match(**args.merge(skip_git_push: true))
+      else
+        raise e
+      end
+    end
 
     unlock_match_keychain
     unless match_keychain_has_codesigning_identities?
+      sh("security find-identity -v -p codesigning \"#{match_keychain_path}\" || true")
       raise "match completed but no valid code signing identities are available in #{match_keychain_path}"
     end
   end

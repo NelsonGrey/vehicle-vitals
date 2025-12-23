@@ -299,7 +299,8 @@ platform :ios do
       team_id: ENV["FASTLANE_TEAM_ID"],
       keychain_name: match_keychain_name,
       keychain_password: match_keychain_password,
-      skip_set_partition_list: false
+      skip_set_partition_list: false,
+      verbose: true
     )
 
     ensure_match_installed_identity!(type: "appstore")
@@ -459,7 +460,8 @@ platform :ios do
                 api_key: api_key,
                 keychain_name: match_keychain_name,
                 keychain_password: match_keychain_password,
-                skip_set_partition_list: false
+                skip_set_partition_list: false,
+                verbose: true
               )
               UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
             else
@@ -476,7 +478,8 @@ platform :ios do
               api_key: api_key,
               keychain_name: match_keychain_name,
               keychain_password: match_keychain_password,
-              skip_set_partition_list: false
+              skip_set_partition_list: false,
+              verbose: true
             )
             UI.success("✅ Created new certificates successfully")
           rescue => regen_err
@@ -501,7 +504,8 @@ platform :ios do
                 api_key: api_key,
                 keychain_name: match_keychain_name,
                 keychain_password: match_keychain_password,
-                skip_set_partition_list: false
+                skip_set_partition_list: false,
+                verbose: true
               )
               UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
             else
@@ -529,7 +533,8 @@ platform :ios do
             api_key: api_key,
             keychain_name: match_keychain_name,
             keychain_password: match_keychain_password,
-            skip_set_partition_list: false
+            skip_set_partition_list: false,
+            verbose: true
           )
           UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
         else

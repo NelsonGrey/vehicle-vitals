@@ -93,8 +93,8 @@ jobs:
 
       - name: 🔧 Install Fastlane
         run: |
-          echo '📦 Installing Fastlane 2.229.0...'
-          gem install fastlane -v 2.229.0
+          echo '📦 Installing Fastlane 2.230.0...'
+          gem install fastlane -v 2.230.0
           echo '📦 Installing CocoaPods...'
           gem install cocoapods
           fastlane --version

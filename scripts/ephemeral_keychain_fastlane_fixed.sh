@@ -105,20 +105,23 @@ cleanup() {
   fi
 
   if [ -n "${KC_PATH:-}" ] && [ -f "$KC_PATH" ] && [[ "$KC_PATH" != *login.keychain* ]]; then
-    security delete-keychain "$KC_PATH" 2>/dev/null || rm -f "$KC_PATH" 2>/dev/null || true
+    security delete-keychain "$KC_PATH" 2>/dev/null || true
+    rm -f "$KC_PATH" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT
 
 echo "[ephemeral-keychain] Configuring temporary keychain"
-# NOTE: Do not change the user's default keychain.
-# Some tools (notably `security cms` used to decode provisioning profiles)
-# can fail with confusing "Write permissions" errors when the default
-# keychain is a freshly-created ephemeral keychain.
-# Keeping the default keychain unchanged while adding the ephemeral keychain
-# to the search list is sufficient for `codesign`/Fastlane to find identities.
+# NOTE: We temporarily set the ephemeral keychain as the default during the
+# Fastlane run. When Fastlane needs to generate a new certificate (e.g., after
+# match_nuke), the private key generation can otherwise land in the login
+# keychain, leaving the certificate in the ephemeral keychain without its
+# matching private key ("no local code signing identities found").
 security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
 security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null || true
+
+# Set ephemeral as default just for this script's lifetime (restored in cleanup)
+security default-keychain -s "$KC_PATH" 2>/dev/null || true
 
 # Ensure the temporary keychain is in the search list so tools like
 # `security find-identity` and `codesign` can locate identities/keys.

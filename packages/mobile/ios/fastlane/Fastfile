@@ -146,6 +146,8 @@ platform :ios do
 
       UI.important("⚠️  match(#{type}) raised #{e.class}: #{message}")
 
+      max_cert_reached = message.match?(/Could not create another Distribution certificate|reached the maximum number of available Distribution certificates/i)
+
       portal_drift = (
         (message.include?("stored in your storage") || printable.include?("stored in your storage")) &&
           (message.include?("not available on the Developer Portal") || printable.include?("not available on the Developer Portal"))
@@ -155,7 +157,20 @@ platform :ios do
       # the more specific portal drift details. Treat that as portal drift in CI.
       portal_drift ||= message.match?(/reset the certificates of your apple account|fastlane match nuke/i)
 
-      if type.to_s == "appstore" && portal_drift
+      if type.to_s == "appstore" && max_cert_reached
+        UI.important("⚠️  Distribution certificate quota reached. Nuking appstore signing assets on the Developer Portal and retrying match.")
+        match_nuke_args = { type: type }
+        match_nuke_args[:app_identifier] = app_identifier if app_identifier
+        if api_key
+          match_nuke_args[:api_key] = api_key
+        else
+          match_nuke_args[:username] = ENV["FASTLANE_APPLE_ID"]
+          match_nuke_args[:team_id] = ENV["FASTLANE_TEAM_ID"]
+        end
+
+        match_nuke(**match_nuke_args)
+        match(**args.merge(force: true, skip_provisioning_profiles: false))
+      elsif type.to_s == "appstore" && portal_drift
         UI.important("⚠️  match storage contains revoked certs. Purging appstore assets from match repo and regenerating.")
         begin
           purge_match_repo_appstore_assets!

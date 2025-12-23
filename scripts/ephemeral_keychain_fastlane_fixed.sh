@@ -120,9 +120,6 @@ echo "[ephemeral-keychain] Configuring temporary keychain"
 security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null
 security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null
 
-# Set ephemeral as default just for this script's lifetime (restored in cleanup)
-security default-keychain -s "$KC_PATH" 2>/dev/null || true
-
 # Ensure the temporary keychain is in the search list so tools like
 # `security find-identity` and `codesign` can locate identities/keys.
 # IMPORTANT: In CI, avoid adding the entire ~/Library/Keychains directory to the
@@ -135,6 +132,23 @@ if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ] && [ "$ORIG_DEFAUL
   KEYCHAIN_ARGS+=("$ORIG_DEFAULT_KC")
 fi
 security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
+
+# Set ephemeral as default just for this script's lifetime (restored in cleanup).
+# This MUST succeed, otherwise `match` can generate the private key in the login
+# keychain while importing the certificate into the ephemeral keychain, which
+# results in "0 valid identities".
+if ! security default-keychain -d user -s "$KC_PATH" 2>/dev/null; then
+  echo "[ephemeral-keychain] ERROR: Failed to set default keychain to $KC_PATH"
+  exit 4
+fi
+
+DEFAULT_KC_NOW=$(security default-keychain -d user 2>/dev/null | tr -d '"' | xargs || true)
+if [ -n "$DEFAULT_KC_NOW" ] && [ "$DEFAULT_KC_NOW" != "$KC_PATH" ]; then
+  echo "[ephemeral-keychain] ERROR: Default keychain did not switch to ephemeral"
+  echo "[ephemeral-keychain] Expected: $KC_PATH"
+  echo "[ephemeral-keychain] Actual:   $DEFAULT_KC_NOW"
+  exit 4
+fi
 
 echo "[ephemeral-keychain] Keychain preflight"
 security default-keychain -d user 2>/dev/null || true

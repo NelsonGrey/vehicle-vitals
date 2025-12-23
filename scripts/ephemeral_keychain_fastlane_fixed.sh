@@ -242,6 +242,16 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   security find-key -t private "$KC_PATH" 2>&1 || true
 
   echo "[ephemeral-keychain] Codesign smoke test (uses identity hash if available)"
+  echo "[ephemeral-keychain] Keychain search list (before codesign smoke test)"
+  security list-keychains -d user 2>&1 || true
+  security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>&1 || true
+  security default-keychain -d user -s "$KC_PATH" 2>&1 || true
+  security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>&1 || true
+  echo "[ephemeral-keychain] Identities via default search list (including invalid)"
+  security find-identity -p codesigning 2>&1 || true
+  echo "[ephemeral-keychain] Identities via default search list (valid only)"
+  security find-identity -v -p codesigning 2>&1 || true
+
   IDENTITY_SHA=$(security find-identity -p codesigning "$KC_PATH" 2>/dev/null | awk '/"Apple Distribution:/{print $2; exit}')
   IDENTITY_NAME=$(security find-identity -p codesigning "$KC_PATH" 2>/dev/null | sed -n 's/.*"\(Apple Distribution:[^"]*\)".*/\1/p' | head -n 1)
   if [ -n "${IDENTITY_SHA:-}" ] && [ -x /usr/bin/codesign ]; then

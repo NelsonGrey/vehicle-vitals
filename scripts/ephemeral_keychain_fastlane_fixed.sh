@@ -122,12 +122,16 @@ security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null || true
 
 # Ensure the temporary keychain is in the search list so tools like
 # `security find-identity` and `codesign` can locate identities/keys.
-# IMPORTANT: In CI, keep the search list limited to the ephemeral keychain.
-# Including the entire ~/Library/Keychains directory or other keychains (like
-# login.keychain-db) can cause Fastlane `match` to incorrectly decide that
-# certs/keys are "already installed" and skip importing into the ephemeral
-# keychain, leading to "0 valid identities found".
-security list-keychains -d user -s "$KC_PATH" 2>/dev/null || true
+# IMPORTANT: In CI, avoid adding the entire ~/Library/Keychains directory to the
+# search list (it can cause `match` to decide items are already installed and
+# skip importing into the ephemeral keychain). However, keep the user's default
+# keychain (usually login.keychain-db) available so trust/intermediate certs
+# (e.g., WWDR) installed there are visible during identity validation.
+KEYCHAIN_ARGS=("$KC_PATH")
+if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ] && [ "$ORIG_DEFAULT_KC" != "$KC_PATH" ]; then
+  KEYCHAIN_ARGS+=("$ORIG_DEFAULT_KC")
+fi
+security list-keychains -d user -s "${KEYCHAIN_ARGS[@]}" 2>/dev/null || true
 
 if [ -n "${CERT_P12_PATH:-}" ]; then
   if [ ! -f "$CERT_P12_PATH" ]; then

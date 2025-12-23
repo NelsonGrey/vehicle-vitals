@@ -29,6 +29,9 @@ Dotenv.load('.env') if File.exist?('.env')
 default_platform(:ios)
 
 platform :ios do
+  require 'tmpdir'
+  require 'shellwords'
+
   def match_keychain_path
     match_keychain_name
   end
@@ -106,26 +109,40 @@ platform :ios do
       unlock_match_keychain
     end
 
-    # True zero-touch: if the certificates repo contains a cert without a usable private key,
-    # match may repeatedly import a non-functional .p12. In CI, we can optionally nuke and
-    # regenerate signing assets to self-heal.
-    if !match_keychain_has_codesigning_identities? && type.to_s == "appstore" && ENV["VV_MATCH_NUKE_ON_IDENTITY_FAILURE"].to_s == "1"
-      UI.important("🧨 VV_MATCH_NUKE_ON_IDENTITY_FAILURE=1 and still no identities. Nuking App Store signing assets and regenerating via match.")
-      match_nuke_args = {
-        type: type,
-        skip_confirmation: true
-      }
-      match_nuke_args[:app_identifier] = app_identifier if app_identifier
-      if api_key
-        match_nuke_args[:api_key] = api_key
-      else
-        match_nuke_args[:username] = ENV["FASTLANE_APPLE_ID"]
-        match_nuke_args[:team_id] = ENV["FASTLANE_TEAM_ID"]
+    def purge_match_repo_appstore_assets!
+      git_url = ENV["MATCH_GIT_URL"].to_s
+      raise "MATCH_GIT_URL is not set" if git_url.empty?
+
+      repo_dir = Dir.mktmpdir("match-repo-")
+
+      begin
+        sh("git clone #{git_url.shellescape} #{repo_dir.shellescape}", log: false)
+        sh("cd #{repo_dir.shellescape} && git checkout main", log: false)
+
+        # Remove appstore provisioning profiles and distribution certs so match is forced to regenerate.
+        sh("cd #{repo_dir.shellescape} && rm -f profiles/appstore/*.mobileprovision || true", log: false)
+        sh("cd #{repo_dir.shellescape} && rm -f certs/distribution/*.cer certs/distribution/*.p12 || true", log: false)
+
+        # If nothing changed, don't commit.
+        status = sh("cd #{repo_dir.shellescape} && git status --porcelain", log: false)
+        return if status.to_s.strip.empty?
+
+        sh("cd #{repo_dir.shellescape} && git add -A", log: false)
+        sh(
+          "cd #{repo_dir.shellescape} && git -c user.email=ci@vehicle-vitals.local -c user.name=vehicle-vitals-ci commit -m \"CI: purge appstore signing assets\"",
+          log: false
+        )
+        sh("cd #{repo_dir.shellescape} && git push origin main", log: false)
+      ensure
+        sh("rm -rf #{repo_dir.shellescape}", log: false)
       end
+    end
 
-      match_nuke(**match_nuke_args)
-
-      # Recreate fresh cert+private-key material and import into keychain
+    # True zero-touch: if the match repo contains certs but no usable identity (missing private key),
+    # force a self-heal by purging appstore signing assets from the repo and regenerating via match.
+    if !match_keychain_has_codesigning_identities? && type.to_s == "appstore" && ENV["VV_MATCH_NUKE_ON_IDENTITY_FAILURE"].to_s == "1"
+      UI.important("🧨 VV_MATCH_NUKE_ON_IDENTITY_FAILURE=1 and still no identities. Purging appstore assets from match repo and regenerating.")
+      purge_match_repo_appstore_assets!
       match(**args.merge(force: true, skip_provisioning_profiles: false))
       unlock_match_keychain
     end

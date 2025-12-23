@@ -236,6 +236,21 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid, very verbose): $KC_PATH"
   security find-identity -vv -p codesigning "$KC_PATH" 2>&1 || true
 
+  echo "[ephemeral-keychain] Private keys matching Apple Distribution label"
+  security find-key -t private -s -l "Apple Distribution" "$KC_PATH" 2>&1 || true
+
+  echo "[ephemeral-keychain] Codesign smoke test (uses identity hash if available)"
+  IDENTITY_SHA=$(security find-identity -p codesigning "$KC_PATH" 2>/dev/null | awk '/"Apple Distribution:/{print $2; exit}')
+  if [ -n "${IDENTITY_SHA:-}" ] && [ -x /usr/bin/codesign ]; then
+    CS_TMP=$(mktemp /tmp/codesign_smoke.XXXXXX)
+    cp /usr/bin/true "$CS_TMP" 2>/dev/null || true
+    /usr/bin/codesign -f -s "$IDENTITY_SHA" --keychain "$KC_PATH" --timestamp=none "$CS_TMP" 2>&1 || true
+    /usr/bin/codesign -dv "$CS_TMP" 2>&1 || true
+    rm -f "$CS_TMP" 2>/dev/null || true
+  else
+    echo "[ephemeral-keychain] Skipping codesign smoke test (no identity hash or codesign binary)"
+  fi
+
   # If a matching identity exists but isn't considered "valid", it's usually
   # because the private key ACL/partition list isn't set correctly for
   # non-interactive codesigning. Attempt a one-time repair + retry.

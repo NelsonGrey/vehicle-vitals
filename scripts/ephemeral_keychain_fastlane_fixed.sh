@@ -221,6 +221,8 @@ CMD_STATUS=$?
 set -e
 set +x
 
+DID_RETRY=0
+
 if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Command failed (exit ${CMD_STATUS}); collecting keychain diagnostics"
   # Ensure the keychain is unlocked for diagnostics.
@@ -252,23 +254,22 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
     fi
   fi
 
-  # If the retry succeeded, skip the remaining diagnostics.
   if [ "${CMD_STATUS:-1}" -eq 0 ]; then
     echo "[ephemeral-keychain] Retry succeeded"
   else
-  if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
-    echo "[ephemeral-keychain] Identities in login keychain: $LOGIN_KC"
-    security find-identity -v -p codesigning "$LOGIN_KC" 2>&1 || true
-    security find-identity -p codesigning "$LOGIN_KC" 2>&1 || true
-  fi
-  if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ]; then
-    echo "[ephemeral-keychain] Identities in original default keychain: $ORIG_DEFAULT_KC"
-    security find-identity -v -p codesigning "$ORIG_DEFAULT_KC" 2>&1 || true
-    security find-identity -p codesigning "$ORIG_DEFAULT_KC" 2>&1 || true
-  fi
-  echo "[ephemeral-keychain] Identities across all keychains"
-  security find-identity -v -p codesigning 2>&1 || true
-  security find-identity -p codesigning 2>&1 || true
+    if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
+      echo "[ephemeral-keychain] Identities in login keychain: $LOGIN_KC"
+      security find-identity -v -p codesigning "$LOGIN_KC" 2>&1 || true
+      security find-identity -p codesigning "$LOGIN_KC" 2>&1 || true
+    fi
+    if [ -n "${ORIG_DEFAULT_KC:-}" ] && [ -f "$ORIG_DEFAULT_KC" ]; then
+      echo "[ephemeral-keychain] Identities in original default keychain: $ORIG_DEFAULT_KC"
+      security find-identity -v -p codesigning "$ORIG_DEFAULT_KC" 2>&1 || true
+      security find-identity -p codesigning "$ORIG_DEFAULT_KC" 2>&1 || true
+    fi
+    echo "[ephemeral-keychain] Identities across all keychains"
+    security find-identity -v -p codesigning 2>&1 || true
+    security find-identity -p codesigning 2>&1 || true
 
   echo "[ephemeral-keychain] Trust check for Apple Distribution certificate (policy: codeSign)"
   DIST_CERT_TMP=$(mktemp /tmp/apple_distribution.XXXXXX.pem)

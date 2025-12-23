@@ -132,6 +132,8 @@ cleanup() {
     security default-keychain -s "$ORIG_DEFAULT_KC" 2>/dev/null || true
   fi
 
+
+  DID_RETRY=0
   if [ ${#ORIG_KEYCHAIN_LIST[@]} -gt 0 ]; then
     security list-keychains -d user -s "${ORIG_KEYCHAIN_LIST[@]}" 2>/dev/null || true
   fi
@@ -227,6 +229,33 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   security find-identity -v -p codesigning "$KC_PATH" 2>&1 || true
   echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid): $KC_PATH"
   security find-identity -p codesigning "$KC_PATH" 2>&1 || true
+
+  # If a matching identity exists but isn't considered "valid", it's usually
+  # because the private key ACL/partition list isn't set correctly for
+  # non-interactive codesigning. Attempt a one-time repair + retry.
+  if [ "${DID_RETRY}" -eq 0 ]; then
+    EPHEMERAL_ALL=$(security find-identity -p codesigning "$KC_PATH" 2>&1 || true)
+    EPHEMERAL_VALID=$(security find-identity -v -p codesigning "$KC_PATH" 2>&1 || true)
+    if echo "$EPHEMERAL_ALL" | grep -Eq '\b[1-9][0-9]* identities found\b' && echo "$EPHEMERAL_VALID" | grep -q "0 valid identities found"; then
+      echo "[ephemeral-keychain] Detected invalid identity; attempting partition list repair and retry"
+      security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
+      security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KC_PASS" "$KC_PATH" 2>&1 || true
+
+      DID_RETRY=1
+      echo "[ephemeral-keychain] Retrying command once: $FASTLANE_CMD"
+      set -x
+      set +e
+      eval "$FASTLANE_CMD"
+      CMD_STATUS=$?
+      set -e
+      set +x
+    fi
+  fi
+
+  # If the retry succeeded, skip the remaining diagnostics.
+  if [ "${CMD_STATUS:-1}" -eq 0 ]; then
+    echo "[ephemeral-keychain] Retry succeeded"
+  else
   if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
     echo "[ephemeral-keychain] Identities in login keychain: $LOGIN_KC"
     security find-identity -v -p codesigning "$LOGIN_KC" 2>&1 || true
@@ -260,6 +289,7 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
 
   security find-certificate -a -c "Apple Distribution" -Z "$KC_PATH" 2>&1 || true
   security find-certificate -a -c "Apple Worldwide Developer Relations" -Z "$KC_PATH" 2>&1 || true
+  fi
 fi
 
 echo "[ephemeral-keychain] Command finished; cleanup via EXIT trap"

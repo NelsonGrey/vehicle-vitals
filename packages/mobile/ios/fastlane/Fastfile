@@ -32,9 +32,29 @@ platform :ios do
   require 'tmpdir'
   require 'shellwords'
 
+  def match_repo_write_url
+    raw = ENV["MATCH_GIT_URL"].to_s.strip
+    raise "MATCH_GIT_URL is not set" if raw.empty?
+
+    pat = ENV["NELSON_GREY_PAT"].to_s.strip
+    return raw if pat.empty?
+
+    repo_path = nil
+    # git@github.com:owner/repo.git
+    if raw.match?(%r{\Agit@github\.com:})
+      repo_path = raw.sub(%r{\Agit@github\.com:}, "").sub(%r{\.git\z}, "")
+    elsif raw.match?(%r{\Ahttps?://github\.com/})
+      repo_path = raw.sub(%r{\Ahttps?://github\.com/}, "").sub(%r{\.git\z}, "")
+    end
+
+    return raw if repo_path.to_s.empty?
+    # Use username + PAT for write operations; keep logging disabled when running git.
+    "https://mnelson3:#{pat}@github.com/#{repo_path}.git"
+  end
+
   def purge_match_repo_appstore_assets!
-    git_url = ENV["MATCH_GIT_URL"].to_s
-    raise "MATCH_GIT_URL is not set" if git_url.empty?
+    UI.important("🧹 Purging appstore signing assets from match repo...")
+    git_url = match_repo_write_url
 
     repo_dir = Dir.mktmpdir("match-repo-")
 
@@ -55,6 +75,7 @@ platform :ios do
         log: false
       )
       sh("cd #{repo_dir.shellescape} && git push origin main", log: false)
+      UI.important("✅ Purged appstore signing assets in match repo")
     ensure
       sh("rm -rf #{repo_dir.shellescape}", log: false)
     end
@@ -119,12 +140,20 @@ platform :ios do
 
     begin
       match(**args)
-    rescue => e
-      if type.to_s == "appstore" && e.message.to_s.include?("stored in your storage") && e.message.to_s.include?("not available on the Developer Portal")
+    rescue Exception => e
+      message = e.message.to_s
+      printable = e.to_s
+
+      if type.to_s == "appstore" && (message.include?("stored in your storage") || printable.include?("stored in your storage")) && (message.include?("not available on the Developer Portal") || printable.include?("not available on the Developer Portal"))
         UI.important("⚠️  match storage contains revoked certs. Purging appstore assets from match repo and regenerating.")
-        purge_match_repo_appstore_assets!
-        match(**args.merge(force: true, skip_provisioning_profiles: false))
-      elsif e.message.to_s.match?(/permission denied|publickey|access denied|push|write access/i)
+        begin
+          purge_match_repo_appstore_assets!
+          match(**args.merge(force: true, skip_provisioning_profiles: false))
+        rescue Exception => purge_err
+          UI.important("⚠️  Purge/regenerate failed (#{purge_err.class}). Retrying match once with skip_certificate_matching: true, force: true.")
+          match(**args.merge(force: true, skip_certificate_matching: true))
+        end
+      elsif message.match?(/permission denied|publickey|access denied|push|write access/i) || printable.match?(/permission denied|publickey|access denied|push|write access/i)
         # If CI only has read access to the match repo, still try to generate/import locally
         # so the pipeline can proceed (this won't persist certs back to the repo).
         UI.important("⚠️  match failed while trying to write to the certificates repo. Retrying once with skip_git_push: true so CI can proceed.")

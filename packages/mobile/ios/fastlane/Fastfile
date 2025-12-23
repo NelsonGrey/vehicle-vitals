@@ -32,6 +32,34 @@ platform :ios do
   require 'tmpdir'
   require 'shellwords'
 
+  def purge_match_repo_appstore_assets!
+    git_url = ENV["MATCH_GIT_URL"].to_s
+    raise "MATCH_GIT_URL is not set" if git_url.empty?
+
+    repo_dir = Dir.mktmpdir("match-repo-")
+
+    begin
+      sh("git clone #{git_url.shellescape} #{repo_dir.shellescape}", log: false)
+      sh("cd #{repo_dir.shellescape} && git checkout main", log: false)
+
+      # Remove appstore provisioning profiles and distribution certs so match is forced to regenerate.
+      sh("cd #{repo_dir.shellescape} && rm -f profiles/appstore/*.mobileprovision || true", log: false)
+      sh("cd #{repo_dir.shellescape} && rm -f certs/distribution/*.cer certs/distribution/*.p12 || true", log: false)
+
+      status = sh("cd #{repo_dir.shellescape} && git status --porcelain", log: false)
+      return if status.to_s.strip.empty?
+
+      sh("cd #{repo_dir.shellescape} && git add -A", log: false)
+      sh(
+        "cd #{repo_dir.shellescape} && git -c user.email=ci@vehicle-vitals.local -c user.name=vehicle-vitals-ci commit -m \"CI: purge appstore signing assets\"",
+        log: false
+      )
+      sh("cd #{repo_dir.shellescape} && git push origin main", log: false)
+    ensure
+      sh("rm -rf #{repo_dir.shellescape}", log: false)
+    end
+  end
+
   def match_keychain_path
     match_keychain_name
   end
@@ -92,9 +120,13 @@ platform :ios do
     begin
       match(**args)
     rescue => e
-      # If CI only has read access to the match repo, still try to generate/import locally
-      # so the pipeline can proceed (this won't persist certs back to the repo).
-      if e.message.to_s.match?(/permission denied|publickey|access denied|push|write access/i)
+      if type.to_s == "appstore" && e.message.to_s.include?("stored in your storage") && e.message.to_s.include?("not available on the Developer Portal")
+        UI.important("⚠️  match storage contains revoked certs. Purging appstore assets from match repo and regenerating.")
+        purge_match_repo_appstore_assets!
+        match(**args.merge(force: true, skip_provisioning_profiles: false))
+      elsif e.message.to_s.match?(/permission denied|publickey|access denied|push|write access/i)
+        # If CI only has read access to the match repo, still try to generate/import locally
+        # so the pipeline can proceed (this won't persist certs back to the repo).
         UI.important("⚠️  match failed while trying to write to the certificates repo. Retrying once with skip_git_push: true so CI can proceed.")
         match(**args.merge(skip_git_push: true))
       else
@@ -107,35 +139,6 @@ platform :ios do
       UI.important("⚠️  Still no identities after appstore match recovery. Escalating to match(force: true) to renew signing assets.")
       match(**args.merge(force: true))
       unlock_match_keychain
-    end
-
-    def purge_match_repo_appstore_assets!
-      git_url = ENV["MATCH_GIT_URL"].to_s
-      raise "MATCH_GIT_URL is not set" if git_url.empty?
-
-      repo_dir = Dir.mktmpdir("match-repo-")
-
-      begin
-        sh("git clone #{git_url.shellescape} #{repo_dir.shellescape}", log: false)
-        sh("cd #{repo_dir.shellescape} && git checkout main", log: false)
-
-        # Remove appstore provisioning profiles and distribution certs so match is forced to regenerate.
-        sh("cd #{repo_dir.shellescape} && rm -f profiles/appstore/*.mobileprovision || true", log: false)
-        sh("cd #{repo_dir.shellescape} && rm -f certs/distribution/*.cer certs/distribution/*.p12 || true", log: false)
-
-        # If nothing changed, don't commit.
-        status = sh("cd #{repo_dir.shellescape} && git status --porcelain", log: false)
-        return if status.to_s.strip.empty?
-
-        sh("cd #{repo_dir.shellescape} && git add -A", log: false)
-        sh(
-          "cd #{repo_dir.shellescape} && git -c user.email=ci@vehicle-vitals.local -c user.name=vehicle-vitals-ci commit -m \"CI: purge appstore signing assets\"",
-          log: false
-        )
-        sh("cd #{repo_dir.shellescape} && git push origin main", log: false)
-      ensure
-        sh("rm -rf #{repo_dir.shellescape}", log: false)
-      end
     end
 
     # True zero-touch: if the match repo contains certs but no usable identity (missing private key),
@@ -356,7 +359,21 @@ platform :ios do
         UI.success("✅ Zero-touch success: Using existing certificates from shared repository")
         UI.message("💡 Maximum efficiency achieved: No new certificates created")
       rescue => e
-        if e.message.include?("No code signing identity found")
+        if e.message.to_s.include?("stored in your storage") && e.message.to_s.include?("not available on the Developer Portal")
+          UI.important("⚠️  match storage contains revoked certs. Purging appstore assets from match repo and regenerating.")
+          purge_match_repo_appstore_assets!
+          match(
+            type: "appstore",
+            readonly: false,
+            force: true,
+            app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+            api_key: api_key,
+            keychain_name: match_keychain_name,
+            keychain_password: match_keychain_password,
+            skip_set_partition_list: false
+          )
+          UI.success("✅ Repaired revoked certificates and regenerated signing assets")
+        elsif e.message.include?("No code signing identity found")
           UI.message("⚠️  No existing certificates found. Creating new ones...")
           match(
             type: "appstore",

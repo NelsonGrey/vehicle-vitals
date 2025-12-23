@@ -229,8 +229,12 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
   echo "[ephemeral-keychain] Identities in ephemeral keychain (valid only): $KC_PATH"
   security find-identity -v -p codesigning "$KC_PATH" 2>&1 || true
+  echo "[ephemeral-keychain] Identities in ephemeral keychain (valid-only, very verbose): $KC_PATH"
+  security find-identity -vv -p codesigning "$KC_PATH" 2>&1 || true
   echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid): $KC_PATH"
   security find-identity -p codesigning "$KC_PATH" 2>&1 || true
+  echo "[ephemeral-keychain] Identities in ephemeral keychain (including invalid, very verbose): $KC_PATH"
+  security find-identity -vv -p codesigning "$KC_PATH" 2>&1 || true
 
   # If a matching identity exists but isn't considered "valid", it's usually
   # because the private key ACL/partition list isn't set correctly for
@@ -281,6 +285,15 @@ if [ "${CMD_STATUS:-1}" -ne 0 ]; then
   echo "[ephemeral-keychain] Trust check for Apple Distribution certificate (policy: codeSign)"
   DIST_CERT_TMP=$(mktemp /tmp/apple_distribution.XXXXXX.pem)
   if security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" >"$DIST_CERT_TMP" 2>/dev/null; then
+    echo "[ephemeral-keychain] Apple Distribution certificate details"
+    security find-certificate -a -c "Apple Distribution" -Z "$KC_PATH" 2>&1 || true
+    security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" \
+      | openssl x509 -noout -subject -issuer -dates 2>/dev/null || true
+    security find-certificate -a -c "Apple Distribution" -p "$KC_PATH" \
+      | openssl x509 -noout -text 2>/dev/null \
+      | egrep -A2 -i 'X509v3 Key Usage|Extended Key Usage|Authority Key Identifier|Subject Key Identifier|Basic Constraints' \
+      | head -n 120 || true
+
     VERIFY_ARGS=(security verify-cert -c "$DIST_CERT_TMP" -p codeSign -v -k "$KC_PATH")
     if [ -f "$LOGIN_KC" ] && [ "$LOGIN_KC" != "$KC_PATH" ]; then
       VERIFY_ARGS+=( -k "$LOGIN_KC" )

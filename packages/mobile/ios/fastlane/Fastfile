@@ -67,6 +67,9 @@ platform :ios do
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
       include_all_certificates: true,
+      # Identity recovery should focus on cert/key material. Profile decoding/install
+      # can fail in CI with `security cms` "Write permissions" errors.
+      skip_provisioning_profiles: true,
       verbose: true
     }
 
@@ -100,6 +103,30 @@ platform :ios do
     if !match_keychain_has_codesigning_identities? && type.to_s == "appstore"
       UI.important("⚠️  Still no identities after appstore match recovery. Escalating to match(force: true) to renew signing assets.")
       match(**args.merge(force: true))
+      unlock_match_keychain
+    end
+
+    # True zero-touch: if the certificates repo contains a cert without a usable private key,
+    # match may repeatedly import a non-functional .p12. In CI, we can optionally nuke and
+    # regenerate signing assets to self-heal.
+    if !match_keychain_has_codesigning_identities? && type.to_s == "appstore" && ENV["VV_MATCH_NUKE_ON_IDENTITY_FAILURE"].to_s == "1"
+      UI.important("🧨 VV_MATCH_NUKE_ON_IDENTITY_FAILURE=1 and still no identities. Nuking App Store signing assets and regenerating via match.")
+      match_nuke_args = {
+        type: type,
+        skip_confirmation: true
+      }
+      match_nuke_args[:app_identifier] = app_identifier if app_identifier
+      if api_key
+        match_nuke_args[:api_key] = api_key
+      else
+        match_nuke_args[:username] = ENV["FASTLANE_APPLE_ID"]
+        match_nuke_args[:team_id] = ENV["FASTLANE_TEAM_ID"]
+      end
+
+      match_nuke(**match_nuke_args)
+
+      # Recreate fresh cert+private-key material and import into keychain
+      match(**args.merge(force: true, skip_provisioning_profiles: false))
       unlock_match_keychain
     end
 

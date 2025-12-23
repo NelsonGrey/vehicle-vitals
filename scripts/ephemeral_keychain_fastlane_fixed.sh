@@ -111,7 +111,12 @@ cleanup() {
 trap cleanup EXIT
 
 echo "[ephemeral-keychain] Configuring temporary keychain"
-security default-keychain -s "$KC_PATH" 2>/dev/null || true
+# NOTE: Do not change the user's default keychain.
+# Some tools (notably `security cms` used to decode provisioning profiles)
+# can fail with confusing "Write permissions" errors when the default
+# keychain is a freshly-created ephemeral keychain.
+# Keeping the default keychain unchanged while adding the ephemeral keychain
+# to the search list is sufficient for `codesign`/Fastlane to find identities.
 security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null || true
 security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null || true
 

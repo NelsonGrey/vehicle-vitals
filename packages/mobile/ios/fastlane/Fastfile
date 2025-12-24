@@ -32,6 +32,16 @@ platform :ios do
   require 'tmpdir'
   require 'shellwords'
 
+  def ci_ios_build_number
+    explicit = ENV["IOS_BUILD_NUMBER"].to_s.strip
+    return explicit if explicit.match?(/\A\d+\z/) && explicit.to_i > 0
+
+    run_id = ENV["GITHUB_RUN_ID"].to_s.strip
+    return run_id if run_id.match?(/\A\d+\z/) && run_id.to_i > 0
+
+    Time.now.utc.strftime("%Y%m%d%H%M%S")
+  end
+
   def match_repo_write_url
     raw = ENV["MATCH_GIT_URL"].to_s.strip
     raise "MATCH_GIT_URL is not set" if raw.empty?
@@ -572,8 +582,10 @@ platform :ios do
 
   desc "Build iOS app for development without code signing"
   lane :build_development do
+    build_number = ci_ios_build_number
+    UI.message("Using iOS build number: #{build_number}")
     # Build the Flutter iOS app without code signing for development
-    sh("cd ../.. && flutter build ios --debug --no-codesign")
+    sh("cd ../.. && flutter build ios --debug --no-codesign --build-number=#{build_number}")
 
     # For development builds without certificates, just copy the .app file
     # Firebase App Distribution can accept .app files for development
@@ -598,6 +610,9 @@ platform :ios do
     release_notes = options[:release_notes] || "Automated build for TestFlight"
     feedback_email = ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com"
 
+    build_number = ci_ios_build_number
+    UI.message("Using iOS build number: #{build_number}")
+
     # Sync code signing certificates for TestFlight (distribution/appstore).
     # Development certificates are not required for an unsigned Flutter build + later resign.
     certificates_appstore
@@ -611,7 +626,7 @@ platform :ios do
     sh("bundle exec pod install")
 
     # Build the Flutter iOS app without code signing
-    sh("cd ../.. && flutter build ios --release --no-codesign")
+    sh("cd ../.. && flutter build ios --release --no-codesign --build-number=#{build_number}")
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")
@@ -675,6 +690,9 @@ platform :ios do
   lane :submit_to_app_store do |options|
     release_notes = options[:release_notes] || "Automated App Store submission"
 
+    build_number = ci_ios_build_number
+    UI.message("Using iOS build number: #{build_number}")
+
     # Sync code signing certificates for App Store
     certificates_appstore
 
@@ -687,7 +705,7 @@ platform :ios do
     sh("bundle exec pod install")
 
     # Build the Flutter iOS app without code signing
-    sh("cd ../.. && flutter build ios --release --no-codesign")
+    sh("cd ../.. && flutter build ios --release --no-codesign --build-number=#{build_number}")
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")

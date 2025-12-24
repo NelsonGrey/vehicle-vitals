@@ -78,7 +78,10 @@ fi
 
 KC_BASENAME="fastlane_tmp_keychain"
 KC_NAME="$KC_BASENAME.keychain-db"
-KC_PATH="$HOME/Library/Keychains/$KC_NAME"
+# Create the ephemeral keychain outside of ~/Library/Keychains so other desktop
+# apps don't start prompting for it if the user default/search list gets altered.
+KC_DIR="${RUNNER_TEMP:-/tmp}"
+KC_PATH="$KC_DIR/$KC_NAME"
 
 # NOTE: Avoid using a `tr </dev/urandom | head` pipeline here.
 # On some macOS runner setups, `tr` can get stuck and never terminates,
@@ -151,46 +154,14 @@ cleanup() {
 trap cleanup EXIT INT TERM HUP
 
 echo "[ephemeral-keychain] Configuring temporary keychain"
-# NOTE: We temporarily set the ephemeral keychain as the default during the
-# Fastlane run. When Fastlane needs to generate a new certificate (e.g., after
-# match_nuke), the private key generation can otherwise land in the login
-# keychain, leaving the certificate in the ephemeral keychain without its
-# matching private key ("no local code signing identities found").
+# NOTE: We intentionally do NOT set the user default keychain or user search list
+# to the ephemeral keychain. On self-hosted Macs this can cause unrelated desktop
+# apps (e.g., Microsoft OneNote) to repeatedly prompt for keychain access.
+#
+# Instead, we rely on Fastlane `match` importing into MATCH_KEYCHAIN_PATH and we
+# pass explicit keychain flags to codesign/xcodebuild via OTHER_CODE_SIGN_FLAGS.
 security unlock-keychain -p "$KC_PASS" "$KC_PATH" 2>/dev/null
 security set-keychain-settings -lut 7200 "$KC_PATH" 2>/dev/null
-
-# Ensure the temporary keychain is the ONLY keychain in the search list during
-# the Fastlane run. We've observed repeated key/cert mismatches (cert pubkey SHA-1
-# does not match the sign-capable private key application label), which most often
-# happens when the private key is generated/imported into a different keychain
-# (typically login) even though the certificate lands in the ephemeral keychain.
-#
-# NOTE: If this causes trust-chain visibility issues, we can re-add login later,
-# but forcing key material into the ephemeral keychain is the priority.
-KEYCHAIN_ARGS=("$KC_PATH")
-security list-keychains -d user -s "$KC_PATH" 2>/dev/null || true
-security list-keychains -s "$KC_PATH" 2>/dev/null || true
-
-# Set ephemeral as default just for this script's lifetime (restored in cleanup).
-# This MUST succeed, otherwise `match` can generate the private key in the login
-# keychain while importing the certificate into the ephemeral keychain, which
-# results in "0 valid identities".
-if ! security default-keychain -d user -s "$KC_PATH" 2>/dev/null; then
-  echo "[ephemeral-keychain] ERROR: Failed to set default keychain to $KC_PATH"
-  exit 4
-fi
-
-# Also set without `-d user` since some tools appear to follow the default
-# domain search list rather than the explicit user-domain list.
-security default-keychain -s "$KC_PATH" 2>/dev/null || true
-
-DEFAULT_KC_NOW=$(security default-keychain -d user 2>/dev/null | tr -d '"' | xargs || true)
-if [ -n "$DEFAULT_KC_NOW" ] && [ "$DEFAULT_KC_NOW" != "$KC_PATH" ]; then
-  echo "[ephemeral-keychain] ERROR: Default keychain did not switch to ephemeral"
-  echo "[ephemeral-keychain] Expected: $KC_PATH"
-  echo "[ephemeral-keychain] Actual:   $DEFAULT_KC_NOW"
-  exit 4
-fi
 
 echo "[ephemeral-keychain] Keychain preflight"
 security default-keychain -d user 2>/dev/null || true
@@ -212,6 +183,10 @@ fi
 export MATCH_KEYCHAIN_NAME="$KC_BASENAME"
 export MATCH_KEYCHAIN_PASSWORD="$KC_PASS"
 export MATCH_KEYCHAIN_PATH="$KC_PATH"
+
+# Ensure codesign/xcodebuild can target the ephemeral keychain without touching
+# global keychain defaults/search list.
+export OTHER_CODE_SIGN_FLAGS="--keychain $KC_PATH"
 
 if [ -n "${GITHUB_ENV:-}" ] && [ -w "$GITHUB_ENV" ]; then
   echo "MATCH_KEYCHAIN_NAME=$KC_BASENAME" >> "$GITHUB_ENV"

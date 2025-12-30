@@ -32,6 +32,23 @@ platform :ios do
   require 'tmpdir'
   require 'shellwords'
 
+  # Helper to set key partition list to avoid UI prompts
+  def set_partition_list(keychain_path, keychain_password)
+    UI.message("🔐 Setting key partition list for keychain: #{keychain_path}")
+    # Use system security command to allow access to the key by apple tools (codesign, etc.)
+    # This prevents the UI prompt for keychain access
+    cmd = "security set-key-partition-list -S apple-tool:,apple: -s -k #{keychain_password.shellescape} #{keychain_path.shellescape}"
+    
+    # Execute command and suppress output unless it fails
+    begin
+      sh(cmd, log: false)
+      UI.success("✅ Key partition list set successfully")
+    rescue => e
+      UI.error("⚠️ Failed to set key partition list: #{e.message}")
+      # Don't fail the build, just warn
+    end
+  end
+
   def ci_ios_build_number
     explicit = ENV["IOS_BUILD_NUMBER"].to_s.strip
     return explicit if explicit.match?(/\A\d+\z/) && explicit.to_i > 0
@@ -313,6 +330,11 @@ platform :ios do
       verbose: true
     )
 
+    # Ensure partition list is set to prevent UI prompts
+    if File.exist?(match_keychain_path)
+      set_partition_list(match_keychain_path, match_keychain_password)
+    end
+
     ensure_match_installed_identity!(type: "appstore")
   end
 
@@ -352,9 +374,9 @@ platform :ios do
             skip_set_partition_list: false
           )
           UI.success("✅ Created new development certificates successfully")
-        else
-          raise e
-        end
+      # Ensure partition list is set to prevent UI prompts
+      if File.exist?(match_keychain_path)
+        set_partition_list(match_keychain_path, match_keychain_password)
       end
 
       ensure_match_installed_identity!(type: "development", api_key: api_key)
@@ -384,6 +406,16 @@ platform :ios do
             keychain_name: match_keychain_name,
             keychain_password: match_keychain_password,
             skip_set_partition_list: false
+          )
+          UI.success("✅ Created new development certificates successfully")
+        else
+          raise e
+        end
+      end
+
+      # Ensure partition list is set to prevent UI prompts
+      if File.exist?(match_keychain_path)
+        set_partition_list(match_keychain_path, match_keychain_password) skip_set_partition_list: false
           )
           UI.success("✅ Created new development certificates successfully")
         else
@@ -537,25 +569,35 @@ platform :ios do
           end
           match(
             type: "appstore",
-            readonly: false,
-            force: true,
-            app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
-            api_key: api_key,
-            keychain_name: match_keychain_name,
-            keychain_password: match_keychain_password,
-            skip_set_partition_list: false,
-            verbose: true
-          )
-          UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
-        else
-          raise e
-        end
+      # Ensure partition list is set to prevent UI prompts
+      if File.exist?(match_keychain_path)
+        set_partition_list(match_keychain_path, match_keychain_password)
       end
 
       ensure_match_installed_identity!(
         type: "appstore",
         app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
         api_key: api_key
+      )
+    else
+      # Fallback for when API key is not available
+      UI.message("🔑 API key not available, using username/password authentication")
+      UI.message("📝 Note: For zero-touch efficiency, configure ASC_PRIVATE_KEY environment variable")
+
+      match(
+        type: "appstore",
+        readonly: true,  # Be conservative with certificate creation
+        username: ENV["FASTLANE_APPLE_ID"],
+        team_id: ENV["FASTLANE_TEAM_ID"],
+        keychain_name: match_keychain_name,
+        keychain_password: match_keychain_password,
+        skip_set_partition_list: false
+      )
+
+      # Ensure partition list is set to prevent UI prompts
+      if File.exist?(match_keychain_path)
+        set_partition_list(match_keychain_path, match_keychain_password)
+      end api_key: api_key
       )
     else
       # Fallback for when API key is not available

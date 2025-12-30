@@ -369,3 +369,4 @@ Desktop.ini
 *.xcworkspace
 *.xcuserdata
 *.xcodeproj/project.xcworkspace/
+packages/mobile/ios/fastlane/fastlane/

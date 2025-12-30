@@ -263,14 +263,14 @@ jobs:
             ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
             export GIT_SSH_COMMAND="ssh -i $MATCH_SSH_KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
 
-            BASE_MATCH_URL="git@github.com:mnelson3/nelson-grey-certificates.git"
+            BASE_MATCH_URL="git@github.com:mnelson3/nelson-grey.git"
             MATCH_GIT_URL="$BASE_MATCH_URL"
             export MATCH_GIT_URL
           else
           # Build a usable match repo URL. Prefer an explicitly-configured MATCH_GIT_URL.
           BASE_MATCH_URL="$MATCH_GIT_URL"
           if [[ -z "$BASE_MATCH_URL" ]]; then
-            BASE_MATCH_URL="https://github.com/mnelson3/nelson-grey-certificates.git"
+            BASE_MATCH_URL="https://github.com/mnelson3/nelson-grey.git"
           fi
 
           if [[ "$BASE_MATCH_URL" == *"@"* ]]; then

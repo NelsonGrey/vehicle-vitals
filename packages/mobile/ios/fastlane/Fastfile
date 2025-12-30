@@ -415,12 +415,7 @@ platform :ios do
 
       # Ensure partition list is set to prevent UI prompts
       if File.exist?(match_keychain_path)
-        set_partition_list(match_keychain_path, match_keychain_password) skip_set_partition_list: false
-          )
-          UI.success("✅ Created new development certificates successfully")
-        else
-          raise e
-        end
+        set_partition_list(match_keychain_path, match_keychain_password)
       end
 
       ensure_match_installed_identity!(type: "development")

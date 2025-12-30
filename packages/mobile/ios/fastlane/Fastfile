@@ -564,6 +564,19 @@ platform :ios do
           end
           match(
             type: "appstore",
+            readonly: false,
+            force: true,
+            app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
+            api_key: api_key,
+            keychain_name: match_keychain_name,
+            keychain_password: match_keychain_password,
+            skip_set_partition_list: false,
+            verbose: true
+          )
+          UI.success("✅ Recovered from certificate quota by nuking and regenerating signing assets")
+        end
+      end
+
       # Ensure partition list is set to prevent UI prompts
       if File.exist?(match_keychain_path)
         set_partition_list(match_keychain_path, match_keychain_password)
@@ -573,26 +586,6 @@ platform :ios do
         type: "appstore",
         app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
         api_key: api_key
-      )
-    else
-      # Fallback for when API key is not available
-      UI.message("🔑 API key not available, using username/password authentication")
-      UI.message("📝 Note: For zero-touch efficiency, configure ASC_PRIVATE_KEY environment variable")
-
-      match(
-        type: "appstore",
-        readonly: true,  # Be conservative with certificate creation
-        username: ENV["FASTLANE_APPLE_ID"],
-        team_id: ENV["FASTLANE_TEAM_ID"],
-        keychain_name: match_keychain_name,
-        keychain_password: match_keychain_password,
-        skip_set_partition_list: false
-      )
-
-      # Ensure partition list is set to prevent UI prompts
-      if File.exist?(match_keychain_path)
-        set_partition_list(match_keychain_path, match_keychain_password)
-      end api_key: api_key
       )
     else
       # Fallback for when API key is not available

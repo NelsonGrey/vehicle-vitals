@@ -832,3 +832,5 @@ platform :ios do
     UI.message("✅ Full release pipeline completed successfully")
   end
 end
+end
+end

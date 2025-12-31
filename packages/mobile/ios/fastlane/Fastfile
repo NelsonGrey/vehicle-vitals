@@ -142,7 +142,7 @@ platform :ios do
     args = {
       type: type,
       readonly: false,
-      keychain_name: match_keychain_name,
+      keychain_name: match_keychain_path,
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
       include_all_certificates: true,
@@ -280,13 +280,13 @@ platform :ios do
 
   before_all do
     if ENV["CI"]
-      keychain_name = match_keychain_name
-      # Only create if it's the default temp keychain
-      if keychain_name == "fastlane_tmp_keychain"
-        UI.message("🔐 Ensuring temporary keychain exists...")
+      keychain_path = match_keychain_path
+      # Only create if it's the default temp keychain or a specific path is provided
+      if keychain_path.include?("fastlane_tmp_keychain")
+        UI.message("🔐 Ensuring temporary keychain exists at #{keychain_path}...")
         begin
           create_keychain(
-            name: keychain_name,
+            name: keychain_path,
             password: match_keychain_password,
             unlock: true,
             timeout: 3600,
@@ -296,8 +296,7 @@ platform :ios do
           UI.message("⚠️  Keychain creation failed (might already exist): #{e.message}")
           begin
             unlock_keychain(
-              path: keychain_name,
-              password: match_keychain_password
+              path: keychain_path,
             )
           rescue => unlock_err
              UI.message("⚠️  Keychain unlock failed: #{unlock_err.message}")
@@ -381,7 +380,7 @@ platform :ios do
       readonly: true,
       username: ENV["FASTLANE_APPLE_ID"],
       team_id: ENV["FASTLANE_TEAM_ID"],
-      keychain_name: match_keychain_name,
+      keychain_name: match_keychain_path,
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
       verbose: true
@@ -512,7 +511,7 @@ platform :ios do
           readonly: true,
           app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
           api_key: api_key,
-          keychain_name: match_keychain_name,
+          keychain_name: match_keychain_path,
           keychain_password: match_keychain_password,
           skip_set_partition_list: false
         )
@@ -531,7 +530,7 @@ platform :ios do
               force: true,
               app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
               api_key: api_key,
-              keychain_name: match_keychain_name,
+              keychain_name: match_keychain_path,
               keychain_password: match_keychain_password,
               skip_set_partition_list: false
             )
@@ -556,7 +555,7 @@ platform :ios do
                 force: true,
                 app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
                 api_key: api_key,
-                keychain_name: match_keychain_name,
+                keychain_name: match_keychain_path,
                 keychain_password: match_keychain_password,
                 skip_set_partition_list: false,
                 verbose: true
@@ -574,7 +573,7 @@ platform :ios do
               readonly: false,
               app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
               api_key: api_key,
-              keychain_name: match_keychain_name,
+              keychain_name: match_keychain_path,
               keychain_password: match_keychain_password,
               skip_set_partition_list: false,
               verbose: true
@@ -600,7 +599,7 @@ platform :ios do
                 force: true,
                 app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
                 api_key: api_key,
-                keychain_name: match_keychain_name,
+                keychain_name: match_keychain_path,
                 keychain_password: match_keychain_password,
                 skip_set_partition_list: false,
                 verbose: true

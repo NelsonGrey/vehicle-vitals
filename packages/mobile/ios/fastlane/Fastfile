@@ -290,23 +290,35 @@ platform :ios do
       keychain_path = match_keychain_path
       # Only create if it's the default temp keychain or a specific path is provided
       if keychain_path.include?("fastlane_tmp_keychain")
-        UI.message("🔐 Ensuring temporary keychain exists at #{keychain_path}...")
-        begin
-          create_keychain(
-            name: match_keychain_name,
-            password: match_keychain_password,
-            unlock: true,
-            timeout: 3600,
-            lock_when_sleeps: false
-          )
-        rescue => e
-          UI.message("⚠️  Keychain creation failed (might already exist): #{e.message}")
+        if File.exist?(keychain_path)
+          UI.message("🔐 Keychain already exists at #{keychain_path}, skipping creation.")
           begin
             unlock_keychain(
               path: keychain_path,
+              password: match_keychain_password
             )
           rescue => unlock_err
              UI.message("⚠️  Keychain unlock failed: #{unlock_err.message}")
+          end
+        else
+          UI.message("🔐 Ensuring temporary keychain exists at #{keychain_path}...")
+          begin
+            create_keychain(
+              name: match_keychain_name,
+              password: match_keychain_password,
+              unlock: true,
+              timeout: 3600,
+              lock_when_sleeps: false
+            )
+          rescue => e
+            UI.message("⚠️  Keychain creation failed (might already exist): #{e.message}")
+            begin
+              unlock_keychain(
+                path: keychain_path,
+              )
+            rescue => unlock_err
+               UI.message("⚠️  Keychain unlock failed: #{unlock_err.message}")
+            end
           end
         end
       end

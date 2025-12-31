@@ -107,6 +107,14 @@ PY
 fi
 
 echo "[ephemeral-keychain] Creating temporary keychain: $KC_NAME"
+
+# Ensure it doesn't exist from a previous failed run
+if [ -f "$KC_PATH" ]; then
+  echo "[ephemeral-keychain] Removing existing temporary keychain at $KC_PATH"
+  security delete-keychain "$KC_PATH" 2>/dev/null || true
+  rm -f "$KC_PATH"
+fi
+
 security create-keychain -p "$KC_PASS" "$KC_PATH"
 
 ORIG_DEFAULT_KC=$(security default-keychain -d user 2>/dev/null | tr -d '"' | xargs || true)

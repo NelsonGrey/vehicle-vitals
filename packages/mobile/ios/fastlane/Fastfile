@@ -109,7 +109,8 @@ platform :ios do
   end
 
   def match_keychain_path
-    ENV["MATCH_KEYCHAIN_PATH"].to_s.empty? ? match_keychain_name : ENV["MATCH_KEYCHAIN_PATH"]
+    # Always use the default keychain location to avoid issues with absolute paths in match
+    File.join(Dir.home, "Library", "Keychains", "#{match_keychain_name}-db")
   end
 
   def match_keychain_name
@@ -142,7 +143,7 @@ platform :ios do
     args = {
       type: type,
       readonly: false,
-      keychain_name: match_keychain_path,
+      keychain_name: match_keychain_name,
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
       include_all_certificates: true,
@@ -286,7 +287,7 @@ platform :ios do
         UI.message("🔐 Ensuring temporary keychain exists at #{keychain_path}...")
         begin
           create_keychain(
-            name: keychain_path,
+            name: match_keychain_name,
             password: match_keychain_password,
             unlock: true,
             timeout: 3600,
@@ -380,7 +381,7 @@ platform :ios do
       readonly: true,
       username: ENV["FASTLANE_APPLE_ID"],
       team_id: ENV["FASTLANE_TEAM_ID"],
-      keychain_name: match_keychain_path,
+      keychain_name: match_keychain_name,
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
       verbose: true

@@ -374,6 +374,10 @@ platform :ios do
             skip_set_partition_list: false
           )
           UI.success("✅ Created new development certificates successfully")
+        else
+          raise e
+        end
+      end
       # Ensure partition list is set to prevent UI prompts
       if File.exist?(match_keychain_path)
         set_partition_list(match_keychain_path, match_keychain_password)
@@ -831,6 +835,4 @@ platform :ios do
 
     UI.message("✅ Full release pipeline completed successfully")
   end
-end
-end
 end

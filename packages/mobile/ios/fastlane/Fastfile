@@ -225,7 +225,35 @@ platform :ios do
     unlock_match_keychain
     if !match_keychain_has_codesigning_identities? && type.to_s == "appstore"
       UI.important("⚠️  Still no identities after appstore match recovery. Escalating to match(force: true) to renew signing assets.")
-      match(**args.merge(force: true))
+      begin
+        match(**args.merge(force: true))
+      rescue Exception => e
+        message = e.message.to_s
+        max_cert_reached = message.match?(/Could not create another Distribution certificate|reached the maximum number of available Distribution certificates/i)
+        
+        if max_cert_reached
+           UI.important("⚠️  Distribution certificate quota reached during forced match. Nuking appstore signing assets and retrying.")
+           match_nuke_args = { type: type }
+           match_nuke_args[:app_identifier] = app_identifier if app_identifier
+           match_nuke_args[:skip_confirmation] = true
+           if api_key
+             match_nuke_args[:api_key] = api_key
+           else
+             match_nuke_args[:username] = ENV["FASTLANE_APPLE_ID"]
+             match_nuke_args[:team_id] = ENV["FASTLANE_TEAM_ID"]
+           end
+   
+           match_nuke(**match_nuke_args)
+           begin
+             purge_match_repo_appstore_assets!
+           rescue Exception => purge_err
+             UI.important("⚠️  Post-nuke match repo purge failed (#{purge_err.class}). Continuing...")
+           end
+           match(**args.merge(force: true, skip_provisioning_profiles: false))
+        else
+           raise e
+        end
+      end
       unlock_match_keychain
     end
 

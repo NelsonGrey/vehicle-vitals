@@ -250,6 +250,35 @@ platform :ios do
     end
   end
 
+  before_all do
+    if ENV["CI"]
+      keychain_name = match_keychain_name
+      # Only create if it's the default temp keychain
+      if keychain_name == "fastlane_tmp_keychain"
+        UI.message("🔐 Ensuring temporary keychain exists...")
+        begin
+          create_keychain(
+            name: keychain_name,
+            password: match_keychain_password,
+            unlock: true,
+            timeout: 3600,
+            lock_when_sleeps: false
+          )
+        rescue => e
+          UI.message("⚠️  Keychain creation failed (might already exist): #{e.message}")
+          begin
+            unlock_keychain(
+              path: keychain_name,
+              password: match_keychain_password
+            )
+          rescue => unlock_err
+             UI.message("⚠️  Keychain unlock failed: #{unlock_err.message}")
+          end
+        end
+      end
+    end
+  end
+
   desc "Distribute iOS app to Firebase App Distribution"
   lane :distribute do |options|
     build_type = options[:build_type] || "debug"

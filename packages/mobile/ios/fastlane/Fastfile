@@ -109,11 +109,17 @@ platform :ios do
   end
 
   def match_keychain_path
+    return ENV["MATCH_KEYCHAIN_PATH"] unless ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
     # Always use the default keychain location to avoid issues with absolute paths in match
     File.join(Dir.home, "Library", "Keychains", "#{match_keychain_name}-db")
   end
 
   def match_keychain_name
+    if !ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
+      # If we have a full path, return it without extension so match can find it
+      # match automatically appends -db or .keychain, so we must strip it
+      return ENV["MATCH_KEYCHAIN_PATH"].sub(/\.keychain-db$/, "").sub(/\.keychain$/, "")
+    end
     ENV["MATCH_KEYCHAIN_NAME"].to_s.empty? ? "fastlane_tmp_keychain" : ENV["MATCH_KEYCHAIN_NAME"]
   end
 

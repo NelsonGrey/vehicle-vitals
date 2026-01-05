@@ -732,7 +732,9 @@ platform :ios do
     ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
 
     # Install CocoaPods dependencies first
-    sh("rm -f Podfile.lock")
+    # Ensure a clean slate for CocoaPods to avoid linker issues (absl/gRPC)
+    sh("rm -rf ../Pods")
+    sh("rm -f ../Podfile.lock")
     sh("rm -rf ~/Library/Developer/Xcode/DerivedData")
     # We do NOT run pod install here because flutter build ipa will do it, 
     # and running it here might cause conflicts if flutter clean is run afterwards.

@@ -47,6 +47,7 @@ jobs:
         working-directory: packages/mobile
     steps:
       - name: iOS Build Environment Check
+        working-directory: .
         run: |
           echo '🍎 Running on self-hosted macOS runner'
           echo '📍 Hostname: $(hostname)'
@@ -55,6 +56,7 @@ jobs:
           echo '🛠️  Xcode version: $(xcodebuild -version | head -1)'
 
       - name: 🔧 Fix Git Config for HTTPS Checkout
+        working-directory: .
         run: |
           echo '🔄 Removing any global SSH redirects for GitHub to ensure HTTPS checkout works...'
           git config --global --unset-all url."git@github.com:".insteadOf || true

@@ -735,7 +735,10 @@ platform :ios do
     # Ensure a clean slate for CocoaPods to avoid linker issues (absl/gRPC)
     sh("rm -rf ../Pods")
     sh("rm -f ../Podfile.lock")
-    sh("rm -rf ~/Library/Developer/Xcode/DerivedData")
+    
+    # Use fastlane action to clear derived data safely (handles failures better than rm -rf)
+    clear_derived_data
+    
     # We do NOT run pod install here because flutter build ipa will do it, 
     # and running it here might cause conflicts if flutter clean is run afterwards.
 

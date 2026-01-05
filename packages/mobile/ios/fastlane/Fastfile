@@ -732,10 +732,12 @@ platform :ios do
     ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
 
     # Install CocoaPods dependencies first
-    sh("rm -f Podfile.lock"); sh("rm -rf ~/Library/Developer/Xcode/DerivedData"); sh("bundle exec pod install --repo-update")
+    sh("rm -f Podfile.lock")
+    sh("rm -rf ~/Library/Developer/Xcode/DerivedData")
+    sh("bundle exec pod install --repo-update")
 
     # Build the Flutter iOS app without code signing
-    sh("cd ../.. && flutter build ios --release --no-codesign --build-number=#{build_number}")
+    sh("cd ../.. && flutter clean && flutter build ios --release --no-codesign --build-number=#{build_number}")
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")

@@ -737,14 +737,13 @@ platform :ios do
     sh("bundle exec pod install --repo-update")
 
     # Build the Flutter iOS app without code signing
-    sh("cd ../.. && flutter clean && flutter build ios --release --no-codesign --build-number=#{build_number}")
+    # Note: We use 'flutter build ipa' with --no-codesign to ensure SwiftSupport is included in the archive
+    # and then exported to an IPA. 'flutter build ios' only creates a .app which lacks SwiftSupport when manually zipped.
+    sh("cd ../.. && flutter clean && flutter build ipa --release --no-codesign --build-number=#{build_number} --export-method=app-store")
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")
-    sh("mkdir -p Payload")
-    sh("cp -r ../../build/ios/iphoneos/Runner.app Payload/")
-    sh("zip -r ./builds/Vehicle-Vitals.ipa Payload/")
-    sh("rm -rf Payload")
+    sh("cp ../../build/ios/ipa/Vehicle-Vitals.ipa ./builds/Vehicle-Vitals.ipa")
 
     # Wait for IPA to be fully written
     sh("while [ ! -f ./builds/Vehicle-Vitals.ipa ] || [ ! -s ./builds/Vehicle-Vitals.ipa ]; do sleep 1; done")

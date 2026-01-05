@@ -756,6 +756,10 @@ platform :ios do
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")
+
+    # DEBUG: List build output to troubleshoot missing IPA
+    sh("ls -R ../../build/ios || true")
+
     # Check if the IPA exists in the expected location, if not, try to search for any IPA recursively in build dir
     # Sometimes it might be in build/ios/iphoneos/ or similar if export skipped
     ipa_source = "../../build/ios/ipa/Vehicle-Vitals.ipa"
@@ -769,8 +773,13 @@ platform :ios do
       else
         # Fallback: check if Runner.app exists and we can zip it (last resort)
         runner_app = "../../build/ios/iphoneos/Runner.app"
+        # Check alternative location for Runner.app
+        unless File.exist?(runner_app)
+          runner_app = "../../build/ios/Release-iphoneos/Runner.app"
+        end
+
         if File.exist?(runner_app)
-             UI.message("⚠️  IPA missing but Runner.app found. Manually packaging IPA...")
+             UI.message("⚠️  IPA missing but Runner.app found at #{runner_app}. Manually packaging IPA...")
              payload_dir = "../../build/ios/Payload"
              sh("rm -rf #{payload_dir} && mkdir -p #{payload_dir}")
              sh("cp -r #{runner_app} #{payload_dir}/")

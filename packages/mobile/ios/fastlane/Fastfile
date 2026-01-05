@@ -734,12 +734,14 @@ platform :ios do
     # Install CocoaPods dependencies first
     sh("rm -f Podfile.lock")
     sh("rm -rf ~/Library/Developer/Xcode/DerivedData")
-    sh("bundle exec pod install --repo-update")
+    # We do NOT run pod install here because flutter build ipa will do it, 
+    # and running it here might cause conflicts if flutter clean is run afterwards.
 
     # Build the Flutter iOS app without code signing
     # Note: We use 'flutter build ipa' with --no-codesign to ensure SwiftSupport is included in the archive
     # and then exported to an IPA. 'flutter build ios' only creates a .app which lacks SwiftSupport when manually zipped.
-    sh("cd ../.. && flutter clean && flutter build ipa --release --no-codesign --build-number=#{build_number} --export-method=app-store")
+    # We run flutter clean first to ensure a fresh build, then flutter pub get to ensure dependencies are available for pod install.
+    sh("cd ../.. && flutter clean && flutter pub get && flutter build ipa --release --no-codesign --build-number=#{build_number} --export-method=app-store")
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")

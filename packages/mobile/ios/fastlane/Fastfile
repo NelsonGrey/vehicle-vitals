@@ -746,7 +746,13 @@ platform :ios do
     # Note: We use 'flutter build ipa' with --no-codesign to ensure SwiftSupport is included in the archive
     # and then exported to an IPA. 'flutter build ios' only creates a .app which lacks SwiftSupport when manually zipped.
     # We run flutter clean first to ensure a fresh build, then flutter pub get to ensure dependencies are available for pod install.
-    sh("cd ../.. && flutter clean && flutter pub get && flutter build ipa --release --no-codesign --build-number=#{build_number} --export-method=app-store")
+    Dir.chdir("../../") do
+      sh("flutter clean")
+      sh("flutter pub get")
+      # Sleep to allow file system to settle (DerivedData clean + flutter clean)
+      sleep(5)
+      sh("flutter build ipa --release --no-codesign --build-number=#{build_number} --export-method=app-store")
+    end
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")

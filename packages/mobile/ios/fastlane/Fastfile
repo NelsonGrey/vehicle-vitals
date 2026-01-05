@@ -747,16 +747,31 @@ platform :ios do
 
     # Create unsigned IPA from the app with proper structure
     sh("mkdir -p ./builds")
-    # Check if the IPA exists in the expected location, if not, try to find it
+    # Check if the IPA exists in the expected location, if not, try to search for any IPA recursively in build dir
+    # Sometimes it might be in build/ios/iphoneos/ or similar if export skipped
     ipa_source = "../../build/ios/ipa/Vehicle-Vitals.ipa"
     unless File.exist?(ipa_source)
-      UI.message("⚠️  IPA not found at #{ipa_source}, searching for any .ipa file...")
-      found_ipas = Dir.glob("../../build/ios/ipa/*.ipa")
+      UI.message("⚠️  IPA not found at #{ipa_source}, searching deeper in ../../build/ios...")
+      # Widen search to entire build/ios directory
+      found_ipas = Dir.glob("../../build/ios/**/*.ipa") 
       if found_ipas.any?
         ipa_source = found_ipas.first
         UI.message("✅  Found IPA at #{ipa_source}")
       else
-        UI.user_error!("❌  Could not find any IPA file in ../../build/ios/ipa/")
+        # Fallback: check if Runner.app exists and we can zip it (last resort)
+        runner_app = "../../build/ios/iphoneos/Runner.app"
+        if File.exist?(runner_app)
+             UI.message("⚠️  IPA missing but Runner.app found. Manually packaging IPA...")
+             payload_dir = "../../build/ios/Payload"
+             sh("rm -rf #{payload_dir} && mkdir -p #{payload_dir}")
+             sh("cp -r #{runner_app} #{payload_dir}/")
+             ipa_source = "../../build/ios/ipa/Vehicle-Vitals-Manual.ipa"
+             sh("mkdir -p ../../build/ios/ipa")
+             sh("cd ../../build/ios && zip -r ipa/Vehicle-Vitals-Manual.ipa Payload")
+             UI.message("✅  Manually created IPA at #{ipa_source}")
+        else
+             UI.user_error!("❌  Could not find any IPA file in ../../build/ios/**/* nor Runner.app")
+        end
       end
     end
     sh("cp #{ipa_source} ./builds/Vehicle-Vitals.ipa")

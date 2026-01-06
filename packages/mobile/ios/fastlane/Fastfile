@@ -115,9 +115,9 @@ platform :ios do
   end
 
   def match_keychain_name
-    raw_path = ENV["MATCH_KEYCHAIN_PATH"]
-    raw_path = ENV["MATCH_KEYCHAIN_NAME"] if raw_path.to_s.empty?
-
+    return ENV["MATCH_KEYCHAIN_PATH"] unless ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
+    
+    raw_path = ENV["MATCH_KEYCHAIN_NAME"]
     if !raw_path.to_s.empty?
       # Extract name from path if provided
       # This handles cases where scripts provide a full path

@@ -43,14 +43,7 @@ post_install do |installer|
     # Fix for 'absl/strings/escaping.h' file not found in gRPC-Core when using use_frameworks!
     if target.name == 'gRPC-Core'
       target.build_configurations.each do |config|
-        config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
-        if config.build_settings['HEADER_SEARCH_PATHS'].is_a?(Array)
-           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/abseil/cpp"'
-           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/abseil-cpp"'
-           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/abseil"'
-        else
-           config.build_settings['HEADER_SEARCH_PATHS'] += ' "$(PODS_ROOT)/abseil/cpp" "$(PODS_ROOT)/abseil-cpp" "$(PODS_ROOT)/abseil"'
-        end
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
       end
     end
   end

@@ -757,8 +757,8 @@ platform :ios do
     sh("rm -rf ../Pods")
     sh("rm -f ../Podfile.lock")
     
-    # Use fastlane action to clear derived data safely (handles failures better than rm -rf)
-    # clear_derived_data
+    # Use fastlane action to clear derived data safely
+    clear_derived_data
     
     # We do NOT run pod install here because flutter build ipa will do it, 
     # and running it here might cause conflicts if flutter clean is run afterwards.

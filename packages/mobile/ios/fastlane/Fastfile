@@ -115,6 +115,12 @@ platform :ios do
   end
 
   def match_keychain_name
+    # If setup_ci or env vars provide the path, use the path (stripped of extension) as the name
+    # This allows match to find keychains in non-standard locations (like CI temp dirs)
+    if !ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
+      return ENV["MATCH_KEYCHAIN_PATH"].gsub(/(\.keychain-db|\.keychain)$/, "")
+    end
+
     # Prefer the name from env var if set (setup_ci sets this)
     # This relies on the keychain being added to the search list by setup_ci
     return ENV["MATCH_KEYCHAIN_NAME"] unless ENV["MATCH_KEYCHAIN_NAME"].to_s.empty?
@@ -527,7 +533,7 @@ platform :ios do
           readonly: true,
           app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
           api_key: api_key,
-          keychain_name: match_keychain_path,
+          keychain_name: match_keychain_name,
           keychain_password: match_keychain_password,
           skip_set_partition_list: false
         )
@@ -546,7 +552,7 @@ platform :ios do
               force: true,
               app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
               api_key: api_key,
-              keychain_name: match_keychain_path,
+              keychain_name: match_keychain_name,
               keychain_password: match_keychain_password,
               skip_set_partition_list: false
             )
@@ -571,7 +577,7 @@ platform :ios do
                 force: true,
                 app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
                 api_key: api_key,
-                keychain_name: match_keychain_path,
+                keychain_name: match_keychain_name,
                 keychain_password: match_keychain_password,
                 skip_set_partition_list: false,
                 verbose: true
@@ -589,7 +595,7 @@ platform :ios do
               readonly: false,
               app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
               api_key: api_key,
-              keychain_name: match_keychain_path,
+              keychain_name: match_keychain_name,
               keychain_password: match_keychain_password,
               skip_set_partition_list: false,
               verbose: true
@@ -615,7 +621,7 @@ platform :ios do
                 force: true,
                 app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
                 api_key: api_key,
-                keychain_name: match_keychain_path,
+                keychain_name: match_keychain_name,
                 keychain_password: match_keychain_password,
                 skip_set_partition_list: false,
                 verbose: true

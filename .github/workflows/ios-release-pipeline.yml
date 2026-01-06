@@ -133,18 +133,44 @@ jobs:
       - name: 🔧 Make Distribution Script Executable
         run: chmod +x packages/mobile/distribute-ios.sh
 
-      - name: 🔐 Setup Fastlane Environment
+      - name: � Build and Distribute iOS App
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.release_type == 'app_store' && 'PRODUCTION' || 'DEVELOPMENT' }}
+          FLUTTER_ROOT: ${{ env.FLUTTER_ROOT }}
         run: |
+          echo "🚀 Building and distributing iOS app..."
+
+          RELEASE_NOTES="${{ github.event.inputs.release_notes || format('Release {0} - {1}', github.ref_name, github.sha) }}"
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+
           cd packages/mobile/ios
+          chmod +x ../../../scripts/ephemeral_keychain_fastlane_fixed.sh
 
-          MATCH_GIT_URL_VALUE='${{ secrets.MATCH_GIT_URL }}'
-          NELSON_GREY_PAT='${{ secrets.NELSON_GREY_PAT }}'
-          MATCH_SSH_PRIVATE_KEY='${{ secrets.MATCH_SSH_PRIVATE_KEY }}'
-          MATCH_GIT_URL_VALUE="$(printf %s "$MATCH_GIT_URL_VALUE" | tr -d '\r\n')"
+          # Export secrets for Fastlane
+          export FASTLANE_APPLE_ID='${{ secrets.FASTLANE_APPLE_ID }}'
+          export FASTLANE_PASSWORD='${{ secrets.FASTLANE_PASSWORD }}'
+          export FASTLANE_TEAM_ID='${{ secrets.FASTLANE_TEAM_ID }}'
+          export FASTLANE_ITC_TEAM_ID='${{ secrets.FASTLANE_ITC_TEAM_ID }}'
+          export ASC_KEY_ID='${{ secrets.ASC_KEY_ID }}'
+          export ASC_ISSUER_ID='${{ secrets.ASC_ISSUER_ID }}'
+          export ASC_PRIVATE_KEY='${{ secrets.ASC_PRIVATE_KEY }}'
+          export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
+          export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
+
+          # Secrets for match repo logic
+          export MATCH_GIT_URL='${{ secrets.MATCH_GIT_URL }}'
+          export NELSON_GREY_PAT='${{ secrets.NELSON_GREY_PAT }}'
+          export MATCH_SSH_PRIVATE_KEY='${{ secrets.MATCH_SSH_PRIVATE_KEY }}'
+
+          # Clean secrets
+          MATCH_PASSWORD="$(printf %s "$MATCH_PASSWORD" | tr -d '\r\n')"
+          MATCH_GIT_URL="$(printf %s "$MATCH_GIT_URL" | tr -d '\r\n')"
           NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"
-          # SSH private keys must keep newlines; only strip CR (Windows line endings).
+          # SSH private keys must keep newlines; only strip CR.
           MATCH_SSH_PRIVATE_KEY="$(printf %s "$MATCH_SSH_PRIVATE_KEY" | tr -d '\r')"
+          export MATCH_PASSWORD
 
+          # SSH / HTTPS Repo Selection Logic
           USE_MATCH_SSH=0
           if [[ -n "$MATCH_SSH_PRIVATE_KEY" ]]; then
             echo '🔐 SSH key provided for match repo access; validating...'
@@ -152,7 +178,6 @@ jobs:
             chmod 700 "$HOME/.ssh"
             MATCH_SSH_KEY_FILE="$HOME/.ssh/match_repo_key"
 
-            # Some setups store the private key base64-encoded to avoid multiline secrets.
             if [[ "$MATCH_SSH_PRIVATE_KEY" == "-----BEGIN "* ]]; then
               printf '%s' "$MATCH_SSH_PRIVATE_KEY" > "$MATCH_SSH_KEY_FILE"
             else
@@ -164,9 +189,7 @@ jobs:
             fi
 
             chmod 600 "$MATCH_SSH_KEY_FILE"
-            echo "🔎 match SSH key first line: $(head -n 1 "$MATCH_SSH_KEY_FILE" 2>/dev/null || true)"
-            echo "🔎 match SSH key bytes: $(wc -c < "$MATCH_SSH_KEY_FILE" 2>/dev/null | tr -d ' ')"
-
+            
             if ssh-keygen -y -f "$MATCH_SSH_KEY_FILE" >/dev/null 2>&1; then
               USE_MATCH_SSH=1
             else
@@ -179,65 +202,30 @@ jobs:
             echo '🔐 Using SSH key for match repo access'
             ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
             export GIT_SSH_COMMAND="ssh -i $MATCH_SSH_KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
-            MATCH_GIT_URL_VALUE="git@github.com:mnelson3/nelson-grey.git"
+            export MATCH_GIT_URL="git@github.com:mnelson3/nelson-grey.git"
           else
-
-          BASE_MATCH_URL="$MATCH_GIT_URL_VALUE"
-          if [[ -z "$BASE_MATCH_URL" ]]; then
-            BASE_MATCH_URL="https://github.com/mnelson3/nelson-grey.git"
-          fi
-
-          if [[ "$BASE_MATCH_URL" == *"@"* ]]; then
-            MATCH_GIT_URL_VALUE="$BASE_MATCH_URL"
-          else
-            if [[ -z "$NELSON_GREY_PAT" ]]; then
-              echo '❌ MATCH_GIT_URL does not include credentials and NELSON_GREY_PAT is not set.'
-              exit 1
+            BASE_MATCH_URL="$MATCH_GIT_URL"
+            if [[ -z "$BASE_MATCH_URL" ]]; then
+              BASE_MATCH_URL="https://github.com/mnelson3/nelson-grey.git"
             fi
-            if [[ "$BASE_MATCH_URL" == https://* ]]; then
-              MATCH_GIT_URL_VALUE="https://mnelson3:${NELSON_GREY_PAT}@${BASE_MATCH_URL#https://}"
+
+            if [[ "$BASE_MATCH_URL" == *"@"* ]]; then
+              export MATCH_GIT_URL="$BASE_MATCH_URL"
             else
-              MATCH_GIT_URL_VALUE="https://mnelson3:${NELSON_GREY_PAT}@github.com/${BASE_MATCH_URL#github.com/}"
+              if [[ -z "$NELSON_GREY_PAT" ]]; then
+                echo '❌ MATCH_GIT_URL does not include credentials and NELSON_GREY_PAT is not set.'
+                exit 1
+              fi
+              if [[ "$BASE_MATCH_URL" == https://* ]]; then
+                export MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@${BASE_MATCH_URL#https://}"
+              else
+                export MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@github.com/${BASE_MATCH_URL#github.com/}"
+              fi
             fi
           fi
-          fi
 
-          # Create .env file for Fastlane with all required environment variables
-          cat > .env << EOF
-          # Apple Developer Account
-          FASTLANE_APPLE_ID=${{ secrets.FASTLANE_APPLE_ID }}
-          FASTLANE_PASSWORD=${{ secrets.FASTLANE_PASSWORD }}
-          FASTLANE_TEAM_ID=${{ secrets.FASTLANE_TEAM_ID }}
-          FASTLANE_ITC_TEAM_ID=${{ secrets.FASTLANE_ITC_TEAM_ID }}
-
-          # App Store Connect API Key
-          ASC_KEY_ID=${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID=${{ secrets.ASC_ISSUER_ID }}
-          ASC_PRIVATE_KEY=${{ secrets.ASC_PRIVATE_KEY }}
-
-          # Match Configuration
-          MATCH_GIT_URL=$MATCH_GIT_URL_VALUE
-          MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}
-
-          # TestFlight Configuration
-          BETA_FEEDBACK_EMAIL=${{ secrets.BETA_FEEDBACK_EMAIL }}
-          EOF
-
-          # Create App Store Connect private key file from base64 encoded secret
-          echo "${{ secrets.ASC_PRIVATE_KEY }}" | base64 -d > asc_private_key.p8
-
-      - name: 🚀 Execute Release Pipeline
-        env:
-          ENVIRONMENT: ${{ github.event.inputs.release_type == 'app_store' && 'PRODUCTION' || 'DEVELOPMENT' }}
-          FASTLANE_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          FLUTTER_ROOT: ${{ env.FLUTTER_ROOT }}
-        run: |
-          # Set release notes environment variable
-          RELEASE_NOTES="${{ github.event.inputs.release_notes || format('Release {0} - {1}', github.ref_name, github.sha) }}"
-
-          cd packages/mobile/ios
-
-          chmod +x ../../../scripts/ephemeral_keychain_fastlane_fixed.sh
+          # Create App Store Connect private key file
+          echo "$ASC_PRIVATE_KEY" | base64 -d > asc_private_key.p8
 
           # Execute the appropriate release pipeline based on type
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"

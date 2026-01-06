@@ -115,16 +115,19 @@ platform :ios do
   end
 
   def match_keychain_name
-    if !ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
+    raw_path = ENV["MATCH_KEYCHAIN_PATH"]
+    raw_path = ENV["MATCH_KEYCHAIN_NAME"] if raw_path.to_s.empty?
+
+    if !raw_path.to_s.empty?
       # Extract name from path if provided
       # This handles cases where scripts provide a full path
-      basename = File.basename(ENV["MATCH_KEYCHAIN_PATH"])
+      basename = File.basename(raw_path)
       # Strip extension if present
       basename = basename.sub(/\.keychain-db$/, "").sub(/\.keychain$/, "")
       return basename
     end
 
-    ENV["MATCH_KEYCHAIN_NAME"].to_s.empty? ? "fastlane_tmp_keychain" : ENV["MATCH_KEYCHAIN_NAME"]
+    "fastlane_tmp_keychain"
   end
 
   def match_keychain_password

@@ -39,5 +39,19 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Fix for 'absl/strings/escaping.h' file not found in gRPC-Core when using use_frameworks!
+    if target.name == 'gRPC-Core'
+      target.build_configurations.each do |config|
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+        if config.build_settings['HEADER_SEARCH_PATHS'].is_a?(Array)
+           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/abseil/cpp"'
+           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/abseil-cpp"'
+           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/abseil"'
+        else
+           config.build_settings['HEADER_SEARCH_PATHS'] += ' "$(PODS_ROOT)/abseil/cpp" "$(PODS_ROOT)/abseil-cpp" "$(PODS_ROOT)/abseil"'
+        end
+      end
+    end
   end
 end

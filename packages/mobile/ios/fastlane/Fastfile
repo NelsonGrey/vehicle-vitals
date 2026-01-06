@@ -768,6 +768,8 @@ platform :ios do
     # and then exported to an IPA. 'flutter build ios' only creates a .app which lacks SwiftSupport when manually zipped.
     # We run flutter clean first to ensure a fresh build, then flutter pub get to ensure dependencies are available for pod install.
     Dir.chdir("../../") do
+      # Manually clean build directory to avoid permission issues with "Runner" app removal
+      sh("rm -rf build")
       # sh("flutter clean") # Disabled to prevent stat cache errors on concurrent usage / cache deletion
       sh("flutter pub get")
       # Sleep to allow file system to settle (DerivedData clean + flutter clean)

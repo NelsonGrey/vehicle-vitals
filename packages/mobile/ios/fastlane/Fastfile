@@ -423,7 +423,8 @@ platform :ios do
       keychain_name: match_keychain_name,
       keychain_password: match_keychain_password,
       skip_set_partition_list: false,
-      verbose: true
+      verbose: true,
+      force: false
     )
 
     # Ensure partition list is set to prevent UI prompts
@@ -567,7 +568,7 @@ platform :ios do
             match(
               type: "appstore",
               readonly: false,
-              force: true,
+              force: false,
               app_identifier: ["com.nelsongrey.vehiclevitals.app.ios"],
               api_key: api_key,
               keychain_name: match_keychain_name,
@@ -760,62 +761,33 @@ platform :ios do
     # Use fastlane action to clear derived data safely
     clear_derived_data
     
-    # We do NOT run pod install here because flutter build ipa will do it, 
-    # and running it here might cause conflicts if flutter clean is run afterwards.
-
-    # Build the Flutter iOS app without code signing
-    # Note: We use 'flutter build ipa' with --no-codesign to ensure SwiftSupport is included in the archive
-    # and then exported to an IPA. 'flutter build ios' only creates a .app which lacks SwiftSupport when manually zipped.
-    # We run flutter clean first to ensure a fresh build, then flutter pub get to ensure dependencies are available for pod install.
+    # Ensure dependencies are available
     Dir.chdir("../../") do
-      # Manually clean build directory to avoid permission issues with "Runner" app removal
       sh("rm -rf build")
-      # sh("flutter clean") # Disabled to prevent stat cache errors on concurrent usage / cache deletion
+      sh("flutter clean || true")
       sh("flutter pub get")
-      # Sleep to allow file system to settle (DerivedData clean + flutter clean)
-      # sleep(5)
-      sh("flutter build ipa --release --no-codesign --build-number=#{build_number} --export-method=app-store")
     end
 
-    # Create unsigned IPA from the app with proper structure
-    sh("mkdir -p ./builds")
-
-    # DEBUG: List build output to troubleshoot missing IPA
-    sh("ls -R ../../build/ios || true")
-
-    # Check if the IPA exists in the expected location, if not, try to search for any IPA recursively in build dir
-    # Sometimes it might be in build/ios/iphoneos/ or similar if export skipped
-    ipa_source = "../../build/ios/ipa/Vehicle-Vitals.ipa"
-    unless File.exist?(ipa_source)
-      UI.message("⚠️  IPA not found at #{ipa_source}, searching deeper in ../../build/ios...")
-      # Widen search to entire build/ios directory
-      found_ipas = Dir.glob("../../build/ios/**/*.ipa") 
-      if found_ipas.any?
-        ipa_source = found_ipas.first
-        UI.message("✅  Found IPA at #{ipa_source}")
-      else
-        # Fallback: check if Runner.app exists and we can zip it (last resort)
-        runner_app = "../../build/ios/iphoneos/Runner.app"
-        # Check alternative location for Runner.app
-        unless File.exist?(runner_app)
-          runner_app = "../../build/ios/Release-iphoneos/Runner.app"
-        end
-
-        if File.exist?(runner_app)
-             UI.message("⚠️  IPA missing but Runner.app found at #{runner_app}. Manually packaging IPA...")
-             payload_dir = "../../build/ios/Payload"
-             sh("rm -rf #{payload_dir} && mkdir -p #{payload_dir}")
-             sh("cp -r #{runner_app} #{payload_dir}/")
-             ipa_source = "../../build/ios/ipa/Vehicle-Vitals-Manual.ipa"
-             sh("mkdir -p ../../build/ios/ipa")
-             sh("cd ../../build/ios && zip -r ipa/Vehicle-Vitals-Manual.ipa Payload")
-             UI.message("✅  Manually created IPA at #{ipa_source}")
-        else
-             UI.user_error!("❌  Could not find any IPA file in ../../build/ios/**/* nor Runner.app")
-        end
-      end
+    # Explicitly install pods (since we aren't using flutter build ipa command which does it automatically)
+    Dir.chdir("..") do
+      sh("rm -f Podfile.lock")
+      sh("pod install --repo-update")
     end
-    sh("cp #{ipa_source} ./builds/Vehicle-Vitals.ipa")
+
+    # Build using gym (build_app) for reliable artifact creation and signing
+    build_app(
+      scheme: "Runner",
+      workspace: "Runner.xcworkspace",
+      clean: true,
+      export_method: "app-store",
+      output_directory: "./builds",
+      output_name: "Vehicle-Vitals.ipa"
+    )
+    
+    # Verify IPA
+    unless File.exist?("./builds/Vehicle-Vitals.ipa")
+       UI.user_error!("gym failed to create IPA at ./builds/Vehicle-Vitals.ipa")
+    end
 
     # Wait for IPA to be fully written
     sh("while [ ! -f ./builds/Vehicle-Vitals.ipa ] || [ ! -s ./builds/Vehicle-Vitals.ipa ]; do sleep 1; done")

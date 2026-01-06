@@ -299,30 +299,47 @@ platform :ios do
       if keychain_path.include?("fastlane_tmp_keychain")
         UI.message("🔐 Managing temporary keychain at #{keychain_path}...")
         
-        # Always delete existing temporary keychain in CI to ensure a clean slate
-        # This prevents issues with stale file handles, corrupted keychains, or locked states
-        if File.exist?(keychain_path)
-          UI.message("⚠️  Deleting existing temporary keychain to ensure clean state...")
-          begin
-            delete_keychain(name: match_keychain_name)
-          rescue => e
-            UI.message("⚠️  Failed to delete existing keychain: #{e.message}")
-            sh("rm -f #{keychain_path}")
+        # If the keychain already exists and was provided by the wrapper script (which ensures it's fresh),
+        # we should use it instead of recreating it. Recreating it with an absolute path might cause 
+        # double-extension issues strictly within create_keychain.
+        if ENV["MATCH_KEYCHAIN_PATH"] && File.exist?(ENV["MATCH_KEYCHAIN_PATH"])
+           UI.message("✅ Keychain provided by wrapper script found at #{ENV['MATCH_KEYCHAIN_PATH']}. Using it directly.")
+           # Ensure it's unlocked
+           begin
+             unlock_keychain(
+               path: ENV["MATCH_KEYCHAIN_PATH"],
+               password: match_keychain_password
+             )
+           rescue => e
+             UI.message("⚠️  Note: explicit unlock failed (#{e.message}); proceeding as it might be unlocked by script.")
+           end
+        else
+          # Fallback: create it if it doesn't exist (e.g. if script didn't run or failed)
+          # Always delete existing temporary keychain in CI to ensure a clean slate
+          # This prevents issues with stale file handles, corrupted keychains, or locked states
+          if File.exist?(keychain_path)
+            UI.message("⚠️  Deleting existing temporary keychain to ensure clean state...")
+            begin
+              delete_keychain(name: match_keychain_name)
+            rescue => e
+              UI.message("⚠️  Failed to delete existing keychain: #{e.message}")
+              sh("rm -f #{keychain_path}")
+            end
           end
-        end
 
-        UI.message("🔐 Creating temporary keychain...")
-        begin
-          create_keychain(
-            name: match_keychain_name,
-            password: match_keychain_password,
-            unlock: true,
-            timeout: 3600,
-            lock_when_sleeps: false
-          )
-        rescue => e
-          UI.message("❌ Keychain creation failed: #{e.message}")
-          raise e
+          UI.message("🔐 Creating temporary keychain...")
+          begin
+            create_keychain(
+              name: match_keychain_name,
+              password: match_keychain_password,
+              unlock: true,
+              timeout: 3600,
+              lock_when_sleeps: false
+            )
+          rescue => e
+            UI.message("❌ Keychain creation failed: #{e.message}")
+            raise e
+          end
         end
       end
     end

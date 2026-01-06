@@ -181,6 +181,14 @@ jobs:
             fi
 
             chmod 600 "$MATCH_SSH_KEY_FILE"
+
+            echo "🔎 match SSH key first line: $(head -n 1 "$MATCH_SSH_KEY_FILE" 2>/dev/null || true)"
+            echo "🔎 match SSH key bytes: $(wc -c < "$MATCH_SSH_KEY_FILE" 2>/dev/null | tr -d ' ')"
+            
+            # Ensure newline at the end of the key file
+            if [ -n "$(tail -c 1 "$MATCH_SSH_KEY_FILE")" ]; then
+                echo >> "$MATCH_SSH_KEY_FILE"
+            fi
             
             if ssh-keygen -y -f "$MATCH_SSH_KEY_FILE" >/dev/null 2>&1; then
               USE_MATCH_SSH=1

@@ -98,10 +98,6 @@ jobs:
           echo "🔧 Checking iOS setup..."
           flutter doctor --ios || echo "⚠️ iOS setup issues detected"
 
-      - name: 🔧 Generate iOS Platform Files
-        run: flutter create --platforms=ios .
-        working-directory: packages/mobile
-
       - name: 🔍 Check Secrets
         run: |
           if [ -n "$MATCH_GIT_URL" ] && [[ "$MATCH_GIT_URL" == *"@"* ]]; then

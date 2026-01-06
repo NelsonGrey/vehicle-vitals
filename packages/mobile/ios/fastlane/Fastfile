@@ -115,6 +115,7 @@ platform :ios do
   end
 
   def match_keychain_name
+    UI.important("DEBUG: MATCH_KEYCHAIN_PATH = '#{ENV["MATCH_KEYCHAIN_PATH"]}'")
     return ENV["MATCH_KEYCHAIN_PATH"] unless ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
     
     raw_path = ENV["MATCH_KEYCHAIN_NAME"]

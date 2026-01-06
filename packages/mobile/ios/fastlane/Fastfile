@@ -115,10 +115,10 @@ platform :ios do
   end
 
   def match_keychain_name
-    # If setup_ci or env vars provide the path, use the path (stripped of extension) as the name
-    # This allows match to find keychains in non-standard locations (like CI temp dirs)
+    # If setup_ci or env vars provide the path, use it directly.
+    # We must provide the absolute path so match can find it in temp directories.
     if !ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
-      return ENV["MATCH_KEYCHAIN_PATH"].gsub(/(\.keychain-db|\.keychain)$/, "")
+      return ENV["MATCH_KEYCHAIN_PATH"]
     end
 
     # Prefer the name from env var if set (setup_ci sets this)

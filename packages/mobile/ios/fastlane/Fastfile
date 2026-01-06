@@ -115,10 +115,19 @@ platform :ios do
   end
 
   def match_keychain_name
-    # Use the name provided by environment or default.
-    # We rely on the search list being configured correctly (by setup_ci or script)
-    # rather than passing absolute paths, which confuses match's extension handling.
-    ENV["MATCH_KEYCHAIN_NAME"] || "fastlane_tmp_keychain"
+    if !ENV["MATCH_KEYCHAIN_PATH"].to_s.empty?
+      # If we have a full path, return it without extension so match can find it
+      # match automatically appends -db or .keychain, so we must strip it
+      return ENV["MATCH_KEYCHAIN_PATH"].sub(/\.keychain-db$/, "").sub(/\.keychain$/, "")
+    end
+
+    # Prefer the name from env var if set (setup_ci sets this)
+    # This relies on the keychain being added to the search list by setup_ci
+    return ENV["MATCH_KEYCHAIN_NAME"] unless ENV["MATCH_KEYCHAIN_NAME"].to_s.empty?
+    
+    # Fallback used to use MATCH_KEYCHAIN_PATH, but match has issues with absolute paths
+    # so we default to the standard name if NAME env var is missing.
+    "fastlane_tmp_keychain"
   end
 
   def match_keychain_password

@@ -411,7 +411,28 @@ platform :ios do
     # Debug: Print environment variables
     UI.message("MATCH_GIT_URL: #{ENV["MATCH_GIT_URL"]}")
     UI.message("FASTLANE_APPLE_ID: #{ENV["FASTLANE_APPLE_ID"]}")
-    UI.message("FASTLANE_TEAM_ID: #{ENV["FASTLANE_TEAM_ID"]}")
+    
+    # Explicitly create/unlock a specifically named keychain to ensure stability
+    keychain_name = match_keychain_name
+    keychain_password = match_keychain_password
+
+    # Create and unlock keychain early
+    if File.exist?(match_keychain_path)
+      unlock_keychain(
+        path: match_keychain_path,
+        password: keychain_password,
+        add_to_search_list: true
+      )
+    else
+      create_keychain(
+        name: keychain_name,
+        password: keychain_password,
+        default_keychain: false,
+        unlock: true,
+        timeout: 3600,
+        add_to_search_list: true
+      )
+    end
 
     # For now, use username/password authentication due to spaceship OpenSSL compatibility issues
     # TODO: Switch back to API key authentication once spaceship is fixed
@@ -420,8 +441,8 @@ platform :ios do
       readonly: true,
       username: ENV["FASTLANE_APPLE_ID"],
       team_id: ENV["FASTLANE_TEAM_ID"],
-      keychain_name: match_keychain_name,
-      keychain_password: match_keychain_password,
+      keychain_name: keychain_name,
+      keychain_password: keychain_password,
       skip_set_partition_list: false,
       verbose: true,
       force: false

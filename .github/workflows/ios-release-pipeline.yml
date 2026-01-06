@@ -49,7 +49,7 @@ jobs:
 
       - name: 📦 Install Ruby Dependencies
         run: |
-          cd packages/mobile
+          cd packages/mobile/ios
           bundle install
 
       - name: 🛠️ Setup Xcode

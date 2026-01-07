@@ -1,7 +1,7 @@
 
   desc "Upload to TestFlight"
-  lane :beta do |options|
-    release_notes = options[:release_notes] || "Automated build for TestFlight"
+  lane :beta do
+    release_notes = ENV["RELEASE_NOTES"] || "Automated build for TestFlight"
     feedback_email = ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com"
 
     build_number = ci_ios_build_number
@@ -105,14 +105,55 @@
       UI.error("ASC_PRIVATE_KEY environment variable is not set or empty")
       raise "Missing ASC_PRIVATE_KEY"
     end
-    private_key_content = private_key_content.gsub("\0", "").gsub("%", "").strip
 
-    api_key = app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: private_key_content,
-      is_key_content_base64: true
-    )
+    # Detect key format
+    is_pem = private_key_content.include?("-----BEGIN")
+    cleaned = private_key_content.gsub(/\s+/, "")
+    looks_base64 = cleaned =~ /\A[A-Za-z0-9+\/=]+\z/ && cleaned.length > 100
+
+    if !is_pem && looks_base64
+      UI.message("Detected ASC_PRIVATE_KEY as base64; passing directly as key_content (is_key_content_base64: true)")
+      api_key = app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_content: cleaned,
+        is_key_content_base64: true,
+        in_house: false
+      )
+    else
+      # Process as PEM
+      private_key_content = private_key_content.strip
+      private_key_content = private_key_content.gsub(/\A['\"]|['\"]\z/, '')
+      private_key_content = private_key_content.gsub(/\\n/, "\n")
+      private_key_content = private_key_content.gsub(/\r\n?/, "\n")
+      private_key_content = private_key_content.lines.map { |l| l.strip }.reject { |l| l.empty? }.join("\n") + "\n"
+
+      unless private_key_content.include?("-----BEGIN PRIVATE KEY-----") || private_key_content.include?("-----BEGIN EC PRIVATE KEY-----")
+        begin
+          require 'base64'
+          decoded = Base64.decode64(private_key_content)
+          if decoded.include?("-----BEGIN")
+            private_key_content = decoded
+            UI.message("Decoded ASC_PRIVATE_KEY from base64")
+          end
+        rescue => e
+          UI.message("Failed to decode ASC_PRIVATE_KEY as base64: #{e.message}")
+        end
+      end
+
+      require 'tempfile'
+      key_file = Tempfile.new(['asc_key', '.p8'])
+      key_file.write(private_key_content)
+      key_file.close
+
+      UI.message("Created temporary ASC key file: #{key_file.path}")
+
+      api_key = app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_filepath: key_file.path
+      )
+    end
 
     # Upload to TestFlight
     upload_to_testflight(

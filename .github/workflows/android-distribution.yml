@@ -2,10 +2,10 @@
 name: Android App Distribution
 
 on:
-#  push:
-#    branches:
-#      - main
-#      - staging
+  #  push:
+  #    branches:
+  #      - main
+  #      - staging
   workflow_dispatch:
     inputs:
       build_type:

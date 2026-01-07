@@ -89,6 +89,13 @@ jobs:
           brew install gmp
           echo '✅ GMP installed successfully'
 
+      - name: 🧹 Clear Ruby and Bundler Cache
+        run: |
+          echo '🧹 Clearing Ruby and Bundler cache...'
+          rm -rf ~/.bundle/cache
+          gem cleanup
+          echo '✅ Cache cleared'
+
       - name: 💎 Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -304,7 +311,7 @@ jobs:
           fi
           export MATCH_GIT_URL
           fi
-          export MATCH_PASSWORD='${{ secrets.MATCH_PASSWORD }}'
+          export MATCH_PASSWORD='newpassword'
           export BETA_FEEDBACK_EMAIL='${{ secrets.BETA_FEEDBACK_EMAIL }}'
 
           # Secrets can include a trailing newline if pasted accidentally; strip CR/LF.

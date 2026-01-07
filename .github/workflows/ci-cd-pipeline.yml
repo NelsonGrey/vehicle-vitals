@@ -1,8 +1,8 @@
 name: 🚀 CI/CD Pipeline - Build, Test & Deploy All Deliverables
 
 on:
-  push:
-    branches: [main, staging]
+#  push:
+#    branches: [main, staging]
   pull_request:
     branches: [main, staging]
   workflow_dispatch:

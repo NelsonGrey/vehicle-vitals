@@ -787,14 +787,23 @@ platform :ios do
     end
 
     # Build using gym (build_app) for reliable artifact creation and signing
+    # Force manual signing to avoid Xcode looking for development certs
+    
+    app_id = "com.nelsongrey.vehiclevitals.app.ios"
+    profile_name = ENV["sigh_#{app_id}_appstore_profile-name"]
+    team_id = ENV["sigh_#{app_id}_appstore_team-id"] || ENV["FASTLANE_TEAM_ID"]
+    cert_name = ENV["sigh_#{app_id}_appstore_certificate-name"] || "Apple Distribution"
+
     build_app(
       scheme: "Runner",
       workspace: "Runner.xcworkspace",
       clean: true,
       export_method: "app-store",
       output_directory: "./builds",
-      output_name: "Vehicle-Vitals.ipa"
+      output_name: "Vehicle-Vitals.ipa",
+      xcargs: "CODE_SIGN_STYLE='Manual' DEVELOPMENT_TEAM='#{team_id}' PROVISIONING_PROFILE_SPECIFIER='#{profile_name}' CODE_SIGN_IDENTITY='#{cert_name}'"
     )
+
     
     # Verify IPA
     unless File.exist?("./builds/Vehicle-Vitals.ipa")

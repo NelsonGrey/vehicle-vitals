@@ -93,7 +93,7 @@ jobs:
         run: |
           echo '🧹 Clearing Ruby and Bundler cache...'
           rm -rf ~/.bundle/cache
-          gem cleanup
+          gem cleanup || true
           echo '✅ Cache cleared'
 
       - name: 💎 Setup Ruby

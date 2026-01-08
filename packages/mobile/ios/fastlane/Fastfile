@@ -1,4 +1,18 @@
 
+default_platform(:ios)
+
+platform :ios do
+  desc "Sync code signing certificates for App Store"
+  lane :certificates_appstore do
+    match(
+      type: "appstore",
+      readonly: is_ci,
+      git_url: ENV['MATCH_GIT_URL'],
+      keychain_name: ENV['MATCH_KEYCHAIN_NAME'],
+      keychain_password: ENV['MATCH_KEYCHAIN_PASSWORD']
+    )
+  end
+
   desc "Upload to TestFlight"
   lane :beta do
     release_notes = ENV["RELEASE_NOTES"] || "Automated build for TestFlight"
@@ -163,3 +177,4 @@
       skip_waiting_for_build_processing: true
     )
   end
+end

@@ -195,7 +195,7 @@ deploy_mobile() {
 
     # This would integrate with fastlane or similar
     # For now, just build
-    cd mobile
+    cd packages/mobile
     flutter build apk --release
     flutter build ios --release
     cd ..

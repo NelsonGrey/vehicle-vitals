@@ -4,7 +4,8 @@
     release_notes = ENV["RELEASE_NOTES"] || "Automated build for TestFlight"
     feedback_email = ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com"
 
-    build_number = ci_ios_build_number
+    build_number = ENV["GITHUB_RUN_NUMBER"] || "1"
+    increment_build_number(build_number: build_number)
     UI.message("Using iOS build number: #{build_number}")
 
     # Sync code signing certificates for TestFlight (distribution/appstore).

@@ -208,11 +208,12 @@ jobs:
           system("curl -H 'Authorization: Bearer #{token}' 'https://api.appstoreconnect.apple.com/v1/apps' -o /dev/null -s -w '%{http_code}' | grep -q '200' && echo '✅ App Store Connect API accessible' || echo '⚠️ App Store Connect API test inconclusive'")
           EOF
 
-      - name: 📱 Generate iOS Platform Files
+      - name: � Install iOS Ruby Dependencies
         run: |
-          echo '🔄 Generating iOS platform files...'
-          flutter create --platforms=ios .
-          echo '✅ iOS platform files generated'
+          echo '📦 Installing Ruby dependencies from Gemfile...'
+          cd ios
+          bundle install
+          echo '✅ Bundle dependencies installed'
 
       - name: 🔐 Setup Service Account Key
         run: |
@@ -230,9 +231,6 @@ jobs:
           echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
           cd ios
-
-          # Install Ruby dependencies
-          bundle install
 
           # Ensure ephemeral keychain helper is executable
           chmod +x ../../../scripts/ephemeral_keychain_fastlane_fixed.sh

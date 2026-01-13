@@ -137,9 +137,10 @@ platform :ios do
         UI.message("⚠️  Creating new certificates...")
         begin
           # Ensure keychain is unlocked before attempting to create certs
-          keychain_path = ENV['MATCH_KEYCHAIN_PATH']
+          keychain_name = ENV['MATCH_KEYCHAIN_NAME']
           keychain_password = ENV['MATCH_KEYCHAIN_PASSWORD']
-          if keychain_path && keychain_password
+          if keychain_name && keychain_password
+            keychain_path = File.expand_path("~/Library/Keychains/#{keychain_name}.keychain-db")
             system("security unlock-keychain -p '#{keychain_password}' '#{keychain_path}' || true")
             system("security set-key-partition-list -S apple-tool:,apple:,codesign: -s -t private -k '#{keychain_password}' '#{keychain_path}' 2>/dev/null || true")
           end
@@ -148,7 +149,7 @@ platform :ios do
             type: "appstore",
             readonly: false,
             git_url: ENV['MATCH_GIT_URL'],
-            keychain_path: ENV['MATCH_KEYCHAIN_PATH'],
+            keychain_name: ENV['MATCH_KEYCHAIN_NAME'],
             keychain_password: ENV['MATCH_KEYCHAIN_PASSWORD'],
             api_key: api_key
           )
@@ -284,11 +285,13 @@ platform :ios do
 
     # Sign the IPA using fastlane resign
     ipa_path = File.expand_path("./builds/Vehicle-Vitals.ipa")
+    keychain_name = ENV['MATCH_KEYCHAIN_NAME']
+    keychain_path = keychain_name ? File.expand_path("~/Library/Keychains/#{keychain_name}.keychain-db") : nil
     resign(
       ipa: ipa_path,
       signing_identity: (ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'] || "Apple Distribution: Mark Nelson (P6YJUBML6P)"),
       provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path'],
-      keychain_path: ENV['MATCH_KEYCHAIN_PATH']
+      keychain_path: keychain_path
     )
 
     # Set up API key authentication

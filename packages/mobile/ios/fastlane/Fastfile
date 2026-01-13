@@ -148,7 +148,7 @@ platform :ios do
             type: "appstore",
             readonly: false,
             git_url: ENV['MATCH_GIT_URL'],
-            keychain_name: ENV['MATCH_KEYCHAIN_NAME'],
+            keychain_path: ENV['MATCH_KEYCHAIN_PATH'],
             keychain_password: ENV['MATCH_KEYCHAIN_PASSWORD'],
             api_key: api_key
           )

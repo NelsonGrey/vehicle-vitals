@@ -208,11 +208,13 @@ jobs:
           system("curl -H 'Authorization: Bearer #{token}' 'https://api.appstoreconnect.apple.com/v1/apps' -o /dev/null -s -w '%{http_code}' | grep -q '200' && echo '✅ App Store Connect API accessible' || echo '⚠️ App Store Connect API test inconclusive'")
           EOF
 
-      - name: � Install iOS Ruby Dependencies
+      - name: 📦 Install iOS Ruby Dependencies
         run: |
           echo '📦 Installing Ruby dependencies from Gemfile...'
           cd ios
           bundle install
+          echo '📋 Installed gem versions:'
+          bundle list | grep -E '(fastlane|cocoapods)'
           echo '✅ Bundle dependencies installed'
 
       - name: 🔐 Setup Service Account Key

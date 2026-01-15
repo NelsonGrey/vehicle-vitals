@@ -1,0 +1,24 @@
+name: Test Self-Hosted Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-self-hosted:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Test basic commands
+        run: |
+          echo "Testing self-hosted runner..."
+          uname -a
+          docker --version
+          node --version
+          npm --version
+          
+      - name: Test Docker-in-Docker
+        run: |
+          echo "Testing Docker-in-Docker capability..."
+          docker run --rm hello-world

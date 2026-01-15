@@ -1,0 +1,154 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Android App Distribution
+
+on:
+  #  push:
+  #    branches:
+  #      - main
+  #      - staging
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Build type to distribute"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
+      release_notes:
+        description: "Release notes for this build"
+        required: false
+        type: string
+
+jobs:
+  distribute-android:
+    runs-on: self-hosted
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔍 Check Dry-Run Mode
+        id: dry-run-check
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" == *"[DRY-RUN]"* ]]; then
+            echo "dry-run=true" >> $GITHUB_OUTPUT
+            echo "🚫 Dry-run mode detected - Android distribution will be simulated"
+          else
+            echo "dry-run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2.21.0
+        with:
+          channel: "stable"
+          architecture: arm64
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Authenticate Firebase CLI
+        run: echo "GOOGLE_APPLICATION_CREDENTIALS=android/app/service-account-key.json" >> $GITHUB_ENV
+
+      - name: Generate Android platform files
+        run: |
+          cd packages/mobile
+          flutter create --platforms=android .
+
+      - name: Create service account key file
+        env:
+          SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          mkdir -p packages/mobile/android/app
+          echo "$SERVICE_ACCOUNT_KEY" > packages/mobile/android/app/service-account-key.json
+
+      - name: Set Android service account environment variable
+        run: echo "ANDROID_SERVICE_ACCOUNT_KEY_FILE=app/service-account-key.json" >> $GITHUB_ENV
+
+      - name: Set Firebase App ID for development
+        if: github.ref == 'refs/heads/develop'
+        run: echo "FIREBASE_APP_ID_ANDROID=${{ secrets.FIREBASE_APP_ID_ANDROID_DEVELOPMENT }}" >> $GITHUB_ENV
+
+      - name: Set Firebase App ID for staging
+        if: github.ref == 'refs/heads/staging'
+        run: echo "FIREBASE_APP_ID_ANDROID=${{ secrets.FIREBASE_APP_ID_ANDROID_STAGING }}" >> $GITHUB_ENV
+
+      - name: Set Firebase App ID for production
+        if: github.ref == 'refs/heads/main'
+        run: echo "FIREBASE_APP_ID_ANDROID=${{ secrets.FIREBASE_APP_ID_ANDROID_PRODUCTION }}" >> $GITHUB_ENV
+
+      - name: Set tester groups for development
+        if: github.ref == 'refs/heads/develop'
+        run: echo "TESTER_GROUPS=internal-testers,developers" >> $GITHUB_ENV
+
+      - name: Set tester groups for staging
+        if: github.ref == 'refs/heads/staging'
+        run: echo "TESTER_GROUPS=internal-testers,qa-team" >> $GITHUB_ENV
+
+      - name: Set tester groups for production
+        if: github.ref == 'refs/heads/main'
+        run: echo "TESTER_GROUPS=beta-testers" >> $GITHUB_ENV
+
+      - name: Create google-services.json for development
+        if: github.ref == 'refs/heads/develop'
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_DEVELOPMENT }}
+        run: |
+          mkdir -p packages/mobile/config/development/android
+          echo "$GOOGLE_SERVICES_JSON" > packages/mobile/config/development/android/google-services.json
+
+      - name: Create google-services.json for staging
+        if: github.ref == 'refs/heads/staging'
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_STAGING }}
+        run: |
+          mkdir -p packages/mobile/config/staging/android
+          echo "$GOOGLE_SERVICES_JSON" > packages/mobile/config/staging/android/google-services.json
+
+      - name: Create google-services.json for production
+        if: github.ref == 'refs/heads/main'
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_PRODUCTION }}
+        run: |
+          mkdir -p packages/mobile/config/production/android
+          echo "$GOOGLE_SERVICES_JSON" > packages/mobile/config/production/android/google-services.json
+
+      - name: Make distribution script executable
+        run: chmod +x packages/mobile/distribute-android.sh
+
+      - name: Extract AdMob configuration for production
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Use GitHub secrets for AdMob configuration
+          echo "ADMOB_BANNER_UNIT_ID=${{ secrets.ADMOB_BANNER_UNIT_ID_ANDROID }}" >> $GITHUB_ENV
+          echo "ADMOB_INTERSTITIAL_UNIT_ID=${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_ANDROID }}" >> $GITHUB_ENV
+          echo "ADMOB_REWARDED_UNIT_ID=${{ secrets.ADMOB_REWARDED_UNIT_ID_ANDROID }}" >> $GITHUB_ENV
+
+      - name: Build and distribute Android app
+        if: steps.dry-run-check.outputs.dry-run == 'false'
+        env:
+          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
+        run: |
+          cd packages/mobile
+          ./distribute-android.sh ${{ github.event.inputs.build_type || 'debug' }} "${{ github.event.inputs.release_notes || format('Build from {0} - {1}', github.ref_name, github.sha) }}"
+
+      - name: 🚫 Dry-Run Android Distribution Skipped
+        if: steps.dry-run-check.outputs.dry-run == 'true'
+        run: |
+          echo "🔍 Dry-run mode: Android distribution simulation completed"
+          echo "📋 Build would be distributed to Firebase App Distribution"
+          echo "💡 To deploy for real, remove [DRY-RUN] from commit message"
+
+      - name: Clean up service account key
+        if: always()
+        run: rm -f packages/mobile/android/app/service-account-key.json

@@ -45,7 +45,8 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         debug {
-            signingConfig = signingConfigs.getByName("release")
+            // Debug builds don't require signing in CI/CD
+            // Sign with release config only if keystore exists locally
         }
     }
 }

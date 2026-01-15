@@ -12,7 +12,7 @@ type User @table {
 
 # Vehicle table keyed by VIN
 type Vehicle @table(key: ["vin"]) {
-  vin: String! @col(dataType: "varchar(17)")  # VIN is exactly 17 characters
+  vin: String! @col(dataType: "varchar(17)") # VIN is exactly 17 characters
   user: User!
   make: String! @col(dataType: "varchar(50)")
   model: String! @col(dataType: "varchar(50)")
@@ -48,7 +48,7 @@ type MaintenanceSchedule @table {
   intervalMiles: Int
   intervalMonths: Int
   description: String!
-  priority: String! @col(dataType: "varchar(10)")  # 'high', 'medium', 'low'
+  priority: String! @col(dataType: "varchar(10)") # 'high', 'medium', 'low'
 }
 
 # Reminders for upcoming maintenance
@@ -60,7 +60,7 @@ type Reminder @table {
   dueDate: Date
   dueMileage: String @col(dataType: "varchar(20)")
   description: String!
-  isCompleted: Boolean! @default(expr: "false")
+  isCompleted: Boolean!
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
 }

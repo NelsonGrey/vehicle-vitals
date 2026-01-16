@@ -2,57 +2,57 @@
 
 # Create or update user profile
 mutation UpsertUser($email: String!, $displayName: String) @auth(level: USER) {
-  user_upsert(data: { 
-    id_expr: "auth.uid", 
-    email: $email, 
-    displayName: $displayName 
-  })
+  user_upsert(
+    data: { id_expr: "auth.uid", email: $email, displayName: $displayName }
+  )
 }
 
 # Add a new vehicle
 mutation AddVehicle(
-  $vin: String!, 
-  $make: String!, 
-  $model: String!, 
-  $year: String!, 
-  $mileage: String,
-  $purchaseDate: Date,
-  $nextDueByMiles: String,
+  $vin: String!
+  $make: String!
+  $model: String!
+  $year: String!
+  $mileage: String
+  $purchaseDate: Date
+  $nextDueByMiles: String
   $nextDueByDate: Date
 ) @auth(level: USER) {
-  vehicle_insert(data: {
-    vin: $vin,
-    userId_expr: "auth.uid",
-    make: $make,
-    model: $model,
-    year: $year,
-    mileage: $mileage,
-    purchaseDate: $purchaseDate,
-    nextDueByMiles: $nextDueByMiles,
-    nextDueByDate: $nextDueByDate
-  })
+  vehicle_insert(
+    data: {
+      vin: $vin
+      user: { id_expr: "auth.uid" }
+      make: $make
+      model: $model
+      year: $year
+      mileage: $mileage
+      purchaseDate: $purchaseDate
+      nextDueByMiles: $nextDueByMiles
+      nextDueByDate: $nextDueByDate
+    }
+  )
 }
 
 # Update an existing vehicle
 mutation UpdateVehicle(
-  $vin: String!,
-  $make: String!,
-  $model: String!,
-  $year: String!,
-  $mileage: String,
-  $purchaseDate: Date,
-  $nextDueByMiles: String,
+  $vin: String!
+  $make: String!
+  $model: String!
+  $year: String!
+  $mileage: String
+  $purchaseDate: Date
+  $nextDueByMiles: String
   $nextDueByDate: Date
 ) @auth(level: USER) {
   vehicle_update(
-    key: { vin: $vin, userId_expr: "auth.uid" },
+    key: { vin: $vin, user: { id_expr: "auth.uid" } }
     data: {
-      make: $make,
-      model: $model,
-      year: $year,
-      mileage: $mileage,
-      purchaseDate: $purchaseDate,
-      nextDueByMiles: $nextDueByMiles,
+      make: $make
+      model: $model
+      year: $year
+      mileage: $mileage
+      purchaseDate: $purchaseDate
+      nextDueByMiles: $nextDueByMiles
       nextDueByDate: $nextDueByDate
     }
   )
@@ -60,53 +60,55 @@ mutation UpdateVehicle(
 
 # Delete a vehicle
 mutation DeleteVehicle($vin: String!) @auth(level: USER) {
-  vehicle_delete(key: { vin: $vin, userId_expr: "auth.uid" })
+  vehicle_delete(key: { vin: $vin, user: { id_expr: "auth.uid" } })
 }
 
 # Add a maintenance record
 mutation AddMaintenanceRecord(
-  $vehicleVin: String!,
-  $serviceType: String!,
-  $description: String!,
-  $date: Date!,
-  $mileage: String,
-  $cost: Float,
-  $provider: String,
+  $vehicleVin: String!
+  $serviceType: String!
+  $description: String!
+  $date: Date!
+  $mileage: String
+  $cost: Float
+  $provider: String
   $notes: String
 ) @auth(level: USER) {
-  maintenanceRecord_insert(data: {
-    vehicleVin: $vehicleVin,
-    userId_expr: "auth.uid",
-    serviceType: $serviceType,
-    description: $description,
-    date: $date,
-    mileage: $mileage,
-    cost: $cost,
-    provider: $provider,
-    notes: $notes
-  })
+  maintenanceRecord_insert(
+    data: {
+      vehicleVin: $vehicleVin
+      userId_expr: "auth.uid"
+      serviceType: $serviceType
+      description: $description
+      date: $date
+      mileage: $mileage
+      cost: $cost
+      provider: $provider
+      notes: $notes
+    }
+  )
 }
 
 # Update a maintenance record
 mutation UpdateMaintenanceRecord(
-  $id: UUID!,
-  $serviceType: String!,
-  $description: String!,
-  $date: Date!,
-  $mileage: String,
-  $cost: Float,
-  $provider: String,
+  $id: UUID!
+  $serviceType: String!
+  $description: String!
+  $date: Date!
+  $mileage: String
+  $cost: Float
+  $provider: String
   $notes: String
 ) @auth(level: USER) {
   maintenanceRecord_update(
-    key: { id: $id },
+    key: { id: $id }
     data: {
-      serviceType: $serviceType,
-      description: $description,
-      date: $date,
-      mileage: $mileage,
-      cost: $cost,
-      provider: $provider,
+      serviceType: $serviceType
+      description: $description
+      date: $date
+      mileage: $mileage
+      cost: $cost
+      provider: $provider
       notes: $notes
     }
   )
@@ -119,28 +121,27 @@ mutation DeleteMaintenanceRecord($id: UUID!) @auth(level: USER) {
 
 # Create a reminder
 mutation CreateReminder(
-  $vehicleVin: String!,
-  $serviceType: String!,
-  $dueDate: Date,
-  $dueMileage: String,
+  $vehicleVin: String!
+  $serviceType: String!
+  $dueDate: Date
+  $dueMileage: String
   $description: String!
 ) @auth(level: USER) {
-  reminder_insert(data: {
-    vehicleVin: $vehicleVin,
-    userId_expr: "auth.uid",
-    serviceType: $serviceType,
-    dueDate: $dueDate,
-    dueMileage: $dueMileage,
-    description: $description
-  })
+  reminder_insert(
+    data: {
+      vehicleVin: $vehicleVin
+      userId_expr: "auth.uid"
+      serviceType: $serviceType
+      dueDate: $dueDate
+      dueMileage: $dueMileage
+      description: $description
+    }
+  )
 }
 
 # Mark reminder as completed
 mutation CompleteReminder($id: UUID!) @auth(level: USER) {
-  reminder_update(
-    key: { id: $id },
-    data: { isCompleted: true }
-  )
+  reminder_update(key: { id: $id }, data: { isCompleted: true })
 }
 
 # Delete a reminder

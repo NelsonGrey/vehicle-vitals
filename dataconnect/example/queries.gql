@@ -2,7 +2,7 @@
 
 # List all vehicles for the authenticated user
 query ListUserVehicles @auth(level: USER) {
-  vehicles(where: { user_expr: "auth.uid" }) {
+  vehicles(where: { user: { id: { eq_expr: "auth.uid" } } }) {
     vin
     make
     model
@@ -18,7 +18,11 @@ query ListUserVehicles @auth(level: USER) {
 
 # Get a specific vehicle by VIN for the authenticated user
 query GetVehicleByVin($vin: String!) @auth(level: USER) {
-  vehicle(vin: $vin, user_expr: "auth.uid") {
+  vehicle(
+    where: {
+      _and: [{ vin: { eq: $vin } }, { user: { id: { eq_expr: "auth.uid" } } }]
+    }
+  ) {
     vin
     make
     model
@@ -47,10 +51,10 @@ query GetVehicleByVin($vin: String!) @auth(level: USER) {
 # List maintenance records for a specific vehicle
 query ListMaintenanceRecords($vehicleVin: String!) @auth(level: USER) {
   maintenanceRecords(
-    where: { 
+    where: {
       _and: [
-        { vehicle: { vin: { eq: $vehicleVin } } },
-        { user_expr: "auth.uid" }
+        { vehicle: { vin: { eq: $vehicleVin } } }
+        { user: { id: { eq_expr: "auth.uid" } } }
       ]
     }
     orderBy: { date: DESC }
@@ -77,9 +81,9 @@ query ListMaintenanceRecords($vehicleVin: String!) @auth(level: USER) {
 # Get upcoming reminders for the authenticated user
 query ListUpcomingReminders @auth(level: USER) {
   reminders(
-    where: { 
+    where: {
       _and: [
-        { user_expr: "auth.uid" },
+        { user: { id: { eq_expr: "auth.uid" } } }
         { isCompleted: { eq: false } }
       ]
     }
@@ -100,7 +104,7 @@ query ListUpcomingReminders @auth(level: USER) {
 }
 
 # Get maintenance schedule templates
-query ListMaintenanceSchedules @auth(level: PUBLIC, insecureReason: "Maintenance schedules are public reference data.") {
+query ListMaintenanceSchedules @auth(level: PUBLIC) {
   maintenanceSchedules(orderBy: { serviceType: ASC }) {
     id
     serviceType

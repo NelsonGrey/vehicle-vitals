@@ -18,11 +18,7 @@ query ListUserVehicles @auth(level: USER) {
 
 # Get a specific vehicle by VIN for the authenticated user
 query GetVehicleByVin($vin: String!) @auth(level: USER) {
-  vehicle(
-    where: {
-      _and: [{ vin: { eq: $vin } }, { user: { id: { eq_expr: "auth.uid" } } }]
-    }
-  ) {
+  vehicle(vin: $vin) {
     vin
     make
     model
@@ -33,6 +29,9 @@ query GetVehicleByVin($vin: String!) @auth(level: USER) {
     nextDueByDate
     createdAt
     updatedAt
+    user {
+      id
+    }
     maintenanceRecords: maintenanceRecords_on_vehicle {
       id
       serviceType

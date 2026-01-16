@@ -76,8 +76,8 @@ mutation AddMaintenanceRecord(
 ) @auth(level: USER) {
   maintenanceRecord_insert(
     data: {
-      vehicleVin: $vehicleVin
-      userId_expr: "auth.uid"
+      vehicle: { vin: $vehicleVin }
+      user: { id_expr: "auth.uid" }
       serviceType: $serviceType
       description: $description
       date: $date
@@ -129,12 +129,13 @@ mutation CreateReminder(
 ) @auth(level: USER) {
   reminder_insert(
     data: {
-      vehicleVin: $vehicleVin
-      userId_expr: "auth.uid"
+      vehicle: { vin: $vehicleVin }
+      user: { id_expr: "auth.uid" }
       serviceType: $serviceType
       dueDate: $dueDate
       dueMileage: $dueMileage
       description: $description
+      isCompleted: false
     }
   )
 }

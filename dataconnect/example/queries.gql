@@ -18,7 +18,7 @@ query ListUserVehicles @auth(level: USER) {
 
 # Get a specific vehicle by VIN for the authenticated user
 query GetVehicleByVin($vin: String!) @auth(level: USER) {
-  vehicle_read(key: { vin: $vin }) {
+  vehicles(where: { vin: { eq: $vin } }) {
     vin
     make
     model

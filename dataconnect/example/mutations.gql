@@ -45,7 +45,7 @@ mutation UpdateVehicle(
   $nextDueByDate: Date
 ) @auth(level: USER) {
   vehicle_update(
-    key: { vin: $vin, user: { id_expr: "auth.uid" } }
+    key: { vin: $vin }
     data: {
       make: $make
       model: $model
@@ -60,7 +60,7 @@ mutation UpdateVehicle(
 
 # Delete a vehicle
 mutation DeleteVehicle($vin: String!) @auth(level: USER) {
-  vehicle_delete(key: { vin: $vin, user: { id_expr: "auth.uid" } })
+  vehicle_delete(key: { vin: $vin })
 }
 
 # Add a maintenance record

@@ -44,6 +44,7 @@ jobs:
   load-config:
     name: Load Project Configuration
     runs-on: ubuntu-latest
+    env:
       APP_STORE_CONNECT_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
       FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV || 'vehicle-vitals-dev' }}
       FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING || 'vehicle-vitals-staging' }}

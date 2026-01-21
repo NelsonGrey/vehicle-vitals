@@ -114,7 +114,7 @@ jobs:
             TRIGGER="build_and_deploy"
             ENVIRONMENT="staging"
           elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            TRIGGER="build_all"
+            TRIGGER="build_and_deploy"
             ENVIRONMENT="development"
           else
             TRIGGER="test_all"

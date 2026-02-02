@@ -13,9 +13,9 @@ echo "🔑 Keychains available:"
 security list-keychains 2>/dev/null || echo "Unable to list keychains"
 
 # Unlock the default keychain to avoid prompts
-if [ -n "$MATCH_PASSWORD" ]; then
-    echo "🔓 Unlocking keychain..."
-    security unlock-keychain -p "$MATCH_PASSWORD" login.keychain 2>/dev/null || true
+if [ -n "$KEYCHAIN_PASSWORD" ]; then
+    echo "🔓 Unlocking login keychain..."
+    security unlock-keychain -p "$KEYCHAIN_PASSWORD" login.keychain 2>/dev/null || true
 fi
 
 # Create temporary keychain for Fastlane if it doesn't exist
@@ -38,7 +38,7 @@ if [ -n "$MATCH_PASSWORD" ]; then
         echo "📜 Importing certificates..."
         for cert in ios/certs/*.cer ios/certs/*.p12; do
             if [ -f "$cert" ]; then
-                security import "$cert" -k fastlane_tmp_keychain -P "$MATCH_PASSWORD" 2>/dev/null || true
+                security import "$cert" -k fastlane_tmp_keychain -P "$MATCH_GIT_PASSWORD" 2>/dev/null || true
             fi
         done
     fi

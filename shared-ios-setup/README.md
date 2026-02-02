@@ -26,9 +26,9 @@ This folder contains the proven, successful iOS configuration from wishlist-wiza
 
 ## Required Environment Variables
 
-- `ASC_PRIVATE_KEY` - App Store Connect private key
-- `ASC_KEY_ID` - App Store Connect key ID
-- `ASC_ISSUER_ID` - App Store Connect issuer ID
+- `APP_STORE_CONNECT_KEY` - App Store Connect private key
+- `APP_STORE_CONNECT_KEY_ID` - App Store Connect key ID
+- `APP_STORE_CONNECT_ISSUER_ID` - App Store Connect issuer ID
 - `FASTLANE_APPLE_ID` - Apple ID email
 - `FASTLANE_TEAM_ID` - Developer team ID
 - `FASTLANE_ITC_TEAM_ID` - App Store Connect team ID

@@ -68,9 +68,9 @@ Add these secrets to your GitHub repository (Settings → Secrets and variables 
 FASTLANE_APPLE_ID=your-apple-id@example.com
 FASTLANE_TEAM_ID=YOUR_TEAM_ID
 FASTLANE_ITC_TEAM_ID=YOUR_ITC_TEAM_ID
-ASC_KEY_ID=YOUR_API_KEY_ID
-ASC_ISSUER_ID=YOUR_ISSUER_ID
-ASC_PRIVATE_KEY=***PRIVATE KEY REMOVED***
+APP_STORE_CONNECT_KEY_ID=YOUR_API_KEY_ID
+APP_STORE_CONNECT_ISSUER_ID=YOUR_ISSUER_ID
+APP_STORE_CONNECT_KEY=***PRIVATE KEY REMOVED***
 MATCH_GIT_URL=https://oauth2:gho_***REMOVED***@github.com/mnelson3/nelson-grey.git
 MATCH_PASSWORD=your_match_password
 BETA_FEEDBACK_EMAIL=feedback@nelsongrey.com

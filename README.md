@@ -414,4 +414,5 @@ If you want, I can:
 - Create a small smoke-test script that asserts the shared `defaultVehicle` shape and that Firestore path functions build expected IDs.
 
 # Test commit to trigger CI/CD workflows
-# Test commit to trigger iOS build with ASC_PRIVATE_KEY fix
+
+# Test commit to trigger iOS build with APP_STORE_CONNECT_KEY fix

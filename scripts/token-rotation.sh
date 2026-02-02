@@ -7,6 +7,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+ENVIRONMENT="${ENVIRONMENT:-development}"
+AUTOMATION_ENV_FILE=".env.automation.${ENVIRONMENT}"
+
 # Colors
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; PURPLE='\033[0;35m'; NC='\033[0m'
@@ -55,7 +58,7 @@ rotate_github_token() {
     log_warning "Token rotation requires manual intervention:"
     log_info "1. Go to https://github.com/settings/tokens"
     log_info "2. Generate a new token with repo/admin permissions"
-    log_info "3. Update GITHUB_TOKEN in .env.automation"
+    log_info "3. Update GITHUB_TOKEN in .env.automation.$ENVIRONMENT"
     log_info "4. Run: ./automate.sh environment sync-secrets <environment>"
 
     # In a real implementation, you'd use GitHub's API to create tokens
@@ -93,7 +96,7 @@ rotate_firebase_key() {
             log_warning "Firebase key rotation requires manual steps for $firebase_project:"
             log_info "1. Go to Firebase Console > Project Settings > Service Accounts"
             log_info "2. Generate new private key"
-            log_info "3. Update FIREBASE_SERVICE_ACCOUNT_KEY in .env.automation"
+            log_info "3. Update FIREBASE_SERVICE_ACCOUNT_KEY in .env.automation.$ENVIRONMENT"
             log_info "4. Update GitHub secrets: ./automate.sh environment sync-secrets $env"
             log_info "5. Delete old private key file"
         fi
@@ -109,11 +112,11 @@ rotate_jwt_secrets() {
     local new_jwt_secret
     new_jwt_secret=$(generate_secret 64)
 
-    # Update .env.automation
-    if [ -f ".env.automation" ]; then
-        sed -i.bak "s/^JWT_SECRET=.*/JWT_SECRET=$new_jwt_secret/" .env.automation
-        rm .env.automation.bak 2>/dev/null || true
-        log_success "Updated JWT_SECRET in .env.automation"
+    # Update .env.automation.<environment>
+    if [ -f "$AUTOMATION_ENV_FILE" ]; then
+        sed -i.bak "s/^JWT_SECRET=.*/JWT_SECRET=$new_jwt_secret/" "$AUTOMATION_ENV_FILE"
+        rm "$AUTOMATION_ENV_FILE.bak" 2>/dev/null || true
+        log_success "Updated JWT_SECRET in $AUTOMATION_ENV_FILE"
     fi
 
     # Update environment-specific files
@@ -139,11 +142,11 @@ rotate_encryption_keys() {
     local new_encryption_key
     new_encryption_key=$(generate_secret 32)
 
-    # Update .env.automation
-    if [ -f ".env.automation" ]; then
-        sed -i.bak "s/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY=$new_encryption_key/" .env.automation
-        rm .env.automation.bak 2>/dev/null || true
-        log_success "Updated ENCRYPTION_KEY in .env.automation"
+    # Update .env.automation.<environment>
+    if [ -f "$AUTOMATION_ENV_FILE" ]; then
+        sed -i.bak "s/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY=$new_encryption_key/" "$AUTOMATION_ENV_FILE"
+        rm "$AUTOMATION_ENV_FILE.bak" 2>/dev/null || true
+        log_success "Updated ENCRYPTION_KEY in $AUTOMATION_ENV_FILE"
     fi
 
     # Update environment-specific files
@@ -169,11 +172,11 @@ rotate_session_secrets() {
     local new_session_secret
     new_session_secret=$(generate_secret 32)
 
-    # Update .env.automation
-    if [ -f ".env.automation" ]; then
-        sed -i.bak "s/^SESSION_SECRET=.*/SESSION_SECRET=$new_session_secret/" .env.automation
-        rm .env.automation.bak 2>/dev/null || true
-        log_success "Updated SESSION_SECRET in .env.automation"
+    # Update .env.automation.<environment>
+    if [ -f "$AUTOMATION_ENV_FILE" ]; then
+        sed -i.bak "s/^SESSION_SECRET=.*/SESSION_SECRET=$new_session_secret/" "$AUTOMATION_ENV_FILE"
+        rm "$AUTOMATION_ENV_FILE.bak" 2>/dev/null || true
+        log_success "Updated SESSION_SECRET in $AUTOMATION_ENV_FILE"
     fi
 }
 
@@ -214,20 +217,20 @@ show_token_status() {
     fi
 
     # Check configuration file
-    if [ -f ".env.automation" ]; then
-        log_success "Configuration file exists"
+    if [ -f "$AUTOMATION_ENV_FILE" ]; then
+        log_success "Configuration file exists: $AUTOMATION_ENV_FILE"
 
         # Check for required secrets
         local required_secrets="GITHUB_TOKEN JWT_SECRET ENCRYPTION_KEY SESSION_SECRET"
         for secret in $required_secrets; do
-            if grep -q "^$secret=" .env.automation; then
+            if grep -q "^$secret=" "$AUTOMATION_ENV_FILE"; then
                 log_success "$secret configured"
             else
                 log_warning "$secret not configured"
             fi
         done
     else
-        log_error "Configuration file missing: .env.automation"
+        log_error "Configuration file missing: $AUTOMATION_ENV_FILE"
     fi
 
     # Check environment files
@@ -280,7 +283,9 @@ main() {
     cd "$PROJECT_ROOT"
 
     # Load configuration
-    if [ -f ".env.automation" ]; then
+    if [ -f "$AUTOMATION_ENV_FILE" ]; then
+        source "$AUTOMATION_ENV_FILE"
+    elif [ -f ".env.automation" ]; then
         source .env.automation
     fi
 

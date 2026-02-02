@@ -4,9 +4,22 @@
 # Bash 3.2 compatible
 
 # Load configuration
-if [ -f ".env.automation" ]; then
-    source .env.automation
-fi
+load_automation_env() {
+    local env="${1:-development}"
+    local env_file=".env.automation.${env}"
+
+    if [ -f "$env_file" ]; then
+        source "$env_file"
+        return 0
+    fi
+
+    if [ -f ".env.automation" ]; then
+        source .env.automation
+        return 0
+    fi
+
+    return 1
+}
 
 # Colors for output
 RED='\033[0;31m'
@@ -61,6 +74,11 @@ main() {
     # Change to project root
     cd "$PROJECT_ROOT"
 
+    # Load configuration for the target environment
+    AUTOMATION_ENVIRONMENT="$environment"
+    AUTOMATION_ENV_FILE=".env.automation.${AUTOMATION_ENVIRONMENT}"
+    load_automation_env "$AUTOMATION_ENVIRONMENT" || true
+
     # Check prerequisites for most commands
     case "$command" in
         "help"|"-h"|"--help") show_help; return ;;
@@ -71,7 +89,7 @@ main() {
 
     case "$command" in
         "setup")
-            setup_system
+            setup_system "$environment"
             ;;
         "deploy")
             deploy_system "$subcommand" "$environment"
@@ -104,6 +122,7 @@ main() {
 
 # Setup system
 setup_system() {
+    local environment="${1:-development}"
     log_header "System Setup"
 
     # Create necessary directories
@@ -111,11 +130,12 @@ setup_system() {
     mkdir -p monitoring
     mkdir -p docker
 
-    # Check if .env.automation exists
-    if [ ! -f ".env.automation" ]; then
-        log_warning ".env.automation not found. Creating from template..."
-        create_env_template
-        log_info "Please edit .env.automation with your actual credentials"
+    # Check if .env.automation.<environment> exists
+    local env_file=".env.automation.${environment}"
+    if [ ! -f "$env_file" ]; then
+        log_warning "$env_file not found. Creating from template..."
+        create_env_template "$environment"
+        log_info "Please edit $env_file with your actual credentials"
         log_info "Then run: ./automate.sh setup"
         exit 0
     fi
@@ -307,11 +327,11 @@ health_check() {
     local issues_found=0
 
     # Check configuration
-    if [ ! -f ".env.automation" ]; then
-        log_error "Configuration file missing: .env.automation"
+    if [ ! -f "$AUTOMATION_ENV_FILE" ]; then
+        log_error "Configuration file missing: $AUTOMATION_ENV_FILE"
         issues_found=$((issues_found + 1))
     else
-        log_success "Configuration file found"
+        log_success "Configuration file found: $AUTOMATION_ENV_FILE"
     fi
 
     # Check required scripts
@@ -458,7 +478,9 @@ validate_environment() {
 
 # Create environment template
 create_env_template() {
-    cat > .env.automation << 'TEMPLATE_EOF'
+    local environment="${1:-development}"
+    local env_file=".env.automation.${environment}"
+    cat > "$env_file" << 'TEMPLATE_EOF'
 # 🎯 Vehicle Vitals - Automation Configuration
 # Copy this template and fill in actual values
 
@@ -526,9 +548,9 @@ API_PROD_ENDPOINT=https://us-central1-vehicle-vitals-prod.cloudfunctions.net/api
 # ==========================================
 
 # iOS App Store Connect
-ASC_KEY_ID=your-asc-key-id
-ASC_ISSUER_ID=your-asc-issuer-id
-ASC_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----
+APP_STORE_CONNECT_KEY_ID=your-app-store-connect-key-id
+APP_STORE_CONNECT_ISSUER_ID=your-app-store-connect-issuer-id
+APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----
 FASTLANE_APPLE_ID=your-apple-id@email.com
 FASTLANE_TEAM_ID=your-team-id
 
@@ -558,7 +580,7 @@ LOCAL_API_PORT=5001
 LOCAL_WEB_PORT=3000
 TEMPLATE_EOF
 
-    log_success "Created .env.automation template"
+    log_success "Created $env_file template"
 }
 
 # Show version

@@ -127,9 +127,9 @@ This automation suite eliminates manual interactions between Visual Studio Code,
 
 ## 🔧 Configuration
 
-### Environment Variables (.env.automation)
+### Environment Variables (.env.automation.development)
 
-Create a `.env.automation` file in the project root:
+Create a `.env.automation.development` file in the project root:
 
 ```bash
 # Notification Settings
@@ -167,9 +167,9 @@ For production deployments, add these secrets to your GitHub repository:
 
 #### Apple Store Connect
 
-- `ASC_KEY_ID`
-- `ASC_ISSUER_ID`
-- `ASC_PRIVATE_KEY`
+- `APP_STORE_CONNECT_KEY_ID`
+- `APP_STORE_CONNECT_ISSUER_ID`
+- `APP_STORE_CONNECT_KEY`
 - `FASTLANE_APPLE_ID`
 - `FASTLANE_TEAM_ID`
 
@@ -434,8 +434,8 @@ git clone https://github.com/your-org/your-repo.git
 cd your-repo
 
 # 2. Configure your environment
-cp .env.automation.example .env.automation
-# Edit .env.automation with your settings
+cp .env.automation.development.example .env.automation.development
+# Edit .env.automation.development with your settings
 
 # 3. Run complete setup
 ./automate.sh setup

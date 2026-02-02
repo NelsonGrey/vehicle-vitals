@@ -16,9 +16,9 @@ name: iOS Distribution
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       build_type:
@@ -40,7 +40,7 @@ jobs:
 
   build-and-distribute:
     needs: test
-    runs-on: macos-latest  # Change to self-hosted for cost savings
+    runs-on: macos-latest # Change to self-hosted for cost savings
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
     steps:
       - name: Checkout code
@@ -65,9 +65,9 @@ jobs:
           FASTLANE_APPLE_ID=${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID=${{ secrets.FASTLANE_TEAM_ID }}
           FASTLANE_ITC_TEAM_ID=${{ secrets.FASTLANE_ITC_TEAM_ID }}
-          ASC_KEY_ID=${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID=${{ secrets.ASC_ISSUER_ID }}
-          ASC_PRIVATE_KEY=${{ secrets.ASC_PRIVATE_KEY }}
+          APP_STORE_CONNECT_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY=${{ secrets.APP_STORE_CONNECT_KEY }}
           MATCH_GIT_URL=${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}
           BETA_FEEDBACK_EMAIL=${{ secrets.BETA_FEEDBACK_EMAIL }}
@@ -101,9 +101,9 @@ FASTLANE_TEAM_ID           → YOUR_TEAM_ID (10 characters)
 FASTLANE_ITC_TEAM_ID       → YOUR_ITC_TEAM_ID
 
 # App Store Connect API Key
-ASC_KEY_ID                 → YOUR_KEY_ID (10 characters)
-ASC_ISSUER_ID              → YOUR_ISSUER_ID (36 characters)
-ASC_PRIVATE_KEY            → base64-encoded .p8 file content
+APP_STORE_CONNECT_KEY_ID        → YOUR_KEY_ID (10 characters)
+APP_STORE_CONNECT_ISSUER_ID     → YOUR_ISSUER_ID (36 characters)
+APP_STORE_CONNECT_KEY           → base64-encoded .p8 file content
 
 # Certificate Repository
 MATCH_GIT_URL              → https://oauth2:gho_TOKEN@github.com/user/repo.git
@@ -116,15 +116,18 @@ BETA_FEEDBACK_EMAIL        → feedback@yourcompany.com
 ## 🏃‍♂️ Self-Hosted Runner Setup
 
 ### Cost Comparison
+
 - **GitHub Hosted macOS**: ~$0.08/minute ($48/hour)
 - **Self-Hosted macOS**: FREE (your hardware)
 
 ### Runner Labels Strategy
+
 ```yaml
 runs-on: [self-hosted, macos-latest, ios, your-project-name]
 ```
 
 ### Runner Setup Script
+
 ```bash
 #!/bin/bash
 # setup-ios-runner.sh
@@ -155,6 +158,7 @@ cd ~/actions-runner-ios
 ## 🔄 GitLab CI Setup
 
 ### .gitlab-ci.yml Template
+
 ```yaml
 stages:
   - test
@@ -162,8 +166,8 @@ stages:
   - deploy
 
 variables:
-  FLUTTER_VERSION: "3.35.7"
-  FASTLANE_VERSION: "2.228.0"
+  FLUTTER_VERSION: '3.35.7'
+  FASTLANE_VERSION: '2.228.0'
 
 # Test stage
 flutter_test:
@@ -201,15 +205,16 @@ ios_deploy:
 ```
 
 ### GitLab CI Variables
+
 Add these to **Settings → CI/CD → Variables**:
 
 ```
 FASTLANE_APPLE_ID           → your-apple-id@example.com
 FASTLANE_TEAM_ID            → YOUR_TEAM_ID
 FASTLANE_ITC_TEAM_ID        → YOUR_ITC_TEAM_ID
-ASC_KEY_ID                  → YOUR_KEY_ID
-ASC_ISSUER_ID               → YOUR_ISSUER_ID
-ASC_PRIVATE_KEY             → base64-encoded .p8 content
+APP_STORE_CONNECT_KEY_ID        → YOUR_KEY_ID
+APP_STORE_CONNECT_ISSUER_ID     → YOUR_ISSUER_ID
+APP_STORE_CONNECT_KEY           → base64-encoded .p8 content
 MATCH_GIT_URL               → https://oauth2:gho_TOKEN@github.com/user/repo.git
 MATCH_PASSWORD              → your_match_password
 BETA_FEEDBACK_EMAIL         → feedback@yourcompany.com
@@ -218,6 +223,7 @@ BETA_FEEDBACK_EMAIL         → feedback@yourcompany.com
 ## 🔄 Jenkins Pipeline
 
 ### Jenkinsfile Template
+
 ```groovy
 pipeline {
     agent { label 'macos-ios' }
@@ -272,18 +278,21 @@ pipeline {
 ## 🔐 Security Best Practices
 
 ### Secret Management
+
 - ✅ **Never commit secrets** to version control
 - ✅ **Use platform secret managers** (GitHub Secrets, GitLab Variables)
 - ✅ **Rotate tokens regularly** (GitHub PATs, API keys)
 - ✅ **Limit secret access** to necessary jobs/branches
 
 ### Certificate Security
+
 - 🔒 **Private certificate repository** with restricted access
 - 🔑 **Read-only match access** for CI pipelines
 - 📊 **Audit certificate usage** and access logs
 - 🔄 **Regular certificate rotation** (annually or when compromised)
 
 ### Network Security
+
 - 🌐 **Use HTTPS** for all repository URLs
 - 🔐 **Enable 2FA** on all accounts (Apple, GitHub)
 - 🚫 **No hardcoded credentials** in scripts or configs
@@ -291,12 +300,14 @@ pipeline {
 ## 📊 Monitoring & Alerts
 
 ### Build Status Badges
+
 ```markdown
 ![iOS Build](https://github.com/username/repo/workflows/iOS%20Distribution/badge.svg)
 ![TestFlight](https://img.shields.io/badge/TestFlight-Latest-blue)
 ```
 
 ### Notification Setup
+
 ```yaml
 # Slack notifications
 - name: Notify Slack
@@ -308,6 +319,7 @@ pipeline {
 ```
 
 ### Health Checks
+
 - Monitor certificate expiration
 - Track build success rates
 - Alert on failed deployments
@@ -317,15 +329,16 @@ pipeline {
 
 ### Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| `fastlane not found` | Add `gem install fastlane` to setup |
-| `certificate not found` | Check MATCH_GIT_URL and token permissions |
-| `provisioning profile expired` | Run `fastlane match appstore --force` |
-| `build timeout` | Increase job timeout in workflow |
-| `storage quota exceeded` | Clean up old artifacts and caches |
+| Issue                          | Solution                                  |
+| ------------------------------ | ----------------------------------------- |
+| `fastlane not found`           | Add `gem install fastlane` to setup       |
+| `certificate not found`        | Check MATCH_GIT_URL and token permissions |
+| `provisioning profile expired` | Run `fastlane match appstore --force`     |
+| `build timeout`                | Increase job timeout in workflow          |
+| `storage quota exceeded`       | Clean up old artifacts and caches         |
 
 ### Debug Mode
+
 ```yaml
 # Add to workflow for debugging
 - name: Debug
@@ -338,6 +351,7 @@ pipeline {
 ## 📈 Performance Optimization
 
 ### Caching Strategies
+
 ```yaml
 - name: Cache Flutter dependencies
   uses: actions/cache@v3
@@ -355,6 +369,7 @@ pipeline {
 ```
 
 ### Parallel Jobs
+
 ```yaml
 jobs:
   test:
@@ -382,6 +397,7 @@ jobs:
 ---
 
 **📖 Related Documentation:**
+
 - [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)
 - [macOS Runner Setup Guide](./MACOS_RUNNER_SETUP.md)</content>
-<parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_CICD_INTEGRATION_GUIDE.md
+  <parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_CICD_INTEGRATION_GUIDE.md

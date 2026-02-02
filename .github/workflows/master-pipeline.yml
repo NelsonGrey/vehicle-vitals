@@ -45,7 +45,9 @@ jobs:
     name: Load Project Configuration
     runs-on: ubuntu-latest
     env:
-      APP_STORE_CONNECT_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
       FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV || 'vehicle-vitals-dev' }}
       FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING || 'vehicle-vitals-staging' }}
       FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD || 'vehicle-vitals-prod' }}
@@ -178,9 +180,9 @@ jobs:
       bundler_version: "2.4.22"
       fastlane_version: "2.230.0"
     secrets:
-      app_store_connect_key_id: ${{ secrets.ASC_KEY_ID }}
-      app_store_connect_issuer_id: ${{ secrets.ASC_ISSUER_ID }}
-      app_store_connect_key: ${{ secrets.ASC_PRIVATE_KEY }}
+      app_store_connect_key_id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      app_store_connect_issuer_id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      app_store_connect_key: ${{ secrets.APP_STORE_CONNECT_KEY }}
       match_password: ${{ secrets.MATCH_PASSWORD }}
       match_git_url: ${{ secrets.MATCH_GIT_URL }}
       match_git_branch: ${{ secrets.MATCH_GIT_BRANCH }}

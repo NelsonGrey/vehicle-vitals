@@ -111,7 +111,7 @@ manage_github_secrets() {
     local repo_name="${GITHUB_REPO#*/}"
 
     if [ -z "$repo_owner" ] || [ -z "$repo_name" ]; then
-        log_error "GITHUB_REPO not properly configured in .env.automation"
+        log_error "GITHUB_REPO not properly configured in .env.automation.$env"
         exit 1
     fi
 
@@ -257,7 +257,10 @@ main() {
     cd "$PROJECT_ROOT"
 
     # Load configuration
-    if [ -f ".env.automation" ]; then
+    local automation_env_file=".env.automation.${environment}"
+    if [ -f "$automation_env_file" ]; then
+        source "$automation_env_file"
+    elif [ -f ".env.automation" ]; then
         source .env.automation
     fi
 

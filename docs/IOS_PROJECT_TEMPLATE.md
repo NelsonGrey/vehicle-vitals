@@ -92,9 +92,9 @@ FASTLANE_TEAM_ID=$TEAM_ID
 FASTLANE_ITC_TEAM_ID=$ITC_TEAM_ID
 
 # App Store Connect API Key (generate from App Store Connect)
-ASC_KEY_ID=your-key-id
-ASC_ISSUER_ID=your-issuer-id
-ASC_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nyour-private-key-here\n-----END PRIVATE KEY-----
+APP_STORE_CONNECT_KEY_ID=your-key-id
+APP_STORE_CONNECT_ISSUER_ID=your-issuer-id
+APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nyour-private-key-here\n-----END PRIVATE KEY-----
 
 # Match Configuration
 MATCH_GIT_URL=$CERT_REPO_URL
@@ -137,9 +137,9 @@ platform :ios do
   desc "Upload to TestFlight"
   lane :beta do
     app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: ENV["ASC_PRIVATE_KEY"],
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_KEY"],
       is_key_content_base64: true
     )
 
@@ -236,9 +236,9 @@ jobs:
           FASTLANE_APPLE_ID=\${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID=\${{ secrets.FASTLANE_TEAM_ID }}
           FASTLANE_ITC_TEAM_ID=\${{ secrets.FASTLANE_ITC_TEAM_ID }}
-          ASC_KEY_ID=\${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID=\${{ secrets.ASC_ISSUER_ID }}
-          ASC_PRIVATE_KEY=\${{ secrets.ASC_PRIVATE_KEY }}
+          APP_STORE_CONNECT_KEY_ID=\${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID=\${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY=\${{ secrets.APP_STORE_CONNECT_KEY }}
           MATCH_GIT_URL=\${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD=\${{ secrets.MATCH_PASSWORD }}
           BETA_FEEDBACK_EMAIL=\${{ secrets.BETA_FEEDBACK_EMAIL }}
@@ -299,9 +299,9 @@ Add these to GitHub Repository Settings → Secrets:
 FASTLANE_APPLE_ID
 FASTLANE_TEAM_ID
 FASTLANE_ITC_TEAM_ID
-ASC_KEY_ID
-ASC_ISSUER_ID
-ASC_PRIVATE_KEY
+APP_STORE_CONNECT_KEY_ID
+APP_STORE_CONNECT_ISSUER_ID
+APP_STORE_CONNECT_KEY
 MATCH_GIT_URL
 MATCH_PASSWORD
 BETA_FEEDBACK_EMAIL
@@ -343,9 +343,9 @@ Add these secrets to **Repository Settings → Secrets and variables → Actions
 FASTLANE_APPLE_ID          → your-apple-id@example.com
 FASTLANE_TEAM_ID           → YOUR_TEAM_ID
 FASTLANE_ITC_TEAM_ID       → YOUR_ITC_TEAM_ID
-ASC_KEY_ID                 → YOUR_KEY_ID
-ASC_ISSUER_ID              → YOUR_ISSUER_ID
-ASC_PRIVATE_KEY            → base64-encoded .p8 content
+APP_STORE_CONNECT_KEY_ID        → YOUR_KEY_ID
+APP_STORE_CONNECT_ISSUER_ID     → YOUR_ISSUER_ID
+APP_STORE_CONNECT_KEY           → base64-encoded .p8 content
 MATCH_GIT_URL              → https://oauth2:gho_TOKEN@github.com/user/repo.git
 MATCH_PASSWORD             → your_match_password
 BETA_FEEDBACK_EMAIL        → feedback@yourcompany.com
@@ -356,20 +356,24 @@ BETA_FEEDBACK_EMAIL        → feedback@yourcompany.com
 For each new project, update these files:
 
 ### Fastlane/Appfile
+
 - `app_identifier("com.yourcompany.yourapp")`
 
 ### Fastlane/Fastfile
+
 - App name in build paths
 - Scheme names (if using native iOS)
 - TestFlight configuration
 
 ### GitHub Workflows
+
 - Flutter version (check compatibility)
 - Ruby version
 - macOS runner version
 - Environment names
 
 ### Documentation
+
 - Update README with project-specific info
 - Update contact emails
 - Update app store descriptions
@@ -377,11 +381,13 @@ For each new project, update these files:
 ## 🚀 Deployment Pipeline
 
 ### Development Workflow
+
 1. Push to `develop` branch
 2. Runs tests and debug build
 3. No distribution (internal testing only)
 
 ### Production Workflow
+
 1. Merge to `main` branch
 2. Runs full test suite
 3. Builds release version
@@ -389,6 +395,7 @@ For each new project, update these files:
 5. Notifies team via Slack/email
 
 ### Manual Deployment
+
 1. Go to GitHub Actions
 2. Select "iOS Distribution" workflow
 3. Choose "release" build type
@@ -397,11 +404,13 @@ For each new project, update these files:
 ## 📊 Monitoring & Maintenance
 
 ### Regular Tasks
+
 - **Monthly**: Check certificate expiration dates
 - **Weekly**: Review build success rates
 - **Daily**: Monitor CI/CD pipeline status
 
 ### Certificate Management
+
 ```bash
 # Check certificate status
 fastlane match appstore
@@ -412,6 +421,7 @@ fastlane match appstore       # Recreate certificates
 ```
 
 ### Performance Optimization
+
 - Use self-hosted runners for cost savings
 - Implement caching for dependencies
 - Parallelize test execution
@@ -420,6 +430,7 @@ fastlane match appstore       # Recreate certificates
 ## 🎯 Success Criteria
 
 ✅ **Setup complete** when:
+
 - [ ] Local build succeeds: `fastlane test_and_build`
 - [ ] CI/CD pipeline passes on all branches
 - [ ] TestFlight builds are generated automatically
@@ -429,7 +440,8 @@ fastlane match appstore       # Recreate certificates
 ---
 
 **📖 Related Templates:**
+
 - [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)
 - [iOS CI/CD Integration Guide](./IOS_CICD_INTEGRATION_GUIDE.md)
 - [iOS Certificate Quick Reference](./IOS_CERTIFICATE_QUICK_REFERENCE.md)</content>
-<parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_PROJECT_TEMPLATE.md
+  <parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_PROJECT_TEMPLATE.md

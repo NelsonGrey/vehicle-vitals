@@ -449,7 +449,7 @@ Based on the attached core features requirements, here's the comprehensive statu
 
 ### Key Files for Reference
 
-- **Configuration**: `.github/copilot-instructions.md`
+- **Configuration**: `docs/.github/Copilot-Instructions.md`
 - **Setup Guides**: `README.md`, `mobile/README.md`
 - **Deployment**: `DEPLOY.md`
 - **Architecture**: `shared/firestoreServiceFactory.js`

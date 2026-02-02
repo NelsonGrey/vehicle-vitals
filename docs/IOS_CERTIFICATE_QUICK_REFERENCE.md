@@ -5,6 +5,7 @@
 ## 🚀 Quick Setup Commands
 
 ### 1. Create Certificate Repository
+
 ```bash
 # Create private GitHub repo: {project-name}-certificates
 # Generate PAT with 'repo' scope
@@ -12,6 +13,7 @@ CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN@github.com/username/project-certifi
 ```
 
 ### 2. Initialize Fastlane (in project/packages/mobile/ios/)
+
 ```bash
 mkdir -p fastlane
 cd fastlane
@@ -36,6 +38,7 @@ EOF
 ```
 
 ### 3. Environment Variables (.env file)
+
 ```bash
 # Apple Account
 FASTLANE_APPLE_ID=your-email@example.com
@@ -43,9 +46,9 @@ FASTLANE_TEAM_ID=YOUR_TEAM_ID
 FASTLANE_ITC_TEAM_ID=YOUR_ITC_TEAM_ID
 
 # App Store Connect API
-ASC_KEY_ID=YOUR_KEY_ID
-ASC_ISSUER_ID=YOUR_ISSUER_ID
-ASC_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_KEY\n-----END PRIVATE KEY-----
+APP_STORE_CONNECT_KEY_ID=YOUR_KEY_ID
+APP_STORE_CONNECT_ISSUER_ID=YOUR_ISSUER_ID
+APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_KEY\n-----END PRIVATE KEY-----
 
 # Certificates
 MATCH_GIT_URL=https://oauth2:gho_TOKEN@github.com/username/project-certificates.git
@@ -56,6 +59,7 @@ BETA_FEEDBACK_EMAIL=feedback@company.com
 ```
 
 ### 4. Generate Certificates
+
 ```bash
 cd packages/mobile/ios
 
@@ -70,6 +74,7 @@ fastlane match appstore
 ```
 
 ### 5. Create Fastfile
+
 ```ruby
 # Fastfile
 default_platform(:ios)
@@ -91,9 +96,9 @@ platform :ios do
   desc "Upload to TestFlight"
   lane :beta do
     app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: ENV["ASC_PRIVATE_KEY"],
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_KEY"],
       is_key_content_base64: true
     )
     build_testflight
@@ -108,9 +113,9 @@ end
 FASTLANE_APPLE_ID          → your-apple-id@example.com
 FASTLANE_TEAM_ID           → YOUR_TEAM_ID
 FASTLANE_ITC_TEAM_ID       → YOUR_ITC_TEAM_ID
-ASC_KEY_ID                 → YOUR_KEY_ID
-ASC_ISSUER_ID              → YOUR_ISSUER_ID
-ASC_PRIVATE_KEY            → base64-encoded .p8 content
+APP_STORE_CONNECT_KEY_ID        → YOUR_KEY_ID
+APP_STORE_CONNECT_ISSUER_ID     → YOUR_ISSUER_ID
+APP_STORE_CONNECT_KEY           → base64-encoded .p8 content
 MATCH_GIT_URL              → https://oauth2:gho_TOKEN@github.com/user/repo.git
 MATCH_PASSWORD             → your_match_password
 BETA_FEEDBACK_EMAIL        → feedback@company.com
@@ -136,13 +141,13 @@ jobs:
 
 ## 🔧 Troubleshooting Quick Fixes
 
-| Error | Solution |
-|-------|----------|
-| `app_name` undefined | Remove `app_name()` from Appfile |
-| No MATCH_PASSWORD | Add `MATCH_PASSWORD` to env vars |
-| Repo not found | Check MATCH_GIT_URL format & token |
-| Certificate expired | `fastlane match appstore --force` |
-| Keychain locked | Add MATCH_PASSWORD to CI secrets |
+| Error                | Solution                           |
+| -------------------- | ---------------------------------- |
+| `app_name` undefined | Remove `app_name()` from Appfile   |
+| No MATCH_PASSWORD    | Add `MATCH_PASSWORD` to env vars   |
+| Repo not found       | Check MATCH_GIT_URL format & token |
+| Certificate expired  | `fastlane match appstore --force`  |
+| Keychain locked      | Add MATCH_PASSWORD to CI secrets   |
 
 ## 📝 Project-Specific Variables to Change
 
@@ -165,6 +170,7 @@ For each new project, update these values:
 ## 🎯 Cost Optimization
 
 **Use self-hosted runners** for significant savings:
+
 - GitHub hosted: ~$0.08/minute
 - Self-hosted: FREE (your hardware)
 

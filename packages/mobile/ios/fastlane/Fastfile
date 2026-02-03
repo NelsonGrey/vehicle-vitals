@@ -279,26 +279,8 @@ platform :ios do
     
     UI.success("✅ IPA created successfully at #{ipa_path}")
 
-    # Diagnostics: keychain + signing identities just before resign
-    UI.message("MATCH_KEYCHAIN_NAME: #{ENV['MATCH_KEYCHAIN_NAME']}")
-    UI.message("MATCH_KEYCHAIN_PATH: #{ENV['MATCH_KEYCHAIN_PATH']}")
-    sh("security default-keychain -d user || true")
-    sh("security list-keychains -d user || true")
-    sh("security find-identity -v -p codesigning || true")
-    if ENV['MATCH_KEYCHAIN_PATH'] && !ENV['MATCH_KEYCHAIN_PATH'].empty?
-      sh("security find-identity -v -p codesigning \"#{ENV['MATCH_KEYCHAIN_PATH']}\" || true")
-    end
-
-    # Sign the IPA using fastlane resign
-    ipa_path = File.expand_path("./builds/Vehicle-Vitals.ipa")
-    keychain_name = ENV['MATCH_KEYCHAIN_NAME']
-    keychain_path = keychain_name ? File.expand_path("~/Library/Keychains/#{keychain_name}.keychain-db") : nil
-    resign(
-      ipa: ipa_path,
-      signing_identity: (ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name'] || "Apple Distribution: Mark Nelson (P6YJUBML6P)"),
-      provisioning_profile: ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_profile-path'],
-      keychain_path: keychain_path
-    )
+    # IPA is already signed by gym/build_app - no need to resign
+    UI.success("📦 IPA is signed and ready for upload")
 
     # Set up API key authentication
     private_key_content = ENV["ASC_PRIVATE_KEY"]

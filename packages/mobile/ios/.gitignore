@@ -29,6 +29,7 @@ Runner/GeneratedPluginRegistrant.*
 
 # Environment variables
 .env
+.env.*
 
 # Exceptions to above rules.
 !default.mode1v3

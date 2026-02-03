@@ -264,14 +264,20 @@ platform :ios do
       }
     )
 
+    # Get IPA path from lane context (gym sets this automatically)
+    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
     
-    # Verify IPA
-    unless File.exist?("./builds/Vehicle-Vitals.ipa")
-       UI.user_error!("gym failed to create IPA at ./builds/Vehicle-Vitals.ipa")
+    # Verify IPA using the actual path from gym
+    unless File.exist?(ipa_path)
+       UI.user_error!("gym failed to create IPA at #{ipa_path}")
     end
 
-    # Wait for IPA to be fully written
-    sh("while [ ! -f ./builds/Vehicle-Vitals.ipa ] || [ ! -s ./builds/Vehicle-Vitals.ipa ]; do sleep 1; done")
+    # Verify IPA has content
+    unless File.size(ipa_path) > 0
+       UI.user_error!("IPA file is empty at #{ipa_path}")
+    end
+    
+    UI.success("✅ IPA created successfully at #{ipa_path}")
 
     # Diagnostics: keychain + signing identities just before resign
     UI.message("MATCH_KEYCHAIN_NAME: #{ENV['MATCH_KEYCHAIN_NAME']}")

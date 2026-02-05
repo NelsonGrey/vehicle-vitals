@@ -13,7 +13,7 @@
   <!-- Left Wrench Head (circular for wrench grip) -->
   <circle cx="100" cy="360" r="60" class="wrench-stroke" stroke="#333333" stroke-width="50" />
   <!-- Left Wrench Shaft (angled down-right) -->
-  <path d="M 140 400 Q 300 550 420 800" class="wrench-stroke" stroke="#333333" stroke-width="48" />
+  <path d="M 140 400 Q 300 600 512 860" class="wrench-stroke" stroke="#333333" stroke-width="48" />
   <!-- Left Wrench Jaw Detail -->
   <g class="wrench-stroke" stroke="#333333" stroke-width="42">
     <path d="M 160 420 L 200 460" />
@@ -23,7 +23,7 @@
   <!-- Right Wrench Head (circular for wrench grip) -->
   <circle cx="924" cy="360" r="60" class="wrench-stroke" stroke="#333333" stroke-width="50" />
   <!-- Right Wrench Shaft (angled down-left) -->
-  <path d="M 884 400 Q 724 550 604 800" class="wrench-stroke" stroke="#333333" stroke-width="48" />
+  <path d="M 884 400 Q 724 600 512 860" class="wrench-stroke" stroke="#333333" stroke-width="48" />
   <!-- Right Wrench Jaw Detail -->
   <g class="wrench-stroke" stroke="#333333" stroke-width="42">
     <path d="M 864 420 L 824 460" />
@@ -52,6 +52,6 @@
   </g>
 
   <!-- Center Accent at V point -->
-  <circle cx="512" cy="810" r="32" fill="#8b1a1a" opacity="0.8" />
-  <circle cx="512" cy="810" r="18" fill="#333333" />
+  <circle cx="512" cy="860" r="32" fill="#8b1a1a" opacity="0.8" />
+  <circle cx="512" cy="860" r="18" fill="#333333" />
 </svg>

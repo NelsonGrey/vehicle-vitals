@@ -1,16 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="720" height="320" viewBox="0 0 72 32" xmlns="http://www.w3.org/2000/svg">
-  <desc>Vehicle Vitals stacked V mark (export asset)</desc>
-  <g fill="none" stroke-linecap="round">
-    <!-- Outer V -->
-    <path d="M12 4 L32 30 L52 4" stroke="#2b2b2b" stroke-width="2.6" />
-    <!-- Middle V -->
-    <path d="M14 5 L32 26 L50 5" stroke="#2b2b2b" stroke-opacity="0.75" stroke-width="2.1" />
-    <!-- Inner V accent -->
-    <path d="M24 8 L32 20 L40 8" stroke="#8b1e2b" stroke-width="3.0" />
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .wrench-stroke { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#fffaf3" />
+
+  <!-- OUTER V - Blue Wrenches (#0066cc) -->
+  <!-- Left Wrench Head (circular for wrench grip) -->
+  <circle cx="180" cy="160" r="60" class="wrench-stroke" stroke="#0066cc" stroke-width="50" />
+  <!-- Left Wrench Shaft (angled down-right) -->
+  <path d="M 220 200 Q 350 450 450 750" class="wrench-stroke" stroke="#0066cc" stroke-width="48" />
+  <!-- Left Wrench Jaw Detail -->
+  <g class="wrench-stroke" stroke="#0066cc" stroke-width="42">
+    <path d="M 240 220 L 280 260" />
+    <path d="M 250 210 L 290 250" />
   </g>
-  <!-- Hex accents (filled) -->
-  <polygon points="15.031,3.5 12,5.5 8.969,3.5 8.969,0.5 12,-1.5 15.031,0.5" fill="#2b2b2b" transform="translate(0,4)"/>
-  <polygon points="15.031,3.5 12,5.5 8.969,3.5 8.969,0.5 12,-1.5 15.031,0.5" fill="#2b2b2b" transform="translate(40,4)"/>
-  <polygon points="15.031,3.5 12,5.5 8.969,3.5 8.969,0.5 12,-1.5 15.031,0.5" fill="#8b1e2b" transform="translate(20,28)"/>
+
+  <!-- Right Wrench Head (circular for wrench grip) -->
+  <circle cx="844" cy="160" r="60" class="wrench-stroke" stroke="#0066cc" stroke-width="50" />
+  <!-- Right Wrench Shaft (angled down-left) -->
+  <path d="M 804 200 Q 674 450 574 750" class="wrench-stroke" stroke="#0066cc" stroke-width="48" />
+  <!-- Right Wrench Jaw Detail -->
+  <g class="wrench-stroke" stroke="#0066cc" stroke-width="42">
+    <path d="M 784 220 L 744 260" />
+    <path d="M 774 210 L 734 250" />
+  </g>
+
+  <!-- INNER V - Red Wrenches (#e63946) -->
+  <!-- Left Inner Wrench Head -->
+  <circle cx="280" cy="280" r="48" class="wrench-stroke" stroke="#e63946" stroke-width="40" />
+  <!-- Left Inner Wrench Shaft -->
+  <path d="M 320 320 Q 400 500 480 750" class="wrench-stroke" stroke="#e63946" stroke-width="38" />
+  <!-- Left Inner Wrench Jaw Detail -->
+  <g class="wrench-stroke" stroke="#e63946" stroke-width="34">
+    <path d="M 335 335 L 370 370" />
+    <path d="M 345 325 L 380 360" />
+  </g>
+
+  <!-- Right Inner Wrench Head -->
+  <circle cx="744" cy="280" r="48" class="wrench-stroke" stroke="#e63946" stroke-width="40" />
+  <!-- Right Inner Wrench Shaft -->
+  <path d="M 704 320 Q 624 500 544 750" class="wrench-stroke" stroke="#e63946" stroke-width="38" />
+  <!-- Right Inner Wrench Jaw Detail -->
+  <g class="wrench-stroke" stroke="#e63946" stroke-width="34">
+    <path d="M 689 335 L 654 370" />
+    <path d="M 679 325 L 644 360" />
+  </g>
+
+  <!-- Center Accent at V point -->
+  <circle cx="512" cy="760" r="32" fill="#e63946" opacity="0.8" />
+  <circle cx="512" cy="760" r="18" fill="#0066cc" />
 </svg>

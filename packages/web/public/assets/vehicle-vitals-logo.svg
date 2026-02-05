@@ -11,23 +11,23 @@
 
   <!-- OUTER V - Blue Wrenches (#0066cc) -->
   <!-- Left Wrench Head (circular for wrench grip) -->
-  <circle cx="180" cy="160" r="60" class="wrench-stroke" stroke="#0066cc" stroke-width="50" />
+  <circle cx="180" cy="220" r="60" class="wrench-stroke" stroke="#0066cc" stroke-width="50" />
   <!-- Left Wrench Shaft (angled down-right) -->
-  <path d="M 220 200 Q 350 450 450 750" class="wrench-stroke" stroke="#0066cc" stroke-width="48" />
+  <path d="M 220 260 Q 350 450 450 750" class="wrench-stroke" stroke="#0066cc" stroke-width="48" />
   <!-- Left Wrench Jaw Detail -->
   <g class="wrench-stroke" stroke="#0066cc" stroke-width="42">
-    <path d="M 240 220 L 280 260" />
-    <path d="M 250 210 L 290 250" />
+    <path d="M 240 280 L 280 320" />
+    <path d="M 250 270 L 290 310" />
   </g>
 
   <!-- Right Wrench Head (circular for wrench grip) -->
-  <circle cx="844" cy="160" r="60" class="wrench-stroke" stroke="#0066cc" stroke-width="50" />
+  <circle cx="844" cy="220" r="60" class="wrench-stroke" stroke="#0066cc" stroke-width="50" />
   <!-- Right Wrench Shaft (angled down-left) -->
-  <path d="M 804 200 Q 674 450 574 750" class="wrench-stroke" stroke="#0066cc" stroke-width="48" />
+  <path d="M 804 260 Q 674 450 574 750" class="wrench-stroke" stroke="#0066cc" stroke-width="48" />
   <!-- Right Wrench Jaw Detail -->
   <g class="wrench-stroke" stroke="#0066cc" stroke-width="42">
-    <path d="M 784 220 L 744 260" />
-    <path d="M 774 210 L 734 250" />
+    <path d="M 784 280 L 744 320" />
+    <path d="M 774 270 L 734 310" />
   </g>
 
   <!-- INNER V - Red Wrenches (#e63946) -->

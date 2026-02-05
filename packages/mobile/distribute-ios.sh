@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # iOS Distribution Script (Firebase App Distribution or TestFlight)
 # Usage: ./distribute-ios.sh [debug|release|testflight] [release-notes]
 

@@ -58,23 +58,23 @@ platform :ios do
           decoded = Base64.decode64(private_key_content)
           if decoded.include?("-----BEGIN")
             private_key_content = decoded
-            UI.message("Decoded ASC_PRIVATE_KEY from base64")
+            UI.message("Decoded APP_STORE_CONNECT_KEY from base64")
           end
         rescue => e
-          UI.message("Failed to decode ASC_PRIVATE_KEY as base64: #{e.message}")
+          UI.message("Failed to decode APP_STORE_CONNECT_KEY as base64: #{e.message}")
         end
       end
 
       require 'tempfile'
-      key_file = Tempfile.new(['asc_key', '.p8'])
+      key_file = Tempfile.new(['app_store_connect_key', '.p8'])
       key_file.write(private_key_content)
       key_file.close
 
-      UI.message("Created temporary ASC key file: #{key_file.path}")
+      UI.message("Created temporary App Store Connect key file: #{key_file.path}")
 
       api_key = app_store_connect_api_key(
-        key_id: ENV["ASC_KEY_ID"],
-        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
         key_filepath: key_file.path
       )
     end

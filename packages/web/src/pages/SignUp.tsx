@@ -30,11 +30,11 @@ export default function SignUp() {
   };
 
   return (
-    <div className="bg-white dark:bg-charcoal-800 rounded-xl shadow-sm p-6 border border-charcoal-200 dark:border-charcoal-700">
-      <h1 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 mb-2 text-center">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
+      <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-2 text-center">
         Create your account
       </h1>
-      <p className="text-charcoal-600 dark:text-cream-300 mb-6 text-center">
+      <p className="text-slate-600 dark:text-slate-400 mb-6 text-center">
         Set up your secure account and start managing your vehicle records.
       </p>
       {error && (
@@ -49,14 +49,14 @@ export default function SignUp() {
         <div className="mb-6">
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
           >
             Email address
           </label>
           <input
             id="email"
             type="email"
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
@@ -65,14 +65,14 @@ export default function SignUp() {
         <div className="mb-6">
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
           >
             Password
           </label>
           <input
             id="password"
             type="password"
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
@@ -80,7 +80,7 @@ export default function SignUp() {
         </div>
         <button
           type="submit"
-          className="w-full bg-oxblood-600 hover:bg-oxblood-700 disabled:bg-charcoal-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+          className="w-full px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity font-medium disabled:opacity-50"
           disabled={busy}
         >
           {busy ? 'Creating account…' : 'Create Account'}
@@ -88,7 +88,7 @@ export default function SignUp() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             type="button"
-            className="border border-charcoal-300 dark:border-charcoal-600 hover:bg-charcoal-50 dark:hover:bg-charcoal-700 disabled:bg-charcoal-100 text-charcoal-700 dark:text-cream-200 font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            className="border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:bg-slate-100 text-slate-700 dark:text-slate-200 font-medium py-2 px-4 rounded-md transition-colors duration-200"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -108,7 +108,7 @@ export default function SignUp() {
           </button>
           <button
             type="button"
-            className="border border-charcoal-300 dark:border-charcoal-600 hover:bg-charcoal-50 dark:hover:bg-charcoal-700 disabled:bg-charcoal-100 text-charcoal-700 dark:text-cream-200 font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            className="border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:bg-slate-100 text-slate-700 dark:text-slate-200 font-medium py-2 px-4 rounded-md transition-colors duration-200"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -128,11 +128,11 @@ export default function SignUp() {
           </button>
         </div>
       </form>
-      <p className="mt-5 text-center text-sm text-charcoal-600 dark:text-cream-300">
+      <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
         Already have an account?{' '}
         <Link
           to="/auth/login"
-          className="text-oxblood-600 hover:text-oxblood-700 font-medium"
+          className="text-slate-700 dark:text-slate-300 hover:underline font-medium"
         >
           Sign in
         </Link>

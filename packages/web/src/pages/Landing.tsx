@@ -74,36 +74,6 @@ export default function Landing() {
                   Open Maintenance Planning Demo
                 </Link>
               </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
-                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
-                  Your garage, anywhere
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Access your vehicles from the web and our companion mobile
-                  apps.
-                </p>
-                <Link
-                  to="/cross-platform-access-demo"
-                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
-                >
-                  Open Cross Platform Access Demo
-                </Link>
-              </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
-                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
-                  Own your history
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  A clear record helps with resale and long-term care—one place
-                  to remember it all.
-                </p>
-                <Link
-                  to="/ownership-history-demo"
-                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
-                >
-                  Open Ownership History Demo
-                </Link>
-              </div>
             </section>
 
             <section className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -8,7 +8,7 @@ export default function Layout() {
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <SiteHeader overlay={false} />
       <HeaderAdBar />
-      <main className="pt-40 pb-16 min-h-[calc(100vh-5rem)]">
+      <main className="pt-40 pb-10 min-h-[calc(100vh-10rem)]">
         <Outlet />
       </main>
       <SiteFooter />

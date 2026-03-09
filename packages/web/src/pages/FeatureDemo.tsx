@@ -16,26 +16,26 @@ export default function FeatureDemo({
   appCtaLabel,
 }: FeatureDemoProps) {
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8">
-      <h1 className="font-serif text-4xl text-slate-900 dark:text-slate-100 mb-3">
-        {title} Demo
-      </h1>
-      <p className="text-slate-600 dark:text-slate-400 text-lg mb-8">
-        {subtitle}
-      </p>
+    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
+        <h1 className="font-serif text-4xl text-slate-900 dark:text-slate-100 mb-3">
+          {title} Demo
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400 text-lg">{subtitle}</p>
+      </section>
 
-      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm mb-6">
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
         <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-4">
           What You See On The Marketing Side
         </h2>
-        <ul className="space-y-2 text-slate-700 dark:text-slate-300">
+        <ul className="list-disc pl-5 space-y-2 text-slate-700 dark:text-slate-300 leading-relaxed">
           {marketingBullets.map(item => (
             <li key={item}>{item}</li>
           ))}
         </ul>
       </section>
 
-      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm mb-6">
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
         <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
           How It Is Implemented In The User App
         </h2>
@@ -64,12 +64,14 @@ export default function FeatureDemo({
         </div>
       </section>
 
-      <Link
-        to="/"
-        className="text-slate-700 dark:text-slate-300 hover:underline"
-      >
-        Back to Marketing Home
-      </Link>
+      <div>
+        <Link
+          to="/"
+          className="text-slate-700 dark:text-slate-300 hover:underline"
+        >
+          Back to Marketing Home
+        </Link>
+      </div>
     </div>
   );
 }

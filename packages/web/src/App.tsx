@@ -1,6 +1,14 @@
 // File: web/src/App.tsx
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
+import AuthLayout from './components/AuthLayout';
 import EnvironmentGate from './components/EnvironmentGate';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -64,6 +72,8 @@ function AppAnalytics() {
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const SignUp = lazy(() => import('./pages/SignUp'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const FeatureDemo = lazy(() => import('./pages/FeatureDemo'));
 const Instructions = lazy(() => import('./pages/Instructions'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Privacy = lazy(() => import('./pages/Privacy'));
@@ -135,35 +145,116 @@ function App() {
         <AppAnalytics />
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            {/* Landing page without layout */}
+            {/* Marketing (anonymous) pages */}
             <Route path="/" element={<Landing />} />
 
-            {/* Routes with layout */}
+            {/* Marketing and user-app routes with main layout */}
             <Route path="/" element={<Layout />}>
-              {/* Public routes */}
-              <Route path="login" element={<Login />} />
-              <Route path="signup" element={<SignUp />} />
+              <Route
+                path="vin-decode-demo"
+                element={
+                  <FeatureDemo
+                    title="VIN Decode"
+                    subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
+                    marketingBullets={[
+                      'Enter a VIN and preview decoded year, make, and model.',
+                      'Understand how quick add reduces setup friction.',
+                      'See the path from initial lookup to saved vehicle records.',
+                    ]}
+                    appRoute="/app/add-vehicle"
+                    appCtaLabel="Open VIN Add Flow"
+                  />
+                }
+              />
+              <Route
+                path="maintenance-planning-demo"
+                element={
+                  <FeatureDemo
+                    title="Maintenance Planning"
+                    subtitle="See how service planning becomes visible, organized, and predictable."
+                    marketingBullets={[
+                      'Preview scheduled maintenance workflows and reminders.',
+                      'Understand how timeline and upcoming tasks connect.',
+                      'See how service history supports long-term ownership.',
+                    ]}
+                    appRoute="/app/upcoming"
+                    appCtaLabel="Open Upcoming Tasks"
+                  />
+                }
+              />
+              <Route
+                path="cross-platform-access-demo"
+                element={
+                  <FeatureDemo
+                    title="Cross Platform Access"
+                    subtitle="See how the same garage data follows users across devices."
+                    marketingBullets={[
+                      'Understand web and mobile continuity from one account.',
+                      'Preview secure sign-in and shared data behavior.',
+                      'See where users continue work from any platform.',
+                    ]}
+                    appRoute="/app"
+                    appCtaLabel="Open Garage Dashboard"
+                  />
+                }
+              />
+              <Route
+                path="ownership-history-demo"
+                element={
+                  <FeatureDemo
+                    title="Ownership History"
+                    subtitle="See how long-term maintenance records become a single source of truth."
+                    marketingBullets={[
+                      'Preview complete vehicle history and service chronology.',
+                      'Understand resale and ownership confidence benefits.',
+                      'See where records are maintained behind secure access.',
+                    ]}
+                    appRoute="/app/timeline"
+                    appCtaLabel="Open Timeline View"
+                  />
+                }
+              />
+
               <Route path="instructions" element={<Instructions />} />
               <Route path="contact" element={<Contact />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />
 
-              {/* Protected routes */}
+              {/* Legacy auth URLs */}
+              <Route
+                path="login"
+                element={<Navigate to="/auth/login" replace />}
+              />
+              <Route
+                path="signup"
+                element={<Navigate to="/auth/signup" replace />}
+              />
+              <Route
+                path="forgot-password"
+                element={<Navigate to="/auth/forgot-password" replace />}
+              />
+
+              {/* Protected user application */}
               <Route
                 path="app"
                 element={
                   <ProtectedRoute>
-                    <Home />
+                    <Outlet />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<Home />} />
+                <Route path="add-vehicle" element={<AddVehicle />} />
+                <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="timeline" element={<TimelineDashboard />} />
+                <Route path="upcoming" element={<UpcomingTasks />} />
+              </Route>
+
+              {/* Legacy protected URLs */}
               <Route
                 path="add-vehicle"
-                element={
-                  <ProtectedRoute>
-                    <AddVehicle />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/app/add-vehicle" replace />}
               />
               <Route
                 path="edit-vehicle/:vin"
@@ -175,28 +266,23 @@ function App() {
               />
               <Route
                 path="profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/app/profile" replace />}
               />
               <Route
                 path="timeline"
-                element={
-                  <ProtectedRoute>
-                    <TimelineDashboard />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/app/timeline" replace />}
               />
               <Route
                 path="upcoming"
-                element={
-                  <ProtectedRoute>
-                    <UpcomingTasks />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/app/upcoming" replace />}
               />
+            </Route>
+
+            {/* Authentication and authorization routes */}
+            <Route path="/auth" element={<AuthLayout />}>
+              <Route path="login" element={<Login />} />
+              <Route path="signup" element={<SignUp />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
             </Route>
 
             {/* Development route - remove in production */}

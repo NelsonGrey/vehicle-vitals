@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 // import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
+import 'components/ad_banner.dart';
 import 'screens/account_screen.dart';
 import 'screens/add_vehicle_screen.dart';
 import 'screens/analytics_screen.dart';
@@ -12,13 +13,14 @@ import 'screens/calendar_preferences_screen.dart';
 import 'screens/contact_screen.dart';
 import 'screens/edit_vehicle_screen.dart';
 import 'screens/email_preferences_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/instructions_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/maintenance_detail_screen.dart';
 import 'screens/maintenance_list_screen.dart';
+import 'screens/marketing_welcome_screen.dart';
 import 'screens/offline_settings_screen.dart';
-// import 'components/ad_banner.dart';
 import 'screens/premium_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/scan_vin_screen.dart';
@@ -86,6 +88,17 @@ class VehicleVitalsApp extends StatelessWidget {
             darkTheme: AppTheme.darkTheme(),
             themeMode: ThemeMode.system,
             routerConfig: _createRouter(authService),
+            builder: (context, child) {
+              return Column(
+                children: [
+                  const SafeArea(
+                    bottom: false,
+                    child: AdBanner(margin: EdgeInsets.zero),
+                  ),
+                  Expanded(child: child ?? const SizedBox.shrink()),
+                ],
+              );
+            },
           );
         },
       ),
@@ -94,108 +107,180 @@ class VehicleVitalsApp extends StatelessWidget {
 
   GoRouter _createRouter(AuthService authService) {
     return GoRouter(
-      initialLocation: '/',
+      initialLocation: '/marketing',
       redirect: (context, state) {
         final isLoggedIn = authService.currentUser != null;
         final isLoading = authService.isLoading;
+        final location = state.matchedLocation;
+
+        final isAuthRoute = location.startsWith('/auth/');
+        final isMarketingRoute = location == '/marketing';
+        final isAppRoute = location == '/app' || location.startsWith('/app/');
 
         if (isLoading) return null; // Don't redirect while loading
 
-        // Redirect to login if not authenticated and trying to access protected routes
-        if (!isLoggedIn &&
-            state.matchedLocation != '/login' &&
-            state.matchedLocation != '/signup') {
-          return '/login';
+        // Unauthenticated users may only access marketing or auth routes.
+        if (!isLoggedIn && isAppRoute) {
+          return '/auth/login';
         }
 
-        // Redirect to home if authenticated and on login/signup pages
-        if (isLoggedIn &&
-            (state.matchedLocation == '/login' ||
-                state.matchedLocation == '/signup')) {
-          return '/';
+        // Authenticated users are routed into the secure app namespace.
+        if (isLoggedIn && (isAuthRoute || isMarketingRoute)) {
+          return '/app';
         }
 
         return null;
       },
       routes: [
-        GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
         GoRoute(
-          path: '/login',
+          path: '/marketing',
+          builder: (context, state) => const MarketingWelcomeScreen(),
+        ),
+        GoRoute(
+          path: '/auth/login',
           builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
-          path: '/signup',
+          path: '/auth/signup',
           builder: (context, state) => const SignUpScreen(),
         ),
         GoRoute(
-          path: '/add-vehicle/:vin?',
+          path: '/auth/forgot-password',
+          builder: (context, state) => const ForgotPasswordScreen(),
+        ),
+        GoRoute(path: '/app', builder: (context, state) => const HomeScreen()),
+        GoRoute(
+          path: '/app/add-vehicle/:vin?',
           builder: (context, state) =>
               AddVehicleScreen(initialVin: state.pathParameters['vin']),
         ),
         GoRoute(
-          path: '/edit-vehicle/:vin',
+          path: '/app/edit-vehicle/:vin',
           builder: (context, state) =>
               EditVehicleScreen(vin: state.pathParameters['vin']!),
         ),
         GoRoute(
-          path: '/scan-vin',
+          path: '/app/scan-vin',
           builder: (context, state) => const ScanVINScreen(),
         ),
         GoRoute(
-          path: '/maintenance/:vin',
+          path: '/app/maintenance/:vin',
           builder: (context, state) =>
               MaintenanceListScreen(vin: state.pathParameters['vin']!),
         ),
         GoRoute(
-          path: '/maintenance/:vin/:entryId',
+          path: '/app/maintenance/:vin/:entryId',
           builder: (context, state) => MaintenanceDetailScreen(
             vin: state.pathParameters['vin']!,
             entryId: state.pathParameters['entryId']!,
           ),
         ),
         GoRoute(
-          path: '/account',
+          path: '/app/account',
           builder: (context, state) => const AccountScreen(),
         ),
         GoRoute(
-          path: '/email-preferences',
+          path: '/app/email-preferences',
           builder: (context, state) => const EmailPreferencesScreen(),
         ),
         GoRoute(
-          path: '/contact',
+          path: '/app/contact',
           builder: (context, state) => const ContactScreen(),
         ),
         GoRoute(
-          path: '/privacy',
+          path: '/app/privacy',
           builder: (context, state) => const PrivacyScreen(),
         ),
         GoRoute(
-          path: '/terms',
+          path: '/app/terms',
           builder: (context, state) => const TermsScreen(),
         ),
         GoRoute(
-          path: '/instructions',
+          path: '/app/instructions',
           builder: (context, state) => const InstructionsScreen(),
         ),
         GoRoute(
-          path: '/calendar-preferences',
+          path: '/app/calendar-preferences',
           builder: (context, state) => const CalendarPreferencesScreen(),
         ),
         GoRoute(
-          path: '/premium',
+          path: '/app/premium',
           builder: (context, state) => const PremiumScreen(),
         ),
         GoRoute(
-          path: '/offline-settings',
+          path: '/app/offline-settings',
           builder: (context, state) => const OfflineSettingsScreen(),
         ),
         GoRoute(
-          path: '/analytics',
+          path: '/app/analytics',
           builder: (context, state) => const AnalyticsScreen(),
         ),
         GoRoute(
-          path: '/upcoming',
+          path: '/app/upcoming',
           builder: (context, state) => const UpcomingTasksScreen(),
+        ),
+        // Legacy routes for backward compatibility.
+        GoRoute(path: '/', redirect: (context, state) => '/marketing'),
+        GoRoute(path: '/login', redirect: (context, state) => '/auth/login'),
+        GoRoute(path: '/signup', redirect: (context, state) => '/auth/signup'),
+        GoRoute(
+          path: '/forgot-password',
+          redirect: (context, state) => '/auth/forgot-password',
+        ),
+        GoRoute(
+          path: '/add-vehicle/:vin?',
+          redirect: (context, state) {
+            final vin = state.pathParameters['vin'];
+            return vin == null ? '/app/add-vehicle' : '/app/add-vehicle/$vin';
+          },
+        ),
+        GoRoute(
+          path: '/edit-vehicle/:vin',
+          redirect: (context, state) =>
+              '/app/edit-vehicle/${state.pathParameters['vin']}',
+        ),
+        GoRoute(
+          path: '/scan-vin',
+          redirect: (context, state) => '/app/scan-vin',
+        ),
+        GoRoute(
+          path: '/maintenance/:vin',
+          redirect: (context, state) =>
+              '/app/maintenance/${state.pathParameters['vin']}',
+        ),
+        GoRoute(
+          path: '/maintenance/:vin/:entryId',
+          redirect: (context, state) =>
+              '/app/maintenance/${state.pathParameters['vin']}/${state.pathParameters['entryId']}',
+        ),
+        GoRoute(path: '/account', redirect: (context, state) => '/app/account'),
+        GoRoute(
+          path: '/email-preferences',
+          redirect: (context, state) => '/app/email-preferences',
+        ),
+        GoRoute(path: '/contact', redirect: (context, state) => '/app/contact'),
+        GoRoute(path: '/privacy', redirect: (context, state) => '/app/privacy'),
+        GoRoute(path: '/terms', redirect: (context, state) => '/app/terms'),
+        GoRoute(
+          path: '/instructions',
+          redirect: (context, state) => '/app/instructions',
+        ),
+        GoRoute(
+          path: '/calendar-preferences',
+          redirect: (context, state) => '/app/calendar-preferences',
+        ),
+        GoRoute(path: '/premium', redirect: (context, state) => '/app/premium'),
+        GoRoute(
+          path: '/offline-settings',
+          redirect: (context, state) => '/app/offline-settings',
+        ),
+        GoRoute(
+          path: '/analytics',
+          redirect: (context, state) => '/app/analytics',
+        ),
+        GoRoute(
+          path: '/upcoming',
+          redirect: (context, state) => '/app/upcoming',
         ),
       ],
     );

@@ -3,6 +3,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -20,6 +21,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<UserCredential>;
   signInWithApple: () => Promise<UserCredential>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -38,6 +40,9 @@ const AuthContext = createContext<AuthContextType>({
     throw new Error('Firebase not initialized');
   },
   signInWithApple: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  resetPassword: async () => {
     throw new Error('Firebase not initialized');
   },
 });
@@ -77,6 +82,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         appleProvider.addScope('name');
         return signInWithPopup(auth, appleProvider);
       },
+      resetPassword: (email: string) => sendPasswordResetEmail(auth, email),
     };
   }, [user, loading]);
 

@@ -12,7 +12,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (loading) return null; // or a spinner
   if (!user) {
-    const to = `/login?redirect=${encodeURIComponent(location.pathname + location.search)}`;
+    const to = `/auth/login?redirect=${encodeURIComponent(location.pathname + location.search)}`;
     return <Navigate to={to} replace />;
   }
   return <>{children}</>;

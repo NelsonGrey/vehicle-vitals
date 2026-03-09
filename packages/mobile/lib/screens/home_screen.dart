@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../models/vehicle.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
-import '../models/vehicle.dart';
 import '../theme/design_tokens.dart';
 import '../theme/tailwind_utilities.dart';
-import '../components/ad_banner.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -61,12 +61,12 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
-                      onPressed: () => context.go('/login'),
+                      onPressed: () => context.go('/auth/login'),
                       child: const Text('Log in'),
                     ),
                     const SizedBox(width: 16),
                     ElevatedButton(
-                      onPressed: () => context.go('/signup'),
+                      onPressed: () => context.go('/auth/signup'),
                       child: const Text('Sign up'),
                     ),
                   ],
@@ -90,22 +90,22 @@ class HomeScreen extends StatelessWidget {
             onSelected: (value) {
               switch (value) {
                 case 'upcoming':
-                  context.go('/upcoming');
+                  context.go('/app/upcoming');
                   break;
                 case 'account':
-                  context.go('/account');
+                  context.go('/app/account');
                   break;
                 case 'instructions':
-                  context.go('/instructions');
+                  context.go('/app/instructions');
                   break;
                 case 'contact':
-                  context.go('/contact');
+                  context.go('/app/contact');
                   break;
                 case 'privacy':
-                  context.go('/privacy');
+                  context.go('/app/privacy');
                   break;
                 case 'terms':
-                  context.go('/terms');
+                  context.go('/app/terms');
                   break;
                 case 'signout':
                   authService.signOut();
@@ -196,7 +196,7 @@ class HomeScreen extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => context.go('/add-vehicle'),
+                onPressed: () => context.go('/app/add-vehicle'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF59E0B),
                   foregroundColor: Colors.white,
@@ -205,9 +205,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // Advertisement banner
-          const AdBanner(),
           // Vehicle list
           Expanded(
             child: StreamBuilder<List<Vehicle>>(
@@ -278,7 +275,7 @@ class HomeScreen extends StatelessWidget {
                                 Expanded(
                                   child: OutlinedButton.icon(
                                     onPressed: () => context.go(
-                                      '/edit-vehicle/${vehicle.vin}',
+                                      '/app/edit-vehicle/${vehicle.vin}',
                                     ),
                                     icon: const Icon(Icons.edit, size: 16),
                                     label: const Text('Edit'),
@@ -291,7 +288,7 @@ class HomeScreen extends StatelessWidget {
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     onPressed: () => context.go(
-                                      '/maintenance/${vehicle.vin}',
+                                      '/app/maintenance/${vehicle.vin}',
                                     ),
                                     icon: const Icon(Icons.build, size: 16),
                                     label: const Text('Maintenance'),
@@ -314,7 +311,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: const AdBanner(),
     );
   }
 }

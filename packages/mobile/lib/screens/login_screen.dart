@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted) {
-        context.go('/');
+        context.go('/app');
       }
     } catch (e) {
       if (mounted) {
@@ -62,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await authService.signInWithApple();
 
       if (mounted) {
-        context.go('/');
+        context.go('/app');
       }
     } catch (e) {
       if (mounted) {
@@ -190,8 +191,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Sign up link
               TextButton(
-                onPressed: () => context.go('/signup'),
+                onPressed: () => context.go('/auth/signup'),
                 child: const Text("Don't have an account? Sign up"),
+              ),
+              TextButton(
+                onPressed: () => context.go('/auth/forgot-password'),
+                child: const Text('Forgot password?'),
               ),
             ],
           ),

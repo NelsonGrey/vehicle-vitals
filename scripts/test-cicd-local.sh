@@ -43,8 +43,8 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Check if Flutter is installed (for mobile workflows)
-    if [[ "$WORKFLOW" =~ ^(android-distribution|ios-distribution)$ ]]; then
+    # Check if Flutter is installed (for iOS mobile workflows)
+    if [[ "$WORKFLOW" =~ ^(ios-distribution)$ ]]; then
         if ! command -v flutter &> /dev/null; then
             echo -e "${RED}❌ Flutter is not installed${NC}"
             exit 1
@@ -182,10 +182,6 @@ test_with_act() {
         "ci-cd-pipeline")
             echo "Testing ci-cd-pipeline.yml..."
             act -j quality-check --secret-file .act-secrets/secrets --env ENVIRONMENT="$ENVIRONMENT" --env DRY_RUN="$DRY_RUN"
-            ;;
-        "android-distribution")
-            echo "Testing android-distribution.yml..."
-            act -j distribute-android --secret-file .act-secrets/secrets --env ENVIRONMENT="$ENVIRONMENT" --env DRY_RUN="$DRY_RUN"
             ;;
         "ios-distribution")
             echo "Testing ios-distribution.yml..."

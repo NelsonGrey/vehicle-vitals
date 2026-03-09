@@ -65,15 +65,6 @@ act -W .github/workflows/ci-cd-pipeline.yml \
   --container-architecture linux/amd64
 ```
 
-### Test Android Distribution
-
-```bash
-act -W .github/workflows/android-distribution.yml \
-  --job distribute-android \
-  --secret-file .act-secrets/test-secrets \
-  --container-architecture linux/amd64
-```
-
 ### Test iOS Distribution
 
 ```bash

@@ -2,12 +2,10 @@
 
 ## Requirements
 
-- iOS distribution is zero-touch:
-  - ASC API key auth via secrets.
-  - Match HTTPS token access to `mnelson3/nelson-grey`.
-  - Ephemeral keychain wrapper for signing.
+- iOS CI focuses on deterministic build validation (no local credential-wrapper orchestration layer in this repo).
 - Branch/environment mapping is correct.
 - Self-hosted runners are resilient (auto-restart + watchdog).
+- Android CI is explicitly on hold.
 
 ## Current state
 
@@ -21,7 +19,7 @@
 
 Acceptance:
 
-- `workflow_dispatch` with `testflight` and `app_store` completes unattended on the `vehicle-vitals-macos-runner`.
+- `workflow_dispatch` build-only path completes unattended on the `vehicle-vitals-macos-runner`.
 
 ### WS2 — Runner reliability (IN PROGRESS)
 

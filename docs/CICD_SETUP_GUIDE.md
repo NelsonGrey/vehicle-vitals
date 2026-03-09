@@ -52,7 +52,7 @@ cp docs/SELF_HOSTED_RUNNERS.md /path/to/target/repo/docs/
 cp docs/COST_EFFECTIVE_CICD.md /path/to/target/repo/docs/
 
 # 5. Update repository references
-find /path/to/target/repo -name "*.yml" -o -name "*.sh" | xargs sed -i '' "s/wishlist-wizard/your-repo-name/g"
+find /path/to/target/repo -name "*.yml" -o -name "*.sh" | xargs sed -i '' "s/vehicle-vitals/your-repo-name/g"
 ```
 
 ## 📋 What's Included
@@ -60,8 +60,7 @@ find /path/to/target/repo -name "*.yml" -o -name "*.sh" | xargs sed -i '' "s/wis
 ### Workflows (`.github/workflows/`)
 
 - `ci-cd-pipeline.yml` - Main CI/CD pipeline with build, test, deploy
-- `ios-distribution.yml` - iOS app distribution to TestFlight/App Store
-- `android-distribution.yml` - Android app distribution to Play Store
+- `ios-distribution.yml` - iOS app build/distribution workflow
 - `test-ci-cd.yml` - Comprehensive testing and validation
 - `chrome-extension-submit.yml` - Chrome extension publishing
 - `test-secrets.yml` - Secret validation testing

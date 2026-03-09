@@ -2,7 +2,7 @@
 name: 🍎 iOS App Distribution
 
 # Simplified iOS workflow for builds and releases
-# Handles local builds, TestFlight distribution, and App Store releases
+# Handles local builds, Legacy Beta Channel distribution, and App Store releases
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
         type: choice
         options:
           - build_only
-          - testflight
+          - beta_channel
           - app_store
           - full_pipeline
       release_notes:
@@ -21,7 +21,7 @@ on:
         required: false
         type: string
       beta_group_name:
-        description: "Name of TestFlight beta group (for full pipeline)"
+        description: "Name of Legacy Beta Channel beta group (for full pipeline)"
         required: false
         default: "Internal Testers"
         type: string
@@ -135,12 +135,12 @@ jobs:
             exit 1
           fi
 
-          # Import into login keychain (no-op if already present).
-          security import "$TMP_WWDR" -k "$HOME/Library/Keychains/login.keychain-db" -T /usr/bin/codesign -T /usr/bin/security || true
+          # Import into login signing store (no-op if already present).
+          security import "$TMP_WWDR" -k "$HOME/Library/signing_stores/login.signing-store-db" -T /usr/bin/codesign -T /usr/bin/security || true
 
           # Best-effort verification (do not fail if search semantics differ on this macOS).
-          security find-certificate -c "Apple Worldwide Developer Relations" "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1 \
-            && echo '✅ WWDR certificate present in login keychain' \
+          security find-certificate -c "Apple Worldwide Developer Relations" "$HOME/Library/signing_stores/login.signing-store-db" >/dev/null 2>&1 \
+            && echo '✅ WWDR certificate present in login signing store' \
             || echo '⚠️ WWDR certificate verification inconclusive'
 
       - name: 🔐 Setup App Store Connect Authentication
@@ -234,8 +234,8 @@ jobs:
 
           cd ios
 
-          # Ensure ephemeral keychain helper is executable
-          chmod +x ../../../scripts/ephemeral_keychain_fastlane_fixed.sh
+          # Ensure legacy signing wrapper helper is executable
+          chmod +x ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh
 
           # Configure Fastlane environment
           export FASTLANE_APPLE_ID='${{ secrets.FASTLANE_APPLE_ID }}'
@@ -349,33 +349,33 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             # PR: Just build and test
             echo '🔨 Building for PR testing...'
-            ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane build_development"
+            ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane build_development"
           else
             # Manual dispatch: execute based on release_type input
             RELEASE_TYPE="${{ github.event.inputs.release_type }}"
             BETA_GROUP_NAME="${{ github.event.inputs.beta_group_name || 'Internal Testers' }}"
 
-            # If triggered by push (e.g. to develop), default to testflight
+            # If triggered by push (e.g. to develop), default to beta_channel
             if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-                RELEASE_TYPE="testflight"
+                RELEASE_TYPE="beta_channel"
             fi
 
             case "$RELEASE_TYPE" in
               "build_only")
                 echo '🔨 Building for local testing...'
-                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane build_development"
+                ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane build_development"
                 ;;
-              "testflight")
-                echo '🎯 Running TestFlight release...'
-                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane beta"
+              "beta_channel")
+                echo '🎯 Running Legacy Beta Channel release...'
+                ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane beta"
                 ;;
               "app_store")
                 echo '🏪 Running App Store submission...'
-                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane submit_to_app_store release_notes:\"$RELEASE_NOTES\""
+                ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane submit_to_app_store release_notes:\"$RELEASE_NOTES\""
                 ;;
               "full_pipeline")
                 echo '🚀 Running complete release pipeline...'
-                ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane full_release_pipeline release_notes:\"$RELEASE_NOTES\" manage_beta:true beta_group_name:\"$BETA_GROUP_NAME\" submit_to_app_store:true"
+                ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane full_release_pipeline release_notes:\"$RELEASE_NOTES\" manage_beta:true beta_group_name:\"$BETA_GROUP_NAME\" submit_to_app_store:true"
                 ;;
               *)
                 echo "❌ Unknown release type: $RELEASE_TYPE"
@@ -387,7 +387,7 @@ jobs:
       - name: 🧹 Clean Up
         if: always()
         run: |
-          echo '🧹 Cleaning up temporary files and keychains...'
+          echo '🧹 Cleaning up temporary files and signing stores...'
 
           # Clean up private keys
           rm -rf ~/.private_keys

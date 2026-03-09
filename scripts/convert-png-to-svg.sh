@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SRC_PNG=${1:-}
-OUT_SVG=${2:-icons/icon-wishlist-wizard.svg}
+OUT_SVG=${2:-icons/icon-vehicle-vitals.svg}
 TEMP_PNM="/tmp/icon-$$.pbm"
 
 if [ -z "$SRC_PNG" ]; then

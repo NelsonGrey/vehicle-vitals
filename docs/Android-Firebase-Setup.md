@@ -1,8 +1,10 @@
 # Firebase Android Configuration for Vehicle Vitals
 
-## ✅ Android Firebase Setup Complete
+> **Status**: On hold. Android development and deployment are currently paused for Vehicle Vitals.
 
-The Android Firebase configuration has been set up with the following components:
+## ⚠️ Android Firebase Setup Snapshot (Historical)
+
+Android Firebase artifacts exist in the repository, but Android development and deployment are paused.
 
 ### 🤖 **Android Configuration Applied:**
 
@@ -16,22 +18,26 @@ The Android Firebase configuration has been set up with the following components
 1. **`mobile/lib/firebase_options.dart`** - Updated with Android configuration
 2. **`mobile/android/app/google-services.json`** - Added Android services file
 
-### 🚀 **Next Steps for Android Development:**
+### 🚀 **Next Steps for Android Development (When Resumed):**
 
 1. **Generate Android Platform Files:**
+
    ```bash
    cd mobile
    flutter create --platforms=android .
    ```
 
 2. **Install Dependencies:**
+
    ```bash
    flutter pub get
    ```
 
 3. **Run on Android Emulator/Device:**
+
    ```bash
-   flutter run -d android
+   # Inactive while Android is on hold.
+   # Android runtime commands are intentionally omitted.
    ```
 
 4. **Configure Android Project (when ready):**
@@ -65,26 +71,29 @@ static const FirebaseOptions android = FirebaseOptions(
 2. **Android Platform Files**: Need to run `flutter create --platforms=android .` to generate Android platform files
 3. **Build Configuration**: google-services.json will be automatically processed by Flutter
 
-### 🎯 **Test Android Configuration:**
+### 🎯 **Test Android Configuration (When Resumed):**
 
 Once Android platform files are created:
+
 ```bash
 cd mobile
-flutter run -d android
+# Inactive while Android is on hold.
+# Android runtime commands are intentionally omitted.
 ```
 
 ### 🔗 **Cross-Platform Integration:**
 
 The google-services.json includes OAuth client configurations for:
+
 - **Android App**: Direct Android authentication
 - **iOS App**: Cross-platform app invites and shared authentication
 
-The app will now connect to Firebase on Android devices and emulators! 🤖🔥
+Android runtime validation is deferred until the Android track is resumed.
 
-### 📱 **All Platforms Status:**
+### 📱 **Platform Status:**
 
-- **✅ Web**: Fully configured and working
-- **✅ iOS**: Fully configured with GoogleService-Info.plist  
-- **✅ Android**: Fully configured with google-services.json
+- **✅ Web**: Active
+- **✅ iOS**: Active
+- **⏸️ Android**: On hold
 
-**Vehicle Vitals is now ready for all platforms!** 🎉
+**Vehicle Vitals currently targets web and iOS in active delivery workflows.**

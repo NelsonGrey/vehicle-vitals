@@ -11,19 +11,17 @@
 
 1. Go to: https://github.com/mnelson3/vehicle-vitals/actions
 2. Click 'iOS Distribution' workflow
-3. Click 'Run workflow' → Select 'develop' branch → Choose 'beta' → 'Run workflow'
-4. **CRITICAL**: Monitor the 'Setup macOS CI Environment' step output
+3. Click 'Run workflow' → Select 'develop' branch → Choose build-only mode → 'Run workflow'
+4. **CRITICAL**: Monitor build and signing steps for deterministic completion
 5. Look for:
-   - ✅ MATCH_PASSWORD is set message
-   - 👤 Current user information
-   - 🔑 Keychain setup verification
-   - Any keychain dialog popups
+   - ✅ Fastlane lane starts successfully
+   - ✅ Flutter iOS build completes
+   - ✅ Artifact generation completes without interactive prompts
 
 ## Step 3: Verify Secrets are Set
 
 Before running, ensure these GitHub secrets exist:
 
-- MATCH_PASSWORD
 - APP_STORE_CONNECT_KEY (complete .p8 content)
 - APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID
 - FASTLANE_APPLE_ID, FASTLANE_TEAM_ID, etc.
@@ -31,11 +29,11 @@ Before running, ensure these GitHub secrets exist:
 ## Expected Results:
 
 - **Emulator Tests**: Should pass all test suites without Firebase CLI issues
-- **iOS Distribution**: Should show successful keychain setup without dialog prompts
+- **iOS Distribution**: Should complete build-only workflow without interactive failures
 
 ## If Issues Persist:
 
-Share the output from 'Setup macOS CI Environment' step for debugging.
+Share the output from the Fastlane + Flutter build steps for debugging.
 
 ---
 

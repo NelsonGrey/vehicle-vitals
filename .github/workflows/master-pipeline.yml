@@ -210,15 +210,74 @@ jobs:
       (needs.load-config.outputs.trigger_context == 'build_all' ||
        needs.load-config.outputs.trigger_context == 'build_and_deploy' ||
        needs.load-config.outputs.trigger_context == 'deploy_only')
-    uses: mnelson3/nelson-grey/.github/workflows/web-deploy.yml@main
-    with:
-      project_name: ${{ needs.load-config.outputs.project_name }}
-      environment: ${{ needs.load-config.outputs.target_environment }}
-    secrets:
-      firebase_token: ${{ secrets.FIREBASE_TOKEN }}
-      firebase_project_dev: ${{ secrets.FIREBASE_PROJECT_DEV }}
-      firebase_project_staging: ${{ secrets.FIREBASE_PROJECT_STAGING }}
-      firebase_project_prod: ${{ secrets.FIREBASE_PROJECT_PROD }}
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
+
+      - name: Build Shared Packages
+        run: |
+          npm run build --workspace=@vehicle-vitals/shared 2>/dev/null || echo "✓ @vehicle-vitals/shared (skip)"
+          npm run build --workspace=@shared/firebase-utils 2>/dev/null || echo "✓ @shared/firebase-utils (skip)"
+
+      - name: Build Web App
+        run: npm run build
+        working-directory: packages/web
+
+      - name: Deploy Hosting Only
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
+          FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING }}
+          FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD }}
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "❌ FIREBASE_TOKEN is not set"
+            exit 1
+          fi
+
+          case "$TARGET_ENV" in
+            production)
+              PROJECT_ID="$FIREBASE_PROJECT_PROD"
+              CONFIG_FILE="firebase.prod.json"
+              ;;
+            staging)
+              PROJECT_ID="$FIREBASE_PROJECT_STAGING"
+              CONFIG_FILE="firebase.staging.json"
+              ;;
+            *)
+              PROJECT_ID="$FIREBASE_PROJECT_DEV"
+              CONFIG_FILE="firebase.dev.json"
+              ;;
+          esac
+
+          if [ -z "$PROJECT_ID" ]; then
+            echo "❌ Firebase project id is not configured for environment: $TARGET_ENV"
+            exit 1
+          fi
+
+          # Keep environment-specific hosting settings, but deploy hosting only.
+          cp "$CONFIG_FILE" firebase.json
+
+          firebase deploy \
+            --project="$PROJECT_ID" \
+            --token="$FIREBASE_TOKEN" \
+            --only hosting \
+            --message="Hosting deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+            --non-interactive
 
   deploy-firebase:
     name: Deploy Firebase
@@ -227,16 +286,64 @@ jobs:
       needs.load-config.outputs.firebase_enabled == 'true' &&
       (needs.load-config.outputs.trigger_context == 'build_and_deploy' ||
        needs.load-config.outputs.trigger_context == 'deploy_only')
-    uses: mnelson3/nelson-grey/.github/workflows/firebase-deploy.yml@main
-    with:
-      project_name: ${{ needs.load-config.outputs.project_name }}
-      environment: ${{ needs.load-config.outputs.target_environment }}
-      deploy_rules: true
-    secrets:
-      firebase_token: ${{ secrets.FIREBASE_TOKEN }}
-      firebase_project_dev: ${{ secrets.FIREBASE_PROJECT_DEV }}
-      firebase_project_staging: ${{ secrets.FIREBASE_PROJECT_STAGING }}
-      firebase_project_prod: ${{ secrets.FIREBASE_PROJECT_PROD }}
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
+
+      - name: Deploy Firestore and Functions Only
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
+          FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING }}
+          FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD }}
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "❌ FIREBASE_TOKEN is not set"
+            exit 1
+          fi
+
+          case "$TARGET_ENV" in
+            production)
+              PROJECT_ID="$FIREBASE_PROJECT_PROD"
+              CONFIG_FILE="firebase.prod.json"
+              ;;
+            staging)
+              PROJECT_ID="$FIREBASE_PROJECT_STAGING"
+              CONFIG_FILE="firebase.staging.json"
+              ;;
+            *)
+              PROJECT_ID="$FIREBASE_PROJECT_DEV"
+              CONFIG_FILE="firebase.dev.json"
+              ;;
+          esac
+
+          if [ -z "$PROJECT_ID" ]; then
+            echo "❌ Firebase project id is not configured for environment: $TARGET_ENV"
+            exit 1
+          fi
+
+          cp "$CONFIG_FILE" firebase.json
+
+          firebase deploy \
+            --project="$PROJECT_ID" \
+            --token="$FIREBASE_TOKEN" \
+            --only firestore,functions \
+            --message="Firestore/Functions deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+            --non-interactive
 
   build-chrome-extension:
     name: Build Chrome Extension

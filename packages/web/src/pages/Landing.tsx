@@ -74,58 +74,35 @@ export default function Landing() {
                   Open Maintenance Planning Demo
                 </Link>
               </div>
-            </section>
-
-            <section className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
-                <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
-                  1. Marketing: What Vehicle Vitals Promises
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-4">
-                  Explore what the product delivers before you sign in.
+                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
+                  Your garage, anywhere
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Access your vehicles from the web and our companion mobile
+                  apps.
                 </p>
-                <ul className="space-y-2 text-slate-700 dark:text-slate-300">
-                  <li>VIN-first onboarding and faster vehicle setup</li>
-                  <li>Maintenance planning with timeline visibility</li>
-                  <li>Cross-platform access from web and mobile</li>
-                  <li>A complete ownership history in one place</li>
-                </ul>
+                <Link
+                  to="/cross-platform-access-demo"
+                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
+                >
+                  Open Cross Platform Access Demo
+                </Link>
               </div>
-
               <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
-                <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
-                  2. User Portal: Where It Gets Implemented
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-4">
-                  After account creation and sign-in, the secured app puts those
-                  promises into action.
+                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
+                  Own your history
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  A clear record helps with resale and long-term care—one place
+                  to remember it all.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Link
-                    to="/auth/signup"
-                    className="px-3 py-2 border border-slate-300 dark:border-slate-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors text-center"
-                  >
-                    Create Account
-                  </Link>
-                  <Link
-                    to="/auth/login"
-                    className="px-3 py-2 border border-slate-300 dark:border-slate-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors text-center"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/app"
-                    className="px-3 py-2 border border-slate-300 dark:border-slate-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors text-center"
-                  >
-                    Garage Dashboard
-                  </Link>
-                  <Link
-                    to="/app/timeline"
-                    className="px-3 py-2 border border-slate-300 dark:border-slate-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors text-center"
-                  >
-                    Timeline View
-                  </Link>
-                </div>
+                <Link
+                  to="/ownership-history-demo"
+                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
+                >
+                  Open Ownership History Demo
+                </Link>
               </div>
             </section>
           </div>

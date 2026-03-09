@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # iOS Setup Implementation Script
-# This script helps implement the shared iOS configuration from wishlist-wizard
+# This script applies the shared iOS configuration for this repository.
 
 set -e
 
@@ -9,7 +9,7 @@ PROJECT_NAME="$1"
 
 if [ -z "$PROJECT_NAME" ]; then
     echo "Usage: $0 <project-name>"
-    echo "Available projects: vehicle-vitals, vehicle-vitals"
+    echo "Available projects: vehicle-vitals"
     exit 1
 fi
 
@@ -42,7 +42,7 @@ echo "✅ iOS setup implemented successfully!"
 echo ""
 echo "📝 Next steps:"
 echo "1. Review the copied files in $FASTLANE_DIR"
-echo "2. Test locally: cd $FASTLANE_DIR && bundle exec fastlane beta"
+echo "2. Test locally: cd $FASTLANE_DIR && bundle exec fastlane build_release"
 echo "3. Update your CI/CD workflows to use the new lanes"
 echo "4. Ensure all required environment variables are set"
 echo ""

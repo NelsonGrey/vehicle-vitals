@@ -10,7 +10,7 @@ This is a monorepo containing multiple packages that work together:
 packages/
 ├── shared/           # Common utilities, Firebase services, types
 ├── web/             # React web application (Vite + React 18)
-└── mobile/          # Flutter mobile application (iOS + Android)
+└── mobile/          # Flutter mobile application (iOS active, Android on hold)
 ```
 
 ## 📚 Documentation
@@ -86,31 +86,30 @@ Mobile (Flutter)
 1. Navigate to mobile directory and install dependencies:
 
 ```bash
-cd mobile
+cd packages/mobile
 flutter pub get
 ```
 
 2. **Firebase Configuration Status:**
    - **✅ iOS**: Configured with GoogleService-Info.plist
-   - **✅ Android**: Configured with google-services.json
+
+- **⏸️ Android**: On hold pending test/deployment path
 
 3. **Generate platform files (if needed):**
 
 ```bash
-flutter create --platforms=ios,android .
+flutter create --platforms=ios .
 ```
 
 4. **Run on simulator / device:**
 
 ```bash
 flutter run -d ios      # iOS is ready!
-flutter run -d android  # Android is ready!
 ```
 
-See setup guides:
+See setup guide:
 
 - `mobile/iOS-Firebase-Setup.md` for iOS instructions
-- `mobile/Android-Firebase-Setup.md` for Android instructions
 
 ## Firebase & credentials
 
@@ -235,40 +234,9 @@ When enabled, the Coming Soon page displays instead of the full application, all
 
 See `DEPLOY.md` for detailed deployment instructions and GitHub Actions setup.
 
-## 📱 Android App Distribution
+## 📱 Android Status
 
-The Android app can be built and distributed to testers using Firebase App Distribution.
-
-#### Manual Distribution
-
-```bash
-cd packages/mobile
-./distribute-android.sh [debug|release] "Release notes"
-```
-
-#### Automated Distribution
-
-Push to `main` or `develop` branches to trigger automated distribution via GitHub Actions:
-
-- `main` → Production testers (`production-testers` group)
-- `develop` → Internal testers (`internal-testers` group)
-
-Or use manual workflow dispatch in GitHub Actions → "Android App Distribution".
-
-#### Required GitHub Secrets
-
-Add these to your repository secrets:
-
-- `FIREBASE_SERVICE_ACCOUNT_KEY`: Service account JSON key with Firebase App Distribution permissions
-- `ANDROID_STORE_PASSWORD`: Android keystore password
-- `ANDROID_KEY_PASSWORD`: Android key password
-
-#### Tester Groups
-
-Configure tester groups in Firebase Console under App Distribution:
-
-- `internal-testers`: Development and testing builds
-- `production-testers`: Release candidate builds
+Android development and distribution are currently on hold. The active mobile roadmap is focused on iOS until Android test and Google Play deployment paths are re-established.
 
 ## 🍎 iOS App Distribution
 

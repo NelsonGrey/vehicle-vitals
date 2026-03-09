@@ -1,5 +1,7 @@
 # App Store Connect API Key Setup
 
+> **Status**: Active for signing access only. Historical distribution-upload wording in this file should be treated as legacy.
+
 To fix the 'invalid curve name' error, you need to set up the APP_STORE_CONNECT_KEY secret in GitHub.
 
 ## Steps to Create App Store Connect API Key:
@@ -25,4 +27,4 @@ To fix the 'invalid curve name' error, you need to set up the APP_STORE_CONNECT_
 - APP_STORE_CONNECT_ISSUER_ID: From the API key details page
 - APP_STORE_CONNECT_KEY: The .p8 file content (full text)
 
-The CI workflow will then be able to authenticate with App Store Connect for code signing and TestFlight uploads.
+The CI workflow will then be able to authenticate with App Store Connect for code signing and iOS release operations.

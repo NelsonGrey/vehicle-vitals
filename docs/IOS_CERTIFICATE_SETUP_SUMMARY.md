@@ -1,5 +1,7 @@
 # iOS Certificate Setup Summary - Vehicle Vitals
 
+> **Status**: Archived summary. Legacy beta-distribution references are not part of the current active pipeline.
+
 ## ✅ Completed Setup
 
 ### 1. Certificate Repository Created
@@ -17,8 +19,8 @@
   - `certificates_development` - Generate dev certificates
   - `certificates_appstore` - Generate App Store certificates
   - `certificates_all` - Generate all certificates
-  - `build_testflight` - Build and sign for TestFlight
-  - `beta` - Upload to TestFlight
+  - `build_beta_channel` - Build and sign for Legacy Beta Channel
+  - `beta` - Upload to Legacy Beta Channel
 
 ### 3. Setup Scripts Created
 

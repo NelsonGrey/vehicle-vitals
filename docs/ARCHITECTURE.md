@@ -2,7 +2,7 @@
 
 **Version**: 1.0  
 **Last Updated**: February 16, 2026  
-**Status**: ✅ PRODUCTION READY  
+**Status**: ⚠️ PARTIALLY PRODUCTION READY  
 **Owner**: Mark Nelson
 
 ---
@@ -27,7 +27,7 @@
 Vehicle Vitals is a cross-platform vehicle management application built on a **Firebase-First Architecture**, enabling users to track vehicle information, maintenance history, and receive proactive notifications. The system consists of three primary applications:
 
 - **Web Application**: React 18 + Vite SPA hosted on Firebase Hosting
-- **Mobile Application**: Flutter app for iOS (15.0+) and Android
+- **Mobile Application**: Flutter app for iOS (active) with Android currently on hold
 - **Backend Services**: Firebase Suite (Auth, Firestore, Functions, Storage)
 
 **Key Architectural Decisions**:
@@ -1087,7 +1087,7 @@ export const decodeVIN = onRequest(
 │  │  STAGING                                             │  │
 │  │  - Firebase Project: vehicle-vitals-staging          │  │
 │  │  - Web: staging.vehiclevitals.com                    │  │
-│  │  - Mobile: TestFlight (iOS) / Internal Track (Android)│  │
+│  │  - Mobile: iOS pre-release validation / Android on hold│  │
 │  │  - Database: Staging Firestore (test data)           │  │
 │  │  - CI/CD: Auto-deploy on 'develop' branch push       │  │
 │  └─────────────────────────────────────────────────────┘  │
@@ -1096,7 +1096,7 @@ export const decodeVIN = onRequest(
 │  │  PRODUCTION                                          │  │
 │  │  - Firebase Project: vehicle-vitals-prod             │  │
 │  │  - Web: www.vehiclevitals.com                        │  │
-│  │  - Mobile: App Store / Google Play Store             │  │
+│  │  - Mobile: App Store target (iOS) / Android on hold  │  │
 │  │  - Database: Production Firestore (live data)        │  │
 │  │  - CI/CD: Manual approval required for deploy        │  │
 │  └─────────────────────────────────────────────────────┘  │
@@ -1212,22 +1212,20 @@ jobs:
 
 ### Mobile App Distribution
 
-**iOS (TestFlight & App Store)**:
+**iOS (Build Validation & App Store)**:
 
 ```
-Development → TestFlight Internal → TestFlight External → App Store
-    ↓              ↓                       ↓                  ↓
-  Local        Team Members            Beta Testers      Public Release
-   Xcode         (25 max)               (10k max)         (unlimited)
+Development → CI Build Validation → App Store Submission
+    ↓                 ↓                      ↓
+  Local            Internal QA          Public Release
+   Xcode
 ```
 
-**Android (Internal Testing & Play Store)**:
+**Android (On Hold)**:
 
 ```
-Development → Internal Track → Closed Testing → Open Testing → Production
-    ↓              ↓               ↓                ↓             ↓
-Android Studio   Team Only     Invited Testers  Public Beta   Public Release
-  Local            (100)          (custom)        (unlimited)   (unlimited)
+Android development and distribution are currently paused pending
+restored testing and deployment capability.
 ```
 
 ---

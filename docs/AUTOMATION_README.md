@@ -286,7 +286,7 @@ firebase deploy --only hosting,functions
 ```bash
 # Certificate and profile management
 fastlane match development  # Automatic provisioning
-fastlane beta             # TestFlight deployment
+fastlane build_release    # iOS build validation
 ```
 
 ### Chrome Web Store

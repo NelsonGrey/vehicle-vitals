@@ -1,5 +1,7 @@
 # 🚀 Zero-Touch DevOps - Quick Reference for AI Agents
 
+> **Status**: Archived legacy reference. Cross-repository credential automation and legacy mobile distribution guidance here are not active for Vehicle Vitals.
+
 ## 🎯 Mission Brief
 
 Implement the Wishlist Wizard zero-touch DevOps automation suite on a new project. This eliminates manual credential management and provides automated CI/CD, monitoring, and deployment.
@@ -34,24 +36,20 @@ project-root/
 └── ZERO_TOUCH_DEVOPS_IMPLEMENTATION_GUIDE.md  # Full documentation
 ```
 
-### 3. **Mobile App Deployment** (NEW!)
+### 3. **Mobile App Deployment**
 
-**iOS App Store & Android Play Store automation**
+**iOS deployment automation (Android currently on hold)**
 
 ```bash
-# Deploy iOS app to TestFlight/App Store
-./automate.sh deploy ios development    # TestFlight
+# Deploy iOS app
+./automate.sh deploy ios development    # Internal build validation
 ./automate.sh deploy ios production     # App Store
-
-# Deploy Android app to Play Store
-./automate.sh deploy android staging    # Internal/Beta track
-./automate.sh deploy android production # Production track
 ```
 
 **Fastlane Integration:**
 
-- iOS: `packages/mobile/ios/fastlane/` (TestFlight + App Store)
-- Android: `packages/mobile/android/fastlane/` (Google Play)
+- iOS: `packages/mobile/ios/fastlane/` (build + App Store lanes)
+- Android: On hold
 
 ### 4. **macOS Runner Directory Isolation** (CRITICAL!)
 
@@ -164,7 +162,7 @@ log_error() { echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" | tee -a "$LOG_FILE
 
 ### 3. **Hardcoded Project Names**
 
-- Replace all `wishlist-wizard` references with variables
+- Replace project-specific references with variables
 - Use `PROJECT_NAME` environment variable
 
 ### 4. **Missing Error Handling**
@@ -250,7 +248,7 @@ cp automate.sh.template /path/to/new/project/automate.sh
 cp .env.automation.development.example /path/to/new/project/.env.automation.development
 
 # 2. Customize project names
-sed -i 's/wishlist-wizard/your-project-name/g' automate.sh
+sed -i 's/vehicle-vitals/your-project-name/g' automate.sh
 
 # 3. Test compatibility
 bash --version  # Must be 3.2+ for macOS

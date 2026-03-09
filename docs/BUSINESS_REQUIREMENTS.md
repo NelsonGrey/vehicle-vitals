@@ -736,7 +736,7 @@
 
 **Decision**: Use Firebase + GitHub Actions for zero-touch automation
 
-- **Rationale**: Reduces DevOps burden, enables rapid scaling, aligns with modulo-squares/wishlist-wizard patterns
+- **Rationale**: Reduces DevOps burden, enables rapid scaling, and supports reusable CI/CD operating patterns
 - **Trade-off**: Firebase pricing scales with users; limited customization options
 
 ---

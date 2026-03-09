@@ -29,7 +29,7 @@ Two frontends (web + mobile) share Firebase-backed utilities in `shared/`. Follo
 
 - Key workflows (concrete commands)
   - Web (from `web/`): `npm run dev`, `npm run build`, `npm run preview`, `npm run test` (Vitest). From repo root, you can prefix with `--prefix web`.
-  - Mobile (from `mobile/`): `flutter run`, `flutter run -d ios`, `flutter run -d android`. `ScanVINScreen` uses `mobile_scanner` package with Code39/Code128 support.
+  - Mobile (from `packages/mobile/`): `flutter run`, `flutter run -d ios`. Android runtime/deployment is currently on hold. `ScanVINScreen` uses `mobile_scanner` package with Code39/Code128 support.
   - Root scripts: `npm run export:logo` renders assets via `scripts/export-logo.js`.
   - Tests: `web/tests/firestoreService.test.js` uses Vitest + `@firebase/rules-unit-testing`; it `vi.mock`s `shared/firebaseConfig` so the service uses a test DB.
 

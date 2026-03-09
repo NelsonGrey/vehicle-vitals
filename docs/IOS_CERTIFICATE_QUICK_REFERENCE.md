@@ -1,5 +1,7 @@
 # iOS Certificate Setup - Quick Reference
 
+> **Status**: Archived quick reference. Legacy beta lane examples are retained for history and are not active deployment guidance.
+
 > **Cheatsheet**: Fast setup commands and essential configurations for new iOS projects.
 
 ## 🚀 Quick Setup Commands
@@ -54,7 +56,7 @@ APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_KEY\n-----END PRIVATE KE
 MATCH_GIT_URL=https://oauth2:gho_TOKEN@github.com/username/project-certificates.git
 MATCH_PASSWORD=your_password
 
-# TestFlight
+# Legacy Beta Channel
 BETA_FEEDBACK_EMAIL=feedback@company.com
 ```
 
@@ -85,15 +87,15 @@ platform :ios do
     match(type: "appstore", readonly: true, api_key_path: nil)
   end
 
-  desc "Build TestFlight"
-  lane :build_testflight do
+  desc "Build Legacy Beta Channel"
+  lane :build_beta_channel do
     sync_signing
     Dir.chdir("../../") do
       sh("flutter build ipa --release")
     end
   end
 
-  desc "Upload to TestFlight"
+  desc "Upload to Legacy Beta Channel"
   lane :beta do
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
@@ -101,8 +103,8 @@ platform :ios do
       key_content: ENV["APP_STORE_CONNECT_KEY"],
       is_key_content_base64: true
     )
-    build_testflight
-    upload_to_testflight(ipa: "../build/ios/ipa/App.ipa")
+    build_beta_channel
+    upload_to_beta_channel(ipa: "../build/ios/ipa/App.ipa")
   end
 end
 ```
@@ -163,9 +165,9 @@ For each new project, update these values:
 ## ✅ Verification Steps
 
 - [ ] `fastlane match appstore` runs without errors
-- [ ] `fastlane beta` builds and uploads to TestFlight
+- [ ] `fastlane beta` builds and uploads to Legacy Beta Channel
 - [ ] GitHub Actions workflow completes successfully
-- [ ] TestFlight build appears in App Store Connect
+- [ ] Legacy Beta Channel build appears in App Store Connect
 
 ## 🎯 Cost Optimization
 
@@ -178,5 +180,4 @@ See [macOS Runner Setup](./MACOS_RUNNER_SETUP.md) for details.
 
 ---
 
-**📖 Full Guide**: [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)</content>
-<parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_CERTIFICATE_QUICK_REFERENCE.md
+**📖 Full Guide**: [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)

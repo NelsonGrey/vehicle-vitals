@@ -119,7 +119,7 @@ test_workflow() {
     elif [[ "$workflow" == "ci-cd-pipeline" && "$job" =~ ^(build-packages|deploy-web)$ ]]; then
         act_cmd="$act_cmd --container-options=\"--memory=2g --cpus=2\""
         act_cmd="$act_cmd -P ubuntu-latest=node:18-slim"
-    elif [[ "$workflow" =~ ^(android-distribution|ios-distribution)$ ]]; then
+    elif [[ "$workflow" =~ ^(ios-distribution)$ ]]; then
         act_cmd="$act_cmd --container-options=\"--memory=2g --cpus=2\""
         # Use node:18-slim for Flutter jobs to avoid architecture issues
         act_cmd="$act_cmd -P ubuntu-latest=node:18-slim"
@@ -234,16 +234,15 @@ main_menu() {
     echo "1. 🚀 CI/CD Pipeline - Quality Check"
     echo "2. 🚀 CI/CD Pipeline - Build Packages"
     echo "3. 🚀 CI/CD Pipeline - Deploy Web"
-    echo "4. 📱 Android Distribution"
-    echo "5. 🍎 iOS Distribution"
-    echo "6. 🔐 Test Secrets"
-    echo "7. 🐳 Setup Docker Images (one-time)"
-    echo "8. 📝 Create Test Events"
-    echo "9. 🧹 Cleanup Docker Resources"
+    echo "4. 🍎 iOS Distribution"
+    echo "5. 🔐 Test Secrets"
+    echo "6. 🐳 Setup Docker Images (one-time)"
+    echo "7. 📝 Create Test Events"
+    echo "8. 🧹 Cleanup Docker Resources"
     echo "0. Exit"
     echo ""
 
-    read -p "Enter choice (0-9): " choice
+    read -p "Enter choice (0-8): " choice
 
     case $choice in
         1)
@@ -256,21 +255,18 @@ main_menu() {
             test_workflow "ci-cd-pipeline" "deploy-web" "workflow_dispatch"
             ;;
         4)
-            test_workflow "android-distribution" "distribute-android" "push"
-            ;;
-        5)
             test_workflow "ios-distribution" "distribute-ios" "push"
             ;;
-        6)
+        5)
             test_workflow "test-secrets" "test-secrets" "workflow_dispatch"
             ;;
-        7)
+        6)
             setup_docker_images
             ;;
-        8)
+        7)
             create_test_events
             ;;
-        9)
+        8)
             cleanup_docker
             ;;
         0)

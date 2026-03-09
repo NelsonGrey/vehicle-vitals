@@ -1,5 +1,7 @@
 # iOS Project Template
 
+> **Status**: Archived template. Legacy beta-distribution instructions are not part of the current Vehicle Vitals active workflow.
+
 > **Project Starter**: Complete template for new iOS projects with certificate management and CI/CD.
 
 ## 📁 Project Structure
@@ -99,7 +101,7 @@ APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nyour-private-key-here\n-----E
 # Match Configuration
 MATCH_GIT_URL=$CERT_REPO_URL
 
-# TestFlight Configuration
+# Legacy Beta Channel Configuration
 BETA_FEEDBACK_EMAIL=feedback@yourcompany.com
 EOF
 
@@ -128,13 +130,13 @@ platform :ios do
     end
   end
 
-  desc "Build and sign for TestFlight"
-  lane :build_testflight do
+  desc "Build and sign for Legacy Beta Channel"
+  lane :build_beta_channel do
     sync_signing
     build_flutter
   end
 
-  desc "Upload to TestFlight"
+  desc "Upload to Legacy Beta Channel"
   lane :beta do
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
@@ -143,9 +145,9 @@ platform :ios do
       is_key_content_base64: true
     )
 
-    build_testflight
+    build_beta_channel
 
-    upload_to_testflight(
+    upload_to_beta_channel(
       ipa: "../build/ios/ipa/$PROJECT_NAME.ipa",
       skip_waiting_for_build_processing: true,
       beta_app_description: "Beta build for $PROJECT_NAME",
@@ -313,7 +315,7 @@ BETA_FEEDBACK_EMAIL
 2. Setup certificate repository: $PROJECT_NAME-certificates
 3. Configure code signing
 4. Test the CI/CD pipeline
-5. Setup TestFlight external testing
+5. Setup Legacy Beta Channel external testing
 
 ## 📖 Documentation
 
@@ -363,7 +365,7 @@ For each new project, update these files:
 
 - App name in build paths
 - Scheme names (if using native iOS)
-- TestFlight configuration
+- Legacy Beta Channel configuration
 
 ### GitHub Workflows
 
@@ -391,7 +393,7 @@ For each new project, update these files:
 1. Merge to `main` branch
 2. Runs full test suite
 3. Builds release version
-4. Uploads to TestFlight
+4. Uploads to Legacy Beta Channel
 5. Notifies team via Slack/email
 
 ### Manual Deployment
@@ -433,7 +435,7 @@ fastlane match appstore       # Recreate certificates
 
 - [ ] Local build succeeds: `fastlane test_and_build`
 - [ ] CI/CD pipeline passes on all branches
-- [ ] TestFlight builds are generated automatically
+- [ ] Legacy Beta Channel builds are generated automatically
 - [ ] Certificates are properly synced
 - [ ] Team can trigger manual releases
 
@@ -443,5 +445,4 @@ fastlane match appstore       # Recreate certificates
 
 - [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)
 - [iOS CI/CD Integration Guide](./IOS_CICD_INTEGRATION_GUIDE.md)
-- [iOS Certificate Quick Reference](./IOS_CERTIFICATE_QUICK_REFERENCE.md)</content>
-  <parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_PROJECT_TEMPLATE.md
+- [iOS Certificate Quick Reference](./IOS_CERTIFICATE_QUICK_REFERENCE.md)

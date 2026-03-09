@@ -7,10 +7,10 @@ on:
       release_type:
         description: "Type of release to perform"
         required: true
-        default: "testflight"
+        default: "beta_channel"
         type: choice
         options:
-          - testflight
+          - beta_channel
           - app_store
           - full_pipeline
       release_notes:
@@ -18,7 +18,7 @@ on:
         required: false
         type: string
       beta_group_name:
-        description: "Name of TestFlight beta group (for full pipeline)"
+        description: "Name of Legacy Beta Channel beta group (for full pipeline)"
         required: false
         default: "Internal Testers"
         type: string
@@ -136,7 +136,7 @@ jobs:
           echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
           cd packages/mobile/ios
-          chmod +x ../../../scripts/ephemeral_keychain_fastlane_fixed.sh
+          chmod +x ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh
 
           # Export secrets for Fastlane
           export FASTLANE_APPLE_ID='${{ secrets.FASTLANE_APPLE_ID }}'
@@ -232,17 +232,17 @@ jobs:
           BETA_GROUP_NAME="${{ github.event.inputs.beta_group_name || 'Internal Testers' }}"
 
           case "$RELEASE_TYPE" in
-            "testflight")
-              echo "🎯 Running TestFlight-only release..."
-              ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane beta"
+            "beta_channel")
+              echo "🎯 Running Legacy Beta Channel-only release..."
+              ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane beta"
               ;;
             "app_store")
               echo "🏪 Running App Store submission..."
-              ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane submit_to_app_store release_notes:\"$RELEASE_NOTES\""
+              ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane submit_to_app_store release_notes:\"$RELEASE_NOTES\""
               ;;
             "full_pipeline")
               echo "🚀 Running complete release pipeline..."
-              ../../../scripts/ephemeral_keychain_fastlane_fixed.sh "bundle exec fastlane full_release_pipeline release_notes:\"$RELEASE_NOTES\" manage_beta:true beta_group_name:\"$BETA_GROUP_NAME\" submit_to_app_store:true"
+              ../../../scripts/ephemeral_signing_store_fastlane_fixed.sh "bundle exec fastlane full_release_pipeline release_notes:\"$RELEASE_NOTES\" manage_beta:true beta_group_name:\"$BETA_GROUP_NAME\" submit_to_app_store:true"
               ;;
             *)
               echo "❌ Unknown release type: $RELEASE_TYPE"
@@ -253,8 +253,8 @@ jobs:
       - name: 🧹 Clean Up
         if: always()
         run: |
-          # Clean up temporary keychain
-          security delete-keychain fastlane_tmp_keychain 2>/dev/null || true
+          # Clean up temporary signing store
+          security delete-signing store fastlane_tmp_signing_store 2>/dev/null || true
 
           # Clean up service account files
           rm -f packages/mobile/ios/service-account-key.json packages/mobile/ios/app_store_connect_key.p8 packages/mobile/ios/certs/dist_cert.p12 packages/mobile/ios/.env

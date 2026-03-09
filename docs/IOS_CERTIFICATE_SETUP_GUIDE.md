@@ -112,7 +112,7 @@ APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----E
 MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/nelson-grey.git
 MATCH_PASSWORD=your_match_password
 
-# TestFlight Configuration
+# Legacy Beta Channel Configuration
 BETA_FEEDBACK_EMAIL=feedback@nelsongrey.com
 ```
 
@@ -203,8 +203,8 @@ platform :ios do
     certificates_appstore
   end
 
-  desc "Build and sign for TestFlight"
-  lane :build_testflight do
+  desc "Build and sign for Legacy Beta Channel"
+  lane :build_beta_channel do
     sync_signing
 
     # For Flutter projects
@@ -220,7 +220,7 @@ platform :ios do
     # )
   end
 
-  desc "Upload to TestFlight"
+  desc "Upload to Legacy Beta Channel"
   lane :beta do
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
@@ -229,9 +229,9 @@ platform :ios do
       is_key_content_base64: true
     )
 
-    build_testflight
+    build_beta_channel
 
-    upload_to_testflight(
+    upload_to_beta_channel(
       ipa: "../build/ios/ipa/Vehicle Vitals.ipa",
       skip_waiting_for_build_processing: true
     )
@@ -311,7 +311,7 @@ fastlane match appstore           # Recreate certificates
 
 - Remove `app_name()` from Appfile (deprecated in newer Fastlane)
 
-**"Neither MATCH_PASSWORD nor keychain"**
+**"Missing signing credentials"**
 
 - Add `MATCH_PASSWORD` to your environment variables
 
@@ -350,7 +350,7 @@ fastlane match appstore           # Recreate certificates
 1. **Test Locally**: Run `fastlane beta` to verify setup
 2. **Push to CI**: Commit changes and trigger workflow
 3. **Monitor Builds**: Check GitHub Actions for successful builds
-4. **Distribute**: Submit to TestFlight and App Store when ready
+4. **Distribute**: Submit to Legacy Beta Channel and App Store when ready
 
 ---
 
@@ -358,5 +358,4 @@ fastlane match appstore           # Recreate certificates
 
 - [macOS Runner Setup Guide](./MACOS_RUNNER_SETUP.md)
 - [CI/CD Pipeline Guide](./CICD_SETUP_GUIDE.md)
-- [Fastlane Documentation](https://docs.fastlane.tools)</content>
-  <parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_CERTIFICATE_SETUP_GUIDE.md
+- [Fastlane Documentation](https://docs.fastlane.tools)

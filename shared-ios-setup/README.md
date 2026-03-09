@@ -1,6 +1,7 @@
-# Shared iOS Setup - Zero-Touch Deployment
+# Shared iOS Setup - Reference Configuration
 
-This folder contains the proven, successful iOS configuration from wishlist-wizard that has demonstrated reliable TestFlight uploads and App Store deployments.
+This folder contains a reference iOS Fastlane configuration for this repository.
+It is not a credential-sharing template for other solutions.
 
 ## Files Included
 
@@ -9,11 +10,11 @@ This folder contains the proven, successful iOS configuration from wishlist-wiza
 - `fastlane/Matchfile` - Certificate and profile management
 - `fastlane/exportOptions.plist` - Xcode export options for App Store distribution
 
-## Key Success Factors
+## Design Notes
 
 1. **Robust API Key Handling** - Multiple fallback methods for App Store Connect authentication
 2. **Smart Build Process** - Automatic IPA detection with fallback export mechanisms
-3. **Comprehensive Beta Lane** - Detailed TestFlight upload with metadata management
+3. **Controlled Distribution Lanes** - Build and release lanes for iOS delivery
 4. **Phone Number Sanitization** - Proper E.164 formatting for App Store Connect
 5. **Error Recovery** - Multiple retry strategies for upload failures
 
@@ -34,18 +35,15 @@ This folder contains the proven, successful iOS configuration from wishlist-wiza
 - `FASTLANE_ITC_TEAM_ID` - App Store Connect team ID
 - `MATCH_GIT_URL` - Git URL for certificates repository
 - `MATCH_PASSWORD` - Password for certificates repository
-- `BETA_FEEDBACK_EMAIL` - Email for beta feedback
-- `BETA_CONTACT_PHONE` - Phone for beta contact (optional)
-- `RELEASE_NOTES` - Release notes for TestFlight
+- `BETA_FEEDBACK_EMAIL` - Email for release feedback
+- `BETA_CONTACT_PHONE` - Phone for release contact (optional)
+- `RELEASE_NOTES` - Release notes
 
 ## Usage
 
 ```bash
-# Run TestFlight upload
-bundle exec fastlane beta
-
 # Run App Store submission
 bundle exec fastlane submit_to_app_store release_notes:"Your release notes"
 ```
 
-This configuration has been battle-tested and provides the most reliable iOS deployment process across the workspace.
+Use this configuration only within the Vehicle Vitals repository context.

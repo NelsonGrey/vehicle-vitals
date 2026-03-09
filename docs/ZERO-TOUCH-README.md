@@ -1,5 +1,7 @@
 # ZERO-TOUCH GitHub Actions Runner Management
 
+> **Status**: Archived legacy reference. This document describes cross-repository runner automation patterns and is not active implementation guidance for current Vehicle Vitals delivery workflows.
+
 This system provides fully automated, zero-maintenance GitHub Actions self-hosted runners using GitHub CLI authentication for token generation.
 
 ## 🎯 Overview
@@ -60,13 +62,13 @@ This will:
 
 ```bash
 # Start Docker runners
-for repo in modulo-squares vehicle-vitals wishlist-wizard; do
+for repo in modulo-squares vehicle-vitals your-project; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner"
   ./manage-docker-runner.sh start
 done
 
 # Start macOS runners
-for repo in modulo-squares vehicle-vitals wishlist-wizard; do
+for repo in modulo-squares vehicle-vitals your-project; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner/actions-runner"
   ./run.sh &
 done
@@ -78,17 +80,17 @@ Check that runners appear online in GitHub:
 
 - https://github.com/mnelson3/modulo-squares/settings/actions/runners
 - https://github.com/nelsongrey/vehicle-vitals/settings/actions/runners
-- https://github.com/nelsongrey/wishlist-wizard/settings/actions/runners
+- https://github.com/nelsongrey/your-project/settings/actions/runners
 
 ```bash
 # Start Docker runners
-for repo in modulo-squares vehicle-vitals wishlist-wizard; do
+for repo in modulo-squares vehicle-vitals your-project; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner"
   ./manage-docker-runner.sh start
 done
 
 # Start macOS runners
-for repo in modulo-squares vehicle-vitals wishlist-wizard; do
+for repo in modulo-squares vehicle-vitals your-project; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner/actions-runner"
   ./run.sh &
 done
@@ -100,7 +102,7 @@ Check that runners appear online in GitHub:
 
 - https://github.com/nelsongrey/modulo-squares/settings/actions/runners
 - https://github.com/nelsongrey/vehicle-vitals/settings/actions/runners
-- https://github.com/nelsongrey/wishlist-wizard/settings/actions/runners
+- https://github.com/nelsongrey/your-project/settings/actions/runners
 
 ## 🔧 Manual GitHub App Setup
 

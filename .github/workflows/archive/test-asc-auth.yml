@@ -74,12 +74,12 @@ jobs:
             exit 1
           fi
 
-          # Import into login keychain
-          security import "$TMP_WWDR" -k "$HOME/Library/Keychains/login.keychain-db" -T /usr/bin/codesign -T /usr/bin/security || true
+          # Import into login signing store
+          security import "$TMP_WWDR" -k "$HOME/Library/signing_stores/login.signing-store-db" -T /usr/bin/codesign -T /usr/bin/security || true
 
           # Verify certificate presence
-          security find-certificate -c "Apple Worldwide Developer Relations" "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1 \
-            && echo '✅ WWDR certificate present in login keychain' \
+          security find-certificate -c "Apple Worldwide Developer Relations" "$HOME/Library/signing_stores/login.signing-store-db" >/dev/null 2>&1 \
+            && echo '✅ WWDR certificate present in login signing store' \
             || echo '⚠️ WWDR certificate verification inconclusive'
 
       - name: 🔍 Validate App Store Connect Environment Variables

@@ -1,5 +1,7 @@
 # 🚀 Zero-Touch DevOps Automation Suite - Implementation Guide
 
+> **Status**: Archived legacy reference. Cross-repository credential automation and legacy mobile distribution guidance in this document are not active for Vehicle Vitals.
+
 ## Overview
 
 This document provides a complete implementation guide for deploying the Wishlist Wizard zero-touch DevOps automation suite to new projects. This suite eliminates manual credential management and provides automated CI/CD, monitoring, and deployment capabilities.

@@ -17,25 +17,23 @@ targets:
         development: true
         distribution: true
     destinations:
-      testflight:
-        enabled: true
-        group: 'Internal Testers'
       appstore:
         enabled: true
 
   android:
-    enabled: true
+    enabled: false
     path: 'packages/mobile/android'
+    status: 'on_hold'
     signing:
       keystore_ref: '${ANDROID_KEYSTORE_PATH}'
       key_alias: '${ANDROID_KEY_ALIAS}'
     destinations:
       firebase_app_distribution:
-        enabled: true
+        enabled: false
         groups:
           - testers
       google_play:
-        enabled: true
+        enabled: false
         track: 'internal'
 
   web:
@@ -109,7 +107,4 @@ ci:
       secrets_profile: 'staging'
     production:
       firebase_config: 'firebase.prod.json'
-      secrets_profile: 'prod'
-
-notifications:
   slack_webhook: '${SLACK_WEBHOOK_URL}'

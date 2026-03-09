@@ -1,5 +1,7 @@
 # iOS CI/CD Integration Guide
 
+> **Status**: Archived integration guide. Legacy beta-distribution workflow details are not part of the current active pipeline.
+
 > **Automation Template**: Complete CI/CD setup for iOS projects with certificate management, testing, and distribution.
 
 ## 🎯 Overview
@@ -24,9 +26,9 @@ on:
       build_type:
         description: 'Build type'
         required: true
-        default: 'testflight'
+        default: 'beta_channel'
         type: choice
-        options: [testflight, appstore, debug]
+        options: [beta_channel, appstore, debug]
 
 jobs:
   test:
@@ -77,8 +79,8 @@ jobs:
       - name: Run Fastlane
         run: |
           cd packages/mobile/ios
-          case "${{ github.event.inputs.build_type || 'testflight' }}" in
-            "testflight")
+          case "${{ github.event.inputs.build_type || 'beta_channel' }}" in
+            "beta_channel")
               fastlane beta
               ;;
             "appstore")
@@ -184,7 +186,7 @@ ios_build:
   script:
     - gem install fastlane -v $FASTLANE_VERSION
     - cd packages/mobile/ios
-    - fastlane build_testflight
+    - fastlane build_beta_channel
   artifacts:
     paths:
       - packages/mobile/build/ios/ipa/*.ipa
@@ -250,7 +252,7 @@ pipeline {
         stage('Build') {
             steps {
                 dir('packages/mobile/ios') {
-                    sh 'fastlane build_testflight'
+                    sh 'fastlane build_beta_channel'
                 }
             }
         }
@@ -303,7 +305,7 @@ pipeline {
 
 ```markdown
 ![iOS Build](https://github.com/username/repo/workflows/iOS%20Distribution/badge.svg)
-![TestFlight](https://img.shields.io/badge/TestFlight-Latest-blue)
+![Legacy Beta Channel](https://img.shields.io/badge/Legacy Beta Channel-Latest-blue)
 ```
 
 ### Notification Setup
@@ -399,5 +401,4 @@ jobs:
 **📖 Related Documentation:**
 
 - [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)
-- [macOS Runner Setup Guide](./MACOS_RUNNER_SETUP.md)</content>
-  <parameter name="filePath">/Users/marknelson/Circus/Repositories/wishlist-wizard/docs/IOS_CICD_INTEGRATION_GUIDE.md
+- [macOS Runner Setup Guide](./MACOS_RUNNER_SETUP.md)

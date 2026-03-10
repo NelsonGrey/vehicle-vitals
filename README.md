@@ -187,6 +187,26 @@ Local Development → Local Scripts → Act Testing → GitHub Dry-Run → Produ
 
 See `COST_EFFECTIVE_CICD.md` for detailed cost savings and testing strategies.
 
+## Keychain Drift Guard (macOS)
+
+If iOS/CI tooling has modified your local keychain defaults in the past, use the repo guard script to detect and repair drift before prompts resurface.
+
+```bash
+# Check keychain health
+./scripts/keychain-sanity.sh --check
+
+# Backup + repair if unhealthy
+./scripts/keychain-sanity.sh --fix
+```
+
+What this guards against:
+
+- `fastlane_tmp_keychain` left as the default user keychain
+- duplicate keychains in the user search list
+- missing `login.keychain-db` in the user search list
+
+Backups are written to `~/.keychain-backups` before any repair.
+
 This project supports multiple Firebase environments for development, staging, and production.
 
 ### Environments

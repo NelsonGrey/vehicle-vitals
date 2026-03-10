@@ -247,6 +247,220 @@ For each Firebase project:
 2. Add as a GitHub secret with the appropriate name (e.g., `FIREBASE_SERVICE_ACCOUNT_PRODUCTION`)
 3. The CI/CD pipeline will use this to authenticate with Firebase
 
+## Functions Integration Environment Flags
+
+The new integration endpoints in `packages/functions/src/index.ts` are controlled
+by runtime environment flags. Configure these in your Functions environment
+(and as CI secrets where applicable).
+
+### Email Provider
+
+```
+EMAIL_PROVIDER
+SENDGRID_API_KEY
+SENDGRID_FROM_EMAIL
+```
+
+Recommended values:
+
+- `EMAIL_PROVIDER=log` for local/dev simulation
+- `EMAIL_PROVIDER=sendgrid` for staging/production delivery
+
+To configure SendGrid in Firebase Functions:
+
+```bash
+cd packages/functions
+firebase functions:secrets:set SENDGRID_API_KEY
+firebase functions:secrets:set SENDGRID_FROM_EMAIL
+```
+
+### Integration Providers and Feature Flags
+
+```
+MANUALS_ENABLED
+MANUALS_PROVIDER
+WARRANTY_ENABLED
+WARRANTY_PROVIDER
+MAINTENANCE_PLAN_ENABLED
+SCHEDULE_PROVIDER
+CALENDAR_ENABLED
+CALENDAR_PROVIDER
+```
+
+Current provider values supported in code:
+
+- `MANUALS_PROVIDER=manuals_primary`
+- `WARRANTY_PROVIDER=warranty_primary`
+- `SCHEDULE_PROVIDER=schedule_primary`
+- `CALENDAR_PROVIDER=calendar_primary`
+
+Recommended staging/production feature toggles:
+
+```bash
+MANUALS_ENABLED=true
+WARRANTY_ENABLED=true
+MAINTENANCE_PLAN_ENABLED=true
+CALENDAR_ENABLED=true
+```
+
+### Auth and Rate Limiting Guards
+
+```
+INTEGRATION_AUTH_REQUIRED
+INTEGRATION_RATE_LIMIT_ENABLED
+INTEGRATION_RATE_LIMIT_MAX
+INTEGRATION_RATE_LIMIT_WINDOW_MS
+INTEGRATION_CACHE_ENABLED
+INTEGRATION_CACHE_TTL_MS
+```
+
+Default behavior when unset:
+
+- `INTEGRATION_AUTH_REQUIRED=true`
+- `INTEGRATION_RATE_LIMIT_ENABLED=true`
+- `INTEGRATION_RATE_LIMIT_MAX=60`
+- `INTEGRATION_RATE_LIMIT_WINDOW_MS=60000`
+- `INTEGRATION_CACHE_ENABLED=false`
+- `INTEGRATION_CACHE_TTL_MS=86400000`
+
+### Premium Purchase Verification (Apple + Google Play)
+
+```
+PREMIUM_VERIFICATION_REQUIRED
+PREMIUM_UNKNOWN_SOURCE_UNVERIFIED
+APPLE_SHARED_SECRET
+GOOGLE_PLAY_PACKAGE_NAME
+GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL
+GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY
+GOOGLE_PLAY_ACCESS_TOKEN
+```
+
+Behavior summary:
+
+- `PREMIUM_VERIFICATION_REQUIRED=true` enforces strict verification in
+  `verifyPremiumPurchase`. Unverified purchases are rejected.
+- `PREMIUM_VERIFICATION_REQUIRED=false` allows provisional entitlement states
+  when provider verification is unavailable.
+- `PREMIUM_UNKNOWN_SOURCE_UNVERIFIED=true` treats unknown purchase sources as
+  `unverified` (recommended default).
+- `APPLE_SHARED_SECRET` enables App Store `verifyReceipt` checks.
+- `GOOGLE_PLAY_PACKAGE_NAME` + service account credentials enable Android
+  Publisher product purchase checks.
+- `GOOGLE_PLAY_ACCESS_TOKEN` is an optional override for deterministic tests or
+  controlled staging workflows; do not rely on this for production.
+
+Supported purchase source values for `verifyPremiumPurchase`:
+
+- App Store canonical: `app_store`
+- App Store aliases: `apple_app_store`, `appstore`
+- Play Store canonical: `play_store`
+- Play Store aliases: `google_play`, `playstore`
+
+Unknown values are handled by `PREMIUM_UNKNOWN_SOURCE_UNVERIFIED`.
+
+Recommended production/staging values:
+
+```bash
+PREMIUM_VERIFICATION_REQUIRED=true
+PREMIUM_UNKNOWN_SOURCE_UNVERIFIED=true
+```
+
+Recommended rollout sequence:
+
+1. Deploy with `PREMIUM_VERIFICATION_REQUIRED=false` while setting all Apple/
+   Play credentials.
+2. Validate purchase paths in staging (`app_store` and `play_store`).
+3. Confirm entitlement documents include:
+   - `verificationState` (`verified` expected for valid receipts)
+   - `verificationProvider`
+   - `verificationReason` (empty for successful verification)
+4. Enable `PREMIUM_VERIFICATION_REQUIRED=true` in production after staging
+   verification passes.
+
+To configure sensitive values in Firebase Functions:
+
+```bash
+cd packages/functions
+firebase functions:secrets:set APPLE_SHARED_SECRET
+firebase functions:secrets:set GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY
+```
+
+These settings are enforced by `packages/functions/src/request.guards.ts` on:
+
+- `getOwnerManuals`
+- `getWarrantySummary`
+- `getMaintenancePlan`
+- `createCalendarEvent`
+
+Optional cache behavior:
+
+- When `INTEGRATION_CACHE_ENABLED=true`, manual and warranty results are cached
+  at `users/{uid}/vehicles/{vin}/integrations/{manuals|warranty}/current`.
+- `INTEGRATION_CACHE_TTL_MS` controls cache expiration.
+
+## Deployed Calendar Auth Smoke Test
+
+Use the repo smoke script to verify HTTP auth behavior for calendar fallback in
+staging/production environments.
+
+1. Generate a Firebase ID token for a signed-in user in the target project.
+   Example using repo helper script:
+
+```bash
+FIREBASE_API_KEY=<target-project-web-api-key> \
+FIREBASE_EMAIL=<test-user-email> \
+FIREBASE_PASSWORD=<test-user-password> \
+./scripts/generate-firebase-id-token.sh
+```
+
+2. Run:
+
+```bash
+FUNCTIONS_BASE_URL=https://us-central1-<project-id>.cloudfunctions.net \
+ID_TOKEN=<firebase-id-token> \
+EXPECT_AUTH_REQUIRED=true \
+./scripts/smoke-calendar-auth.sh
+```
+
+Expected outcome when auth is enforced:
+
+- anonymous request returns `401`
+- authenticated request returns any non-`401` status (`200`, `501`, or `503`)
+
+This validates the auth guard path required for HTTP fallback from web/mobile
+calendar clients.
+
+### One-command Staging + Production Run
+
+Use the wrapper script to run both environments in one command:
+
+```bash
+STAGING_ID_TOKEN=$(FIREBASE_API_KEY=<staging-web-api-key> FIREBASE_EMAIL=<staging-user-email> FIREBASE_PASSWORD=<staging-user-password> ./scripts/generate-firebase-id-token.sh)
+PRODUCTION_ID_TOKEN=$(FIREBASE_API_KEY=<prod-web-api-key> FIREBASE_EMAIL=<prod-user-email> FIREBASE_PASSWORD=<prod-user-password> ./scripts/generate-firebase-id-token.sh)
+```
+
+```bash
+STAGING_FUNCTIONS_BASE_URL=https://us-central1-<staging-project-id>.cloudfunctions.net \
+STAGING_ID_TOKEN=<staging-firebase-id-token> \
+PRODUCTION_FUNCTIONS_BASE_URL=https://us-central1-<prod-project-id>.cloudfunctions.net \
+PRODUCTION_ID_TOKEN=<prod-firebase-id-token> \
+./scripts/smoke-calendar-auth-all.sh
+```
+
+The command exits non-zero if either environment fails verification.
+It also writes a timestamped evidence log to `artifacts/smoke/` by default.
+
+To force a specific evidence file path:
+
+```bash
+EVIDENCE_LOG_FILE=artifacts/smoke/calendar-auth-staging-prod.log \
+STAGING_FUNCTIONS_BASE_URL=https://us-central1-<staging-project-id>.cloudfunctions.net \
+STAGING_ID_TOKEN=<staging-firebase-id-token> \
+PRODUCTION_FUNCTIONS_BASE_URL=https://us-central1-<prod-project-id>.cloudfunctions.net \
+PRODUCTION_ID_TOKEN=<prod-firebase-id-token> \
+./scripts/smoke-calendar-auth-all.sh
+```
+
 ## Testing Environment Setup
 
 ### 1. Local Development

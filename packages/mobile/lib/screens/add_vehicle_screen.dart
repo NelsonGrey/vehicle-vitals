@@ -1,4 +1,4 @@
-// import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,43 +52,51 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Mock VIN decoding for TestFlight - disabled Firebase Functions
-      // final functions = FirebaseFunctions.instance;
-      // final result = await functions.httpsCallable('decodeVIN').call({
-      //   'vin': vin,
-      // });
+      final functions = FirebaseFunctions.instance;
+      final result = await functions.httpsCallable('decodeVIN').call({
+        'vin': vin,
+      });
 
-      // Mock response for TestFlight
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      final data = Map<String, dynamic>.from(result.data as Map);
+      if (data['success'] != true) {
+        final errorMessage = (data['error'] ?? 'VIN decode failed').toString();
+        throw Exception(errorMessage);
+      }
 
-      // Mock vehicle data based on VIN
-      final mockVehicleData = {
-        'make': 'Honda',
-        'model': 'Civic',
-        'year': '2020',
-      };
+      final vehicleData = Map<String, dynamic>.from(
+        data['vehicle'] as Map? ?? <String, dynamic>{},
+      );
+      final decodedYear = (vehicleData['year'] ?? '').toString();
 
       setState(() {
-        _makeController.text = mockVehicleData['make'] ?? '';
-        _modelController.text = mockVehicleData['model'] ?? '';
-        _yearController.text = mockVehicleData['year'] ?? '';
+        _makeController.text = (vehicleData['make'] ?? '').toString();
+        _modelController.text = (vehicleData['model'] ?? '').toString();
+        if (decodedYear.isNotEmpty) {
+          _yearController.text = decodedYear;
+        }
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          // ignore: use_build_context_synchronously
           const SnackBar(
-            content: Text(
-              'VIN decoded successfully! (Mock data for TestFlight)',
-            ),
+            content: Text('VIN decoded successfully!'),
             backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        final message = e.message ?? 'VIN decode service unavailable';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error decoding VIN: $message'),
+            backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          // ignore: use_build_context_synchronously
           SnackBar(
             content: Text('Error decoding VIN: ${e.toString()}'),
             backgroundColor: Colors.red,
@@ -123,7 +131,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.go('/');
+        context.go('/app');
       }
     } catch (e) {
       if (mounted) {
@@ -148,7 +156,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         title: const Text('Add Vehicle'),
         actions: [
           TextButton(
-            onPressed: () => context.go('/scan-vin'),
+            onPressed: () => context.push('/app/scan-vin'),
             child: const Text('Scan VIN'),
           ),
         ],

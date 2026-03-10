@@ -110,6 +110,87 @@ lib/               # Compiled JavaScript output
 - **Firebase**: Functions runtime
 - **NHTSA VPIC API**: For VIN decoding (no API key required)
 
+### Integration Runtime Flags
+
+Email delivery:
+
+```bash
+EMAIL_PROVIDER=log|sendgrid
+SENDGRID_API_KEY=...
+SENDGRID_FROM_EMAIL=no-reply@example.com
+```
+
+Provider flags:
+
+```bash
+MANUALS_ENABLED=true|false
+MANUALS_PROVIDER=manuals_primary|none
+WARRANTY_ENABLED=true|false
+WARRANTY_PROVIDER=warranty_primary|none
+MAINTENANCE_PLAN_ENABLED=true|false
+SCHEDULE_PROVIDER=schedule_primary|none
+CALENDAR_ENABLED=true|false
+CALENDAR_PROVIDER=calendar_primary|none
+```
+
+Auth and rate limiting:
+
+```bash
+INTEGRATION_AUTH_REQUIRED=true|false
+INTEGRATION_RATE_LIMIT_ENABLED=true|false
+INTEGRATION_RATE_LIMIT_MAX=60
+INTEGRATION_RATE_LIMIT_WINDOW_MS=60000
+INTEGRATION_CACHE_ENABLED=true|false
+INTEGRATION_CACHE_TTL_MS=86400000
+```
+
+Guard behavior is implemented in `src/request.guards.ts` and applied to
+integration endpoints (`getOwnerManuals`, `getWarrantySummary`,
+`getMaintenancePlan`, `createCalendarEvent`).
+
+Calendar trigger entry points:
+
+- HTTP fallback endpoint: `createCalendarEvent`
+- Callable endpoint: `createCalendarEventCallable`
+
+Integration cache behavior (optional):
+
+- Enable with `INTEGRATION_CACHE_ENABLED=true`
+- TTL with `INTEGRATION_CACHE_TTL_MS`
+- Cached docs are stored under
+  `users/{uid}/vehicles/{vin}/integrations/{manuals|warranty}/current`
+
+Premium verification flags:
+
+```bash
+PREMIUM_VERIFICATION_REQUIRED=true|false
+PREMIUM_UNKNOWN_SOURCE_UNVERIFIED=true|false
+APPLE_SHARED_SECRET=...
+GOOGLE_PLAY_PACKAGE_NAME=com.example.app
+GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
+GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+GOOGLE_PLAY_ACCESS_TOKEN=... # optional test/staging override
+```
+
+Premium verification behavior:
+
+- Entry point: `verifyPremiumPurchase` callable in `src/index.ts`
+- Entitlement read API: `getPremiumEntitlement` callable
+- Provider implementation: `src/premium.provider.ts`
+- Receipt replay protection: `premiumReceipts/{receiptHash}`
+
+Accepted purchase source values:
+
+- App Store canonical: `app_store`
+- App Store aliases: `apple_app_store`, `appstore`
+- Play Store canonical: `play_store`
+- Play Store aliases: `google_play`, `playstore`
+
+Recommended production mode:
+
+- `PREMIUM_VERIFICATION_REQUIRED=true`
+- `PREMIUM_UNKNOWN_SOURCE_UNVERIFIED=true`
+
 ## Deployment
 
 Functions are automatically deployed via CI/CD pipeline. For manual deployment:
@@ -132,6 +213,5 @@ npm run shell
 
 - CORS enabled for web app integration
 - Input validation for all endpoints
-- Firebase Authentication integration (planned)
-- Rate limiting via Firebase Functions configuration</content>
-  <parameter name="filePath">/Users/marknelson/Circus/Repositories/vehicle-vitals/packages/functions/README.md
+- Firebase Authentication enforced for integration endpoints via ID token verification
+- Per-endpoint rate limiting enforced via `src/request.guards.ts`

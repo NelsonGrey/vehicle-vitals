@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/email_reminder_service.dart';
 
@@ -15,6 +16,14 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String _userEmail = '';
+
+  void _goBack() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/app/account');
+  }
 
   @override
   void initState() {
@@ -101,7 +110,13 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Email Preferences')),
+        appBar: AppBar(
+          title: const Text('Email Preferences'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _goBack,
+          ),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -109,6 +124,10 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Email Preferences'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _goBack,
+        ),
         actions: [
           TextButton(
             onPressed: _isSaving ? null : _savePreferences,

@@ -1,11 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:logging/logging.dart';
-// import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
 import 'components/ad_banner.dart';
+import 'firebase_options.dart';
 import 'screens/account_screen.dart';
 import 'screens/add_vehicle_screen.dart';
 import 'screens/analytics_screen.dart';
@@ -28,7 +29,6 @@ import 'screens/signup_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/upcoming_tasks_screen.dart';
 import 'services/analytics_service.dart';
-// import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
@@ -47,15 +47,26 @@ void main() async {
     );
   });
 
-  // Initialize Firebase - DISABLED FOR TESTFLIGHT
-  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Initialize Firebase with explicit options to avoid environment drift.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    final activeOptions = Firebase.app().options;
+    debugPrint(
+      'Firebase initialized: project=${activeOptions.projectId}, appId=${activeOptions.appId}',
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+    rethrow;
+  }
 
   // Initialize Google Mobile Ads - DISABLED FOR TESTFLIGHT
   // await MobileAds.instance.initialize();
 
-  // Initialize notifications - DISABLED FOR TESTFLIGHT
+  // Initialize notifications.
   final notificationService = NotificationService();
-  // await notificationService.initialize();
+  await notificationService.initialize();
 
   // Pre-load interstitial and rewarded ads - DISABLED FOR TESTFLIGHT
   // InterstitialAdHelper.loadAd();

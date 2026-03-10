@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/calendar_service.dart';
 
 class CalendarPreferencesScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
   bool _isSaving = false;
   bool _hasPermissions = false;
   String? _selectedCalendarId;
+  List<Map<String, dynamic>> _availableCalendars = const [];
 
   @override
   void initState() {
@@ -31,10 +33,19 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       _hasPermissions = await _calendarService.hasCalendarPermissions();
 
       if (_hasPermissions) {
+        final calendars = await _calendarService.getAvailableCalendars();
+        _availableCalendars = calendars
+            .map((c) => Map<String, dynamic>.from(c as Map))
+            .toList();
+
         // Load user preferences
         final preferences = await _calendarService.getCalendarPreferences();
         _calendarSyncEnabled = preferences['calendarSyncEnabled'];
         _selectedCalendarId = preferences['calendarId'];
+
+        if (_selectedCalendarId == null && _availableCalendars.isNotEmpty) {
+          _selectedCalendarId = _availableCalendars.first['id']?.toString();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -228,6 +239,11 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                         ),
                       ),
                     ],
+                    if (_hasPermissions)
+                      const Text(
+                        'Calendar is connected through backend event links.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                   ],
                 ),
               ),
@@ -266,6 +282,27 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                           setState(() => _calendarSyncEnabled = value);
                         },
                       ),
+                      if (_calendarSyncEnabled) ...[
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedCalendarId,
+                          decoration: const InputDecoration(
+                            labelText: 'Default Calendar Target',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _availableCalendars
+                              .map(
+                                (c) => DropdownMenuItem<String>(
+                                  value: c['id']?.toString(),
+                                  child: Text(c['name']?.toString() ?? ''),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() => _selectedCalendarId = value);
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -299,7 +336,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
 
               // Information text
               const Text(
-                'Maintenance events are added for services due within the next 30 days. You can disable this at any time.',
+                'Use Upcoming Tasks to create calendar events with your selected target.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),

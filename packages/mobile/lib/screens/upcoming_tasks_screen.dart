@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
+import '../services/calendar_service.dart';
 import '../services/firestore_service.dart';
 import '../theme/design_tokens.dart';
 import '../theme/tailwind_utilities.dart';
@@ -18,6 +19,7 @@ class UpcomingTasksScreen extends StatefulWidget {
 class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   List<Map<String, dynamic>> _upcomingItems = [];
   bool _loading = true;
+  final CalendarService _calendarService = CalendarService();
 
   @override
   void initState() {
@@ -85,6 +87,44 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
     if (milesUntilDue <= 1000) return 'Urgent';
     if (milesUntilDue <= 5000) return 'Soon';
     return 'Upcoming';
+  }
+
+  DateTime _estimateDueDate(int milesUntilDue) {
+    final dayOffset = (milesUntilDue / 100).ceil().clamp(1, 180);
+    return DateTime.now().add(Duration(days: dayOffset));
+  }
+
+  Future<void> _addItemToCalendar(
+    Vehicle vehicle,
+    Map<String, dynamic> item,
+  ) async {
+    try {
+      final dueDate = _estimateDueDate(item['milesUntilDue'] as int);
+      final event = await _calendarService.addMaintenanceToCalendar(
+        vehicleVin: vehicle.vin,
+        title: item['description'] as String,
+        description: 'Maintenance reminder from Vehicle Vitals',
+        dueDate: dueDate,
+        vehicleInfo: '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+      );
+
+      if (!mounted) return;
+      final target = (event['target'] ?? 'calendar').toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Calendar event created for $target.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to add to calendar: $e'),
+          backgroundColor: AppDesignTokens.danger,
+        ),
+      );
+    }
   }
 
   @override
@@ -249,17 +289,27 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         ],
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                MaintenanceListScreen(vin: vehicle.vin),
-                          ),
-                        );
-                      },
-                      child: const Text('Mark Complete'),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => _addItemToCalendar(vehicle, item),
+                          child: const Text('Add to Calendar'),
+                        ),
+                        SizedBox(width: TwSpace.s2),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    MaintenanceListScreen(vin: vehicle.vin),
+                              ),
+                            );
+                          },
+                          child: const Text('Mark Complete'),
+                        ),
+                      ],
                     ),
                   ],
                 ),

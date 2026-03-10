@@ -49,7 +49,7 @@ class _ScanVINScreenState extends State<ScanVINScreen> {
         title: const Text('Scan VIN - DISABLED'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/add-vehicle'),
+          onPressed: () => context.go('/app/add-vehicle'),
         ),
       ),
       body: const Center(

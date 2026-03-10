@@ -1,4 +1,4 @@
-import * as logger from 'firebase-functions/logger';
+import * as logger from "firebase-functions/logger";
 
 export interface EmailMessage {
   to: string;
@@ -7,15 +7,15 @@ export interface EmailMessage {
   text: string;
 }
 
-type EmailProvider = 'log' | 'sendgrid';
+type EmailProvider = "log" | "sendgrid";
 
 /**
  * Resolve outbound email provider from environment.
  * @return {EmailProvider} Active provider name
  */
 function getEmailProvider(): EmailProvider {
-  const raw = (process.env.EMAIL_PROVIDER || 'log').trim().toLowerCase();
-  return raw === 'sendgrid' ? 'sendgrid' : 'log';
+  const raw = (process.env.EMAIL_PROVIDER || "log").trim().toLowerCase();
+  return raw === "sendgrid" ? "sendgrid" : "log";
 }
 
 /**
@@ -29,23 +29,23 @@ async function sendWithSendGrid(message: EmailMessage): Promise<void> {
 
   if (!apiKey || !fromEmail) {
     throw new Error(
-      'Missing SENDGRID_API_KEY or SENDGRID_FROM_EMAIL for sendgrid provider'
+      "Missing SENDGRID_API_KEY or SENDGRID_FROM_EMAIL for sendgrid provider"
     );
   }
 
-  const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
+  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: message.to }] }],
-      from: { email: fromEmail },
+      personalizations: [{to: [{email: message.to}]}],
+      from: {email: fromEmail},
       subject: message.subject,
       content: [
-        { type: 'text/plain', value: message.text },
-        { type: 'text/html', value: message.html },
+        {type: "text/plain", value: message.text},
+        {type: "text/html", value: message.html},
       ],
     }),
   });
@@ -64,16 +64,16 @@ async function sendWithSendGrid(message: EmailMessage): Promise<void> {
 export async function sendEmail(message: EmailMessage): Promise<void> {
   const provider = getEmailProvider();
 
-  if (provider === 'sendgrid') {
+  if (provider === "sendgrid") {
     await sendWithSendGrid(message);
-    logger.info('Reminder email sent via sendgrid', {
+    logger.info("Reminder email sent via sendgrid", {
       to: message.to,
       subject: message.subject,
     });
     return;
   }
 
-  logger.info('EMAIL_PROVIDER=log; email send simulated', {
+  logger.info("EMAIL_PROVIDER=log; email send simulated", {
     to: message.to,
     subject: message.subject,
     previewText: message.text.slice(0, 180),

@@ -20,11 +20,11 @@ export interface CalendarEventOutput {
  * @return {string} Escaped value
  */
 function escapeIcs(value: string): string {
-  return (value || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/\n/g, '\\n')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;');
+  return (value || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
 }
 
 /**
@@ -36,8 +36,8 @@ function toIcsTimestamp(iso: string): string {
   const d = new Date(iso);
   return d
     .toISOString()
-    .replace(/[-:]/g, '')
-    .replace(/\.\d{3}/, '');
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
 }
 
 /**
@@ -54,21 +54,21 @@ export function buildIcsEvent(input: CalendarEventInput): {
   const endTs = toIcsTimestamp(input.endAt || input.startAt);
 
   const ics = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Vehicle Vitals//Maintenance//EN',
-    'BEGIN:VEVENT',
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Vehicle Vitals//Maintenance//EN",
+    "BEGIN:VEVENT",
     `UID:${uid}`,
     `DTSTAMP:${toIcsTimestamp(new Date().toISOString())}`,
     `DTSTART:${startTs}`,
     `DTEND:${endTs}`,
     `SUMMARY:${escapeIcs(input.title)}`,
     `DESCRIPTION:${escapeIcs(
-      input.description || 'Vehicle maintenance event'
+      input.description || "Vehicle maintenance event"
     )}`,
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].join('\r\n');
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
 
   const encoded = encodeURIComponent(ics);
   return {
@@ -89,11 +89,11 @@ export function buildGoogleCalendarEvent(
   const startTs = toIcsTimestamp(input.startAt);
   const endTs = toIcsTimestamp(input.endAt || input.startAt);
   const actionUrl =
-    'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    "https://calendar.google.com/calendar/render?action=TEMPLATE" +
     `&text=${encodeURIComponent(input.title)}` +
     `&dates=${encodeURIComponent(`${startTs}/${endTs}`)}` +
     `&details=${encodeURIComponent(
-      input.description || 'Vehicle maintenance event'
+      input.description || "Vehicle maintenance event"
     )}`;
 
   return {
@@ -115,6 +115,6 @@ export function buildAppleCalendarEvent(
   return {
     eventId: `${ics.eventId}-apple`,
     downloadUrl: ics.downloadUrl,
-    delivery: 'ics_import',
+    delivery: "ics_import",
   };
 }

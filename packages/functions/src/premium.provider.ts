@@ -6,99 +6,102 @@ interface PremiumVerificationInput {
 
 export interface PremiumVerificationResult {
   verified: boolean;
-  verificationState: 'verified' | 'provisional' | 'unverified';
+  verificationState: "verified" | "provisional" | "unverified";
   provider: string;
   reason?: string;
 }
 
 function boolFromEnv(name: string, defaultValue: boolean): boolean {
-  const raw = (process.env[name] || '').trim().toLowerCase();
+  const raw = (process.env[name] || "").trim().toLowerCase();
   if (!raw) return defaultValue;
-  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
 function normalizePurchaseSource(source: string): string {
-  const normalized = (source || '').trim().toLowerCase();
+  const normalized = (source || "").trim().toLowerCase();
 
   if (
-    normalized === 'play_store' ||
-    normalized === 'google_play' ||
-    normalized === 'playstore'
+    normalized === "play_store" ||
+    normalized === "google_play" ||
+    normalized === "playstore"
   ) {
-    return 'play_store';
+    return "play_store";
   }
 
   if (
-    normalized === 'app_store' ||
-    normalized === 'apple_app_store' ||
-    normalized === 'appstore'
+    normalized === "app_store" ||
+    normalized === "apple_app_store" ||
+    normalized === "appstore"
   ) {
-    return 'app_store';
+    return "app_store";
   }
 
-  return normalized || 'unknown';
+  return normalized || "unknown";
 }
 
 function normalizePrivateKey(value: string): string {
-  return value.replace(/\\n/g, '\n');
+  return value.replace(/\\n/g, "\n");
 }
 
 function toBase64Url(input: Buffer | string): string {
-  const value = Buffer.isBuffer(input)
-    ? input.toString('base64')
-    : Buffer.from(input).toString('base64');
-  return value.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  const value = Buffer.isBuffer(input) ?
+    input.toString("base64") :
+    Buffer.from(input).toString("base64");
+  return value.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 async function getGooglePlayAccessToken(): Promise<string> {
-  const explicitToken = (process.env.GOOGLE_PLAY_ACCESS_TOKEN || '').trim();
+  const explicitToken = (process.env.GOOGLE_PLAY_ACCESS_TOKEN || "").trim();
   if (explicitToken) {
     return explicitToken;
   }
 
   const clientEmail = (
-    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL || ''
+    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL || ""
   ).trim();
   const rawPrivateKey = (
-    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY || ''
+    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY || ""
   ).trim();
 
   if (!clientEmail || !rawPrivateKey) {
     throw new Error(
-      'GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL or GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY not configured'
+      "GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL or " +
+        "GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY not configured"
     );
   }
 
   const privateKey = normalizePrivateKey(rawPrivateKey);
   const now = Math.floor(Date.now() / 1000);
 
-  const header = { alg: 'RS256', typ: 'JWT' };
+  const header = {alg: "RS256", typ: "JWT"};
   const claims = {
     iss: clientEmail,
-    scope: 'https://www.googleapis.com/auth/androidpublisher',
-    aud: 'https://oauth2.googleapis.com/token',
+    scope: "https://www.googleapis.com/auth/androidpublisher",
+    aud: "https://oauth2.googleapis.com/token",
     iat: now,
     exp: now + 3600,
   };
 
-  const unsignedToken = `${toBase64Url(JSON.stringify(header))}.${toBase64Url(JSON.stringify(claims))}`;
+  const encodedHeader = toBase64Url(JSON.stringify(header));
+  const encodedClaims = toBase64Url(JSON.stringify(claims));
+  const unsignedToken = `${encodedHeader}.${encodedClaims}`;
 
-  const crypto = await import('crypto');
-  const signer = crypto.createSign('RSA-SHA256');
+  const crypto = await import("crypto");
+  const signer = crypto.createSign("RSA-SHA256");
   signer.update(unsignedToken);
   signer.end();
   const signature = signer.sign(privateKey);
   const assertion = `${unsignedToken}.${toBase64Url(signature)}`;
 
   const body = new URLSearchParams({
-    grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
     assertion,
   });
 
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      "Content-Type": "application/x-www-form-urlencoded",
     },
     body: body.toString(),
   });
@@ -109,9 +112,9 @@ async function getGooglePlayAccessToken(): Promise<string> {
   }
 
   const payload = (await response.json()) as { access_token?: string };
-  const accessToken = (payload.access_token || '').toString();
+  const accessToken = (payload.access_token || "").toString();
   if (!accessToken) {
-    throw new Error('Google OAuth token response missing access_token');
+    throw new Error("Google OAuth token response missing access_token");
   }
 
   return accessToken;
@@ -120,13 +123,13 @@ async function getGooglePlayAccessToken(): Promise<string> {
 async function verifyPlayStoreReceipt(
   input: PremiumVerificationInput
 ): Promise<PremiumVerificationResult> {
-  const packageName = (process.env.GOOGLE_PLAY_PACKAGE_NAME || '').trim();
+  const packageName = (process.env.GOOGLE_PLAY_PACKAGE_NAME || "").trim();
   if (!packageName) {
     return {
       verified: false,
-      verificationState: 'provisional',
-      provider: 'play_store',
-      reason: 'GOOGLE_PLAY_PACKAGE_NAME not configured',
+      verificationState: "provisional",
+      provider: "play_store",
+      reason: "GOOGLE_PLAY_PACKAGE_NAME not configured",
     };
   }
 
@@ -136,22 +139,23 @@ async function verifyPlayStoreReceipt(
   } catch (error) {
     return {
       verified: false,
-      verificationState: 'unverified',
-      provider: 'play_store',
+      verificationState: "unverified",
+      provider: "play_store",
       reason: `Google OAuth token fetch failed: ${String(error)}`,
     };
   }
 
   const purchaseToken = input.receipt;
   const endpoint =
-    'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/' +
-    `${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(input.productId)}` +
+    "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/" +
+    `${encodeURIComponent(packageName)}/purchases/products/` +
+    `${encodeURIComponent(input.productId)}` +
     `/tokens/${encodeURIComponent(purchaseToken)}`;
 
   let payload: any;
   try {
     const response = await fetch(endpoint, {
-      method: 'GET',
+      method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -161,8 +165,8 @@ async function verifyPlayStoreReceipt(
       const text = await response.text();
       return {
         verified: false,
-        verificationState: 'unverified',
-        provider: 'play_store',
+        verificationState: "unverified",
+        provider: "play_store",
         reason: `Play purchase lookup HTTP ${response.status}: ${text}`,
       };
     }
@@ -171,8 +175,8 @@ async function verifyPlayStoreReceipt(
   } catch (error) {
     return {
       verified: false,
-      verificationState: 'unverified',
-      provider: 'play_store',
+      verificationState: "unverified",
+      provider: "play_store",
       reason: `Play purchase lookup failed: ${String(error)}`,
     };
   }
@@ -183,11 +187,13 @@ async function verifyPlayStoreReceipt(
   const verified = purchaseState === 0 && consumptionState === 0;
   return {
     verified,
-    verificationState: verified ? 'verified' : 'unverified',
-    provider: 'play_store',
-    reason: verified
-      ? undefined
-      : `Play purchase state invalid (purchaseState=${purchaseState}, consumptionState=${consumptionState})`,
+    verificationState: verified ? "verified" : "unverified",
+    provider: "play_store",
+    reason: verified ?
+      undefined :
+      "Play purchase state invalid " +
+        `(purchaseState=${purchaseState}, ` +
+        `consumptionState=${consumptionState})`,
   };
 }
 
@@ -197,14 +203,14 @@ async function postAppleVerifyReceipt(
   sharedSecret: string
 ): Promise<any> {
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      'receipt-data': receipt,
-      password: sharedSecret,
-      'exclude-old-transactions': true,
+      "receipt-data": receipt,
+      "password": sharedSecret,
+      "exclude-old-transactions": true,
     }),
   });
 
@@ -219,18 +225,18 @@ async function postAppleVerifyReceipt(
 async function verifyAppleReceipt(
   input: PremiumVerificationInput
 ): Promise<PremiumVerificationResult> {
-  const sharedSecret = (process.env.APPLE_SHARED_SECRET || '').trim();
+  const sharedSecret = (process.env.APPLE_SHARED_SECRET || "").trim();
   if (!sharedSecret) {
     return {
       verified: false,
-      verificationState: 'provisional',
-      provider: 'app_store',
-      reason: 'APPLE_SHARED_SECRET not configured',
+      verificationState: "provisional",
+      provider: "app_store",
+      reason: "APPLE_SHARED_SECRET not configured",
     };
   }
 
-  const productionUrl = 'https://buy.itunes.apple.com/verifyReceipt';
-  const sandboxUrl = 'https://sandbox.itunes.apple.com/verifyReceipt';
+  const productionUrl = "https://buy.itunes.apple.com/verifyReceipt";
+  const sandboxUrl = "https://sandbox.itunes.apple.com/verifyReceipt";
 
   let payload: any;
   try {
@@ -240,14 +246,14 @@ async function verifyAppleReceipt(
       sharedSecret
     );
     payload =
-      firstAttempt?.status === 21007
-        ? await postAppleVerifyReceipt(sandboxUrl, input.receipt, sharedSecret)
-        : firstAttempt;
+      firstAttempt?.status === 21007 ?
+        await postAppleVerifyReceipt(sandboxUrl, input.receipt, sharedSecret) :
+        firstAttempt;
   } catch (error) {
     return {
       verified: false,
-      verificationState: 'unverified',
-      provider: 'app_store',
+      verificationState: "unverified",
+      provider: "app_store",
       reason: `Apple verifyReceipt request failed: ${String(error)}`,
     };
   }
@@ -255,17 +261,17 @@ async function verifyAppleReceipt(
   if (payload?.status !== 0) {
     return {
       verified: false,
-      verificationState: 'unverified',
-      provider: 'app_store',
-      reason: `Apple verifyReceipt status=${payload?.status ?? 'unknown'}`,
+      verificationState: "unverified",
+      provider: "app_store",
+      reason: `Apple verifyReceipt status=${payload?.status ?? "unknown"}`,
     };
   }
 
   const receiptItems = [
     ...(Array.isArray(payload?.receipt?.in_app) ? payload.receipt.in_app : []),
-    ...(Array.isArray(payload?.latest_receipt_info)
-      ? payload.latest_receipt_info
-      : []),
+    ...(Array.isArray(payload?.latest_receipt_info) ?
+      payload.latest_receipt_info :
+      []),
   ];
 
   const productMatched = receiptItems.some(
@@ -274,11 +280,11 @@ async function verifyAppleReceipt(
 
   return {
     verified: productMatched,
-    verificationState: productMatched ? 'verified' : 'unverified',
-    provider: 'app_store',
-    reason: productMatched
-      ? undefined
-      : 'Receipt valid but product not found in transaction history',
+    verificationState: productMatched ? "verified" : "unverified",
+    provider: "app_store",
+    reason: productMatched ?
+      undefined :
+      "Receipt valid but product not found in transaction history",
   };
 }
 
@@ -287,22 +293,22 @@ export async function verifyPremiumReceipt(
 ): Promise<PremiumVerificationResult> {
   const source = normalizePurchaseSource(input.source);
   const strictUnknownSource = boolFromEnv(
-    'PREMIUM_UNKNOWN_SOURCE_UNVERIFIED',
+    "PREMIUM_UNKNOWN_SOURCE_UNVERIFIED",
     true
   );
 
-  if (source === 'app_store') {
-    return verifyAppleReceipt({ ...input, source });
+  if (source === "app_store") {
+    return verifyAppleReceipt({...input, source});
   }
 
-  if (source === 'play_store') {
-    return verifyPlayStoreReceipt({ ...input, source });
+  if (source === "play_store") {
+    return verifyPlayStoreReceipt({...input, source});
   }
 
   return {
     verified: false,
-    verificationState: strictUnknownSource ? 'unverified' : 'provisional',
+    verificationState: strictUnknownSource ? "unverified" : "provisional",
     provider: source,
-    reason: 'Unknown purchase source',
+    reason: "Unknown purchase source",
   };
 }

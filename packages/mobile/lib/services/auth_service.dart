@@ -1,8 +1,10 @@
-import 'package:flutter/foundation.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
+import 'dart:async';
 
-// Mock User class for TestFlight build
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:flutter/foundation.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
+
+// App-level user model used by screens.
 class User {
   final String uid;
   final String? email;
@@ -17,7 +19,7 @@ class User {
   });
 }
 
-// Mock UserCredential class for TestFlight build
+// App-level auth response wrapper used by screens.
 class UserCredential {
   final User user;
 
@@ -25,7 +27,8 @@ class UserCredential {
 }
 
 class AuthService extends ChangeNotifier {
-  // final FirebaseAuth _auth = FirebaseAuth.instance;
+  final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
+  StreamSubscription<firebase_auth.User?>? _authSubscription;
   User? _currentUser;
   bool _isLoading = true;
 
@@ -37,58 +40,119 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   void _init() {
-    // Mock auth state - always signed in for TestFlight
-    _currentUser = User(
-      uid: 'testflight-user',
-      email: 'test@example.com',
-      displayName: 'TestFlight User',
+    _currentUser = _mapUser(_auth.currentUser);
+    _authSubscription = _auth.authStateChanges().listen((firebaseUser) {
+      _currentUser = _mapUser(firebaseUser);
+      _isLoading = false;
+      notifyListeners();
+    });
+  }
+
+  User? _mapUser(firebase_auth.User? user) {
+    if (user == null) return null;
+    return User(
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      emailVerified: user.emailVerified,
     );
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<UserCredential?> signInWithEmailAndPassword(
     String email,
     String password,
   ) async {
-    // Mock successful sign in
-    final user = User(uid: 'testflight-user', email: email);
-    _currentUser = user;
-    notifyListeners();
-    return UserCredential(user: user);
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = _mapUser(credential.user);
+      _currentUser = user;
+      notifyListeners();
+      if (user == null) return null;
+      return UserCredential(user: user);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw Exception(_friendlyAuthMessage(e, email.trim()));
+    }
+  }
+
+  String _friendlyAuthMessage(
+    firebase_auth.FirebaseAuthException e,
+    String email,
+  ) {
+    switch (e.code) {
+      case 'invalid-credential':
+      case 'wrong-password':
+      case 'invalid-email':
+        if (email.isNotEmpty) {
+          return 'Invalid email or password. If this email is used with Google or Apple on web, use that provider instead.';
+        }
+        return 'Invalid email or password.';
+      case 'user-not-found':
+        return 'No account found for this email. Please sign up first.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'network-request-failed':
+        return 'Network error. Please check your connection and try again.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait and try again.';
+      case 'operation-not-allowed':
+        return 'Email/password sign-in is not enabled for this project.';
+      default:
+        return e.message ?? 'Authentication failed. Please try again.';
+    }
   }
 
   Future<UserCredential?> createUserWithEmailAndPassword(
     String email,
     String password,
   ) async {
-    // Mock successful sign up
-    final user = User(uid: 'testflight-user', email: email);
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = _mapUser(credential.user);
     _currentUser = user;
     notifyListeners();
+    if (user == null) return null;
     return UserCredential(user: user);
   }
 
   Future<void> signOut() async {
-    // Mock sign out
+    await _auth.signOut();
     _currentUser = null;
     notifyListeners();
   }
 
   Future<void> resetPassword(String email) async {
-    // Mock password reset - do nothing
-    debugPrint('Mock password reset for: $email');
+    await _auth.sendPasswordResetEmail(email: email);
   }
 
   Future<UserCredential?> signInWithApple() async {
-    // Mock Apple sign in
-    final user = User(
-      uid: 'testflight-apple-user',
-      email: 'apple@example.com',
-      displayName: 'Apple User',
+    final appleCredential = await apple.SignInWithApple.getAppleIDCredential(
+      scopes: [
+        apple.AppleIDAuthorizationScopes.email,
+        apple.AppleIDAuthorizationScopes.fullName,
+      ],
     );
+
+    final oauthCredential = firebase_auth.OAuthProvider('apple.com').credential(
+      idToken: appleCredential.identityToken,
+      accessToken: appleCredential.authorizationCode,
+    );
+
+    final credential = await _auth.signInWithCredential(oauthCredential);
+    final user = _mapUser(credential.user);
     _currentUser = user;
     notifyListeners();
+    if (user == null) return null;
     return UserCredential(user: user);
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 }

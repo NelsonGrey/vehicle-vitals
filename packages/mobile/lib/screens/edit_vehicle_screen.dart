@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/firestore_service.dart';
+
 import '../models/vehicle.dart';
+import '../services/firestore_service.dart';
 
 class EditVehicleScreen extends StatefulWidget {
   final String vin;
@@ -57,7 +58,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         });
       } else if (mounted) {
         // Vehicle not found, go back
-        context.go('/');
+        context.go('/app');
       }
     } catch (e) {
       if (mounted) {
@@ -67,7 +68,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
             backgroundColor: Colors.red,
           ),
         );
-        context.go('/');
+        context.go('/app');
       }
     }
   }
@@ -94,7 +95,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.go('/');
+        context.go('/app');
       }
     } catch (e) {
       if (mounted) {
@@ -144,7 +145,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          context.go('/');
+          context.go('/app');
         }
       } catch (e) {
         if (mounted) {

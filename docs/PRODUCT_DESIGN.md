@@ -1,8 +1,8 @@
 # Vehicle Vitals - Product Design & Feature Specifications
 
-**Version**: 1.0  
-**Last Updated**: February 12, 2026  
-**Status**: ✅ SHIPPED & OPERATIONAL  
+**Version**: 1.1  
+**Last Updated**: March 9, 2026  
+**Status**: 🟡 PARTIALLY SHIPPED (web core implemented, mobile in TestFlight mock mode)  
 **Owner**: Mark Nelson
 
 ---
@@ -11,7 +11,7 @@
 
 **Vision Statement**: "Every vehicle owner deserves complete visibility and control over their vehicle's health, maintenance history, and costs."
 
-**Product Positioning**: Vehicle Vitals is a cross-platform vehicle management platform combining digital record maintenance, predictive maintenance alerts, and mechanic network integration. It's targeted at responsible vehicle owners aged 25-65 who value vehicle reliability, cost control, and organized records.
+**Product Positioning**: Vehicle Vitals is a cross-platform vehicle management platform for digital maintenance records, maintenance reminders, and long-term vehicle cost visibility. It is targeted at responsible vehicle owners aged 25-65 who value reliability, cost control, and organized records.
 
 **Core Value Proposition**:
 
@@ -20,6 +20,32 @@
 - **Cost visibility**: Track maintenance spending and budgeting (vs. unexpected repair bills)
 - **Resale leverage**: Documented maintenance proves owner responsibility (critical for resale value)
 - **Cross-device sync**: Check vehicle status from web, iOS, or Android (unified experience)
+
+---
+
+## Implementation Reality Snapshot (Code-Verified: March 9, 2026)
+
+This document contains both product vision and delivery claims. The matrix below reflects current implementation evidence in the repository.
+
+| Capability                             | Current Status                | Evidence                                                                                                                                                                                |
+| -------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Multi-vehicle management               | 🟡 Partial                    | Web CRUD implemented in `packages/web/src/pages/Home.tsx` and `packages/web/src/pages/EditVehicle.tsx`; mobile service is mock in `packages/mobile/lib/services/firestore_service.dart` |
+| VIN decode / vehicle auto-populate     | 🟡 Partial                    | Backend VIN decode function in `packages/functions/src/index.ts`; full cross-platform production flow not yet demonstrated                                                              |
+| Maintenance logging + timeline         | 🟡 Partial                    | Web timeline and history in `packages/web/src/pages/TimelineDashboard.tsx` and `packages/web/src/pages/EditVehicle.tsx`; mobile data layer remains mock                                 |
+| Smart alerts (dismiss/snooze/complete) | 🔴 Not implemented end-to-end | Reminder API methods are stubs in `packages/shared/src/firestoreServiceFactory.js`                                                                                                      |
+| Reminder scheduling                    | 🟡 Partial                    | Scheduled function exists in `packages/functions/src/index.ts`; delivery and user action lifecycle incomplete                                                                           |
+| Notification pipeline (email/push)     | 🟡 Partial                    | Web FCM scaffolding in `packages/web/src/shared/notificationService.js`; email sender integration marked TODO in `packages/functions/src/index.ts`; mobile notification service mock    |
+| Data export (PDF/CSV)                  | 🟡 Partial                    | Web export implemented in `packages/web/src/utils/dataExport.js`; mobile export disabled in `packages/mobile/lib/services/data_export_service.dart`                                     |
+| Service provider directory             | ⏸ Planned                    | No implemented provider directory routes/screens in active web route map (`packages/web/src/App.tsx`)                                                                                   |
+| Fleet manager workflow/dashboard       | ⏸ Planned                    | No fleet-role or fleet dashboard implementation in active web/mobile app routes                                                                                                         |
+| Budget insights / forecasting          | 🟡 Partial                    | Basic analytics UI exists in `packages/mobile/lib/screens/analytics_screen.dart`, backed by mock service data                                                                           |
+
+Legend:
+
+- `🟢 Implemented`: production-capable in current code paths
+- `🟡 Partial`: implemented in limited surfaces or blocked by stubs/mocks
+- `🔴 Not implemented`: interface or contract exists but behavior not built
+- `⏸ Planned`: product intent only
 
 ---
 
@@ -255,7 +281,7 @@ Home Screen
 
 ### Feature 1: Multi-Vehicle Management
 
-**Status**: ✅ Complete
+**Status**: 🟡 Partial (web implemented, mobile currently mock-backed)
 
 **Hierarchical Organization**:
 
@@ -287,7 +313,7 @@ My Vehicles (Dashboard)
 
 ### Feature 2: VIN Scanning & Auto-Population
 
-**Status**: ✅ Complete
+**Status**: 🟡 Partial
 
 **VIN Decoding Process**:
 
@@ -315,7 +341,7 @@ My Vehicles (Dashboard)
 
 ### Feature 3: Maintenance Logging & Tracking
 
-**Status**: ✅ Complete
+**Status**: 🟡 Partial
 
 **Maintenance Type Taxonomy**:
 
@@ -351,7 +377,7 @@ My Vehicles (Dashboard)
 
 ### Feature 4: Smart Maintenance Alerts
 
-**Status**: ✅ Complete
+**Status**: 🔴 Not implemented end-to-end
 
 **Alert Generation**:
 
@@ -387,7 +413,7 @@ Standard interval: 10,000 miles
 
 ### Feature 5: Service Provider Directory
 
-**Status**: ✅ In Development
+**Status**: ⏸️ Planned
 
 **Mechanic/Dealership Directory** (integrated feature):
 
@@ -419,7 +445,7 @@ Oil Change: $35-55 (avg from community)
 
 ### Feature 6: Budget Tracking & Forecasting
 
-**Status**: ✅ Partial (tracking complete, forecasting planned)
+**Status**: 🟡 Partial (limited implementation, forecasting planned)
 
 **Current Implementation** (Tracking):
 
@@ -444,7 +470,7 @@ Oil Change: $35-55 (avg from community)
 
 ### Feature 7: Account & Data Management
 
-**Status**: ✅ Complete
+**Status**: 🟡 Partial
 
 **Authentication**:
 
@@ -611,20 +637,20 @@ Budget & Insights
 
 ## 🎯 Feature Prioritization
 
-| Feature                    | Impact   | Effort    | Priority | Status                |
-| -------------------------- | -------- | --------- | -------- | --------------------- |
-| Multi-vehicle management   | Critical | Medium    | P0       | ✅ Complete           |
-| VIN scanning (barcode)     | High     | Medium    | P1       | ✅ Complete           |
-| Maintenance logging        | Critical | Medium    | P0       | ✅ Complete           |
-| Smart alerts               | High     | Medium    | P1       | ✅ Complete           |
-| Timeline view              | High     | Low       | P1       | ✅ Complete           |
-| Cross-platform sync        | Critical | High      | P0       | ✅ Complete           |
-| Budget tracking            | Medium   | Medium    | P2       | ✅ Complete (partial) |
-| Service provider directory | Medium   | High      | P2       | 🟡 In dev             |
-| Cost forecasting           | Medium   | High      | P3       | ⏸️ Planned            |
-| Warranty integration       | Medium   | High      | P3       | ⏸️ Planned            |
-| OBD-II diagnostics         | Low      | Very High | P4       | ⏸️ Future             |
-| Insurance integration      | Medium   | High      | P3       | ⏸️ Future             |
+| Feature                    | Impact   | Effort    | Priority | Delivery Status               |
+| -------------------------- | -------- | --------- | -------- | ----------------------------- |
+| Multi-vehicle management   | Critical | Medium    | P0       | 🟡 Partial                    |
+| VIN scanning (barcode)     | High     | Medium    | P1       | 🟡 Partial                    |
+| Maintenance logging        | Critical | Medium    | P0       | 🟡 Partial                    |
+| Smart alerts               | High     | Medium    | P1       | 🔴 Not implemented end-to-end |
+| Timeline view              | High     | Low       | P1       | 🟡 Partial                    |
+| Cross-platform sync        | Critical | High      | P0       | 🟡 Partial                    |
+| Budget tracking            | Medium   | Medium    | P2       | 🟡 Partial                    |
+| Service provider directory | Medium   | High      | P2       | ⏸️ Planned                    |
+| Cost forecasting           | Medium   | High      | P3       | ⏸️ Planned                    |
+| Warranty integration       | Medium   | High      | P3       | ⏸️ Planned                    |
+| OBD-II diagnostics         | Low      | Very High | P4       | ⏸️ Future                     |
+| Insurance integration      | Medium   | High      | P3       | ⏸️ Future                     |
 
 ---
 
@@ -657,15 +683,15 @@ Budget & Insights
 
 ## 📊 Phased Roadmap
 
-### Phase 1: Foundation (Shipped ✅)
+### Phase 1: Foundation (Partially Delivered)
 
-- ✅ Multi-vehicle support
-- ✅ VIN scanning & auto-population
-- ✅ Maintenance logging & timeline
-- ✅ Smart maintenance alerts
-- ✅ Cross-platform (web, iOS, Android)
-- ✅ Basic budget tracking
-- ✅ Data export (GDPR compliance)
+- 🟡 Multi-vehicle support
+- 🟡 VIN scanning & auto-population
+- 🟡 Maintenance logging & timeline
+- 🔴 Smart maintenance alerts
+- 🟡 Cross-platform parity (web/mobile parity incomplete)
+- 🟡 Basic budget tracking
+- 🟡 Data export (web implemented, mobile disabled in current build)
 
 ---
 
@@ -731,5 +757,5 @@ Budget & Insights
 ---
 
 **Product Design Owner**: Mark Nelson  
-**Last Updated**: February 12, 2026  
-**Design Status**: ✅ Complete & Shipped
+**Last Updated**: March 9, 2026  
+**Design Status**: 🟡 Vision Complete, Implementation In Progress

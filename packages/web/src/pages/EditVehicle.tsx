@@ -16,6 +16,7 @@ import {
   generateMaintenanceAttachmentPath,
   uploadFile,
 } from '../shared/storageService';
+import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { decodeVin } from '../utils/vehicleService';
 
 interface Vehicle {
@@ -314,6 +315,9 @@ function MaintenanceList({ vin }: { vin: string }) {
     attachments: [] as Array<{ name: string; url: string; type?: string }>,
   });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [calendarTarget, setCalendarTarget] = useState<
+    'google' | 'apple' | 'ics'
+  >('google');
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -393,14 +397,78 @@ function MaintenanceList({ vin }: { vin: string }) {
     ? getUpcomingMaintenance(vehicle.make, vehicle.model, vehicle.mileage)
     : [];
 
+  const handleAddToCalendar = async (item: any) => {
+    if (!vehicle?.vin) {
+      alert('Vehicle VIN is required to create calendar events.');
+      return;
+    }
+
+    try {
+      const dueDate = new Date();
+      const milesUntilDue = Number(item.milesUntilDue || 0);
+      const dayOffset = Math.max(
+        1,
+        Math.min(180, Math.ceil(milesUntilDue / 100))
+      );
+      dueDate.setDate(dueDate.getDate() + dayOffset);
+
+      const startAt = dueDate.toISOString();
+      const endAt = new Date(dueDate.getTime() + 60 * 60 * 1000).toISOString();
+      const event = await createMaintenanceCalendarEvent({
+        vehicleVin: vehicle.vin,
+        title: item.description,
+        description: `${vehicle.year} ${vehicle.make} ${vehicle.model} maintenance reminder`,
+        startAt,
+        endAt,
+        target: calendarTarget,
+      });
+
+      const destination = event.actionUrl || event.downloadUrl;
+      if (destination) {
+        window.open(destination, '_blank', 'noopener,noreferrer');
+      }
+
+      alert(`Calendar event created for ${calendarTarget}.`);
+    } catch (error) {
+      alert(
+        'Failed to create calendar event: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6">
       {/* Manufacturer Schedules Section */}
       {vehicle && (
         <div className="mb-6 border-b border-charcoal-200 dark:border-charcoal-600 pb-4">
-          <h4 className="font-serif font-bold text-xl text-charcoal-800 dark:text-cream-100 mb-3">
-            Recommended Maintenance
-          </h4>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h4 className="font-serif font-bold text-xl text-charcoal-800 dark:text-cream-100">
+              Recommended Maintenance
+            </h4>
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="calendarTarget"
+                className="text-sm text-charcoal-700 dark:text-cream-300"
+              >
+                Calendar
+              </label>
+              <select
+                id="calendarTarget"
+                value={calendarTarget}
+                onChange={e =>
+                  setCalendarTarget(
+                    e.target.value as 'google' | 'apple' | 'ics'
+                  )
+                }
+                className="px-2 py-1 border border-charcoal-300 dark:border-charcoal-600 rounded-md text-sm dark:bg-charcoal-700 dark:text-cream-100"
+              >
+                <option value="google">Google</option>
+                <option value="apple">Apple</option>
+                <option value="ics">ICS</option>
+              </select>
+            </div>
+          </div>
           <p className="text-sm text-charcoal-600 dark:text-cream-300 mb-3">
             {vehicle.make} {vehicle.model} ({vehicle.year}) • Current mileage:{' '}
             {vehicle.mileage}
@@ -431,7 +499,13 @@ function MaintenanceList({ vin }: { vin: string }) {
                       </div>
                     </div>
                     <div className="text-xs text-charcoal-500 dark:text-cream-400 text-right">
-                      {item.frequency}
+                      <div>{item.frequency}</div>
+                      <button
+                        onClick={() => handleAddToCalendar(item)}
+                        className="mt-2 bg-slate-600 hover:bg-slate-700 text-white font-medium py-1 px-2 rounded text-xs"
+                      >
+                        Add to Calendar
+                      </button>
                     </div>
                   </div>
                 ))}

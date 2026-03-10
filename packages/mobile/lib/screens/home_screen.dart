@@ -90,22 +90,22 @@ class HomeScreen extends StatelessWidget {
             onSelected: (value) {
               switch (value) {
                 case 'upcoming':
-                  context.go('/app/upcoming');
+                  context.push('/app/upcoming');
                   break;
                 case 'account':
-                  context.go('/app/account');
+                  context.push('/app/account');
                   break;
                 case 'instructions':
-                  context.go('/app/instructions');
+                  context.push('/app/instructions');
                   break;
                 case 'contact':
-                  context.go('/app/contact');
+                  context.push('/app/contact');
                   break;
                 case 'privacy':
-                  context.go('/app/privacy');
+                  context.push('/app/privacy');
                   break;
                 case 'terms':
-                  context.go('/app/terms');
+                  context.push('/app/terms');
                   break;
                 case 'signout':
                   authService.signOut();
@@ -196,7 +196,7 @@ class HomeScreen extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => context.go('/app/add-vehicle'),
+                onPressed: () => context.push('/app/add-vehicle'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF59E0B),
                   foregroundColor: Colors.white,
@@ -274,7 +274,7 @@ class HomeScreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    onPressed: () => context.go(
+                                    onPressed: () => context.push(
                                       '/app/edit-vehicle/${vehicle.vin}',
                                     ),
                                     icon: const Icon(Icons.edit, size: 16),
@@ -287,7 +287,7 @@ class HomeScreen extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: () => context.go(
+                                    onPressed: () => context.push(
                                       '/app/maintenance/${vehicle.vin}',
                                     ),
                                     icon: const Icon(Icons.build, size: 16),

@@ -1,8 +1,8 @@
 # Vehicle Vitals - Business Requirements & Strategic Analysis
 
-**Version**: 1.0  
-**Last Updated**: February 12, 2026  
-**Status**: ✅ OPERATIONAL & GENERATING REVENUE  
+**Version**: 1.1  
+**Last Updated**: March 9, 2026  
+**Status**: ⚠️ PARTIALLY OPERATIONAL (web core delivered, mobile/runtime parity in progress)  
 **Owner**: Mark Nelson
 
 ---
@@ -22,7 +22,24 @@
 
 **Business Model**: Freemium with optional premium features (maintenance planning, advanced analytics, diagnostic integration).
 
-**Current Status**: ✅ **Production ready** with Web, Mobile (iOS + Android), and Browser-integrated solutions. 100% feature complete for MVP scope.
+**Current Status**: ⚠️ Web core is operational, but platform parity and several MVP-adjacent capabilities remain partial in current code paths (mobile services, reminder actions, and some integrations).
+
+---
+
+## Delivery Reality Snapshot (Code-Verified: March 9, 2026)
+
+| Business-Critical Capability                             | Current Delivery State | Code Evidence                                                                                                                                  |
+| -------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Multi-platform user experience parity                    | 🟡 Partial             | Web implemented, mobile services mocked in `packages/mobile/lib/main.dart` and `packages/mobile/lib/services/*`                                |
+| Proactive maintenance reminder operations                | 🔴 Incomplete          | Reminder lifecycle stubs in `packages/shared/src/firestoreServiceFactory.js`                                                                   |
+| Notification execution (email/push)                      | 🟡 Partial             | Scheduler exists in `packages/functions/src/index.ts`; email integration still TODO; mobile push currently mock                                |
+| Export/reporting for user value and compliance workflows | 🟡 Partial             | Web export exists in `packages/web/src/utils/dataExport.js`; mobile export disabled in `packages/mobile/lib/services/data_export_service.dart` |
+| Fleet/provider/community roadmap features                | ⏸ Planned             | Not represented in current active web/mobile route surfaces                                                                                    |
+
+Implication for business planning:
+
+- Revenue and growth projections should assume a staged rollout profile rather than full cross-platform feature parity today.
+- Positioning should emphasize delivered web value and transparent roadmap milestones for mobile/integration completion.
 
 ---
 

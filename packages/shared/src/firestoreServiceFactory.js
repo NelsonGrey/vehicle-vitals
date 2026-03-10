@@ -125,30 +125,52 @@ export function createFirestoreService({ db, auth, helpers }) {
   async function addReminder(vin, reminder) {
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
-    // no-op stub: return the provided reminder shape (no Firestore write yet)
-    return { id: null, ...reminder };
+    const collRef = collection(db, `users/${userId}/vehicles/${vin}/reminders`);
+    const docRef = await addDoc(
+      collRef,
+      withTimestamps(reminder, { create: true })
+    );
+    return { id: docRef.id, ...reminder };
   }
 
   async function getReminders(vin) {
-    // eslint-disable-line @typescript-eslint/no-unused-vars
     const userId = auth.currentUser?.uid;
     if (!userId) return [];
-    // no-op stub: return empty list for now
-    return [];
+    const collRef = collection(db, `users/${userId}/vehicles/${vin}/reminders`);
+    const snap = await getDocs(collRef);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
   async function completeReminder(vin, reminderId) {
-    // eslint-disable-line @typescript-eslint/no-unused-vars
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
-    // no-op stub
+    const ref = doc(
+      db,
+      `users/${userId}/vehicles/${vin}/reminders/${reminderId}`
+    );
+    await updateDoc(
+      ref,
+      withTimestamps({
+        status: 'completed',
+        completedAt: serverTimestamp(),
+      })
+    );
   }
 
   async function snoozeReminder(vin, reminderId, untilDateISO) {
-    // eslint-disable-line @typescript-eslint/no-unused-vars
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
-    // no-op stub
+    const ref = doc(
+      db,
+      `users/${userId}/vehicles/${vin}/reminders/${reminderId}`
+    );
+    await updateDoc(
+      ref,
+      withTimestamps({
+        status: 'snoozed',
+        snoozedUntil: untilDateISO,
+      })
+    );
   }
 
   async function deleteVehicle(vin) {

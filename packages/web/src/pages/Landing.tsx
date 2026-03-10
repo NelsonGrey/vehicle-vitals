@@ -5,36 +5,36 @@ import SiteHeader from '../components/SiteHeader';
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <SiteHeader overlay={false} />
       <HeaderAdBar />
-      <main className="pt-40 pb-16 min-h-[calc(100vh-5rem)]">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
         {/* Clean Slate Hero Section */}
-        <section className="bg-slate-100 dark:bg-slate-800 py-20">
-          <div className="max-w-6xl mx-auto px-5">
-            <div className="text-center py-12 max-w-4xl mx-auto">
+        <section className="bg-slate-100 dark:bg-slate-800 py-10 sm:py-14 lg:py-16">
+          <div className="max-w-6xl mx-auto px-4 sm:px-5">
+            <div className="text-center py-6 sm:py-8 lg:py-10 max-w-4xl mx-auto">
               <div className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">
                 Care for every mile
               </div>
-              <div className="font-serif text-5xl leading-tight mb-4 text-slate-900 dark:text-slate-100">
+              <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl leading-tight mb-4 text-slate-900 dark:text-slate-100">
                 Track your vehicle&apos;s story with confidence
-              </div>
-              <div className="text-lg max-w-prose text-slate-700 dark:text-slate-300 mb-8">
+              </h1>
+              <p className="text-base sm:text-lg max-w-2xl mx-auto text-slate-700 dark:text-slate-300 mb-7 sm:mb-8">
                 Vehicle Vitals helps you log maintenance, plan service, and keep
                 a timeless record—on web and mobile.
-              </div>
-              <div className="mt-8">
+              </p>
+              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <Link
                   to="/app"
-                  className="inline-block px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium mr-4 transition-colors"
+                  className="inline-block w-full sm:w-auto text-center px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-800"
                 >
                   Open the app
                 </Link>
-                <span className="text-slate-600 dark:text-slate-400">
+                <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
                   or{' '}
                   <Link
                     to="/instructions"
-                    className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 underline transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 underline transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-800"
                   >
                     read the instructions
                   </Link>
@@ -43,7 +43,7 @@ export default function Landing() {
             </div>
 
             {/* Feature Cards */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mt-10 sm:mt-12 lg:mt-14">
               <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   VIN decode & quick add
@@ -54,7 +54,7 @@ export default function Landing() {
                 </p>
                 <Link
                   to="/vin-decode-demo"
-                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
+                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-700"
                 >
                   Open VIN Decode Demo
                 </Link>
@@ -69,7 +69,7 @@ export default function Landing() {
                 </p>
                 <Link
                   to="/maintenance-planning-demo"
-                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
+                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-700"
                 >
                   Open Maintenance Planning Demo
                 </Link>
@@ -84,7 +84,7 @@ export default function Landing() {
                 </p>
                 <Link
                   to="/cross-platform-access-demo"
-                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
+                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-700"
                 >
                   Open Cross Platform Access Demo
                 </Link>
@@ -99,7 +99,7 @@ export default function Landing() {
                 </p>
                 <Link
                   to="/ownership-history-demo"
-                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline"
+                  className="inline-block mt-4 text-slate-700 dark:text-slate-200 underline hover:no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-700"
                 >
                   Open Ownership History Demo
                 </Link>

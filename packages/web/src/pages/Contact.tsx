@@ -2,9 +2,9 @@
 
 export default function Contact() {
   return (
-    <div className="max-w-3xl mx-auto px-5 py-8 space-y-6">
-      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
-        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 mb-4">
+    <div className="max-w-3xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5 sm:space-y-6">
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h1 className="font-serif font-bold text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-4">
           Contact Us
         </h1>
         <p className="text-slate-700 dark:text-slate-300 mb-4">
@@ -14,7 +14,7 @@ export default function Contact() {
         <p className="mb-4">
           <a
             href="mailto:support@vehicle-vitals.com"
-            className="text-slate-800 dark:text-slate-200 underline hover:no-underline"
+            className="text-slate-800 dark:text-slate-200 underline hover:no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
           >
             support@vehicle-vitals.com
           </a>

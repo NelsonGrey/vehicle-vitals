@@ -1,5 +1,5 @@
-import * as admin from 'firebase-admin';
-import * as logger from 'firebase-functions/logger';
+import * as admin from "firebase-admin";
+import * as logger from "firebase-functions/logger";
 
 interface CacheReadResult<T> {
   hit: boolean;
@@ -13,9 +13,9 @@ interface CacheReadResult<T> {
  * @return {boolean} Parsed boolean value.
  */
 function boolFromEnv(name: string, defaultValue: boolean): boolean {
-  const raw = (process.env[name] || '').trim().toLowerCase();
+  const raw = (process.env[name] || "").trim().toLowerCase();
   if (!raw) return defaultValue;
-  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
 /**
@@ -25,7 +25,7 @@ function boolFromEnv(name: string, defaultValue: boolean): boolean {
  * @return {number} Parsed positive number.
  */
 function numberFromEnv(name: string, defaultValue: number): number {
-  const parsed = Number(process.env[name] || '');
+  const parsed = Number(process.env[name] || "");
   return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
 }
 
@@ -34,7 +34,7 @@ function numberFromEnv(name: string, defaultValue: number): number {
  * @return {boolean} True when cache reads/writes should run.
  */
 function isCacheEnabled(): boolean {
-  return boolFromEnv('INTEGRATION_CACHE_ENABLED', false);
+  return boolFromEnv("INTEGRATION_CACHE_ENABLED", false);
 }
 
 /**
@@ -42,7 +42,7 @@ function isCacheEnabled(): boolean {
  * @return {number} Cache TTL in milliseconds.
  */
 function cacheTtlMs(): number {
-  return numberFromEnv('INTEGRATION_CACHE_TTL_MS', 24 * 60 * 60 * 1000);
+  return numberFromEnv("INTEGRATION_CACHE_TTL_MS", 24 * 60 * 60 * 1000);
 }
 
 /**
@@ -71,24 +71,24 @@ export async function readIntegrationCache<T>(
   key: string
 ): Promise<CacheReadResult<T>> {
   if (!isCacheEnabled()) {
-    return { hit: false, value: null };
+    return {hit: false, value: null};
   }
 
   try {
     const snap = await cacheDocRef(uid, vin, key).get();
     if (!snap.exists) {
-      return { hit: false, value: null };
+      return {hit: false, value: null};
     }
 
     const data = snap.data() || {};
     const expiresAt = data.expiresAt;
     const expiresAtMs =
-      expiresAt && typeof expiresAt.toMillis === 'function'
-        ? expiresAt.toMillis()
-        : 0;
+      expiresAt && typeof expiresAt.toMillis === "function" ?
+        expiresAt.toMillis() :
+        0;
 
     if (!expiresAtMs || expiresAtMs <= Date.now()) {
-      return { hit: false, value: null };
+      return {hit: false, value: null};
     }
 
     return {
@@ -96,12 +96,12 @@ export async function readIntegrationCache<T>(
       value: (data.value as T) ?? null,
     };
   } catch (error) {
-    logger.warn('Integration cache read failed; proceeding without cache', {
+    logger.warn("Integration cache read failed; proceeding without cache", {
       key,
       vinPrefix: vin.substring(0, 8),
       error,
     });
-    return { hit: false, value: null };
+    return {hit: false, value: null};
   }
 }
 
@@ -131,10 +131,10 @@ export async function writeIntegrationCache<T>(
         retrievedAt: admin.firestore.FieldValue.serverTimestamp(),
         expiresAt: admin.firestore.Timestamp.fromMillis(nowMs + cacheTtlMs()),
       },
-      { merge: true }
+      {merge: true}
     );
   } catch (error) {
-    logger.warn('Integration cache write failed; proceeding without cache', {
+    logger.warn("Integration cache write failed; proceeding without cache", {
       key,
       vinPrefix: vin.substring(0, 8),
       error,

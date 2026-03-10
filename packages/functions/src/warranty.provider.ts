@@ -1,4 +1,4 @@
-import * as logger from 'firebase-functions/logger';
+import * as logger from "firebase-functions/logger";
 
 export interface WarrantyCoverage {
   type: string;
@@ -9,7 +9,7 @@ export interface WarrantyCoverage {
 }
 
 export interface WarrantySummary {
-  status: 'active' | 'expired' | 'unknown';
+  status: "active" | "expired" | "unknown";
   asOf: string;
   coverages: WarrantyCoverage[];
   source: string;
@@ -29,17 +29,17 @@ interface DecodedVehicleIdentity {
  * @return {string} Sanitized value
  */
 function sanitize(value: string | undefined): string {
-  const s = (value ?? '').toString().trim();
-  if (!s) return '';
+  const s = (value ?? "").toString().trim();
+  if (!s) return "";
   const bad = new Set([
-    '0',
-    'NOT APPLICABLE',
-    'NULL',
-    'N/A',
-    'NONE',
-    'UNKNOWN',
+    "0",
+    "NOT APPLICABLE",
+    "NULL",
+    "N/A",
+    "NONE",
+    "UNKNOWN",
   ]);
-  return bad.has(s.toUpperCase()) ? '' : s;
+  return bad.has(s.toUpperCase()) ? "" : s;
 }
 
 /**
@@ -52,7 +52,7 @@ function getVal(
   results: Array<{ Variable: string; Value: string }>,
   key: string
 ): string {
-  return sanitize(results.find(r => r.Variable === key)?.Value);
+  return sanitize(results.find((r) => r.Variable === key)?.Value);
 }
 
 /**
@@ -62,7 +62,7 @@ function getVal(
  */
 async function decodeVinIdentity(vin: string): Promise<DecodedVehicleIdentity> {
   const nhtsaUrl =
-    'https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/' +
+    "https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/" +
     `${encodeURIComponent(vin)}?format=json`;
   const nhtsaResponse = await fetch(nhtsaUrl);
 
@@ -72,13 +72,13 @@ async function decodeVinIdentity(vin: string): Promise<DecodedVehicleIdentity> {
 
   const data = await nhtsaResponse.json();
   const results = data?.Results || [];
-  const yearRaw = getVal(results, 'Model Year');
+  const yearRaw = getVal(results, "Model Year");
   const parsedYear = Number(yearRaw);
 
   return {
     vin: vin.toUpperCase(),
-    make: getVal(results, 'Make'),
-    model: getVal(results, 'Model'),
+    make: getVal(results, "Make"),
+    model: getVal(results, "Model"),
     year: Number.isFinite(parsedYear) ? parsedYear : null,
   };
 }
@@ -101,7 +101,7 @@ function yearsFromNow(date: Date, years: number): Date {
  * @return {string} ISO date string
  */
 function toIsoDate(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return d.toISOString().split("T")[0];
 }
 
 /**
@@ -121,10 +121,10 @@ function resolveInServiceDate(year: number | null): Date {
  * @param {WarrantyCoverage[]} coverages Coverage list
  * @return {"active" | "expired"} Current status
  */
-function coverageStatus(coverages: WarrantyCoverage[]): 'active' | 'expired' {
+function coverageStatus(coverages: WarrantyCoverage[]): "active" | "expired" {
   const now = new Date();
-  const active = coverages.some(c => new Date(c.endDate) >= now);
-  return active ? 'active' : 'expired';
+  const active = coverages.some((c) => new Date(c.endDate) >= now);
+  return active ? "active" : "expired";
 }
 
 /**
@@ -159,21 +159,21 @@ export async function lookupWarrantySummary(
 
   const coverages: WarrantyCoverage[] = [
     {
-      type: 'basic',
+      type: "basic",
       startDate: toIsoDate(inService),
       endDate: toIsoDate(basicEnd),
       maxMileage: 36000,
       remainingMileage: remainingMileage(36000, currentMileage),
     },
     {
-      type: 'powertrain',
+      type: "powertrain",
       startDate: toIsoDate(inService),
       endDate: toIsoDate(powertrainEnd),
       maxMileage: 60000,
       remainingMileage: remainingMileage(60000, currentMileage),
     },
     {
-      type: 'corrosion',
+      type: "corrosion",
       startDate: toIsoDate(inService),
       endDate: toIsoDate(corrosionEnd),
       maxMileage: 100000,
@@ -181,7 +181,7 @@ export async function lookupWarrantySummary(
     },
   ];
 
-  logger.info('Warranty summary generated', {
+  logger.info("Warranty summary generated", {
     vinPrefix: identity.vin.substring(0, 8),
     make: identity.make,
     model: identity.model,
@@ -192,10 +192,10 @@ export async function lookupWarrantySummary(
     status: coverageStatus(coverages),
     asOf: toIsoDate(new Date()),
     coverages,
-    source: 'warranty_heuristic_v1',
+    source: "warranty_heuristic_v1",
     notes:
-      'Estimated warranty coverage from model year and generic OEM ranges. ' +
-      'Replace with OEM/dealer provider integration ' +
-      'for authoritative coverage.',
+      "Estimated warranty coverage from model year and generic OEM ranges. " +
+      "Replace with OEM/dealer provider integration " +
+      "for authoritative coverage.",
   };
 }

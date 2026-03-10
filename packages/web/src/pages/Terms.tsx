@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 
 export default function Terms() {
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8">
-      <article className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
-        <h1 className="font-serif text-4xl text-slate-900 dark:text-slate-100 mb-2">
+    <div className="max-w-4xl mx-auto px-4 sm:px-5 py-6 sm:py-8">
+      <article className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h1 className="font-serif text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-2">
           Terms of Use
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mb-6">
@@ -14,7 +14,7 @@ export default function Terms() {
 
         <div className="space-y-6 text-slate-700 dark:text-slate-300 leading-relaxed">
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               1. Acceptance of Terms
             </h2>
             <p>
@@ -24,7 +24,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               2. Description of Service
             </h2>
             <p>
@@ -34,7 +34,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               3. Your Responsibilities
             </h2>
             <ul className="list-disc pl-5 space-y-1">
@@ -48,7 +48,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               4. Data and Privacy
             </h2>
             <p>
@@ -61,7 +61,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               5. Disclaimers
             </h2>
             <p>
@@ -72,7 +72,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               6. Limitation of Liability
             </h2>
             <p>
@@ -83,7 +83,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               7. Changes to Terms
             </h2>
             <p>
@@ -93,7 +93,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
+            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
               8. Contact
             </h2>
             <p>

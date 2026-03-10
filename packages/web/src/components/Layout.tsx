@@ -5,11 +5,13 @@ import SiteHeader from './SiteHeader';
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <SiteHeader overlay={false} />
       <HeaderAdBar />
-      <main className="pt-40 pb-10 min-h-[calc(100vh-10rem)]">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="w-full py-4">
+          <Outlet />
+        </div>
       </main>
       <SiteFooter />
     </div>

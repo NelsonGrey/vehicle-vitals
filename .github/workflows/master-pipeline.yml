@@ -192,17 +192,17 @@ jobs:
           export PATH="$HOME/flutter/bin:$PATH"
           flutter doctor -v
 
-      - name: Get Dependencies
-        run: |
-          export PATH="$HOME/flutter/bin:$PATH"
-          flutter pub get
-
       - name: Clean iOS Build State
         run: |
           export PATH="$HOME/flutter/bin:$PATH"
           flutter clean
           rm -rf ios/Pods ios/Podfile.lock
           rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
+
+      - name: Regenerate Flutter iOS Config
+        run: |
+          export PATH="$HOME/flutter/bin:$PATH"
+          flutter pub get
 
       - name: Install CocoaPods
         run: |

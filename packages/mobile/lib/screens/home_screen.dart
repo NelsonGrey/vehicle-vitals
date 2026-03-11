@@ -328,19 +328,33 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: ElevatedButton.icon(
+                                  child: OutlinedButton.icon(
                                     onPressed: () => context.push(
-                                      '/app/maintenance/${vehicle.vin}',
+                                      '/app/records/${vehicle.vin}',
                                     ),
-                                    icon: const Icon(Icons.build, size: 16),
-                                    label: const Text('Maintenance'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFF59E0B),
-                                      foregroundColor: Colors.white,
+                                    icon: const Icon(Icons.folder_open, size: 16),
+                                    label: const Text('Records'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF1E3A8A),
                                     ),
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () => context.push(
+                                  '/app/maintenance/${vehicle.vin}',
+                                ),
+                                icon: const Icon(Icons.build, size: 16),
+                                label: const Text('Maintenance'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF59E0B),
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
                             ),
                           ],
                         ),

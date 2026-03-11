@@ -33,7 +33,22 @@ export default function AddVehicle() {
 
   const handleSubmit = async () => {
     try {
-      await addOrUpdateVehicle(form);
+      await addOrUpdateVehicle({
+        ...form,
+        ...(insights
+          ? {
+              recallsCount: insights.recallsCount,
+              recallsSource: insights.recallsSource,
+              bodyClass: insights.bodyClass,
+              fuelType: insights.fuelType,
+              driveType: insights.driveType,
+              transmissionStyle: insights.transmissionStyle,
+              trim: insights.trim,
+              vehicleType: insights.vehicleType,
+              insightsUpdatedAt: new Date().toISOString(),
+            }
+          : {}),
+      });
       alert('Vehicle added successfully');
       navigate('/app');
     } catch (err: unknown) {

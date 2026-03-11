@@ -31,6 +31,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   bool _isLoading = false;
   int? _recallsCount;
   String? _recallsSource;
+  String? _bodyClass;
+  String? _fuelType;
+  String? _driveType;
+  String? _transmissionStyle;
+  String? _trim;
+  String? _vehicleType;
 
   @override
   void initState() {
@@ -155,6 +161,13 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         );
         _recallsCount = recallsCountValue;
         _recallsSource = (recalls['source'] ?? 'NHTSA').toString();
+        _bodyClass = (vehicleData['bodyClass'] ?? '').toString();
+        _fuelType = (vehicleData['fuelType'] ?? '').toString();
+        _driveType = (vehicleData['driveType'] ?? '').toString();
+        _transmissionStyle = (vehicleData['transmissionStyle'] ?? '')
+            .toString();
+        _trim = (vehicleData['trim'] ?? '').toString();
+        _vehicleType = (vehicleData['vehicleType'] ?? '').toString();
       });
 
       if (mounted) {
@@ -196,6 +209,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         model: _modelController.text.trim(),
         year: int.parse(_yearController.text),
         mileage: int.parse(_mileageController.text),
+        recallsCount: _recallsCount ?? 0,
+        recallsSource: _recallsSource,
+        bodyClass: _bodyClass,
+        fuelType: _fuelType,
+        driveType: _driveType,
+        transmissionStyle: _transmissionStyle,
+        trim: _trim,
+        vehicleType: _vehicleType,
       );
 
       await _firestoreService.addOrUpdateVehicle(vehicle);

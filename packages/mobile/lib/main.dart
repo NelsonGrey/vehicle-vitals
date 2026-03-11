@@ -161,7 +161,11 @@ class VehicleVitalsApp extends StatelessWidget {
         ),
         GoRoute(path: '/app', builder: (context, state) => const HomeScreen()),
         GoRoute(
-          path: '/app/add-vehicle/:vin?',
+          path: '/app/add-vehicle',
+          builder: (context, state) => const AddVehicleScreen(),
+        ),
+        GoRoute(
+          path: '/app/add-vehicle/:vin',
           builder: (context, state) =>
               AddVehicleScreen(initialVin: state.pathParameters['vin']),
         ),
@@ -239,11 +243,13 @@ class VehicleVitalsApp extends StatelessWidget {
           redirect: (context, state) => '/auth/forgot-password',
         ),
         GoRoute(
-          path: '/add-vehicle/:vin?',
-          redirect: (context, state) {
-            final vin = state.pathParameters['vin'];
-            return vin == null ? '/app/add-vehicle' : '/app/add-vehicle/$vin';
-          },
+          path: '/add-vehicle',
+          redirect: (context, state) => '/app/add-vehicle',
+        ),
+        GoRoute(
+          path: '/add-vehicle/:vin',
+          redirect: (context, state) =>
+              '/app/add-vehicle/${state.pathParameters['vin']}',
         ),
         GoRoute(
           path: '/edit-vehicle/:vin',

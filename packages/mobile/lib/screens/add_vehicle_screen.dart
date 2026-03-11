@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,12 +56,52 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final functions = FirebaseFunctions.instance;
-      final result = await functions.httpsCallable('decodeVIN').call({
-        'vin': vin,
-      });
+      Map<String, dynamic> data;
 
-      final data = Map<String, dynamic>.from(result.data as Map);
+      try {
+        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+        final result = await functions.httpsCallable('decodeVINCallable').call({
+          'vin': vin,
+        });
+        data = Map<String, dynamic>.from(result.data as Map);
+      } on FirebaseFunctionsException catch (e) {
+        // If callable is unavailable in this environment, fall back to HTTP.
+        final shouldFallback =
+            e.code == 'not-found' ||
+            e.code == 'unimplemented' ||
+            e.code == 'internal';
+
+        if (!shouldFallback) {
+          if (e.code == 'unauthenticated') {
+            throw Exception('Please sign in to decode VIN.');
+          }
+          throw Exception(e.message ?? 'VIN decode service unavailable');
+        }
+
+        final projectId = Firebase.app().options.projectId;
+        final uri = Uri.parse(
+          'https://us-central1-$projectId.cloudfunctions.net/decodeVIN',
+        );
+
+        final client = HttpClient();
+        final request = await client.postUrl(uri);
+        request.headers.contentType = ContentType.json;
+        request.write(jsonEncode({'vin': vin}));
+
+        final response = await request.close();
+        final responseBody = await response.transform(utf8.decoder).join();
+        final decoded = jsonDecode(responseBody);
+        data = Map<String, dynamic>.from(
+          decoded is Map ? decoded : <String, dynamic>{},
+        );
+
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          final errorMessage = (data['error'] ?? 'VIN decode failed')
+              .toString();
+          throw Exception(errorMessage);
+        }
+      }
+
       if (data['success'] != true) {
         final errorMessage = (data['error'] ?? 'VIN decode failed').toString();
         throw Exception(errorMessage);
@@ -81,16 +125,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           const SnackBar(
             content: Text('VIN decoded successfully!'),
             backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } on FirebaseFunctionsException catch (e) {
-      if (mounted) {
-        final message = e.message ?? 'VIN decode service unavailable';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error decoding VIN: $message'),
-            backgroundColor: Colors.red,
           ),
         );
       }
@@ -135,9 +169,21 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final message = e.toString();
+        if (message.contains('Not authenticated')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session expired. Please sign in again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          context.go('/auth/login');
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error adding vehicle: ${e.toString()}'),
+            content: Text('Error adding vehicle: $message'),
             backgroundColor: Colors.red,
           ),
         );

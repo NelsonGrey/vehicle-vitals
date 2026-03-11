@@ -616,19 +616,23 @@ export default function Profile() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-5 py-5">
-      <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 mb-4">
-        Profile
-      </h1>
-      <p className="text-slate-600 dark:text-slate-300 mb-6">
-        Signed in as{' '}
-        <strong className="text-slate-900 dark:text-slate-100">
-          {user.email}
-        </strong>
-      </p>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
+            Profile
+          </h1>
+          <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
+            Signed in as{' '}
+            <strong className="text-slate-900 dark:text-slate-100">
+              {user.email}
+            </strong>
+          </p>
+        </div>
+      </div>
 
       {status && (
         <div
-          className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4"
+          className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6"
           role="alert"
         >
           {status}
@@ -636,69 +640,71 @@ export default function Profile() {
       )}
       {error && (
         <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4"
+          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6"
           role="alert"
         >
           {error}
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">
-        <h5 className="font-serif font-bold text-xl text-slate-900 dark:text-slate-100 mb-2">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-6">
+        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
           Maintenance Alert Preferences
-        </h5>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 mt-0">
           Control whether maintenance reminders are generated and when they
           should appear before service is due.
         </p>
 
-        <label className="flex items-center justify-between mb-4 text-sm text-slate-700 dark:text-slate-200">
-          <span>Enable maintenance alerts</span>
+        <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+          <label className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-200">
+            <span>Enable maintenance alerts</span>
+            <input
+              type="checkbox"
+              checked={maintenanceAlertsEnabled}
+              onChange={event =>
+                setMaintenanceAlertsEnabled(event.target.checked)
+              }
+            />
+          </label>
+
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+            Preferred reminder lead time (days)
+          </label>
           <input
-            type="checkbox"
-            checked={maintenanceAlertsEnabled}
-            onChange={event =>
-              setMaintenanceAlertsEnabled(event.target.checked)
-            }
+            type="number"
+            min={1}
+            max={90}
+            value={preferredReminderTimingDays}
+            onChange={event => {
+              const next = Number(event.target.value);
+              if (Number.isFinite(next)) {
+                setPreferredReminderTimingDays(Math.max(1, Math.min(90, next)));
+              }
+            }}
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
           />
-        </label>
 
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Preferred reminder lead time (days)
-        </label>
-        <input
-          type="number"
-          min={1}
-          max={90}
-          value={preferredReminderTimingDays}
-          onChange={event => {
-            const next = Number(event.target.value);
-            if (Number.isFinite(next)) {
-              setPreferredReminderTimingDays(Math.max(1, Math.min(90, next)));
-            }
-          }}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-        />
-
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 mt-4">
-          Average driving distance (miles/day)
-        </label>
-        <input
-          type="number"
-          min={1}
-          max={250}
-          value={preferredDailyMiles}
-          onChange={event => {
-            const next = Number(event.target.value);
-            if (Number.isFinite(next)) {
-              setPreferredDailyMiles(
-                Math.max(1, Math.min(250, Math.round(next)))
-              );
-            }
-          }}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-        />
-        <div className="mt-4">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 mt-4">
+            Average driving distance (miles/day)
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={250}
+            value={preferredDailyMiles}
+            onChange={event => {
+              const next = Number(event.target.value);
+              if (Number.isFinite(next)) {
+                setPreferredDailyMiles(
+                  Math.max(1, Math.min(250, Math.round(next)))
+                );
+              }
+            }}
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+          />
+        </div>
+        <div className="pt-2">
           <button
             type="button"
             onClick={() => void savePreferences()}
@@ -710,211 +716,217 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">
-        <h5 className="font-serif font-bold text-xl text-slate-900 dark:text-slate-100 mb-2">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-6">
+        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 mb-3 mt-0">
           Home Address
-        </h5>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 mt-0">
           Save your home address so we can surface nearby repair shops and
           dealerships.
         </p>
 
-        <div className="space-y-3">
-          <div>
-            <label
-              htmlFor="street1"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
-            >
-              Street address
-            </label>
-            <input
-              id="street1"
-              type="text"
-              autoComplete="address-line1"
-              value={homeAddress.street1}
-              onChange={e => onAddressFieldChange('street1', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-              placeholder="123 Main St"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="street2"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
-            >
-              Apt, suite, unit (optional)
-            </label>
-            <input
-              id="street2"
-              type="text"
-              autoComplete="address-line2"
-              value={homeAddress.street2}
-              onChange={e => onAddressFieldChange('street2', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-              placeholder="Apt 4B"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+          <div className="space-y-3">
             <div>
               <label
-                htmlFor="city"
+                htmlFor="street1"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
               >
-                City
+                Street address
               </label>
               <input
-                id="city"
+                id="street1"
                 type="text"
-                autoComplete="address-level2"
-                value={homeAddress.city}
-                onChange={e => onAddressFieldChange('city', e.target.value)}
+                autoComplete="address-line1"
+                value={homeAddress.street1}
+                onChange={e => onAddressFieldChange('street1', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="Nashville"
+                placeholder="123 Main St"
               />
             </div>
 
             <div>
               <label
-                htmlFor="stateProvince"
+                htmlFor="street2"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
               >
-                State / province
+                Apt, suite, unit (optional)
               </label>
               <input
-                id="stateProvince"
+                id="street2"
                 type="text"
-                autoComplete="address-level1"
-                value={homeAddress.stateProvince}
-                onChange={e =>
-                  onAddressFieldChange('stateProvince', e.target.value)
-                }
+                autoComplete="address-line2"
+                value={homeAddress.street2}
+                onChange={e => onAddressFieldChange('street2', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="TN"
+                placeholder="Apt 4B"
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="postalCode"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
-              >
-                ZIP / postal code
-              </label>
-              <input
-                id="postalCode"
-                type="text"
-                autoComplete="postal-code"
-                value={homeAddress.postalCode}
-                onChange={e =>
-                  onAddressFieldChange('postalCode', e.target.value)
-                }
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="37203"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="providerRadius"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
-              >
-                Search radius (miles)
-              </label>
-              <input
-                id="providerRadius"
-                type="number"
-                min={5}
-                max={100}
-                value={preferredProviderRadiusMiles}
-                onChange={e => {
-                  const next = Number(e.target.value);
-                  if (Number.isFinite(next)) {
-                    setPreferredProviderRadiusMiles(
-                      Math.max(5, Math.min(100, Math.round(next)))
-                    );
-                  }
-                }}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="25"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="providerType"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
-              >
-                Service type
-              </label>
-              <select
-                id="providerType"
-                value={preferredProviderType}
-                onChange={e =>
-                  setPreferredProviderType(e.target.value as ProviderTypeFilter)
-                }
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-              >
-                <option value="all">All providers</option>
-                <option value="repair_shop">Repair shops only</option>
-                <option value="dealership">Dealerships only</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-200 mb-2">
-                <span>Use my vehicle make for dealership matching</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="city"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+                >
+                  City
+                </label>
                 <input
-                  type="checkbox"
-                  checked={preferredProviderUseVehicleMake}
-                  onChange={e =>
-                    setPreferredProviderUseVehicleMake(e.target.checked)
-                  }
+                  id="city"
+                  type="text"
+                  autoComplete="address-level2"
+                  value={homeAddress.city}
+                  onChange={e => onAddressFieldChange('city', e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                  placeholder="Nashville"
                 />
-              </label>
-              <select
-                id="preferredVehicleMake"
-                value={preferredVehicleMake}
-                onChange={e => setPreferredVehicleMake(e.target.value)}
-                disabled={
-                  !preferredProviderUseVehicleMake || garageMakes.length === 0
-                }
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100 disabled:opacity-60"
-              >
-                {garageMakes.length === 0 ? (
-                  <option value="">No vehicle makes found</option>
-                ) : (
-                  garageMakes.map(make => (
-                    <option key={make} value={make}>
-                      {make}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
+              </div>
 
-            <div>
-              <label
-                htmlFor="country"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
-              >
-                Country
-              </label>
-              <input
-                id="country"
-                type="text"
-                autoComplete="country"
-                value={homeAddress.country}
-                onChange={e => onAddressFieldChange('country', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="US"
-              />
+              <div>
+                <label
+                  htmlFor="stateProvince"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+                >
+                  State / province
+                </label>
+                <input
+                  id="stateProvince"
+                  type="text"
+                  autoComplete="address-level1"
+                  value={homeAddress.stateProvince}
+                  onChange={e =>
+                    onAddressFieldChange('stateProvince', e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                  placeholder="TN"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="postalCode"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+                >
+                  ZIP / postal code
+                </label>
+                <input
+                  id="postalCode"
+                  type="text"
+                  autoComplete="postal-code"
+                  value={homeAddress.postalCode}
+                  onChange={e =>
+                    onAddressFieldChange('postalCode', e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                  placeholder="37203"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="providerRadius"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+                >
+                  Search radius (miles)
+                </label>
+                <input
+                  id="providerRadius"
+                  type="number"
+                  min={5}
+                  max={100}
+                  value={preferredProviderRadiusMiles}
+                  onChange={e => {
+                    const next = Number(e.target.value);
+                    if (Number.isFinite(next)) {
+                      setPreferredProviderRadiusMiles(
+                        Math.max(5, Math.min(100, Math.round(next)))
+                      );
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                  placeholder="25"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="providerType"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+                >
+                  Service type
+                </label>
+                <select
+                  id="providerType"
+                  value={preferredProviderType}
+                  onChange={e =>
+                    setPreferredProviderType(
+                      e.target.value as ProviderTypeFilter
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                >
+                  <option value="all">All providers</option>
+                  <option value="repair_shop">Repair shops only</option>
+                  <option value="dealership">Dealerships only</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-200 mb-2">
+                  <span>Use my vehicle make for dealership matching</span>
+                  <input
+                    type="checkbox"
+                    checked={preferredProviderUseVehicleMake}
+                    onChange={e =>
+                      setPreferredProviderUseVehicleMake(e.target.checked)
+                    }
+                  />
+                </label>
+                <select
+                  id="preferredVehicleMake"
+                  value={preferredVehicleMake}
+                  onChange={e => setPreferredVehicleMake(e.target.value)}
+                  disabled={
+                    !preferredProviderUseVehicleMake || garageMakes.length === 0
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100 disabled:opacity-60"
+                >
+                  {garageMakes.length === 0 ? (
+                    <option value="">No vehicle makes found</option>
+                  ) : (
+                    garageMakes.map(make => (
+                      <option key={make} value={make}>
+                        {make}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="country"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+                >
+                  Country
+                </label>
+                <input
+                  id="country"
+                  type="text"
+                  autoComplete="country"
+                  value={homeAddress.country}
+                  onChange={e =>
+                    onAddressFieldChange('country', e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                  placeholder="US"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="pt-2">
           <button
             type="button"
             onClick={() => void saveHomeAddress()}
@@ -1044,9 +1056,12 @@ export default function Profile() {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">
-        <h5 className="font-serif font-bold text-xl text-slate-900 dark:text-slate-100 mb-4">
-          Change password
-        </h5>
+        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
+          Change Password
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-4">
+          Update your password to keep your account secure.
+        </p>
         <form onSubmit={onChangePassword} className="space-y-4">
           <div>
             <label
@@ -1096,25 +1111,26 @@ export default function Profile() {
               required
             />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-            disabled={busy}
-          >
-            {busy ? 'Updating…' : 'Update password'}
-          </button>
+          <div>
+            <button
+              type="submit"
+              className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+              disabled={busy}
+            >
+              {busy ? 'Updating…' : 'Update password'}
+            </button>
+          </div>
         </form>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border-l-4 border-red-500">
-        <h5 className="font-serif font-bold text-xl text-red-700 dark:text-red-400 mb-2">
-          Danger zone
-        </h5>
-        <p className="text-red-600 dark:text-red-400 mb-4">
-          Deleting your account removes all your vehicles and maintenance logs.
-          This cannot be undone.
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 border-l-4 border-red-500 space-y-6">
+        <h2 className="font-serif font-bold text-2xl text-red-700 dark:text-red-400 m-0">
+          Delete Account
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
+          Delete your account and all associated data. This action cannot be undone.
         </p>
-        <div className="mb-4">
+        <div>
           <label
             htmlFor="currentPasswordDelete"
             className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
@@ -1129,13 +1145,15 @@ export default function Profile() {
             onChange={e => setCurrentPassword(e.target.value)}
           />
         </div>
-        <button
-          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-          onClick={onDeleteAccount}
-          disabled={busy}
-        >
-          Delete account
-        </button>
+        <div>
+          <button
+            className="bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            onClick={onDeleteAccount}
+            disabled={busy}
+          >
+            Delete account
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -186,6 +186,37 @@ async function decodeVinData(vinInput: string) {
   return vehicle;
 }
 
+async function lookupNhtsaRecalls(vinInput: string) {
+  const vin = vinInput.trim().toUpperCase();
+  if (vin.length !== 17) {
+    throw new Error("Valid 17-character VIN required");
+  }
+
+  const recallsUrl =
+    "https://api.nhtsa.gov/recalls/recallsByVehicle?vin=" +
+    encodeURIComponent(vin);
+  const recallsResponse = await fetch(recallsUrl);
+
+  if (!recallsResponse.ok) {
+    throw new Error(`NHTSA recalls API error: ${recallsResponse.status}`);
+  }
+
+  const recallsData = await recallsResponse.json();
+  const recalls = Array.isArray(recallsData?.results) ?
+    recallsData.results :
+    [];
+
+  return recalls.map((item: Record<string, unknown>) => ({
+    campaignNumber: (item["NHTSACampaignNumber"] || "").toString(),
+    reportReceivedDate: (item["ReportReceivedDate"] || "").toString(),
+    component: (item["Component"] || "").toString(),
+    summary: (item["Summary"] || "").toString(),
+    consequence: (item["Conequence"] || item["Consequence"] || "").toString(),
+    remedy: (item["Remedy"] || "").toString(),
+    manufacturer: (item["Manufacturer"] || "").toString(),
+  }));
+}
+
 // VIN decoding function
 export const decodeVIN = onRequest(
   {cors: true},
@@ -237,6 +268,63 @@ export const decodeVINCallable = onCall(async (request) => {
   } catch (error) {
     logger.error("VIN callable decoding error:", error);
     throw new HttpsError("internal", "Failed to decode VIN");
+  }
+});
+
+export const getVehicleInsightsCallable = onCall(async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Missing auth context");
+  }
+
+  const vin = (request.data?.vin || "").toString();
+  if (vin.length !== 17) {
+    throw new HttpsError("invalid-argument", "Valid 17-character VIN required");
+  }
+
+  try {
+    const [vehicle, recalls] = await Promise.all([
+      decodeVinData(vin),
+      lookupNhtsaRecalls(vin),
+    ]);
+    const integrationConfig = getIntegrationConfig();
+
+    return {
+      success: true,
+      vin: vin.trim().toUpperCase(),
+      free: {
+        vinProfile: vehicle,
+        recalls: {
+          source: "NHTSA",
+          count: recalls.length,
+          items: recalls,
+        },
+      },
+      paid: {
+        manuals: {
+          enabled: integrationConfig.features.manualsEnabled,
+          provider: integrationConfig.providers.manuals,
+        },
+        warranty: {
+          enabled: integrationConfig.features.warrantyEnabled,
+          provider: integrationConfig.providers.warranty,
+        },
+        maintenancePlan: {
+          enabled: integrationConfig.features.maintenancePlanEnabled,
+          provider: integrationConfig.providers.schedule,
+        },
+      },
+      sources: {
+        free: ["NHTSA vPIC", "NHTSA Recalls API"],
+        paid: [
+          "Owner Manuals Provider",
+          "Warranty Provider",
+          "Maintenance Schedule Provider",
+        ],
+      },
+    };
+  } catch (error) {
+    logger.error("Vehicle insights callable error:", error);
+    throw new HttpsError("internal", "Failed to fetch vehicle insights");
   }
 });
 

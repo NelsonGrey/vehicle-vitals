@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  deleteFile,
+  generateVehicleRecordAttachmentPath,
+  uploadFile,
+} from '../shared/storageService';
 import { getVehicle, updateVehicle } from '../shared/firestoreService';
 
 type PortfolioItem = {
@@ -9,7 +14,13 @@ type PortfolioItem = {
   required: boolean;
   status: 'missing' | 'in-progress' | 'ready';
   notes?: string;
-  files?: unknown[];
+  files?: Array<{
+    name?: string;
+    url?: string;
+    path?: string;
+    size?: number;
+    type?: string;
+  }>;
 };
 
 type PortfolioCategory = {
@@ -39,6 +50,7 @@ export default function Records() {
   const [categories, setCategories] = useState<PortfolioCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -76,6 +88,93 @@ export default function Records() {
       };
       return next;
     });
+  };
+
+  const appendItemFile = (
+    categoryIndex: number,
+    itemIndex: number,
+    fileEntry: NonNullable<PortfolioItem['files']>[number]
+  ) => {
+    setCategories(prev => {
+      const next = clonePortfolio(prev);
+      const currentItem = next[categoryIndex].items[itemIndex];
+      const files = Array.isArray(currentItem.files) ? currentItem.files : [];
+      next[categoryIndex].items[itemIndex] = {
+        ...currentItem,
+        files: [...files, fileEntry],
+      };
+      return next;
+    });
+  };
+
+  const removeItemFile = async (
+    categoryIndex: number,
+    itemIndex: number,
+    fileIndex: number
+  ) => {
+    const item = categories[categoryIndex]?.items[itemIndex];
+    const file = item?.files?.[fileIndex];
+    if (!file) return;
+
+    try {
+      if (file.path) {
+        await deleteFile(file.path);
+      }
+      setCategories(prev => {
+        const next = clonePortfolio(prev);
+        const currentItem = next[categoryIndex].items[itemIndex];
+        const files = [...(currentItem.files || [])];
+        files.splice(fileIndex, 1);
+        next[categoryIndex].items[itemIndex] = {
+          ...currentItem,
+          files,
+        };
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to delete record attachment', error);
+      alert('Failed to delete attachment');
+    }
+  };
+
+  const handleUpload = async (
+    categoryIndex: number,
+    itemIndex: number,
+    fileList: FileList | null
+  ) => {
+    if (!vin || !fileList?.length) return;
+
+    const item = categories[categoryIndex]?.items[itemIndex];
+    if (!item) return;
+
+    const uploadKey = `${categoryIndex}:${itemIndex}`;
+    setUploadingKey(uploadKey);
+    try {
+      for (const file of Array.from(fileList)) {
+        const path = await generateVehicleRecordAttachmentPath(
+          vin,
+          item.id,
+          file.name
+        );
+        const uploaded = await uploadFile(file, path);
+        appendItemFile(
+          categoryIndex,
+          itemIndex,
+          uploaded as {
+            name?: string;
+            url?: string;
+            path?: string;
+            size?: number;
+            type?: string;
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Failed to upload record attachment', error);
+      alert('Failed to upload attachment');
+    } finally {
+      setUploadingKey(null);
+    }
   };
 
   const requiredCount = categories.reduce(
@@ -196,6 +295,64 @@ export default function Records() {
                     placeholder="Notes about where this document is stored, what still needs to be scanned, or renewal details."
                     className="mt-3 w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
                   />
+                  <div className="mt-3">
+                    <label className="inline-block px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer text-sm text-slate-900 dark:text-slate-100">
+                      {uploadingKey === `${categoryIndex}:${itemIndex}`
+                        ? 'Uploading...'
+                        : 'Attach files'}
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={event => {
+                          void handleUpload(
+                            categoryIndex,
+                            itemIndex,
+                            event.target.files
+                          );
+                          event.target.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {!!item.files?.length && (
+                    <div className="mt-3 space-y-2">
+                      {item.files.map((file, fileIndex) => (
+                        <div
+                          key={`${file.path || file.url || file.name}-${fileIndex}`}
+                          className="flex items-center justify-between gap-3 text-sm border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            {file.url ? (
+                              <a
+                                href={file.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-700 dark:text-blue-300 no-underline"
+                              >
+                                {file.name || 'Attachment'}
+                              </a>
+                            ) : (
+                              <span>{file.name || 'Attachment'}</span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void removeItemFile(
+                                categoryIndex,
+                                itemIndex,
+                                fileIndex
+                              )
+                            }
+                            className="text-red-600 dark:text-red-400 bg-transparent border-0 cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

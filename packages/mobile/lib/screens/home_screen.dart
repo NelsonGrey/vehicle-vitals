@@ -290,6 +290,27 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
+                            if (vehicle.requiredPortfolioItemCount > 0) ...[
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F0FF),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Records: ${vehicle.completedRequiredPortfolioItemCount}/${vehicle.requiredPortfolioItemCount} required complete',
+                                  style: const TextStyle(
+                                    color: Color(0xFF1E3A8A),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             Row(
                               children: [

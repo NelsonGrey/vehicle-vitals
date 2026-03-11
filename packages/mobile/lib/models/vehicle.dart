@@ -16,6 +16,7 @@ class Vehicle {
   final String? purchaseDate;
   final String? nextDueDate;
   final String? nextDueTask;
+  final Map<String, dynamic>? documentPortfolio;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -37,6 +38,7 @@ class Vehicle {
     this.purchaseDate,
     this.nextDueDate,
     this.nextDueTask,
+    this.documentPortfolio,
     this.createdAt,
     this.updatedAt,
   });
@@ -60,6 +62,10 @@ class Vehicle {
       purchaseDate: map['purchaseDate'],
       nextDueDate: map['nextDueDate'],
       nextDueTask: map['nextDueTask'],
+      documentPortfolio:
+          map['documentPortfolio'] is Map<String, dynamic>
+              ? map['documentPortfolio'] as Map<String, dynamic>
+              : null,
       createdAt: map['createdAt']?.toDate(),
       updatedAt: map['updatedAt']?.toDate(),
     );
@@ -84,6 +90,7 @@ class Vehicle {
       'purchaseDate': purchaseDate,
       'nextDueDate': nextDueDate,
       'nextDueTask': nextDueTask,
+      'documentPortfolio': documentPortfolio,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -115,6 +122,7 @@ class Vehicle {
     String? purchaseDate,
     String? nextDueDate,
     String? nextDueTask,
+    Map<String, dynamic>? documentPortfolio,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -136,8 +144,41 @@ class Vehicle {
       purchaseDate: purchaseDate ?? this.purchaseDate,
       nextDueDate: nextDueDate ?? this.nextDueDate,
       nextDueTask: nextDueTask ?? this.nextDueTask,
+      documentPortfolio: documentPortfolio ?? this.documentPortfolio,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  int get requiredPortfolioItemCount {
+    final categories = (documentPortfolio?['categories'] as List?) ?? [];
+    var count = 0;
+
+    for (final category in categories) {
+      final items = (category is Map ? category['items'] as List? : null) ?? [];
+      for (final item in items) {
+        if (item is Map && item['required'] == true) {
+          count += 1;
+        }
+      }
+    }
+
+    return count;
+  }
+
+  int get completedRequiredPortfolioItemCount {
+    final categories = (documentPortfolio?['categories'] as List?) ?? [];
+    var count = 0;
+
+    for (final category in categories) {
+      final items = (category is Map ? category['items'] as List? : null) ?? [];
+      for (final item in items) {
+        if (item is Map && item['required'] == true && item['status'] == 'ready') {
+          count += 1;
+        }
+      }
+    }
+
+    return count;
   }
 }

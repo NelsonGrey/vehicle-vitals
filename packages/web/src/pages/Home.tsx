@@ -12,6 +12,30 @@ interface Vehicle {
   year: string;
   mileage?: string;
   recallsCount?: number;
+  documentPortfolio?: {
+    categories?: Array<{
+      items?: Array<{ required?: boolean; status?: string }>;
+    }>;
+  };
+}
+
+function getPortfolioRequiredProgress(vehicle: Vehicle) {
+  const categories = vehicle.documentPortfolio?.categories || [];
+  let required = 0;
+  let complete = 0;
+
+  categories.forEach(category => {
+    (category.items || []).forEach(item => {
+      if (item.required) {
+        required += 1;
+        if (item.status === 'ready') {
+          complete += 1;
+        }
+      }
+    });
+  });
+
+  return { complete, required };
 }
 
 export default function Home() {
@@ -77,6 +101,9 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 my-4">
               {vehicles.map(v => (
+                (() => {
+                  const portfolioProgress = getPortfolioRequiredProgress(v);
+                  return (
                 <div
                   key={v.vin}
                   className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2"
@@ -95,6 +122,11 @@ export default function Home() {
                         {Number(v.recallsCount) === 1 ? '' : 's'}
                       </div>
                     )}
+                    {portfolioProgress.required > 0 && (
+                      <div className="mt-1 inline-block rounded-full bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-1 text-xs font-medium">
+                        Records: {portfolioProgress.complete}/{portfolioProgress.required} required complete
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2 mt-auto">
                     <Link
@@ -111,6 +143,8 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
+                  );
+                })()
               ))}
             </div>
           )}

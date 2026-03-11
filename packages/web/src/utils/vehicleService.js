@@ -123,31 +123,44 @@ export async function fetchVehicleByVINAndSave(vin) {
   }
 }
 
+export async function getVehicleInsights(vin) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const getVehicleInsightsCallable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'getVehicleInsightsCallable'
+  );
+  const result = await getVehicleInsightsCallable({ vin });
+
+  if (!result.data.success) {
+    throw new Error(result.data.error || 'Failed to fetch vehicle insights');
+  }
+
+  return result.data;
+}
+
 // Decode VIN without saving; returns { make, model, year } strings or '' when unknown
 export async function decodeVin(vin) {
   try {
-    const firebaseService = await createFirebaseService();
-
-    if (!firebaseService.functions) {
-      throw new Error('Firebase Functions not available');
-    }
-
-    // Call Firebase Function for VIN decoding
-    const decodeVINCallable = firebaseService.httpsCallable(
-      firebaseService.functions,
-      'decodeVINCallable'
-    );
-    const result = await decodeVINCallable({ vin });
-
-    if (!result.data.success) {
-      throw new Error(result.data.error || 'Failed to decode VIN');
-    }
-
-    const vehicle = result.data.vehicle;
+    const insights = await getVehicleInsights(vin);
+    const vehicle = insights?.free?.vinProfile || {};
+    const recallCount = Number(insights?.free?.recalls?.count || 0);
     return {
       make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
+      recallsCount: Number.isFinite(recallCount) ? recallCount : 0,
+      recallsSource: insights?.free?.recalls?.source || 'NHTSA',
+      bodyClass: vehicle.bodyClass || '',
+      fuelType: vehicle.fuelType || '',
+      driveType: vehicle.driveType || '',
+      transmissionStyle: vehicle.transmissionStyle || '',
+      trim: vehicle.trim || '',
+      vehicleType: vehicle.vehicleType || '',
     };
   } catch (err) {
     console.error('VIN decode failed', err);

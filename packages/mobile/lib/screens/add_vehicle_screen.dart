@@ -29,6 +29,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _mileageController = TextEditingController();
 
   bool _isLoading = false;
+  int? _recallsCount;
+  String? _recallsSource;
 
   @override
   void initState() {
@@ -57,15 +59,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
     try {
       Map<String, dynamic> data;
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
 
       try {
-        final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-        final result = await functions.httpsCallable('decodeVINCallable').call({
-          'vin': vin,
-        });
+        final result = await functions
+            .httpsCallable('getVehicleInsightsCallable')
+            .call({'vin': vin});
         data = Map<String, dynamic>.from(result.data as Map);
       } on FirebaseFunctionsException catch (e) {
-        // If callable is unavailable in this environment, fall back to HTTP.
         final shouldFallback =
             e.code == 'not-found' ||
             e.code == 'unimplemented' ||
@@ -78,27 +79,48 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           throw Exception(e.message ?? 'VIN decode service unavailable');
         }
 
-        final projectId = Firebase.app().options.projectId;
-        final uri = Uri.parse(
-          'https://us-central1-$projectId.cloudfunctions.net/decodeVIN',
-        );
+        try {
+          final decodeResult = await functions
+              .httpsCallable('decodeVINCallable')
+              .call({'vin': vin});
+          data = Map<String, dynamic>.from(decodeResult.data as Map);
+        } on FirebaseFunctionsException catch (decodeError) {
+          final decodeFallbackAllowed =
+              decodeError.code == 'not-found' ||
+              decodeError.code == 'unimplemented' ||
+              decodeError.code == 'internal';
 
-        final client = HttpClient();
-        final request = await client.postUrl(uri);
-        request.headers.contentType = ContentType.json;
-        request.write(jsonEncode({'vin': vin}));
+          if (!decodeFallbackAllowed) {
+            if (decodeError.code == 'unauthenticated') {
+              throw Exception('Please sign in to decode VIN.');
+            }
+            throw Exception(
+              decodeError.message ?? 'VIN decode service unavailable',
+            );
+          }
 
-        final response = await request.close();
-        final responseBody = await response.transform(utf8.decoder).join();
-        final decoded = jsonDecode(responseBody);
-        data = Map<String, dynamic>.from(
-          decoded is Map ? decoded : <String, dynamic>{},
-        );
+          final projectId = Firebase.app().options.projectId;
+          final uri = Uri.parse(
+            'https://us-central1-$projectId.cloudfunctions.net/decodeVIN',
+          );
 
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          final errorMessage = (data['error'] ?? 'VIN decode failed')
-              .toString();
-          throw Exception(errorMessage);
+          final client = HttpClient();
+          final request = await client.postUrl(uri);
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode({'vin': vin}));
+
+          final response = await request.close();
+          final responseBody = await response.transform(utf8.decoder).join();
+          final decoded = jsonDecode(responseBody);
+          data = Map<String, dynamic>.from(
+            decoded is Map ? decoded : <String, dynamic>{},
+          );
+
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            final errorMessage = (data['error'] ?? 'VIN decode failed')
+                .toString();
+            throw Exception(errorMessage);
+          }
         }
       }
 
@@ -107,8 +129,17 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         throw Exception(errorMessage);
       }
 
+      final free = Map<String, dynamic>.from(
+        data['free'] as Map? ?? <String, dynamic>{},
+      );
+      final recalls = Map<String, dynamic>.from(
+        free['recalls'] as Map? ?? <String, dynamic>{},
+      );
+
       final vehicleData = Map<String, dynamic>.from(
-        data['vehicle'] as Map? ?? <String, dynamic>{},
+        (free['vinProfile'] as Map?) ??
+            (data['vehicle'] as Map?) ??
+            <String, dynamic>{},
       );
       final decodedYear = (vehicleData['year'] ?? '').toString();
 
@@ -118,12 +149,21 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         if (decodedYear.isNotEmpty) {
           _yearController.text = decodedYear;
         }
+
+        final recallsCountValue = int.tryParse(
+          (recalls['count'] ?? '0').toString(),
+        );
+        _recallsCount = recallsCountValue;
+        _recallsSource = (recalls['source'] ?? 'NHTSA').toString();
       });
 
       if (mounted) {
+        final recallsNote = _recallsCount == null
+            ? ''
+            : ' • Open recalls: ${_recallsCount!}';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('VIN decoded successfully!'),
+          SnackBar(
+            content: Text('VIN decoded successfully$recallsNote'),
             backgroundColor: Colors.green,
           ),
         );
@@ -138,7 +178,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -255,6 +297,28 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+
+                      if (_recallsCount != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.amber.withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: Text(
+                            'Free insights (${_recallsSource ?? 'NHTSA'}): '
+                            'Open recalls: $_recallsCount',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
 
                       // Make field
                       TextFormField(

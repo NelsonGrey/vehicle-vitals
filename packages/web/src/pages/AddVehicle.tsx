@@ -10,6 +10,16 @@ import { decodeVin } from '../utils/vehicleService';
 
 export default function AddVehicle() {
   const [form, setForm] = useState({ ...defaultVehicle });
+  const [insights, setInsights] = useState<{
+    recallsCount: number;
+    recallsSource: string;
+    bodyClass: string;
+    fuelType: string;
+    driveType: string;
+    transmissionStyle: string;
+    trim: string;
+    vehicleType: string;
+  } | null>(null);
   const navigate = useNavigate();
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form.year, make: form.make });
@@ -39,13 +49,35 @@ export default function AddVehicle() {
       return;
     }
     try {
-      const { make, model, year } = await decodeVin(vin);
+      const {
+        make,
+        model,
+        year,
+        recallsCount,
+        recallsSource,
+        bodyClass,
+        fuelType,
+        driveType,
+        transmissionStyle,
+        trim,
+        vehicleType,
+      } = await decodeVin(vin);
       setForm(prev => ({
         ...prev,
         make: make || prev.make,
         model: model || prev.model,
         year: year || prev.year,
       }));
+      setInsights({
+        recallsCount: Number(recallsCount || 0),
+        recallsSource: (recallsSource || 'NHTSA').toString(),
+        bodyClass: (bodyClass || '').toString(),
+        fuelType: (fuelType || '').toString(),
+        driveType: (driveType || '').toString(),
+        transmissionStyle: (transmissionStyle || '').toString(),
+        trim: (trim || '').toString(),
+        vehicleType: (vehicleType || '').toString(),
+      });
     } catch (e: unknown) {
       const error = e as Error;
       alert(error?.message || 'Failed to decode VIN');
@@ -178,6 +210,30 @@ export default function AddVehicle() {
             Decode VIN
           </button>
         </div>
+
+        {insights && (
+          <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 space-y-2">
+            <div className="font-medium text-slate-900 dark:text-slate-100">
+              Free Vehicle Insights
+            </div>
+            <p className="text-sm text-slate-700 dark:text-slate-300 m-0">
+              Open recalls: <strong>{insights.recallsCount}</strong> (source:{' '}
+              {insights.recallsSource})
+            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 m-0">
+              {[
+                insights.vehicleType,
+                insights.bodyClass,
+                insights.trim,
+                insights.fuelType,
+                insights.driveType,
+                insights.transmissionStyle,
+              ]
+                .filter(Boolean)
+                .join(' • ') || 'No additional specs returned for this VIN.'}
+            </p>
+          </div>
+        )}
 
         <div>
           <label

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
 import {
   deleteFile,
   generateVehicleRecordAttachmentPath,
@@ -43,6 +44,18 @@ function clonePortfolio(categories: PortfolioCategory[]) {
   return JSON.parse(JSON.stringify(categories)) as PortfolioCategory[];
 }
 
+function resolveInitialCategories(
+  loadedVehicle: VehicleRecord
+): PortfolioCategory[] {
+  const existing = loadedVehicle.documentPortfolio?.categories || [];
+  if (existing.length > 0) {
+    return clonePortfolio(existing);
+  }
+  return clonePortfolio(
+    (createStandardVehiclePortfolio().categories || []) as PortfolioCategory[]
+  );
+}
+
 export default function Records() {
   const { vin } = useParams();
   const navigate = useNavigate();
@@ -61,9 +74,7 @@ export default function Records() {
         return;
       }
       setVehicle(loadedVehicle as VehicleRecord);
-      setCategories(
-        clonePortfolio(loadedVehicle.documentPortfolio?.categories || [])
-      );
+      setCategories(resolveInitialCategories(loadedVehicle as VehicleRecord));
       setLoading(false);
     };
 
@@ -211,6 +222,15 @@ export default function Records() {
     }
   };
 
+  const initializePortfolio = () => {
+    setCategories(
+      clonePortfolio(
+        (createStandardVehiclePortfolio().categories ||
+          []) as PortfolioCategory[]
+      )
+    );
+  };
+
   if (loading) {
     return <div className="p-6">Loading records...</div>;
   }
@@ -238,6 +258,20 @@ export default function Records() {
       </div>
 
       <div className="space-y-4">
+        {categories.length === 0 && (
+          <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <p className="text-slate-700 dark:text-slate-300 mt-0">
+              This vehicle does not have a records portfolio yet.
+            </p>
+            <button
+              type="button"
+              onClick={initializePortfolio}
+              className="px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-700"
+            >
+              Initialize Standard Records
+            </button>
+          </section>
+        )}
         {categories.map((category, categoryIndex) => (
           <section
             key={category.key}

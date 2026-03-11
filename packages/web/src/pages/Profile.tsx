@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import AdBanner from '../components/AdBanner';
 import { useAuth } from '../shared/AuthContext';
 
 // Declare Firebase global
@@ -145,7 +144,6 @@ export default function Profile() {
 
   return (
     <div className="max-w-md mx-auto px-5 py-5">
-      <AdBanner />
       <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 mb-4">
         Profile
       </h1>

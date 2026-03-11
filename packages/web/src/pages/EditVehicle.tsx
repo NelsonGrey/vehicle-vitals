@@ -3,7 +3,6 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import AdBanner from '../components/AdBanner';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import {
   addMaintenanceEntry,
@@ -124,7 +123,6 @@ export default function EditVehicle() {
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-5">
-      <AdBanner />
       <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 mb-6">
         Edit Vehicle
       </h2>
@@ -290,10 +288,6 @@ export default function EditVehicle() {
             Delete Vehicle
           </button>
         </div>
-      </div>
-
-      <div className="mt-6">
-        <AdBanner />
       </div>
 
       <div className="mt-8">

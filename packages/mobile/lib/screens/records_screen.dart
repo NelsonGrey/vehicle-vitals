@@ -138,6 +138,40 @@ class _RecordsScreenState extends State<RecordsScreen> {
     }
   }
 
+  Future<void> _openItemFile(
+    int categoryIndex,
+    int itemIndex,
+    int fileIndex,
+  ) async {
+    final files = _itemFiles(categoryIndex, itemIndex);
+    if (fileIndex < 0 || fileIndex >= files.length) return;
+
+    final file = files[fileIndex];
+    final url = (file['url'] ?? '').toString();
+    if (url.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Attachment URL is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _recordStorageService.openVehicleRecordFile(url);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error opening attachment: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _pickAndUploadFiles(int categoryIndex, int itemIndex) async {
     final category = Map<String, dynamic>.from(
       _categories[categoryIndex] as Map,
@@ -381,16 +415,36 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                       subtitle: Text(
                                         (entry.value['type'] ?? '').toString(),
                                       ),
-                                      trailing: IconButton(
-                                        onPressed: () => _removeItemFile(
-                                          categoryIndex,
-                                          itemIndex,
-                                          entry.key,
-                                        ),
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                        ),
+                                      onTap: () => _openItemFile(
+                                        categoryIndex,
+                                        itemIndex,
+                                        entry.key,
+                                      ),
+                                      trailing: Wrap(
+                                        spacing: 4,
+                                        children: [
+                                          IconButton(
+                                            onPressed: () => _openItemFile(
+                                              categoryIndex,
+                                              itemIndex,
+                                              entry.key,
+                                            ),
+                                            icon: const Icon(Icons.open_in_new),
+                                            tooltip: 'Open attachment',
+                                          ),
+                                          IconButton(
+                                            onPressed: () => _removeItemFile(
+                                              categoryIndex,
+                                              itemIndex,
+                                              entry.key,
+                                            ),
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.red,
+                                            ),
+                                            tooltip: 'Remove attachment',
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),

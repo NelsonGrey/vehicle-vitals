@@ -1,8 +1,8 @@
 # Vehicle Vitals - Product Design & Feature Specifications
 
 **Version**: 1.1  
-**Last Updated**: March 9, 2026  
-**Status**: 🟡 PARTIALLY SHIPPED (web core implemented, mobile in TestFlight mock mode)  
+**Last Updated**: March 11, 2026  
+**Status**: 🟡 PARTIALLY SHIPPED (web and mobile core flows active; advanced workflows still partial)  
 **Owner**: Mark Nelson
 
 ---
@@ -23,27 +23,27 @@
 
 ---
 
-## Implementation Reality Snapshot (Code-Verified: March 9, 2026)
+## Implementation Reality Snapshot (Code-Verified: March 11, 2026)
 
 This document contains both product vision and delivery claims. The matrix below reflects current implementation evidence in the repository.
 
-| Capability                             | Current Status                | Evidence                                                                                                                                                                                |
-| -------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Multi-vehicle management               | 🟡 Partial                    | Web CRUD implemented in `packages/web/src/pages/Home.tsx` and `packages/web/src/pages/EditVehicle.tsx`; mobile service is mock in `packages/mobile/lib/services/firestore_service.dart` |
-| VIN decode / vehicle auto-populate     | 🟡 Partial                    | Backend VIN decode function in `packages/functions/src/index.ts`; full cross-platform production flow not yet demonstrated                                                              |
-| Maintenance logging + timeline         | 🟡 Partial                    | Web timeline and history in `packages/web/src/pages/TimelineDashboard.tsx` and `packages/web/src/pages/EditVehicle.tsx`; mobile data layer remains mock                                 |
-| Smart alerts (dismiss/snooze/complete) | 🔴 Not implemented end-to-end | Reminder API methods are stubs in `packages/shared/src/firestoreServiceFactory.js`                                                                                                      |
-| Reminder scheduling                    | 🟡 Partial                    | Scheduled function exists in `packages/functions/src/index.ts`; delivery and user action lifecycle incomplete                                                                           |
-| Notification pipeline (email/push)     | 🟡 Partial                    | Web FCM scaffolding in `packages/web/src/shared/notificationService.js`; email sender integration marked TODO in `packages/functions/src/index.ts`; mobile notification service mock    |
-| Data export (PDF/CSV)                  | 🟡 Partial                    | Web export implemented in `packages/web/src/utils/dataExport.js`; mobile export disabled in `packages/mobile/lib/services/data_export_service.dart`                                     |
-| Service provider directory             | ⏸ Planned                    | No implemented provider directory routes/screens in active web route map (`packages/web/src/App.tsx`)                                                                                   |
-| Fleet manager workflow/dashboard       | ⏸ Planned                    | No fleet-role or fleet dashboard implementation in active web/mobile app routes                                                                                                         |
-| Budget insights / forecasting          | 🟡 Partial                    | Basic analytics UI exists in `packages/mobile/lib/screens/analytics_screen.dart`, backed by mock service data                                                                           |
+| Capability                             | Current Status        | Evidence                                                                                                                                                                                                                                     |
+| -------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Multi-vehicle management               | 🟢 Implemented (core) | Web protected CRUD routes in `packages/web/src/App.tsx`; mobile CRUD service active in `packages/mobile/lib/services/firestore_service.dart`                                                                                                 |
+| VIN decode / vehicle auto-populate     | 🟡 Partial            | Callable VIN decode and vehicle insights exist in `packages/functions/src/index.ts`; web add-vehicle flow consumes them in `packages/web/src/pages/AddVehicle.tsx`                                                                           |
+| Maintenance logging + timeline         | 🟡 Partial            | Web history/timeline in `packages/web/src/pages/EditVehicle.tsx` and `packages/web/src/pages/TimelineDashboard.tsx`; mobile maintenance CRUD exists but a full timeline surface is not shown                                                 |
+| Smart alerts (dismiss/snooze/complete) | 🟡 Partial            | Reminder persistence methods exist in `packages/shared/src/firestoreServiceFactory.js`, but no complete cross-platform alert action UI is wired end-to-end                                                                                   |
+| Reminder scheduling                    | 🟡 Partial            | Scheduled reminder check exists in `packages/functions/src/index.ts`; user delivery and feedback loop remain basic                                                                                                                           |
+| Notification pipeline (email/push)     | 🟡 Partial            | Web FCM scaffolding in `packages/web/src/shared/notificationService.js`; email sending is implemented through `packages/functions/src/email.provider.ts`; mobile initializes FCM in `packages/mobile/lib/services/notification_service.dart` |
+| Data export (PDF/CSV)                  | 🟡 Partial            | Web export implemented in `packages/web/src/utils/dataExport.js`; mobile CSV/PDF export exists in `packages/mobile/lib/services/data_export_service.dart`, but coverage is limited to maintenance-focused reports                            |
+| Service provider directory             | ⏸ Planned            | No implemented provider directory routes/screens in active web route map (`packages/web/src/App.tsx`)                                                                                                                                        |
+| Fleet manager workflow/dashboard       | ⏸ Planned            | No fleet-role or fleet dashboard implementation in active web/mobile app routes                                                                                                                                                              |
+| Budget insights / forecasting          | 🟡 Partial            | Mobile analytics UI exists in `packages/mobile/lib/screens/analytics_screen.dart` and reads Firestore-backed data through `packages/mobile/lib/services/analytics_service.dart`                                                              |
 
 Legend:
 
 - `🟢 Implemented`: production-capable in current code paths
-- `🟡 Partial`: implemented in limited surfaces or blocked by stubs/mocks
+- `🟡 Partial`: implemented in limited surfaces or missing complete UX/operational coverage
 - `🔴 Not implemented`: interface or contract exists but behavior not built
 - `⏸ Planned`: product intent only
 

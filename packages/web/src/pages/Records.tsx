@@ -1,12 +1,12 @@
+import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
+import { getVehicle, updateVehicle } from '../shared/firestoreService';
 import {
   deleteFile,
   generateVehicleRecordAttachmentPath,
   uploadFile,
 } from '../shared/storageService';
-import { getVehicle, updateVehicle } from '../shared/firestoreService';
 
 type PortfolioItem = {
   id: string;
@@ -64,6 +64,11 @@ export default function Records() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null);
+  const [listFilter, setListFilter] = useState<
+    'all' | 'required' | PortfolioItem['status']
+  >('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -231,6 +236,83 @@ export default function Records() {
     );
   };
 
+  const flattenedItems = categories.flatMap((category, categoryIndex) =>
+    category.items.map((item, itemIndex) => ({
+      key: `${categoryIndex}:${itemIndex}`,
+      categoryIndex,
+      itemIndex,
+      categoryTitle: category.title,
+      item,
+    }))
+  );
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const searchedItems = flattenedItems.filter(entry => {
+    return (
+      !normalizedSearch ||
+      entry.item.title.toLowerCase().includes(normalizedSearch) ||
+      entry.item.description.toLowerCase().includes(normalizedSearch) ||
+      entry.categoryTitle.toLowerCase().includes(normalizedSearch)
+    );
+  });
+
+  const filterCounts = {
+    all: searchedItems.length,
+    required: searchedItems.filter(entry => entry.item.required).length,
+    missing: searchedItems.filter(entry => entry.item.status === 'missing')
+      .length,
+    'in-progress': searchedItems.filter(
+      entry => entry.item.status === 'in-progress'
+    ).length,
+    ready: searchedItems.filter(entry => entry.item.status === 'ready').length,
+  } as const;
+
+  const filteredItems = flattenedItems.filter(entry => {
+    const filterMatch =
+      listFilter === 'all'
+        ? true
+        : listFilter === 'required'
+          ? entry.item.required
+          : entry.item.status === listFilter;
+
+    const searchMatch = searchedItems.some(item => item.key === entry.key);
+
+    return filterMatch && searchMatch;
+  });
+
+  useEffect(() => {
+    if (filteredItems.length === 0) {
+      setSelectedItemKey(null);
+      return;
+    }
+
+    const hasSelected = filteredItems.some(
+      entry => entry.key === selectedItemKey
+    );
+    if (!hasSelected) {
+      setSelectedItemKey(filteredItems[0].key);
+    }
+  }, [filteredItems, selectedItemKey]);
+
+  const selectedEntry = filteredItems.find(
+    entry => entry.key === selectedItemKey
+  );
+
+  const statusClassMap: Record<PortfolioItem['status'], string> = {
+    missing:
+      'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+    'in-progress':
+      'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+    ready:
+      'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+  };
+
+  const statusLabelMap: Record<PortfolioItem['status'], string> = {
+    missing: 'Missing',
+    'in-progress': 'In Progress',
+    ready: 'Ready',
+  };
+
   if (loading) {
     return <div className="p-6">Loading records...</div>;
   }
@@ -272,66 +354,157 @@ export default function Records() {
             </button>
           </section>
         )}
-        {categories.map((category, categoryIndex) => (
-          <section
-            key={category.key}
-            className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4"
-          >
-            <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
-              {category.title}
-            </h2>
-            <div className="space-y-4">
-              {category.items.map((item, itemIndex) => (
-                <div
-                  key={item.id}
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 p-4"
-                >
+
+        {flattenedItems.length > 0 && (
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+              <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+                Record List
+              </h2>
+              <div className="mb-3 space-y-2">
+                <input
+                  type="search"
+                  value={searchTerm}
+                  onChange={event => setSearchTerm(event.target.value)}
+                  placeholder="Search title, description, or category"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ['all', 'All'],
+                      ['required', 'Required'],
+                      ['missing', 'Missing'],
+                      ['in-progress', 'In Progress'],
+                      ['ready', 'Ready'],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setListFilter(value)}
+                      className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                        listFilter === value
+                          ? 'border-slate-700 bg-slate-700 text-white dark:border-slate-200 dark:bg-slate-200 dark:text-slate-900'
+                          : 'border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {label} ({filterCounts[value]})
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
+                {filteredItems.map(entry => {
+                  const isSelected = entry.key === selectedItemKey;
+                  const fileCount = entry.item.files?.length || 0;
+
+                  return (
+                    <button
+                      key={entry.key}
+                      type="button"
+                      onClick={() => setSelectedItemKey(entry.key)}
+                      className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                        isSelected
+                          ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
+                          {entry.item.title}
+                        </div>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${statusClassMap[entry.item.status]}`}
+                        >
+                          {statusLabelMap[entry.item.status]}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                        {entry.categoryTitle} •{' '}
+                        {entry.item.required ? 'Required' : 'Optional'} •{' '}
+                        {fileCount} file{fileCount === 1 ? '' : 's'}
+                      </div>
+                    </button>
+                  );
+                })}
+                {filteredItems.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
+                    No records match this filter.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+              {!selectedEntry ? (
+                <p className="text-slate-600 dark:text-slate-400 m-0">
+                  Select a record item to view and edit details.
+                </p>
+              ) : (
+                <>
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-slate-100">
-                        {item.title}
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-0 mt-1">
-                        {item.description}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-500 mt-2 mb-0">
-                        {item.required ? 'Required' : 'Optional'}
+                      <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                        {selectedEntry.item.title}
+                      </h2>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-2">
+                        {selectedEntry.categoryTitle} •{' '}
+                        {selectedEntry.item.required ? 'Required' : 'Optional'}
                       </p>
                     </div>
-                    <select
-                      value={item.status}
-                      onChange={event =>
-                        setItemField(
-                          categoryIndex,
-                          itemIndex,
-                          'status',
-                          event.target.value
-                        )
-                      }
-                      className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${statusClassMap[selectedEntry.item.status]}`}
                     >
-                      <option value="missing">Missing</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="ready">Ready</option>
-                    </select>
+                      {statusLabelMap[selectedEntry.item.status]}
+                    </span>
                   </div>
-                  <textarea
-                    value={item.notes || ''}
+
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mt-0 mb-3">
+                    {selectedEntry.item.description}
+                  </p>
+
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={selectedEntry.item.status}
                     onChange={event =>
                       setItemField(
-                        categoryIndex,
-                        itemIndex,
+                        selectedEntry.categoryIndex,
+                        selectedEntry.itemIndex,
+                        'status',
+                        event.target.value
+                      )
+                    }
+                    className="mb-3 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="missing">Missing</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="ready">Ready</option>
+                  </select>
+
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    value={selectedEntry.item.notes || ''}
+                    onChange={event =>
+                      setItemField(
+                        selectedEntry.categoryIndex,
+                        selectedEntry.itemIndex,
                         'notes',
                         event.target.value
                       )
                     }
-                    rows={3}
+                    rows={4}
                     placeholder="Notes about where this document is stored, what still needs to be scanned, or renewal details."
-                    className="mt-3 w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
                   />
+
                   <div className="mt-3">
                     <label className="inline-block px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer text-sm text-slate-900 dark:text-slate-100">
-                      {uploadingKey === `${categoryIndex}:${itemIndex}`
+                      {uploadingKey === selectedEntry.key
                         ? 'Uploading...'
                         : 'Attach files'}
                       <input
@@ -340,8 +513,8 @@ export default function Records() {
                         className="hidden"
                         onChange={event => {
                           void handleUpload(
-                            categoryIndex,
-                            itemIndex,
+                            selectedEntry.categoryIndex,
+                            selectedEntry.itemIndex,
                             event.target.files
                           );
                           event.target.value = '';
@@ -349,9 +522,10 @@ export default function Records() {
                       />
                     </label>
                   </div>
-                  {!!item.files?.length && (
+
+                  {!!selectedEntry.item.files?.length && (
                     <div className="mt-3 space-y-2">
-                      {item.files.map((file, fileIndex) => (
+                      {selectedEntry.item.files.map((file, fileIndex) => (
                         <div
                           key={`${file.path || file.url || file.name}-${fileIndex}`}
                           className="flex items-center justify-between gap-3 text-sm border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2"
@@ -374,8 +548,8 @@ export default function Records() {
                             type="button"
                             onClick={() =>
                               void removeItemFile(
-                                categoryIndex,
-                                itemIndex,
+                                selectedEntry.categoryIndex,
+                                selectedEntry.itemIndex,
                                 fileIndex
                               )
                             }
@@ -387,11 +561,11 @@ export default function Records() {
                       ))}
                     </div>
                   )}
-                </div>
-              ))}
+                </>
+              )}
             </div>
           </section>
-        ))}
+        )}
       </div>
 
       <div className="mt-6 flex justify-end">

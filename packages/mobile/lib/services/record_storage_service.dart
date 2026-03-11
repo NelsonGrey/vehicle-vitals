@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RecordStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -61,5 +62,17 @@ class RecordStorageService {
 
   Future<void> deleteVehicleRecordFile(String path) async {
     await _storage.ref(path).delete();
+  }
+
+  Future<void> openVehicleRecordFile(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      throw Exception('Invalid attachment URL');
+    }
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched) {
+      throw Exception('Unable to open attachment');
+    }
   }
 }

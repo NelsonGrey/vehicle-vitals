@@ -13,6 +13,9 @@ class Vehicle {
   final String? transmissionStyle;
   final String? trim;
   final String? vehicleType;
+  final List<Map<String, dynamic>>? recallsItems;
+  final Map<String, dynamic>? vinProfile;
+  final Map<String, dynamic>? vinInsights;
   final String? purchaseDate;
   final String? nextDueDate;
   final String? nextDueTask;
@@ -35,6 +38,9 @@ class Vehicle {
     this.transmissionStyle,
     this.trim,
     this.vehicleType,
+    this.recallsItems,
+    this.vinProfile,
+    this.vinInsights,
     this.purchaseDate,
     this.nextDueDate,
     this.nextDueTask,
@@ -59,6 +65,15 @@ class Vehicle {
       transmissionStyle: map['transmissionStyle'],
       trim: map['trim'],
       vehicleType: map['vehicleType'],
+      recallsItems: (map['recallsItems'] as List?)
+          ?.map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(),
+      vinProfile: map['vinProfile'] is Map
+          ? Map<String, dynamic>.from(map['vinProfile'] as Map)
+          : null,
+      vinInsights: map['vinInsights'] is Map
+          ? Map<String, dynamic>.from(map['vinInsights'] as Map)
+          : null,
       purchaseDate: map['purchaseDate'],
       nextDueDate: map['nextDueDate'],
       nextDueTask: map['nextDueTask'],
@@ -86,6 +101,9 @@ class Vehicle {
       'transmissionStyle': transmissionStyle,
       'trim': trim,
       'vehicleType': vehicleType,
+      'recallsItems': recallsItems,
+      'vinProfile': vinProfile,
+      'vinInsights': vinInsights,
       'purchaseDate': purchaseDate,
       'nextDueDate': nextDueDate,
       'nextDueTask': nextDueTask,
@@ -118,6 +136,9 @@ class Vehicle {
     String? transmissionStyle,
     String? trim,
     String? vehicleType,
+    List<Map<String, dynamic>>? recallsItems,
+    Map<String, dynamic>? vinProfile,
+    Map<String, dynamic>? vinInsights,
     String? purchaseDate,
     String? nextDueDate,
     String? nextDueTask,
@@ -140,6 +161,9 @@ class Vehicle {
       transmissionStyle: transmissionStyle ?? this.transmissionStyle,
       trim: trim ?? this.trim,
       vehicleType: vehicleType ?? this.vehicleType,
+      recallsItems: recallsItems ?? this.recallsItems,
+      vinProfile: vinProfile ?? this.vinProfile,
+      vinInsights: vinInsights ?? this.vinInsights,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       nextDueDate: nextDueDate ?? this.nextDueDate,
       nextDueTask: nextDueTask ?? this.nextDueTask,

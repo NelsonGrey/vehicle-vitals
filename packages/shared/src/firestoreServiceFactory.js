@@ -1,5 +1,7 @@
 // shared/firestoreServiceFactory.js
 // Factory that creates service functions given platform-specific db/auth and firestore helpers.
+import { createStandardVehiclePortfolio } from './vehiclePortfolio.js';
+
 export function createFirestoreService({ db, auth, helpers }) {
   const {
     collection,
@@ -33,7 +35,20 @@ export function createFirestoreService({ db, auth, helpers }) {
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
     const ref = doc(db, `users/${userId}/vehicles/${vehicle.vin}`);
-    await setDoc(ref, withTimestamps({ ...vehicle }));
+    let portfolio;
+    const current = await readDoc(ref);
+    if (current && typeof current.exists === 'function' && current.exists()) {
+      const existing = current.data() || {};
+      portfolio = existing.documentPortfolio || null;
+    }
+
+    await setDoc(
+      ref,
+      withTimestamps({
+        ...vehicle,
+        documentPortfolio: portfolio || createStandardVehiclePortfolio(),
+      })
+    );
     return vehicle;
   }
 

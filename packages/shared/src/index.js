@@ -27,6 +27,7 @@
 // Firebase configuration and services
 export { firebaseConfig } from './firebaseConfig.js';
 export { createFirestoreService } from './firestoreServiceFactory.js';
+export { createStandardVehiclePortfolio } from './vehiclePortfolio.js';
 // export { default as firestoreService } from './firestoreService.js'; // Removed - use factory instead
 
 // Default vehicle object structure

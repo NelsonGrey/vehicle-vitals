@@ -38,6 +38,7 @@ dependencies:
   cloud_firestore: ^6.0.2
   cloud_functions: ^6.0.2
   firebase_messaging: ^16.0.2
+  firebase_storage: ^13.0.2
 
   # Navigation
   go_router: ^16.3.0
@@ -53,6 +54,7 @@ dependencies:
 
   # File system access
   path_provider: ^2.1.4
+  file_picker: ^10.1.9
 
   # AdMob integration
   google_mobile_ads: ^6.0.0

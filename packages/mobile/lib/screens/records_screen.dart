@@ -1,8 +1,10 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
+import '../services/record_storage_service.dart';
 
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({super.key, required this.vin});
@@ -15,8 +17,10 @@ class RecordsScreen extends StatefulWidget {
 
 class _RecordsScreenState extends State<RecordsScreen> {
   final _firestoreService = FirestoreService();
+  final _recordStorageService = RecordStorageService();
   bool _isLoading = true;
   bool _isSaving = false;
+  String? _uploadingKey;
   Vehicle? _vehicle;
   Map<String, dynamic>? _portfolio;
 
@@ -80,6 +84,99 @@ class _RecordsScreenState extends State<RecordsScreen> {
     setState(() {
       _portfolio = nextPortfolio;
     });
+  }
+
+  List<Map<String, dynamic>> _itemFiles(int categoryIndex, int itemIndex) {
+    final category = Map<String, dynamic>.from(
+      _categories[categoryIndex] as Map,
+    );
+    final items = (category['items'] as List?) ?? [];
+    final item = Map<String, dynamic>.from(items[itemIndex] as Map);
+    return List<Map<String, dynamic>>.from(
+      ((item['files'] as List?) ?? []).map(
+        (file) => Map<String, dynamic>.from(file as Map),
+      ),
+    );
+  }
+
+  void _appendItemFile(
+    int categoryIndex,
+    int itemIndex,
+    Map<String, dynamic> file,
+  ) {
+    final existingFiles = _itemFiles(categoryIndex, itemIndex);
+    _updateItemField(categoryIndex, itemIndex, 'files', [
+      ...existingFiles,
+      file,
+    ]);
+  }
+
+  Future<void> _removeItemFile(
+    int categoryIndex,
+    int itemIndex,
+    int fileIndex,
+  ) async {
+    final files = _itemFiles(categoryIndex, itemIndex);
+    if (fileIndex < 0 || fileIndex >= files.length) return;
+    final file = files[fileIndex];
+
+    try {
+      final path = (file['path'] ?? '').toString();
+      if (path.isNotEmpty) {
+        await _recordStorageService.deleteVehicleRecordFile(path);
+      }
+      final nextFiles = [...files]..removeAt(fileIndex);
+      _updateItemField(categoryIndex, itemIndex, 'files', nextFiles);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting attachment: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickAndUploadFiles(int categoryIndex, int itemIndex) async {
+    final category = Map<String, dynamic>.from(
+      _categories[categoryIndex] as Map,
+    );
+    final items = (category['items'] as List?) ?? [];
+    final item = Map<String, dynamic>.from(items[itemIndex] as Map);
+    final uploadKey = '$categoryIndex:$itemIndex';
+
+    try {
+      setState(() => _uploadingKey = uploadKey);
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      for (final file in result.files) {
+        final uploaded = await _recordStorageService.uploadVehicleRecordFile(
+          widget.vin,
+          (item['id'] ?? '').toString(),
+          file,
+        );
+        _appendItemFile(categoryIndex, itemIndex, uploaded);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error uploading attachment: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _uploadingKey = null);
+      }
+    }
   }
 
   Future<void> _save() async {
@@ -163,8 +260,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
               child: ListView.builder(
                 itemCount: _categories.length,
                 itemBuilder: (context, categoryIndex) {
-                  final category =
-                      Map<String, dynamic>.from(_categories[categoryIndex] as Map);
+                  final category = Map<String, dynamic>.from(
+                    _categories[categoryIndex] as Map,
+                  );
                   final items = (category['items'] as List?) ?? [];
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -189,8 +287,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                 children: [
                                   Text(
                                     (item['title'] ?? '').toString(),
-                                    style:
-                                        Theme.of(context).textTheme.titleSmall,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
                                   ),
                                   const SizedBox(height: 4),
                                   Text((item['description'] ?? '').toString()),
@@ -230,7 +329,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   TextFormField(
-                                    initialValue: (item['notes'] ?? '').toString(),
+                                    initialValue: (item['notes'] ?? '')
+                                        .toString(),
                                     minLines: 2,
                                     maxLines: 4,
                                     decoration: const InputDecoration(
@@ -242,6 +342,56 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                       itemIndex,
                                       'notes',
                                       value,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        onPressed:
+                                            _uploadingKey ==
+                                                '$categoryIndex:$itemIndex'
+                                            ? null
+                                            : () => _pickAndUploadFiles(
+                                                categoryIndex,
+                                                itemIndex,
+                                              ),
+                                        icon: const Icon(Icons.attach_file),
+                                        label: Text(
+                                          _uploadingKey ==
+                                                  '$categoryIndex:$itemIndex'
+                                              ? 'Uploading...'
+                                              : 'Attach files',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  ..._itemFiles(
+                                    categoryIndex,
+                                    itemIndex,
+                                  ).asMap().entries.map(
+                                    (entry) => ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      title: Text(
+                                        (entry.value['name'] ?? 'Attachment')
+                                            .toString(),
+                                      ),
+                                      subtitle: Text(
+                                        (entry.value['type'] ?? '').toString(),
+                                      ),
+                                      trailing: IconButton(
+                                        onPressed: () => _removeItemFile(
+                                          categoryIndex,
+                                          itemIndex,
+                                          entry.key,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],

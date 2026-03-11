@@ -120,7 +120,7 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <main>
         <div className="flex items-end justify-between mb-3">
           <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">

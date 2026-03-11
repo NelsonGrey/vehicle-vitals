@@ -1128,7 +1128,8 @@ export default function Profile() {
           Delete Account
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
-          Delete your account and all associated data. This action cannot be undone.
+          Delete your account and all associated data. This action cannot be
+          undone.
         </p>
         <div>
           <label

@@ -83,7 +83,7 @@ export default function TimelineDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 py-5">
+      <div className="w-full max-w-7xl mx-auto px-5 py-5">
         <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">
           Maintenance Timeline
         </h1>
@@ -97,7 +97,7 @@ export default function TimelineDashboard() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">
         Maintenance Timeline
       </h1>

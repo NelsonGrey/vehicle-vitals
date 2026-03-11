@@ -389,7 +389,7 @@ export default function UpcomingTasks() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-5 py-5">
+      <div className="w-full max-w-7xl mx-auto px-5 py-5">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
           <span className="ml-3 text-slate-600">Loading upcoming tasks...</span>
@@ -399,7 +399,7 @@ export default function UpcomingTasks() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <div className="mb-6">
         <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0 mb-2">
           Upcoming Tasks

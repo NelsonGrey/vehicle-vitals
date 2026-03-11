@@ -6,6 +6,7 @@ class Vehicle {
   final int mileage;
   final int recallsCount;
   final String? recallsSource;
+  final String? engineType;
   final String? bodyClass;
   final String? fuelType;
   final String? driveType;
@@ -26,6 +27,7 @@ class Vehicle {
     required this.mileage,
     this.recallsCount = 0,
     this.recallsSource,
+    this.engineType,
     this.bodyClass,
     this.fuelType,
     this.driveType,
@@ -48,6 +50,7 @@ class Vehicle {
       mileage: map['mileage'] ?? 0,
       recallsCount: map['recallsCount'] ?? 0,
       recallsSource: map['recallsSource'],
+      engineType: map['engineType'],
       bodyClass: map['bodyClass'],
       fuelType: map['fuelType'],
       driveType: map['driveType'],
@@ -71,6 +74,7 @@ class Vehicle {
       'mileage': mileage,
       'recallsCount': recallsCount,
       'recallsSource': recallsSource,
+      'engineType': engineType,
       'bodyClass': bodyClass,
       'fuelType': fuelType,
       'driveType': driveType,
@@ -101,6 +105,7 @@ class Vehicle {
     int? mileage,
     int? recallsCount,
     String? recallsSource,
+    String? engineType,
     String? bodyClass,
     String? fuelType,
     String? driveType,
@@ -121,6 +126,7 @@ class Vehicle {
       mileage: mileage ?? this.mileage,
       recallsCount: recallsCount ?? this.recallsCount,
       recallsSource: recallsSource ?? this.recallsSource,
+      engineType: engineType ?? this.engineType,
       bodyClass: bodyClass ?? this.bodyClass,
       fuelType: fuelType ?? this.fuelType,
       driveType: driveType ?? this.driveType,

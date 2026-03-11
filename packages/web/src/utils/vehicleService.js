@@ -153,6 +153,7 @@ export async function decodeVin(vin) {
       make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
+      engineType: vehicle.engineType || '',
       recallsCount: Number.isFinite(recallCount) ? recallCount : 0,
       recallsSource: insights?.free?.recalls?.source || 'NHTSA',
       bodyClass: vehicle.bodyClass || '',

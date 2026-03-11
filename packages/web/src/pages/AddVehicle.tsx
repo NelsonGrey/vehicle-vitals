@@ -3,7 +3,6 @@
 import { defaultVehicle } from '@vehicle-vitals/shared';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AdBanner from '../components/AdBanner';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import { addOrUpdateVehicle } from '../shared/firestoreService';
 import { decodeVin } from '../utils/vehicleService';
@@ -105,7 +104,6 @@ export default function AddVehicle() {
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-5">
-      <AdBanner />
       <h2 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">
         Add Vehicle
       </h2>
@@ -280,10 +278,6 @@ export default function AddVehicle() {
             Add Vehicle
           </button>
         </div>
-      </div>
-
-      <div className="mt-6">
-        <AdBanner />
       </div>
     </div>
   );

@@ -125,6 +125,67 @@ class FirestoreCrudHelpers {
 // this will be the maximum concurrent request count.
 setGlobalOptions({maxInstances: 10});
 
+async function decodeVinData(vinInput: string) {
+  const vin = vinInput.trim().toUpperCase();
+  if (vin.length !== 17) {
+    throw new Error("Valid 17-character VIN required");
+  }
+
+  logger.info(`Decoding VIN: ${vin.substring(0, 8)}...`);
+
+  const nhtsaUrl =
+    "https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/" +
+    `${encodeURIComponent(vin)}?format=json`;
+  const nhtsaResponse = await fetch(nhtsaUrl);
+
+  if (!nhtsaResponse.ok) {
+    throw new Error(`NHTSA API error: ${nhtsaResponse.status}`);
+  }
+
+  const data = await nhtsaResponse.json();
+  const results = data?.Results || [];
+
+  const sanitize = (value: string | undefined) => {
+    const s = (value ?? "").toString().trim();
+    if (!s) return "";
+    const bad = new Set([
+      "0",
+      "NOT APPLICABLE",
+      "NULL",
+      "N/A",
+      "NONE",
+      "UNKNOWN",
+    ]);
+    return bad.has(s.toUpperCase()) ? "" : s;
+  };
+
+  const getVal = (key: string) =>
+    sanitize(
+      results.find(
+        (r: { Variable: string; Value: string }) => r.Variable === key
+      )?.Value
+    );
+
+  const vehicle = {
+    vin,
+    make: getVal("Make"),
+    model: getVal("Model"),
+    year: getVal("Model Year"),
+    bodyClass: getVal("Body Class"),
+    engineType: getVal("Engine Type"),
+    fuelType: getVal("Fuel Type - Primary"),
+    driveType: getVal("Drive Type"),
+    transmissionStyle: getVal("Transmission Style"),
+    trim: getVal("Trim"),
+    vehicleType: getVal("Vehicle Type"),
+  };
+
+  const vehicleDesc = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+  logger.info(`Successfully decoded VIN for ${vehicleDesc}`);
+
+  return vehicle;
+}
+
 // VIN decoding function
 export const decodeVIN = onRequest(
   {cors: true},
@@ -137,63 +198,11 @@ export const decodeVIN = onRequest(
       }
 
       const {vin} = request.body;
-
-      if (!vin || typeof vin !== "string" || vin.length !== 17) {
+      if (!vin || typeof vin !== "string") {
         response.status(400).json({error: "Valid 17-character VIN required"});
         return;
       }
-
-      logger.info(`Decoding VIN: ${vin.substring(0, 8)}...`);
-
-      // Call NHTSA VPIC API
-      const nhtsaUrl = `https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${encodeURIComponent(vin)}?format=json`;
-      const nhtsaResponse = await fetch(nhtsaUrl);
-
-      if (!nhtsaResponse.ok) {
-        throw new Error(`NHTSA API error: ${nhtsaResponse.status}`);
-      }
-
-      const data = await nhtsaResponse.json();
-      const results = data?.Results || [];
-
-      // Extract relevant vehicle information
-      const sanitize = (value: string | undefined) => {
-        const s = (value ?? "").toString().trim();
-        if (!s) return "";
-        const bad = new Set([
-          "0",
-          "NOT APPLICABLE",
-          "NULL",
-          "N/A",
-          "NONE",
-          "UNKNOWN",
-        ]);
-        return bad.has(s.toUpperCase()) ? "" : s;
-      };
-
-      const getVal = (key: string) =>
-        sanitize(
-          results.find(
-            (r: { Variable: string; Value: string }) => r.Variable === key
-          )?.Value
-        );
-
-      const vehicle = {
-        vin: vin.toUpperCase(),
-        make: getVal("Make"),
-        model: getVal("Model"),
-        year: getVal("Model Year"),
-        bodyClass: getVal("Body Class"),
-        engineType: getVal("Engine Type"),
-        fuelType: getVal("Fuel Type - Primary"),
-        driveType: getVal("Drive Type"),
-        transmissionStyle: getVal("Transmission Style"),
-        trim: getVal("Trim"),
-        vehicleType: getVal("Vehicle Type"),
-      };
-
-      const vehicleDesc = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
-      logger.info(`Successfully decoded VIN for ${vehicleDesc}`);
+      const vehicle = await decodeVinData(vin);
 
       response.json({
         success: true,
@@ -208,6 +217,28 @@ export const decodeVIN = onRequest(
     }
   }
 );
+
+export const decodeVINCallable = onCall(async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Missing auth context");
+  }
+
+  const vin = (request.data?.vin || "").toString();
+  if (vin.length !== 17) {
+    throw new HttpsError("invalid-argument", "Valid 17-character VIN required");
+  }
+
+  try {
+    const vehicle = await decodeVinData(vin);
+    return {
+      success: true,
+      vehicle,
+    };
+  } catch (error) {
+    logger.error("VIN callable decoding error:", error);
+    throw new HttpsError("internal", "Failed to decode VIN");
+  }
+});
 
 // Email reminder function
 export const sendMaintenanceReminder = onRequest(

@@ -2,7 +2,7 @@
 // File: web/pages/EditVehicle.jsx
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import {
   addMaintenanceEntry,
@@ -116,16 +116,24 @@ export default function EditVehicle() {
 
   if (!form)
     return (
-      <div className="max-w-2xl mx-auto px-5 py-5">
+      <div className="w-full max-w-7xl mx-auto px-5 py-5">
         <p className="text-charcoal-600 dark:text-cream-300">Loading...</p>
       </div>
     );
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-5">
-      <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 mb-6">
-        Edit Vehicle
-      </h2>
+    <div className="w-full max-w-7xl mx-auto px-5 py-5">
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 m-0">
+          Edit Vehicle
+        </h2>
+        <Link
+          to="/app"
+          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
+        >
+          Back
+        </Link>
+      </div>
 
       <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6 space-y-6">
         {/* Year dropdown */}

@@ -4,6 +4,151 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/maintenance.dart';
 import '../models/vehicle.dart';
 
+Map<String, dynamic> _portfolioItem({
+  required String id,
+  required String title,
+  required String description,
+  required bool required,
+}) {
+  return {
+    'id': id,
+    'title': title,
+    'description': description,
+    'required': required,
+    'status': 'missing',
+    'files': <Map<String, dynamic>>[],
+    'notes': '',
+    'updatedAt': null,
+  };
+}
+
+Map<String, dynamic> _createStandardVehiclePortfolio() {
+  return {
+    'schemaVersion': 1,
+    'generatedAt': DateTime.now().toUtc().toIso8601String(),
+    'categories': [
+      {
+        'key': 'ownership',
+        'title': 'Ownership and Legal',
+        'items': [
+          _portfolioItem(
+            id: 'title',
+            title: 'Vehicle Title',
+            description: 'Proof of legal ownership and lien status.',
+            required: true,
+          ),
+          _portfolioItem(
+            id: 'registration',
+            title: 'Registration Card',
+            description: 'Current state/provincial registration document.',
+            required: true,
+          ),
+          _portfolioItem(
+            id: 'insurance',
+            title: 'Insurance Card and Policy Summary',
+            description: 'Current proof of insurance and policy details.',
+            required: true,
+          ),
+          _portfolioItem(
+            id: 'bill_of_sale',
+            title: 'Bill of Sale / Purchase Agreement',
+            description: 'Purchase agreement from dealership or private party.',
+            required: true,
+          ),
+        ],
+      },
+      {
+        'key': 'finance',
+        'title': 'Finance and Tax',
+        'items': [
+          _portfolioItem(
+            id: 'loan_or_lease',
+            title: 'Loan / Lease Contract',
+            description: 'Original financing or lease paperwork.',
+            required: false,
+          ),
+          _portfolioItem(
+            id: 'payment_history',
+            title: 'Payment History Statements',
+            description: 'Monthly statements for financing records.',
+            required: false,
+          ),
+          _portfolioItem(
+            id: 'tax_receipts',
+            title: 'Tax and Fee Receipts',
+            description: 'Sales tax, registration fees, and related receipts.',
+            required: false,
+          ),
+        ],
+      },
+      {
+        'key': 'maintenance',
+        'title': 'Maintenance and Repair',
+        'items': [
+          _portfolioItem(
+            id: 'service_history',
+            title: 'Service Invoices',
+            description:
+                'Oil changes, inspections, and routine maintenance receipts.',
+            required: true,
+          ),
+          _portfolioItem(
+            id: 'repair_invoices',
+            title: 'Repair Invoices',
+            description: 'Parts and labor records for all repairs.',
+            required: true,
+          ),
+          _portfolioItem(
+            id: 'warranty_records',
+            title: 'Warranty and Recall Records',
+            description:
+                'Warranty claims, recall completion receipts, and campaign docs.',
+            required: true,
+          ),
+          _portfolioItem(
+            id: 'inspection_reports',
+            title: 'Inspection and Emissions Reports',
+            description: 'State inspection, emissions, and safety checks.',
+            required: false,
+          ),
+        ],
+      },
+      {
+        'key': 'reference',
+        'title': 'Reference and Evidence',
+        'items': [
+          _portfolioItem(
+            id: 'owners_manual',
+            title: 'Owner Manual and Quick Guides',
+            description:
+                'Digital owner manual, quick start, and feature guides.',
+            required: false,
+          ),
+          _portfolioItem(
+            id: 'accident_reports',
+            title: 'Accident / Incident Reports',
+            description: 'Police reports, claim packets, and repair estimates.',
+            required: false,
+          ),
+          _portfolioItem(
+            id: 'photo_log',
+            title: 'Photo Log',
+            description:
+                'Condition photos for resale, claims, and maintenance evidence.',
+            required: false,
+          ),
+          _portfolioItem(
+            id: 'modifications',
+            title: 'Modification and Accessory Receipts',
+            description: 'Aftermarket installation records and warranties.',
+            required: false,
+          ),
+        ],
+      },
+    ],
+  };
+}
+
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -31,9 +176,15 @@ class FirestoreService {
   Future<void> addOrUpdateVehicle(Vehicle vehicle) async {
     final docRef = _vehiclesCollection.doc(vehicle.vin);
     final now = FieldValue.serverTimestamp();
+    final currentDoc = await docRef.get();
+    final existingData = currentDoc.data();
+    final existingPortfolio = existingData?['documentPortfolio'];
+
     await docRef.set({
       ...vehicle.toMap(),
       'vin': vehicle.vin,
+      'documentPortfolio':
+          existingPortfolio ?? _createStandardVehiclePortfolio(),
       'updatedAt': now,
       'createdAt': now,
     }, SetOptions(merge: true));

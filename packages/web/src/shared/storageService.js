@@ -1,5 +1,10 @@
 import { storage, auth } from './firebaseConfig';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // Upload file to Firebase Storage
@@ -11,12 +16,13 @@ export const uploadFile = async (file, path) => {
     return new Promise((resolve, reject) => {
       uploadTask.on(
         'state_changed',
-        (snapshot) => {
+        snapshot => {
           // Progress monitoring (optional)
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           console.log('Upload progress:', progress);
         },
-        (error) => {
+        error => {
           reject(error);
         },
         async () => {
@@ -27,7 +33,7 @@ export const uploadFile = async (file, path) => {
               path: path,
               size: file.size,
               type: file.type,
-              name: file.name
+              name: file.name,
             });
           } catch (error) {
             reject(error);
@@ -42,7 +48,7 @@ export const uploadFile = async (file, path) => {
 };
 
 // Delete file from Firebase Storage
-export const deleteFile = async (path) => {
+export const deleteFile = async path => {
   try {
     const storageRef = ref(storage, path);
     await deleteObject(storageRef);
@@ -53,16 +59,20 @@ export const deleteFile = async (path) => {
 };
 
 // Generate storage path for maintenance attachments
-export const generateMaintenanceAttachmentPath = async (vin, maintenanceId, fileName) => {
+export const generateMaintenanceAttachmentPath = async (
+  vin,
+  maintenanceId,
+  fileName
+) => {
   // Get current user ID
   const getCurrentUserId = () => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const user = auth.currentUser;
       if (user) {
         resolve(user.uid);
       } else {
         // Wait for auth state change
-        const unsub = onAuthStateChanged(auth, (u) => {
+        const unsub = onAuthStateChanged(auth, u => {
           unsub();
           resolve(u?.uid || 'anonymous');
         });
@@ -74,4 +84,30 @@ export const generateMaintenanceAttachmentPath = async (vin, maintenanceId, file
   const timestamp = Date.now();
   const extension = fileName.split('.').pop();
   return `users/${userId}/vehicles/${vin}/maintenance/${maintenanceId}/${timestamp}.${extension}`;
+};
+
+// Generate storage path for vehicle record attachments
+export const generateVehicleRecordAttachmentPath = async (
+  vin,
+  recordId,
+  fileName
+) => {
+  const getCurrentUserId = () => {
+    return new Promise(resolve => {
+      const user = auth.currentUser;
+      if (user) {
+        resolve(user.uid);
+      } else {
+        const unsub = onAuthStateChanged(auth, u => {
+          unsub();
+          resolve(u?.uid || 'anonymous');
+        });
+      }
+    });
+  };
+
+  const userId = await getCurrentUserId();
+  const timestamp = Date.now();
+  const extension = fileName.includes('.') ? fileName.split('.').pop() : 'bin';
+  return `users/${userId}/vehicles/${vin}/records/${recordId}/${timestamp}.${extension}`;
 };

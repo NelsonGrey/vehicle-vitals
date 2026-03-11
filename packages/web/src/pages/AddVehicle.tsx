@@ -13,6 +13,7 @@ export default function AddVehicle() {
   const [insights, setInsights] = useState<{
     recallsCount: number;
     recallsSource: string;
+    engineType: string;
     bodyClass: string;
     fuelType: string;
     driveType: string;
@@ -39,6 +40,7 @@ export default function AddVehicle() {
           ? {
               recallsCount: insights.recallsCount,
               recallsSource: insights.recallsSource,
+              engineType: insights.engineType,
               bodyClass: insights.bodyClass,
               fuelType: insights.fuelType,
               driveType: insights.driveType,
@@ -70,6 +72,7 @@ export default function AddVehicle() {
         year,
         recallsCount,
         recallsSource,
+        engineType,
         bodyClass,
         fuelType,
         driveType,
@@ -86,6 +89,7 @@ export default function AddVehicle() {
       setInsights({
         recallsCount: Number(recallsCount || 0),
         recallsSource: (recallsSource || 'NHTSA').toString(),
+        engineType: (engineType || '').toString(),
         bodyClass: (bodyClass || '').toString(),
         fuelType: (fuelType || '').toString(),
         driveType: (driveType || '').toString(),
@@ -238,6 +242,7 @@ export default function AddVehicle() {
             <p className="text-sm text-slate-700 dark:text-slate-300 m-0">
               {[
                 insights.vehicleType,
+                insights.engineType,
                 insights.bodyClass,
                 insights.trim,
                 insights.fuelType,

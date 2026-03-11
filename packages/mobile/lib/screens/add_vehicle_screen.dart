@@ -31,6 +31,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   bool _isLoading = false;
   int? _recallsCount;
   String? _recallsSource;
+  String? _engineType;
   String? _bodyClass;
   String? _fuelType;
   String? _driveType;
@@ -161,6 +162,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         );
         _recallsCount = recallsCountValue;
         _recallsSource = (recalls['source'] ?? 'NHTSA').toString();
+        _engineType = (vehicleData['engineType'] ?? '').toString();
         _bodyClass = (vehicleData['bodyClass'] ?? '').toString();
         _fuelType = (vehicleData['fuelType'] ?? '').toString();
         _driveType = (vehicleData['driveType'] ?? '').toString();
@@ -211,6 +213,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         mileage: int.parse(_mileageController.text),
         recallsCount: _recallsCount ?? 0,
         recallsSource: _recallsSource,
+        engineType: _engineType,
         bodyClass: _bodyClass,
         fuelType: _fuelType,
         driveType: _driveType,
@@ -331,13 +334,39 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                               color: Colors.amber.withValues(alpha: 0.35),
                             ),
                           ),
-                          child: Text(
-                            'Free insights (${_recallsSource ?? 'NHTSA'}): '
-                            'Open recalls: $_recallsCount',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Free insights (${_recallsSource ?? 'NHTSA'}): '
+                                'Open recalls: $_recallsCount',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                [
+                                      _engineType,
+                                      _transmissionStyle,
+                                      _fuelType,
+                                      _driveType,
+                                      _bodyClass,
+                                      _trim,
+                                    ]
+                                    .where(
+                                      (value) =>
+                                          value != null &&
+                                          value.toString().trim().isNotEmpty,
+                                    )
+                                    .join(' • '),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF7A4A00),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 

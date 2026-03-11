@@ -269,6 +269,27 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
+                            if (vehicle.recallsCount > 0) ...[
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFE8B5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${vehicle.recallsCount} open recall${vehicle.recallsCount == 1 ? '' : 's'}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF7A4A00),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             Row(
                               children: [

@@ -4,6 +4,14 @@ class Vehicle {
   final String model;
   final int year;
   final int mileage;
+  final int recallsCount;
+  final String? recallsSource;
+  final String? bodyClass;
+  final String? fuelType;
+  final String? driveType;
+  final String? transmissionStyle;
+  final String? trim;
+  final String? vehicleType;
   final String? purchaseDate;
   final String? nextDueDate;
   final String? nextDueTask;
@@ -16,6 +24,14 @@ class Vehicle {
     required this.model,
     required this.year,
     required this.mileage,
+    this.recallsCount = 0,
+    this.recallsSource,
+    this.bodyClass,
+    this.fuelType,
+    this.driveType,
+    this.transmissionStyle,
+    this.trim,
+    this.vehicleType,
     this.purchaseDate,
     this.nextDueDate,
     this.nextDueTask,
@@ -30,6 +46,14 @@ class Vehicle {
       model: map['model'] ?? '',
       year: map['year'] ?? 0,
       mileage: map['mileage'] ?? 0,
+      recallsCount: map['recallsCount'] ?? 0,
+      recallsSource: map['recallsSource'],
+      bodyClass: map['bodyClass'],
+      fuelType: map['fuelType'],
+      driveType: map['driveType'],
+      transmissionStyle: map['transmissionStyle'],
+      trim: map['trim'],
+      vehicleType: map['vehicleType'],
       purchaseDate: map['purchaseDate'],
       nextDueDate: map['nextDueDate'],
       nextDueTask: map['nextDueTask'],
@@ -45,6 +69,14 @@ class Vehicle {
       'model': model,
       'year': year,
       'mileage': mileage,
+      'recallsCount': recallsCount,
+      'recallsSource': recallsSource,
+      'bodyClass': bodyClass,
+      'fuelType': fuelType,
+      'driveType': driveType,
+      'transmissionStyle': transmissionStyle,
+      'trim': trim,
+      'vehicleType': vehicleType,
       'purchaseDate': purchaseDate,
       'nextDueDate': nextDueDate,
       'nextDueTask': nextDueTask,
@@ -67,6 +99,14 @@ class Vehicle {
     String? model,
     int? year,
     int? mileage,
+    int? recallsCount,
+    String? recallsSource,
+    String? bodyClass,
+    String? fuelType,
+    String? driveType,
+    String? transmissionStyle,
+    String? trim,
+    String? vehicleType,
     String? purchaseDate,
     String? nextDueDate,
     String? nextDueTask,
@@ -79,6 +119,14 @@ class Vehicle {
       model: model ?? this.model,
       year: year ?? this.year,
       mileage: mileage ?? this.mileage,
+      recallsCount: recallsCount ?? this.recallsCount,
+      recallsSource: recallsSource ?? this.recallsSource,
+      bodyClass: bodyClass ?? this.bodyClass,
+      fuelType: fuelType ?? this.fuelType,
+      driveType: driveType ?? this.driveType,
+      transmissionStyle: transmissionStyle ?? this.transmissionStyle,
+      trim: trim ?? this.trim,
+      vehicleType: vehicleType ?? this.vehicleType,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       nextDueDate: nextDueDate ?? this.nextDueDate,
       nextDueTask: nextDueTask ?? this.nextDueTask,

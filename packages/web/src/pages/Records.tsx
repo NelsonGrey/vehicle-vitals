@@ -318,7 +318,7 @@ export default function Records() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 m-0">
@@ -357,7 +357,7 @@ export default function Records() {
 
         {flattenedItems.length > 0 && (
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+            <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
               <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
                 Record List
               </h2>
@@ -436,7 +436,7 @@ export default function Records() {
               </div>
             </div>
 
-            <div className="lg:col-span-7 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
               {!selectedEntry ? (
                 <p className="text-slate-600 dark:text-slate-400 m-0">
                   Select a record item to view and edit details.

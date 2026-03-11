@@ -615,7 +615,7 @@ export default function Profile() {
     : 'Undo Last Broaden';
 
   return (
-    <div className="max-w-md mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 mb-4">
         Profile
       </h1>

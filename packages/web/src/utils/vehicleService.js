@@ -86,7 +86,7 @@ export async function fetchVehicleByVINAndSave(vin) {
     // Call Firebase Function for VIN decoding
     const decodeVINCallable = firebaseService.httpsCallable(
       firebaseService.functions,
-      'decodeVIN'
+      'decodeVINCallable'
     );
     const result = await decodeVINCallable({ vin });
 
@@ -135,7 +135,7 @@ export async function decodeVin(vin) {
     // Call Firebase Function for VIN decoding
     const decodeVINCallable = firebaseService.httpsCallable(
       firebaseService.functions,
-      'decodeVIN'
+      'decodeVINCallable'
     );
     const result = await decodeVINCallable({ vin });
 

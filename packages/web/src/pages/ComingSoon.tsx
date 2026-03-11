@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import StackedVLogo from '../components/StackedVLogo';
-import SiteFooter from '../components/SiteFooter';
-import HeaderAdBar from '../components/HeaderAdBar';
 import {
-  getFirestore,
-  collection,
   addDoc,
+  collection,
+  getFirestore,
   serverTimestamp,
 } from 'firebase/firestore';
+import { useState } from 'react';
+import HeaderAdBar from '../components/HeaderAdBar';
+import SiteFooter from '../components/SiteFooter';
+import StackedVLogo from '../components/StackedVLogo';
 
 export default function ComingSoon() {
   const [email, setEmail] = useState('');
@@ -63,7 +63,7 @@ export default function ComingSoon() {
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-6xl mx-auto px-5 py-6">
+        <div className="max-w-7xl mx-auto px-5 py-6">
           <div className="flex items-center justify-center">
             <StackedVLogo
               size={40}
@@ -81,22 +81,22 @@ export default function ComingSoon() {
       <main className="pt-8 pb-16">
         {/* Hero Section */}
         <section className="bg-slate-100 dark:bg-slate-800 py-20">
-          <div className="max-w-6xl mx-auto px-5">
-            <div className="text-center py-12 max-w-4xl mx-auto">
+          <div className="max-w-7xl mx-auto px-5">
+            <div className="text-center py-12 max-w-7xl mx-auto">
               <div className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">
                 Care for every mile
               </div>
               <div className="font-serif text-5xl leading-tight mb-4 text-slate-900 dark:text-slate-100">
                 Coming Soon
               </div>
-              <div className="text-lg max-w-prose text-slate-700 dark:text-slate-300 mb-8">
+              <div className="text-lg max-w-7xl mx-auto text-slate-700 dark:text-slate-300 mb-8">
                 We&apos;re putting the finishing touches on Vehicle Vitals.
                 Track your vehicle&apos;s story with confidence—on web and
                 mobile.
               </div>
 
               {/* Email Signup Form */}
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-8 rounded-xl shadow-sm max-w-md mx-auto mb-12">
+              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mb-12">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-4">
                   Get notified when we launch
                 </h3>
@@ -171,7 +171,7 @@ export default function ComingSoon() {
             </section>
 
             {/* Suggestion Form */}
-            <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-8 rounded-xl shadow-sm max-w-2xl mx-auto mt-12">
+            <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mt-12">
               <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-4 text-center">
                 Have a suggestion?
               </h3>

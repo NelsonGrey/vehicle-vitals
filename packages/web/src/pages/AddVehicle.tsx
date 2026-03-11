@@ -111,7 +111,7 @@ export default function AddVehicle() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <h2 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 mb-6">
         Add Vehicle
       </h2>

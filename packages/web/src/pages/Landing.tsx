@@ -11,15 +11,15 @@ export default function Landing() {
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
         {/* Clean Slate Hero Section */}
         <section className="bg-slate-100 dark:bg-slate-800 py-10 sm:py-14 lg:py-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-5">
-            <div className="text-center py-6 sm:py-8 lg:py-10 max-w-4xl mx-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-5">
+            <div className="text-center py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto">
               <div className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">
                 Care for every mile
               </div>
               <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl leading-tight mb-4 text-slate-900 dark:text-slate-100">
                 Track your vehicle&apos;s story with confidence
               </h1>
-              <p className="text-base sm:text-lg max-w-2xl mx-auto text-slate-700 dark:text-slate-300 mb-7 sm:mb-8">
+              <p className="text-base sm:text-lg max-w-7xl mx-auto text-slate-700 dark:text-slate-300 mb-7 sm:mb-8">
                 Vehicle Vitals helps you log maintenance, plan service, and keep
                 a timeless record—on web and mobile.
               </p>

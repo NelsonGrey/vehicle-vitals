@@ -86,7 +86,6 @@ const AddVehicle = lazy(() => import('./pages/AddVehicle'));
 const EditVehicle = lazy(() => import('./pages/EditVehicle'));
 const Records = lazy(() => import('./pages/Records'));
 const Profile = lazy(() => import('./pages/Profile'));
-const DevSeed = lazy(() => import('./pages/DevSeed'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
 const UpcomingTasks = lazy(() => import('./pages/UpcomingTasks'));
 
@@ -286,9 +285,6 @@ function App() {
               <Route path="signup" element={<SignUp />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
             </Route>
-
-            {/* Development route - remove in production */}
-            <Route path="/dev-seed" element={<DevSeed />} />
           </Routes>
         </Suspense>
       </AuthProvider>

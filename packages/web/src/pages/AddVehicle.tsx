@@ -5,13 +5,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import { addOrUpdateVehicle } from '../shared/firestoreService';
-import { decodeVin } from '../utils/vehicleService';
+import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
 
 export default function AddVehicle() {
   const [form, setForm] = useState({ ...defaultVehicle });
   const [insights, setInsights] = useState<{
     recallsCount: number;
     recallsSource: string;
+    recallsItems: Array<Record<string, unknown>>;
     engineType: string;
     bodyClass: string;
     fuelType: string;
@@ -19,6 +20,8 @@ export default function AddVehicle() {
     transmissionStyle: string;
     trim: string;
     vehicleType: string;
+    vinProfile: Record<string, unknown>;
+    rawInsights: Record<string, unknown>;
   } | null>(null);
   const navigate = useNavigate();
   const { years, makes, models, loadingMakes, loadingModels } =
@@ -37,16 +40,7 @@ export default function AddVehicle() {
         ...form,
         ...(insights
           ? {
-              recallsCount: insights.recallsCount,
-              recallsSource: insights.recallsSource,
-              engineType: insights.engineType,
-              bodyClass: insights.bodyClass,
-              fuelType: insights.fuelType,
-              driveType: insights.driveType,
-              transmissionStyle: insights.transmissionStyle,
-              trim: insights.trim,
-              vehicleType: insights.vehicleType,
-              insightsUpdatedAt: new Date().toISOString(),
+              ...buildPersistedVinInsights(insights.rawInsights),
             }
           : {}),
       });
@@ -78,6 +72,9 @@ export default function AddVehicle() {
         transmissionStyle,
         trim,
         vehicleType,
+        recallsItems,
+        vinProfile,
+        rawInsights,
       } = await decodeVin(vin);
       setForm(prev => ({
         ...prev,
@@ -95,6 +92,17 @@ export default function AddVehicle() {
         transmissionStyle: (transmissionStyle || '').toString(),
         trim: (trim || '').toString(),
         vehicleType: (vehicleType || '').toString(),
+        recallsItems: Array.isArray(recallsItems)
+          ? (recallsItems as Array<Record<string, unknown>>)
+          : [],
+        vinProfile:
+          vinProfile && typeof vinProfile === 'object'
+            ? (vinProfile as Record<string, unknown>)
+            : {},
+        rawInsights:
+          rawInsights && typeof rawInsights === 'object'
+            ? (rawInsights as Record<string, unknown>)
+            : {},
       });
     } catch (e: unknown) {
       const error = e as Error;

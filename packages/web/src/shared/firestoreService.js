@@ -52,6 +52,12 @@ const initializeFirestoreService = async () => {
       updateVehicle: () => Promise.reject('Firestore not available'),
       addMaintenanceEntry: () => Promise.reject('Firestore not available'),
       getMaintenanceEntries: () => Promise.resolve([]),
+      addReminder: () => Promise.reject('Firestore not available'),
+      getReminders: () => Promise.resolve([]),
+      completeReminder: () => Promise.reject('Firestore not available'),
+      snoozeReminder: () => Promise.reject('Firestore not available'),
+      dismissReminder: () => Promise.reject('Firestore not available'),
+      reopenReminder: () => Promise.reject('Firestore not available'),
       deleteVehicle: () => Promise.reject('Firestore not available'),
       deleteMaintenanceEntry: () => Promise.reject('Firestore not available'),
     };
@@ -84,8 +90,9 @@ export const deleteMaintenanceEntry = createAsyncMethod(
   'deleteMaintenanceEntry'
 );
 export const deleteVehicle = createAsyncMethod('deleteVehicle');
-// Reminder helpers (stubs)
-export const getUpcomingReminders = createAsyncMethod('getUpcomingReminders');
 export const addReminder = createAsyncMethod('addReminder');
-export const deleteReminder = createAsyncMethod('deleteReminder');
-export const markReminderComplete = createAsyncMethod('markReminderComplete');
+export const getReminders = createAsyncMethod('getReminders');
+export const completeReminder = createAsyncMethod('completeReminder');
+export const snoozeReminder = createAsyncMethod('snoozeReminder');
+export const dismissReminder = createAsyncMethod('dismissReminder');
+export const reopenReminder = createAsyncMethod('reopenReminder');

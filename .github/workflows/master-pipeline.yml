@@ -170,25 +170,59 @@ jobs:
       needs.load-config.outputs.ios_enabled == 'true' &&
       (needs.load-config.outputs.trigger_context == 'build_all' ||
        needs.load-config.outputs.trigger_context == 'build_and_deploy')
-    uses: mnelson3/nelson-grey/.github/workflows/ios-build.yml@main
-    with:
-      project_name: ${{ needs.load-config.outputs.project_name }}
-      release_type: build_only
-      release_notes: ${{ needs.load-config.outputs.trigger_context == 'build_and_deploy' && format('Automated build from {0} ({1})', github.sha, github.ref_name) || '' }}
-      beta_group_name: "Internal Testers"
-      ruby_version: "3.2"
-      bundler_version: "2.4.22"
-      fastlane_version: "2.230.0"
-    secrets:
-      app_store_connect_key_id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-      app_store_connect_issuer_id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-      app_store_connect_key: ${{ secrets.APP_STORE_CONNECT_KEY }}
-      match_git_password: ${{ secrets.MATCH_GIT_PASSWORD }}
-      # Required by the reusable ios-build workflow contract.
-      # Mapped to an existing signing secret in this repository.
-      keychain_password: ${{ secrets.MATCH_GIT_PASSWORD }}
-      match_git_url: ${{ secrets.MATCH_GIT_URL }}
-      match_git_branch: ${{ secrets.MATCH_GIT_BRANCH }}
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: packages/mobile
+    env:
+      COCOAPODS_DISABLE_STATS: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Ensure Flutter SDK
+        run: |
+          if [ ! -d "$HOME/flutter" ]; then
+            git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$HOME/flutter"
+          fi
+          echo "$HOME/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Flutter Doctor
+        run: |
+          export PATH="$HOME/flutter/bin:$PATH"
+          flutter doctor -v
+
+      - name: Get Dependencies
+        run: |
+          export PATH="$HOME/flutter/bin:$PATH"
+          flutter pub get
+
+      - name: Clean iOS Build State
+        run: |
+          export PATH="$HOME/flutter/bin:$PATH"
+          flutter clean
+          rm -rf ios/Pods ios/Podfile.lock
+          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Build iOS (No Codesign)
+        run: |
+          export PATH="$HOME/flutter/bin:$PATH"
+          flutter build ios --release --no-codesign
+
+      - name: Upload iOS Build Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-no-codesign-build
+          path: |
+            packages/mobile/build/ios/iphoneos
+            packages/mobile/build/ios/archive
+          if-no-files-found: warn
 
   build-android:
     name: Build Android App

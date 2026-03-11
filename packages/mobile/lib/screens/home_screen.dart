@@ -332,7 +332,10 @@ class HomeScreen extends StatelessWidget {
                                     onPressed: () => context.push(
                                       '/app/records/${vehicle.vin}',
                                     ),
-                                    icon: const Icon(Icons.folder_open, size: 16),
+                                    icon: const Icon(
+                                      Icons.folder_open,
+                                      size: 16,
+                                    ),
                                     label: const Text('Records'),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: const Color(0xFF1E3A8A),

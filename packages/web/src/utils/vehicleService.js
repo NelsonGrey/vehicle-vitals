@@ -143,25 +143,44 @@ export async function getVehicleInsights(vin) {
   return result.data;
 }
 
+export function buildPersistedVinInsights(insights) {
+  const vinProfile = insights?.free?.vinProfile || {};
+  const recalls = insights?.free?.recalls || {};
+  const recallCount = Number(recalls?.count || 0);
+
+  return {
+    recallsCount: Number.isFinite(recallCount) ? recallCount : 0,
+    recallsSource: recalls?.source || 'NHTSA',
+    engineType: vinProfile.engineType || '',
+    bodyClass: vinProfile.bodyClass || '',
+    fuelType: vinProfile.fuelType || '',
+    driveType: vinProfile.driveType || '',
+    transmissionStyle: vinProfile.transmissionStyle || '',
+    trim: vinProfile.trim || '',
+    vehicleType: vinProfile.vehicleType || '',
+    recallsItems: Array.isArray(recalls?.items) ? recalls.items : [],
+    vinProfile,
+    vinInsights: {
+      ...insights,
+      fetchedAt: new Date().toISOString(),
+    },
+    insightsUpdatedAt: new Date().toISOString(),
+  };
+}
+
 // Decode VIN without saving; returns { make, model, year } strings or '' when unknown
 export async function decodeVin(vin) {
   try {
     const insights = await getVehicleInsights(vin);
     const vehicle = insights?.free?.vinProfile || {};
-    const recallCount = Number(insights?.free?.recalls?.count || 0);
+    const persistedFields = buildPersistedVinInsights(insights);
     return {
       make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
-      engineType: vehicle.engineType || '',
-      recallsCount: Number.isFinite(recallCount) ? recallCount : 0,
-      recallsSource: insights?.free?.recalls?.source || 'NHTSA',
-      bodyClass: vehicle.bodyClass || '',
-      fuelType: vehicle.fuelType || '',
-      driveType: vehicle.driveType || '',
-      transmissionStyle: vehicle.transmissionStyle || '',
-      trim: vehicle.trim || '',
-      vehicleType: vehicle.vehicleType || '',
+      ...persistedFields,
+      vinProfile: vehicle,
+      rawInsights: insights,
     };
   } catch (err) {
     console.error('VIN decode failed', err);

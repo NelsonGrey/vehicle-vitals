@@ -75,11 +75,7 @@ beforeEach(() => {
 
   // Mock toLocaleDateString to return consistent format regardless of timezone
   global.Date.prototype.toLocaleDateString = function () {
-    const date = this;
-    const utcYear = date.getUTCFullYear();
-    const utcMonth = date.getUTCMonth();
-    const utcDay = date.getUTCDate();
-    return `${utcMonth + 1}/${utcDay}/${utcYear}`;
+    return `${this.getUTCMonth() + 1}/${this.getUTCDate()}/${this.getUTCFullYear()}`;
   };
 });
 

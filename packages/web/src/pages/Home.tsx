@@ -2,7 +2,15 @@
 // File: web/pages/Home.jsx
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deleteVehicle, getVehicles } from '../shared/firestoreService';
+import {
+  deleteVehicle,
+  getVehicles,
+  updateVehicle,
+} from '../shared/firestoreService';
+import {
+  buildPersistedVinInsights,
+  getVehicleInsights,
+} from '../utils/vehicleService';
 
 interface Vehicle {
   vin: string;
@@ -11,6 +19,9 @@ interface Vehicle {
   year: string;
   mileage?: string;
   recallsCount?: number;
+  vinInsights?: {
+    fetchedAt?: string;
+  };
   documentPortfolio?: {
     categories?: Array<{
       items?: Array<{ required?: boolean; status?: string }>;
@@ -39,6 +50,8 @@ function getPortfolioRequiredProgress(vehicle: Vehicle) {
 
 export default function Home() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [isBackfillingInsights, setIsBackfillingInsights] = useState(false);
+  const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -47,6 +60,49 @@ export default function Home() {
     };
     fetchVehicles();
   }, []);
+
+  const backfillVinInsights = async () => {
+    const candidates = vehicles.filter(
+      vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
+    );
+
+    if (candidates.length === 0) {
+      setBackfillMessage('All vehicles already have full VIN insights.');
+      return;
+    }
+
+    setIsBackfillingInsights(true);
+    setBackfillMessage(null);
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    for (const vehicle of candidates) {
+      try {
+        const insights = await getVehicleInsights(vehicle.vin);
+        await updateVehicle(vehicle.vin, buildPersistedVinInsights(insights));
+        successCount += 1;
+      } catch (error) {
+        console.error(`VIN insight backfill failed for ${vehicle.vin}`, error);
+        failureCount += 1;
+      }
+    }
+
+    const list = await getVehicles();
+    setVehicles(list);
+
+    if (failureCount === 0) {
+      setBackfillMessage(
+        `VIN insights backfill complete: ${successCount} vehicle${successCount === 1 ? '' : 's'} updated.`
+      );
+    } else {
+      setBackfillMessage(
+        `VIN insights backfill finished: ${successCount} updated, ${failureCount} failed.`
+      );
+    }
+
+    setIsBackfillingInsights(false);
+  };
 
   const handleDelete = async (vin: string) => {
     const ok = window.confirm('Delete this vehicle? This cannot be undone.');
@@ -70,13 +126,29 @@ export default function Home() {
           <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
             Vehicle Vitals
           </h1>
-          <Link
-            to="/add-vehicle"
-            className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
-          >
-            Add Vehicle
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void backfillVinInsights()}
+              disabled={isBackfillingInsights || vehicles.length === 0}
+              className="px-4 py-2.5 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isBackfillingInsights
+                ? 'Backfilling VIN...'
+                : 'Backfill VIN Data'}
+            </button>
+            <Link
+              to="/add-vehicle"
+              className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
+            >
+              Add Vehicle
+            </Link>
+          </div>
         </div>
+        {backfillMessage && (
+          <div className="mb-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
+            {backfillMessage}
+          </div>
+        )}
         {vehicles.length === 0 ? (
           <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 my-4">
             <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-2">

@@ -38,6 +38,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   String? _transmissionStyle;
   String? _trim;
   String? _vehicleType;
+  List<Map<String, dynamic>> _recallsItems = const [];
+  Map<String, dynamic> _vinProfile = const {};
+  Map<String, dynamic> _vinInsights = const {};
 
   @override
   void initState() {
@@ -142,6 +145,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       final recalls = Map<String, dynamic>.from(
         free['recalls'] as Map? ?? <String, dynamic>{},
       );
+      final recallsItems = ((recalls['items'] as List?) ?? const [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
 
       final vehicleData = Map<String, dynamic>.from(
         (free['vinProfile'] as Map?) ??
@@ -170,6 +176,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             .toString();
         _trim = (vehicleData['trim'] ?? '').toString();
         _vehicleType = (vehicleData['vehicleType'] ?? '').toString();
+        _recallsItems = recallsItems;
+        _vinProfile = Map<String, dynamic>.from(vehicleData);
+        _vinInsights = {
+          ...Map<String, dynamic>.from(data),
+          'fetchedAt': DateTime.now().toUtc().toIso8601String(),
+        };
       });
 
       if (mounted) {
@@ -220,6 +232,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         transmissionStyle: _transmissionStyle,
         trim: _trim,
         vehicleType: _vehicleType,
+        recallsItems: _recallsItems,
+        vinProfile: _vinProfile,
+        vinInsights: _vinInsights,
       );
 
       await _firestoreService.addOrUpdateVehicle(vehicle);

@@ -139,8 +139,7 @@ export function createFirestoreService({ db, auth, helpers }) {
     await updateDoc(ref, withTimestamps(updates));
   }
 
-  // --- Reminder stubs (no-op implementations for now) ---
-  // Suggested path when implemented: `users/${userId}/vehicles/${vin}/reminders/*`
+  // Reminder persistence path: `users/${userId}/vehicles/${vin}/reminders/*`
   async function addReminder(vin, reminder) {
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
@@ -192,6 +191,37 @@ export function createFirestoreService({ db, auth, helpers }) {
     );
   }
 
+  async function dismissReminder(vin, reminderId) {
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error('Not authenticated');
+    const ref = doc(
+      db,
+      `users/${userId}/vehicles/${vin}/reminders/${reminderId}`
+    );
+    await updateDoc(
+      ref,
+      withTimestamps({
+        status: 'dismissed',
+        dismissedAt: serverTimestamp(),
+      })
+    );
+  }
+
+  async function reopenReminder(vin, reminderId) {
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error('Not authenticated');
+    const ref = doc(
+      db,
+      `users/${userId}/vehicles/${vin}/reminders/${reminderId}`
+    );
+    await updateDoc(
+      ref,
+      withTimestamps({
+        status: 'active',
+      })
+    );
+  }
+
   async function deleteVehicle(vin) {
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
@@ -210,10 +240,12 @@ export function createFirestoreService({ db, auth, helpers }) {
     deleteMaintenanceEntry,
     updateVehicle,
     deleteVehicle,
-    // reminder stubs
+    // reminder methods
     addReminder,
     getReminders,
     completeReminder,
     snoozeReminder,
+    dismissReminder,
+    reopenReminder,
   };
 }

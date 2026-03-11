@@ -7,11 +7,16 @@ export function createFirestoreService({ db, auth, helpers }) {
     setDoc,
     getDocs,
     getDoc,
+    getDocsFromServer,
+    getDocFromServer,
     addDoc,
     updateDoc,
     deleteDoc,
     serverTimestamp,
   } = helpers;
+
+  const readDocs = getDocsFromServer || getDocs;
+  const readDoc = getDocFromServer || getDoc;
 
   // Small utility to stamp created/updated times consistently
   function withTimestamps(data, { create = false } = {}) {
@@ -36,7 +41,7 @@ export function createFirestoreService({ db, auth, helpers }) {
     const userId = auth.currentUser?.uid;
     if (!userId) return [];
     const ref = vehiclesCollectionRef(userId);
-    const snap = await getDocs(ref);
+    const snap = await readDocs(ref);
     return snap.docs.map(d => d.data());
   }
 
@@ -44,7 +49,7 @@ export function createFirestoreService({ db, auth, helpers }) {
     const userId = auth.currentUser?.uid;
     if (!userId) return null;
     const ref = doc(db, `users/${userId}/vehicles/${vin}`);
-    const snap = await getDoc(ref);
+    const snap = await readDoc(ref);
     if (snap && typeof snap.exists === 'function') {
       return snap.exists() ? snap.data() : null;
     } else {
@@ -74,23 +79,22 @@ export function createFirestoreService({ db, auth, helpers }) {
       db,
       `users/${userId}/vehicles/${vin}/maintenance`
     );
-    const snap = await getDocs(collRef);
+    const snap = await readDocs(collRef);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
   async function getMaintenanceEntry(vin, entryId) {
     const userId = auth.currentUser?.uid;
     if (!userId) return null;
-    const collRef = collection(
+    const ref = doc(
       db,
-      `users/${userId}/vehicles/${vin}/maintenance`
+      `users/${userId}/vehicles/${vin}/maintenance/${entryId}`
     );
-    const snap = await getDocs(collRef);
-    const doc = snap.docs.find(d => d.id === entryId);
-    if (doc) {
-      return { id: doc.id, ...doc.data() };
+    const snap = await readDoc(ref);
+    if (snap && typeof snap.exists === 'function') {
+      return snap.exists() ? { id: snap.id, ...snap.data() } : null;
     }
-    return null;
+    return snap || null;
   }
 
   async function updateMaintenanceEntry(vin, entryId, updates) {
@@ -137,7 +141,7 @@ export function createFirestoreService({ db, auth, helpers }) {
     const userId = auth.currentUser?.uid;
     if (!userId) return [];
     const collRef = collection(db, `users/${userId}/vehicles/${vin}/reminders`);
-    const snap = await getDocs(collRef);
+    const snap = await readDocs(collRef);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 

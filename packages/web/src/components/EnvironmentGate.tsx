@@ -107,6 +107,7 @@ export default function EnvironmentGate({
               onChange={e => setPassword(e.target.value)}
               className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
               placeholder={`Enter ${environment} password`}
+              autoComplete="current-password"
               required
               autoFocus
             />

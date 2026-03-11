@@ -24,6 +24,7 @@ import 'screens/marketing_welcome_screen.dart';
 import 'screens/offline_settings_screen.dart';
 import 'screens/premium_screen.dart';
 import 'screens/privacy_screen.dart';
+import 'screens/records_screen.dart';
 import 'screens/scan_vin_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/terms_screen.dart';
@@ -173,6 +174,11 @@ class VehicleVitalsApp extends StatelessWidget {
           path: '/app/edit-vehicle/:vin',
           builder: (context, state) =>
               EditVehicleScreen(vin: state.pathParameters['vin']!),
+        ),
+        GoRoute(
+          path: '/app/records/:vin',
+          builder: (context, state) =>
+              RecordsScreen(vin: state.pathParameters['vin']!),
         ),
         GoRoute(
           path: '/app/scan-vin',

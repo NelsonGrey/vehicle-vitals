@@ -84,6 +84,7 @@ const ComingSoon = lazy(() => import('./pages/ComingSoon'));
 const Home = lazy(() => import('./pages/Home'));
 const AddVehicle = lazy(() => import('./pages/AddVehicle'));
 const EditVehicle = lazy(() => import('./pages/EditVehicle'));
+const Records = lazy(() => import('./pages/Records'));
 const Profile = lazy(() => import('./pages/Profile'));
 const DevSeed = lazy(() => import('./pages/DevSeed'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
@@ -246,6 +247,7 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="add-vehicle" element={<AddVehicle />} />
                 <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
+                <Route path="records/:vin" element={<Records />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="timeline" element={<TimelineDashboard />} />
                 <Route path="upcoming" element={<UpcomingTasks />} />

@@ -62,10 +62,9 @@ class Vehicle {
       purchaseDate: map['purchaseDate'],
       nextDueDate: map['nextDueDate'],
       nextDueTask: map['nextDueTask'],
-      documentPortfolio:
-          map['documentPortfolio'] is Map<String, dynamic>
-              ? map['documentPortfolio'] as Map<String, dynamic>
-              : null,
+      documentPortfolio: map['documentPortfolio'] is Map<String, dynamic>
+          ? map['documentPortfolio'] as Map<String, dynamic>
+          : null,
       createdAt: map['createdAt']?.toDate(),
       updatedAt: map['updatedAt']?.toDate(),
     );
@@ -173,7 +172,9 @@ class Vehicle {
     for (final category in categories) {
       final items = (category is Map ? category['items'] as List? : null) ?? [];
       for (final item in items) {
-        if (item is Map && item['required'] == true && item['status'] == 'ready') {
+        if (item is Map &&
+            item['required'] == true &&
+            item['status'] == 'ready') {
           count += 1;
         }
       }

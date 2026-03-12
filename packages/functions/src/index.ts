@@ -404,19 +404,44 @@ export const getVehicleInsightsCallable = onCall(async (request) => {
   }
 
   try {
-    const [vehicle, recalls] = await Promise.all([
-      decodeVinData(vin),
-      lookupNhtsaRecalls(vin),
+    const normalizedVin = vin.trim().toUpperCase();
+    const [vehicleResult, recallsResult] = await Promise.allSettled([
+      decodeVinData(normalizedVin),
+      lookupNhtsaRecalls(normalizedVin),
     ]);
+
+    if (vehicleResult.status !== "fulfilled") {
+      logger.error("VIN profile lookup failed", {
+        vinPrefix: normalizedVin.substring(0, 8),
+        error: vehicleResult.reason,
+      });
+      throw new HttpsError("internal", "Failed to decode VIN profile");
+    }
+
+    const vehicle = vehicleResult.value;
+    const recalls =
+      recallsResult.status === "fulfilled" ? recallsResult.value : [];
+    const recallsSource =
+      recallsResult.status === "fulfilled" ?
+        "NHTSA" :
+        "NHTSA (temporarily unavailable)";
+
+    if (recallsResult.status !== "fulfilled") {
+      logger.warn("VIN recalls lookup failed, returning fallback recalls", {
+        vinPrefix: normalizedVin.substring(0, 8),
+        error: recallsResult.reason,
+      });
+    }
+
     const integrationConfig = getIntegrationConfig();
 
     return {
       success: true,
-      vin: vin.trim().toUpperCase(),
+      vin: normalizedVin,
       free: {
         vinProfile: vehicle,
         recalls: {
-          source: "NHTSA",
+          source: recallsSource,
           count: recalls.length,
           items: recalls,
         },
@@ -443,6 +468,10 @@ export const getVehicleInsightsCallable = onCall(async (request) => {
           "Maintenance Schedule Provider",
         ],
       },
+      warnings:
+        recallsResult.status === "fulfilled" ?
+          [] :
+          ["Recalls data temporarily unavailable; VIN profile returned."],
     };
   } catch (error) {
     logger.error("Vehicle insights callable error:", error);

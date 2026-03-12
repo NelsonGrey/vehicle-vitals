@@ -1,4 +1,3 @@
-import { getAuth, signInAnonymously } from 'firebase/auth';
 import { useState } from 'react';
 
 interface EnvironmentGateProps {
@@ -43,16 +42,7 @@ export default function EnvironmentGate({
     const correctPassword = getEnvironmentPassword();
 
     if (password === correctPassword) {
-      try {
-        // Sign in anonymously for Firebase access
-        const auth = getAuth();
-        await signInAnonymously(auth);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Anonymous sign in failed:', error);
-        // Still allow access even if anonymous sign in fails
-        setIsAuthenticated(true);
-      }
+      setIsAuthenticated(true);
     } else {
       setError('Incorrect password. Please try again.');
     }

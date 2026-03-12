@@ -55,6 +55,22 @@ export default function Home() {
   const [selectedVin, setSelectedVin] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const normalizedSearch = searchTerm.toLowerCase();
+  const filteredVehicles = vehicles.filter(v => {
+    if (!normalizedSearch) return true;
+    const yearText = String(v.year ?? '').toLowerCase();
+    const makeText = String(v.make ?? '').toLowerCase();
+    const modelText = String(v.model ?? '').toLowerCase();
+    const vinText = String(v.vin ?? '').toLowerCase();
+
+    return (
+      yearText.includes(normalizedSearch) ||
+      makeText.includes(normalizedSearch) ||
+      modelText.includes(normalizedSearch) ||
+      vinText.includes(normalizedSearch)
+    );
+  });
+
   useEffect(() => {
     const fetchVehicles = async () => {
       const list = await getVehicles();
@@ -208,64 +224,47 @@ export default function Home() {
                 />
               </div>
               <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
-                {vehicles
-                  .filter(v => {
-                    const searchLower = searchTerm.toLowerCase();
-                    return (
-                      v.year.toLowerCase().includes(searchLower) ||
-                      v.make.toLowerCase().includes(searchLower) ||
-                      v.model.toLowerCase().includes(searchLower) ||
-                      v.vin.toLowerCase().includes(searchLower)
-                    );
-                  })
-                  .map(v => {
-                    const isSelected = v.vin === selectedVin;
-                    const portfolioProgress = getPortfolioRequiredProgress(v);
-                    return (
-                      <button
-                        key={v.vin}
-                        type="button"
-                        onClick={() => setSelectedVin(v.vin)}
-                        className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                          isSelected
-                            ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
-                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
-                        }`}
-                      >
-                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
-                          {v.year} {v.make} {v.model}
+                {filteredVehicles.map(v => {
+                  const isSelected = v.vin === selectedVin;
+                  const portfolioProgress = getPortfolioRequiredProgress(v);
+                  return (
+                    <button
+                      key={v.vin}
+                      type="button"
+                      onClick={() => setSelectedVin(v.vin)}
+                      className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                        isSelected
+                          ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
+                      }`}
+                    >
+                      <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
+                        {v.year} {v.make} {v.model}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                        {v.vin}
+                        {v.mileage ? ` • ${v.mileage} mi` : ''}
+                      </div>
+                      {Number(v.recallsCount || 0) > 0 && (
+                        <div className="mt-1.5 text-xs">
+                          <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5">
+                            {v.recallsCount} recall
+                            {Number(v.recallsCount) === 1 ? '' : 's'}
+                          </span>
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                          {v.vin}
-                          {v.mileage ? ` • ${v.mileage} mi` : ''}
+                      )}
+                      {portfolioProgress.required > 0 && (
+                        <div className="mt-1 text-xs">
+                          <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5">
+                            Records: {portfolioProgress.complete}/
+                            {portfolioProgress.required}
+                          </span>
                         </div>
-                        {Number(v.recallsCount || 0) > 0 && (
-                          <div className="mt-1.5 text-xs">
-                            <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5">
-                              {v.recallsCount} recall
-                              {Number(v.recallsCount) === 1 ? '' : 's'}
-                            </span>
-                          </div>
-                        )}
-                        {portfolioProgress.required > 0 && (
-                          <div className="mt-1 text-xs">
-                            <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5">
-                              Records: {portfolioProgress.complete}/
-                              {portfolioProgress.required}
-                            </span>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                {vehicles.filter(
-                  v =>
-                    searchTerm === '' ||
-                    v.year.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    v.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    v.vin.toLowerCase().includes(searchTerm.toLowerCase())
-                ).length === 0 && (
+                      )}
+                    </button>
+                  );
+                })}
+                {filteredVehicles.length === 0 && (
                   <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
                     No vehicles match this search.
                   </div>

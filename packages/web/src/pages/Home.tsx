@@ -52,6 +52,8 @@ export default function Home() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isBackfillingInsights, setIsBackfillingInsights] = useState(false);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
+  const [selectedVin, setSelectedVin] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -60,6 +62,22 @@ export default function Home() {
     };
     fetchVehicles();
   }, []);
+
+  useEffect(() => {
+    if (vehicles.length === 0) {
+      if (selectedVin !== null) {
+        setSelectedVin(null);
+      }
+      return;
+    }
+
+    const hasSelectedVehicle = vehicles.some(
+      vehicle => vehicle.vin === selectedVin
+    );
+    if (!hasSelectedVehicle) {
+      setSelectedVin(vehicles[0].vin);
+    }
+  }, [selectedVin, vehicles]);
 
   const backfillVinInsights = async () => {
     const candidates = vehicles.filter(
@@ -122,10 +140,18 @@ export default function Home() {
   return (
     <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <main>
-        <div className="flex items-end justify-between mb-3">
-          <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-            Vehicle Vitals
-          </h1>
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
+              Vehicle Vitals
+            </h1>
+            {vehicles.length > 0 && (
+              <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
+                {vehicles.length} vehicle{vehicles.length === 1 ? '' : 's'} in
+                garage
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => void backfillVinInsights()}
@@ -145,12 +171,12 @@ export default function Home() {
           </div>
         </div>
         {backfillMessage && (
-          <div className="mb-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
+          <div className="mb-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
             {backfillMessage}
           </div>
         )}
         {vehicles.length === 0 ? (
-          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 my-4">
+          <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 my-4">
             <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-2">
               No vehicles yet
             </h3>
@@ -166,61 +192,176 @@ export default function Home() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 my-4">
-            {vehicles.map(v =>
-              (() => {
-                const portfolioProgress = getPortfolioRequiredProgress(v);
-                return (
-                  <div
-                    key={v.vin}
-                    className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2"
-                  >
-                    <div>
-                      <div className="font-semibold text-lg text-slate-900 dark:text-slate-100">
-                        {v.year} {v.make} {v.model}
-                      </div>
-                      <div className="text-slate-600 dark:text-slate-400 text-sm">
-                        VIN: {v.vin}
-                        {v.mileage ? ` • ${v.mileage} mi` : ''}
-                      </div>
-                      {Number(v.recallsCount || 0) > 0 && (
-                        <div className="mt-1 inline-block rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-1 text-xs font-medium">
-                          {v.recallsCount} open recall
-                          {Number(v.recallsCount) === 1 ? '' : 's'}
-                        </div>
-                      )}
-                      {portfolioProgress.required > 0 && (
-                        <div className="mt-1 inline-block rounded-full bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-1 text-xs font-medium">
-                          Records: {portfolioProgress.complete}/
-                          {portfolioProgress.required} required complete
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-auto">
-                      <Link
-                        to={`/edit-vehicle/${v.vin}`}
-                        className="inline-block px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors no-underline text-sm"
-                      >
-                        Open
-                      </Link>
-                      <Link
-                        to={`/app/records/${v.vin}`}
-                        className="inline-block px-3 py-2 bg-transparent border border-blue-200 dark:border-blue-700 text-blue-900 dark:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors no-underline text-sm"
-                      >
-                        Records
-                      </Link>
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left Column: Vehicle List */}
+            <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+              <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+                Vehicles
+              </h2>
+              <div className="mb-3">
+                <input
+                  type="search"
+                  value={searchTerm}
+                  onChange={event => setSearchTerm(event.target.value)}
+                  placeholder="Search by year, make, model, or VIN"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                />
+              </div>
+              <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
+                {vehicles
+                  .filter(v => {
+                    const searchLower = searchTerm.toLowerCase();
+                    return (
+                      v.year.toLowerCase().includes(searchLower) ||
+                      v.make.toLowerCase().includes(searchLower) ||
+                      v.model.toLowerCase().includes(searchLower) ||
+                      v.vin.toLowerCase().includes(searchLower)
+                    );
+                  })
+                  .map(v => {
+                    const isSelected = v.vin === selectedVin;
+                    const portfolioProgress = getPortfolioRequiredProgress(v);
+                    return (
                       <button
-                        className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white border border-red-500 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium cursor-pointer"
-                        onClick={() => handleDelete(v.vin)}
+                        key={v.vin}
+                        type="button"
+                        onClick={() => setSelectedVin(v.vin)}
+                        className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                          isSelected
+                            ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
+                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
+                        }`}
                       >
-                        Delete
+                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
+                          {v.year} {v.make} {v.model}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                          {v.vin}
+                          {v.mileage ? ` • ${v.mileage} mi` : ''}
+                        </div>
+                        {Number(v.recallsCount || 0) > 0 && (
+                          <div className="mt-1.5 text-xs">
+                            <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5">
+                              {v.recallsCount} recall
+                              {Number(v.recallsCount) === 1 ? '' : 's'}
+                            </span>
+                          </div>
+                        )}
+                        {portfolioProgress.required > 0 && (
+                          <div className="mt-1 text-xs">
+                            <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5">
+                              Records: {portfolioProgress.complete}/
+                              {portfolioProgress.required}
+                            </span>
+                          </div>
+                        )}
                       </button>
-                    </div>
+                    );
+                  })}
+                {vehicles.filter(
+                  v =>
+                    searchTerm === '' ||
+                    v.year.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    v.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    v.vin.toLowerCase().includes(searchTerm.toLowerCase())
+                ).length === 0 && (
+                  <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
+                    No vehicles match this search.
                   </div>
-                );
-              })()
-            )}
-          </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Vehicle Details */}
+            <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+              {!selectedVin ? (
+                <p className="text-slate-600 dark:text-slate-400 m-0">
+                  Select a vehicle to view details.
+                </p>
+              ) : (
+                (() => {
+                  const selectedVehicle = vehicles.find(
+                    v => v.vin === selectedVin
+                  );
+                  if (!selectedVehicle) {
+                    return (
+                      <p className="text-slate-600 dark:text-slate-400 m-0">
+                        Vehicle not found.
+                      </p>
+                    );
+                  }
+
+                  const portfolioProgress =
+                    getPortfolioRequiredProgress(selectedVehicle);
+
+                  return (
+                    <>
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div>
+                          <h3 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                            {selectedVehicle.year} {selectedVehicle.make}{' '}
+                            {selectedVehicle.model}
+                          </h3>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                            VIN: {selectedVehicle.vin}
+                            {selectedVehicle.mileage
+                              ? ` • ${selectedVehicle.mileage} mi`
+                              : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Vehicle Status Badges */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {Number(selectedVehicle.recallsCount || 0) > 0 && (
+                          <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2.5 py-1 text-xs font-medium">
+                            {selectedVehicle.recallsCount} open recall
+                            {Number(selectedVehicle.recallsCount) === 1
+                              ? ''
+                              : 's'}
+                          </span>
+                        )}
+                        {portfolioProgress.required > 0 && (
+                          <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2.5 py-1 text-xs font-medium">
+                            Records: {portfolioProgress.complete}/
+                            {portfolioProgress.required} required complete
+                          </span>
+                        )}
+                        {selectedVehicle.vinInsights && (
+                          <span className="inline-block rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 px-2.5 py-1 text-xs font-medium">
+                            VIN insights loaded
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          to={`/edit-vehicle/${selectedVehicle.vin}`}
+                          className="inline-block px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors no-underline text-sm font-medium"
+                        >
+                          Edit Vehicle
+                        </Link>
+                        <Link
+                          to={`/app/records/${selectedVehicle.vin}`}
+                          className="inline-block px-3 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors no-underline text-sm font-medium"
+                        >
+                          View Records
+                        </Link>
+                        <button
+                          className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 rounded-lg transition-colors text-sm font-medium cursor-pointer"
+                          onClick={() => handleDelete(selectedVehicle.vin)}
+                        >
+                          Delete Vehicle
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()
+              )}
+            </div>
+          </section>
         )}
       </main>
     </div>

@@ -18,6 +18,30 @@ import {
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { decodeVin } from '../utils/vehicleService';
 
+interface VinInsights {
+  vin?: string;
+  make?: string;
+  model?: string;
+  year?: string;
+  bodyClass?: string;
+  engineType?: string;
+  fuelType?: string;
+  driveType?: string;
+  transmissionStyle?: string;
+  trim?: string;
+  vehicleType?: string;
+}
+
+interface Recall {
+  campaignNumber?: string;
+  reportReceivedDate?: string;
+  component?: string;
+  summary?: string;
+  consequence?: string;
+  remedy?: string;
+  manufacturer?: string;
+}
+
 interface Vehicle {
   vin: string;
   make: string;
@@ -25,6 +49,18 @@ interface Vehicle {
   year: string;
   mileage: string;
   purchaseDate?: string;
+  engineType?: string;
+  bodyClass?: string;
+  fuelType?: string;
+  driveType?: string;
+  transmissionStyle?: string;
+  trim?: string;
+  vehicleType?: string;
+  recallsCount?: number;
+  recallsSource?: string;
+  recallsItems?: Recall[];
+  vinProfile?: VinInsights;
+  insightsUpdatedAt?: string;
 }
 
 interface MaintenanceEntry {
@@ -81,7 +117,22 @@ export default function EditVehicle() {
       return;
     }
     try {
-      const { make, model, year } = await decodeVin(v);
+      const {
+        make,
+        model,
+        year,
+        recallsCount,
+        recallsSource,
+        engineType,
+        bodyClass,
+        fuelType,
+        driveType,
+        transmissionStyle,
+        trim,
+        vehicleType,
+        recallsItems,
+        vinProfile,
+      } = await decodeVin(v);
       setForm(prev =>
         prev
           ? {
@@ -89,6 +140,38 @@ export default function EditVehicle() {
               make: make || prev.make,
               model: model || prev.model,
               year: year || prev.year,
+              recallsCount:
+                typeof recallsCount === 'number'
+                  ? recallsCount
+                  : prev.recallsCount,
+              recallsSource:
+                typeof recallsSource === 'string' && recallsSource
+                  ? recallsSource
+                  : prev.recallsSource,
+              engineType:
+                typeof engineType === 'string' ? engineType : prev.engineType,
+              bodyClass:
+                typeof bodyClass === 'string' ? bodyClass : prev.bodyClass,
+              fuelType: typeof fuelType === 'string' ? fuelType : prev.fuelType,
+              driveType:
+                typeof driveType === 'string' ? driveType : prev.driveType,
+              transmissionStyle:
+                typeof transmissionStyle === 'string'
+                  ? transmissionStyle
+                  : prev.transmissionStyle,
+              trim: typeof trim === 'string' ? trim : prev.trim,
+              vehicleType:
+                typeof vehicleType === 'string'
+                  ? vehicleType
+                  : prev.vehicleType,
+              recallsItems: Array.isArray(recallsItems)
+                ? (recallsItems as Recall[])
+                : prev.recallsItems,
+              vinProfile:
+                vinProfile && typeof vinProfile === 'object'
+                  ? (vinProfile as VinInsights)
+                  : prev.vinProfile,
+              insightsUpdatedAt: new Date().toISOString(),
             }
           : null
       );
@@ -124,9 +207,14 @@ export default function EditVehicle() {
   return (
     <div className="w-full max-w-7xl mx-auto px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
-        <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 m-0">
-          Edit Vehicle
-        </h2>
+        <div>
+          <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 m-0">
+            Edit Vehicle
+          </h2>
+          <p className="text-charcoal-600 dark:text-cream-300 mt-2 mb-0">
+            {form.year} {form.make} {form.model} • {form.vin}
+          </p>
+        </div>
         <Link
           to="/app"
           className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
@@ -135,169 +223,309 @@ export default function EditVehicle() {
         </Link>
       </div>
 
-      <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6 space-y-6">
-        {/* Year dropdown */}
-        <div>
-          <label
-            htmlFor="year"
-            className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2"
-          >
-            Year
-          </label>
-          <select
-            id="year"
-            name="year"
-            value={form.year}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
-          >
-            <option value="">Select Year</option>
-            {form.year && !years.includes(String(form.year)) && (
-              <option value={form.year}>Current: {form.year}</option>
-            )}
-            {years.map((y: string) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Two-column layout: Form + VIN Insights */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
+        {/* Left Column: Vehicle Edit Form */}
+        <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4 px-0">
+            Vehicle Details
+          </h3>
 
-        {/* Make dropdown */}
-        <div>
-          <label
-            htmlFor="make"
-            className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2"
-          >
-            Make
-          </label>
-          <select
-            id="make"
-            name="make"
-            value={form.make}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100 disabled:bg-charcoal-100 disabled:cursor-not-allowed"
-            disabled={loadingMakes}
-          >
-            <option value="">
-              {loadingMakes ? 'Loading makes…' : 'Select Make'}
-            </option>
-            {form.make && !(makes as string[]).includes(form.make) && (
-              <option value={form.make}>Current: {form.make}</option>
-            )}
-            {makes.map((m: string) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="space-y-4">
+            {/* Year dropdown */}
+            <div>
+              <label
+                htmlFor="year"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Year
+              </label>
+              <select
+                id="year"
+                name="year"
+                value={form.year}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                <option value="">Select Year</option>
+                {form.year && !years.includes(String(form.year)) && (
+                  <option value={form.year}>Current: {form.year}</option>
+                )}
+                {years.map((y: string) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Model dropdown depends on year+make */}
-        <div>
-          <label
-            htmlFor="model"
-            className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2"
-          >
-            Model
-          </label>
-          <select
-            id="model"
-            name="model"
-            value={form.model}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100 disabled:bg-charcoal-100 disabled:cursor-not-allowed"
-            disabled={!form.year || !form.make || loadingModels}
-          >
-            <option value="">
-              {loadingModels
-                ? 'Loading models…'
-                : !form.year || !form.make
-                  ? 'Select year & make first'
-                  : 'Select Model'}
-            </option>
-            {form.model && !(models as string[]).includes(form.model) && (
-              <option value={form.model}>Current: {form.model}</option>
-            )}
-            {models.map((m: string) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </div>
+            {/* Make dropdown */}
+            <div>
+              <label
+                htmlFor="make"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Make
+              </label>
+              <select
+                id="make"
+                name="make"
+                value={form.make}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loadingMakes}
+              >
+                <option value="">
+                  {loadingMakes ? 'Loading makes…' : 'Select Make'}
+                </option>
+                {form.make && !(makes as string[]).includes(form.make) && (
+                  <option value={form.make}>Current: {form.make}</option>
+                )}
+                {makes.map((m: string) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* VIN and mileage text inputs */}
-        {['vin', 'mileage'].map(field => (
-          <div key={field}>
-            <label
-              htmlFor={field}
-              className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2"
-            >
-              {field.charAt(0).toUpperCase() + field.slice(1)}
-            </label>
-            <input
-              id={field}
-              type="text"
-              name={field}
-              value={form[field as keyof Vehicle] || ''}
-              onChange={handleChange}
-              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-              className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
-            />
-            {field === 'vin' && (
-              <p className="text-xs text-charcoal-600 dark:text-cream-400 mt-1">
-                Decode VIN uses the NHTSA VPIC database to prefill Year, Make,
-                and Model. Changes aren&apos;t saved until you click Save
-                Changes.
+            {/* Model dropdown */}
+            <div>
+              <label
+                htmlFor="model"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Model
+              </label>
+              <select
+                id="model"
+                name="model"
+                value={form.model}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!form.year || !form.make || loadingModels}
+              >
+                <option value="">
+                  {loadingModels
+                    ? 'Loading models…'
+                    : !form.year || !form.make
+                      ? 'Select year & make first'
+                      : 'Select Model'}
+                </option>
+                {form.model && !(models as string[]).includes(form.model) && (
+                  <option value={form.model}>Current: {form.model}</option>
+                )}
+                {models.map((m: string) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* VIN */}
+            <div>
+              <label
+                htmlFor="vin"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                VIN
+              </label>
+              <input
+                id="vin"
+                type="text"
+                name="vin"
+                value={form.vin || ''}
+                onChange={handleChange}
+                placeholder="Vehicle Identification Number"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                Enter VIN and click Decode to prefill vehicle details
               </p>
-            )}
+            </div>
+
+            {/* Mileage */}
+            <div>
+              <label
+                htmlFor="mileage"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Mileage
+              </label>
+              <input
+                id="mileage"
+                type="text"
+                name="mileage"
+                value={form.mileage || ''}
+                onChange={handleChange}
+                placeholder="Current mileage"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            {/* Purchase Date */}
+            <div>
+              <label
+                htmlFor="purchaseDate"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Purchase Date
+              </label>
+              <input
+                id="purchaseDate"
+                type="date"
+                name="purchaseDate"
+                value={form.purchaseDate || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleDecodeVin}
+                className="w-full px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Decode VIN
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={handleDelete}
+                className="w-full px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-md border border-red-300 transition-colors"
+              >
+                Delete Vehicle
+              </button>
+            </div>
           </div>
-        ))}
-
-        <div>
-          <button
-            type="button"
-            onClick={handleDecodeVin}
-            className="bg-charcoal-600 hover:bg-charcoal-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-          >
-            Decode VIN
-          </button>
         </div>
 
-        <div>
-          <label
-            htmlFor="purchaseDate"
-            className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2"
-          >
-            Purchase Date
-          </label>
-          <input
-            id="purchaseDate"
-            type="date"
-            name="purchaseDate"
-            value={form.purchaseDate || ''}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
-          />
-        </div>
+        {/* Right Column: VIN Insights Display */}
+        <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4 px-0">
+            Vehicle Insights
+          </h3>
 
-        <div className="flex gap-3 pt-4">
-          <button
-            onClick={handleUpdate}
-            className="flex-1 bg-oxblood-600 hover:bg-oxblood-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
-          >
-            Save Changes
-          </button>
-          <button
-            onClick={handleDelete}
-            className="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-md transition-colors duration-200 border border-red-300"
-          >
-            Delete Vehicle
-          </button>
-        </div>
-      </div>
+          {!form.vehicleType ? (
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              Run VIN decode to populate vehicle insights from NHTSA database
+            </p>
+          ) : (
+            <>
+              {/* Vehicle Specifications */}
+              <div className="mb-6">
+                <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm mb-3">
+                  Specifications
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {[
+                    { label: 'Body Class', value: form.bodyClass },
+                    { label: 'Vehicle Type', value: form.vehicleType },
+                    { label: 'Engine Type', value: form.engineType },
+                    { label: 'Fuel Type', value: form.fuelType },
+                    { label: 'Drive Type', value: form.driveType },
+                    { label: 'Transmission', value: form.transmissionStyle },
+                    { label: 'Trim', value: form.trim },
+                  ].map(({ label, value }) =>
+                    value ? (
+                      <div key={label}>
+                        <p className="text-slate-600 dark:text-slate-400 text-xs mb-0.5">
+                          {label}
+                        </p>
+                        <p className="text-slate-900 dark:text-slate-100 font-medium mb-0">
+                          {value}
+                        </p>
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              </div>
 
+              {/* Recalls Section */}
+              {form.recallsCount !== undefined && (
+                <div className="mb-6 border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm m-0">
+                      Active Recalls
+                    </h4>
+                    <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                      {form.recallsCount || 0} Recall
+                      {form.recallsCount === 1 ? '' : 's'}
+                    </span>
+                  </div>
+
+                  {form.recallsSource && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                      Source: {form.recallsSource}
+                    </p>
+                  )}
+
+                  {form.recallsCount === 0 ? (
+                    <p className="text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 rounded p-2">
+                      No active recalls found for this vehicle.
+                    </p>
+                  ) : form.recallsItems && form.recallsItems.length > 0 ? (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {form.recallsItems.map((recall, idx) => (
+                        <div
+                          key={idx}
+                          className="border border-slate-200 dark:border-slate-600 rounded p-2 text-sm"
+                        >
+                          {recall.campaignNumber && (
+                            <p className="font-medium text-slate-900 dark:text-slate-100 text-xs mb-1">
+                              Campaign: {recall.campaignNumber}
+                            </p>
+                          )}
+                          {recall.component && (
+                            <p className="text-slate-700 dark:text-slate-300 text-xs mb-1">
+                              <span className="font-medium">Component:</span>{' '}
+                              {recall.component}
+                            </p>
+                          )}
+                          {recall.summary && (
+                            <p className="text-slate-700 dark:text-slate-300 text-xs mb-1">
+                              <span className="font-medium">Summary:</span>{' '}
+                              {recall.summary}
+                            </p>
+                          )}
+                          {recall.consequence && (
+                            <p className="text-slate-700 dark:text-slate-300 text-xs mb-1">
+                              <span className="font-medium">Consequence:</span>{' '}
+                              {recall.consequence}
+                            </p>
+                          )}
+                          {recall.remedy && (
+                            <p className="text-slate-700 dark:text-slate-300 text-xs">
+                              <span className="font-medium">Remedy:</span>{' '}
+                              {recall.remedy}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {form.insightsUpdatedAt && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 pt-3 mt-4">
+                  Last updated:{' '}
+                  {new Date(form.insightsUpdatedAt).toLocaleDateString()}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Maintenance Section */}
       <div className="mt-8">
         <h3 className="font-serif font-bold text-2xl text-charcoal-800 dark:text-cream-100 mb-4">
           Maintenance

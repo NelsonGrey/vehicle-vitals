@@ -400,28 +400,34 @@ export default function UpcomingTasks() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-5 py-5">
-      <div className="mb-6">
-        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0 mb-2">
-          Upcoming Tasks
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Stay ahead of maintenance with upcoming service recommendations for
-          all your vehicles.
-        </p>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0 mb-2">
+            Upcoming Tasks
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 m-0">
+            Stay ahead of maintenance with upcoming service recommendations for
+            all your vehicles.
+          </p>
+        </div>
       </div>
 
-      <div className="mb-6 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-        Alerts: <strong>{alertsEnabled ? 'Enabled' : 'Disabled'}</strong> •
-        Preferred lead time: <strong>{preferredLeadDays} days</strong> • Average
-        driving: <strong>{preferredDailyMiles} miles/day</strong> • Alert
-        window: <strong>{leadMilesThreshold.toLocaleString()} miles</strong>
-      </div>
-
-      {savedReminders.length > 0 && (
-        <div className="mb-6 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-0 mb-3">
-            Saved Reminders
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+          <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+            Reminder Center
           </h2>
+          <div className="mb-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
+            Alerts: <strong>{alertsEnabled ? 'Enabled' : 'Disabled'}</strong>
+            <br />
+            Lead time: <strong>{preferredLeadDays} days</strong>
+            <br />
+            Average driving: <strong>{preferredDailyMiles} miles/day</strong>
+            <br />
+            Alert window:{' '}
+            <strong>{leadMilesThreshold.toLocaleString()} miles</strong>
+          </div>
+
           <div className="mb-3 flex flex-wrap gap-2">
             {(
               [
@@ -446,17 +452,18 @@ export default function UpcomingTasks() {
               </button>
             ))}
           </div>
-          <div className="space-y-3">
-            {visibleReminders.slice(0, 8).map(reminder => (
+
+          <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
+            {visibleReminders.map(reminder => (
               <div
                 key={reminder.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-3"
               >
                 <div>
                   <div className="font-medium text-slate-900 dark:text-slate-100">
                     {reminder.title}
                   </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                     VIN: {reminder.vin}
                     {typeof reminder.nextDueMileage === 'number' &&
                       ` • Due at ${reminder.nextDueMileage.toLocaleString()} miles`}
@@ -467,7 +474,7 @@ export default function UpcomingTasks() {
                     {reminder.status === 'dismissed' && ' • Dismissed'}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {reminder.status === 'dismissed' ? (
                     <button
                       onClick={() => void handleRestoreReminder(reminder)}
@@ -520,116 +527,141 @@ export default function UpcomingTasks() {
             )}
           </div>
         </div>
-      )}
 
-      {visibleUpcomingItems.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">✅</div>
-          <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-            All caught up!
-          </h3>
-          <p className="text-slate-600 dark:text-slate-400">
-            {alertsEnabled
-              ? 'No upcoming maintenance tasks found in your preferred lead-time window.'
-              : 'Maintenance alerts are disabled in Profile settings.'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {visibleUpcomingItems.map((item, index) => (
-            <div
-              key={`${item.vehicle.vin}-${item.serviceType}-${index}`}
-              className={`border rounded-lg p-6 ${getUrgencyColor(item.milesUntilDue)}`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">
-                      {item.description}
-                    </h3>
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        item.milesUntilDue <= 1000
-                          ? 'bg-red-100 text-red-800'
-                          : item.milesUntilDue <= 5000
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {getUrgencyLabel(item.milesUntilDue)}
-                    </span>
-                  </div>
-
-                  <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                    <span className="font-medium">
-                      {item.vehicle.year} {item.vehicle.make}{' '}
-                      {item.vehicle.model}
-                    </span>
-                    <span className="mx-2">•</span>
-                    <span>{item.frequency}</span>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Due at:</span>{' '}
-                      {item.nextDueMileage.toLocaleString()} miles
-                    </div>
-                    <div>
-                      <span className="font-medium">Miles until due:</span>{' '}
-                      {item.milesUntilDue.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="ml-4">
-                  <button
-                    onClick={() => void handleSaveReminder(item)}
-                    disabled={
-                      savedReminderKeys.has(
-                        buildReminderKey(item.vehicle.vin, item.serviceType)
-                      ) ||
-                      savingReminderKeys.has(
-                        buildReminderKey(item.vehicle.vin, item.serviceType)
-                      )
-                    }
-                    className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {savingReminderKeys.has(
-                      buildReminderKey(item.vehicle.vin, item.serviceType)
-                    )
-                      ? 'Saving...'
-                      : savedReminderKeys.has(
-                            buildReminderKey(item.vehicle.vin, item.serviceType)
-                          )
-                        ? 'Reminder Saved'
-                        : 'Save Reminder'}
-                  </button>
+        <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          {visibleUpcomingItems.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">✅</div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                All caught up!
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400">
+                {alertsEnabled
+                  ? 'No upcoming maintenance tasks found in your preferred lead-time window.'
+                  : 'Maintenance alerts are disabled in Profile settings.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                    Upcoming Maintenance Queue
+                  </h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                    {visibleUpcomingItems.length} recommendation
+                    {visibleUpcomingItems.length === 1 ? '' : 's'} in range
+                  </p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
 
-      {visibleUpcomingItems.length > 0 && (
-        <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-          <h4 className="font-semibold mb-2">Legend</h4>
-          <div className="flex gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-200 rounded"></div>
-              <span>Urgent (≤1,000 miles)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-orange-200 rounded"></div>
-              <span>Soon (≤5,000 miles)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-200 rounded"></div>
-              <span>Upcoming (&gt;5,000 miles)</span>
-            </div>
-          </div>
+              <div className="grid gap-4">
+                {visibleUpcomingItems.map((item, index) => (
+                  <div
+                    key={`${item.vehicle.vin}-${item.serviceType}-${index}`}
+                    className={`border rounded-lg p-6 ${getUrgencyColor(item.milesUntilDue)}`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
+                          <h3 className="font-semibold text-lg m-0">
+                            {item.description}
+                          </h3>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              item.milesUntilDue <= 1000
+                                ? 'bg-red-100 text-red-800'
+                                : item.milesUntilDue <= 5000
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {getUrgencyLabel(item.milesUntilDue)}
+                          </span>
+                        </div>
+
+                        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                          <span className="font-medium">
+                            {item.vehicle.year} {item.vehicle.make}{' '}
+                            {item.vehicle.model}
+                          </span>
+                          <span className="mx-2">•</span>
+                          <span>{item.frequency}</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-300">
+                          <div>
+                            <span className="font-medium">Due at:</span>{' '}
+                            {item.nextDueMileage.toLocaleString()} miles
+                          </div>
+                          <div>
+                            <span className="font-medium">
+                              Miles until due:
+                            </span>{' '}
+                            {item.milesUntilDue.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <button
+                          onClick={() => void handleSaveReminder(item)}
+                          disabled={
+                            savedReminderKeys.has(
+                              buildReminderKey(
+                                item.vehicle.vin,
+                                item.serviceType
+                              )
+                            ) ||
+                            savingReminderKeys.has(
+                              buildReminderKey(
+                                item.vehicle.vin,
+                                item.serviceType
+                              )
+                            )
+                          }
+                          className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {savingReminderKeys.has(
+                            buildReminderKey(item.vehicle.vin, item.serviceType)
+                          )
+                            ? 'Saving...'
+                            : savedReminderKeys.has(
+                                  buildReminderKey(
+                                    item.vehicle.vin,
+                                    item.serviceType
+                                  )
+                                )
+                              ? 'Reminder Saved'
+                              : 'Save Reminder'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                <h4 className="font-semibold mb-2 mt-0">Legend</h4>
+                <div className="flex gap-4 text-sm flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-200 rounded"></div>
+                    <span>Urgent (≤1,000 miles)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-orange-200 rounded"></div>
+                    <span>Soon (≤5,000 miles)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-200 rounded"></div>
+                    <span>Upcoming (&gt;5,000 miles)</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-      )}
+      </section>
     </div>
   );
 }

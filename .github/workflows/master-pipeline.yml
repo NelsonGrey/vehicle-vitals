@@ -290,6 +290,9 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT }}
           VITE_FIREBASE_APP_ID_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_APP_ID_DEVELOPMENT }}
           VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT }}
+          VITE_SHOW_COMING_SOON_PRODUCTION: ${{ secrets.VITE_SHOW_COMING_SOON_PRODUCTION }}
+          VITE_SHOW_COMING_SOON_STAGING: ${{ secrets.VITE_SHOW_COMING_SOON_STAGING }}
+          VITE_SHOW_COMING_SOON_DEVELOPMENT: ${{ secrets.VITE_SHOW_COMING_SOON_DEVELOPMENT }}
         run: |
           case "$TARGET_ENV" in
             production)
@@ -300,6 +303,7 @@ jobs:
               MESSAGING_SENDER_ID="$VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION"
               APP_ID="$VITE_FIREBASE_APP_ID_PRODUCTION"
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION"
+              SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_PRODUCTION"
               ;;
             staging)
               API_KEY="$VITE_FIREBASE_API_KEY_STAGING"
@@ -309,6 +313,7 @@ jobs:
               MESSAGING_SENDER_ID="$VITE_FIREBASE_MESSAGING_SENDER_ID_STAGING"
               APP_ID="$VITE_FIREBASE_APP_ID_STAGING"
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_STAGING"
+              SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_STAGING"
               ;;
             *)
               API_KEY="$VITE_FIREBASE_API_KEY_DEVELOPMENT"
@@ -318,6 +323,7 @@ jobs:
               MESSAGING_SENDER_ID="$VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT"
               APP_ID="$VITE_FIREBASE_APP_ID_DEVELOPMENT"
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT"
+              SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_DEVELOPMENT"
               ;;
           esac
 
@@ -334,9 +340,11 @@ jobs:
             printf 'VITE_FIREBASE_MESSAGING_SENDER_ID=%s\n' "$MESSAGING_SENDER_ID"
             printf 'VITE_FIREBASE_APP_ID=%s\n' "$APP_ID"
             printf 'VITE_FIREBASE_MEASUREMENT_ID=%s\n' "$MEASUREMENT_ID"
+            printf 'VITE_ENVIRONMENT=%s\n' "$TARGET_ENV"
+            printf 'VITE_SHOW_COMING_SOON=%s\n' "$SHOW_COMING_SOON"
           } > packages/web/.env.production
 
-          echo "✅ Web Firebase env prepared for $TARGET_ENV (project: $PROJECT_ID)"
+          echo "✅ Web Firebase env prepared for $TARGET_ENV (project: $PROJECT_ID, coming_soon: $SHOW_COMING_SOON)"
 
       - name: Build Web App
         run: npm run build

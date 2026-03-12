@@ -298,6 +298,37 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF6E6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE8DECF)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Vehicle Form',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Enter VIN and decode to auto-fill core details and insights.',
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                       // VIN field
                       Row(
                         children: [
@@ -337,53 +368,58 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      if (_recallsCount != null)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.amber.withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Free insights (${_recallsSource ?? 'NHTSA'}): '
-                                'Open recalls: $_recallsCount',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                [
-                                      _engineType,
-                                      _transmissionStyle,
-                                      _fuelType,
-                                      _driveType,
-                                      _bodyClass,
-                                      _trim,
-                                    ]
-                                    .where(
-                                      (value) =>
-                                          value != null &&
-                                          value.toString().trim().isNotEmpty,
-                                    )
-                                    .join(' • '),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF7A4A00),
-                                ),
-                              ),
-                            ],
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.amber.withValues(alpha: 0.35),
                           ),
                         ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _recallsCount == null
+                                  ? 'VIN Insight Preview'
+                                  : 'Free insights (${_recallsSource ?? 'NHTSA'}): Open recalls: $_recallsCount',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _recallsCount == null
+                                  ? 'Decode a VIN to preview body class, powertrain details, and recall metadata before saving.'
+                                  : [
+                                          _engineType,
+                                          _transmissionStyle,
+                                          _fuelType,
+                                          _driveType,
+                                          _bodyClass,
+                                          _trim,
+                                        ]
+                                        .where(
+                                          (value) =>
+                                              value != null &&
+                                              value
+                                                  .toString()
+                                                  .trim()
+                                                  .isNotEmpty,
+                                        )
+                                        .join(' • '),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF7A4A00),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                       // Make field
                       TextFormField(

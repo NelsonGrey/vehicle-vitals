@@ -2,30 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../components/app_bottom_nav.dart';
 import '../models/vehicle.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../theme/design_tokens.dart';
-import '../theme/tailwind_utilities.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _searchTerm = '';
+  String? _selectedVin;
 
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final firestoreService = FirestoreService();
 
-    // If not authenticated, show welcome screen
     if (authService.currentUser == null) {
       return Scaffold(
-        body: TwContainer(
-          padding: EdgeInsets.all(TwSpace.s6),
-          child: Center(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App icon placeholder (you can replace with actual logo)
                 Container(
                   width: 96,
                   height: 96,
@@ -33,7 +39,7 @@ class HomeScreen extends StatelessWidget {
                     color: AppDesignTokens.colorScheme(
                       Theme.of(context).brightness,
                     ).primary,
-                    borderRadius: BorderRadius.circular(TwRadius.xl),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: const Icon(
                     Icons.directions_car,
@@ -56,7 +62,7 @@ class HomeScreen extends StatelessWidget {
                     ).muted,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -64,7 +70,7 @@ class HomeScreen extends StatelessWidget {
                       onPressed: () => context.go('/auth/login'),
                       child: const Text('Log in'),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () => context.go('/auth/signup'),
                       child: const Text('Sign up'),
@@ -78,7 +84,6 @@ class HomeScreen extends StatelessWidget {
       );
     }
 
-    // Authenticated user - show vehicle garage
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -92,28 +97,19 @@ class HomeScreen extends StatelessWidget {
                 case 'upcoming':
                   context.push('/app/upcoming');
                   break;
+                case 'timeline':
+                  context.push('/app/timeline');
+                  break;
                 case 'account':
-                  context.push('/app/account');
-                  break;
-                case 'instructions':
-                  context.push('/app/instructions');
-                  break;
-                case 'contact':
-                  context.push('/app/contact');
-                  break;
-                case 'privacy':
-                  context.push('/app/privacy');
-                  break;
-                case 'terms':
-                  context.push('/app/terms');
+                  context.push('/app/profile');
                   break;
                 case 'signout':
                   authService.signOut();
                   break;
               }
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
+            itemBuilder: (context) => const [
+              PopupMenuItem(
                 value: 'upcoming',
                 child: Row(
                   children: [
@@ -123,58 +119,28 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
+                value: 'timeline',
+                child: Row(
+                  children: [
+                    Icon(Icons.timeline),
+                    SizedBox(width: 8),
+                    Text('Timeline Dashboard'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 value: 'account',
                 child: Row(
                   children: [
                     Icon(Icons.account_circle),
                     SizedBox(width: 8),
-                    Text('Account'),
+                    Text('Profile'),
                   ],
                 ),
               ),
-              const PopupMenuItem(
-                value: 'instructions',
-                child: Row(
-                  children: [
-                    Icon(Icons.help),
-                    SizedBox(width: 8),
-                    Text('Instructions'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'contact',
-                child: Row(
-                  children: [
-                    Icon(Icons.contact_support),
-                    SizedBox(width: 8),
-                    Text('Contact'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'privacy',
-                child: Row(
-                  children: [
-                    Icon(Icons.privacy_tip),
-                    SizedBox(width: 8),
-                    Text('Privacy Policy'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'terms',
-                child: Row(
-                  children: [
-                    Icon(Icons.description),
-                    SizedBox(width: 8),
-                    Text('Terms of Service'),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
+              PopupMenuDivider(),
+              PopupMenuItem(
                 value: 'signout',
                 child: Row(
                   children: [
@@ -188,188 +154,267 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Add Vehicle button
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => context.push('/app/add-vehicle'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF59E0B),
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Add Vehicle'),
-              ),
-            ),
-          ),
-          // Vehicle list
-          Expanded(
-            child: StreamBuilder<List<Vehicle>>(
-              stream: firestoreService.getVehiclesStream(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      body: StreamBuilder<List<Vehicle>>(
+        stream: firestoreService.getVehiclesStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                final vehicles = snapshot.data ?? [];
+          final vehicles = snapshot.data ?? [];
+          final filtered = vehicles.where((vehicle) {
+            final q = _searchTerm.toLowerCase();
+            return vehicle.vin.toLowerCase().contains(q) ||
+                vehicle.make.toLowerCase().contains(q) ||
+                vehicle.model.toLowerCase().contains(q) ||
+                vehicle.year.toString().contains(q);
+          }).toList();
 
-                if (vehicles.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(
-                        'No vehicles yet. Add your first vehicle.',
-                        style: TextStyle(
-                          color: Color(0xFF7A6F66),
-                          fontSize: 16,
+          if (_selectedVin == null && filtered.isNotEmpty) {
+            _selectedVin = filtered.first.vin;
+          }
+
+          Vehicle? selected;
+          if (_selectedVin != null) {
+            for (final vehicle in filtered) {
+              if (vehicle.vin == _selectedVin) {
+                selected = vehicle;
+                break;
+              }
+            }
+            selected ??= filtered.isNotEmpty ? filtered.first : null;
+            _selectedVin = selected?.vin;
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          hintText: 'Search VIN, make, model, year',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
                         ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchTerm = value;
+                          });
+                        },
                       ),
                     ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: vehicles.length,
-                  itemBuilder: (context, index) {
-                    final vehicle = vehicles[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      color: const Color(0xFFFFF6E6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      onPressed: () => context.push('/app/add-vehicle'),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push('/app/upcoming'),
+                        icon: const Icon(Icons.upcoming),
+                        label: const Text('Upcoming'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push('/app/timeline'),
+                        icon: const Icon(Icons.timeline),
+                        label: const Text('Timeline'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? const Center(
+                          child: Text('No vehicles match this filter.'),
+                        )
+                      : Column(
                           children: [
-                            Text(
-                              '${vehicle.year} ${vehicle.make} ${vehicle.model}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                            Expanded(
+                              flex: 3,
+                              child: Card(
+                                margin: EdgeInsets.zero,
+                                color: const Color(0xFFFFF6E6),
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(12),
+                                  itemCount: filtered.length,
+                                  itemBuilder: (context, index) {
+                                    final vehicle = filtered[index];
+                                    final isSelected =
+                                        vehicle.vin == selected?.vin;
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFFFFE8B5)
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFFF59E0B)
+                                              : const Color(0xFFE8DECF),
+                                        ),
+                                      ),
+                                      child: ListTile(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedVin = vehicle.vin;
+                                          });
+                                        },
+                                        title: Text(
+                                          '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        subtitle: Text('VIN: ${vehicle.vin}'),
+                                        trailing: vehicle.recallsCount > 0
+                                            ? Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                    0xFFFFE8B5,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(99),
+                                                ),
+                                                child: Text(
+                                                  '${vehicle.recallsCount} recalls',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'VIN: ${vehicle.vin}',
-                              style: const TextStyle(
-                                color: Color(0xFF7A6F66),
-                                fontSize: 12,
-                              ),
-                            ),
-                            if (vehicle.mileage > 0) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Mileage: ${vehicle.mileage.toStringAsFixed(0)} miles',
-                                style: const TextStyle(
-                                  color: Color(0xFF7A6F66),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                            if (vehicle.recallsCount > 0) ...[
-                              const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFE8B5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '${vehicle.recallsCount} open recall${vehicle.recallsCount == 1 ? '' : 's'}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF7A4A00),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (vehicle.requiredPortfolioItemCount > 0) ...[
-                              const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8F0FF),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'Records: ${vehicle.completedRequiredPortfolioItemCount}/${vehicle.requiredPortfolioItemCount} required complete',
-                                  style: const TextStyle(
-                                    color: Color(0xFF1E3A8A),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => context.push(
-                                      '/app/edit-vehicle/${vehicle.vin}',
-                                    ),
-                                    icon: const Icon(Icons.edit, size: 16),
-                                    label: const Text('Edit'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFFF59E0B),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => context.push(
-                                      '/app/records/${vehicle.vin}',
-                                    ),
-                                    icon: const Icon(
-                                      Icons.folder_open,
-                                      size: 16,
-                                    ),
-                                    label: const Text('Records'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF1E3A8A),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () => context.push(
-                                  '/app/maintenance/${vehicle.vin}',
-                                ),
-                                icon: const Icon(Icons.build, size: 16),
-                                label: const Text('Maintenance'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF59E0B),
-                                  foregroundColor: Colors.white,
-                                ),
+                            const SizedBox(height: 10),
+                            Expanded(
+                              flex: 4,
+                              child: Card(
+                                margin: EdgeInsets.zero,
+                                child: selected == null
+                                    ? const Center(
+                                        child: Text('Select a vehicle'),
+                                      )
+                                    : Padding(
+                                        padding: const EdgeInsets.all(14),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${selected.year} ${selected.make} ${selected.model}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text('VIN: ${selected.vin}'),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Mileage: ${selected.mileage} miles',
+                                            ),
+                                            const SizedBox(height: 8),
+                                            if (selected.recallsCount > 0)
+                                              Text(
+                                                'Open recalls: ${selected.recallsCount}',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF7A4A00),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            const Spacer(),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: OutlinedButton.icon(
+                                                    onPressed: () => context.push(
+                                                      '/app/edit-vehicle/${selected!.vin}',
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size: 16,
+                                                    ),
+                                                    label: const Text('Edit'),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: OutlinedButton.icon(
+                                                    onPressed: () => context.push(
+                                                      '/app/records/${selected!.vin}',
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.folder_open,
+                                                      size: 16,
+                                                    ),
+                                                    label: const Text(
+                                                      'Records',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton.icon(
+                                                onPressed: () => context.push(
+                                                  '/app/maintenance/${selected!.vin}',
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.build,
+                                                  size: 16,
+                                                ),
+                                                label: const Text(
+                                                  'Maintenance',
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                    0xFFF59E0B,
+                                                  ),
+                                                  foregroundColor: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                );
-              },
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 }

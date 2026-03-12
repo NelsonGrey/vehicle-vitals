@@ -22,7 +22,7 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
       context.pop();
       return;
     }
-    context.go('/app/account');
+    context.go('/app/profile');
   }
 
   @override

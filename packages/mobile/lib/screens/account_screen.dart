@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../components/app_bottom_nav.dart';
 import '../services/auth_service.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -14,6 +15,19 @@ class AccountScreen extends StatefulWidget {
 class _AccountScreenState extends State<AccountScreen> {
   final _emailController = TextEditingController();
   bool _busy = false;
+
+  String _formatProvider(String providerId) {
+    switch (providerId) {
+      case 'password':
+        return 'Email/Password';
+      case 'apple.com':
+        return 'Apple';
+      case 'google.com':
+        return 'Google';
+      default:
+        return providerId;
+    }
+  }
 
   @override
   void initState() {
@@ -74,13 +88,41 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _linkApple() async {
+    setState(() => _busy = true);
+
+    try {
+      final authService = context.read<AuthService>();
+      await authService.linkCurrentUserWithApple();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Apple sign-in linked to this account')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to link Apple sign-in: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = context.watch<AuthService>();
     final user = authService.currentUser;
+    final providerLabels =
+        user?.providerIds.map(_formatProvider).toSet().toList() ??
+        const <String>[];
+    final appleLinked = user?.providerIds.contains('apple.com') ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: const Text('Profile')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -93,6 +135,14 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        'Profile Overview',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       const Text(
                         'User Information',
                         style: TextStyle(
@@ -109,6 +159,17 @@ class _AccountScreenState extends State<AccountScreen> {
                         Text(
                           'Email Verified: ${user.emailVerified ? "Yes" : "No"}',
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Linked providers: ${providerLabels.isEmpty ? 'Unknown' : providerLabels.join(', ')}',
+                        ),
+                        const SizedBox(height: 12),
+                        if (!appleLinked)
+                          OutlinedButton.icon(
+                            onPressed: _busy ? null : _linkApple,
+                            icon: const Icon(Icons.link),
+                            label: const Text('Link Apple Sign-In'),
+                          ),
                       ] else ...[
                         const Text('Not signed in'),
                       ],
@@ -168,6 +229,13 @@ class _AccountScreenState extends State<AccountScreen> {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/analytics'),
                       ),
+                      ListTile(
+                        leading: const Icon(Icons.timeline),
+                        title: const Text('Timeline Dashboard'),
+                        subtitle: const Text('View maintenance history stream'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/timeline'),
+                      ),
                     ],
                   ),
                 ),
@@ -225,6 +293,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 3),
     );
   }
 }

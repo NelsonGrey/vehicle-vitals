@@ -10,12 +10,14 @@ class User {
   final String? email;
   final String? displayName;
   final bool emailVerified;
+  final List<String> providerIds;
 
   User({
     required this.uid,
     this.email,
     this.displayName,
     this.emailVerified = true,
+    this.providerIds = const [],
   });
 }
 
@@ -55,7 +57,19 @@ class AuthService extends ChangeNotifier {
       email: user.email,
       displayName: user.displayName,
       emailVerified: user.emailVerified,
+      providerIds: user.providerData
+          .map((provider) => provider.providerId)
+          .whereType<String>()
+          .toList(),
     );
+  }
+
+  String _buildProviderConflictMessage(String? email) {
+    if (email == null || email.trim().isEmpty) {
+      return 'This credential is already tied to another account. Sign in with your existing method, then link providers from Account.';
+    }
+
+    return 'This email already belongs to an existing account. Sign in with that existing method first, then link Apple from Account.';
   }
 
   Future<UserCredential?> signInWithEmailAndPassword(
@@ -108,15 +122,24 @@ class AuthService extends ChangeNotifier {
     String email,
     String password,
   ) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    final user = _mapUser(credential.user);
-    _currentUser = user;
-    notifyListeners();
-    if (user == null) return null;
-    return UserCredential(user: user);
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = _mapUser(credential.user);
+      _currentUser = user;
+      notifyListeners();
+      if (user == null) return null;
+      return UserCredential(user: user);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        throw Exception(
+          'An account already exists for this email. Sign in instead of creating another account.',
+        );
+      }
+      throw Exception(e.message ?? 'Authentication failed. Please try again.');
+    }
   }
 
   Future<void> signOut() async {
@@ -142,12 +165,57 @@ class AuthService extends ChangeNotifier {
       accessToken: appleCredential.authorizationCode,
     );
 
-    final credential = await _auth.signInWithCredential(oauthCredential);
-    final user = _mapUser(credential.user);
-    _currentUser = user;
-    notifyListeners();
-    if (user == null) return null;
-    return UserCredential(user: user);
+    try {
+      final credential = await _auth.signInWithCredential(oauthCredential);
+      final user = _mapUser(credential.user);
+      _currentUser = user;
+      notifyListeners();
+      if (user == null) return null;
+      return UserCredential(user: user);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'account-exists-with-different-credential' ||
+          e.code == 'credential-already-in-use') {
+        final message = _buildProviderConflictMessage(appleCredential.email);
+        throw Exception(message);
+      }
+      throw Exception(e.message ?? 'Apple sign-in failed. Please try again.');
+    }
+  }
+
+  Future<void> linkCurrentUserWithApple() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      throw Exception('Sign in first before linking Apple.');
+    }
+
+    final appleCredential = await apple.SignInWithApple.getAppleIDCredential(
+      scopes: [
+        apple.AppleIDAuthorizationScopes.email,
+        apple.AppleIDAuthorizationScopes.fullName,
+      ],
+    );
+
+    final oauthCredential = firebase_auth.OAuthProvider('apple.com').credential(
+      idToken: appleCredential.identityToken,
+      accessToken: appleCredential.authorizationCode,
+    );
+
+    try {
+      await currentUser.linkWithCredential(oauthCredential);
+      await currentUser.reload();
+      _currentUser = _mapUser(_auth.currentUser);
+      notifyListeners();
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'provider-already-linked') {
+        return;
+      }
+      if (e.code == 'credential-already-in-use') {
+        throw Exception(
+          'That Apple identity is already linked to another account. Sign in with that account first if you need to consolidate data.',
+        );
+      }
+      throw Exception(e.message ?? 'Unable to link Apple sign-in.');
+    }
   }
 
   @override

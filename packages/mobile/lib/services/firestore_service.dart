@@ -153,71 +153,23 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  String? _buildEmailDataKey(String? email) {
-    if (email == null) return null;
-    final normalized = email.trim().toLowerCase();
-    if (normalized.isEmpty) return null;
-    return 'email__${Uri.encodeComponent(normalized)}';
-  }
-
   String get _userId {
     final user = _auth.currentUser;
     if (user == null) throw Exception('Not authenticated');
     return user.uid;
   }
 
-  String get _dataUserId {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('Not authenticated');
-    return _buildEmailDataKey(user.email) ?? user.uid;
-  }
-
   CollectionReference<Map<String, dynamic>> get _vehiclesCollection =>
-      _db.collection('users').doc(_dataUserId).collection('vehicles');
-
-  CollectionReference<Map<String, dynamic>> get _legacyVehiclesCollection =>
       _db.collection('users').doc(_userId).collection('vehicles');
 
   CollectionReference<Map<String, dynamic>> _maintenanceCollection(
     String vin,
   ) => _vehiclesCollection.doc(vin).collection('maintenance');
 
-  CollectionReference<Map<String, dynamic>> _legacyMaintenanceCollection(
-    String vin,
-  ) => _legacyVehiclesCollection.doc(vin).collection('maintenance');
-
   // Get all vehicles for current user
   Future<List<Vehicle>> getVehicles() async {
-    final primarySnapshot = await _vehiclesCollection.get();
-    final primaryVehicles = primarySnapshot.docs
-        .map((doc) => Vehicle.fromMap(doc.data()))
-        .toList();
-
-    if (_dataUserId == _userId) return primaryVehicles;
-
-    final legacySnapshot = await _legacyVehiclesCollection.get();
-    if (legacySnapshot.docs.isEmpty) return primaryVehicles;
-
-    final mergedByVin = <String, Vehicle>{
-      for (final v in legacySnapshot.docs.map(
-        (doc) => Vehicle.fromMap(doc.data()),
-      ))
-        v.vin: v,
-      for (final v in primaryVehicles) v.vin: v,
-    };
-
-    // Backfill any legacy-only vehicles so app/web converge to one namespace.
-    for (final legacyDoc in legacySnapshot.docs) {
-      final vin = legacyDoc.id;
-      final existsInPrimary = primarySnapshot.docs.any((d) => d.id == vin);
-      if (!existsInPrimary) {
-        await _vehiclesCollection
-            .doc(vin)
-            .set(legacyDoc.data(), SetOptions(merge: true));
-      }
-    }
-
-    return mergedByVin.values.toList();
+    final snapshot = await _vehiclesCollection.get();
+    return snapshot.docs.map((doc) => Vehicle.fromMap(doc.data())).toList();
   }
 
   // Add or update a vehicle
@@ -246,21 +198,8 @@ class FirestoreService {
   // Get a specific vehicle by VIN
   Future<Vehicle?> getVehicle(String vin) async {
     final snapshot = await _vehiclesCollection.doc(vin).get();
-    if (snapshot.exists && snapshot.data() != null) {
-      return Vehicle.fromMap(snapshot.data()!);
-    }
-
-    if (_dataUserId != _userId) {
-      final legacySnapshot = await _legacyVehiclesCollection.doc(vin).get();
-      if (legacySnapshot.exists && legacySnapshot.data() != null) {
-        await _vehiclesCollection
-            .doc(vin)
-            .set(legacySnapshot.data()!, SetOptions(merge: true));
-        return Vehicle.fromMap(legacySnapshot.data()!);
-      }
-    }
-
-    return null;
+    if (!snapshot.exists || snapshot.data() == null) return null;
+    return Vehicle.fromMap(snapshot.data()!);
   }
 
   // Stream vehicles for real-time updates
@@ -273,30 +212,12 @@ class FirestoreService {
 
   // Get maintenance entries for a vehicle
   Future<List<Maintenance>> getMaintenanceEntries(String vin) async {
-    final primarySnapshot = await _maintenanceCollection(
+    final snapshot = await _maintenanceCollection(
       vin,
     ).orderBy('date', descending: true).get();
-    final primaryEntries = primarySnapshot.docs
+    return snapshot.docs
         .map((doc) => Maintenance.fromMap(doc.data(), doc.id))
         .toList();
-
-    if (_dataUserId == _userId) return primaryEntries;
-
-    final legacySnapshot = await _legacyMaintenanceCollection(
-      vin,
-    ).orderBy('date', descending: true).get();
-
-    if (legacySnapshot.docs.isEmpty) return primaryEntries;
-
-    final mergedById = <String, Maintenance>{
-      for (final e in legacySnapshot.docs.map(
-        (doc) => Maintenance.fromMap(doc.data(), doc.id),
-      ))
-        e.id: e,
-      for (final e in primaryEntries) e.id: e,
-    };
-
-    return mergedById.values.toList()..sort((a, b) => b.date.compareTo(a.date));
   }
 
   // Add maintenance entry
@@ -314,20 +235,8 @@ class FirestoreService {
   // Get a specific maintenance entry
   Future<Maintenance?> getMaintenanceEntry(String vin, String entryId) async {
     final snapshot = await _maintenanceCollection(vin).doc(entryId).get();
-    if (snapshot.exists && snapshot.data() != null) {
-      return Maintenance.fromMap(snapshot.data()!, snapshot.id);
-    }
-
-    if (_dataUserId != _userId) {
-      final legacySnapshot = await _legacyMaintenanceCollection(
-        vin,
-      ).doc(entryId).get();
-      if (legacySnapshot.exists && legacySnapshot.data() != null) {
-        return Maintenance.fromMap(legacySnapshot.data()!, legacySnapshot.id);
-      }
-    }
-
-    return null;
+    if (!snapshot.exists || snapshot.data() == null) return null;
+    return Maintenance.fromMap(snapshot.data()!, snapshot.id);
   }
 
   // Update maintenance entry

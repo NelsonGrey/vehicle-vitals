@@ -28,6 +28,7 @@ import 'screens/records_screen.dart';
 import 'screens/scan_vin_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/terms_screen.dart';
+import 'screens/timeline_dashboard_screen.dart';
 import 'screens/upcoming_tasks_screen.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
@@ -197,8 +198,12 @@ class VehicleVitalsApp extends StatelessWidget {
           ),
         ),
         GoRoute(
-          path: '/app/account',
+          path: '/app/profile',
           builder: (context, state) => const AccountScreen(),
+        ),
+        GoRoute(
+          path: '/app/account',
+          redirect: (context, state) => '/app/profile',
         ),
         GoRoute(
           path: '/app/email-preferences',
@@ -240,6 +245,10 @@ class VehicleVitalsApp extends StatelessWidget {
           path: '/app/upcoming',
           builder: (context, state) => const UpcomingTasksScreen(),
         ),
+        GoRoute(
+          path: '/app/timeline',
+          builder: (context, state) => const TimelineDashboardScreen(),
+        ),
         // Legacy routes for backward compatibility.
         GoRoute(path: '/', redirect: (context, state) => '/marketing'),
         GoRoute(path: '/login', redirect: (context, state) => '/auth/login'),
@@ -276,7 +285,8 @@ class VehicleVitalsApp extends StatelessWidget {
           redirect: (context, state) =>
               '/app/maintenance/${state.pathParameters['vin']}/${state.pathParameters['entryId']}',
         ),
-        GoRoute(path: '/account', redirect: (context, state) => '/app/account'),
+        GoRoute(path: '/profile', redirect: (context, state) => '/app/profile'),
+        GoRoute(path: '/account', redirect: (context, state) => '/app/profile'),
         GoRoute(
           path: '/email-preferences',
           redirect: (context, state) => '/app/email-preferences',
@@ -304,6 +314,10 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/upcoming',
           redirect: (context, state) => '/app/upcoming',
+        ),
+        GoRoute(
+          path: '/timeline',
+          redirect: (context, state) => '/app/timeline',
         ),
       ],
     );

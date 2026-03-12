@@ -11,7 +11,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (loading) return null; // or a spinner
-  if (!user) {
+  if (!user || user.isAnonymous) {
     const to = `/auth/login?redirect=${encodeURIComponent(location.pathname + location.search)}`;
     return <Navigate to={to} replace />;
   }

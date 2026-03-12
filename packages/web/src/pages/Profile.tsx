@@ -111,13 +111,14 @@ const createFirebaseAuthService = async () => {
 };
 
 export default function Profile() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, linkWithGoogle, linkWithApple } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [linkingProvider, setLinkingProvider] = useState('');
   const [authService, setAuthService] = useState<AuthService | null>(null);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
   const [maintenanceAlertsEnabled, setMaintenanceAlertsEnabled] =
@@ -257,6 +258,60 @@ export default function Profile() {
   }, [undoNow, lastRecoverySnapshot]);
 
   if (!user || !authService) return null;
+
+  const providerLabels = (user.providerData || [])
+    .map(provider => {
+      switch (provider.providerId) {
+        case 'password':
+          return 'Email/Password';
+        case 'google.com':
+          return 'Google';
+        case 'apple.com':
+          return 'Apple';
+        default:
+          return provider.providerId;
+      }
+    })
+    .filter(Boolean);
+
+  const hasGoogle = (user.providerData || []).some(
+    provider => provider.providerId === 'google.com'
+  );
+  const hasApple = (user.providerData || []).some(
+    provider => provider.providerId === 'apple.com'
+  );
+
+  const onLinkGoogle = async () => {
+    setError('');
+    setStatus('');
+    setLinkingProvider('google');
+    try {
+      await linkWithGoogle();
+      setStatus('Google sign-in linked to this account.');
+    } catch (linkError) {
+      setError(
+        linkError instanceof Error ? linkError.message : 'Failed to link Google'
+      );
+    } finally {
+      setLinkingProvider('');
+    }
+  };
+
+  const onLinkApple = async () => {
+    setError('');
+    setStatus('');
+    setLinkingProvider('apple');
+    try {
+      await linkWithApple();
+      setStatus('Apple sign-in linked to this account.');
+    } catch (linkError) {
+      setError(
+        linkError instanceof Error ? linkError.message : 'Failed to link Apple'
+      );
+    } finally {
+      setLinkingProvider('');
+    }
+  };
 
   const savePreferences = async () => {
     setPreferencesSaving(true);
@@ -661,6 +716,50 @@ export default function Profile() {
                 <p className="font-medium text-slate-900 dark:text-slate-100 m-0 break-all">
                   {user.email}
                 </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
+                  User ID
+                </p>
+                <p className="font-medium text-slate-900 dark:text-slate-100 m-0 break-all">
+                  {user.uid}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
+                  Linked providers
+                </p>
+                <p className="font-medium text-slate-900 dark:text-slate-100 m-0">
+                  {providerLabels.length
+                    ? providerLabels.join(', ')
+                    : 'Unknown'}
+                </p>
+                <div className="mt-3 grid grid-cols-1 gap-2">
+                  {!hasGoogle && (
+                    <button
+                      type="button"
+                      onClick={() => void onLinkGoogle()}
+                      disabled={Boolean(linkingProvider)}
+                      className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-50"
+                    >
+                      {linkingProvider === 'google'
+                        ? 'Linking Google...'
+                        : 'Link Google'}
+                    </button>
+                  )}
+                  {!hasApple && (
+                    <button
+                      type="button"
+                      onClick={() => void onLinkApple()}
+                      disabled={Boolean(linkingProvider)}
+                      className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-50"
+                    >
+                      {linkingProvider === 'apple'
+                        ? 'Linking Apple...'
+                        : 'Link Apple'}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">

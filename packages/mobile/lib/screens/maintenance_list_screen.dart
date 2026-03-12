@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/firestore_service.dart';
-import '../services/data_export_service.dart';
-import '../services/calendar_service.dart';
-import '../services/premium_service.dart';
+
+import '../components/ad_banner.dart';
+import '../components/app_bottom_nav.dart';
 import '../models/maintenance.dart';
 import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
-import '../components/ad_banner.dart';
+import '../services/calendar_service.dart';
+import '../services/data_export_service.dart';
+import '../services/firestore_service.dart';
+import '../services/premium_service.dart';
 import 'maintenance_detail_screen.dart';
 
 class MaintenanceListScreen extends StatefulWidget {
@@ -401,7 +403,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const AdBanner(),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 }

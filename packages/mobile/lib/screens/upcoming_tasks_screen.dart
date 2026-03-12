@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../components/app_bottom_nav.dart';
 import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../services/calendar_service.dart';
@@ -133,6 +135,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       return Scaffold(
         appBar: AppBar(title: const Text('Upcoming Tasks')),
         body: const Center(child: CircularProgressIndicator()),
+        bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       );
     }
 
@@ -141,12 +144,18 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         title: const Text('Upcoming Tasks'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.timeline),
+            tooltip: 'Timeline',
+            onPressed: () => context.push('/app/timeline'),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadUpcomingTasks,
           ),
         ],
       ),
       body: _upcomingItems.isEmpty ? _buildEmptyState() : _buildUpcomingList(),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );
   }
 
@@ -183,15 +192,54 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   }
 
   Widget _buildUpcomingList() {
+    final urgentCount = _upcomingItems
+        .where((item) => (item['milesUntilDue'] as int) <= 1000)
+        .length;
+    final soonCount = _upcomingItems
+        .where(
+          (item) =>
+              (item['milesUntilDue'] as int) > 1000 &&
+              (item['milesUntilDue'] as int) <= 5000,
+        )
+        .length;
+
     return ListView.builder(
       padding: EdgeInsets.all(TwSpace.s4),
-      itemCount: _upcomingItems.length + 1, // +1 for legend
+      itemCount: _upcomingItems.length + 2, // +2 for summary and legend
       itemBuilder: (context, index) {
-        if (index == _upcomingItems.length) {
+        if (index == 0) {
+          return Container(
+            margin: EdgeInsets.only(bottom: TwSpace.s3),
+            padding: EdgeInsets.all(TwSpace.s4),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(TwRadius.lg),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reminder Center',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: TwSpace.s2),
+                Text(
+                  'Urgent: $urgentCount  •  Soon: $soonCount  •  Queue: ${_upcomingItems.length}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (index == _upcomingItems.length + 1) {
           return _buildLegend();
         }
 
-        final item = _upcomingItems[index];
+        final item = _upcomingItems[index - 1];
         final vehicle = item['vehicle'] as Vehicle;
         final milesUntilDue = item['milesUntilDue'] as int;
 

@@ -11,11 +11,48 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+const resolveEnvironmentName = () => {
+  const raw =
+    import.meta.env.VITE_ENVIRONMENT || import.meta.env.MODE || 'development';
+  return String(raw).trim().toLowerCase();
+};
+
+const expectedProjectIdsByEnvironment = {
+  development: ['vehicle-vitals-dev'],
+  staging: ['vehicle-vitals-staging'],
+  production: ['vehicle-vitals-prod'],
+};
+
+const validateEnvironmentProjectAlignment = () => {
+  const environment = resolveEnvironmentName();
+  const projectId = String(firebaseConfig.projectId || '').trim();
+  const expectedProjects = expectedProjectIdsByEnvironment[environment] || [];
+
+  if (!projectId || expectedProjects.length === 0) {
+    return;
+  }
+
+  if (!expectedProjects.includes(projectId)) {
+    const message =
+      `[firebaseConfig] Environment/project mismatch: ` +
+      `VITE_ENVIRONMENT=${environment} but projectId=${projectId}. ` +
+      `Expected one of: ${expectedProjects.join(', ')}`;
+
+    // Fail fast for deployed builds; warn during local dev loops.
+    if (import.meta.env.PROD) {
+      throw new Error(message);
+    }
+    console.warn(message);
+  }
+};
+
+validateEnvironmentProjectAlignment();
+
 // Initialize Firebase using shared client
 const firebaseClient = FirebaseClient.initialize(firebaseConfig);
 
-// Connect to emulators in development
-if (import.meta.env.DEV) {
+// Emulators are explicit opt-in to avoid accidentally bypassing environment backends.
+if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
   firebaseClient.connectToEmulators();
 }
 

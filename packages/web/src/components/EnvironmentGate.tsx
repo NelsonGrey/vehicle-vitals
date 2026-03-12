@@ -93,6 +93,16 @@ export default function EnvironmentGate({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            value={`${environment}-access`}
+            readOnly
+            aria-hidden="true"
+            tabIndex={-1}
+            className="sr-only"
+          />
           <div>
             <label
               htmlFor="password"

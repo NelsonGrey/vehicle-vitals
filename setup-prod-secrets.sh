@@ -60,6 +60,8 @@ echo -e "${YELLOW}📋 Setting up Environment & Feature Flags...${NC}"
 # Environment settings
 set_secret "VITE_DEBUG_PRODUCTION" "false" "Disable debug mode in production"
 set_secret "VITE_SHOW_COMING_SOON_PRODUCTION" "true" "Show coming soon page instead of full app"
+set_secret "VITE_SHOW_COMING_SOON_STAGING" "false" "Show full app on staging (not coming soon)"
+set_secret "VITE_SHOW_COMING_SOON_DEVELOPMENT" "false" "Show full app on development (not coming soon)"
 
 echo -e "${YELLOW}📋 Setting up Analytics & Monitoring...${NC}"
 

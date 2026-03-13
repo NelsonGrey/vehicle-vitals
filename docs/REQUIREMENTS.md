@@ -35,14 +35,14 @@ Planning companion:
 
 ## Implementation Reality Snapshot (Code-Verified: March 2026)
 
-| Capability                                                | Delivery Status                                   | Code Evidence                                                                                                                            |
-| --------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Web app core (auth, vehicles, timeline, maintenance CRUD) | 🟡 Partial                                        | `packages/web/src/pages/Home.tsx`, `packages/web/src/pages/EditVehicle.tsx`, `packages/web/src/pages/TimelineDashboard.tsx`              |
-| Mobile runtime parity                                     | � Partial                                        | Firebase/Auth/Firestore/notifications use real SDKs; push notification end-to-end delivery not fully validated in production              |
-| Reminder lifecycle (add/snooze/dismiss/complete)          | � Implemented                                    | Full CRUD in `packages/shared/src/firestoreServiceFactory.js`; connected on web (`UpcomingTasks.tsx`) and mobile (`upcoming_tasks_screen.dart`) |
-| Scheduled reminder checks                                 | � Implemented                                    | Scheduled sweep + injectable `runMaintenanceReminderSweep` / `runMaintenanceReminderSchedule` in `packages/functions/src/index.ts`; tested |
-| Reminder delivery integration                             | 🟡 Partial                                        | `sendMaintenanceReminder` HTTP endpoint and `sendEmail` provider implemented; production SendGrid delivery not yet end-to-end validated    |
-| Data export                                               | � Implemented                                    | Web CSV/PDF in `packages/web/src/utils/dataExport.js`; mobile CSV/PDF via `packages/mobile/lib/services/data_export_service.dart` and share sheet |
+| Capability                                                | Delivery Status | Code Evidence                                                                                                                                     |
+| --------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web app core (auth, vehicles, timeline, maintenance CRUD) | 🟡 Partial      | `packages/web/src/pages/Home.tsx`, `packages/web/src/pages/EditVehicle.tsx`, `packages/web/src/pages/TimelineDashboard.tsx`                       |
+| Mobile runtime parity                                     | � Partial       | Firebase/Auth/Firestore/notifications use real SDKs; push notification end-to-end delivery not fully validated in production                      |
+| Reminder lifecycle (add/snooze/dismiss/complete)          | � Implemented   | Full CRUD in `packages/shared/src/firestoreServiceFactory.js`; connected on web (`UpcomingTasks.tsx`) and mobile (`upcoming_tasks_screen.dart`)   |
+| Scheduled reminder checks                                 | � Implemented   | Scheduled sweep + injectable `runMaintenanceReminderSweep` / `runMaintenanceReminderSchedule` in `packages/functions/src/index.ts`; tested        |
+| Reminder delivery integration                             | 🟡 Partial      | `sendMaintenanceReminder` HTTP endpoint and `sendEmail` provider implemented; production SendGrid delivery not yet end-to-end validated           |
+| Data export                                               | � Implemented   | Web CSV/PDF in `packages/web/src/utils/dataExport.js`; mobile CSV/PDF via `packages/mobile/lib/services/data_export_service.dart` and share sheet |
 
 Legend: `🟢 Implemented`, `🟡 Partial`, `🔴 Not implemented`.
 
@@ -52,12 +52,12 @@ Legend: `🟢 Implemented`, `🟡 Partial`, `🔴 Not implemented`.
 
 ### Core Platforms
 
-| Platform         | Technology                  | Status       | Notes                                                                         |
-| ---------------- | --------------------------- | ------------ | ----------------------------------------------------------------------------- |
-| **Web Frontend** | React + Vite + React Router | 🟡 Partial   | Core user flows implemented; some roadmap capabilities still missing          |
-| **Mobile App**   | Flutter                     | � Partial   | Real Firebase services in use; push notification end-to-end validation pending |
-| **Backend**      | Firebase Suite              | 🟡 Partial   | Core functions exist; reminder delivery integrations not fully wired          |
-| **Deployment**   | Firebase Hosting + CI/CD    | 🟡 Partial   | Web delivery path works; mobile production parity pending                     |
+| Platform         | Technology                  | Status     | Notes                                                                          |
+| ---------------- | --------------------------- | ---------- | ------------------------------------------------------------------------------ |
+| **Web Frontend** | React + Vite + React Router | 🟡 Partial | Core user flows implemented; some roadmap capabilities still missing           |
+| **Mobile App**   | Flutter                     | � Partial  | Real Firebase services in use; push notification end-to-end validation pending |
+| **Backend**      | Firebase Suite              | 🟡 Partial | Core functions exist; reminder delivery integrations not fully wired           |
+| **Deployment**   | Firebase Hosting + CI/CD    | 🟡 Partial | Web delivery path works; mobile production parity pending                      |
 
 ### Package Structure
 
@@ -365,12 +365,12 @@ Based on the attached core features requirements, here's the comprehensive statu
 
 ### 5. Dashboard/History
 
-| Requirement               | Web         | Mobile        | Status         | Notes                                                                   |
-| ------------------------- | ----------- | ------------- | -------------- | ----------------------------------------------------------------------- |
-| Timeline view             | ✅ Complete | 🔄 Basic List | 🟡 **PARTIAL** | Web timeline is mature; mobile list exists but parity is incomplete     |
-| Cost tracking             | ✅ Complete | 🔄 Mocked     | 🟡 **PARTIAL** | Web has tracked costs; mobile analytics path uses mock services         |
+| Requirement               | Web         | Mobile        | Status          | Notes                                                                           |
+| ------------------------- | ----------- | ------------- | --------------- | ------------------------------------------------------------------------------- |
+| Timeline view             | ✅ Complete | 🔄 Basic List | 🟡 **PARTIAL**  | Web timeline is mature; mobile list exists but parity is incomplete             |
+| Cost tracking             | ✅ Complete | 🔄 Mocked     | 🟡 **PARTIAL**  | Web has tracked costs; mobile analytics path uses mock services                 |
 | Upcoming tasks view       | ✅ Complete | ✅ Complete   | ✅ **COMPLETE** | Reminder actions (complete/snooze/dismiss/restore) wired on both web and mobile |
-| Export history (PDF, CSV) | ✅ Complete | ✅ Complete   | ✅ **COMPLETE** | Web export works; mobile CSV/PDF export via share sheet fully implemented |
+| Export history (PDF, CSV) | ✅ Complete | ✅ Complete   | ✅ **COMPLETE** | Web export works; mobile CSV/PDF export via share sheet fully implemented       |
 
 ### 6. Ad Integration
 

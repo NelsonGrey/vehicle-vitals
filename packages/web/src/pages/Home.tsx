@@ -1,5 +1,6 @@
 // -----------------------------
 // File: web/pages/Home.jsx
+import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -29,6 +30,20 @@ interface Vehicle {
   };
 }
 
+interface UpcomingItem {
+  id: string;
+  description: string;
+  milesUntilDue: number;
+  nextDueMileage: number;
+}
+
+type AlertLevel = 'urgent' | 'soon' | null;
+
+interface VehicleAlert {
+  level: AlertLevel;
+  items: UpcomingItem[];
+}
+
 function getPortfolioRequiredProgress(vehicle: Vehicle) {
   const categories = vehicle.documentPortfolio?.categories || [];
   let required = 0;
@@ -54,6 +69,9 @@ export default function Home() {
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
   const [selectedVin, setSelectedVin] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [vehicleAlerts, setVehicleAlerts] = useState<
+    Record<string, VehicleAlert>
+  >({});
 
   const normalizedSearch = searchTerm.toLowerCase();
   const filteredVehicles = vehicles.filter(v => {
@@ -78,6 +96,32 @@ export default function Home() {
     };
     fetchVehicles();
   }, []);
+
+  useEffect(() => {
+    if (vehicles.length === 0) return;
+    const alerts: Record<string, VehicleAlert> = {};
+    for (const v of vehicles) {
+      const mileage = parseInt(v.mileage || '0', 10);
+      if (!mileage || !v.make || !v.model) continue;
+      const items = getUpcomingMaintenance(
+        v.make,
+        v.model,
+        mileage,
+        mileage + 10000
+      ) as UpcomingItem[];
+      if (items.length === 0) continue;
+      let level: AlertLevel = null;
+      for (const item of items) {
+        if (item.milesUntilDue <= 1000) {
+          level = 'urgent';
+          break;
+        }
+        if (item.milesUntilDue <= 5000) level = 'soon';
+      }
+      alerts[v.vin] = { level, items: items.slice(0, 3) };
+    }
+    setVehicleAlerts(alerts);
+  }, [vehicles]);
 
   useEffect(() => {
     if (vehicles.length === 0) {
@@ -261,6 +305,20 @@ export default function Home() {
                           </span>
                         </div>
                       )}
+                      {vehicleAlerts[v.vin]?.level === 'urgent' && (
+                        <div className="mt-1 text-xs">
+                          <span className="inline-block rounded-full bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 px-2 py-0.5">
+                            ⚠ Maintenance due!
+                          </span>
+                        </div>
+                      )}
+                      {vehicleAlerts[v.vin]?.level === 'soon' && (
+                        <div className="mt-1 text-xs">
+                          <span className="inline-block rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-2 py-0.5">
+                            Service due soon
+                          </span>
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -333,6 +391,63 @@ export default function Home() {
                           </span>
                         )}
                       </div>
+
+                      {/* Upcoming Maintenance */}
+                      {vehicleAlerts[selectedVehicle.vin] && (
+                        <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 m-0">
+                              Upcoming Maintenance
+                            </h4>
+                            <Link
+                              to="/app/upcoming"
+                              className="text-xs text-blue-600 dark:text-blue-400 no-underline hover:underline"
+                            >
+                              View all →
+                            </Link>
+                          </div>
+                          <ul className="space-y-1.5 m-0 p-0 list-none">
+                            {vehicleAlerts[selectedVehicle.vin].items.map(
+                              item => {
+                                const isUrgent = item.milesUntilDue <= 1000;
+                                const isSoon = item.milesUntilDue <= 5000;
+                                return (
+                                  <li
+                                    key={item.id}
+                                    className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                        isUrgent
+                                          ? 'bg-red-500'
+                                          : isSoon
+                                            ? 'bg-orange-400'
+                                            : 'bg-slate-300'
+                                      }`}
+                                    />
+                                    <span className="flex-1">
+                                      {item.description}
+                                    </span>
+                                    <span
+                                      className={`font-medium ${
+                                        isUrgent
+                                          ? 'text-red-600 dark:text-red-400'
+                                          : isSoon
+                                            ? 'text-orange-600 dark:text-orange-400'
+                                            : 'text-slate-500 dark:text-slate-400'
+                                      }`}
+                                    >
+                                      {item.milesUntilDue <= 0
+                                        ? 'Due now'
+                                        : `${item.milesUntilDue.toLocaleString()} mi`}
+                                    </span>
+                                  </li>
+                                );
+                              }
+                            )}
+                          </ul>
+                        </div>
+                      )}
 
                       {/* Actions */}
                       <div className="flex flex-wrap gap-2">

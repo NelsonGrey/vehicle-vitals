@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
@@ -68,6 +69,16 @@ const DISMISSED_REMINDER = {
   status: 'dismissed',
 };
 
+const renderUpcomingTasks = (initialEntries = ['/app/upcoming']) =>
+  render(
+    <MemoryRouter
+      initialEntries={initialEntries}
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
+      <UpcomingTasks />
+    </MemoryRouter>
+  );
+
 describe('UpcomingTasks reminder actions', () => {
   beforeEach(() => {
     vi.spyOn(window, 'alert').mockImplementation(() => {});
@@ -93,7 +104,7 @@ describe('UpcomingTasks reminder actions', () => {
   });
 
   it('renders saved reminders after loading', async () => {
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => {
       expect(screen.getByText('Oil Change')).toBeInTheDocument();
@@ -101,7 +112,7 @@ describe('UpcomingTasks reminder actions', () => {
   });
 
   it('calls completeReminder with correct args when Complete is clicked', async () => {
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
 
@@ -113,7 +124,7 @@ describe('UpcomingTasks reminder actions', () => {
   });
 
   it('calls snoozeReminder with correct vin and id when Snooze is clicked', async () => {
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
 
@@ -129,7 +140,7 @@ describe('UpcomingTasks reminder actions', () => {
   });
 
   it('calls dismissReminder with correct args when Dismiss is clicked', async () => {
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
 
@@ -142,7 +153,7 @@ describe('UpcomingTasks reminder actions', () => {
 
   it('shows Restore button for dismissed reminders and calls reopenReminder', async () => {
     getReminders.mockResolvedValue([DISMISSED_REMINDER]);
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Tire Rotation'));
 
@@ -155,7 +166,7 @@ describe('UpcomingTasks reminder actions', () => {
 
   it('shows empty state when no reminders exist', async () => {
     getReminders.mockResolvedValue([]);
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => {
       expect(
@@ -166,7 +177,7 @@ describe('UpcomingTasks reminder actions', () => {
 
   it('filter buttons change which reminders are visible', async () => {
     getReminders.mockResolvedValue([ACTIVE_REMINDER, DISMISSED_REMINDER]);
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
 
@@ -194,7 +205,7 @@ describe('UpcomingTasks reminder actions', () => {
       },
     ]);
 
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil and filter change'));
     fireEvent.click(screen.getByRole('button', { name: 'Add to Calendar' }));
@@ -221,7 +232,7 @@ describe('UpcomingTasks reminder actions', () => {
       nextDueMileage: 35000,
     };
     getReminders.mockResolvedValue([reminderWithMileage]);
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
     fireEvent.change(screen.getByLabelText('Reminder Email'), {
@@ -249,7 +260,7 @@ describe('UpcomingTasks reminder actions', () => {
 
   it('persists failed delivery status when email send fails', async () => {
     sendReminderDeliveryEmail.mockRejectedValueOnce(new Error('Provider down'));
-    render(<UpcomingTasks />);
+    renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
     fireEvent.change(screen.getByLabelText('Reminder Email'), {
@@ -267,5 +278,44 @@ describe('UpcomingTasks reminder actions', () => {
         })
       );
     });
+  });
+
+  it('filters reminders to the notification VIN when opened from push', async () => {
+    const secondVehicle = {
+      vin: 'VIN999',
+      make: 'Honda',
+      model: 'Accord',
+      year: '2021',
+      mileage: '42000',
+    };
+
+    getVehicles.mockResolvedValue([VEHICLE, secondVehicle]);
+    getReminders.mockImplementation(async vin => {
+      if (vin === 'VIN999') {
+        return [
+          {
+            id: 'rem-99',
+            title: 'Brake Flush',
+            serviceType: 'brake_flush',
+            status: 'active',
+          },
+        ];
+      }
+
+      return [ACTIVE_REMINDER];
+    });
+
+    renderUpcomingTasks(['/app/upcoming?source=push&vin=VIN999']);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Opened from a maintenance reminder notification/i)
+      ).toBeInTheDocument()
+    );
+    expect(screen.getByText('Brake Flush')).toBeInTheDocument();
+    expect(screen.queryByText('Oil Change')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /show all vehicles/i })
+    ).toHaveAttribute('href', '/app/upcoming');
   });
 });

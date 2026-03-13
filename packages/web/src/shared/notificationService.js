@@ -5,7 +5,8 @@ let messaging = null; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 // Initialize Firebase messaging
 const initializeMessaging = async () => {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return null;
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator))
+    return null;
 
   // Wait for Firebase to be available globally
   const checkFirebase = () => {
@@ -15,7 +16,11 @@ const initializeMessaging = async () => {
 
       const check = () => {
         attempts++;
-        if (window.firebase && window.firebase.messaging && window.firebase.messaging.getMessaging) {
+        if (
+          window.firebase &&
+          window.firebase.messaging &&
+          window.firebase.messaging.getMessaging
+        ) {
           resolve(window.firebase);
         } else if (attempts >= maxAttempts) {
           reject(new Error('Firebase messaging SDK failed to load'));
@@ -45,11 +50,13 @@ const initializeMessaging = async () => {
 
     // Register service worker for background messages
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+      navigator.serviceWorker
+        .register('/firebase-messaging-sw.js')
+        .then(registration => {
+          // eslint-disable-line @typescript-eslint/no-unused-vars
           console.log('Service Worker registered for FCM');
         })
-        .catch((error) => {
+        .catch(error => {
           console.error('Service Worker registration failed:', error);
         });
     }
@@ -61,6 +68,20 @@ const initializeMessaging = async () => {
   }
 };
 
+export const buildReminderNotificationPath = (payloadData = {}) => {
+  const params = new URLSearchParams({ source: 'push' });
+  const vin =
+    typeof payloadData?.vin === 'string'
+      ? payloadData.vin.trim().toUpperCase()
+      : '';
+
+  if (vin) {
+    params.set('vin', vin);
+  }
+
+  return `/app/upcoming?${params.toString()}`;
+};
+
 // Request notification permission and get token
 export const requestNotificationPermission = async () => {
   try {
@@ -70,7 +91,7 @@ export const requestNotificationPermission = async () => {
       if (firebaseServices) {
         const { messaging, messagingFunctions } = firebaseServices;
         const token = await messagingFunctions.getToken(messaging, {
-          vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
+          vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
         });
         return token;
       }
@@ -82,19 +103,38 @@ export const requestNotificationPermission = async () => {
   }
 };
 
+export const subscribeToForegroundMessages = async onMessage => {
+  try {
+    const firebaseServices = await initializeMessaging();
+    if (!firebaseServices) {
+      return () => {};
+    }
+
+    const { messaging, messagingFunctions } = firebaseServices;
+    return messagingFunctions.onMessage(messaging, payload => {
+      onMessage(payload);
+    });
+  } catch (error) {
+    console.error('Error setting up message listener:', error);
+    return () => {};
+  }
+};
+
 // Listen for foreground messages
 export const onMessageListener = async () => {
   try {
     const firebaseServices = await initializeMessaging();
-    if (firebaseServices) {
-      const { messaging, messagingFunctions } = firebaseServices;
-      return new Promise((resolve) => {
-        messagingFunctions.onMessage(messaging, (payload) => {
-          resolve(payload);
-        });
-      });
+    if (!firebaseServices) {
+      return null;
     }
-    return null;
+
+    const { messaging, messagingFunctions } = firebaseServices;
+    return await new Promise(resolve => {
+      const unsubscribe = messagingFunctions.onMessage(messaging, payload => {
+        unsubscribe();
+        resolve(payload);
+      });
+    });
   } catch (error) {
     console.error('Error setting up message listener:', error);
     return null;

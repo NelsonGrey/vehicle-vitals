@@ -70,6 +70,7 @@ interface ReminderSweepSummary {
   usersScanned: number;
   vehiclesScanned: number;
   remindersSent: number;
+  reminderFailures: number;
 }
 
 interface ReminderSweepDependencies {
@@ -689,6 +690,7 @@ export async function runMaintenanceReminderSweep(
   let usersScanned = 0;
   let vehiclesScanned = 0;
   let remindersSent = 0;
+  let reminderFailures = 0;
 
   for (const user of users) {
     usersScanned += 1;
@@ -713,8 +715,18 @@ export async function runMaintenanceReminderSweep(
         continue;
       }
 
-      await deliverReminderEmail(user.email, vehicle, upcomingMaintenance);
-      remindersSent += 1;
+      try {
+        await deliverReminderEmail(user.email, vehicle, upcomingMaintenance);
+        remindersSent += 1;
+      } catch (error) {
+        reminderFailures += 1;
+        logger.error('Reminder delivery failed', {
+          userId,
+          email: user.email,
+          vin: vehicle.vin,
+          error,
+        });
+      }
     }
   }
 
@@ -722,6 +734,7 @@ export async function runMaintenanceReminderSweep(
     usersScanned,
     vehiclesScanned,
     remindersSent,
+    reminderFailures,
   };
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ScanVINScreen extends StatefulWidget {
   const ScanVINScreen({super.key});
@@ -9,72 +10,73 @@ class ScanVINScreen extends StatefulWidget {
 }
 
 class _ScanVINScreenState extends State<ScanVINScreen> {
-  // MobileScannerController cameraController = MobileScannerController(
-  //   formats: [BarcodeFormat.code39, BarcodeFormat.code128],
-  // );
+  final MobileScannerController _cameraController = MobileScannerController(
+    formats: [BarcodeFormat.code39, BarcodeFormat.code128],
+  );
+  bool _screenOpened = false;
 
   @override
   void dispose() {
-    // cameraController.dispose();
+    _cameraController.dispose();
     super.dispose();
   }
 
-  // void _foundBarcode(BarcodeCapture capture) {
-  //   /// Prevent opening the same screen multiple times
-  //   if (_screenOpened) return;
-  //   _screenOpened = true;
+  void _foundBarcode(BarcodeCapture capture) {
+    if (_screenOpened) return;
 
-  //   final List<Barcode> barcodes = capture.barcodes;
-  //   for (final barcode in barcodes) {
-  //     final String? code = barcode.rawValue;
-  //     if (code != null && code.length == 17) {
-  //       // Found a valid 17-character VIN
-  //       Navigator.of(context).pop();
-  //       context.go('/add-vehicle/$code');
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('VIN detected: $code'),
-  //           backgroundColor: Colors.green,
-  //         ),
-  //       );
-  //       return;
-  //     }
-  //   }
-  // }
+    for (final barcode in capture.barcodes) {
+      final code = barcode.rawValue?.trim().toUpperCase();
+      if (code == null || code.length != 17) {
+        continue;
+      }
+
+      _screenOpened = true;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('VIN detected: $code'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+      context.go('/app/add-vehicle/$code');
+      return;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan VIN - DISABLED'),
+        title: const Text('Scan VIN'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/app/add-vehicle'),
         ),
       ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.camera_alt, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'VIN Scanning Disabled',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: Column(
+        children: [
+          Expanded(
+            child: MobileScanner(
+              controller: _cameraController,
+              onDetect: _foundBarcode,
             ),
-            SizedBox(height: 8),
-            Text(
-              'Camera scanning is disabled for TestFlight build.\nPlease enter VIN manually.',
+          ),
+          Container(
+            width: double.infinity,
+            color: colorScheme.surface,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+            child: Text(
+              'Center the VIN barcode in the camera frame. If scan fails, go back and enter VIN manually.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
             ),
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: null, // Disabled
-              child: Text('Scan VIN (Disabled)'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

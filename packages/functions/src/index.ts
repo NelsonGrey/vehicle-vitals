@@ -66,6 +66,37 @@ interface LocalServiceProvider {
   specialties: string[];
 }
 
+interface ReminderSweepSummary {
+  usersScanned: number;
+  vehiclesScanned: number;
+  remindersSent: number;
+}
+
+interface ReminderSweepDependencies {
+  queryDocuments: (
+    collection: string,
+    options?: {
+      filters?: Array<{
+        field: string;
+        operator: admin.firestore.WhereFilterOp;
+        value: unknown;
+      }>;
+      orderBy?: { field: string; direction: 'asc' | 'desc' };
+      limit?: number;
+      offset?: number;
+    }
+  ) => Promise<any[]>;
+  getUpcomingMaintenance: (
+    vehicle: Vehicle,
+    daysAhead?: number
+  ) => Promise<MaintenanceItem[]>;
+  sendReminderEmail: (
+    email: string,
+    vehicle: Vehicle,
+    maintenanceItems: MaintenanceItem[]
+  ) => Promise<void>;
+}
+
 /**
  * Firestore CRUD helpers for Firebase Functions
  */
@@ -630,41 +661,69 @@ export const checkMaintenanceReminders = onSchedule('0 9 * * *', async () => {
   logger.info('Checking for maintenance reminders...');
 
   try {
-    // Get all users using FirestoreCrudHelpers
-    const users = await FirestoreCrudHelpers.queryDocuments('users');
-
-    for (const user of users) {
-      const userId = user.id;
-
-      // Check if user has email reminders enabled
-      // (default to true if not set)
-      const emailRemindersEnabled = user.emailRemindersEnabled !== false;
-
-      if (!emailRemindersEnabled || !user.email) {
-        continue;
-      }
-
-      // Get user's vehicles using FirestoreCrudHelpers
-      const vehicles = await FirestoreCrudHelpers.queryDocuments(
-        `users/${userId}/vehicles`
-      );
-
-      for (const vehicle of vehicles) {
-        // Check for upcoming maintenance (within 30 days)
-        const upcomingMaintenance = await getUpcomingMaintenance(vehicle, 30);
-
-        if (upcomingMaintenance.length > 0) {
-          // Send reminder email
-          await sendReminderEmail(user.email, vehicle, upcomingMaintenance);
-        }
-      }
-    }
-
-    logger.info('Maintenance reminder check completed');
+    const summary = await runMaintenanceReminderSweep();
+    logger.info('Maintenance reminder check completed', summary);
   } catch (error) {
     logger.error('Error checking maintenance reminders:', error);
   }
 });
+
+/**
+ * Execute scheduled reminder eligibility checks and email dispatch.
+ * @param {ReminderSweepDependencies} dependencies Optional injected deps
+ * @return {Promise<ReminderSweepSummary>} Sweep counts for observability/tests
+ */
+export async function runMaintenanceReminderSweep(
+  dependencies?: Partial<ReminderSweepDependencies>
+): Promise<ReminderSweepSummary> {
+  const queryDocuments =
+    dependencies?.queryDocuments ||
+    FirestoreCrudHelpers.queryDocuments.bind(FirestoreCrudHelpers);
+  const resolveUpcomingMaintenance =
+    dependencies?.getUpcomingMaintenance || getUpcomingMaintenance;
+  const deliverReminderEmail =
+    dependencies?.sendReminderEmail || sendReminderEmail;
+
+  const users = await queryDocuments('users');
+
+  let usersScanned = 0;
+  let vehiclesScanned = 0;
+  let remindersSent = 0;
+
+  for (const user of users) {
+    usersScanned += 1;
+
+    const emailRemindersEnabled = user.emailRemindersEnabled !== false;
+    if (!emailRemindersEnabled || !user.email) {
+      continue;
+    }
+
+    const userId = (user.id || '').toString();
+    if (!userId) {
+      continue;
+    }
+
+    const vehicles = await queryDocuments(`users/${userId}/vehicles`);
+
+    for (const vehicle of vehicles as Vehicle[]) {
+      vehiclesScanned += 1;
+      const upcomingMaintenance = await resolveUpcomingMaintenance(vehicle, 30);
+
+      if (upcomingMaintenance.length === 0) {
+        continue;
+      }
+
+      await deliverReminderEmail(user.email, vehicle, upcomingMaintenance);
+      remindersSent += 1;
+    }
+  }
+
+  return {
+    usersScanned,
+    vehiclesScanned,
+    remindersSent,
+  };
+}
 
 /**
  * Helper function to get upcoming maintenance items for a vehicle

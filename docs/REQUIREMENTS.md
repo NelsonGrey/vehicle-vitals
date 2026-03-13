@@ -359,7 +359,7 @@ Based on the attached core features requirements, here's the comprehensive statu
 
 | Requirement          | Web         | Mobile      | Status         | Notes                                                                                                                                                                                         |
 | -------------------- | ----------- | ----------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Push reminders       | ✅ Complete | 🟡 Partial  | 🟡 **PARTIAL** | Web: FCM opt-in UI on Profile (token stored in __preferences__), reminder sweep delivers FCM push via admin.messaging(); mobile push not yet end-to-end validated                             |
+| Push reminders       | ✅ Complete | 🟡 Partial  | 🟡 **PARTIAL** | Web: FCM opt-in UI on Profile (token stored in `__preferences__`), reminder sweep delivers FCM push via admin.messaging(); mobile push not yet end-to-end validated                           |
 | Email reminders      | 🟡 Partial  | 🟡 Partial  | 🟡 **PARTIAL** | Web supports manual reminder send and delivery outcome tracking in Upcoming Tasks; full automated, cross-platform delivery reliability still needs production validation                      |
 | Calendar integration | ✅ Complete | ✅ Complete | 🟡 **PARTIAL** | Calendar event creation is available in web and mobile upcoming/maintenance flows via backend calendar endpoints; full provider-account sync reliability still requires production validation |
 

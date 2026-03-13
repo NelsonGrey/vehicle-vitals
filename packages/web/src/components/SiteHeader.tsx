@@ -101,6 +101,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               <Link to="/app/upcoming" className={linkClass}>
                 Upcoming
               </Link>
+              <Link to="/app/providers" className={linkClass}>
+                Providers
+              </Link>
             </div>
           </div>
         </nav>

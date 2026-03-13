@@ -365,12 +365,12 @@ Based on the attached core features requirements, here's the comprehensive statu
 
 ### 5. Dashboard/History
 
-| Requirement               | Web         | Mobile        | Status          | Notes                                                                           |
-| ------------------------- | ----------- | ------------- | --------------- | ------------------------------------------------------------------------------- |
-| Timeline view             | ✅ Complete | 🔄 Basic List | 🟡 **PARTIAL**  | Web timeline is mature; mobile list exists but parity is incomplete             |
-| Cost tracking             | ✅ Complete | 🔄 Mocked     | 🟡 **PARTIAL**  | Web has tracked costs; mobile analytics path uses mock services                 |
-| Upcoming tasks view       | ✅ Complete | ✅ Complete   | ✅ **COMPLETE** | Reminder actions (complete/snooze/dismiss/restore) wired on both web and mobile |
-| Export history (PDF, CSV) | ✅ Complete | ✅ Complete   | ✅ **COMPLETE** | Web export works; mobile CSV/PDF export via share sheet fully implemented       |
+| Requirement               | Web         | Mobile                | Status          | Notes                                                                                                               |
+| ------------------------- | ----------- | --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Timeline view             | ✅ Complete | 🟡 Filtered Dashboard | 🟡 **PARTIAL**  | Web timeline remains richer, but mobile now supports a timeline dashboard with vehicle/date filters and event notes |
+| Cost tracking             | ✅ Complete | 🔄 Mocked             | 🟡 **PARTIAL**  | Web has tracked costs; mobile analytics path uses mock services                                                     |
+| Upcoming tasks view       | ✅ Complete | ✅ Complete           | ✅ **COMPLETE** | Reminder actions (complete/snooze/dismiss/restore) wired on both web and mobile                                     |
+| Export history (PDF, CSV) | ✅ Complete | ✅ Complete           | ✅ **COMPLETE** | Web export works; mobile CSV/PDF export via share sheet fully implemented                                           |
 
 ### 6. Ad Integration
 

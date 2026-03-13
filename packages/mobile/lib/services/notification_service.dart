@@ -18,13 +18,25 @@ class NotificationService extends ChangeNotifier {
 
     try {
       await _firebaseMessaging.requestPermission();
-      _fcmToken = await _firebaseMessaging.getToken();
 
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       FirebaseMessaging.instance.onTokenRefresh.listen((token) {
         _fcmToken = token;
         notifyListeners();
       });
+
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        final apnsToken = await _firebaseMessaging.getAPNSToken();
+        if (apnsToken == null) {
+          debugPrint(
+            'APNS token not available yet; deferring FCM token fetch until refresh.',
+          );
+        } else {
+          _fcmToken = await _firebaseMessaging.getToken();
+        }
+      } else {
+        _fcmToken = await _firebaseMessaging.getToken();
+      }
 
       _isInitialized = true;
       notifyListeners();

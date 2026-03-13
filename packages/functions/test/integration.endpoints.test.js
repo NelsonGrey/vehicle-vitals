@@ -4,6 +4,7 @@ const {
   getOwnerManuals,
   getWarrantySummary,
   getMaintenancePlan,
+  sendMaintenanceReminder,
   createCalendarEvent,
   createCalendarEventCallable,
   getPremiumEntitlement,
@@ -212,6 +213,116 @@ test('createCalendarEvent returns 503 when calendar feature disabled', async () 
   assert.equal(res.state.statusCode, 503);
   assert.equal(res.state.body.success, false);
   assert.equal(res.state.body.error, 'Calendar feature is disabled');
+});
+
+test('sendMaintenanceReminder returns 405 for non-POST requests', async () => {
+  const req = {
+    method: 'GET',
+    headers: baseHeaders(),
+    body: {},
+    ip: '198.51.100.20',
+  };
+  const res = makeResponse();
+
+  await sendMaintenanceReminder(req, res);
+
+  assert.equal(res.state.statusCode, 405);
+  assert.equal(res.state.body.error, 'Method not allowed');
+});
+
+test('sendMaintenanceReminder returns 400 when payload is invalid', async () => {
+  const req = {
+    method: 'POST',
+    headers: baseHeaders(),
+    body: {
+      email: 'driver@example.com',
+      vehicle: {
+        make: 'Honda',
+        model: 'Accord',
+        year: 2022,
+        vin: '1HGCV1F39NA000001',
+      },
+      maintenanceItems: 'not-an-array',
+    },
+    ip: '198.51.100.20',
+  };
+  const res = makeResponse();
+
+  await sendMaintenanceReminder(req, res);
+
+  assert.equal(res.state.statusCode, 400);
+  assert.equal(
+    res.state.body.error,
+    'Missing required fields: email, vehicle, maintenanceItems'
+  );
+});
+
+test('sendMaintenanceReminder returns 200 for valid payload', async () => {
+  process.env.EMAIL_PROVIDER = 'log';
+
+  const req = {
+    method: 'POST',
+    headers: baseHeaders(),
+    body: {
+      email: 'driver@example.com',
+      vehicle: {
+        make: 'Toyota',
+        model: 'Camry',
+        year: 2023,
+        vin: '4T1BF1FK9HU123456',
+      },
+      maintenanceItems: [
+        {
+          title: 'Oil Change',
+          dueDate: 'Within 30 days',
+        },
+      ],
+    },
+    ip: '198.51.100.20',
+  };
+  const res = makeResponse();
+
+  await sendMaintenanceReminder(req, res);
+
+  assert.equal(res.state.statusCode, 200);
+  assert.equal(res.state.body.success, true);
+  assert.equal(res.state.body.message, 'Reminder email sent');
+});
+
+test('sendMaintenanceReminder returns 500 when provider send fails', async () => {
+  process.env.EMAIL_PROVIDER = 'sendgrid';
+  delete process.env.SENDGRID_API_KEY;
+  delete process.env.SENDGRID_FROM_EMAIL;
+
+  const req = {
+    method: 'POST',
+    headers: baseHeaders(),
+    body: {
+      email: 'driver@example.com',
+      vehicle: {
+        make: 'Ford',
+        model: 'Escape',
+        year: 2021,
+        vin: '1FMCU9G63MUA00001',
+      },
+      maintenanceItems: [
+        {
+          title: 'Brake Inspection',
+          dueDate: 'Within 14 days',
+        },
+      ],
+    },
+    ip: '198.51.100.20',
+  };
+  const res = makeResponse();
+
+  await sendMaintenanceReminder(req, res);
+
+  assert.equal(res.state.statusCode, 500);
+  assert.equal(res.state.body.success, false);
+  assert.equal(res.state.body.error, 'Failed to send reminder email');
+
+  process.env.EMAIL_PROVIDER = 'log';
 });
 
 test('getOwnerManuals returns 200 with normalized manuals payload', async () => {

@@ -7,6 +7,16 @@
 
 ---
 
+## Document Relationship
+
+This document describes product vision, UX direction, and phased roadmap.
+
+- Delivery truth for active releases is tracked in `docs/REQUIREMENTS.md`.
+- Planned and aspirational capabilities in this document are not implied as currently shipped.
+- When delivery status differs between documents, defer to `docs/REQUIREMENTS.md` for implementation state.
+
+---
+
 ## 🚗 Product Vision
 
 **Vision Statement**: "Every vehicle owner deserves complete visibility and control over their vehicle's health, maintenance history, and costs."
@@ -154,7 +164,7 @@ Legend:
 Install App
   ↓
 [Authentication]
-  ├→ Email/Password or Anonymous
+  ├→ Email/Password
   ├→ Apple Sign-In / Google Sign-In
   └→ Confirm email (for sensitive operations)
   ↓

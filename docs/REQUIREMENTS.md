@@ -27,6 +27,10 @@ This file is the delivery contract for what is implemented now versus what is pa
 | Service provider directory   | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap          |
 | Fleet manager workflows      | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap          |
 
+Planning companion:
+
+- `docs/RELEASE_SCOPE_MATRIX.md` defines Must/Should/Later scope tiers and milestone targets.
+
 ---
 
 ## Implementation Reality Snapshot (Code-Verified: March 2026)
@@ -487,4 +491,4 @@ Vehicle Vitals is live and operational on web, while the iOS app remains in a pr
 
 ---
 
-**Project Status**: This is a fully functional, production-ready vehicle management application with comprehensive web and mobile frontends, robust Firebase backend, and automated deployment pipeline. All core features are implemented and tested.
+**Project Status**: Web delivery is strong, while mobile and cross-platform parity remain in progress. Core workflows are partially implemented overall, and roadmap features are still pending.

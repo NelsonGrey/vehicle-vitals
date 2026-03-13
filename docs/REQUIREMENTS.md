@@ -357,11 +357,11 @@ Based on the attached core features requirements, here's the comprehensive statu
 
 ### 4. Reminders & Notifications
 
-| Requirement          | Web        | Mobile     | Status                 | Notes                                                                        |
-| -------------------- | ---------- | ---------- | ---------------------- | ---------------------------------------------------------------------------- |
-| Push reminders       | 🟡 Partial | 🟡 Partial | 🟡 **PARTIAL**         | Scaffolding exists but lifecycle UX and reliability are not fully end-to-end |
-| Email reminders      | 🟡 Partial | 🟡 Partial | 🟡 **PARTIAL**         | Delivery path exists but full product flow remains incomplete                |
-| Calendar integration | ❌ Missing | ❌ Missing | ❌ **NOT IMPLEMENTED** | No calendar API integration                                                  |
+| Requirement          | Web         | Mobile      | Status         | Notes                                                                                                                                                                                         |
+| -------------------- | ----------- | ----------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Push reminders       | 🟡 Partial  | 🟡 Partial  | 🟡 **PARTIAL** | Scaffolding exists but lifecycle UX and reliability are not fully end-to-end                                                                                                                  |
+| Email reminders      | 🟡 Partial  | 🟡 Partial  | 🟡 **PARTIAL** | Delivery path exists but full product flow remains incomplete                                                                                                                                 |
+| Calendar integration | ✅ Complete | ✅ Complete | 🟡 **PARTIAL** | Calendar event creation is available in web and mobile upcoming/maintenance flows via backend calendar endpoints; full provider-account sync reliability still requires production validation |
 
 ### 5. Dashboard/History
 

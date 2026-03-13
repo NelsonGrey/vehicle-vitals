@@ -5,6 +5,7 @@ import {
   getVehicles,
   updateVehicle,
 } from '../shared/firestoreService';
+import { requestNotificationPermission } from '../shared/notificationService';
 
 // Declare Firebase global
 declare global {
@@ -153,6 +154,11 @@ export default function Profile() {
   const [nearbyProviders, setNearbyProviders] = useState<
     LocalServiceProvider[]
   >([]);
+  const [pushPermission, setPushPermission] = useState<
+    'granted' | 'denied' | 'default' | 'unsupported'
+  >('unsupported');
+  const [fcmToken, setFcmToken] = useState('');
+  const [pushSaving, setPushSaving] = useState(false);
 
   useEffect(() => {
     createFirebaseAuthService().then(setAuthService);
@@ -207,6 +213,15 @@ export default function Profile() {
             postalCode: storedAddress.postalCode || '',
             country: storedAddress.country || 'US',
           });
+        }
+
+        if (typeof prefs?.fcmToken === 'string') {
+          setFcmToken(prefs.fcmToken);
+        }
+        if (typeof Notification !== 'undefined') {
+          setPushPermission(
+            Notification.permission as 'granted' | 'denied' | 'default'
+          );
         }
 
         const vehicles = (await getVehicles()) as VehicleSummary[];
@@ -280,6 +295,57 @@ export default function Profile() {
   const hasApple = (user.providerData || []).some(
     provider => provider.providerId === 'apple.com'
   );
+
+  const handleEnablePushNotifications = async () => {
+    setPushSaving(true);
+    setError('');
+    setStatus('');
+    try {
+      const token = await requestNotificationPermission();
+      if (token) {
+        await updateVehicle('__preferences__', { fcmToken: token });
+        setFcmToken(token);
+        setPushPermission('granted');
+        setStatus('Push notifications enabled for this browser.');
+      } else {
+        if (typeof Notification !== 'undefined') {
+          setPushPermission(
+            Notification.permission as 'granted' | 'denied' | 'default'
+          );
+        }
+        setError(
+          'Push notifications could not be enabled. Check your browser settings.'
+        );
+      }
+    } catch (pushError) {
+      setError(
+        pushError instanceof Error
+          ? pushError.message
+          : 'Failed to enable push notifications'
+      );
+    } finally {
+      setPushSaving(false);
+    }
+  };
+
+  const handleDisablePushNotifications = async () => {
+    setPushSaving(true);
+    setError('');
+    setStatus('');
+    try {
+      await updateVehicle('__preferences__', { fcmToken: '' });
+      setFcmToken('');
+      setStatus('Push notifications disabled.');
+    } catch (pushError) {
+      setError(
+        pushError instanceof Error
+          ? pushError.message
+          : 'Failed to disable push notifications'
+      );
+    } finally {
+      setPushSaving(false);
+    }
+  };
 
   const onLinkGoogle = async () => {
     setError('');
@@ -771,6 +837,14 @@ export default function Profile() {
               </div>
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
+                  Push notifications
+                </p>
+                <p className="font-medium text-slate-900 dark:text-slate-100 m-0">
+                  {fcmToken ? 'Enabled' : 'Disabled'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
                   Reminder lead time
                 </p>
                 <p className="font-medium text-slate-900 dark:text-slate-100 m-0">
@@ -1221,6 +1295,62 @@ export default function Profile() {
                   </div>
                 </div>
               )}
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-4">
+            <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
+              Push Notifications
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">
+              Receive push notifications in this browser when maintenance
+              reminders are due.
+            </p>
+            <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+              {pushPermission === 'unsupported' && (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Push notifications are not supported in this browser.
+                </p>
+              )}
+              {pushPermission === 'denied' && (
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  Notifications are blocked by your browser. To enable, update
+                  your browser or OS notification settings for this site.
+                </p>
+              )}
+              {pushPermission === 'granted' && fcmToken && (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Push notifications are enabled for this browser.
+                </p>
+              )}
+              {pushPermission !== 'unsupported' &&
+                pushPermission !== 'denied' && (
+                  <div className="flex gap-3 flex-wrap">
+                    {!fcmToken ? (
+                      <button
+                        type="button"
+                        id="enablePushNotifications"
+                        onClick={() => void handleEnablePushNotifications()}
+                        disabled={pushSaving}
+                        className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                      >
+                        {pushSaving ? 'Enabling…' : 'Enable Push Notifications'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        id="disablePushNotifications"
+                        onClick={() => void handleDisablePushNotifications()}
+                        disabled={pushSaving}
+                        className="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-60"
+                      >
+                        {pushSaving
+                          ? 'Disabling…'
+                          : 'Disable Push Notifications'}
+                      </button>
+                    )}
+                  </div>
+                )}
+            </div>
           </div>
 
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">

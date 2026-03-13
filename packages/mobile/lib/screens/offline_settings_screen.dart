@@ -42,7 +42,10 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Enable offline mode to access your data without an internet connection. Changes will sync when you reconnect.',
-                          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         SwitchListTile(
@@ -133,7 +136,10 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                           const SizedBox(height: 16),
                           Text(
                             'Advanced options for managing offline data.',
-                            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           SizedBox(
@@ -176,7 +182,10 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
 
                 Text(
                   'Offline mode stores your vehicle and maintenance data locally on your device. This allows you to view and edit data without an internet connection.',
-                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],

@@ -455,7 +455,9 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                             color: colorScheme.secondary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: colorScheme.secondary.withValues(alpha: 0.35),
+                              color: colorScheme.secondary.withValues(
+                                alpha: 0.35,
+                              ),
                             ),
                           ),
                           child: Column(
@@ -567,9 +569,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: _isSaving
-                      ? CircularProgressIndicator(
-                          color: colorScheme.onPrimary,
-                        )
+                      ? CircularProgressIndicator(color: colorScheme.onPrimary)
                       : const Text('Save Changes'),
                 ),
               ),

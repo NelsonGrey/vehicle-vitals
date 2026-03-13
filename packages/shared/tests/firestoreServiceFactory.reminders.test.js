@@ -3,38 +3,26 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createFirestoreService } from '../src/firestoreServiceFactory.js';
 
 function createMockFirestoreHelpers() {
-  const writes: Array<Record<string, unknown>> = [];
+  const writes = [];
 
-  const collection = (_db: unknown, path: string) => ({
-    __kind: 'collection',
-    path,
-  });
-  const doc = (_db: unknown, path: string) => ({ __kind: 'doc', path });
+  const collection = (_db, path) => ({ __kind: 'collection', path });
+  const doc = (_db, path) => ({ __kind: 'doc', path });
 
-  const addDoc = async (
-    collectionRef: { path: string },
-    data: Record<string, unknown>
-  ) => {
+  const addDoc = async (collectionRef, data) => {
     const id = `doc-${writes.length + 1}`;
     writes.push({ op: 'addDoc', path: `${collectionRef.path}/${id}`, data });
     return { id };
   };
 
-  const updateDoc = async (
-    docRef: { path: string },
-    data: Record<string, unknown>
-  ) => {
+  const updateDoc = async (docRef, data) => {
     writes.push({ op: 'updateDoc', path: docRef.path, data });
   };
 
-  const deleteDoc = async (docRef: { path: string }) => {
+  const deleteDoc = async docRef => {
     writes.push({ op: 'deleteDoc', path: docRef.path });
   };
 
-  const setDoc = async (
-    docRef: { path: string },
-    data: Record<string, unknown>
-  ) => {
+  const setDoc = async (docRef, data) => {
     writes.push({ op: 'setDoc', path: docRef.path, data });
   };
 
@@ -64,8 +52,8 @@ function createMockFirestoreHelpers() {
 }
 
 describe('createFirestoreService reminder lifecycle', () => {
-  let writes: Array<Record<string, unknown>>;
-  let service: ReturnType<typeof createFirestoreService>;
+  let writes;
+  let service;
 
   beforeEach(() => {
     const { writes: capturedWrites, helpers } = createMockFirestoreHelpers();
@@ -85,12 +73,8 @@ describe('createFirestoreService reminder lifecycle', () => {
     expect(created.title).toBe('Oil Change');
     expect(writes[0].op).toBe('addDoc');
     expect(writes[0].path).toMatch('users/user-123/vehicles/VIN001/reminders/');
-    expect((writes[0].data as Record<string, unknown>).createdAt).toBe(
-      'SERVER_TS'
-    );
-    expect((writes[0].data as Record<string, unknown>).updatedAt).toBe(
-      'SERVER_TS'
-    );
+    expect(writes[0].data.createdAt).toBe('SERVER_TS');
+    expect(writes[0].data.updatedAt).toBe('SERVER_TS');
   });
 
   it('completes a reminder with completion status and timestamp', async () => {
@@ -164,7 +148,7 @@ describe('createFirestoreService reminder lifecycle', () => {
       { id: 'rem-a', data: () => ({ title: 'Oil Change', status: 'active' }) },
       { id: 'rem-b', data: () => ({ title: 'Tire Rotation', status: 'snoozed' }) },
     ];
-    (helpers as Record<string, unknown>).getDocs = async () => ({ docs: mockDocs });
+    helpers.getDocs = async () => ({ docs: mockDocs });
     const svc = createFirestoreService({
       db: {},
       auth: { currentUser: { uid: 'user-123' } },

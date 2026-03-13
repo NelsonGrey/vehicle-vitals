@@ -549,6 +549,7 @@ test('runMaintenanceReminderSweep sends reminders only for eligible users/vehicl
   assert.equal(summary.usersScanned, 3);
   assert.equal(summary.vehiclesScanned, 2);
   assert.equal(summary.remindersSent, 1);
+  assert.equal(summary.reminderFailures, 0);
   assert.deepEqual(sentEmails, [
     {
       email: 'enabled@example.com',
@@ -585,6 +586,51 @@ test('runMaintenanceReminderSweep skips users without valid ids', async () => {
   assert.equal(summary.usersScanned, 2);
   assert.equal(summary.vehiclesScanned, 0);
   assert.equal(summary.remindersSent, 0);
+  assert.equal(summary.reminderFailures, 0);
+});
+
+test('runMaintenanceReminderSweep continues after reminder delivery failure', async () => {
+  const attemptedVins = [];
+
+  const summary = await runMaintenanceReminderSweep({
+    async queryDocuments(collection) {
+      if (collection === 'users') {
+        return [
+          {
+            id: 'resilience-user',
+            email: 'resilience@example.com',
+            emailRemindersEnabled: true,
+          },
+        ];
+      }
+
+      if (collection === 'users/resilience-user/vehicles') {
+        return [
+          { vin: 'VIN-FAIL', make: 'Ford', model: 'Escape', year: 2020 },
+          { vin: 'VIN-OK', make: 'Mazda', model: 'CX-5', year: 2023 },
+        ];
+      }
+
+      return [];
+    },
+    async getUpcomingMaintenance() {
+      return [
+        { title: 'Oil Change', dueDate: 'Within 30 days', type: 'preventive' },
+      ];
+    },
+    async sendReminderEmail(_email, vehicle) {
+      attemptedVins.push(vehicle.vin);
+      if (vehicle.vin === 'VIN-FAIL') {
+        throw new Error('Simulated delivery outage');
+      }
+    },
+  });
+
+  assert.deepEqual(attemptedVins, ['VIN-FAIL', 'VIN-OK']);
+  assert.equal(summary.usersScanned, 1);
+  assert.equal(summary.vehiclesScanned, 2);
+  assert.equal(summary.remindersSent, 1);
+  assert.equal(summary.reminderFailures, 1);
 });
 
 test('verifyPremiumPurchase rejects without auth context', async () => {

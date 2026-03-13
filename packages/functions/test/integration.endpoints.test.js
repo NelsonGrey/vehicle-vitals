@@ -9,6 +9,7 @@ const {
   getPremiumEntitlement,
   verifyPremiumPurchase,
   deriveUpcomingMaintenanceItems,
+  runMaintenanceReminderSweep,
 } = require('../lib/index.js');
 
 const originalFetch = global.fetch;
@@ -482,6 +483,108 @@ test('deriveUpcomingMaintenanceItems suggests reminder for stale oil history', (
 
   assert.equal(items.length, 1);
   assert.equal(items[0].title, 'Oil Change');
+});
+
+test('runMaintenanceReminderSweep sends reminders only for eligible users/vehicles', async () => {
+  const sentEmails = [];
+  const queriedCollections = [];
+
+  const summary = await runMaintenanceReminderSweep({
+    async queryDocuments(collection) {
+      queriedCollections.push(collection);
+
+      if (collection === 'users') {
+        return [
+          {
+            id: 'user-enabled',
+            email: 'enabled@example.com',
+            emailRemindersEnabled: true,
+          },
+          {
+            id: 'user-disabled',
+            email: 'disabled@example.com',
+            emailRemindersEnabled: false,
+          },
+          {
+            id: 'user-no-email',
+            emailRemindersEnabled: true,
+          },
+        ];
+      }
+
+      if (collection === 'users/user-enabled/vehicles') {
+        return [
+          { vin: 'VIN-1', make: 'Honda', model: 'Civic', year: 2021 },
+          { vin: 'VIN-2', make: 'Toyota', model: 'Camry', year: 2022 },
+        ];
+      }
+
+      return [];
+    },
+    async getUpcomingMaintenance(vehicle) {
+      if (vehicle.vin === 'VIN-1') {
+        return [
+          {
+            title: 'Oil Change',
+            dueDate: 'Within 30 days',
+            type: 'preventive',
+          },
+        ];
+      }
+      return [];
+    },
+    async sendReminderEmail(email, vehicle, maintenanceItems) {
+      sentEmails.push({
+        email,
+        vin: vehicle.vin,
+        count: maintenanceItems.length,
+      });
+    },
+  });
+
+  assert.deepEqual(queriedCollections, [
+    'users',
+    'users/user-enabled/vehicles',
+  ]);
+  assert.equal(summary.usersScanned, 3);
+  assert.equal(summary.vehiclesScanned, 2);
+  assert.equal(summary.remindersSent, 1);
+  assert.deepEqual(sentEmails, [
+    {
+      email: 'enabled@example.com',
+      vin: 'VIN-1',
+      count: 1,
+    },
+  ]);
+});
+
+test('runMaintenanceReminderSweep skips users without valid ids', async () => {
+  const summary = await runMaintenanceReminderSweep({
+    async queryDocuments(collection) {
+      if (collection === 'users') {
+        return [
+          { email: 'no-id@example.com', emailRemindersEnabled: true },
+          {
+            id: '',
+            email: 'blank-id@example.com',
+            emailRemindersEnabled: true,
+          },
+        ];
+      }
+
+      throw new Error(`Unexpected query path: ${collection}`);
+    },
+    async getUpcomingMaintenance() {
+      throw new Error('getUpcomingMaintenance should not be called');
+    },
+    async sendReminderEmail() {
+      throw new Error('sendReminderEmail should not be called');
+    },
+  });
+
+  assert.equal(summary.usersScanned, 2);
+  assert.equal(summary.vehiclesScanned, 0);
+  assert.equal(summary.remindersSent, 0);
 });
 
 test('verifyPremiumPurchase rejects without auth context', async () => {

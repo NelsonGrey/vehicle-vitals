@@ -496,7 +496,10 @@ export default function UpcomingTasks() {
           lastDeliveryError: message,
         });
       } catch (persistError) {
-        console.error('Failed to persist reminder delivery failure', persistError);
+        console.error(
+          'Failed to persist reminder delivery failure',
+          persistError
+        );
       }
 
       setSavedReminders(prev =>

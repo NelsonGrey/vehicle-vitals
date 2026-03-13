@@ -15,10 +15,12 @@ import {
   getReminders,
   getVehicle,
   getVehicles,
+  markReminderDelivery,
   reopenReminder,
   snoozeReminder,
 } from '../src/shared/firestoreService';
 import { createMaintenanceCalendarEvent } from '../src/utils/calendarService';
+import { sendReminderDeliveryEmail } from '../src/utils/reminderDeliveryService';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getVehicle: vi.fn(),
@@ -29,6 +31,7 @@ vi.mock('../src/shared/firestoreService', () => ({
   snoozeReminder: vi.fn(),
   dismissReminder: vi.fn(),
   reopenReminder: vi.fn(),
+  markReminderDelivery: vi.fn(),
 }));
 
 vi.mock('@vehicle-vitals/shared', () => ({
@@ -37,6 +40,10 @@ vi.mock('@vehicle-vitals/shared', () => ({
 
 vi.mock('../src/utils/calendarService', () => ({
   createMaintenanceCalendarEvent: vi.fn(),
+}));
+
+vi.mock('../src/utils/reminderDeliveryService', () => ({
+  sendReminderDeliveryEmail: vi.fn(),
 }));
 
 const VEHICLE = {
@@ -72,9 +79,11 @@ describe('UpcomingTasks reminder actions', () => {
     snoozeReminder.mockResolvedValue(undefined);
     dismissReminder.mockResolvedValue(undefined);
     reopenReminder.mockResolvedValue(undefined);
+    markReminderDelivery.mockResolvedValue(undefined);
     createMaintenanceCalendarEvent.mockResolvedValue({
       actionUrl: 'https://calendar.example/event',
     });
+    sendReminderDeliveryEmail.mockResolvedValue({ success: true });
     getUpcomingMaintenance.mockReturnValue([]);
   });
 
@@ -204,5 +213,59 @@ describe('UpcomingTasks reminder actions', () => {
       '_blank',
       'noopener,noreferrer'
     );
+  });
+
+  it('sends reminder email and persists sent delivery status', async () => {
+    const reminderWithMileage = {
+      ...ACTIVE_REMINDER,
+      nextDueMileage: 35000,
+    };
+    getReminders.mockResolvedValue([reminderWithMileage]);
+    render(<UpcomingTasks />);
+
+    await waitFor(() => screen.getByText('Oil Change'));
+    fireEvent.change(screen.getByLabelText('Reminder Email'), {
+      target: { value: 'owner@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send Email Now' }));
+
+    await waitFor(() => {
+      expect(sendReminderDeliveryEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'owner@example.com',
+          vehicle: expect.objectContaining({ vin: 'VIN001' }),
+        })
+      );
+    });
+    expect(markReminderDelivery).toHaveBeenCalledWith(
+      'VIN001',
+      'rem-1',
+      expect.objectContaining({
+        deliveryStatus: 'sent',
+      })
+    );
+    expect(window.alert).toHaveBeenCalledWith('Reminder email sent.');
+  });
+
+  it('persists failed delivery status when email send fails', async () => {
+    sendReminderDeliveryEmail.mockRejectedValueOnce(new Error('Provider down'));
+    render(<UpcomingTasks />);
+
+    await waitFor(() => screen.getByText('Oil Change'));
+    fireEvent.change(screen.getByLabelText('Reminder Email'), {
+      target: { value: 'owner@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send Email Now' }));
+
+    await waitFor(() => {
+      expect(markReminderDelivery).toHaveBeenCalledWith(
+        'VIN001',
+        'rem-1',
+        expect.objectContaining({
+          deliveryStatus: 'failed',
+          lastDeliveryError: 'Provider down',
+        })
+      );
+    });
   });
 });

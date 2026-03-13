@@ -222,6 +222,16 @@ export function createFirestoreService({ db, auth, helpers }) {
     );
   }
 
+  async function markReminderDelivery(vin, reminderId, delivery) {
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error('Not authenticated');
+    const ref = doc(
+      db,
+      `users/${userId}/vehicles/${vin}/reminders/${reminderId}`
+    );
+    await updateDoc(ref, withTimestamps(delivery));
+  }
+
   async function deleteVehicle(vin) {
     const userId = auth.currentUser?.uid;
     if (!userId) throw new Error('Not authenticated');
@@ -247,5 +257,6 @@ export function createFirestoreService({ db, auth, helpers }) {
     snoozeReminder,
     dismissReminder,
     reopenReminder,
+    markReminderDelivery,
   };
 }

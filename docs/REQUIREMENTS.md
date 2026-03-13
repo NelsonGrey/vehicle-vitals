@@ -17,15 +17,15 @@ This file is the delivery contract for what is implemented now versus what is pa
 
 ## Feature Traceability Baseline (March 2026)
 
-| Feature Area                 | Product Design Intent | Current Delivery Reality                          | Primary Tracking Location       |
-| ---------------------------- | --------------------- | ------------------------------------------------- | ------------------------------- |
-| Core web vehicle workflows   | Required              | 🟡 Partial                                        | Implementation Reality Snapshot |
-| Mobile production parity     | Required              | 🔴 Not production-capable in current build config | Implementation Reality Snapshot |
-| Reminder lifecycle actions   | Required              | 🔴 Not implemented end-to-end                     | Implementation Reality Snapshot |
-| Reminder scheduling pipeline | Required              | 🟡 Partial                                        | Implementation Reality Snapshot |
-| Export records               | Required              | 🟡 Partial                                        | Implementation Reality Snapshot |
-| Service provider directory   | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap          |
-| Fleet manager workflows      | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap          |
+| Feature Area                 | Product Design Intent | Current Delivery Reality                          | Primary Tracking Location                                                                                                            |
+| ---------------------------- | --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Core web vehicle workflows   | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                      |
+| Mobile production parity     | Required              | 🔴 Not production-capable in current build config | Implementation Reality Snapshot                                                                                                      |
+| Reminder lifecycle actions   | Required              | 🔴 Not implemented end-to-end                     | Implementation Reality Snapshot                                                                                                      |
+| Reminder scheduling pipeline | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                      |
+| Export records               | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                      |
+| Service provider directory   | Planned               | 🟡 Partial                                        | Web route /app/providers now supports local provider lookup via callable; mobile parity and richer provider data remain roadmap work |
+| Fleet manager workflows      | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap                                                                                                               |
 
 Planning companion:
 

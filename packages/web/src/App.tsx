@@ -86,6 +86,7 @@ const AddVehicle = lazy(() => import('./pages/AddVehicle'));
 const EditVehicle = lazy(() => import('./pages/EditVehicle'));
 const Records = lazy(() => import('./pages/Records'));
 const Profile = lazy(() => import('./pages/Profile'));
+const ServiceProviders = lazy(() => import('./pages/ServiceProviders'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
 const UpcomingTasks = lazy(() => import('./pages/UpcomingTasks'));
 
@@ -248,6 +249,7 @@ function App() {
                 <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
                 <Route path="records/:vin" element={<Records />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="providers" element={<ServiceProviders />} />
                 <Route path="timeline" element={<TimelineDashboard />} />
                 <Route path="upcoming" element={<UpcomingTasks />} />
               </Route>
@@ -264,6 +266,10 @@ function App() {
                     <EditVehicle />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="providers"
+                element={<Navigate to="/app/providers" replace />}
               />
               <Route
                 path="profile"

@@ -7,10 +7,12 @@ import {
   getReminders,
   getVehicle,
   getVehicles,
+  markReminderDelivery,
   reopenReminder,
   snoozeReminder,
 } from '../shared/firestoreService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
+import { sendReminderDeliveryEmail } from '../utils/reminderDeliveryService';
 
 interface UpcomingMaintenanceItem {
   id: string;
@@ -49,6 +51,9 @@ interface ReminderItem {
   snoozedUntil?: string;
   nextDueMileage?: number;
   milesUntilDue?: number;
+  deliveryStatus?: 'sent' | 'failed' | 'pending';
+  lastDeliveredAt?: string;
+  lastDeliveryError?: string;
 }
 
 export default function UpcomingTasks() {
@@ -70,11 +75,18 @@ export default function UpcomingTasks() {
   const [preferredLeadDays, setPreferredLeadDays] = useState(14);
   const [preferredDailyMiles, setPreferredDailyMiles] = useState(35);
   const [loading, setLoading] = useState(true);
+  const [deliveryEmail, setDeliveryEmail] = useState('');
   const [calendarTarget, setCalendarTarget] = useState<
     'google' | 'apple' | 'ics'
   >('google');
   const [savingCalendarKeys, setSavingCalendarKeys] = useState<Set<string>>(
     () => new Set()
+  );
+  const [sendingReminderIds, setSendingReminderIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [vehicleLookup, setVehicleLookup] = useState<Record<string, Vehicle>>(
+    {}
   );
 
   const buildReminderKey = (vin: string, serviceType?: string) =>
@@ -105,8 +117,21 @@ export default function UpcomingTasks() {
         if (Number.isFinite(dailyMiles) && dailyMiles > 0) {
           setPreferredDailyMiles(Math.round(dailyMiles));
         }
+        if (typeof preferenceDoc?.notificationEmail === 'string') {
+          setDeliveryEmail(preferenceDoc.notificationEmail);
+        }
 
         const vehicles = await getVehicles();
+        const nextVehicleLookup: Record<string, Vehicle> = {};
+        vehicles.forEach(vehicle => {
+          nextVehicleLookup[vehicle.vin] = {
+            vin: vehicle.vin,
+            make: vehicle.make,
+            model: vehicle.model,
+            year: vehicle.year,
+            mileage: vehicle.mileage,
+          };
+        });
 
         const allUpcoming: UpcomingItem[] = [];
         const nextSavedReminders: ReminderItem[] = [];
@@ -125,6 +150,9 @@ export default function UpcomingTasks() {
               snoozedUntil?: string;
               nextDueMileage?: number;
               milesUntilDue?: number;
+              deliveryStatus?: 'sent' | 'failed' | 'pending';
+              lastDeliveredAt?: string;
+              lastDeliveryError?: string;
             }) => {
               nextSavedReminders.push({
                 id: reminder.id,
@@ -135,6 +163,9 @@ export default function UpcomingTasks() {
                 snoozedUntil: reminder.snoozedUntil,
                 nextDueMileage: reminder.nextDueMileage,
                 milesUntilDue: reminder.milesUntilDue,
+                deliveryStatus: reminder.deliveryStatus,
+                lastDeliveredAt: reminder.lastDeliveredAt,
+                lastDeliveryError: reminder.lastDeliveryError,
               });
 
               if ((reminder.status || 'active') !== 'completed') {
@@ -179,6 +210,7 @@ export default function UpcomingTasks() {
         setUpcomingItems(allUpcoming);
         setSavedReminders(nextSavedReminders);
         setSavedReminderKeys(nextSavedReminderKeys);
+        setVehicleLookup(nextVehicleLookup);
       } catch (error) {
         console.error('Error loading upcoming tasks:', error);
       } finally {
@@ -401,6 +433,93 @@ export default function UpcomingTasks() {
     }
   };
 
+  const handleSendReminderNow = async (reminder: ReminderItem) => {
+    if (!reminder.id) return;
+
+    const recipient = deliveryEmail.trim();
+    if (!recipient || !recipient.includes('@')) {
+      alert('Enter a valid reminder email address.');
+      return;
+    }
+
+    const vehicle = vehicleLookup[reminder.vin];
+    if (!vehicle) {
+      alert('Vehicle details not found for this reminder.');
+      return;
+    }
+
+    setSendingReminderIds(prev => new Set(prev).add(reminder.id));
+    try {
+      await sendReminderDeliveryEmail({
+        email: recipient,
+        vehicle,
+        maintenanceItems: [
+          {
+            title: reminder.title,
+            dueDate:
+              typeof reminder.nextDueMileage === 'number'
+                ? `${reminder.nextDueMileage.toLocaleString()} miles`
+                : reminder.snoozedUntil
+                  ? `Snoozed until ${formatDateLabel(reminder.snoozedUntil)}`
+                  : 'Upcoming',
+          },
+        ],
+      });
+
+      const deliveredAt = new Date().toISOString();
+      await markReminderDelivery(reminder.vin, reminder.id, {
+        deliveryStatus: 'sent',
+        lastDeliveredAt: deliveredAt,
+        lastDeliveryError: null,
+      });
+
+      setSavedReminders(prev =>
+        prev.map(item =>
+          item.id === reminder.id
+            ? {
+                ...item,
+                deliveryStatus: 'sent',
+                lastDeliveredAt: deliveredAt,
+                lastDeliveryError: undefined,
+              }
+            : item
+        )
+      );
+      alert('Reminder email sent.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to send reminder';
+
+      try {
+        await markReminderDelivery(reminder.vin, reminder.id, {
+          deliveryStatus: 'failed',
+          lastDeliveryError: message,
+        });
+      } catch (persistError) {
+        console.error('Failed to persist reminder delivery failure', persistError);
+      }
+
+      setSavedReminders(prev =>
+        prev.map(item =>
+          item.id === reminder.id
+            ? {
+                ...item,
+                deliveryStatus: 'failed',
+                lastDeliveryError: message,
+              }
+            : item
+        )
+      );
+      alert(`Failed to send reminder email: ${message}`);
+    } finally {
+      setSendingReminderIds(prev => {
+        const next = new Set(prev);
+        next.delete(reminder.id);
+        return next;
+      });
+    }
+  };
+
   const reminderCounts = {
     all: savedReminders.length,
     active: savedReminders.filter(
@@ -478,6 +597,22 @@ export default function UpcomingTasks() {
             Alert window:{' '}
             <strong>{leadMilesThreshold.toLocaleString()} miles</strong>
           </div>
+          <div className="mb-3">
+            <label
+              htmlFor="reminderDeliveryEmail"
+              className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1"
+            >
+              Reminder Email
+            </label>
+            <input
+              id="reminderDeliveryEmail"
+              type="email"
+              value={deliveryEmail}
+              onChange={event => setDeliveryEmail(event.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+            />
+          </div>
 
           <div className="mb-3 flex flex-wrap gap-2">
             {(
@@ -523,6 +658,15 @@ export default function UpcomingTasks() {
                       ` • Snoozed until ${formatDateLabel(reminder.snoozedUntil)}`}
                     {reminder.status === 'completed' && ' • Completed'}
                     {reminder.status === 'dismissed' && ' • Dismissed'}
+                    {reminder.deliveryStatus === 'sent' &&
+                      reminder.lastDeliveredAt &&
+                      ` • Email sent ${formatDateLabel(reminder.lastDeliveredAt)}`}
+                    {reminder.deliveryStatus === 'failed' &&
+                      ` • Delivery failed${
+                        reminder.lastDeliveryError
+                          ? `: ${reminder.lastDeliveryError}`
+                          : ''
+                      }`}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
@@ -536,6 +680,20 @@ export default function UpcomingTasks() {
                     </button>
                   ) : (
                     <>
+                      <button
+                        onClick={() => void handleSendReminderNow(reminder)}
+                        disabled={
+                          reminder.status === 'completed' ||
+                          reminder.status === 'dismissed' ||
+                          actingReminderIds.has(reminder.id) ||
+                          sendingReminderIds.has(reminder.id)
+                        }
+                        className="px-3 py-1.5 border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {sendingReminderIds.has(reminder.id)
+                          ? 'Sending...'
+                          : 'Send Email Now'}
+                      </button>
                       <button
                         onClick={() => void handleSnoozeReminder(reminder)}
                         disabled={

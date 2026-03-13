@@ -58,6 +58,7 @@ const initializeFirestoreService = async () => {
       snoozeReminder: () => Promise.reject('Firestore not available'),
       dismissReminder: () => Promise.reject('Firestore not available'),
       reopenReminder: () => Promise.reject('Firestore not available'),
+      markReminderDelivery: () => Promise.reject('Firestore not available'),
       deleteVehicle: () => Promise.reject('Firestore not available'),
       deleteMaintenanceEntry: () => Promise.reject('Firestore not available'),
     };
@@ -96,3 +97,4 @@ export const completeReminder = createAsyncMethod('completeReminder');
 export const snoozeReminder = createAsyncMethod('snoozeReminder');
 export const dismissReminder = createAsyncMethod('dismissReminder');
 export const reopenReminder = createAsyncMethod('reopenReminder');
+export const markReminderDelivery = createAsyncMethod('markReminderDelivery');

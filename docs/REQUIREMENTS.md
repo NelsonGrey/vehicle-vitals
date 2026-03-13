@@ -35,14 +35,14 @@ Planning companion:
 
 ## Implementation Reality Snapshot (Code-Verified: March 2026)
 
-| Capability                                                | Delivery Status | Code Evidence                                                                                                                                     |
-| --------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Web app core (auth, vehicles, timeline, maintenance CRUD) | 🟡 Partial      | `packages/web/src/pages/Home.tsx`, `packages/web/src/pages/EditVehicle.tsx`, `packages/web/src/pages/TimelineDashboard.tsx`                       |
-| Mobile runtime parity                                     | � Partial       | Firebase/Auth/Firestore/notifications use real SDKs; push notification end-to-end delivery not fully validated in production                      |
-| Reminder lifecycle (add/snooze/dismiss/complete)          | � Implemented   | Full CRUD in `packages/shared/src/firestoreServiceFactory.js`; connected on web (`UpcomingTasks.tsx`) and mobile (`upcoming_tasks_screen.dart`)   |
-| Scheduled reminder checks                                 | � Implemented   | Scheduled sweep + injectable `runMaintenanceReminderSweep` / `runMaintenanceReminderSchedule` in `packages/functions/src/index.ts`; tested        |
-| Reminder delivery integration                             | 🟡 Partial      | `sendMaintenanceReminder` HTTP endpoint and `sendEmail` provider implemented; web reminder center now supports manual send + persisted delivery status, while production SendGrid reliability still needs end-to-end validation           |
-| Data export                                               | � Implemented   | Web CSV/PDF in `packages/web/src/utils/dataExport.js`; mobile CSV/PDF via `packages/mobile/lib/services/data_export_service.dart` and share sheet |
+| Capability                                                | Delivery Status | Code Evidence                                                                                                                                                                                                                   |
+| --------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web app core (auth, vehicles, timeline, maintenance CRUD) | 🟡 Partial      | `packages/web/src/pages/Home.tsx`, `packages/web/src/pages/EditVehicle.tsx`, `packages/web/src/pages/TimelineDashboard.tsx`                                                                                                     |
+| Mobile runtime parity                                     | � Partial       | Firebase/Auth/Firestore/notifications use real SDKs; push notification end-to-end delivery not fully validated in production                                                                                                    |
+| Reminder lifecycle (add/snooze/dismiss/complete)          | � Implemented   | Full CRUD in `packages/shared/src/firestoreServiceFactory.js`; connected on web (`UpcomingTasks.tsx`) and mobile (`upcoming_tasks_screen.dart`)                                                                                 |
+| Scheduled reminder checks                                 | � Implemented   | Scheduled sweep + injectable `runMaintenanceReminderSweep` / `runMaintenanceReminderSchedule` in `packages/functions/src/index.ts`; tested                                                                                      |
+| Reminder delivery integration                             | 🟡 Partial      | `sendMaintenanceReminder` HTTP endpoint and `sendEmail` provider implemented; web reminder center now supports manual send + persisted delivery status, while production SendGrid reliability still needs end-to-end validation |
+| Data export                                               | � Implemented   | Web CSV/PDF in `packages/web/src/utils/dataExport.js`; mobile CSV/PDF via `packages/mobile/lib/services/data_export_service.dart` and share sheet                                                                               |
 
 Legend: `🟢 Implemented`, `🟡 Partial`, `🔴 Not implemented`.
 
@@ -360,7 +360,7 @@ Based on the attached core features requirements, here's the comprehensive statu
 | Requirement          | Web         | Mobile      | Status         | Notes                                                                                                                                                                                         |
 | -------------------- | ----------- | ----------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Push reminders       | 🟡 Partial  | 🟡 Partial  | 🟡 **PARTIAL** | Scaffolding exists but lifecycle UX and reliability are not fully end-to-end                                                                                                                  |
-| Email reminders      | 🟡 Partial  | 🟡 Partial  | 🟡 **PARTIAL** | Web supports manual reminder send and delivery outcome tracking in Upcoming Tasks; full automated, cross-platform delivery reliability still needs production validation                     |
+| Email reminders      | 🟡 Partial  | 🟡 Partial  | 🟡 **PARTIAL** | Web supports manual reminder send and delivery outcome tracking in Upcoming Tasks; full automated, cross-platform delivery reliability still needs production validation                      |
 | Calendar integration | ✅ Complete | ✅ Complete | 🟡 **PARTIAL** | Calendar event creation is available in web and mobile upcoming/maintenance flows via backend calendar endpoints; full provider-account sync reliability still requires production validation |
 
 ### 5. Dashboard/History

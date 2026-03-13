@@ -18,6 +18,7 @@ import {
   reopenReminder,
   snoozeReminder,
 } from '../src/shared/firestoreService';
+import { createMaintenanceCalendarEvent } from '../src/utils/calendarService';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getVehicle: vi.fn(),
@@ -32,6 +33,10 @@ vi.mock('../src/shared/firestoreService', () => ({
 
 vi.mock('@vehicle-vitals/shared', () => ({
   getUpcomingMaintenance: vi.fn(() => []),
+}));
+
+vi.mock('../src/utils/calendarService', () => ({
+  createMaintenanceCalendarEvent: vi.fn(),
 }));
 
 const VEHICLE = {
@@ -58,6 +63,8 @@ const DISMISSED_REMINDER = {
 
 describe('UpcomingTasks reminder actions', () => {
   beforeEach(() => {
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
+    vi.spyOn(window, 'open').mockImplementation(() => null);
     getVehicle.mockResolvedValue(null);
     getVehicles.mockResolvedValue([VEHICLE]);
     getReminders.mockResolvedValue([ACTIVE_REMINDER]);
@@ -65,6 +72,9 @@ describe('UpcomingTasks reminder actions', () => {
     snoozeReminder.mockResolvedValue(undefined);
     dismissReminder.mockResolvedValue(undefined);
     reopenReminder.mockResolvedValue(undefined);
+    createMaintenanceCalendarEvent.mockResolvedValue({
+      actionUrl: 'https://calendar.example/event',
+    });
     getUpcomingMaintenance.mockReturnValue([]);
   });
 
@@ -160,5 +170,39 @@ describe('UpcomingTasks reminder actions', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Active/ }));
     expect(screen.getByText('Oil Change')).toBeInTheDocument();
     expect(screen.queryByText('Tire Rotation')).not.toBeInTheDocument();
+  });
+
+  it('creates calendar event for an upcoming item', async () => {
+    getReminders.mockResolvedValue([]);
+    getUpcomingMaintenance.mockReturnValue([
+      {
+        id: 'oil_change',
+        description: 'Oil and filter change',
+        frequency: 'Every 5,000 miles',
+        interval: 5000,
+        nextDueMileage: 35000,
+        milesUntilDue: 400,
+      },
+    ]);
+
+    render(<UpcomingTasks />);
+
+    await waitFor(() => screen.getByText('Oil and filter change'));
+    fireEvent.click(screen.getByRole('button', { name: 'Add to Calendar' }));
+
+    await waitFor(() => {
+      expect(createMaintenanceCalendarEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vehicleVin: 'VIN001',
+          title: 'Oil and filter change',
+          target: 'google',
+        })
+      );
+    });
+    expect(window.open).toHaveBeenCalledWith(
+      'https://calendar.example/event',
+      '_blank',
+      'noopener,noreferrer'
+    );
   });
 });

@@ -10,6 +10,7 @@ import {
   reopenReminder,
   snoozeReminder,
 } from '../shared/firestoreService';
+import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 
 interface UpcomingMaintenanceItem {
   id: string;
@@ -69,6 +70,12 @@ export default function UpcomingTasks() {
   const [preferredLeadDays, setPreferredLeadDays] = useState(14);
   const [preferredDailyMiles, setPreferredDailyMiles] = useState(35);
   const [loading, setLoading] = useState(true);
+  const [calendarTarget, setCalendarTarget] = useState<
+    'google' | 'apple' | 'ics'
+  >('google');
+  const [savingCalendarKeys, setSavingCalendarKeys] = useState<Set<string>>(
+    () => new Set()
+  );
 
   const buildReminderKey = (vin: string, serviceType?: string) =>
     `${vin}:${serviceType || 'maintenance'}`;
@@ -233,6 +240,50 @@ export default function UpcomingTasks() {
       setSavingReminderKeys(prev => {
         const next = new Set(prev);
         next.delete(reminderKey);
+        return next;
+      });
+    }
+  };
+
+  const handleAddToCalendar = async (item: UpcomingItem) => {
+    const actionKey = buildReminderKey(item.vehicle.vin, item.serviceType);
+    setSavingCalendarKeys(prev => new Set(prev).add(actionKey));
+    try {
+      const dueDate = new Date();
+      const milesUntilDue = Number(item.milesUntilDue || 0);
+      const dayOffset = Math.max(
+        1,
+        Math.min(180, Math.ceil(milesUntilDue / 100))
+      );
+      dueDate.setDate(dueDate.getDate() + dayOffset);
+
+      const startAt = dueDate.toISOString();
+      const endAt = new Date(dueDate.getTime() + 60 * 60 * 1000).toISOString();
+
+      const event = await createMaintenanceCalendarEvent({
+        vehicleVin: item.vehicle.vin,
+        title: item.description,
+        description: `${item.vehicle.year} ${item.vehicle.make} ${item.vehicle.model} maintenance reminder`,
+        startAt,
+        endAt,
+        target: calendarTarget,
+      });
+
+      const destination = event.actionUrl || event.downloadUrl;
+      if (destination) {
+        window.open(destination, '_blank', 'noopener,noreferrer');
+      }
+
+      alert(`Calendar event created for ${calendarTarget}.`);
+    } catch (error) {
+      alert(
+        'Failed to create calendar event: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setSavingCalendarKeys(prev => {
+        const next = new Set(prev);
+        next.delete(actionKey);
         return next;
       });
     }
@@ -553,6 +604,28 @@ export default function UpcomingTasks() {
                     {visibleUpcomingItems.length === 1 ? '' : 's'} in range
                   </p>
                 </div>
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="upcomingCalendarTarget"
+                    className="text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    Calendar
+                  </label>
+                  <select
+                    id="upcomingCalendarTarget"
+                    value={calendarTarget}
+                    onChange={event =>
+                      setCalendarTarget(
+                        event.target.value as 'google' | 'apple' | 'ics'
+                      )
+                    }
+                    className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-900"
+                  >
+                    <option value="google">Google</option>
+                    <option value="apple">Apple</option>
+                    <option value="ics">ICS</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid gap-4">
@@ -604,37 +677,61 @@ export default function UpcomingTasks() {
                       </div>
 
                       <div>
-                        <button
-                          onClick={() => void handleSaveReminder(item)}
-                          disabled={
-                            savedReminderKeys.has(
-                              buildReminderKey(
-                                item.vehicle.vin,
-                                item.serviceType
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => void handleSaveReminder(item)}
+                            disabled={
+                              savedReminderKeys.has(
+                                buildReminderKey(
+                                  item.vehicle.vin,
+                                  item.serviceType
+                                )
+                              ) ||
+                              savingReminderKeys.has(
+                                buildReminderKey(
+                                  item.vehicle.vin,
+                                  item.serviceType
+                                )
                               )
-                            ) ||
-                            savingReminderKeys.has(
+                            }
+                            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {savingReminderKeys.has(
                               buildReminderKey(
                                 item.vehicle.vin,
                                 item.serviceType
                               )
                             )
-                          }
-                          className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {savingReminderKeys.has(
-                            buildReminderKey(item.vehicle.vin, item.serviceType)
-                          )
-                            ? 'Saving...'
-                            : savedReminderKeys.has(
-                                  buildReminderKey(
-                                    item.vehicle.vin,
-                                    item.serviceType
+                              ? 'Saving...'
+                              : savedReminderKeys.has(
+                                    buildReminderKey(
+                                      item.vehicle.vin,
+                                      item.serviceType
+                                    )
                                   )
-                                )
-                              ? 'Reminder Saved'
-                              : 'Save Reminder'}
-                        </button>
+                                ? 'Reminder Saved'
+                                : 'Save Reminder'}
+                          </button>
+                          <button
+                            onClick={() => void handleAddToCalendar(item)}
+                            disabled={savingCalendarKeys.has(
+                              buildReminderKey(
+                                item.vehicle.vin,
+                                item.serviceType
+                              )
+                            )}
+                            className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {savingCalendarKeys.has(
+                              buildReminderKey(
+                                item.vehicle.vin,
+                                item.serviceType
+                              )
+                            )
+                              ? 'Adding...'
+                              : 'Add to Calendar'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -7,12 +7,17 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
 import EnvironmentGate from './components/EnvironmentGate';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './shared/AuthContext';
+import {
+  buildReminderNotificationPath,
+  subscribeToForegroundMessages,
+} from './shared/notificationService';
 import { analytics, logger } from './utils/logger';
 
 // Component to handle logging and analytics
@@ -66,6 +71,61 @@ function AppAnalytics() {
   }, [location]);
 
   return null; // This component doesn't render anything
+}
+
+function AppNotificationBridge() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      return undefined;
+    }
+
+    let unsubscribe = () => {};
+    let isActive = true;
+
+    void subscribeToForegroundMessages(payload => {
+      const notificationTitle = payload.notification?.title || 'Vehicle Vitals';
+      const notificationBody =
+        payload.notification?.body || 'You have a maintenance reminder.';
+      const destination = buildReminderNotificationPath(payload.data);
+
+      if (
+        typeof Notification !== 'undefined' &&
+        Notification.permission === 'granted'
+      ) {
+        const notification = new Notification(notificationTitle, {
+          body: notificationBody,
+          tag: payload.data?.tag || 'vehicle-vitals-notification',
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          navigate(destination);
+          notification.close();
+        };
+        return;
+      }
+
+      window.alert(`${notificationTitle}\n\n${notificationBody}`);
+      navigate(destination);
+    }).then(nextUnsubscribe => {
+      if (!isActive) {
+        nextUnsubscribe();
+        return;
+      }
+
+      unsubscribe = nextUnsubscribe;
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [navigate, user]);
+
+  return null;
 }
 
 // Public pages - lazy loaded
@@ -144,6 +204,7 @@ function App() {
     >
       <AuthProvider>
         <AppAnalytics />
+        <AppNotificationBridge />
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Marketing (anonymous) pages */}

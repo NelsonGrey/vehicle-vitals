@@ -1,5 +1,6 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   addReminder,
   completeReminder,
@@ -57,6 +58,7 @@ interface ReminderItem {
 }
 
 export default function UpcomingTasks() {
+  const location = useLocation();
   const [upcomingItems, setUpcomingItems] = useState<UpcomingItem[]>([]);
   const [savedReminders, setSavedReminders] = useState<ReminderItem[]>([]);
   const [savedReminderKeys, setSavedReminderKeys] = useState<Set<string>>(
@@ -91,6 +93,10 @@ export default function UpcomingTasks() {
 
   const buildReminderKey = (vin: string, serviceType?: string) =>
     `${vin}:${serviceType || 'maintenance'}`;
+
+  const searchParams = new URLSearchParams(location.search);
+  const selectedVin = searchParams.get('vin')?.trim().toUpperCase();
+  const openedFromPush = searchParams.get('source') === 'push';
 
   const formatDateLabel = (value?: string) => {
     if (!value) return '';
@@ -539,13 +545,25 @@ export default function UpcomingTasks() {
   } as const;
 
   const visibleReminders = savedReminders.filter(reminder => {
+    if (selectedVin && reminder.vin.toUpperCase() !== selectedVin) {
+      return false;
+    }
+
     if (reminderFilter === 'all') return true;
     return (reminder.status || 'active') === reminderFilter;
   });
 
   const visibleUpcomingItems = alertsEnabled
-    ? upcomingItems.filter(item => item.milesUntilDue <= leadMilesThreshold)
+    ? upcomingItems.filter(item => {
+        if (selectedVin && item.vehicle.vin.toUpperCase() !== selectedVin) {
+          return false;
+        }
+
+        return item.milesUntilDue <= leadMilesThreshold;
+      })
     : [];
+
+  const selectedVehicle = selectedVin ? vehicleLookup[selectedVin] : undefined;
 
   const getUrgencyColor = (milesUntilDue: number) => {
     if (milesUntilDue <= 1000) return 'text-red-600 bg-red-50 border-red-200';
@@ -584,6 +602,27 @@ export default function UpcomingTasks() {
           </p>
         </div>
       </div>
+
+      {openedFromPush && (
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          <div>
+            Opened from a maintenance reminder notification.
+            {selectedVehicle
+              ? ` Showing items for ${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}.`
+              : selectedVin
+                ? ` Showing items for VIN ${selectedVin}.`
+                : ''}
+          </div>
+          {selectedVin ? (
+            <Link
+              to="/app/upcoming"
+              className="mt-2 inline-block font-medium text-blue-700 underline"
+            >
+              Show all vehicles
+            </Link>
+          ) : null}
+        </div>
+      )}
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">

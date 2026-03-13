@@ -7,6 +7,28 @@
 
 ---
 
+## Document Relationship & Scope Contract
+
+This file is the delivery contract for what is implemented now versus what is partial or planned.
+
+- `docs/PRODUCT_DESIGN.md` defines vision, UX intent, and roadmap direction.
+- `docs/REQUIREMENTS.md` defines implementation truth for active releases.
+- If a conflict exists between these documents, treat this file as source of truth for delivery status.
+
+## Feature Traceability Baseline (March 2026)
+
+| Feature Area                 | Product Design Intent | Current Delivery Reality                          | Primary Tracking Location       |
+| ---------------------------- | --------------------- | ------------------------------------------------- | ------------------------------- |
+| Core web vehicle workflows   | Required              | 🟡 Partial                                        | Implementation Reality Snapshot |
+| Mobile production parity     | Required              | 🔴 Not production-capable in current build config | Implementation Reality Snapshot |
+| Reminder lifecycle actions   | Required              | 🔴 Not implemented end-to-end                     | Implementation Reality Snapshot |
+| Reminder scheduling pipeline | Required              | 🟡 Partial                                        | Implementation Reality Snapshot |
+| Export records               | Required              | 🟡 Partial                                        | Implementation Reality Snapshot |
+| Service provider directory   | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap          |
+| Fleet manager workflows      | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap          |
+
+---
+
 ## Implementation Reality Snapshot (Code-Verified: March 2026)
 
 | Capability                                                | Delivery Status                                   | Code Evidence                                                                                                                            |
@@ -331,11 +353,11 @@ Based on the attached core features requirements, here's the comprehensive statu
 
 ### 4. Reminders & Notifications
 
-| Requirement          | Web         | Mobile      | Status                 | Notes                               |
-| -------------------- | ----------- | ----------- | ---------------------- | ----------------------------------- |
-| Push reminders       | ✅ Complete | ✅ Complete | ✅ **COMPLETE**        | Firebase Cloud Messaging configured |
-| Email reminders      | ✅ Complete | ✅ Complete | ✅ **COMPLETE**        | Firebase Functions email service    |
-| Calendar integration | ❌ Missing  | ❌ Missing  | ❌ **NOT IMPLEMENTED** | No calendar API integration         |
+| Requirement          | Web        | Mobile     | Status                 | Notes                                                                        |
+| -------------------- | ---------- | ---------- | ---------------------- | ---------------------------------------------------------------------------- |
+| Push reminders       | 🟡 Partial | 🟡 Partial | 🟡 **PARTIAL**         | Scaffolding exists but lifecycle UX and reliability are not fully end-to-end |
+| Email reminders      | 🟡 Partial | 🟡 Partial | 🟡 **PARTIAL**         | Delivery path exists but full product flow remains incomplete                |
+| Calendar integration | ❌ Missing | ❌ Missing | ❌ **NOT IMPLEMENTED** | No calendar API integration                                                  |
 
 ### 5. Dashboard/History
 

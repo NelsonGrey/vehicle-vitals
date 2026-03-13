@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_bottom_nav.dart';
+import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
@@ -18,6 +19,118 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _searchTerm = '';
   String? _selectedVin;
+
+  Widget? _maintenanceUrgencyChip(Vehicle vehicle, ColorScheme colorScheme) {
+    final items = MaintenanceSchedule.getUpcomingMaintenance(
+      vehicle.make,
+      vehicle.model,
+      vehicle.mileage,
+      vehicle.mileage + 10000,
+    );
+    if (items.isEmpty) return null;
+    final miles = items.first['milesUntilDue'] as int;
+    if (miles > 5000) return null;
+    final isUrgent = miles <= 1000;
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: isUrgent ? Colors.red.shade100 : Colors.orange.shade100,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        isUrgent ? '⚠ Maintenance due!' : 'Service due soon',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: isUrgent ? Colors.red.shade800 : Colors.orange.shade800,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMaintenanceSection(
+    BuildContext context,
+    Vehicle vehicle,
+    ColorScheme colorScheme,
+  ) {
+    final items = MaintenanceSchedule.getUpcomingMaintenance(
+      vehicle.make,
+      vehicle.model,
+      vehicle.mileage,
+      vehicle.mileage + 10000,
+    ).take(3).toList();
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Upcoming Maintenance',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+            GestureDetector(
+              onTap: () => context.push('/app/upcoming'),
+              child: Text(
+                'View all →',
+                style: TextStyle(fontSize: 12, color: colorScheme.primary),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ...items.map((item) {
+          final miles = item['milesUntilDue'] as int;
+          final isUrgent = miles <= 1000;
+          final isSoon = miles <= 5000;
+          final dotColor = isUrgent
+              ? Colors.red.shade500
+              : isSoon
+              ? Colors.orange.shade400
+              : Colors.grey.shade400;
+          final labelColor = isUrgent
+              ? Colors.red.shade700
+              : isSoon
+              ? Colors.orange.shade700
+              : Colors.grey.shade600;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    item['description'] as String,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                Text(
+                  miles <= 0 ? 'Due now' : '$miles mi',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,7 +397,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                             fontWeight: FontWeight.w700,
                                           ),
                                         ),
-                                        subtitle: Text('VIN: ${vehicle.vin}'),
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'VIN: ${vehicle.vin}',
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Builder(
+                                              builder: (ctx) {
+                                                final chip =
+                                                    _maintenanceUrgencyChip(
+                                                      vehicle,
+                                                      colorScheme,
+                                                    );
+                                                return chip ??
+                                                    const SizedBox.shrink();
+                                              },
+                                            ),
+                                          ],
+                                        ),
                                         trailing: vehicle.recallsCount > 0
                                             ? Container(
                                                 padding:
@@ -350,6 +484,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
+                                            _buildMaintenanceSection(
+                                              context,
+                                              selected,
+                                              colorScheme,
+                                            ),
                                             const Spacer(),
                                             Row(
                                               children: [

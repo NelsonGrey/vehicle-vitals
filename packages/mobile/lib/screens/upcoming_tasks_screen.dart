@@ -20,8 +20,28 @@ class UpcomingTasksScreen extends StatefulWidget {
 
 class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   List<Map<String, dynamic>> _upcomingItems = [];
+  List<Map<String, dynamic>> _savedReminders = [];
+  Set<String> _savedReminderKeys = <String>{};
+  Set<String> _savingReminderKeys = <String>{};
+  Set<String> _actingReminderIds = <String>{};
   bool _loading = true;
   final CalendarService _calendarService = CalendarService();
+
+  String _buildReminderKey(String vin, String serviceType) =>
+      '$vin:$serviceType';
+
+  String _serviceTypeForItem(Map<String, dynamic> item) {
+    return (item['id'] ?? item['description'] ?? 'maintenance').toString();
+  }
+
+  Map<String, dynamic>? _findReminder(String vin, String serviceType) {
+    for (final reminder in _savedReminders) {
+      if (reminder['vin'] == vin && reminder['serviceType'] == serviceType) {
+        return reminder;
+      }
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -37,8 +57,23 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       final vehicles = await firestoreService.getVehicles();
 
       final allUpcoming = <Map<String, dynamic>>[];
+      final nextSavedReminders = <Map<String, dynamic>>[];
+      final nextSavedReminderKeys = <String>{};
 
       for (final vehicle in vehicles) {
+        final reminders = await firestoreService.getReminders(vehicle.vin);
+        for (final reminder in reminders) {
+          final serviceType = (reminder['serviceType'] ?? 'maintenance')
+              .toString();
+          final status = (reminder['status'] ?? 'active').toString();
+          nextSavedReminders.add({...reminder, 'vin': vehicle.vin});
+          if (status != 'completed' && status != 'dismissed') {
+            nextSavedReminderKeys.add(
+              _buildReminderKey(vehicle.vin, serviceType),
+            );
+          }
+        }
+
         final currentMileage = vehicle.mileage;
         final upcoming = MaintenanceSchedule.getUpcomingMaintenance(
           vehicle.make,
@@ -59,6 +94,8 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
 
       setState(() {
         _upcomingItems = allUpcoming;
+        _savedReminders = nextSavedReminders;
+        _savedReminderKeys = nextSavedReminderKeys;
         _loading = false;
       });
     } catch (e) {
@@ -131,6 +168,252 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
           backgroundColor: colorScheme.error,
         ),
       );
+    }
+  }
+
+  Future<void> _saveReminder(Vehicle vehicle, Map<String, dynamic> item) async {
+    final firestoreService = context.read<FirestoreService>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final serviceType = _serviceTypeForItem(item);
+    final reminderKey = _buildReminderKey(vehicle.vin, serviceType);
+
+    if (_savedReminderKeys.contains(reminderKey)) {
+      return;
+    }
+
+    setState(() {
+      _savingReminderKeys = {..._savingReminderKeys, reminderKey};
+    });
+
+    try {
+      final created = await firestoreService.addReminder(vehicle.vin, {
+        'title': item['description'],
+        'description': '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+        'serviceType': serviceType,
+        'frequency': item['frequency'],
+        'interval': item['interval'],
+        'nextDueMileage': item['nextDueMileage'],
+        'milesUntilDue': item['milesUntilDue'],
+        'status': 'active',
+      });
+
+      if (!mounted) return;
+      setState(() {
+        _savedReminders = [
+          {...created, 'vin': vehicle.vin, 'serviceType': serviceType},
+          ..._savedReminders,
+        ];
+        _savedReminderKeys = {..._savedReminderKeys, reminderKey};
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Reminder saved.'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save reminder: $e'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _savingReminderKeys = {..._savingReminderKeys}..remove(reminderKey);
+        });
+      }
+    }
+  }
+
+  Future<void> _completeReminder(Map<String, dynamic> reminder) async {
+    final reminderId = reminder['id']?.toString();
+    final vin = reminder['vin']?.toString();
+    final serviceType = (reminder['serviceType'] ?? 'maintenance').toString();
+    if (reminderId == null || vin == null) return;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    setState(() {
+      _actingReminderIds = {..._actingReminderIds, reminderId};
+    });
+    try {
+      await context.read<FirestoreService>().completeReminder(vin, reminderId);
+      if (!mounted) return;
+      setState(() {
+        _savedReminders = _savedReminders
+            .map(
+              (r) => r['id'] == reminderId ? {...r, 'status': 'completed'} : r,
+            )
+            .toList();
+        _savedReminderKeys = {..._savedReminderKeys}
+          ..remove(_buildReminderKey(vin, serviceType));
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Reminder marked complete.'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to complete reminder: $e'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _actingReminderIds = {..._actingReminderIds}..remove(reminderId);
+        });
+      }
+    }
+  }
+
+  Future<void> _snoozeReminder(Map<String, dynamic> reminder) async {
+    final reminderId = reminder['id']?.toString();
+    final vin = reminder['vin']?.toString();
+    if (reminderId == null || vin == null) return;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final snoozedUntil = DateTime.now()
+        .add(const Duration(days: 14))
+        .toIso8601String()
+        .split('T')
+        .first;
+
+    setState(() {
+      _actingReminderIds = {..._actingReminderIds, reminderId};
+    });
+    try {
+      await context.read<FirestoreService>().snoozeReminder(
+        vin,
+        reminderId,
+        snoozedUntil,
+      );
+      if (!mounted) return;
+      setState(() {
+        _savedReminders = _savedReminders
+            .map(
+              (r) => r['id'] == reminderId
+                  ? {...r, 'status': 'snoozed', 'snoozedUntil': snoozedUntil}
+                  : r,
+            )
+            .toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Reminder snoozed for 14 days.'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to snooze reminder: $e'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _actingReminderIds = {..._actingReminderIds}..remove(reminderId);
+        });
+      }
+    }
+  }
+
+  Future<void> _dismissReminder(Map<String, dynamic> reminder) async {
+    final reminderId = reminder['id']?.toString();
+    final vin = reminder['vin']?.toString();
+    final serviceType = (reminder['serviceType'] ?? 'maintenance').toString();
+    if (reminderId == null || vin == null) return;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    setState(() {
+      _actingReminderIds = {..._actingReminderIds, reminderId};
+    });
+    try {
+      await context.read<FirestoreService>().dismissReminder(vin, reminderId);
+      if (!mounted) return;
+      setState(() {
+        _savedReminders = _savedReminders
+            .map(
+              (r) => r['id'] == reminderId ? {...r, 'status': 'dismissed'} : r,
+            )
+            .toList();
+        _savedReminderKeys = {..._savedReminderKeys}
+          ..remove(_buildReminderKey(vin, serviceType));
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Reminder dismissed.'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to dismiss reminder: $e'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _actingReminderIds = {..._actingReminderIds}..remove(reminderId);
+        });
+      }
+    }
+  }
+
+  Future<void> _restoreReminder(Map<String, dynamic> reminder) async {
+    final reminderId = reminder['id']?.toString();
+    final vin = reminder['vin']?.toString();
+    final serviceType = (reminder['serviceType'] ?? 'maintenance').toString();
+    if (reminderId == null || vin == null) return;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    setState(() {
+      _actingReminderIds = {..._actingReminderIds, reminderId};
+    });
+    try {
+      await context.read<FirestoreService>().reopenReminder(vin, reminderId);
+      if (!mounted) return;
+      setState(() {
+        _savedReminders = _savedReminders
+            .map((r) => r['id'] == reminderId ? {...r, 'status': 'active'} : r)
+            .toList();
+        _savedReminderKeys = {
+          ..._savedReminderKeys,
+          _buildReminderKey(vin, serviceType),
+        };
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Reminder restored.'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to restore reminder: $e'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _actingReminderIds = {..._actingReminderIds}..remove(reminderId);
+        });
+      }
     }
   }
 
@@ -246,6 +529,14 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
 
         final item = _upcomingItems[index - 1];
         final vehicle = item['vehicle'] as Vehicle;
+        final serviceType = _serviceTypeForItem(item);
+        final reminder = _findReminder(vehicle.vin, serviceType);
+        final reminderStatus = (reminder?['status'] ?? '').toString();
+        final reminderKey = _buildReminderKey(vehicle.vin, serviceType);
+        final isReminderBusy =
+            _savingReminderKeys.contains(reminderKey) ||
+            (reminder != null &&
+                _actingReminderIds.contains(reminder['id']?.toString() ?? ''));
         final milesUntilDue = item['milesUntilDue'] as int;
 
         return Card(
@@ -290,6 +581,29 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         ),
                       ),
                     ),
+                    if (reminder != null) ...[
+                      SizedBox(width: TwSpace.s2),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: TwSpace.s2,
+                          vertical: TwSpace.s1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(TwRadius.sm),
+                        ),
+                        child: Text(
+                          'Reminder: ${reminderStatus.isEmpty ? 'active' : reminderStatus}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 SizedBox(height: TwSpace.s2),
@@ -348,6 +662,81 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         OutlinedButton(
                           onPressed: () => _addItemToCalendar(vehicle, item),
                           child: const Text('Add to Calendar'),
+                        ),
+                        SizedBox(width: TwSpace.s2),
+                        OutlinedButton(
+                          onPressed: isReminderBusy
+                              ? null
+                              : reminder == null
+                              ? () => _saveReminder(vehicle, item)
+                              : () {
+                                  showModalBottomSheet<void>(
+                                    context: context,
+                                    builder: (context) {
+                                      return SafeArea(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (reminderStatus != 'completed')
+                                              ListTile(
+                                                leading: const Icon(
+                                                  Icons.check_circle_outline,
+                                                ),
+                                                title: const Text(
+                                                  'Mark Reminder Complete',
+                                                ),
+                                                onTap: () {
+                                                  Navigator.of(context).pop();
+                                                  _completeReminder(reminder);
+                                                },
+                                              ),
+                                            if (reminderStatus != 'snoozed')
+                                              ListTile(
+                                                leading: const Icon(
+                                                  Icons.snooze,
+                                                ),
+                                                title: const Text(
+                                                  'Snooze 14 Days',
+                                                ),
+                                                onTap: () {
+                                                  Navigator.of(context).pop();
+                                                  _snoozeReminder(reminder);
+                                                },
+                                              ),
+                                            if (reminderStatus != 'dismissed')
+                                              ListTile(
+                                                leading: const Icon(
+                                                  Icons.cancel,
+                                                ),
+                                                title: const Text('Dismiss'),
+                                                onTap: () {
+                                                  Navigator.of(context).pop();
+                                                  _dismissReminder(reminder);
+                                                },
+                                              ),
+                                            if (reminderStatus == 'dismissed' ||
+                                                reminderStatus == 'completed')
+                                              ListTile(
+                                                leading: const Icon(
+                                                  Icons.restore,
+                                                ),
+                                                title: const Text('Restore'),
+                                                onTap: () {
+                                                  Navigator.of(context).pop();
+                                                  _restoreReminder(reminder);
+                                                },
+                                              ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                          child: Text(
+                            reminder == null
+                                ? 'Save Reminder'
+                                : 'Reminder Actions',
+                          ),
                         ),
                         SizedBox(width: TwSpace.s2),
                         ElevatedButton(

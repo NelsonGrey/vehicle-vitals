@@ -166,6 +166,9 @@ class FirestoreService {
     String vin,
   ) => _vehiclesCollection.doc(vin).collection('maintenance');
 
+  CollectionReference<Map<String, dynamic>> _remindersCollection(String vin) =>
+      _vehiclesCollection.doc(vin).collection('reminders');
+
   // Get all vehicles for current user
   Future<List<Vehicle>> getVehicles() async {
     final snapshot = await _vehiclesCollection.get();
@@ -255,5 +258,62 @@ class FirestoreService {
   // Delete maintenance entry
   Future<void> deleteMaintenanceEntry(String vin, String entryId) async {
     await _maintenanceCollection(vin).doc(entryId).delete();
+  }
+
+  // Add reminder entry
+  Future<Map<String, dynamic>> addReminder(
+    String vin,
+    Map<String, dynamic> reminder,
+  ) async {
+    final now = FieldValue.serverTimestamp();
+    final docRef = _remindersCollection(vin).doc();
+    await docRef.set({
+      ...reminder,
+      'createdAt': now,
+      'updatedAt': now,
+    }, SetOptions(merge: true));
+
+    return {'id': docRef.id, ...reminder};
+  }
+
+  // Get reminders for a vehicle
+  Future<List<Map<String, dynamic>>> getReminders(String vin) async {
+    final snapshot = await _remindersCollection(vin).get();
+    return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+  }
+
+  Future<void> completeReminder(String vin, String reminderId) async {
+    await _remindersCollection(vin).doc(reminderId).set({
+      'status': 'completed',
+      'completedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> snoozeReminder(
+    String vin,
+    String reminderId,
+    String untilDateISO,
+  ) async {
+    await _remindersCollection(vin).doc(reminderId).set({
+      'status': 'snoozed',
+      'snoozedUntil': untilDateISO,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> dismissReminder(String vin, String reminderId) async {
+    await _remindersCollection(vin).doc(reminderId).set({
+      'status': 'dismissed',
+      'dismissedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> reopenReminder(String vin, String reminderId) async {
+    await _remindersCollection(vin).doc(reminderId).set({
+      'status': 'active',
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 }

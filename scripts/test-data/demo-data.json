@@ -1,0 +1,125 @@
+{
+  "dataset": "vehicle-vitals-demo-v1",
+  "vehicles": [
+    {
+      "vin": "1HGCM82633A100001",
+      "make": "Honda",
+      "model": "Accord",
+      "year": 2018,
+      "mileage": 74210,
+      "recallsCount": 1,
+      "recallsSource": "NHTSA",
+      "engineType": "2.4L I4",
+      "fuelType": "Gasoline",
+      "driveType": "FWD",
+      "transmissionStyle": "CVT",
+      "trim": "EX-L",
+      "vehicleType": "Passenger Car",
+      "maintenance": [
+        {
+          "id": "maint-oil-2026-01",
+          "title": "Oil Change",
+          "notes": "Synthetic oil and filter replacement",
+          "cost": 79.95,
+          "date": "2026-01-18T10:30:00.000Z"
+        },
+        {
+          "id": "maint-brake-2025-11",
+          "title": "Brake Service",
+          "notes": "Front pads and rotor resurfacing",
+          "cost": 389.5,
+          "date": "2025-11-02T13:15:00.000Z"
+        }
+      ],
+      "reminders": [
+        {
+          "id": "rem-oil-next",
+          "title": "Oil change due soon",
+          "status": "active",
+          "snoozedUntil": null,
+          "targetMileage": 78000
+        }
+      ]
+    },
+    {
+      "vin": "1FAFP404X1F100002",
+      "make": "Ford",
+      "model": "Mustang",
+      "year": 2020,
+      "mileage": 41280,
+      "recallsCount": 0,
+      "recallsSource": "NHTSA",
+      "engineType": "5.0L V8",
+      "fuelType": "Gasoline",
+      "driveType": "RWD",
+      "transmissionStyle": "Automatic",
+      "trim": "GT Premium",
+      "vehicleType": "Passenger Car",
+      "maintenance": [
+        {
+          "id": "maint-tires-2026-02",
+          "title": "Tire Rotation",
+          "notes": "Rotated all four tires and inspected tread",
+          "cost": 49,
+          "date": "2026-02-09T09:00:00.000Z"
+        },
+        {
+          "id": "maint-inspect-2025-09",
+          "title": "Annual Inspection",
+          "notes": "Passed emissions and safety",
+          "cost": 92,
+          "date": "2025-09-14T15:40:00.000Z"
+        }
+      ],
+      "reminders": [
+        {
+          "id": "rem-inspection-next",
+          "title": "Inspection renewal",
+          "status": "active",
+          "snoozedUntil": null,
+          "targetMileage": 45000
+        }
+      ]
+    },
+    {
+      "vin": "2C4RC1BG5HR100003",
+      "make": "Chrysler",
+      "model": "Pacifica",
+      "year": 2019,
+      "mileage": 98340,
+      "recallsCount": 2,
+      "recallsSource": "NHTSA",
+      "engineType": "3.6L V6",
+      "fuelType": "Gasoline",
+      "driveType": "FWD",
+      "transmissionStyle": "Automatic",
+      "trim": "Touring L",
+      "vehicleType": "MPV",
+      "maintenance": [
+        {
+          "id": "maint-transmission-2026-02",
+          "title": "Transmission Fluid Service",
+          "notes": "Fluid exchange and pan gasket",
+          "cost": 265,
+          "date": "2026-02-20T11:10:00.000Z"
+        },
+        {
+          "id": "maint-battery-2025-12",
+          "title": "Battery Replacement",
+          "notes": "Installed AGM battery",
+          "cost": 214.75,
+          "date": "2025-12-03T16:25:00.000Z"
+        }
+      ],
+      "reminders": [
+        {
+          "id": "rem-recall-followup",
+          "title": "Recall service follow-up",
+          "status": "active",
+          "snoozedUntil": null,
+          "targetMileage": 100000
+        }
+      ]
+    }
+  ]
+}

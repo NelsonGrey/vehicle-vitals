@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'design_tokens.dart';
 
 /// App theme configuration using Tailwind-inspired design tokens
@@ -92,6 +93,25 @@ class AppTheme {
             horizontal: AppDesignTokens.space4,
             vertical: AppDesignTokens.space3,
           ),
+        ),
+      ),
+
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: colors.surface,
+        selectedItemColor: colors.primary,
+        unselectedItemColor: colors.muted,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: colors.surface,
+        contentTextStyle: TextStyle(color: colors.onSurface),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignTokens.radiusLg),
+          side: BorderSide(color: colors.border),
         ),
       ),
 
@@ -269,6 +289,25 @@ class AppTheme {
             horizontal: AppDesignTokens.space4,
             vertical: AppDesignTokens.space3,
           ),
+        ),
+      ),
+
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: colors.surface,
+        selectedItemColor: colors.primary,
+        unselectedItemColor: colors.muted,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: colors.surface,
+        contentTextStyle: TextStyle(color: colors.onSurface),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignTokens.radiusLg),
+          side: BorderSide(color: colors.border),
         ),
       ),
 

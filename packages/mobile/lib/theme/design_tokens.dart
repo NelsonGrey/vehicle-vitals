@@ -2,27 +2,18 @@ import 'package:flutter/material.dart';
 
 /// Design tokens that mirror the web Tailwind configuration
 class AppDesignTokens {
-  // Color palette matching web Tailwind config
-  static const cream = Color(0xFFFFFAF3);
-  static const charcoal = Color(0xFF2B2B2B);
-  static const warmGray = Color(0xFF7A6F66);
-  static const parchment = Color(0xFFFFF6E6);
-  static const tan = Color(0xFFE8DECF);
-  static const oxblood = Color(0xFF8B1E2B);
-  static const primaryContrast = Color(0xFFFFF9F4);
-  static const forest = Color(0xFF0B5D3B);
-  static const gold = Color(0xFFB68C2C);
+  // Slate/teal palette matching the web app style.
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const slate700 = Color(0xFF334155);
+  static const slate800 = Color(0xFF1E293B);
+  static const slate900 = Color(0xFF0F172A);
+  static const teal700 = Color(0xFF0F766E);
   static const danger = Color(0xFFB42318);
-
-  // Dark mode colors
-  static const deepBrown = Color(0xFF14110F);
-  static const lightCream = Color(0xFFF3EFE7);
-  static const lightGray = Color(0xFFC9C3B8);
-  static const darkCard = Color(0xFF1D1916);
-  static const darkBorder = Color(0xFF2B2622);
-  static const rust = Color(0xFFE07A5F);
-  static const mintGreen = Color(0xFF81B29A);
-  static const lightGold = Color(0xFFF2CC8F);
 
   // Spacing scale (4px base)
   static const space1 = 4.0;
@@ -81,28 +72,28 @@ class AppColorScheme {
   });
 
   factory AppColorScheme.light() => const AppColorScheme(
-    background: AppDesignTokens.cream,
-    surface: AppDesignTokens.parchment,
-    onBackground: AppDesignTokens.charcoal,
-    onSurface: AppDesignTokens.charcoal,
-    primary: AppDesignTokens.oxblood,
-    onPrimary: AppDesignTokens.primaryContrast,
-    secondary: AppDesignTokens.forest,
+    background: AppDesignTokens.slate50,
+    surface: Colors.white,
+    onBackground: AppDesignTokens.slate900,
+    onSurface: AppDesignTokens.slate900,
+    primary: AppDesignTokens.slate700,
+    onPrimary: Colors.white,
+    secondary: AppDesignTokens.teal700,
     onSecondary: Colors.white,
-    border: AppDesignTokens.tan,
-    muted: AppDesignTokens.warmGray,
+    border: AppDesignTokens.slate200,
+    muted: AppDesignTokens.slate500,
   );
 
   factory AppColorScheme.dark() => const AppColorScheme(
-    background: AppDesignTokens.deepBrown,
-    surface: AppDesignTokens.darkCard,
-    onBackground: AppDesignTokens.lightCream,
-    onSurface: AppDesignTokens.lightCream,
-    primary: AppDesignTokens.rust,
-    onPrimary: AppDesignTokens.deepBrown,
-    secondary: AppDesignTokens.mintGreen,
-    onSecondary: AppDesignTokens.deepBrown,
-    border: AppDesignTokens.darkBorder,
-    muted: AppDesignTokens.lightGray,
+    background: AppDesignTokens.slate900,
+    surface: AppDesignTokens.slate800,
+    onBackground: AppDesignTokens.slate50,
+    onSurface: AppDesignTokens.slate50,
+    primary: AppDesignTokens.slate300,
+    onPrimary: AppDesignTokens.slate900,
+    secondary: Color(0xFF2DD4BF),
+    onSecondary: AppDesignTokens.slate900,
+    border: AppDesignTokens.slate700,
+    muted: AppDesignTokens.slate400,
   );
 }

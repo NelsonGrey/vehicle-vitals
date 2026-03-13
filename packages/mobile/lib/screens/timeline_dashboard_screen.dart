@@ -92,7 +92,11 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 40),
+                Icon(
+                  Icons.error_outline,
+                  color: Theme.of(context).colorScheme.error,
+                  size: 40,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Unable to load timeline: $_error',
@@ -219,17 +223,19 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6E6),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8DECF)),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF7A4A00)),
+          Icon(icon, size: 18, color: colorScheme.primary),
           const SizedBox(height: 6),
           Text(
             value,
@@ -238,7 +244,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             title,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF7A6F66)),
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),

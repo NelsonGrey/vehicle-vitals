@@ -188,19 +188,21 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         final recallsNote = _recallsCount == null
             ? ''
             : ' • Open recalls: ${_recallsCount!}';
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('VIN decoded successfully$recallsNote'),
-            backgroundColor: Colors.green,
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error decoding VIN: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -240,10 +242,11 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       await _firestoreService.addOrUpdateVehicle(vehicle);
 
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vehicle added successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Vehicle added successfully!'),
+            backgroundColor: colorScheme.primary,
           ),
         );
         context.go('/app');
@@ -252,20 +255,22 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       if (mounted) {
         final message = e.toString();
         if (message.contains('Not authenticated')) {
+          final colorScheme = Theme.of(context).colorScheme;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Session expired. Please sign in again.'),
-              backgroundColor: Colors.red,
+            SnackBar(
+              content: const Text('Session expired. Please sign in again.'),
+              backgroundColor: colorScheme.error,
             ),
           );
           context.go('/auth/login');
           return;
         }
 
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error adding vehicle: $message'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -278,6 +283,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Vehicle'),
@@ -303,9 +310,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF6E6),
+                          color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE8DECF)),
+                          border: Border.all(color: colorScheme.outline),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +328,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             Text(
                               'Enter VIN and decode to auto-fill core details and insights.',
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: colorScheme.onSurfaceVariant,
                                 fontSize: 12,
                               ),
                             ),
@@ -373,10 +380,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.12),
+                          color: colorScheme.secondary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.amber.withValues(alpha: 0.35),
+                            color: colorScheme.secondary.withValues(
+                              alpha: 0.35,
+                            ),
                           ),
                         ),
                         child: Column(
@@ -412,9 +421,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                                   .isNotEmpty,
                                         )
                                         .join(' • '),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF7A4A00),
+                                color: colorScheme.secondary,
                               ),
                             ),
                           ],
@@ -513,12 +522,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveVehicle,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF59E0B),
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? CircularProgressIndicator(
+                          color: colorScheme.onPrimary,
+                        )
                       : const Text('Save Vehicle'),
                 ),
               ),

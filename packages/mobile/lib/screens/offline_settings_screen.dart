@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../services/offline_service.dart';
 
 class OfflineSettingsScreen extends StatefulWidget {
@@ -14,11 +15,13 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Offline Settings')),
       body: Consumer<OfflineService>(
         builder: (context, offlineService, child) {
-          return Padding(
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,9 +40,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Enable offline mode to access your data without an internet connection. Changes will sync when you reconnect.',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 16),
                         SwitchListTile(
@@ -81,16 +84,16 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                                   ? Icons.wifi
                                   : Icons.wifi_off,
                               color: offlineService.isOnline
-                                  ? Colors.green
-                                  : Colors.orange,
+                                  ? colorScheme.primary
+                                  : colorScheme.secondary,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               offlineService.isOnline ? 'Online' : 'Offline',
                               style: TextStyle(
                                 color: offlineService.isOnline
-                                    ? Colors.green
-                                    : Colors.orange,
+                                    ? colorScheme.primary
+                                    : colorScheme.secondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -101,9 +104,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                           offlineService.isOnline
                               ? 'You are connected to the internet. All changes sync automatically.'
                               : 'You are offline. Changes will sync when you reconnect.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -128,9 +131,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'Advanced options for managing offline data.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: 16),
                           SizedBox(
@@ -169,11 +172,11 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                     ),
                   ),
 
-                const Spacer(),
+                const SizedBox(height: 24),
 
-                const Text(
+                Text(
                   'Offline mode stores your vehicle and maintenance data locally on your device. This allows you to view and edit data without an internet connection.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -194,6 +197,7 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
       await offlineService.setOfflineEnabled(enabled);
 
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -201,16 +205,19 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                   ? 'Offline mode enabled. Your data will be stored locally.'
                   : 'Offline mode disabled. You need internet to access your data.',
             ),
-            backgroundColor: enabled ? Colors.green : Colors.blue,
+            backgroundColor: enabled
+                ? colorScheme.primary
+                : colorScheme.secondary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to update offline settings: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -226,19 +233,21 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
       await offlineService.syncPendingChanges();
 
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data synced successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Data synced successfully!'),
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Sync failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -262,7 +271,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Clear Cache'),
           ),
         ],
@@ -277,19 +288,21 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
       await offlineService.clearCache();
 
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Local cache cleared successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Local cache cleared successfully!'),
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to clear cache: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }

@@ -72,17 +72,20 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   }
 
   Color _getUrgencyColor(int milesUntilDue) {
-    if (milesUntilDue <= 1000) return AppDesignTokens.danger;
-    if (milesUntilDue <= 5000) return Colors.orange;
-    return AppDesignTokens.colorScheme(Theme.of(context).brightness).primary;
+    final scheme = Theme.of(context).colorScheme;
+    if (milesUntilDue <= 1000) return scheme.error;
+    if (milesUntilDue <= 5000) return scheme.secondary;
+    return scheme.primary;
   }
 
   Color _getUrgencyBackgroundColor(int milesUntilDue) {
-    if (milesUntilDue <= 1000) return Colors.red.shade50;
-    if (milesUntilDue <= 5000) return Colors.orange.shade50;
-    return AppDesignTokens.colorScheme(
-      Theme.of(context).brightness,
-    ).primary.withValues(alpha: 0.1);
+    if (milesUntilDue <= 1000) {
+      return Theme.of(context).colorScheme.error.withValues(alpha: 0.08);
+    }
+    if (milesUntilDue <= 5000) {
+      return Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1);
+    }
+    return Theme.of(context).colorScheme.primary.withValues(alpha: 0.08);
   }
 
   String _getUrgencyLabel(int milesUntilDue) {
@@ -112,18 +115,20 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
 
       if (!mounted) return;
       final target = (event['target'] ?? 'calendar').toString();
+      final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Calendar event created for $target.'),
-          backgroundColor: Colors.green,
+          backgroundColor: colorScheme.primary,
         ),
       );
     } catch (e) {
       if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to add to calendar: $e'),
-          backgroundColor: AppDesignTokens.danger,
+          backgroundColor: colorScheme.error,
         ),
       );
     }
@@ -395,20 +400,20 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
             children: [
               _buildLegendItem(
                 'Urgent (≤1,000 miles)',
-                Colors.red.shade100,
-                Colors.red,
+                Theme.of(context).colorScheme.error.withValues(alpha: 0.2),
+                Theme.of(context).colorScheme.error,
               ),
               SizedBox(width: TwSpace.s4),
               _buildLegendItem(
                 'Soon (≤5,000 miles)',
-                Colors.orange.shade100,
-                Colors.orange,
+                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+                Theme.of(context).colorScheme.secondary,
               ),
               SizedBox(width: TwSpace.s4),
               _buildLegendItem(
                 'Upcoming (>5,000 miles)',
-                Colors.green.shade100,
-                Colors.green,
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                Theme.of(context).colorScheme.primary,
               ),
             ],
           ),

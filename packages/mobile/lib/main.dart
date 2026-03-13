@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
@@ -63,16 +63,16 @@ void main() async {
     rethrow;
   }
 
-  // Initialize Google Mobile Ads - DISABLED FOR TESTFLIGHT
-  // await MobileAds.instance.initialize();
+  // Initialize Google Mobile Ads.
+  await MobileAds.instance.initialize();
 
   // Initialize notifications.
   final notificationService = NotificationService();
   await notificationService.initialize();
 
-  // Pre-load interstitial and rewarded ads - DISABLED FOR TESTFLIGHT
-  // InterstitialAdHelper.loadAd();
-  // RewardedAdHelper.loadAd();
+  // Pre-load interstitial and rewarded ads.
+  InterstitialAdHelper.loadAd();
+  RewardedAdHelper.loadAd();
 
   runApp(VehicleVitalsApp(notificationService: notificationService));
 }

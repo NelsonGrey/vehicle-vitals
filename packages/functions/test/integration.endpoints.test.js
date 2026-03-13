@@ -10,6 +10,7 @@ const {
   verifyPremiumPurchase,
   deriveUpcomingMaintenanceItems,
   runMaintenanceReminderSweep,
+  runMaintenanceReminderSchedule,
 } = require('../lib/index.js');
 
 const originalFetch = global.fetch;
@@ -631,6 +632,62 @@ test('runMaintenanceReminderSweep continues after reminder delivery failure', as
   assert.equal(summary.vehiclesScanned, 2);
   assert.equal(summary.remindersSent, 1);
   assert.equal(summary.reminderFailures, 1);
+});
+
+test('runMaintenanceReminderSchedule logs summary and returns it on success', async () => {
+  const infoLogs = [];
+  const errorLogs = [];
+  const expectedSummary = {
+    usersScanned: 2,
+    vehiclesScanned: 4,
+    remindersSent: 3,
+    reminderFailures: 1,
+  };
+
+  const summary = await runMaintenanceReminderSchedule({
+    async runSweep() {
+      return expectedSummary;
+    },
+    onInfo(message, payload) {
+      infoLogs.push({ message, payload });
+    },
+    onError(message, error) {
+      errorLogs.push({ message, error });
+    },
+  });
+
+  assert.deepEqual(summary, expectedSummary);
+  assert.equal(infoLogs.length, 2);
+  assert.deepEqual(infoLogs[1], {
+    message: 'Maintenance reminder check completed',
+    payload: expectedSummary,
+  });
+  assert.equal(errorLogs.length, 0);
+});
+
+test('runMaintenanceReminderSchedule swallows errors and returns null', async () => {
+  const infoLogs = [];
+  const errorLogs = [];
+
+  const summary = await runMaintenanceReminderSchedule({
+    async runSweep() {
+      throw new Error('sweep-failure');
+    },
+    onInfo(message, payload) {
+      infoLogs.push({ message, payload });
+    },
+    onError(message, error) {
+      errorLogs.push({ message, error: error.message });
+    },
+  });
+
+  assert.equal(summary, null);
+  assert.equal(infoLogs.length, 1);
+  assert.equal(errorLogs.length, 1);
+  assert.deepEqual(errorLogs[0], {
+    message: 'Error checking maintenance reminders:',
+    error: 'sweep-failure',
+  });
 });
 
 test('verifyPremiumPurchase rejects without auth context', async () => {

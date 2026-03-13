@@ -18,8 +18,10 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
   bool _loading = true;
   String? _error;
   List<_TimelineEvent> _events = [];
+  List<Vehicle> _vehicles = [];
+  String _selectedVinFilter = 'all';
+  int _daysFilter = 365;
   int _vehicleCount = 0;
-  double _totalCost = 0;
 
   @override
   void initState() {
@@ -37,7 +39,6 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
       final firestoreService = context.read<FirestoreService>();
       final vehicles = await firestoreService.getVehicles();
       final events = <_TimelineEvent>[];
-      var totalCost = 0.0;
 
       for (final vehicle in vehicles) {
         final entries = await firestoreService.getMaintenanceEntries(
@@ -45,7 +46,6 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
         );
         for (final entry in entries) {
           events.add(_TimelineEvent(vehicle: vehicle, entry: entry));
-          totalCost += entry.cost;
         }
       }
 
@@ -54,8 +54,8 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
       if (!mounted) return;
       setState(() {
         _events = events;
+        _vehicles = vehicles;
         _vehicleCount = vehicles.length;
-        _totalCost = totalCost;
         _loading = false;
       });
     } catch (e) {
@@ -73,8 +73,38 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
     return '${date.year}-$month-$day';
   }
 
+  List<_TimelineEvent> _filteredEvents() {
+    final now = DateTime.now();
+    return _events.where((event) {
+      if (_selectedVinFilter != 'all' &&
+          event.vehicle.vin != _selectedVinFilter) {
+        return false;
+      }
+      if (_daysFilter > 0) {
+        final oldestAllowed = now.subtract(Duration(days: _daysFilter));
+        if (event.entry.date.isBefore(oldestAllowed)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  String _dateFilterLabel(int days) {
+    if (days <= 0) return 'All';
+    if (days == 30) return '30d';
+    if (days == 90) return '90d';
+    return '1y';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filteredEvents = _filteredEvents();
+    final filteredCost = filteredEvents.fold<double>(
+      0,
+      (sum, event) => sum + event.entry.cost,
+    );
+
     if (_loading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Timeline Dashboard')),
@@ -145,7 +175,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
                 Expanded(
                   child: _SummaryCard(
                     title: 'Timeline Events',
-                    value: _events.length.toString(),
+                    value: filteredEvents.length.toString(),
                     icon: Icons.timeline,
                   ),
                 ),
@@ -153,9 +183,61 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
                 Expanded(
                   child: _SummaryCard(
                     title: 'Total Cost',
-                    value: '\$${_totalCost.toStringAsFixed(2)}',
+                    value: '\$${filteredCost.toStringAsFixed(2)}',
                     icon: Icons.attach_money,
                   ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedVinFilter,
+                    decoration: const InputDecoration(
+                      labelText: 'Vehicle',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: [
+                      const DropdownMenuItem(
+                        value: 'all',
+                        child: Text('All vehicles'),
+                      ),
+                      ..._vehicles.map((vehicle) {
+                        return DropdownMenuItem(
+                          value: vehicle.vin,
+                          child: Text(
+                            '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _selectedVinFilter = value;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Wrap(
+                  spacing: 6,
+                  children: [30, 90, 365, 0].map((days) {
+                    final selected = _daysFilter == days;
+                    return ChoiceChip(
+                      label: Text(_dateFilterLabel(days)),
+                      selected: selected,
+                      onSelected: (_) {
+                        setState(() {
+                          _daysFilter = days;
+                        });
+                      },
+                    );
+                  }).toList(),
                 ),
               ],
             ),
@@ -163,23 +245,21 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
             Text('Event Feed', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Expanded(
-              child: _events.isEmpty
+              child: filteredEvents.isEmpty
                   ? const Center(
-                      child: Text(
-                        'No maintenance events yet. Add one from Maintenance.',
-                      ),
+                      child: Text('No maintenance events for current filters.'),
                     )
                   : ListView.builder(
-                      itemCount: _events.length,
+                      itemCount: filteredEvents.length,
                       itemBuilder: (context, index) {
-                        final event = _events[index];
+                        final event = filteredEvents[index];
                         return Card(
                           margin: const EdgeInsets.only(bottom: 10),
                           child: ListTile(
                             leading: const Icon(Icons.build_circle_outlined),
                             title: Text(event.entry.title),
                             subtitle: Text(
-                              '${event.vehicle.year} ${event.vehicle.make} ${event.vehicle.model}\n${_formatDate(event.entry.date)}',
+                              '${event.vehicle.year} ${event.vehicle.make} ${event.vehicle.model}\n${_formatDate(event.entry.date)}${event.entry.notes.isNotEmpty ? '\n${event.entry.notes}' : ''}',
                             ),
                             trailing: event.entry.cost > 0
                                 ? Text(

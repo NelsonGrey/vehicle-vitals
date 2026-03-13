@@ -98,6 +98,12 @@ interface ReminderSweepDependencies {
   ) => Promise<void>;
 }
 
+interface ReminderScheduleRunDependencies {
+  runSweep: () => Promise<ReminderSweepSummary>;
+  onInfo: (message: string, payload?: unknown) => void;
+  onError: (message: string, error: unknown) => void;
+}
+
 /**
  * Firestore CRUD helpers for Firebase Functions
  */
@@ -659,15 +665,33 @@ export const sendMaintenanceReminder = onRequest(
 
 // Scheduled function to check for upcoming maintenance (runs daily)
 export const checkMaintenanceReminders = onSchedule('0 9 * * *', async () => {
-  logger.info('Checking for maintenance reminders...');
+  await runMaintenanceReminderSchedule();
+});
+
+/**
+ * Execute one scheduled reminder run with logging and error swallowing.
+ * @param {Partial<ReminderScheduleRunDependencies>} dependencies Optional
+ * injected dependencies for tests
+ * @return {Promise<ReminderSweepSummary | null>} Sweep summary on success
+ */
+export async function runMaintenanceReminderSchedule(
+  dependencies?: Partial<ReminderScheduleRunDependencies>
+): Promise<ReminderSweepSummary | null> {
+  const runSweep = dependencies?.runSweep || runMaintenanceReminderSweep;
+  const onInfo = dependencies?.onInfo || logger.info;
+  const onError = dependencies?.onError || logger.error;
+
+  onInfo('Checking for maintenance reminders...');
 
   try {
-    const summary = await runMaintenanceReminderSweep();
-    logger.info('Maintenance reminder check completed', summary);
+    const summary = await runSweep();
+    onInfo('Maintenance reminder check completed', summary);
+    return summary;
   } catch (error) {
-    logger.error('Error checking maintenance reminders:', error);
+    onError('Error checking maintenance reminders:', error);
+    return null;
   }
-});
+}
 
 /**
  * Execute scheduled reminder eligibility checks and email dispatch.

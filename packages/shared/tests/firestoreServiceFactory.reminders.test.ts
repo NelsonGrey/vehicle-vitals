@@ -157,4 +157,37 @@ describe('createFirestoreService reminder lifecycle', () => {
       unauthService.addReminder('VIN001', { title: 'x' })
     ).rejects.toThrow('Not authenticated');
   });
+
+  it('returns reminders mapped from Firestore documents', async () => {
+    const { helpers } = createMockFirestoreHelpers();
+    const mockDocs = [
+      { id: 'rem-a', data: () => ({ title: 'Oil Change', status: 'active' }) },
+      { id: 'rem-b', data: () => ({ title: 'Tire Rotation', status: 'snoozed' }) },
+    ];
+    (helpers as Record<string, unknown>).getDocs = async () => ({ docs: mockDocs });
+    const svc = createFirestoreService({
+      db: {},
+      auth: { currentUser: { uid: 'user-123' } },
+      helpers,
+    });
+
+    const reminders = await svc.getReminders('VIN001');
+
+    expect(reminders).toHaveLength(2);
+    expect(reminders[0]).toEqual({ id: 'rem-a', title: 'Oil Change', status: 'active' });
+    expect(reminders[1]).toEqual({ id: 'rem-b', title: 'Tire Rotation', status: 'snoozed' });
+  });
+
+  it('returns empty array for getReminders when unauthenticated', async () => {
+    const { helpers } = createMockFirestoreHelpers();
+    const unauthService = createFirestoreService({
+      db: {},
+      auth: { currentUser: null },
+      helpers,
+    });
+
+    const reminders = await unauthService.getReminders('VIN001');
+
+    expect(reminders).toEqual([]);
+  });
 });

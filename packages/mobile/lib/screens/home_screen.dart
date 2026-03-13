@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final firestoreService = FirestoreService();
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (authService.currentUser == null) {
       return Scaffold(
@@ -247,7 +248,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               flex: 3,
                               child: Card(
                                 margin: EdgeInsets.zero,
-                                color: const Color(0xFFFFF6E6),
                                 child: ListView.builder(
                                   padding: const EdgeInsets.all(12),
                                   itemCount: filtered.length,
@@ -259,13 +259,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                       margin: const EdgeInsets.only(bottom: 8),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? const Color(0xFFFFE8B5)
-                                            : Colors.white,
+                                            ? colorScheme.primary.withValues(
+                                                alpha: 0.12,
+                                              )
+                                            : colorScheme.surface,
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
                                           color: isSelected
-                                              ? const Color(0xFFF59E0B)
-                                              : const Color(0xFFE8DECF),
+                                              ? colorScheme.primary.withValues(
+                                                  alpha: 0.45,
+                                                )
+                                              : colorScheme.outline,
                                         ),
                                       ),
                                       child: ListTile(
@@ -289,9 +293,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       vertical: 4,
                                                     ),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(
-                                                    0xFFFFE8B5,
-                                                  ),
+                                                  color: colorScheme.secondary
+                                                      .withValues(alpha: 0.18),
                                                   borderRadius:
                                                       BorderRadius.circular(99),
                                                 ),
@@ -342,8 +345,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             if (selected.recallsCount > 0)
                                               Text(
                                                 'Open recalls: ${selected.recallsCount}',
-                                                style: const TextStyle(
-                                                  color: Color(0xFF7A4A00),
+                                                style: TextStyle(
+                                                  color: colorScheme.secondary,
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
@@ -392,12 +395,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 ),
                                                 label: const Text(
                                                   'Maintenance',
-                                                ),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(
-                                                    0xFFF59E0B,
-                                                  ),
-                                                  foregroundColor: Colors.white,
                                                 ),
                                               ),
                                             ),

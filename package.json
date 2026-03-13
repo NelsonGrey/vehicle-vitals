@@ -28,7 +28,9 @@
     "firebase:test": "./tools/test-firebase.sh",
     "firebase:test-ios": "./tools/test-ios-firebase.sh",
     "firebase:test-android": "./tools/test-android-firebase.sh",
-    "firebase:test-mobile": "./tools/test-mobile-firebase.sh"
+    "firebase:test-mobile": "./tools/test-mobile-firebase.sh",
+    "demo-data:load": "npm --workspace=functions run seed:demo-data --",
+    "demo-data:purge": "npm --workspace=functions run purge:demo-data --"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",

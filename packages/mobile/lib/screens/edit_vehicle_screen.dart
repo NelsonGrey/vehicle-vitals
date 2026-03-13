@@ -93,10 +93,11 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading vehicle: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
         context.go('/app');
@@ -107,10 +108,11 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   Future<void> _decodeVinInsights() async {
     final vin = _vinController.text.trim().toUpperCase();
     if (vin.length != 17) {
+      final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('VIN must be 17 characters to decode.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('VIN must be 17 characters to decode.'),
+          backgroundColor: colorScheme.error,
         ),
       );
       return;
@@ -238,19 +240,21 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         final recallsNote = _recallsCount == null
             ? ''
             : ' • Open recalls: ${_recallsCount!}';
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('VIN decoded successfully$recallsNote'),
-            backgroundColor: Colors.green,
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error decoding VIN: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -289,20 +293,22 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       await _firestoreService.addOrUpdateVehicle(updatedVehicle);
 
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vehicle updated successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Vehicle updated successfully!'),
+            backgroundColor: colorScheme.primary,
           ),
         );
         context.go('/app');
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating vehicle: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -328,7 +334,9 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -339,20 +347,22 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       try {
         await _firestoreService.deleteVehicle(widget.vin);
         if (mounted) {
+          final colorScheme = Theme.of(context).colorScheme;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Vehicle deleted successfully!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Vehicle deleted successfully!'),
+              backgroundColor: colorScheme.primary,
             ),
           );
           context.go('/app');
         }
       } catch (e) {
         if (mounted) {
+          final colorScheme = Theme.of(context).colorScheme;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error deleting vehicle: ${e.toString()}'),
-              backgroundColor: Colors.red,
+              backgroundColor: colorScheme.error,
             ),
           );
         }
@@ -369,13 +379,18 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         '$label: $value',
-        style: const TextStyle(fontSize: 12, color: Color(0xFF7A4A00)),
+        style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.secondary,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -387,7 +402,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
           IconButton(
             onPressed: _deleteVehicle,
             icon: const Icon(Icons.delete),
-            color: Colors.red,
+            color: colorScheme.error,
           ),
         ],
       ),
@@ -408,7 +423,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           border: OutlineInputBorder(),
                         ),
                         readOnly: true,
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(color: colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 10),
                       SizedBox(
@@ -437,10 +452,10 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.12),
+                            color: colorScheme.secondary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.amber.withValues(alpha: 0.35),
+                              color: colorScheme.secondary.withValues(alpha: 0.35),
                             ),
                           ),
                           child: Column(
@@ -549,12 +564,12 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _saveVehicle,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF59E0B),
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: _isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? CircularProgressIndicator(
+                          color: colorScheme.onPrimary,
+                        )
                       : const Text('Save Changes'),
                 ),
               ),

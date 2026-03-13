@@ -525,9 +525,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: _isLoading
-                      ? CircularProgressIndicator(
-                          color: colorScheme.onPrimary,
-                        )
+                      ? CircularProgressIndicator(color: colorScheme.onPrimary)
                       : const Text('Save Vehicle'),
                 ),
               ),

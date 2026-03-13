@@ -21,6 +21,8 @@ module.exports = {
     "/lib/**/*", // Ignore built files.
     "/generated/**/*", // Ignore generated files.
     "/test/**/*.js", // JS tests are not part of TS parser project.
+    "/scripts/**/*.js", // Utility scripts are plain Node.js
+    // and are not part of TS project config.
   ],
   plugins: ["@typescript-eslint", "import"],
   rules: {

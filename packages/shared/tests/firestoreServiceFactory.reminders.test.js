@@ -146,7 +146,10 @@ describe('createFirestoreService reminder lifecycle', () => {
     const { helpers } = createMockFirestoreHelpers();
     const mockDocs = [
       { id: 'rem-a', data: () => ({ title: 'Oil Change', status: 'active' }) },
-      { id: 'rem-b', data: () => ({ title: 'Tire Rotation', status: 'snoozed' }) },
+      {
+        id: 'rem-b',
+        data: () => ({ title: 'Tire Rotation', status: 'snoozed' }),
+      },
     ];
     helpers.getDocs = async () => ({ docs: mockDocs });
     const svc = createFirestoreService({
@@ -158,8 +161,16 @@ describe('createFirestoreService reminder lifecycle', () => {
     const reminders = await svc.getReminders('VIN001');
 
     expect(reminders).toHaveLength(2);
-    expect(reminders[0]).toEqual({ id: 'rem-a', title: 'Oil Change', status: 'active' });
-    expect(reminders[1]).toEqual({ id: 'rem-b', title: 'Tire Rotation', status: 'snoozed' });
+    expect(reminders[0]).toEqual({
+      id: 'rem-a',
+      title: 'Oil Change',
+      status: 'active',
+    });
+    expect(reminders[1]).toEqual({
+      id: 'rem-b',
+      title: 'Tire Rotation',
+      status: 'snoozed',
+    });
   });
 
   it('returns empty array for getReminders when unauthenticated', async () => {

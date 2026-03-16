@@ -1,19 +1,11 @@
 // Firebase Messaging Service Worker
 /* eslint-disable no-undef */
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js');
-importScripts(
-  'https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js'
-);
-
-// Initialize Firebase in service worker
-firebase.initializeApp({
-  apiKey: 'AIzaSyB8Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z0Z',
-  authDomain: 'vehicle-vitals.firebaseapp.com',
-  projectId: 'vehicle-vitals',
-  storageBucket: 'vehicle-vitals.appspot.com',
-  messagingSenderId: '123456789012',
-  appId: '1:123456789012:web:abcdef123456',
-});
+// Use compat builds — they expose the `firebase` global required by service workers.
+importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
+// Firebase Hosting automatically serves the correct project config here,
+// including calling firebase.initializeApp() — no hard-coded values needed.
+importScripts('/__/firebase/init.js');
 
 const messaging = firebase.messaging();
 

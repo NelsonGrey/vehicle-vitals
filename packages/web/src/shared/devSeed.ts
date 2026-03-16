@@ -14,6 +14,7 @@ import {
   getVehicles,
   markReminderDelivery,
   snoozeReminder,
+  updateVehicle,
 } from './firestoreService';
 
 export interface SeedDetails {
@@ -22,6 +23,7 @@ export interface SeedDetails {
   seededVehicles: number;
   seededMaintenance: number;
   seededReminders: number;
+  seededRecordPortfolios: number;
   preferencesUpdated: boolean;
 }
 
@@ -289,8 +291,11 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
 
   let seededMaintenance = 0;
   let seededReminders = 0;
+  let seededRecordPortfolios = 0;
 
   for (const vehicle of BOB_DEMO_VEHICLES) {
+    const demoPortfolio = createDemoPortfolio(vehicle);
+
     await addOrUpdateVehicle({
       ...defaultVehicle,
       vin: vehicle.vin,
@@ -304,9 +309,17 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
       annualMileageEstimate: vehicle.annualMileageEstimate,
       fuelType: vehicle.fuelType,
       nickname: vehicle.nickname,
-      documentPortfolio: createDemoPortfolio(vehicle),
+      documentPortfolio: demoPortfolio,
       demoOwnerName: 'Bob Demo',
     });
+
+    // Ensure records demo content is applied even if addOrUpdateVehicle
+    // falls back to an existing/default portfolio shape.
+    await updateVehicle(vehicle.vin, {
+      documentPortfolio: demoPortfolio,
+      demoOwnerName: 'Bob Demo',
+    });
+    seededRecordPortfolios += 1;
 
     const existingMaintenance = await getMaintenanceEntries(vehicle.vin);
     for (const entry of vehicle.maintenance) {
@@ -395,6 +408,7 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
     seededVehicles: BOB_DEMO_VEHICLES.length,
     seededMaintenance,
     seededReminders,
+    seededRecordPortfolios,
     preferencesUpdated: true,
   };
 }

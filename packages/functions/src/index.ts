@@ -950,7 +950,8 @@ async function sendPushNotification(
   const body =
     maintenanceItems.length === 1
       ? `${firstItem.title} — Due: ${firstItem.dueDate}`
-      : `${firstItem.title} and ${maintenanceItems.length - 1} more service(s) due`;
+      : `${firstItem.title} and ` +
+        `${maintenanceItems.length - 1} more service(s) due`;
 
   await admin.messaging().send({
     token: fcmToken,

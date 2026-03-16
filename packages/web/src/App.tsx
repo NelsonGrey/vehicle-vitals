@@ -149,6 +149,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const ServiceProviders = lazy(() => import('./pages/ServiceProviders'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
 const UpcomingTasks = lazy(() => import('./pages/UpcomingTasks'));
+const DevSeed = lazy(() => import('./pages/DevSeed'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -313,6 +314,9 @@ function App() {
                 <Route path="providers" element={<ServiceProviders />} />
                 <Route path="timeline" element={<TimelineDashboard />} />
                 <Route path="upcoming" element={<UpcomingTasks />} />
+                {import.meta.env.DEV && (
+                  <Route path="dev-seed" element={<DevSeed />} />
+                )}
               </Route>
 
               {/* Legacy protected URLs */}

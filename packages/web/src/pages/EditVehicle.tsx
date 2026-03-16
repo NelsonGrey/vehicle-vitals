@@ -47,6 +47,7 @@ interface Vehicle {
   make: string;
   model: string;
   year: string;
+  licensePlate?: string;
   mileage: string;
   purchaseDate?: string;
   engineType?: string;
@@ -343,6 +344,25 @@ export default function EditVehicle() {
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 Enter VIN and click Decode to prefill vehicle details
               </p>
+            </div>
+
+            {/* Mileage */}
+            <div>
+              <label
+                htmlFor="licensePlate"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                License Plate
+              </label>
+              <input
+                id="licensePlate"
+                type="text"
+                name="licensePlate"
+                value={form.licensePlate || ''}
+                onChange={handleChange}
+                placeholder="Plate number (optional)"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
             </div>
 
             {/* Mileage */}

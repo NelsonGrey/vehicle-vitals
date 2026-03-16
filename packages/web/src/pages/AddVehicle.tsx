@@ -216,13 +216,15 @@ export default function AddVehicle() {
               </select>
             </div>
 
-            {(['vin', 'mileage'] as const).map(field => (
+            {(['vin', 'licensePlate', 'mileage'] as const).map(field => (
               <div key={field}>
                 <label
                   htmlFor={field}
                   className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
                 >
-                  {field.charAt(0).toUpperCase() + field.slice(1)}
+                  {field === 'licensePlate'
+                    ? 'License Plate'
+                    : field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
                   id={field}
@@ -233,7 +235,9 @@ export default function AddVehicle() {
                   placeholder={
                     field === 'vin'
                       ? 'Vehicle Identification Number'
-                      : 'Current mileage'
+                      : field === 'licensePlate'
+                        ? 'Plate number (optional)'
+                        : 'Current mileage'
                   }
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
                 />

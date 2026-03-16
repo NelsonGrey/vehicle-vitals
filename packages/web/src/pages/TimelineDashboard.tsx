@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getMaintenanceEntries, getVehicles } from '../shared/firestoreService';
 
 interface Vehicle {
@@ -34,13 +35,35 @@ interface FirestoreMaintenanceEntry {
 
 type TimeFilter = 'all' | 'past' | 'future';
 
+function parseTimeFilter(raw: string | null): TimeFilter {
+  return raw === 'past' || raw === 'future' ? raw : 'all';
+}
+
+function parseVehicleFilter(raw: string | null): string[] {
+  if (raw === null) {
+    return [];
+  }
+
+  return raw
+    .split(',')
+    .map(vin => vin.trim())
+    .filter(Boolean);
+}
+
 export default function TimelineDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasVehicleFilterParam = searchParams.has('vins');
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [maintenanceEntries, setMaintenanceEntries] = useState<
     MaintenanceEntry[]
   >([]);
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
-  const [selectedVehicleVins, setSelectedVehicleVins] = useState<string[]>([]);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>(() =>
+    parseTimeFilter(searchParams.get('time'))
+  );
+  const [selectedVehicleVins, setSelectedVehicleVins] = useState<string[]>(() =>
+    parseVehicleFilter(searchParams.get('vins'))
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,7 +71,18 @@ export default function TimelineDashboard() {
       try {
         const vehiclesList = await getVehicles();
         setVehicles(vehiclesList);
-        setSelectedVehicleVins(vehiclesList.map(vehicle => vehicle.vin));
+        setSelectedVehicleVins(current => {
+          const availableVins = new Set(
+            vehiclesList.map(vehicle => vehicle.vin)
+          );
+          const validSelection = current.filter(vin => availableVins.has(vin));
+
+          if (hasVehicleFilterParam) {
+            return validSelection;
+          }
+
+          return vehiclesList.map(vehicle => vehicle.vin);
+        });
 
         // Load maintenance entries for all vehicles
         const allEntries: MaintenanceEntry[] = [];
@@ -86,7 +120,32 @@ export default function TimelineDashboard() {
     };
 
     loadData();
-  }, []);
+  }, [hasVehicleFilterParam]);
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams();
+    if (timeFilter !== 'all') {
+      nextParams.set('time', timeFilter);
+    }
+    if (selectedVehicleVins.length > 0 || hasVehicleFilterParam) {
+      nextParams.set('vins', selectedVehicleVins.join(','));
+    }
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [
+    hasVehicleFilterParam,
+    loading,
+    searchParams,
+    selectedVehicleVins,
+    setSearchParams,
+    timeFilter,
+  ]);
 
   const now = Date.now();
   const filteredEntries = maintenanceEntries.filter(entry => {
@@ -251,7 +310,16 @@ export default function TimelineDashboard() {
               uploaded attachments.
             </div>
             <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs text-slate-500 dark:text-slate-400">
-              Showing: {timeFilter === 'all' ? 'All' : timeFilter === 'past' ? 'Past' : 'Future'} • {hasAllVehiclesSelected ? 'All vehicles' : `${selectedVehicleVins.length} selected`}
+              Showing:{' '}
+              {timeFilter === 'all'
+                ? 'All'
+                : timeFilter === 'past'
+                  ? 'Past'
+                  : 'Future'}{' '}
+              •{' '}
+              {hasAllVehiclesSelected
+                ? 'All vehicles'
+                : `${selectedVehicleVins.length} selected`}
             </div>
           </div>
         </div>

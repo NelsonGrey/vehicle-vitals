@@ -393,8 +393,29 @@ jobs:
           echo "✅ Web Firebase env prepared for $TARGET_ENV (project: $PROJECT_ID, coming_soon: $SHOW_COMING_SOON)"
 
       - name: Build Web App
-        run: npm run build
         working-directory: packages/web
+        run: |
+          set +e
+          npm run build
+          BUILD_EXIT=$?
+
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "[warn] Initial web build failed; checking for esbuild service-stop failure"
+
+            if grep -q "The service was stopped" npm-debug.log 2>/dev/null; then
+              echo "[warn] Detected esbuild service-stop via npm-debug.log"
+            fi
+
+            echo "[info] Resetting Vite/esbuild state and retrying once"
+            rm -rf node_modules/.vite .vite
+            npm rebuild esbuild || true
+            pkill -f esbuild || true
+
+            npm run build
+            BUILD_EXIT=$?
+          fi
+
+          exit $BUILD_EXIT
 
       - name: Deploy Hosting Only
         env:

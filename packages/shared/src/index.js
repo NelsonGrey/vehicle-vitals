@@ -5,6 +5,7 @@
  * @property {string} model
  * @property {string} year
  * @property {string} vin
+ * @property {string} [licensePlate]
  * @property {string} mileage
  * @property {string} purchaseDate
  * @property {string} [nextDueByMiles]
@@ -37,6 +38,7 @@ export const defaultVehicle = {
   model: '',
   year: '',
   vin: '',
+  licensePlate: '',
   mileage: '',
   purchaseDate: '', // ISO date string (e.g., '2025-09-30')
   // Optional computed/scheduled fields for upcoming maintenance

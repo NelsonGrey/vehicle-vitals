@@ -104,6 +104,11 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               <Link to="/app/providers" className={linkClass}>
                 Providers
               </Link>
+              {import.meta.env.DEV && (
+                <Link to="/app/dev-seed" className={linkClass}>
+                  Demo Seed
+                </Link>
+              )}
             </div>
           </div>
         </nav>

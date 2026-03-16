@@ -73,6 +73,11 @@ interface DemoAttachment {
   type: string;
 }
 
+interface AttachmentTemplate {
+  baseName: string;
+  extensions: string[];
+}
+
 const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
   {
     vin: '4T1G11AK2PU123456',
@@ -245,24 +250,95 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
 
 function buildDemoAttachment(
   vehicle: DemoVehicleSeed,
+  template: AttachmentTemplate,
   itemId: string,
   categoryKey: string,
   docIndex: number
 ): DemoAttachment {
-  const extByIndex = ['pdf', 'jpg'];
   const mimeByExt: Record<string, string> = {
     pdf: 'application/pdf',
     jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
   };
-  const ext = extByIndex[(docIndex - 1) % extByIndex.length];
+  const ext =
+    template.extensions[(docIndex - 1) % template.extensions.length] || 'pdf';
   const normalizedVin = vehicle.vin.toLowerCase();
+  const normalizedName = template.baseName.replace(/\s+/g, '_');
 
   return {
-    name: `${vehicle.year}_${vehicle.make}_${itemId}_${docIndex}.${ext}`,
+    name: `${vehicle.year}_${vehicle.make}_${normalizedName}_${docIndex}.${ext}`,
     url: `https://storage.googleapis.com/vehicle-vitals-demo/${normalizedVin}/${categoryKey}/${itemId}-${docIndex}.${ext}`,
     size: 96_000 + docIndex * 28_000,
-    type: mimeByExt[ext],
+    type: mimeByExt[ext] || 'application/octet-stream',
   };
+}
+
+function getAttachmentTemplate(itemId: string): AttachmentTemplate {
+  const templates: Record<string, AttachmentTemplate> = {
+    title: { baseName: 'vehicle_title_front', extensions: ['pdf'] },
+    registration: {
+      baseName: 'registration_card',
+      extensions: ['pdf', 'jpg'],
+    },
+    insurance: {
+      baseName: 'insurance_policy_summary',
+      extensions: ['pdf', 'jpg'],
+    },
+    bill_of_sale: {
+      baseName: 'bill_of_sale',
+      extensions: ['pdf', 'jpg'],
+    },
+    loan_or_lease: { baseName: 'loan_contract', extensions: ['pdf'] },
+    payment_history: {
+      baseName: 'payment_statement',
+      extensions: ['pdf', 'pdf'],
+    },
+    tax_receipts: {
+      baseName: 'tax_fee_receipt',
+      extensions: ['pdf', 'jpg'],
+    },
+    service_history: {
+      baseName: 'service_invoice',
+      extensions: ['pdf', 'jpg'],
+    },
+    repair_invoices: {
+      baseName: 'repair_invoice',
+      extensions: ['pdf', 'jpg'],
+    },
+    warranty_records: {
+      baseName: 'warranty_claim_record',
+      extensions: ['pdf', 'jpg'],
+    },
+    inspection_reports: {
+      baseName: 'inspection_report',
+      extensions: ['pdf', 'pdf'],
+    },
+    owners_manual: {
+      baseName: 'owners_manual_section',
+      extensions: ['pdf'],
+    },
+    accident_reports: {
+      baseName: 'incident_report_packet',
+      extensions: ['pdf', 'jpg'],
+    },
+    photo_log: {
+      baseName: 'condition_photo_log',
+      extensions: ['jpg', 'webp'],
+    },
+    modifications: {
+      baseName: 'modification_receipt',
+      extensions: ['pdf', 'jpg'],
+    },
+  };
+
+  return (
+    templates[itemId] || {
+      baseName: itemId,
+      extensions: ['pdf', 'jpg'],
+    }
+  );
 }
 
 function getDemoAttachmentsForItem(
@@ -275,9 +351,12 @@ function getDemoAttachmentsForItem(
   // both "single attachment" and "multiple attachments" behavior.
   const count = itemIndex % 2 === 0 ? 1 : 2;
 
+  const template = getAttachmentTemplate(itemId);
   const attachments: DemoAttachment[] = [];
   for (let index = 1; index <= count; index += 1) {
-    attachments.push(buildDemoAttachment(vehicle, itemId, categoryKey, index));
+    attachments.push(
+      buildDemoAttachment(vehicle, template, itemId, categoryKey, index)
+    );
   }
 
   return attachments;

@@ -171,14 +171,27 @@ jobs:
       (needs.load-config.outputs.trigger_context == 'build_all' ||
        needs.load-config.outputs.trigger_context == 'build_and_deploy')
     runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: packages/mobile
     env:
       COCOAPODS_DISABLE_STATS: true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Prepare Isolated iOS Workspace
+        id: ios_workspace
+        run: |
+          BUILD_ROOT="/private/tmp/vehicle-vitals-ios-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          rm -rf "$BUILD_ROOT"
+          mkdir -p "$BUILD_ROOT"
+          rsync -a --delete "$GITHUB_WORKSPACE/packages/mobile/" "$BUILD_ROOT/"
+
+          # Build outside the runner checkout path to avoid runner-specific EPERM
+          # failures against generated Flutter artifacts under .dart_tool.
+          chmod -R u+rwX "$BUILD_ROOT"
+          chmod -RN "$BUILD_ROOT" || true
+          xattr -cr "$BUILD_ROOT" || true
+
+          echo "mobile_dir=$BUILD_ROOT" >> "$GITHUB_OUTPUT"
 
       - name: Ensure Flutter SDK
         run: |
@@ -189,11 +202,13 @@ jobs:
 
       - name: Flutter Doctor
         run: |
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           export PATH="$HOME/flutter/bin:$PATH"
           flutter doctor -v
 
       - name: Clean iOS Build State
         run: |
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           export PATH="$HOME/flutter/bin:$PATH"
           flutter clean
           rm -rf ios/Pods ios/Podfile.lock
@@ -201,6 +216,7 @@ jobs:
 
       - name: Normalize Workspace Permissions
         run: |
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           # Self-hosted macOS runners can inherit restrictive ACL/xattr metadata.
           # Normalize here so Flutter/Xcode can read generated artifacts during lipo.
           chmod -R u+rwX "$PWD"
@@ -209,16 +225,19 @@ jobs:
 
       - name: Regenerate Flutter iOS Config
         run: |
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           export PATH="$HOME/flutter/bin:$PATH"
           flutter pub get
 
       - name: Install CocoaPods
         run: |
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           cd ios
           pod install --repo-update
 
       - name: Build iOS (No Codesign)
         run: |
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           export PATH="$HOME/flutter/bin:$PATH"
           set +e
           flutter build ios --release --no-codesign
@@ -226,6 +245,7 @@ jobs:
 
           if [ $BUILD_EXIT -ne 0 ]; then
             echo "[warn] Initial iOS build failed; retrying once after resetting Flutter build intermediates"
+            find .dart_tool/flutter_build -path '*/arm64/App.framework/App' -print -exec ls -lO@ {} \; 2>/dev/null || true
             rm -rf .dart_tool/flutter_build
             chmod -R u+rwX .dart_tool || true
             xattr -cr .dart_tool || true
@@ -241,9 +261,14 @@ jobs:
         with:
           name: ios-no-codesign-build
           path: |
-            packages/mobile/build/ios/iphoneos
-            packages/mobile/build/ios/archive
+            ${{ steps.ios_workspace.outputs.mobile_dir }}/build/ios/iphoneos
+            ${{ steps.ios_workspace.outputs.mobile_dir }}/build/ios/archive
           if-no-files-found: warn
+
+      - name: Cleanup Isolated iOS Workspace
+        if: always()
+        run: |
+          rm -rf "${{ steps.ios_workspace.outputs.mobile_dir }}"
 
   build-android:
     name: Build Android App

@@ -5,6 +5,7 @@ import {
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { useAuth } from '../shared/AuthContext';
+import { isDevelopmentEnvironment } from '../shared/environment';
 import { db } from '../shared/firebaseConfig';
 import {
   addMaintenanceEntry,
@@ -266,10 +267,10 @@ export default function DevSeed() {
   const [status, setStatus] = useState('Idle');
   const [details, setDetails] = useState<SeedDetails | null>(null);
 
-  if (!import.meta.env.DEV) {
+  if (!isDevelopmentEnvironment) {
     return (
       <div className="dev-seed-container">
-        This seeding page is only available in development builds.
+        This seeding page is only available in the development environment.
       </div>
     );
   }

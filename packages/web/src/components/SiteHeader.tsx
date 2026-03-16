@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { isDevelopmentEnvironment } from '../shared/environment';
 import StackedVLogo from './StackedVLogo';
 
 interface SiteHeaderProps {
@@ -104,9 +105,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               <Link to="/app/providers" className={linkClass}>
                 Providers
               </Link>
-              {import.meta.env.DEV && (
+              {isDevelopmentEnvironment && (
                 <Link to="/app/dev-seed" className={linkClass}>
-                  Demo Seed
+                  Data Seed
                 </Link>
               )}
             </div>

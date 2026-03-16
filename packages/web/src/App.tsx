@@ -14,6 +14,7 @@ import EnvironmentGate from './components/EnvironmentGate';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './shared/AuthContext';
+import { appEnvironment, isDevelopmentEnvironment } from './shared/environment';
 import {
   buildReminderNotificationPath,
   subscribeToForegroundMessages,
@@ -161,7 +162,7 @@ const LoadingSpinner = () => (
 function App() {
   // Check if we should show the coming soon page
   const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
-  const environment = import.meta.env.VITE_ENVIRONMENT || 'development';
+  const environment = appEnvironment;
 
   // Track app initialization
   useEffect(() => {
@@ -314,7 +315,7 @@ function App() {
                 <Route path="providers" element={<ServiceProviders />} />
                 <Route path="timeline" element={<TimelineDashboard />} />
                 <Route path="upcoming" element={<UpcomingTasks />} />
-                {import.meta.env.DEV && (
+                {isDevelopmentEnvironment && (
                   <Route path="dev-seed" element={<DevSeed />} />
                 )}
               </Route>

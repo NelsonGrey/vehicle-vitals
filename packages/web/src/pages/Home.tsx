@@ -3,6 +3,9 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../shared/AuthContext';
+import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
+import { isDevelopmentEnvironment } from '../shared/environment';
 import {
   deleteVehicle,
   getVehicles,
@@ -64,14 +67,21 @@ function getPortfolioRequiredProgress(vehicle: Vehicle) {
 }
 
 export default function Home() {
+  const { user } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isBackfillingInsights, setIsBackfillingInsights] = useState(false);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
+  const [isSeedingDemo, setIsSeedingDemo] = useState(false);
   const [selectedVin, setSelectedVin] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [vehicleAlerts, setVehicleAlerts] = useState<
     Record<string, VehicleAlert>
   >({});
+
+  const refreshVehicles = async () => {
+    const list = await getVehicles();
+    setVehicles(list);
+  };
 
   const normalizedSearch = searchTerm.toLowerCase();
   const filteredVehicles = vehicles.filter(v => {
@@ -91,8 +101,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchVehicles = async () => {
-      const list = await getVehicles();
-      setVehicles(list);
+      await refreshVehicles();
     };
     fetchVehicles();
   }, []);
@@ -166,8 +175,7 @@ export default function Home() {
       }
     }
 
-    const list = await getVehicles();
-    setVehicles(list);
+    await refreshVehicles();
 
     if (failureCount === 0) {
       setBackfillMessage(
@@ -187,13 +195,34 @@ export default function Home() {
     if (!ok) return;
     try {
       await deleteVehicle(vin);
-      const list = await getVehicles();
-      setVehicles(list);
+      await refreshVehicles();
     } catch (err) {
       alert(
         'Error deleting vehicle: ' +
           (err instanceof Error ? err.message : String(err))
       );
+    }
+  };
+
+  const handleSeedDemo = async () => {
+    try {
+      setIsSeedingDemo(true);
+      setBackfillMessage(null);
+      const details = await seedBobDemo({
+        uid: user?.uid || '',
+        email: user?.email,
+      });
+      await refreshVehicles();
+      setBackfillMessage(
+        `Loaded Bob Demo data: ${details.vehiclesCount} vehicles now in garage.`
+      );
+    } catch (error) {
+      setBackfillMessage(
+        'Unable to load demo data: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setIsSeedingDemo(false);
     }
   };
 
@@ -244,12 +273,25 @@ export default function Home() {
               Get started by adding your first vehicle. You can use VIN decode
               to speed things up.
             </p>
-            <Link
-              to="/add-vehicle"
-              className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
-            >
-              Add your first vehicle
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/add-vehicle"
+                className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
+              >
+                Add your first vehicle
+              </Link>
+              {isDevelopmentEnvironment && (
+                <button
+                  onClick={() => void handleSeedDemo()}
+                  disabled={isSeedingDemo}
+                  className="inline-block px-4 py-2.5 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isSeedingDemo
+                    ? 'Loading demo data...'
+                    : `Load Bob Demo Data (${bobDemoVehicleCount} vehicles)`}
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">

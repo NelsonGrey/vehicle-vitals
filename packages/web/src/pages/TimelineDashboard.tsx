@@ -7,6 +7,7 @@ interface Vehicle {
   make: string;
   model: string;
   year: string;
+  licensePlate?: string;
 }
 
 interface MaintenanceEntry {
@@ -31,6 +32,22 @@ interface FirestoreMaintenanceEntry {
   cost?: number;
   createdAt?: any;
   updatedAt?: any;
+}
+
+function resolveVehiclePlate(vehicle: any): string | undefined {
+  const candidates = [
+    vehicle?.licensePlate,
+    vehicle?.plateNumber,
+    vehicle?.plate,
+  ];
+
+  for (const value of candidates) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
 }
 
 type TimeFilter = 'all' | 'past' | 'future';
@@ -101,6 +118,7 @@ export default function TimelineDashboard() {
                   make: vehicle.make,
                   model: vehicle.model,
                   year: vehicle.year,
+                  licensePlate: resolveVehiclePlate(vehicle),
                 },
               })
             )
@@ -279,6 +297,7 @@ export default function TimelineDashboard() {
                       }`}
                     >
                       {vehicle.year} {vehicle.make} {vehicle.model}
+                      {vehicle.licensePlate ? ` • ${vehicle.licensePlate}` : ''}
                     </button>
                   );
                 })}
@@ -356,6 +375,9 @@ export default function TimelineDashboard() {
                             <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
                               {entry.vehicle.make} {entry.vehicle.model} (
                               {entry.vehicle.year}) • {entry.vehicle.vin}
+                              {entry.vehicle.licensePlate
+                                ? ` • Plate: ${entry.vehicle.licensePlate}`
+                                : ''}
                             </p>
                           </div>
                           <div className="text-right">

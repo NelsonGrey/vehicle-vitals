@@ -32,6 +32,7 @@ interface DemoVehicleSeed {
   make: string;
   model: string;
   year: string;
+  licensePlate: string;
   mileage: string;
   purchaseDate: string;
   nextDueByMiles: string;
@@ -84,6 +85,7 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
     make: 'Toyota',
     model: 'Camry XLE',
     year: '2023',
+    licensePlate: 'IL-B0B123',
     mileage: '38210',
     purchaseDate: '2023-07-18',
     nextDueByMiles: '40000',
@@ -146,6 +148,7 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
     make: 'Ford',
     model: 'F-150 Lariat',
     year: '2022',
+    licensePlate: 'IL-TRK457',
     mileage: '51745',
     purchaseDate: '2022-03-04',
     nextDueByMiles: '55000',
@@ -207,6 +210,7 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
     make: 'BMW',
     model: '330i',
     year: '2023',
+    licensePlate: 'IL-BMW330',
     mileage: '24180',
     purchaseDate: '2023-01-23',
     nextDueByMiles: '30000',
@@ -434,6 +438,7 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
       make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
+      licensePlate: vehicle.licensePlate,
       mileage: vehicle.mileage,
       purchaseDate: vehicle.purchaseDate,
       nextDueByMiles: vehicle.nextDueByMiles,

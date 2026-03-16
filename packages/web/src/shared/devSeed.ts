@@ -66,6 +66,13 @@ interface SeedUser {
   email?: string | null;
 }
 
+interface DemoAttachment {
+  name: string;
+  url: string;
+  size: number;
+  type: string;
+}
+
 const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
   {
     vin: '4T1G11AK2PU123456',
@@ -236,12 +243,52 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
   },
 ];
 
+function buildDemoAttachment(
+  vehicle: DemoVehicleSeed,
+  itemId: string,
+  categoryKey: string,
+  docIndex: number
+): DemoAttachment {
+  const extByIndex = ['pdf', 'jpg'];
+  const mimeByExt: Record<string, string> = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg',
+  };
+  const ext = extByIndex[(docIndex - 1) % extByIndex.length];
+  const normalizedVin = vehicle.vin.toLowerCase();
+
+  return {
+    name: `${vehicle.year}_${vehicle.make}_${itemId}_${docIndex}.${ext}`,
+    url: `https://storage.googleapis.com/vehicle-vitals-demo/${normalizedVin}/${categoryKey}/${itemId}-${docIndex}.${ext}`,
+    size: 96_000 + docIndex * 28_000,
+    type: mimeByExt[ext],
+  };
+}
+
+function getDemoAttachmentsForItem(
+  vehicle: DemoVehicleSeed,
+  categoryKey: string,
+  itemId: string,
+  itemIndex: number
+): DemoAttachment[] {
+  // Alternate 1-file and 2-file examples so every section demonstrates
+  // both "single attachment" and "multiple attachments" behavior.
+  const count = itemIndex % 2 === 0 ? 1 : 2;
+
+  const attachments: DemoAttachment[] = [];
+  for (let index = 1; index <= count; index += 1) {
+    attachments.push(buildDemoAttachment(vehicle, itemId, categoryKey, index));
+  }
+
+  return attachments;
+}
+
 function createDemoPortfolio(vehicle: DemoVehicleSeed) {
   const portfolio = createStandardVehiclePortfolio();
   const categories = portfolio.categories || [];
 
   for (const category of categories) {
-    for (const item of category.items || []) {
+    for (const [itemIndex, item] of (category.items || []).entries()) {
       if (category.key === 'maintenance') {
         item.status = item.required ? 'ready' : 'in-progress';
       } else if (category.key === 'ownership') {
@@ -255,6 +302,12 @@ function createDemoPortfolio(vehicle: DemoVehicleSeed) {
       item.notes = `Bob Demo - ${vehicle.nickname}: ${item.title} ${
         item.status === 'ready' ? 'on file and verified.' : 'in progress.'
       }`;
+      item.files = getDemoAttachmentsForItem(
+        vehicle,
+        category.key,
+        item.id,
+        itemIndex
+      );
     }
   }
 

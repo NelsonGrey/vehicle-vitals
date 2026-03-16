@@ -32,16 +32,23 @@ interface FirestoreMaintenanceEntry {
   updatedAt?: any;
 }
 
+type TimeFilter = 'all' | 'past' | 'future';
+
 export default function TimelineDashboard() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [maintenanceEntries, setMaintenanceEntries] = useState<
     MaintenanceEntry[]
   >([]);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+  const [selectedVehicleVins, setSelectedVehicleVins] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const vehiclesList = await getVehicles();
+        setVehicles(vehiclesList);
+        setSelectedVehicleVins(vehiclesList.map(vehicle => vehicle.vin));
 
         // Load maintenance entries for all vehicles
         const allEntries: MaintenanceEntry[] = [];
@@ -81,6 +88,41 @@ export default function TimelineDashboard() {
     loadData();
   }, []);
 
+  const now = Date.now();
+  const filteredEntries = maintenanceEntries.filter(entry => {
+    const vehicleMatch = selectedVehicleVins.includes(entry.vehicle.vin);
+
+    const entryTimestamp = new Date(entry.date).getTime();
+    const isFuture = Number.isFinite(entryTimestamp) && entryTimestamp > now;
+    const isPast = !isFuture;
+
+    const timeMatch =
+      timeFilter === 'all' ||
+      (timeFilter === 'past' && isPast) ||
+      (timeFilter === 'future' && isFuture);
+
+    return vehicleMatch && timeMatch;
+  });
+
+  const hasAllVehiclesSelected =
+    vehicles.length > 0 && selectedVehicleVins.length === vehicles.length;
+
+  const toggleVehicleSelection = (vin: string) => {
+    setSelectedVehicleVins(current =>
+      current.includes(vin)
+        ? current.filter(selectedVin => selectedVin !== vin)
+        : [...current, vin]
+    );
+  };
+
+  const selectAllVehicles = () => {
+    setSelectedVehicleVins(vehicles.map(vehicle => vehicle.vin));
+  };
+
+  const clearVehicleSelection = () => {
+    setSelectedVehicleVins([]);
+  };
+
   if (loading) {
     return (
       <div className="w-full max-w-7xl mx-auto px-5 py-5">
@@ -112,13 +154,86 @@ export default function TimelineDashboard() {
           <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4">
             Timeline Summary
           </h2>
+
+          <div className="space-y-3 mb-4">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+                Time Range
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ['all', 'All'],
+                    ['past', 'Past'],
+                    ['future', 'Future'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTimeFilter(value)}
+                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                      timeFilter === value
+                        ? 'border-slate-700 bg-slate-700 text-white dark:border-slate-200 dark:bg-slate-200 dark:text-slate-900'
+                        : 'border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+                Vehicles
+              </p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={selectAllVehicles}
+                  className="px-2.5 py-1 text-xs rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                >
+                  All Vehicles
+                </button>
+                <button
+                  type="button"
+                  onClick={clearVehicleSelection}
+                  className="px-2.5 py-1 text-xs rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+                {vehicles.map(vehicle => {
+                  const selected = selectedVehicleVins.includes(vehicle.vin);
+                  return (
+                    <button
+                      key={vehicle.vin}
+                      type="button"
+                      onClick={() => toggleVehicleSelection(vehicle.vin)}
+                      className={`w-full text-left px-2.5 py-2 text-xs rounded-lg border transition-colors ${
+                        selected
+                          ? 'border-slate-700 bg-slate-100 dark:border-slate-300 dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-3">
             <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
                 Entries logged
               </p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100 m-0">
-                {maintenanceEntries.length}
+                {filteredEntries.length}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
@@ -126,8 +241,8 @@ export default function TimelineDashboard() {
                 Latest activity
               </p>
               <p className="text-sm font-medium text-slate-900 dark:text-slate-100 m-0">
-                {maintenanceEntries[0]
-                  ? new Date(maintenanceEntries[0].date).toLocaleDateString()
+                {filteredEntries[0]
+                  ? new Date(filteredEntries[0].date).toLocaleDateString()
                   : 'No history yet'}
               </p>
             </div>
@@ -135,17 +250,20 @@ export default function TimelineDashboard() {
               Each event includes its vehicle, recorded cost, notes, and any
               uploaded attachments.
             </div>
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs text-slate-500 dark:text-slate-400">
+              Showing: {timeFilter === 'all' ? 'All' : timeFilter === 'past' ? 'Past' : 'Future'} • {hasAllVehiclesSelected ? 'All vehicles' : `${selectedVehicleVins.length} selected`}
+            </div>
           </div>
         </div>
 
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          {maintenanceEntries.length === 0 ? (
+          {filteredEntries.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-slate-500 dark:text-slate-400 text-lg mb-2">
-                No maintenance history yet
+                No timeline entries match the current filters
               </div>
               <div className="text-slate-400 dark:text-slate-500">
-                Add maintenance entries to your vehicles to see the timeline
+                Try switching time range or selecting different vehicles.
               </div>
             </div>
           ) : (
@@ -153,7 +271,7 @@ export default function TimelineDashboard() {
               <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-300 dark:bg-slate-600"></div>
 
               <div className="space-y-8">
-                {maintenanceEntries.map((entry, index) => (
+                {filteredEntries.map((entry, index) => (
                   <div
                     key={entry.id || index}
                     className="relative flex items-start"

@@ -199,6 +199,14 @@ jobs:
           rm -rf ios/Pods ios/Podfile.lock
           rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
 
+      - name: Normalize Workspace Permissions
+        run: |
+          # Self-hosted macOS runners can inherit restrictive ACL/xattr metadata.
+          # Normalize here so Flutter/Xcode can read generated artifacts during lipo.
+          chmod -R u+rwX "$PWD"
+          chmod -RN "$PWD" || true
+          xattr -cr "$PWD" || true
+
       - name: Regenerate Flutter iOS Config
         run: |
           export PATH="$HOME/flutter/bin:$PATH"
@@ -212,7 +220,20 @@ jobs:
       - name: Build iOS (No Codesign)
         run: |
           export PATH="$HOME/flutter/bin:$PATH"
+          set +e
           flutter build ios --release --no-codesign
+          BUILD_EXIT=$?
+
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "[warn] Initial iOS build failed; retrying once after resetting Flutter build intermediates"
+            rm -rf .dart_tool/flutter_build
+            chmod -R u+rwX .dart_tool || true
+            xattr -cr .dart_tool || true
+            flutter build ios --release --no-codesign
+            BUILD_EXIT=$?
+          fi
+
+          exit $BUILD_EXIT
 
       - name: Upload iOS Build Artifacts
         if: always()

@@ -1,28 +1,28 @@
-import { createHash } from 'crypto';
-import * as admin from 'firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
-import { setGlobalOptions } from 'firebase-functions';
-import { onRequest } from 'firebase-functions/https';
-import * as logger from 'firebase-functions/logger';
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { onObjectFinalized } from 'firebase-functions/v2/storage';
+import {createHash} from "crypto";
+import * as admin from "firebase-admin";
+import {Timestamp} from "firebase-admin/firestore";
+import {setGlobalOptions} from "firebase-functions";
+import {onRequest} from "firebase-functions/https";
+import * as logger from "firebase-functions/logger";
+import {HttpsError, onCall} from "firebase-functions/v2/https";
+import {onSchedule} from "firebase-functions/v2/scheduler";
+import {onObjectFinalized} from "firebase-functions/v2/storage";
 import {
   buildAppleCalendarEvent,
   buildGoogleCalendarEvent,
   buildIcsEvent,
-} from './calendar.provider';
-import { sendEmail } from './email.provider';
+} from "./calendar.provider";
+import {sendEmail} from "./email.provider";
 import {
   readIntegrationCache,
   writeIntegrationCache,
-} from './integration.cache';
-import { getIntegrationConfig } from './integrations.config';
-import { lookupOwnerManuals } from './manuals.provider';
-import { verifyPremiumReceipt } from './premium.provider';
-import { enforceRateLimit, requireAuthenticatedUser } from './request.guards';
-import { buildMaintenancePlan } from './schedule.provider';
-import { lookupWarrantySummary } from './warranty.provider';
+} from "./integration.cache";
+import {getIntegrationConfig} from "./integrations.config";
+import {lookupOwnerManuals} from "./manuals.provider";
+import {verifyPremiumReceipt} from "./premium.provider";
+import {enforceRateLimit, requireAuthenticatedUser} from "./request.guards";
+import {buildMaintenancePlan} from "./schedule.provider";
+import {lookupWarrantySummary} from "./warranty.provider";
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -57,7 +57,7 @@ interface MaintenanceEntry {
 
 interface LocalServiceProvider {
   id: string;
-  type: 'repair_shop' | 'dealership';
+  type: "repair_shop" | "dealership";
   name: string;
   distanceMiles: number;
   address: string;
@@ -85,7 +85,7 @@ interface ReminderSweepDependencies {
         operator: admin.firestore.WhereFilterOp;
         value: unknown;
       }>;
-      orderBy?: { field: string; direction: 'asc' | 'desc' };
+      orderBy?: { field: string; direction: "asc" | "desc" };
       limit?: number;
       offset?: number;
     }
@@ -132,7 +132,7 @@ class FirestoreCrudHelpers {
         operator: admin.firestore.WhereFilterOp;
         value: unknown;
       }>;
-      orderBy?: { field: string; direction: 'asc' | 'desc' };
+      orderBy?: { field: string; direction: "asc" | "desc" };
       limit?: number;
       offset?: number;
     }
@@ -142,7 +142,7 @@ class FirestoreCrudHelpers {
 
     // Apply filters
     if (options?.filters) {
-      options.filters.forEach(filter => {
+      options.filters.forEach((filter) => {
         query = query.where(filter.field, filter.operator, filter.value);
       });
     }
@@ -164,7 +164,7 @@ class FirestoreCrudHelpers {
     }
 
     const snapshot = await query.get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
   }
 }
 
@@ -181,10 +181,10 @@ class FirestoreCrudHelpers {
 // functions should each use functions.runWith({ maxInstances: 10 }) instead.
 // In the v1 API, each function can only serve one request per container, so
 // this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+setGlobalOptions({maxInstances: 10});
 
 interface AttachmentExtractedData {
-  documentCategory: 'receipt' | 'invoice' | 'image' | 'document' | 'other';
+  documentCategory: "receipt" | "invoice" | "image" | "document" | "other";
   serviceType?: string;
   totalCost?: number;
   currency?: string;
@@ -195,42 +195,42 @@ interface AttachmentExtractedData {
 function inferDocumentCategory(
   fileName: string,
   mimeType?: string
-): AttachmentExtractedData['documentCategory'] {
+): AttachmentExtractedData["documentCategory"] {
   const lower = fileName.toLowerCase();
-  const mime = (mimeType || '').toLowerCase();
+  const mime = (mimeType || "").toLowerCase();
 
-  if (lower.includes('receipt') || lower.includes('invoice')) {
-    return lower.includes('invoice') ? 'invoice' : 'receipt';
+  if (lower.includes("receipt") || lower.includes("invoice")) {
+    return lower.includes("invoice") ? "invoice" : "receipt";
   }
 
-  if (mime.startsWith('image/')) {
-    return 'image';
+  if (mime.startsWith("image/")) {
+    return "image";
   }
 
   if (
-    mime.includes('pdf') ||
-    mime.includes('word') ||
-    mime.includes('sheet') ||
-    mime.includes('text')
+    mime.includes("pdf") ||
+    mime.includes("word") ||
+    mime.includes("sheet") ||
+    mime.includes("text")
   ) {
-    return 'document';
+    return "document";
   }
 
-  return 'other';
+  return "other";
 }
 
 function inferServiceType(fileName: string): string | undefined {
   const lower = fileName.toLowerCase();
   const mapping: Array<{ pattern: RegExp; label: string }> = [
-    { pattern: /oil/, label: 'Oil Change' },
-    { pattern: /tire|tyre|rotation/, label: 'Tire Service' },
-    { pattern: /brake/, label: 'Brake Service' },
-    { pattern: /battery/, label: 'Battery Service' },
-    { pattern: /inspection/, label: 'Inspection' },
-    { pattern: /alignment/, label: 'Alignment' },
+    {pattern: /oil/, label: "Oil Change"},
+    {pattern: /tire|tyre|rotation/, label: "Tire Service"},
+    {pattern: /brake/, label: "Brake Service"},
+    {pattern: /battery/, label: "Battery Service"},
+    {pattern: /inspection/, label: "Inspection"},
+    {pattern: /alignment/, label: "Alignment"},
   ];
 
-  const match = mapping.find(item => item.pattern.test(lower));
+  const match = mapping.find((item) => item.pattern.test(lower));
   return match?.label;
 }
 
@@ -242,7 +242,7 @@ function extractCost(value: string): number | undefined {
     ) || text.match(/\$(\d{1,5}(?:[.,]\d{2})?)/);
   if (!explicit) return undefined;
 
-  const normalized = explicit[1].replace(',', '.');
+  const normalized = explicit[1].replace(",", ".");
   const parsed = Number(normalized);
   if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
   return Number(parsed.toFixed(2));
@@ -253,7 +253,7 @@ function extractMileage(value: string): number | undefined {
     /(\d{1,3}(?:,\d{3})+|\d{4,6})\s?(?:mi|miles|km)\b/i
   );
   if (!mileageMatch) return undefined;
-  const parsed = Number(mileageMatch[1].replace(/,/g, ''));
+  const parsed = Number(mileageMatch[1].replace(/,/g, ""));
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
@@ -272,8 +272,8 @@ function extractServiceDate(value: string): string | undefined {
 
   const usMatch = value.match(/\b(\d{1,2})[-_/](\d{1,2})[-_/](\d{2,4})\b/);
   if (usMatch) {
-    const month = usMatch[1].padStart(2, '0');
-    const day = usMatch[2].padStart(2, '0');
+    const month = usMatch[1].padStart(2, "0");
+    const day = usMatch[2].padStart(2, "0");
     const year = usMatch[3].length === 2 ? `20${usMatch[3]}` : usMatch[3];
     return toIsoDate(new Date(`${year}-${month}-${day}T00:00:00Z`));
   }
@@ -290,7 +290,7 @@ function buildAttachmentAnalysis(
   confidence: number;
   sourceText: string;
 } {
-  const fileName = objectName.split('/').pop() || objectName;
+  const fileName = objectName.split("/").pop() || objectName;
   const metadataText = [
     fileName,
     customMetadata?.title,
@@ -299,34 +299,34 @@ function buildAttachmentAnalysis(
     customMetadata?.ocrText,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   const extracted: AttachmentExtractedData = {
     documentCategory: inferDocumentCategory(fileName, mimeType),
     serviceType: inferServiceType(metadataText),
     totalCost: extractCost(metadataText),
-    currency: 'USD',
+    currency: "USD",
     serviceDate: extractServiceDate(metadataText),
     mileage: extractMileage(metadataText),
   };
 
   const confidenceSignals = [
-    extracted.documentCategory !== 'other',
+    extracted.documentCategory !== "other",
     Boolean(extracted.serviceType),
-    typeof extracted.totalCost === 'number',
+    typeof extracted.totalCost === "number",
     Boolean(extracted.serviceDate),
-    typeof extracted.mileage === 'number',
+    typeof extracted.mileage === "number",
   ].filter(Boolean).length;
 
   const confidence = Math.min(0.25 + confidenceSignals * 0.15, 0.9);
 
-  return { extracted, confidence, sourceText: metadataText };
+  return {extracted, confidence, sourceText: metadataText};
 }
 
 function parseAttachmentPath(path: string): {
   uid: string;
   vin: string;
-  section: 'maintenance' | 'records';
+  section: "maintenance" | "records";
   parentId: string;
 } | null {
   const match = path.match(
@@ -338,41 +338,72 @@ function parseAttachmentPath(path: string): {
   return {
     uid: match[1],
     vin: match[2],
-    section: match[3] as 'maintenance' | 'records',
+    section: match[3] as "maintenance" | "records",
     parentId: match[4],
   };
 }
 
-export const analyzeUploadedAttachment = onObjectFinalized(async event => {
-  const object = event.data;
-  const objectName = object.name;
-  if (!objectName) {
-    logger.warn('Skipping storage finalize event with missing object name');
-    return;
-  }
+async function upsertAttachmentAnalysis(params: {
+  uid: string;
+  vin: string;
+  objectPath: string;
+  bucket?: string | null;
+  contentType?: string | null;
+  sizeBytes?: number | null;
+  customMetadata?: Record<string, string>;
+  forceOcrText?: string;
+}) {
+  const {
+    uid,
+    vin,
+    objectPath,
+    bucket,
+    contentType,
+    sizeBytes,
+    customMetadata,
+    forceOcrText,
+  } = params;
 
-  const pathContext = parseAttachmentPath(objectName);
+  const pathContext = parseAttachmentPath(objectPath);
   if (!pathContext) {
-    return;
+    throw new HttpsError("invalid-argument", "Invalid attachment storage path");
   }
 
-  const { uid, vin, section, parentId } = pathContext;
+  if (pathContext.uid !== uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Attachment path does not match authenticated user"
+    );
+  }
+
+  if (pathContext.vin !== vin) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Attachment path VIN does not match request VIN"
+    );
+  }
+
   const db = admin.firestore();
-  const analysisDocId = encodeURIComponent(objectName);
-  const { extracted, confidence, sourceText } = buildAttachmentAnalysis(
-    objectName,
-    object.contentType,
-    object.metadata as Record<string, string> | undefined
+  const mergedMetadata = {
+    ...(customMetadata || {}),
+    ...(forceOcrText ? {ocrText: forceOcrText} : {}),
+  };
+
+  const {extracted, confidence, sourceText} = buildAttachmentAnalysis(
+    objectPath,
+    contentType || undefined,
+    mergedMetadata
   );
 
+  const analysisDocId = encodeURIComponent(objectPath);
   const analysisData = {
-    path: objectName,
-    bucket: object.bucket,
-    contentType: object.contentType || null,
-    sizeBytes: Number(object.size || 0),
-    fileName: objectName.split('/').pop() || objectName,
-    section,
-    parentId,
+    path: objectPath,
+    bucket: bucket || null,
+    contentType: contentType || null,
+    sizeBytes: typeof sizeBytes === "number" ? sizeBytes : null,
+    fileName: objectPath.split("/").pop() || objectPath,
+    section: pathContext.section,
+    parentId: pathContext.parentId,
     extracted,
     confidence,
     sourceText,
@@ -382,21 +413,24 @@ export const analyzeUploadedAttachment = onObjectFinalized(async event => {
 
   await db
     .doc(`users/${uid}/vehicles/${vin}/attachmentAnalyses/${analysisDocId}`)
-    .set(analysisData, { merge: true });
+    .set(analysisData, {merge: true});
 
-  if (section === 'maintenance' && !parentId.startsWith('temp_')) {
+  if (
+    pathContext.section === "maintenance" &&
+    !pathContext.parentId.startsWith("temp_")
+  ) {
     const maintenanceRef = db.doc(
-      `users/${uid}/vehicles/${vin}/maintenance/${parentId}`
+      `users/${uid}/vehicles/${vin}/maintenance/${pathContext.parentId}`
     );
     const maintenanceSnap = await maintenanceRef.get();
     if (maintenanceSnap.exists) {
       const data = maintenanceSnap.data() || {};
-      const attachments = Array.isArray(data.attachments)
-        ? data.attachments
-        : [];
+      const attachments = Array.isArray(data.attachments) ?
+        data.attachments :
+        [];
       let changed = false;
       const nextAttachments = attachments.map((attachment: any) => {
-        if (attachment?.path !== objectName) {
+        if (attachment?.path !== objectPath) {
           return attachment;
         }
 
@@ -418,23 +452,101 @@ export const analyzeUploadedAttachment = onObjectFinalized(async event => {
             attachmentAnalysisUpdatedAt:
               admin.firestore.FieldValue.serverTimestamp(),
           },
-          { merge: true }
+          {merge: true}
         );
       }
     }
   }
+
+  return {
+    extracted,
+    confidence,
+    sourceText,
+    section: pathContext.section,
+    parentId: pathContext.parentId,
+  };
+}
+
+export const analyzeUploadedAttachment = onObjectFinalized(async (event) => {
+  const object = event.data;
+  const objectName = object.name;
+  if (!objectName) {
+    logger.warn("Skipping storage finalize event with missing object name");
+    return;
+  }
+
+  const pathContext = parseAttachmentPath(objectName);
+  if (!pathContext) {
+    return;
+  }
+
+  await upsertAttachmentAnalysis({
+    uid: pathContext.uid,
+    vin: pathContext.vin,
+    objectPath: objectName,
+    bucket: object.bucket,
+    contentType: object.contentType || null,
+    sizeBytes: Number(object.size || 0),
+    customMetadata: object.metadata as Record<string, string> | undefined,
+  });
+});
+
+export const analyzeAttachmentTextCallable = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Missing auth context");
+  }
+
+  const {vin, storagePath, ocrText, contentType} =
+    (request.data as {
+      vin?: string;
+      storagePath?: string;
+      ocrText?: string;
+      contentType?: string;
+    }) ?? {};
+
+  const normalizedVin = (vin || "").trim().toUpperCase();
+  const normalizedPath = (storagePath || "").trim();
+  const normalizedText = (ocrText || "").trim();
+
+  if (!normalizedVin || normalizedVin.length !== 17) {
+    throw new HttpsError("invalid-argument", "Valid 17-character VIN required");
+  }
+
+  if (!normalizedPath) {
+    throw new HttpsError("invalid-argument", "storagePath is required");
+  }
+
+  if (!normalizedText) {
+    throw new HttpsError("invalid-argument", "ocrText is required");
+  }
+
+  const result = await upsertAttachmentAnalysis({
+    uid,
+    vin: normalizedVin,
+    objectPath: normalizedPath,
+    contentType: (contentType || "").trim() || null,
+    forceOcrText: normalizedText,
+  });
+
+  return {
+    success: true,
+    vin: normalizedVin,
+    storagePath: normalizedPath,
+    analysis: result,
+  };
 });
 
 async function decodeVinData(vinInput: string) {
   const vin = vinInput.trim().toUpperCase();
   if (vin.length !== 17) {
-    throw new Error('Valid 17-character VIN required');
+    throw new Error("Valid 17-character VIN required");
   }
 
   logger.info(`Decoding VIN: ${vin.substring(0, 8)}...`);
 
   const nhtsaUrl =
-    'https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/' +
+    "https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/" +
     `${encodeURIComponent(vin)}?format=json`;
   const nhtsaResponse = await fetch(nhtsaUrl);
 
@@ -446,17 +558,17 @@ async function decodeVinData(vinInput: string) {
   const results = data?.Results || [];
 
   const sanitize = (value: string | undefined) => {
-    const s = (value ?? '').toString().trim();
-    if (!s) return '';
+    const s = (value ?? "").toString().trim();
+    if (!s) return "";
     const bad = new Set([
-      '0',
-      'NOT APPLICABLE',
-      'NULL',
-      'N/A',
-      'NONE',
-      'UNKNOWN',
+      "0",
+      "NOT APPLICABLE",
+      "NULL",
+      "N/A",
+      "NONE",
+      "UNKNOWN",
     ]);
-    return bad.has(s.toUpperCase()) ? '' : s;
+    return bad.has(s.toUpperCase()) ? "" : s;
   };
 
   const getVal = (key: string) =>
@@ -468,16 +580,16 @@ async function decodeVinData(vinInput: string) {
 
   const vehicle = {
     vin,
-    make: getVal('Make'),
-    model: getVal('Model'),
-    year: getVal('Model Year'),
-    bodyClass: getVal('Body Class'),
-    engineType: getVal('Engine Type'),
-    fuelType: getVal('Fuel Type - Primary'),
-    driveType: getVal('Drive Type'),
-    transmissionStyle: getVal('Transmission Style'),
-    trim: getVal('Trim'),
-    vehicleType: getVal('Vehicle Type'),
+    make: getVal("Make"),
+    model: getVal("Model"),
+    year: getVal("Model Year"),
+    bodyClass: getVal("Body Class"),
+    engineType: getVal("Engine Type"),
+    fuelType: getVal("Fuel Type - Primary"),
+    driveType: getVal("Drive Type"),
+    transmissionStyle: getVal("Transmission Style"),
+    trim: getVal("Trim"),
+    vehicleType: getVal("Vehicle Type"),
   };
 
   const vehicleDesc = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
@@ -489,11 +601,11 @@ async function decodeVinData(vinInput: string) {
 async function lookupNhtsaRecalls(vinInput: string) {
   const vin = vinInput.trim().toUpperCase();
   if (vin.length !== 17) {
-    throw new Error('Valid 17-character VIN required');
+    throw new Error("Valid 17-character VIN required");
   }
 
   const recallsUrl =
-    'https://api.nhtsa.gov/recalls/recallsByVehicle?vin=' +
+    "https://api.nhtsa.gov/recalls/recallsByVehicle?vin=" +
     encodeURIComponent(vin);
   const recallsResponse = await fetch(recallsUrl);
 
@@ -502,18 +614,18 @@ async function lookupNhtsaRecalls(vinInput: string) {
   }
 
   const recallsData = await recallsResponse.json();
-  const recalls = Array.isArray(recallsData?.results)
-    ? recallsData.results
-    : [];
+  const recalls = Array.isArray(recallsData?.results) ?
+    recallsData.results :
+    [];
 
   return recalls.map((item: Record<string, unknown>) => ({
-    campaignNumber: (item['NHTSACampaignNumber'] || '').toString(),
-    reportReceivedDate: (item['ReportReceivedDate'] || '').toString(),
-    component: (item['Component'] || '').toString(),
-    summary: (item['Summary'] || '').toString(),
-    consequence: (item['Conequence'] || item['Consequence'] || '').toString(),
-    remedy: (item['Remedy'] || '').toString(),
-    manufacturer: (item['Manufacturer'] || '').toString(),
+    campaignNumber: (item["NHTSACampaignNumber"] || "").toString(),
+    reportReceivedDate: (item["ReportReceivedDate"] || "").toString(),
+    component: (item["Component"] || "").toString(),
+    summary: (item["Summary"] || "").toString(),
+    consequence: (item["Conequence"] || item["Consequence"] || "").toString(),
+    remedy: (item["Remedy"] || "").toString(),
+    manufacturer: (item["Manufacturer"] || "").toString(),
   }));
 }
 
@@ -541,7 +653,7 @@ function deterministicShuffle<T>(items: T[], seed: number): T[] {
 }
 
 function normalizeLocationText(value: string): string {
-  return value.trim().replace(/\s+/g, ' ');
+  return value.trim().replace(/\s+/g, " ");
 }
 
 function buildLocalServiceProviders(
@@ -549,47 +661,47 @@ function buildLocalServiceProviders(
   radiusMiles: number,
   maxResults: number,
   vehicleMake?: string,
-  providerTypeFilter: 'all' | 'repair_shop' | 'dealership' = 'all'
+  providerTypeFilter: "all" | "repair_shop" | "dealership" = "all"
 ): LocalServiceProvider[] {
   const normalizedLocation = normalizeLocationText(locationQuery);
-  const focusMake = (vehicleMake || '').trim();
+  const focusMake = (vehicleMake || "").trim();
   const seed = hashToSeed(`${normalizedLocation}:${focusMake}`);
 
   const repairShopTemplates = [
-    { name: 'Precision Auto Care', specialties: ['Oil Change', 'Brakes'] },
+    {name: "Precision Auto Care", specialties: ["Oil Change", "Brakes"]},
     {
-      name: 'Neighborhood Garage Works',
-      specialties: ['Diagnostics', 'Engine Repair'],
+      name: "Neighborhood Garage Works",
+      specialties: ["Diagnostics", "Engine Repair"],
     },
     {
-      name: 'Summit Tire & Service',
-      specialties: ['Tires', 'Alignment', 'Suspension'],
+      name: "Summit Tire & Service",
+      specialties: ["Tires", "Alignment", "Suspension"],
     },
     {
-      name: 'Main Street Auto Clinic',
-      specialties: ['Transmission', 'AC Service'],
+      name: "Main Street Auto Clinic",
+      specialties: ["Transmission", "AC Service"],
     },
   ];
 
   const dealerTemplates = [
     {
-      name: `${focusMake || 'Certified'} Auto Center`,
-      specialties: ['Factory Service', 'Warranty Repairs'],
+      name: `${focusMake || "Certified"} Auto Center`,
+      specialties: ["Factory Service", "Warranty Repairs"],
     },
     {
-      name: `${focusMake || 'Premier'} Motors`,
-      specialties: ['Certified Pre-Owned', 'Recall Service'],
+      name: `${focusMake || "Premier"} Motors`,
+      specialties: ["Certified Pre-Owned", "Recall Service"],
     },
     {
-      name: 'Metro Auto Dealership',
-      specialties: ['OEM Parts', 'Service Packages'],
+      name: "Metro Auto Dealership",
+      specialties: ["OEM Parts", "Service Packages"],
     },
   ];
 
   const providers: LocalServiceProvider[] = [
     ...repairShopTemplates.map((template, index) => ({
       id: `repair-${index + 1}`,
-      type: 'repair_shop' as const,
+      type: "repair_shop" as const,
       name: template.name,
       distanceMiles: Math.max(1, Math.min(radiusMiles, 2 + index * 3)),
       address: `${100 + index * 11} Service Ave, ${normalizedLocation}`,
@@ -600,7 +712,7 @@ function buildLocalServiceProviders(
     })),
     ...dealerTemplates.map((template, index) => ({
       id: `dealer-${index + 1}`,
-      type: 'dealership' as const,
+      type: "dealership" as const,
       name: template.name,
       distanceMiles: Math.max(2, Math.min(radiusMiles, 4 + index * 5)),
       address: `${400 + index * 13} Dealer Blvd, ${normalizedLocation}`,
@@ -612,9 +724,9 @@ function buildLocalServiceProviders(
   ];
 
   const filteredProviders =
-    providerTypeFilter === 'all'
-      ? providers
-      : providers.filter(provider => provider.type === providerTypeFilter);
+    providerTypeFilter === "all" ?
+      providers :
+      providers.filter((provider) => provider.type === providerTypeFilter);
 
   return deterministicShuffle(filteredProviders, seed)
     .slice(0, maxResults)
@@ -629,18 +741,18 @@ function buildLocalServiceProviders(
 
 // VIN decoding function
 export const decodeVIN = onRequest(
-  { cors: true },
+  {cors: true},
   async (request, response) => {
     try {
       // Only allow POST requests
-      if (request.method !== 'POST') {
-        response.status(405).json({ error: 'Method not allowed' });
+      if (request.method !== "POST") {
+        response.status(405).json({error: "Method not allowed"});
         return;
       }
 
-      const { vin } = request.body;
-      if (!vin || typeof vin !== 'string') {
-        response.status(400).json({ error: 'Valid 17-character VIN required' });
+      const {vin} = request.body;
+      if (!vin || typeof vin !== "string") {
+        response.status(400).json({error: "Valid 17-character VIN required"});
         return;
       }
       const vehicle = await decodeVinData(vin);
@@ -650,23 +762,23 @@ export const decodeVIN = onRequest(
         vehicle,
       });
     } catch (error) {
-      logger.error('VIN decoding error:', error);
+      logger.error("VIN decoding error:", error);
       response.status(500).json({
         success: false,
-        error: 'Failed to decode VIN',
+        error: "Failed to decode VIN",
       });
     }
   }
 );
 
-export const decodeVINCallable = onCall(async request => {
+export const decodeVINCallable = onCall(async (request) => {
   if (!request.auth?.uid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
+    throw new HttpsError("unauthenticated", "Missing auth context");
   }
 
-  const vin = (request.data?.vin || '').toString();
+  const vin = (request.data?.vin || "").toString();
   if (vin.length !== 17) {
-    throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
+    throw new HttpsError("invalid-argument", "Valid 17-character VIN required");
   }
 
   try {
@@ -676,19 +788,19 @@ export const decodeVINCallable = onCall(async request => {
       vehicle,
     };
   } catch (error) {
-    logger.error('VIN callable decoding error:', error);
-    throw new HttpsError('internal', 'Failed to decode VIN');
+    logger.error("VIN callable decoding error:", error);
+    throw new HttpsError("internal", "Failed to decode VIN");
   }
 });
 
-export const getVehicleInsightsCallable = onCall(async request => {
+export const getVehicleInsightsCallable = onCall(async (request) => {
   if (!request.auth?.uid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
+    throw new HttpsError("unauthenticated", "Missing auth context");
   }
 
-  const vin = (request.data?.vin || '').toString();
+  const vin = (request.data?.vin || "").toString();
   if (vin.length !== 17) {
-    throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
+    throw new HttpsError("invalid-argument", "Valid 17-character VIN required");
   }
 
   try {
@@ -698,24 +810,24 @@ export const getVehicleInsightsCallable = onCall(async request => {
       lookupNhtsaRecalls(normalizedVin),
     ]);
 
-    if (vehicleResult.status !== 'fulfilled') {
-      logger.error('VIN profile lookup failed', {
+    if (vehicleResult.status !== "fulfilled") {
+      logger.error("VIN profile lookup failed", {
         vinPrefix: normalizedVin.substring(0, 8),
         error: vehicleResult.reason,
       });
-      throw new HttpsError('internal', 'Failed to decode VIN profile');
+      throw new HttpsError("internal", "Failed to decode VIN profile");
     }
 
     const vehicle = vehicleResult.value;
     const recalls =
-      recallsResult.status === 'fulfilled' ? recallsResult.value : [];
+      recallsResult.status === "fulfilled" ? recallsResult.value : [];
     const recallsSource =
-      recallsResult.status === 'fulfilled'
-        ? 'NHTSA'
-        : 'NHTSA (temporarily unavailable)';
+      recallsResult.status === "fulfilled" ?
+        "NHTSA" :
+        "NHTSA (temporarily unavailable)";
 
-    if (recallsResult.status !== 'fulfilled') {
-      logger.warn('VIN recalls lookup failed, returning fallback recalls', {
+    if (recallsResult.status !== "fulfilled") {
+      logger.warn("VIN recalls lookup failed, returning fallback recalls", {
         vinPrefix: normalizedVin.substring(0, 8),
         error: recallsResult.reason,
       });
@@ -749,62 +861,62 @@ export const getVehicleInsightsCallable = onCall(async request => {
         },
       },
       sources: {
-        free: ['NHTSA vPIC', 'NHTSA Recalls API'],
+        free: ["NHTSA vPIC", "NHTSA Recalls API"],
         paid: [
-          'Owner Manuals Provider',
-          'Warranty Provider',
-          'Maintenance Schedule Provider',
+          "Owner Manuals Provider",
+          "Warranty Provider",
+          "Maintenance Schedule Provider",
         ],
       },
       warnings:
-        recallsResult.status === 'fulfilled'
-          ? []
-          : ['Recalls data temporarily unavailable; VIN profile returned.'],
+        recallsResult.status === "fulfilled" ?
+          [] :
+          ["Recalls data temporarily unavailable; VIN profile returned."],
     };
   } catch (error) {
-    logger.error('Vehicle insights callable error:', error);
-    throw new HttpsError('internal', 'Failed to fetch vehicle insights');
+    logger.error("Vehicle insights callable error:", error);
+    throw new HttpsError("internal", "Failed to fetch vehicle insights");
   }
 });
 
-export const getLocalServiceProvidersCallable = onCall(async request => {
+export const getLocalServiceProvidersCallable = onCall(async (request) => {
   const authRequired =
-    (process.env.INTEGRATION_AUTH_REQUIRED || 'true').trim().toLowerCase() !==
-    'false';
+    (process.env.INTEGRATION_AUTH_REQUIRED || "true").trim().toLowerCase() !==
+    "false";
 
   if (authRequired && !request.auth?.uid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
+    throw new HttpsError("unauthenticated", "Missing auth context");
   }
 
-  const { locationQuery, radiusMiles, maxResults, vehicleMake, providerType } =
+  const {locationQuery, radiusMiles, maxResults, vehicleMake, providerType} =
     (request.data as {
       locationQuery?: string;
       radiusMiles?: number;
       maxResults?: number;
       vehicleMake?: string;
-      providerType?: 'all' | 'repair_shop' | 'dealership';
+      providerType?: "all" | "repair_shop" | "dealership";
     }) ?? {};
 
   const normalizedLocation = normalizeLocationText(
-    (locationQuery || '').toString()
+    (locationQuery || "").toString()
   );
   if (!normalizedLocation || normalizedLocation.length < 5) {
     throw new HttpsError(
-      'invalid-argument',
-      'locationQuery is required to find nearby providers'
+      "invalid-argument",
+      "locationQuery is required to find nearby providers"
     );
   }
 
-  const safeRadius = Number.isFinite(Number(radiusMiles))
-    ? Math.max(5, Math.min(100, Number(radiusMiles)))
-    : 25;
-  const safeMaxResults = Number.isFinite(Number(maxResults))
-    ? Math.max(1, Math.min(25, Number(maxResults)))
-    : 8;
-  const allowedProviderTypes = new Set(['all', 'repair_shop', 'dealership']);
-  const safeProviderType = allowedProviderTypes.has(providerType || '')
-    ? (providerType as 'all' | 'repair_shop' | 'dealership')
-    : 'all';
+  const safeRadius = Number.isFinite(Number(radiusMiles)) ?
+    Math.max(5, Math.min(100, Number(radiusMiles))) :
+    25;
+  const safeMaxResults = Number.isFinite(Number(maxResults)) ?
+    Math.max(1, Math.min(25, Number(maxResults))) :
+    8;
+  const allowedProviderTypes = new Set(["all", "repair_shop", "dealership"]);
+  const safeProviderType = allowedProviderTypes.has(providerType || "") ?
+    (providerType as "all" | "repair_shop" | "dealership") :
+    "all";
 
   const providers = buildLocalServiceProviders(
     normalizedLocation,
@@ -816,7 +928,7 @@ export const getLocalServiceProvidersCallable = onCall(async request => {
 
   return {
     success: true,
-    source: 'location_fallback',
+    source: "location_fallback",
     locationQuery: normalizedLocation,
     radiusMiles: safeRadius,
     providerType: safeProviderType,
@@ -826,16 +938,16 @@ export const getLocalServiceProvidersCallable = onCall(async request => {
 
 // Email reminder function
 export const sendMaintenanceReminder = onRequest(
-  { cors: true },
+  {cors: true},
   async (request, response) => {
     try {
       // Only allow POST requests
-      if (request.method !== 'POST') {
-        response.status(405).json({ error: 'Method not allowed' });
+      if (request.method !== "POST") {
+        response.status(405).json({error: "Method not allowed"});
         return;
       }
 
-      const { email, vehicle, maintenanceItems } = request.body;
+      const {email, vehicle, maintenanceItems} = request.body;
 
       if (
         !email ||
@@ -844,7 +956,7 @@ export const sendMaintenanceReminder = onRequest(
         !Array.isArray(maintenanceItems)
       ) {
         response.status(400).json({
-          error: 'Missing required fields: email, vehicle, maintenanceItems',
+          error: "Missing required fields: email, vehicle, maintenanceItems",
         });
         return;
       }
@@ -869,11 +981,11 @@ export const sendMaintenanceReminder = onRequest(
           (VIN: ${vehicle.vin}) is due for maintenance:</p>
           <ul>
             ${maintenanceItems
-              .map(
-                item =>
-                  `<li><strong>${item.title}</strong> - Due: ${item.dueDate}</li>`
-              )
-              .join('')}
+    .map(
+      (item) =>
+        `<li><strong>${item.title}</strong> - Due: ${item.dueDate}</li>`
+    )
+    .join("")}
           </ul>
           <p>Please schedule these services soon to keep your vehicle ` +
           `in optimal condition.</p>
@@ -887,8 +999,8 @@ export const sendMaintenanceReminder = onRequest(
           (VIN: ${vehicle.vin}) is due for maintenance:
 
           ${maintenanceItems
-            .map(item => `- ${item.title} - Due: ${item.dueDate}`)
-            .join('\n')}
+    .map((item) => `- ${item.title} - Due: ${item.dueDate}`)
+    .join("\n")}
 
           Please schedule these services soon to keep your vehicle
           in optimal condition.
@@ -901,20 +1013,20 @@ export const sendMaintenanceReminder = onRequest(
 
       response.json({
         success: true,
-        message: 'Reminder email sent',
+        message: "Reminder email sent",
       });
     } catch (error) {
-      logger.error('Email reminder error:', error);
+      logger.error("Email reminder error:", error);
       response.status(500).json({
         success: false,
-        error: 'Failed to send reminder email',
+        error: "Failed to send reminder email",
       });
     }
   }
 );
 
 // Scheduled function to check for upcoming maintenance (runs daily)
-export const checkMaintenanceReminders = onSchedule('0 9 * * *', async () => {
+export const checkMaintenanceReminders = onSchedule("0 9 * * *", async () => {
   await runMaintenanceReminderSchedule();
 });
 
@@ -931,14 +1043,14 @@ export async function runMaintenanceReminderSchedule(
   const onInfo = dependencies?.onInfo || logger.info;
   const onError = dependencies?.onError || logger.error;
 
-  onInfo('Checking for maintenance reminders...');
+  onInfo("Checking for maintenance reminders...");
 
   try {
     const summary = await runSweep();
-    onInfo('Maintenance reminder check completed', summary);
+    onInfo("Maintenance reminder check completed", summary);
     return summary;
   } catch (error) {
-    onError('Error checking maintenance reminders:', error);
+    onError("Error checking maintenance reminders:", error);
     return null;
   }
 }
@@ -961,7 +1073,7 @@ export async function runMaintenanceReminderSweep(
   const deliverPushNotification =
     dependencies?.sendPushNotification || sendPushNotification;
 
-  const users = await queryDocuments('users');
+  const users = await queryDocuments("users");
 
   let usersScanned = 0;
   let vehiclesScanned = 0;
@@ -975,7 +1087,7 @@ export async function runMaintenanceReminderSweep(
 
     const emailRemindersEnabled = user.emailRemindersEnabled !== false;
 
-    const userId = (user.id || '').toString();
+    const userId = (user.id || "").toString();
     if (!userId) {
       continue;
     }
@@ -983,12 +1095,14 @@ export async function runMaintenanceReminderSweep(
     const vehicles = await queryDocuments(`users/${userId}/vehicles`);
 
     // Extract FCM token from the preferences doc (virtual vehicle record).
-    const prefsDoc = (vehicles as any[]).find(v => v.id === '__preferences__');
-    const userFcmToken: string = (prefsDoc?.fcmToken || '').toString();
+    const prefsDoc = (vehicles as any[]).find(
+      (v) => v.id === "__preferences__"
+    );
+    const userFcmToken: string = (prefsDoc?.fcmToken || "").toString();
 
     for (const vehicle of vehicles as Vehicle[]) {
       // Skip the preferences sentinel – it is not a real vehicle.
-      if ((vehicle as any).id === '__preferences__') {
+      if ((vehicle as any).id === "__preferences__") {
         continue;
       }
 
@@ -1005,7 +1119,7 @@ export async function runMaintenanceReminderSweep(
           remindersSent += 1;
         } catch (error) {
           reminderFailures += 1;
-          logger.error('Reminder email delivery failed', {
+          logger.error("Reminder email delivery failed", {
             userId,
             email: user.email,
             vin: vehicle.vin,
@@ -1024,7 +1138,7 @@ export async function runMaintenanceReminderSweep(
           pushSent += 1;
         } catch (pushError) {
           pushFailures += 1;
-          logger.warn('Push notification delivery failed', {
+          logger.warn("Push notification delivery failed", {
             userId,
             vin: vehicle.vin,
             pushError,
@@ -1056,7 +1170,7 @@ async function getUpcomingMaintenance(
 ): Promise<MaintenanceItem[]> {
   // Get maintenance entries using FirestoreCrudHelpers
   const maintenanceEntries = await FirestoreCrudHelpers.queryDocuments(
-    `users/${vehicle.uid || 'unknown'}/vehicles/${vehicle.vin}/maintenance`
+    `users/${vehicle.uid || "unknown"}/vehicles/${vehicle.vin}/maintenance`
   );
 
   return deriveUpcomingMaintenanceItems(maintenanceEntries, daysAhead);
@@ -1088,16 +1202,16 @@ export function deriveUpcomingMaintenanceItems(
     let entryDate: Date;
     if (entry.date instanceof Date) {
       entryDate = entry.date;
-    } else if (typeof entry.date === 'string') {
+    } else if (typeof entry.date === "string") {
       entryDate = new Date(entry.date);
-    } else if (entry.date && typeof entry.date.toDate === 'function') {
+    } else if (entry.date && typeof entry.date.toDate === "function") {
       entryDate = entry.date.toDate();
     } else {
       return; // Skip invalid dates
     }
 
     if (
-      entry.title?.toLowerCase().includes('oil') &&
+      entry.title?.toLowerCase().includes("oil") &&
       entryDate > sixMonthsAgo
     ) {
       hasRecentOilChange = true;
@@ -1106,14 +1220,14 @@ export function deriveUpcomingMaintenanceItems(
 
   if (!hasRecentOilChange) {
     const dueDateLabel =
-      normalizedDaysAhead <= 30
-        ? `Within ${normalizedDaysAhead} days`
-        : 'Within 1 month';
+      normalizedDaysAhead <= 30 ?
+        `Within ${normalizedDaysAhead} days` :
+        "Within 1 month";
 
     upcomingItems.push({
-      title: 'Oil Change',
+      title: "Oil Change",
       dueDate: dueDateLabel,
-      type: 'preventive',
+      type: "preventive",
     });
   }
 
@@ -1143,11 +1257,11 @@ async function sendReminderEmail(
         (VIN: ${vehicle.vin}) is due for maintenance:</p>
         <ul>
           ${maintenanceItems
-            .map(
-              item =>
-                `<li><strong>${item.title}</strong> - Due: ${item.dueDate}</li>`
-            )
-            .join('')}
+    .map(
+      (item) =>
+        `<li><strong>${item.title}</strong> - Due: ${item.dueDate}</li>`
+    )
+    .join("")}
         </ul>
         <p>
         Please schedule these services soon to keep your vehicle in
@@ -1163,8 +1277,8 @@ async function sendReminderEmail(
       (VIN: ${vehicle.vin}) is due for maintenance:
 
       ${maintenanceItems
-        .map(item => `- ${item.title} - Due: ${item.dueDate}`)
-        .join('\n')}
+    .map((item) => `- ${item.title} - Due: ${item.dueDate}`)
+    .join("\n")}
 
       Please schedule these services soon to keep your vehicle in
       optimal condition.
@@ -1190,23 +1304,23 @@ async function sendPushNotification(
 ): Promise<void> {
   const firstItem = maintenanceItems[0];
   const title = [
-    'Maintenance due:',
+    "Maintenance due:",
     String(vehicle.year),
     vehicle.make,
     vehicle.model,
-  ].join(' ');
+  ].join(" ");
   const body =
-    maintenanceItems.length === 1
-      ? `${firstItem.title} — Due: ${firstItem.dueDate}`
-      : `${firstItem.title} and ` +
+    maintenanceItems.length === 1 ?
+      `${firstItem.title} — Due: ${firstItem.dueDate}` :
+      `${firstItem.title} and ` +
         `${maintenanceItems.length - 1} more service(s) due`;
 
   await admin.messaging().send({
     token: fcmToken,
-    notification: { title, body },
+    notification: {title, body},
     data: {
       vin: vehicle.vin,
-      type: 'maintenance_reminder',
+      type: "maintenance_reminder",
     },
   });
 }
@@ -1216,24 +1330,24 @@ async function sendPushNotification(
 // integrations are built.
 
 export const getOwnerManuals = onRequest(
-  { cors: true },
+  {cors: true},
   async (request, response) => {
     try {
-      if (!enforceRateLimit(request, response, 'getOwnerManuals')) {
+      if (!enforceRateLimit(request, response, "getOwnerManuals")) {
         return;
       }
 
       const uid = await requireAuthenticatedUser(request, response);
       if (!uid) return;
 
-      if (request.method !== 'GET') {
-        response.status(405).json({ error: 'Method not allowed' });
+      if (request.method !== "GET") {
+        response.status(405).json({error: "Method not allowed"});
         return;
       }
 
-      const vin = ((request.query.vin as string) || '').trim().toUpperCase();
+      const vin = ((request.query.vin as string) || "").trim().toUpperCase();
       if (!vin || vin.length !== 17) {
-        response.status(400).json({ error: 'Valid 17-character VIN required' });
+        response.status(400).json({error: "Valid 17-character VIN required"});
         return;
       }
 
@@ -1241,7 +1355,7 @@ export const getOwnerManuals = onRequest(
       if (!config.features.manualsEnabled) {
         response.status(503).json({
           success: false,
-          error: 'Owner manual feature is disabled',
+          error: "Owner manual feature is disabled",
           provider: config.providers.manuals,
           vin,
           manuals: [],
@@ -1249,10 +1363,10 @@ export const getOwnerManuals = onRequest(
         return;
       }
 
-      if (config.providers.manuals !== 'manuals_primary') {
+      if (config.providers.manuals !== "manuals_primary") {
         response.status(501).json({
           success: false,
-          error: 'Owner manual provider integration not implemented',
+          error: "Owner manual provider integration not implemented",
           provider: config.providers.manuals,
           vin,
           manuals: [],
@@ -1263,7 +1377,7 @@ export const getOwnerManuals = onRequest(
       const cachedManuals = await readIntegrationCache<unknown[]>(
         uid,
         vin,
-        'manuals'
+        "manuals"
       );
       if (cachedManuals.hit && Array.isArray(cachedManuals.value)) {
         response.json({
@@ -1271,62 +1385,62 @@ export const getOwnerManuals = onRequest(
           provider: config.providers.manuals,
           vin,
           manuals: cachedManuals.value,
-          cache: { hit: true },
+          cache: {hit: true},
         });
         return;
       }
 
       const manuals = await lookupOwnerManuals(vin);
-      await writeIntegrationCache(uid, vin, 'manuals', manuals);
+      await writeIntegrationCache(uid, vin, "manuals", manuals);
       response.json({
         success: true,
         provider: config.providers.manuals,
         vin,
         manuals,
-        cache: { hit: false },
+        cache: {hit: false},
       });
     } catch (error) {
-      logger.error('Owner manual lookup error:', error);
+      logger.error("Owner manual lookup error:", error);
       response.status(500).json({
         success: false,
-        error: 'Failed to fetch owner manuals',
+        error: "Failed to fetch owner manuals",
       });
     }
   }
 );
 
 export const getWarrantySummary = onRequest(
-  { cors: true },
+  {cors: true},
   async (request, response) => {
     try {
-      if (!enforceRateLimit(request, response, 'getWarrantySummary')) {
+      if (!enforceRateLimit(request, response, "getWarrantySummary")) {
         return;
       }
 
       const uid = await requireAuthenticatedUser(request, response);
       if (!uid) return;
 
-      if (request.method !== 'GET') {
-        response.status(405).json({ error: 'Method not allowed' });
+      if (request.method !== "GET") {
+        response.status(405).json({error: "Method not allowed"});
         return;
       }
 
-      const vin = ((request.query.vin as string) || '').trim().toUpperCase();
+      const vin = ((request.query.vin as string) || "").trim().toUpperCase();
       if (!vin || vin.length !== 17) {
-        response.status(400).json({ error: 'Valid 17-character VIN required' });
+        response.status(400).json({error: "Valid 17-character VIN required"});
         return;
       }
 
-      const mileageRaw = Number(request.query.currentMileage ?? '');
-      const currentMileage = Number.isFinite(mileageRaw)
-        ? mileageRaw
-        : undefined;
+      const mileageRaw = Number(request.query.currentMileage ?? "");
+      const currentMileage = Number.isFinite(mileageRaw) ?
+        mileageRaw :
+        undefined;
 
       const config = getIntegrationConfig();
       if (!config.features.warrantyEnabled) {
         response.status(503).json({
           success: false,
-          error: 'Warranty feature is disabled',
+          error: "Warranty feature is disabled",
           provider: config.providers.warranty,
           vin,
           warranty: null,
@@ -1334,10 +1448,10 @@ export const getWarrantySummary = onRequest(
         return;
       }
 
-      if (config.providers.warranty !== 'warranty_primary') {
+      if (config.providers.warranty !== "warranty_primary") {
         response.status(501).json({
           success: false,
-          error: 'Warranty provider integration not implemented',
+          error: "Warranty provider integration not implemented",
           provider: config.providers.warranty,
           vin,
           warranty: null,
@@ -1348,7 +1462,7 @@ export const getWarrantySummary = onRequest(
       const cachedWarranty = await readIntegrationCache<unknown>(
         uid,
         vin,
-        'warranty'
+        "warranty"
       );
       if (cachedWarranty.hit && cachedWarranty.value) {
         response.json({
@@ -1356,58 +1470,58 @@ export const getWarrantySummary = onRequest(
           provider: config.providers.warranty,
           vin,
           warranty: cachedWarranty.value,
-          cache: { hit: true },
+          cache: {hit: true},
         });
         return;
       }
 
       const warranty = await lookupWarrantySummary(vin, currentMileage);
-      await writeIntegrationCache(uid, vin, 'warranty', warranty);
+      await writeIntegrationCache(uid, vin, "warranty", warranty);
       response.json({
         success: true,
         provider: config.providers.warranty,
         vin,
         warranty,
-        cache: { hit: false },
+        cache: {hit: false},
       });
     } catch (error) {
-      logger.error('Warranty summary error:', error);
+      logger.error("Warranty summary error:", error);
       response.status(500).json({
         success: false,
-        error: 'Failed to fetch warranty summary',
+        error: "Failed to fetch warranty summary",
       });
     }
   }
 );
 
 export const getMaintenancePlan = onRequest(
-  { cors: true },
+  {cors: true},
   async (request, response) => {
     try {
-      if (!enforceRateLimit(request, response, 'getMaintenancePlan')) {
+      if (!enforceRateLimit(request, response, "getMaintenancePlan")) {
         return;
       }
 
       const uid = await requireAuthenticatedUser(request, response);
       if (!uid) return;
 
-      if (request.method !== 'GET') {
-        response.status(405).json({ error: 'Method not allowed' });
+      if (request.method !== "GET") {
+        response.status(405).json({error: "Method not allowed"});
         return;
       }
 
-      const vin = ((request.query.vin as string) || '').trim().toUpperCase();
-      const currentMileage = Number(request.query.currentMileage ?? '');
+      const vin = ((request.query.vin as string) || "").trim().toUpperCase();
+      const currentMileage = Number(request.query.currentMileage ?? "");
 
       if (!vin || vin.length !== 17) {
-        response.status(400).json({ error: 'Valid 17-character VIN required' });
+        response.status(400).json({error: "Valid 17-character VIN required"});
         return;
       }
 
       if (!Number.isFinite(currentMileage) || currentMileage < 0) {
         response
           .status(400)
-          .json({ error: 'Valid currentMileage is required' });
+          .json({error: "Valid currentMileage is required"});
         return;
       }
 
@@ -1415,7 +1529,7 @@ export const getMaintenancePlan = onRequest(
       if (!config.features.maintenancePlanEnabled) {
         response.status(503).json({
           success: false,
-          error: 'Maintenance plan feature is disabled',
+          error: "Maintenance plan feature is disabled",
           provider: config.providers.schedule,
           vin,
           plan: null,
@@ -1423,10 +1537,10 @@ export const getMaintenancePlan = onRequest(
         return;
       }
 
-      if (config.providers.schedule !== 'schedule_primary') {
+      if (config.providers.schedule !== "schedule_primary") {
         response.status(501).json({
           success: false,
-          error: 'Maintenance schedule provider integration not implemented',
+          error: "Maintenance schedule provider integration not implemented",
           provider: config.providers.schedule,
           vin,
           plan: null,
@@ -1442,48 +1556,48 @@ export const getMaintenancePlan = onRequest(
         plan,
       });
     } catch (error) {
-      logger.error('Maintenance plan error:', error);
+      logger.error("Maintenance plan error:", error);
       response.status(500).json({
         success: false,
-        error: 'Failed to build maintenance plan',
+        error: "Failed to build maintenance plan",
       });
     }
   }
 );
 
 export const createCalendarEvent = onRequest(
-  { cors: true },
+  {cors: true},
   async (request, response) => {
     try {
-      if (!enforceRateLimit(request, response, 'createCalendarEvent')) {
+      if (!enforceRateLimit(request, response, "createCalendarEvent")) {
         return;
       }
 
       const uid = await requireAuthenticatedUser(request, response);
       if (!uid) return;
 
-      if (request.method !== 'POST') {
-        response.status(405).json({ error: 'Method not allowed' });
+      if (request.method !== "POST") {
+        response.status(405).json({error: "Method not allowed"});
         return;
       }
       response.json(buildCalendarEventResponse(request.body));
     } catch (error) {
       if (error instanceof HttpsError) {
         const codeToStatus: Record<string, number> = {
-          'invalid-argument': 400,
-          unauthenticated: 401,
-          'failed-precondition': 503,
-          unimplemented: 501,
+          "invalid-argument": 400,
+          "unauthenticated": 401,
+          "failed-precondition": 503,
+          "unimplemented": 501,
         };
         const status = codeToStatus[error.code] || 500;
-        response.status(status).json({ success: false, error: error.message });
+        response.status(status).json({success: false, error: error.message});
         return;
       }
 
-      logger.error('Calendar event error:', error);
+      logger.error("Calendar event error:", error);
       response.status(500).json({
         success: false,
-        error: 'Failed to create calendar event',
+        error: "Failed to create calendar event",
       });
     }
   }
@@ -1495,42 +1609,42 @@ export const createCalendarEvent = onRequest(
  * @return {object} Success payload with normalized event data
  */
 function buildCalendarEventResponse(input: unknown) {
-  const { vehicleVin, title, startAt, target, description, endAt } =
+  const {vehicleVin, title, startAt, target, description, endAt} =
     (input as {
       vehicleVin?: string;
       title?: string;
       startAt?: string;
-      target?: 'google' | 'apple' | 'ics';
+      target?: "google" | "apple" | "ics";
       description?: string;
       endAt?: string;
     }) ?? {};
 
-  const vin = (vehicleVin || '').toString().trim().toUpperCase();
-  const allowedTargets = new Set(['google', 'apple', 'ics']);
+  const vin = (vehicleVin || "").toString().trim().toUpperCase();
+  const allowedTargets = new Set(["google", "apple", "ics"]);
 
   if (!vin || vin.length !== 17) {
     throw new HttpsError(
-      'invalid-argument',
-      'Valid 17-character vehicleVin required'
+      "invalid-argument",
+      "Valid 17-character vehicleVin required"
     );
   }
 
   if (!title || !startAt || !target || !allowedTargets.has(target)) {
     throw new HttpsError(
-      'invalid-argument',
-      'Required fields: title, startAt, target (google|apple|ics)'
+      "invalid-argument",
+      "Required fields: title, startAt, target (google|apple|ics)"
     );
   }
 
   const config = getIntegrationConfig();
   if (!config.features.calendarEnabled) {
-    throw new HttpsError('failed-precondition', 'Calendar feature is disabled');
+    throw new HttpsError("failed-precondition", "Calendar feature is disabled");
   }
 
-  if (config.providers.calendar !== 'calendar_primary') {
+  if (config.providers.calendar !== "calendar_primary") {
     throw new HttpsError(
-      'unimplemented',
-      'Calendar provider integration not implemented'
+      "unimplemented",
+      "Calendar provider integration not implemented"
     );
   }
 
@@ -1544,11 +1658,11 @@ function buildCalendarEventResponse(input: unknown) {
   };
 
   const event =
-    target === 'google'
-      ? buildGoogleCalendarEvent(eventInput)
-      : target === 'apple'
-        ? buildAppleCalendarEvent(eventInput)
-        : buildIcsEvent(eventInput);
+    target === "google" ?
+      buildGoogleCalendarEvent(eventInput) :
+      target === "apple" ?
+        buildAppleCalendarEvent(eventInput) :
+        buildIcsEvent(eventInput);
 
   return {
     success: true,
@@ -1561,13 +1675,13 @@ function buildCalendarEventResponse(input: unknown) {
   };
 }
 
-export const createCalendarEventCallable = onCall(async request => {
+export const createCalendarEventCallable = onCall(async (request) => {
   const authRequired =
-    (process.env.INTEGRATION_AUTH_REQUIRED || 'true').trim().toLowerCase() !==
-    'false';
+    (process.env.INTEGRATION_AUTH_REQUIRED || "true").trim().toLowerCase() !==
+    "false";
 
   if (authRequired && !request.auth?.uid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
+    throw new HttpsError("unauthenticated", "Missing auth context");
   }
 
   try {
@@ -1577,18 +1691,18 @@ export const createCalendarEventCallable = onCall(async request => {
       throw error;
     }
 
-    logger.error('Callable calendar event error:', error);
-    throw new HttpsError('internal', 'Failed to create calendar event');
+    logger.error("Callable calendar event error:", error);
+    throw new HttpsError("internal", "Failed to create calendar event");
   }
 });
 
-export const verifyPremiumPurchase = onCall(async request => {
+export const verifyPremiumPurchase = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
+    throw new HttpsError("unauthenticated", "Missing auth context");
   }
 
-  const { productId, purchaseId, verificationData, source } =
+  const {productId, purchaseId, verificationData, source} =
     (request.data as {
       productId?: string;
       purchaseId?: string;
@@ -1596,20 +1710,20 @@ export const verifyPremiumPurchase = onCall(async request => {
       source?: string;
     }) ?? {};
 
-  if (productId !== 'premium_ad_free') {
-    throw new HttpsError('invalid-argument', 'Unsupported premium productId');
+  if (productId !== "premium_ad_free") {
+    throw new HttpsError("invalid-argument", "Unsupported premium productId");
   }
 
-  const receipt = (verificationData || '').trim();
+  const receipt = (verificationData || "").trim();
   if (!receipt) {
     throw new HttpsError(
-      'invalid-argument',
-      'verificationData is required for premium verification'
+      "invalid-argument",
+      "verificationData is required for premium verification"
     );
   }
 
-  const receiptHash = createHash('sha256').update(receipt).digest('hex');
-  const purchaseSource = (source || 'unknown').toString();
+  const receiptHash = createHash("sha256").update(receipt).digest("hex");
+  const purchaseSource = (source || "unknown").toString();
 
   const verification = await verifyPremiumReceipt({
     productId,
@@ -1618,15 +1732,15 @@ export const verifyPremiumPurchase = onCall(async request => {
   });
 
   const strictVerification =
-    (process.env.PREMIUM_VERIFICATION_REQUIRED || 'false')
+    (process.env.PREMIUM_VERIFICATION_REQUIRED || "false")
       .trim()
-      .toLowerCase() === 'true';
+      .toLowerCase() === "true";
 
   if (strictVerification && !verification.verified) {
     throw new HttpsError(
-      'failed-precondition',
+      "failed-precondition",
       verification.reason ||
-        'Premium receipt verification failed in strict verification mode'
+        "Premium receipt verification failed in strict verification mode"
     );
   }
 
@@ -1634,14 +1748,14 @@ export const verifyPremiumPurchase = onCall(async request => {
   const receiptRef = db.doc(`premiumReceipts/${receiptHash}`);
   const entitlementRef = db.doc(`users/${uid}/entitlements/premium`);
 
-  await db.runTransaction(async tx => {
+  await db.runTransaction(async (tx) => {
     const receiptSnap = await tx.get(receiptRef);
     if (receiptSnap.exists) {
-      const existingUid = (receiptSnap.data()?.uid || '').toString();
+      const existingUid = (receiptSnap.data()?.uid || "").toString();
       if (existingUid && existingUid !== uid) {
         throw new HttpsError(
-          'permission-denied',
-          'Receipt is already linked to another account'
+          "permission-denied",
+          "Receipt is already linked to another account"
         );
       }
     }
@@ -1652,15 +1766,15 @@ export const verifyPremiumPurchase = onCall(async request => {
         uid,
         productId,
         source: purchaseSource,
-        purchaseId: (purchaseId || '').toString(),
+        purchaseId: (purchaseId || "").toString(),
         receiptHash,
         verified: verification.verified,
         verificationState: verification.verificationState,
         verificationProvider: verification.provider,
-        verificationReason: (verification.reason || '').toString(),
+        verificationReason: (verification.reason || "").toString(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
-      { merge: true }
+      {merge: true}
     );
 
     tx.set(
@@ -1669,15 +1783,15 @@ export const verifyPremiumPurchase = onCall(async request => {
         active: true,
         productId,
         source: purchaseSource,
-        purchaseId: (purchaseId || '').toString(),
+        purchaseId: (purchaseId || "").toString(),
         receiptHash,
         verificationState: verification.verificationState,
         verified: verification.verified,
         verificationProvider: verification.provider,
-        verificationReason: (verification.reason || '').toString(),
+        verificationReason: (verification.reason || "").toString(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
-      { merge: true }
+      {merge: true}
     );
   });
 
@@ -1691,10 +1805,10 @@ export const verifyPremiumPurchase = onCall(async request => {
   };
 });
 
-export const getPremiumEntitlement = onCall(async request => {
+export const getPremiumEntitlement = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
+    throw new HttpsError("unauthenticated", "Missing auth context");
   }
 
   const entitlementSnap = await admin
@@ -1708,8 +1822,8 @@ export const getPremiumEntitlement = onCall(async request => {
     entitlement: {
       premium: data.active === true,
       verified: data.verified === true,
-      verificationState: (data.verificationState || 'none').toString(),
-      productId: (data.productId || '').toString(),
+      verificationState: (data.verificationState || "none").toString(),
+      productId: (data.productId || "").toString(),
       updatedAt: data.updatedAt || null,
     },
   };

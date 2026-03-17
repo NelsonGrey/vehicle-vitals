@@ -9,6 +9,7 @@ import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
 
 export default function AddVehicle() {
   const [form, setForm] = useState({ ...defaultVehicle });
+  const [plateValidationError, setPlateValidationError] = useState<string>();
   const [insights, setInsights] = useState<{
     recallsCount: number;
     recallsSource: string;
@@ -31,7 +32,16 @@ export default function AddVehicle() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+
+    // Special handling for license plate: normalize and validate
+    if (name === 'licensePlate') {
+      const normalized = normalizeLicensePlate(value);
+      const validation = validateLicensePlate(normalized);
+      setPlateValidationError(validation.error);
+      setForm(prev => ({ ...prev, [name]: normalized }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -239,12 +249,21 @@ export default function AddVehicle() {
                         ? 'Plate number (optional)'
                         : 'Current mileage'
                   }
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                  className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 ${
+                    field === 'licensePlate' && plateValidationError
+                      ? 'border-red-300 dark:border-red-600'
+                      : 'border-slate-300 dark:border-slate-600'
+                  }`}
                 />
                 {field === 'vin' && (
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                     Decode VIN fills the year, make, model, specs, and recall
                     data before save.
+                  </p>
+                )}
+                {field === 'licensePlate' && plateValidationError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    {plateValidationError}
                   </p>
                 )}
               </div>

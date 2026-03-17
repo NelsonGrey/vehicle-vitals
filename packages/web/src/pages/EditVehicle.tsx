@@ -81,6 +81,7 @@ export default function EditVehicle() {
   const { vin } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState<Vehicle | null>(null);
+  const [plateValidationError, setPlateValidationError] = useState<string>();
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form?.year, make: form?.make });
 
@@ -97,7 +98,16 @@ export default function EditVehicle() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setForm(prev => (prev ? { ...prev, [name]: value } : null));
+
+    // Special handling for license plate: normalize and validate
+    if (name === 'licensePlate') {
+      const normalized = normalizeLicensePlate(value);
+      const validation = validateLicensePlate(normalized);
+      setPlateValidationError(validation.error);
+      setForm(prev => (prev ? { ...prev, [name]: normalized } : null));
+    } else {
+      setForm(prev => (prev ? { ...prev, [name]: value } : null));
+    }
   };
 
   const handleUpdate = async () => {
@@ -361,8 +371,17 @@ export default function EditVehicle() {
                 value={form.licensePlate || ''}
                 onChange={handleChange}
                 placeholder="Plate number (optional)"
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 ${
+                  plateValidationError
+                    ? 'border-red-300 dark:border-red-600'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}
               />
+              {plateValidationError && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                  {plateValidationError}
+                </p>
+              )}
             </div>
 
             {/* Mileage */}

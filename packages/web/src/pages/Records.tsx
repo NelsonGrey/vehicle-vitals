@@ -2,7 +2,11 @@ import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatFileDisplay } from '../shared/fileUtils';
-import { getVehicle, updateVehicle } from '../shared/firestoreService';
+import {
+  getAttachmentAnalyses,
+  getVehicle,
+  updateVehicle,
+} from '../shared/firestoreService';
 import {
   deleteFile,
   generateVehicleRecordAttachmentPath,
@@ -22,6 +26,15 @@ type PortfolioItem = {
     path?: string;
     size?: number;
     type?: string;
+    analysis?: {
+      extracted?: {
+        serviceType?: string;
+        totalCost?: number;
+        serviceDate?: string;
+        mileage?: number;
+      };
+      confidence?: number;
+    };
   }>;
 };
 
@@ -55,6 +68,40 @@ function resolveInitialCategories(
   return clonePortfolio(
     (createStandardVehiclePortfolio().categories || []) as PortfolioCategory[]
   );
+}
+
+function getAnalysisBadge(confidence: number | undefined): {
+  label: string;
+  className: string;
+} {
+  if (typeof confidence !== 'number') {
+    return {
+      label: 'Unscored',
+      className:
+        'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+    };
+  }
+
+  if (confidence >= 0.7) {
+    return {
+      label: 'Auto-Verified',
+      className:
+        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+    };
+  }
+
+  if (confidence >= 0.4) {
+    return {
+      label: 'Review Suggested',
+      className:
+        'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+    };
+  }
+
+  return {
+    label: 'Needs Review',
+    className: 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
+  };
 }
 
 export default function Records() {
@@ -174,15 +221,25 @@ export default function Records() {
           file.name
         );
         const uploaded = await uploadFile(file, path);
+        const analyses = await getAttachmentAnalyses(vin, [path]);
+        const matched = analyses.find((entry: any) => entry?.path === path);
         appendItemFile(
           categoryIndex,
           itemIndex,
-          uploaded as {
-            name?: string;
-            url?: string;
-            path?: string;
-            size?: number;
-            type?: string;
+          {
+            ...(uploaded as {
+              name?: string;
+              url?: string;
+              path?: string;
+              size?: number;
+              type?: string;
+            }),
+            analysis: matched
+              ? {
+                  extracted: matched.extracted,
+                  confidence: matched.confidence,
+                }
+              : undefined,
           }
         );
       }
@@ -532,12 +589,14 @@ export default function Records() {
                           file.size,
                           file.type
                         );
+                        const badge = getAnalysisBadge(file.analysis?.confidence);
+                        const extracted = file.analysis?.extracted;
                         return (
                           <div
                             key={`${file.path || file.url || file.name}-${fileIndex}`}
                             className="flex items-center justify-between gap-3 text-sm border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2"
                           >
-                            <div className="min-w-0 flex items-center gap-2">
+                            <div className="min-w-0 flex items-start gap-2">
                               <span className="text-base flex-shrink-0">
                                 {fileDisplay.icon}
                               </span>
@@ -570,6 +629,28 @@ export default function Records() {
                                     )}
                                   </>
                                 )}
+                                <div className="mt-1 flex items-center gap-2 flex-wrap">
+                                  <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${badge.className}`}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                  {(extracted?.serviceType ||
+                                    typeof extracted?.totalCost === 'number' ||
+                                    extracted?.serviceDate) && (
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                      {extracted?.serviceType
+                                        ? extracted.serviceType
+                                        : 'Document insight'}
+                                      {typeof extracted?.totalCost === 'number'
+                                        ? ` • $${extracted.totalCost.toFixed(2)}`
+                                        : ''}
+                                      {extracted?.serviceDate
+                                        ? ` • ${extracted.serviceDate}`
+                                        : ''}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <button

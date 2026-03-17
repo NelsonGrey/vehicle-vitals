@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { formatFileDisplay } from '../shared/fileUtils';
 import { getMaintenanceEntries, getVehicles } from '../shared/firestoreService';
 
 interface Vehicle {
@@ -20,8 +21,50 @@ interface MaintenanceEntry {
     name: string;
     url: string;
     type?: string;
+    analysis?: {
+      extracted?: {
+        serviceType?: string;
+        totalCost?: number;
+        serviceDate?: string;
+      };
+      confidence?: number;
+    };
   }>;
   vehicle: Vehicle;
+}
+
+function getAnalysisBadge(confidence: number | undefined): {
+  label: string;
+  className: string;
+} {
+  if (typeof confidence !== 'number') {
+    return {
+      label: 'Unscored',
+      className:
+        'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+    };
+  }
+
+  if (confidence >= 0.7) {
+    return {
+      label: 'Auto-Verified',
+      className:
+        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+    };
+  }
+
+  if (confidence >= 0.4) {
+    return {
+      label: 'Review Suggested',
+      className:
+        'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+    };
+  }
+
+  return {
+    label: 'Needs Review',
+    className: 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
+  };
 }
 
 // Type for raw data from Firestore service
@@ -446,10 +489,14 @@ export default function TimelineDashboard() {
                                   undefined,
                                   attachment.type
                                 );
+                                const badge = getAnalysisBadge(
+                                  attachment.analysis?.confidence
+                                );
+                                const extracted = attachment.analysis?.extracted;
                                 return (
                                   <div
                                     key={attIndex}
-                                    className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700"
+                                    className="flex items-start gap-2 p-2 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700"
                                   >
                                     {attachment.type?.startsWith('image/') ? (
                                       <img
@@ -462,9 +509,34 @@ export default function TimelineDashboard() {
                                         {fileDisplay.icon}
                                       </span>
                                     )}
-                                    <span className="text-sm text-slate-700 dark:text-slate-300">
-                                      {attachment.name}
-                                    </span>
+                                    <div>
+                                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                                        {attachment.name}
+                                      </span>
+                                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${badge.className}`}
+                                        >
+                                          {badge.label}
+                                        </span>
+                                        {(extracted?.serviceType ||
+                                          typeof extracted?.totalCost === 'number' ||
+                                          extracted?.serviceDate) && (
+                                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                            {extracted?.serviceType
+                                              ? extracted.serviceType
+                                              : 'Document insight'}
+                                            {typeof extracted?.totalCost ===
+                                            'number'
+                                              ? ` • $${extracted.totalCost.toFixed(2)}`
+                                              : ''}
+                                            {extracted?.serviceDate
+                                              ? ` • ${extracted.serviceDate}`
+                                              : ''}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
                                 );
                               })}

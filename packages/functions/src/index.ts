@@ -532,16 +532,12 @@ export const analyzeAttachmentTextCallable = onCall(async request => {
     throw new HttpsError('invalid-argument', 'storagePath is required');
   }
 
-  if (!normalizedText) {
-    throw new HttpsError('invalid-argument', 'ocrText is required');
-  }
-
   const result = await upsertAttachmentAnalysis({
     uid,
     vin: normalizedVin,
     objectPath: normalizedPath,
     contentType: (contentType || '').trim() || null,
-    forceOcrText: normalizedText,
+    forceOcrText: normalizedText || undefined,
   });
 
   return {

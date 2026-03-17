@@ -12,6 +12,7 @@ import {
   generateVehicleRecordAttachmentPath,
   uploadFile,
 } from '../shared/storageService';
+import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 
 type PortfolioItem = {
   id: string;
@@ -221,27 +222,27 @@ export default function Records() {
           file.name
         );
         const uploaded = await uploadFile(file, path);
+        await analyzeAttachmentText({
+          vin,
+          storagePath: path,
+        });
         const analyses = await getAttachmentAnalyses(vin, [path]);
         const matched = analyses.find((entry: any) => entry?.path === path);
-        appendItemFile(
-          categoryIndex,
-          itemIndex,
-          {
-            ...(uploaded as {
-              name?: string;
-              url?: string;
-              path?: string;
-              size?: number;
-              type?: string;
-            }),
-            analysis: matched
-              ? {
-                  extracted: matched.extracted,
-                  confidence: matched.confidence,
-                }
-              : undefined,
-          }
-        );
+        appendItemFile(categoryIndex, itemIndex, {
+          ...(uploaded as {
+            name?: string;
+            url?: string;
+            path?: string;
+            size?: number;
+            type?: string;
+          }),
+          analysis: matched
+            ? {
+                extracted: matched.extracted,
+                confidence: matched.confidence,
+              }
+            : undefined,
+        });
       }
     } catch (error) {
       console.error('Failed to upload record attachment', error);
@@ -589,7 +590,9 @@ export default function Records() {
                           file.size,
                           file.type
                         );
-                        const badge = getAnalysisBadge(file.analysis?.confidence);
+                        const badge = getAnalysisBadge(
+                          file.analysis?.confidence
+                        );
                         const extracted = file.analysis?.extracted;
                         return (
                           <div

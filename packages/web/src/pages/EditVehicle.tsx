@@ -17,6 +17,7 @@ import {
   generateMaintenanceAttachmentPath,
   uploadFile,
 } from '../shared/storageService';
+import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { decodeVin } from '../utils/vehicleService';
 
@@ -654,6 +655,16 @@ function MaintenanceList({ vin }: { vin: string }) {
       const uploadedPaths = uploadedFiles
         .map(file => file.path)
         .filter((path): path is string => Boolean(path));
+
+      await Promise.allSettled(
+        uploadedPaths.map(storagePath =>
+          analyzeAttachmentText({
+            vin,
+            storagePath,
+          })
+        )
+      );
+
       const analyses = await getAttachmentAnalyses(vin, uploadedPaths);
       const pathToAnalysis = new Map(
         analyses

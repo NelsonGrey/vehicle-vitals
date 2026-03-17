@@ -4,6 +4,7 @@ import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import useVehicleOptions from '../hooks/useVehicleOptions';
+import { formatFileDisplay } from '../shared/fileUtils';
 import {
   addMaintenanceEntry,
   deleteVehicle,
@@ -911,36 +912,41 @@ function MaintenanceList({ vin }: { vin: string }) {
                 Attachments
               </h5>
               <div className="space-y-2">
-                {form.attachments.map((attachment, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-2 bg-charcoal-50 dark:bg-charcoal-700 rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      {attachment.type?.startsWith('image/') ? (
-                        <img
-                          src={attachment.url}
-                          alt={attachment.name}
-                          className="w-8 h-8 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 bg-charcoal-200 dark:bg-charcoal-600 rounded flex items-center justify-center">
-                          <span className="text-xs">📄</span>
-                        </div>
-                      )}
-                      <span className="text-sm text-charcoal-800 dark:text-cream-100">
-                        {attachment.name}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeAttachment(index)}
-                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                {form.attachments.map((attachment, index) => {
+                  const fileDisplay = formatFileDisplay(
+                    attachment.name,
+                    undefined,
+                    attachment.type
+                  );
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-charcoal-50 dark:bg-charcoal-700 rounded-md border border-charcoal-200 dark:border-charcoal-600"
                     >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2">
+                        {attachment.type?.startsWith('image/') ? (
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            className="w-8 h-8 object-cover rounded"
+                          />
+                        ) : (
+                          <span className="text-base">{fileDisplay.icon}</span>
+                        )}
+                        <span className="text-sm text-charcoal-800 dark:text-cream-100">
+                          {attachment.name}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(index)}
+                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

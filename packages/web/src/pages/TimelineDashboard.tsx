@@ -440,27 +440,34 @@ export default function TimelineDashboard() {
                         {entry.attachments && entry.attachments.length > 0 && (
                           <div className="border-t border-slate-200 dark:border-slate-600 pt-3">
                             <div className="flex flex-wrap gap-2">
-                              {entry.attachments.map((attachment, attIndex) => (
-                                <div
-                                  key={attIndex}
-                                  className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-md"
-                                >
-                                  {attachment.type?.startsWith('image/') ? (
-                                    <img
-                                      src={attachment.url}
-                                      alt={attachment.name}
-                                      className="w-8 h-8 object-cover rounded"
-                                    />
-                                  ) : (
-                                    <div className="w-8 h-8 bg-slate-200 dark:bg-slate-600 rounded flex items-center justify-center">
-                                      <span className="text-xs">DOC</span>
-                                    </div>
-                                  )}
-                                  <span className="text-sm text-slate-700 dark:text-slate-300">
-                                    {attachment.name}
-                                  </span>
-                                </div>
-                              ))}
+                              {entry.attachments.map((attachment, attIndex) => {
+                                const fileDisplay = formatFileDisplay(
+                                  attachment.name,
+                                  undefined,
+                                  attachment.type
+                                );
+                                return (
+                                  <div
+                                    key={attIndex}
+                                    className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700"
+                                  >
+                                    {attachment.type?.startsWith('image/') ? (
+                                      <img
+                                        src={attachment.url}
+                                        alt={attachment.name}
+                                        className="w-8 h-8 object-cover rounded"
+                                      />
+                                    ) : (
+                                      <span className="text-base">
+                                        {fileDisplay.icon}
+                                      </span>
+                                    )}
+                                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                                      {attachment.name}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}

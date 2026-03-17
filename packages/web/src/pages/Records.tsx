@@ -1,6 +1,7 @@
 import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { formatFileDisplay } from '../shared/fileUtils';
 import { getVehicle, updateVehicle } from '../shared/firestoreService';
 import {
   deleteFile,
@@ -525,40 +526,68 @@ export default function Records() {
 
                   {!!selectedEntry.item.files?.length && (
                     <div className="mt-3 space-y-2">
-                      {selectedEntry.item.files.map((file, fileIndex) => (
-                        <div
-                          key={`${file.path || file.url || file.name}-${fileIndex}`}
-                          className="flex items-center justify-between gap-3 text-sm border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2"
-                        >
-                          <div className="min-w-0">
-                            {file.url ? (
-                              <a
-                                href={file.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-blue-700 dark:text-blue-300 no-underline"
-                              >
-                                {file.name || 'Attachment'}
-                              </a>
-                            ) : (
-                              <span>{file.name || 'Attachment'}</span>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void removeItemFile(
-                                selectedEntry.categoryIndex,
-                                selectedEntry.itemIndex,
-                                fileIndex
-                              )
-                            }
-                            className="text-red-600 dark:text-red-400 bg-transparent border-0 cursor-pointer"
+                      {selectedEntry.item.files.map((file, fileIndex) => {
+                        const fileDisplay = formatFileDisplay(
+                          file.name,
+                          file.size,
+                          file.type
+                        );
+                        return (
+                          <div
+                            key={`${file.path || file.url || file.name}-${fileIndex}`}
+                            className="flex items-center justify-between gap-3 text-sm border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2"
                           >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
+                            <div className="min-w-0 flex items-center gap-2">
+                              <span className="text-base flex-shrink-0">
+                                {fileDisplay.icon}
+                              </span>
+                              <div className="min-w-0">
+                                {file.url ? (
+                                  <a
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-700 dark:text-blue-300 no-underline hover:underline"
+                                  >
+                                    <span className="font-medium">
+                                      {file.name || 'Attachment'}
+                                    </span>
+                                    {fileDisplay.sizeStr && (
+                                      <span className="text-slate-500 dark:text-slate-400 ml-1">
+                                        ({fileDisplay.sizeStr})
+                                      </span>
+                                    )}
+                                  </a>
+                                ) : (
+                                  <>
+                                    <span className="font-medium">
+                                      {file.name || 'Attachment'}
+                                    </span>
+                                    {fileDisplay.sizeStr && (
+                                      <span className="text-slate-500 dark:text-slate-400 ml-1">
+                                        ({fileDisplay.sizeStr})
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void removeItemFile(
+                                  selectedEntry.categoryIndex,
+                                  selectedEntry.itemIndex,
+                                  fileIndex
+                                )
+                              }
+                              className="text-red-600 dark:text-red-400 bg-transparent border-0 cursor-pointer hover:opacity-70 flex-shrink-0"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </>

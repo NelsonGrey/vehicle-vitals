@@ -30,6 +30,7 @@ interface FirestoreMaintenanceEntry {
   title: string;
   notes?: string;
   cost?: number;
+  date?: string | any; // ISO string or Firestore Timestamp
   createdAt?: any;
   updatedAt?: any;
 }
@@ -48,6 +49,48 @@ function resolveVehiclePlate(vehicle: any): string | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * Resolves the actual maintenance date from a Firestore entry.
+ * Prefers the service date (entry.date) over creation timestamp.
+ * Handles Firestore Timestamps, ISO strings, and invalid dates.
+ */
+function resolveMaintenanceDate(entry: FirestoreMaintenanceEntry): string {
+  // Priority 1: Use entry.date if it exists (the actual service date)
+  if (entry.date) {
+    // If it's a Firestore Timestamp object with toDate method
+    if (entry.date?.toDate && typeof entry.date.toDate === 'function') {
+      try {
+        return entry.date.toDate().toISOString();
+      } catch {
+        // Fall through if conversion fails
+      }
+    }
+    // If it's already an ISO string or parseable date string
+    if (typeof entry.date === 'string') {
+      const parsed = new Date(entry.date);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+      }
+    }
+  }
+
+  // Priority 2: Fall back to createdAt timestamp
+  if (entry.createdAt?.toDate && typeof entry.createdAt.toDate === 'function') {
+    try {
+      return entry.createdAt.toDate().toISOString();
+    } catch {
+      // Fall through if conversion fails
+    }
+  }
+
+  // Priority 3: Last resort - use current time (should not happen in practice)
+  console.warn(
+    'Maintenance entry has no valid date or createdAt field:',
+    entry
+  );
+  return new Date().toISOString();
 }
 
 type TimeFilter = 'all' | 'past' | 'future';
@@ -109,9 +152,7 @@ export default function TimelineDashboard() {
             ...entries.map(
               (entry: FirestoreMaintenanceEntry): MaintenanceEntry => ({
                 ...entry,
-                date:
-                  entry.createdAt?.toDate?.()?.toISOString() ||
-                  new Date().toISOString(),
+                date: resolveMaintenanceDate(entry),
                 cost: entry.cost?.toString(),
                 vehicle: {
                   vin: vehicle.vin,

@@ -239,6 +239,37 @@ export function createFirestoreService({ db, auth, helpers }) {
     await deleteDoc(ref);
   }
 
+  async function getAttachmentAnalysis(vin, storagePath) {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return null;
+    if (!vin || !storagePath) return null;
+
+    const analysisId = encodeURIComponent(storagePath);
+    const ref = doc(
+      db,
+      `users/${userId}/vehicles/${vin}/attachmentAnalyses/${analysisId}`
+    );
+    const snap = await readDoc(ref);
+
+    if (snap && typeof snap.exists === 'function') {
+      return snap.exists() ? snap.data() : null;
+    }
+
+    return snap || null;
+  }
+
+  async function getAttachmentAnalyses(vin, storagePaths = []) {
+    if (!Array.isArray(storagePaths) || storagePaths.length === 0) {
+      return [];
+    }
+
+    const analyses = await Promise.all(
+      storagePaths.map(path => getAttachmentAnalysis(vin, path))
+    );
+
+    return analyses.filter(Boolean);
+  }
+
   return {
     addOrUpdateVehicle,
     getVehicles,
@@ -250,6 +281,8 @@ export function createFirestoreService({ db, auth, helpers }) {
     deleteMaintenanceEntry,
     updateVehicle,
     deleteVehicle,
+    getAttachmentAnalysis,
+    getAttachmentAnalyses,
     // reminder methods
     addReminder,
     getReminders,

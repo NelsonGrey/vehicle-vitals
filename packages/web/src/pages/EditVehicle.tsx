@@ -8,6 +8,7 @@ import { formatFileDisplay } from '../shared/fileUtils';
 import {
   addMaintenanceEntry,
   deleteVehicle,
+  getAttachmentAnalyses,
   getMaintenanceEntries,
   getVehicle,
   updateVehicle,
@@ -74,7 +75,17 @@ interface MaintenanceEntry {
   attachments?: Array<{
     name: string;
     url: string;
+    path?: string;
     type?: string;
+    analysis?: {
+      extracted?: {
+        serviceType?: string;
+        totalCost?: number;
+        serviceDate?: string;
+        mileage?: number;
+      };
+      confidence?: number;
+    };
   }>;
 }
 
@@ -582,7 +593,21 @@ function MaintenanceList({ vin }: { vin: string }) {
     title: '',
     notes: '',
     cost: '',
-    attachments: [] as Array<{ name: string; url: string; type?: string }>,
+    attachments: [] as Array<{
+      name: string;
+      url: string;
+      path?: string;
+      type?: string;
+      analysis?: {
+        extracted?: {
+          serviceType?: string;
+          totalCost?: number;
+          serviceDate?: string;
+          mileage?: number;
+        };
+        confidence?: number;
+      };
+    }>,
   });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [calendarTarget, setCalendarTarget] = useState<
@@ -626,9 +651,45 @@ function MaintenanceList({ vin }: { vin: string }) {
       });
 
       const uploadedFiles = await Promise.all(uploadPromises);
+      const uploadedPaths = uploadedFiles
+        .map(file => file.path)
+        .filter((path): path is string => Boolean(path));
+      const analyses = await getAttachmentAnalyses(vin, uploadedPaths);
+      const pathToAnalysis = new Map(
+        analyses
+          .filter((analysis: any) => analysis?.path)
+          .map((analysis: any) => [analysis.path, analysis])
+      );
+
+      const enrichedUploadedFiles = uploadedFiles.map(file => {
+        const analysis = file.path ? pathToAnalysis.get(file.path) : undefined;
+        if (!analysis) {
+          return file;
+        }
+
+        return {
+          ...file,
+          analysis: {
+            extracted: analysis.extracted,
+            confidence: analysis.confidence,
+          },
+        };
+      });
+
+      const firstExtracted = analyses.find(
+        (analysis: any) =>
+          analysis?.extracted?.totalCost || analysis?.extracted?.serviceType
+      )?.extracted;
+
       setForm(p => ({
         ...p,
-        attachments: [...(p.attachments || []), ...uploadedFiles],
+        title: p.title.trim() || firstExtracted?.serviceType || '',
+        cost:
+          p.cost.trim() ||
+          (typeof firstExtracted?.totalCost === 'number'
+            ? firstExtracted.totalCost.toFixed(2)
+            : ''),
+        attachments: [...(p.attachments || []), ...enrichedUploadedFiles],
       }));
     } catch (error) {
       alert(
@@ -649,11 +710,62 @@ function MaintenanceList({ vin }: { vin: string }) {
 
   const handleAdd = async () => {
     try {
+      const attachmentPaths = (form.attachments || [])
+        .map(attachment => attachment.path)
+        .filter((path): path is string => Boolean(path));
+
+      const analyses = await getAttachmentAnalyses(vin, attachmentPaths);
+      const pathToAnalysis = new Map(
+        analyses
+          .filter((analysis: any) => analysis?.path)
+          .map((analysis: any) => [analysis.path, analysis])
+      );
+
+      const enrichedAttachments = (form.attachments || []).map(attachment => {
+        const analysis = attachment.path
+          ? pathToAnalysis.get(attachment.path)
+          : undefined;
+
+        if (!analysis) {
+          return attachment;
+        }
+
+        return {
+          ...attachment,
+          analysis: {
+            extracted: analysis.extracted,
+            confidence: analysis.confidence,
+          },
+        };
+      });
+
+      const firstExtracted = analyses.find(
+        (analysis: any) =>
+          analysis?.extracted?.totalCost ||
+          analysis?.extracted?.serviceType ||
+          analysis?.extracted?.serviceDate
+      )?.extracted;
+
+      const derivedTitle =
+        form.title.trim() || firstExtracted?.serviceType || 'Service Record';
+      const derivedCost =
+        form.cost.trim() ||
+        (typeof firstExtracted?.totalCost === 'number'
+          ? firstExtracted.totalCost.toFixed(2)
+          : '');
+
+      const derivedDate = firstExtracted?.serviceDate
+        ? new Date(`${firstExtracted.serviceDate}T00:00:00Z`).toISOString()
+        : new Date().toISOString();
+
       const entry = {
         ...form,
-        date: new Date().toISOString(),
-        attachments: form.attachments || [],
+        title: derivedTitle,
+        cost: derivedCost,
+        date: derivedDate,
+        attachments: enrichedAttachments,
       };
+
       await addMaintenanceEntry(vin, entry);
       const list = await getMaintenanceEntries(vin);
       setEntries(list);
@@ -918,24 +1030,49 @@ function MaintenanceList({ vin }: { vin: string }) {
                     undefined,
                     attachment.type
                   );
+                  const extracted = attachment.analysis?.extracted;
                   return (
                     <div
                       key={index}
                       className="flex items-center justify-between p-2 bg-charcoal-50 dark:bg-charcoal-700 rounded-md border border-charcoal-200 dark:border-charcoal-600"
                     >
-                      <div className="flex items-center gap-2">
-                        {attachment.type?.startsWith('image/') ? (
-                          <img
-                            src={attachment.url}
-                            alt={attachment.name}
-                            className="w-8 h-8 object-cover rounded"
-                          />
-                        ) : (
-                          <span className="text-base">{fileDisplay.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          {attachment.type?.startsWith('image/') ? (
+                            <img
+                              src={attachment.url}
+                              alt={attachment.name}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          ) : (
+                            <span className="text-base">
+                              {fileDisplay.icon}
+                            </span>
+                          )}
+                          <span className="text-sm text-charcoal-800 dark:text-cream-100">
+                            {attachment.name}
+                          </span>
+                        </div>
+                        {(extracted?.serviceType ||
+                          typeof extracted?.totalCost === 'number' ||
+                          extracted?.serviceDate ||
+                          typeof extracted?.mileage === 'number') && (
+                          <p className="mt-1 text-xs text-charcoal-600 dark:text-cream-300">
+                            Detected:
+                            {extracted?.serviceType
+                              ? ` ${extracted.serviceType}`
+                              : ''}
+                            {typeof extracted?.totalCost === 'number'
+                              ? ` • $${extracted.totalCost.toFixed(2)}`
+                              : ''}
+                            {extracted?.serviceDate
+                              ? ` • ${extracted.serviceDate}`
+                              : ''}
+                            {typeof extracted?.mileage === 'number'
+                              ? ` • ${extracted.mileage.toLocaleString()} mi`
+                              : ''}
+                          </p>
                         )}
-                        <span className="text-sm text-charcoal-800 dark:text-cream-100">
-                          {attachment.name}
-                        </span>
                       </div>
                       <button
                         type="button"

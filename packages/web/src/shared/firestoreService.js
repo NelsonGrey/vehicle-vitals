@@ -61,6 +61,8 @@ const initializeFirestoreService = async () => {
       markReminderDelivery: () => Promise.reject('Firestore not available'),
       deleteVehicle: () => Promise.reject('Firestore not available'),
       deleteMaintenanceEntry: () => Promise.reject('Firestore not available'),
+      getAttachmentAnalysis: () => Promise.resolve(null),
+      getAttachmentAnalyses: () => Promise.resolve([]),
     };
   }
 };
@@ -91,6 +93,8 @@ export const deleteMaintenanceEntry = createAsyncMethod(
   'deleteMaintenanceEntry'
 );
 export const deleteVehicle = createAsyncMethod('deleteVehicle');
+export const getAttachmentAnalysis = createAsyncMethod('getAttachmentAnalysis');
+export const getAttachmentAnalyses = createAsyncMethod('getAttachmentAnalyses');
 export const addReminder = createAsyncMethod('addReminder');
 export const getReminders = createAsyncMethod('getReminders');
 export const completeReminder = createAsyncMethod('completeReminder');

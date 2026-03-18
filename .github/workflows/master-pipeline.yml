@@ -339,6 +339,9 @@ jobs:
           VITE_SHOW_COMING_SOON_PRODUCTION: ${{ secrets.VITE_SHOW_COMING_SOON_PRODUCTION }}
           VITE_SHOW_COMING_SOON_STAGING: ${{ secrets.VITE_SHOW_COMING_SOON_STAGING }}
           VITE_SHOW_COMING_SOON_DEVELOPMENT: ${{ secrets.VITE_SHOW_COMING_SOON_DEVELOPMENT }}
+          VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION }}
+          VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING }}
+          VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT }}
         run: |
           case "$TARGET_ENV" in
             production)
@@ -350,6 +353,7 @@ jobs:
               APP_ID="$VITE_FIREBASE_APP_ID_PRODUCTION"
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION"
               SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_PRODUCTION"
+              ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION"
               ;;
             staging)
               API_KEY="$VITE_FIREBASE_API_KEY_STAGING"
@@ -360,6 +364,7 @@ jobs:
               APP_ID="$VITE_FIREBASE_APP_ID_STAGING"
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_STAGING"
               SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_STAGING"
+              ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING"
               ;;
             *)
               API_KEY="$VITE_FIREBASE_API_KEY_DEVELOPMENT"
@@ -370,8 +375,14 @@ jobs:
               APP_ID="$VITE_FIREBASE_APP_ID_DEVELOPMENT"
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT"
               SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_DEVELOPMENT"
+              ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT"
               ;;
           esac
+
+          if [ -z "$ENABLE_HOSTED_DEMO_PDF_UPLOADS" ]; then
+            ENABLE_HOSTED_DEMO_PDF_UPLOADS="false"
+          fi
+
 
           if [ -z "$API_KEY" ] || [ -z "$AUTH_DOMAIN" ] || [ -z "$PROJECT_ID" ] || [ -z "$STORAGE_BUCKET" ] || [ -z "$MESSAGING_SENDER_ID" ] || [ -z "$APP_ID" ]; then
             echo "❌ Missing required VITE_FIREBASE_* secrets for environment: $TARGET_ENV"
@@ -388,6 +399,7 @@ jobs:
             printf 'VITE_FIREBASE_MEASUREMENT_ID=%s\n' "$MEASUREMENT_ID"
             printf 'VITE_ENVIRONMENT=%s\n' "$TARGET_ENV"
             printf 'VITE_SHOW_COMING_SOON=%s\n' "$SHOW_COMING_SOON"
+            printf 'VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=%s\n' "$ENABLE_HOSTED_DEMO_PDF_UPLOADS"
           } > packages/web/.env.production
 
           echo "✅ Web Firebase env prepared for $TARGET_ENV (project: $PROJECT_ID, coming_soon: $SHOW_COMING_SOON)"

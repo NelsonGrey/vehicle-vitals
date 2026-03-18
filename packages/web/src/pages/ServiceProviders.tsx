@@ -90,7 +90,7 @@ export default function ServiceProviders() {
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        const prefs = await getVehicle('__preferences__');
+        const prefs = await getVehicle('preferences');
 
         const providerRadiusMiles = Number(prefs?.preferredProviderRadiusMiles);
         const providerType = (prefs?.preferredProviderType || 'all').toString();
@@ -183,7 +183,7 @@ export default function ServiceProviders() {
       setLookupSource(result.source || 'unknown');
       setStatus('Nearby providers updated.');
 
-      await updateVehicle('__preferences__', {
+      await updateVehicle('preferences', {
         homeAddress: normalizedAddress,
         preferredProviderRadiusMiles,
         preferredProviderType,

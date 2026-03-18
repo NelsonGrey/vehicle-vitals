@@ -168,7 +168,7 @@ export default function Profile() {
     const loadPreferences = async () => {
       if (!user) return;
       try {
-        const prefs = await getVehicle('__preferences__');
+        const prefs = await getVehicle('preferences');
         const enabled = prefs?.maintenanceAlertsEnabled;
         const leadDays = Number(prefs?.preferredReminderTimingDays);
         const dailyMiles = Number(prefs?.preferredDailyMiles);
@@ -303,7 +303,7 @@ export default function Profile() {
     try {
       const token = await requestNotificationPermission();
       if (token) {
-        await updateVehicle('__preferences__', { fcmToken: token });
+        await updateVehicle('preferences', { fcmToken: token });
         setFcmToken(token);
         setPushPermission('granted');
         setStatus('Push notifications enabled for this browser.');
@@ -333,7 +333,7 @@ export default function Profile() {
     setError('');
     setStatus('');
     try {
-      await updateVehicle('__preferences__', { fcmToken: '' });
+      await updateVehicle('preferences', { fcmToken: '' });
       setFcmToken('');
       setStatus('Push notifications disabled.');
     } catch (pushError) {
@@ -384,7 +384,7 @@ export default function Profile() {
     setError('');
     setStatus('');
     try {
-      await updateVehicle('__preferences__', {
+      await updateVehicle('preferences', {
         maintenanceAlertsEnabled,
         preferredReminderTimingDays,
         preferredDailyMiles,
@@ -488,7 +488,7 @@ export default function Profile() {
     const locationSearchQuery = buildLocationSearchQuery(normalizedAddress);
 
     try {
-      await updateVehicle('__preferences__', {
+      await updateVehicle('preferences', {
         homeAddress: normalizedAddress,
         locationSearchQuery,
         preferredProviderRadiusMiles,
@@ -584,7 +584,7 @@ export default function Profile() {
     const nextRadius = Math.min(100, preferredProviderRadiusMiles + 15);
     setPreferredProviderRadiusMiles(nextRadius);
     try {
-      await updateVehicle('__preferences__', {
+      await updateVehicle('preferences', {
         preferredProviderRadiusMiles: nextRadius,
       });
     } catch (persistError) {
@@ -611,7 +611,7 @@ export default function Profile() {
     setPreferredProviderType('all');
     setPreferredProviderUseVehicleMake(false);
     try {
-      await updateVehicle('__preferences__', {
+      await updateVehicle('preferences', {
         preferredProviderRadiusMiles: nextRadius,
         preferredProviderType: 'all',
         preferredProviderUseVehicleMake: false,
@@ -642,7 +642,7 @@ export default function Profile() {
     setPreferredProviderUseVehicleMake(lastRecoverySnapshot.useVehicleMake);
 
     try {
-      await updateVehicle('__preferences__', {
+      await updateVehicle('preferences', {
         preferredProviderRadiusMiles: lastRecoverySnapshot.radiusMiles,
         preferredProviderType: lastRecoverySnapshot.providerType,
         preferredProviderUseVehicleMake: lastRecoverySnapshot.useVehicleMake,

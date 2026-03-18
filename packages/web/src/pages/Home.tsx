@@ -3,6 +3,7 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
 import { isDevelopmentEnvironment } from '../shared/environment';
@@ -490,6 +491,14 @@ export default function Home() {
                           </ul>
                         </div>
                       )}
+
+                      {/* Cost of Ownership */}
+                      <div className="mb-1">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+                          Cost of Ownership
+                        </p>
+                        <CostAnalysisReportlet vehicle={selectedVehicle} />
+                      </div>
 
                       {/* Actions */}
                       <div className="flex flex-wrap gap-2">

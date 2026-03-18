@@ -4,7 +4,14 @@ export const appEnvironment = String(
   .trim()
   .toLowerCase();
 
+const firebaseProjectId = String(import.meta.env.VITE_FIREBASE_PROJECT_ID || '')
+  .trim()
+  .toLowerCase();
+
 export const isDevelopmentEnvironment = appEnvironment === 'development';
+export const isDevelopmentProject = firebaseProjectId === 'vehicle-vitals-dev';
+export const showDemoSeedControls =
+  isDevelopmentEnvironment || isDevelopmentProject;
 
 export const enableHostedDemoPdfUploads =
   String(import.meta.env.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS || '')

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
-import { isDevelopmentEnvironment } from '../shared/environment';
+import { showDemoSeedControls } from '../shared/environment';
 import {
   deleteVehicle,
   getVehicles,
@@ -243,6 +243,17 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            {showDemoSeedControls && (
+              <button
+                onClick={() => void handleSeedDemo()}
+                disabled={isSeedingDemo}
+                className="px-4 py-2.5 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isSeedingDemo
+                  ? 'Loading demo data...'
+                  : `Load Bob Demo Data (${bobDemoVehicleCount} vehicles)`}
+              </button>
+            )}
             <button
               onClick={() => void backfillVinInsights()}
               disabled={isBackfillingInsights || vehicles.length === 0}
@@ -281,7 +292,7 @@ export default function Home() {
               >
                 Add your first vehicle
               </Link>
-              {isDevelopmentEnvironment && (
+              {showDemoSeedControls && (
                 <button
                   onClick={() => void handleSeedDemo()}
                   disabled={isSeedingDemo}

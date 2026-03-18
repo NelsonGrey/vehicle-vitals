@@ -6,6 +6,8 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 ENVIRONMENT=${1:-production}
 
 echo "🚀 Deploying Vehicle Vitals to $ENVIRONMENT environment"
@@ -26,21 +28,17 @@ esac
 case $ENVIRONMENT in
     production)
         FIREBASE_PROJECT="vehicle-vitals-prod"
-        BUILD_CMD="npm run build"
         ;;
     staging)
         FIREBASE_PROJECT="vehicle-vitals-staging"
-        BUILD_CMD="npm run build:staging"
         ;;
     development)
         FIREBASE_PROJECT="vehicle-vitals-dev"
-        BUILD_CMD="npm run build:development"
         ;;
 esac
 
 echo "🔧 Building application..."
-cd packages/web
-eval $BUILD_CMD
+"$SCRIPT_DIR/scripts/build-web-sanitized-env.sh" "$ENVIRONMENT"
 
 echo "📦 Deploying to Firebase..."
 firebase use $FIREBASE_PROJECT

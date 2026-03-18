@@ -128,7 +128,57 @@ export default function Records() {
         return;
       }
       setVehicle(loadedVehicle as VehicleRecord);
-      setCategories(resolveInitialCategories(loadedVehicle as VehicleRecord));
+
+      const initialCategories = resolveInitialCategories(
+        loadedVehicle as VehicleRecord
+      );
+
+      // Collect all file paths across all portfolio items so we can
+      // enrich them with stored analysis data in one batch read.
+      const allPaths: string[] = [];
+      for (const category of initialCategories) {
+        for (const item of category.items) {
+          for (const file of item.files || []) {
+            if (file.path) allPaths.push(file.path);
+          }
+        }
+      }
+
+      if (allPaths.length > 0) {
+        try {
+          const analyses = await getAttachmentAnalyses(vin, allPaths);
+          const pathToAnalysis = new Map(
+            analyses
+              .filter((a: any) => a?.path)
+              .map((a: any) => [a.path, a])
+          );
+
+          if (pathToAnalysis.size > 0) {
+            for (const category of initialCategories) {
+              for (const item of category.items) {
+                if (!item.files) continue;
+                item.files = item.files.map(file => {
+                  const analysis = file.path
+                    ? pathToAnalysis.get(file.path)
+                    : undefined;
+                  if (!analysis) return file;
+                  return {
+                    ...file,
+                    analysis: {
+                      extracted: analysis.extracted,
+                      confidence: analysis.confidence,
+                    },
+                  };
+                });
+              }
+            }
+          }
+        } catch {
+          // Non-fatal: render without analysis enrichment
+        }
+      }
+
+      setCategories(initialCategories);
       setLoading(false);
     };
 

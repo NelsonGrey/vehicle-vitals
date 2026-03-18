@@ -17,3 +17,18 @@ export const enableHostedDemoPdfUploads =
   String(import.meta.env.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS || '')
     .trim()
     .toLowerCase() === 'true';
+
+const explicitAdsFlag = String(import.meta.env.VITE_ENABLE_ADS || '')
+  .trim()
+  .toLowerCase();
+
+const defaultEnableAds =
+  appEnvironment === 'production' &&
+  firebaseProjectId === 'vehicle-vitals-prod';
+
+export const enableAds =
+  explicitAdsFlag === 'true'
+    ? true
+    : explicitAdsFlag === 'false'
+      ? false
+      : defaultEnableAds;

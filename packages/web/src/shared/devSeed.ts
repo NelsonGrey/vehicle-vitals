@@ -5,6 +5,7 @@ import {
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { generateAllDemoDocs } from '../utils/demoPdfGenerator';
+import { enableHostedDemoPdfUploads } from './environment';
 import { db } from './firebaseConfig';
 import {
   addMaintenanceEntry,
@@ -59,11 +60,15 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
   const isLocalhost =
     typeof window !== 'undefined' &&
     ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const allowHostedUploads = enableHostedDemoPdfUploads;
 
   // Hosted environments can have Storage bucket CORS restrictions that block
-  // browser uploads. For hosted dev-seed runs, skip direct uploads and fall
-  // back to synthetic attachment URLs/analysis to avoid user-facing failures.
-  if (!isLocalhost) {
+  // browser uploads. For hosted dev-seed runs, skip direct uploads by default
+  // unless explicitly enabled via VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=true.
+  if (!isLocalhost && !allowHostedUploads) {
+    console.info(
+      '[devSeed] Using synthetic demo attachments on hosted domain. Set VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=true after configuring Firebase Storage CORS to upload real PDFs.'
+    );
     return { realFiles: {}, count: 0 };
   }
 

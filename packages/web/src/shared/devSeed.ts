@@ -72,6 +72,50 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
     return { realFiles: {}, count: 0 };
   }
 
+  // Even with CORS enabled, Firebase uploads can fail with HTTP 412 when the
+  // configured bucket isn't linked/authorized for Firebase Storage service
+  // accounts. Probe once and fall back to synthetic demo attachments if the
+  // endpoint isn't healthy.
+  if (!isLocalhost && allowHostedUploads) {
+    const bucket = String(
+      import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || ''
+    ).trim();
+
+    if (!bucket) {
+      console.warn(
+        '[devSeed] VITE_FIREBASE_STORAGE_BUCKET missing. Falling back to synthetic demo attachments.'
+      );
+      return { realFiles: {}, count: 0 };
+    }
+
+    try {
+      const probeUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(
+        bucket
+      )}/o?name=seed-probe-${Date.now()}.txt`;
+      const probe = await fetch(probeUrl, {
+        method: 'OPTIONS',
+        headers: {
+          'Access-Control-Request-Method': 'POST',
+          'Access-Control-Request-Headers':
+            'authorization,content-type,x-goog-resumable',
+        },
+      });
+
+      if (!probe.ok) {
+        console.warn(
+          `[devSeed] Firebase Storage probe failed (${probe.status}). Falling back to synthetic attachments. Ensure bucket is linked in Firebase Storage and service accounts are authorized.`
+        );
+        return { realFiles: {}, count: 0 };
+      }
+    } catch (error) {
+      console.warn(
+        '[devSeed] Firebase Storage probe failed. Falling back to synthetic attachments.',
+        error
+      );
+      return { realFiles: {}, count: 0 };
+    }
+  }
+
   const allDocs = generateAllDemoDocs({
     vin: vehicle.vin,
     year: vehicle.year,

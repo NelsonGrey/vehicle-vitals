@@ -214,9 +214,15 @@ export default function Home() {
         email: user?.email,
       });
       await refreshVehicles();
-      setBackfillMessage(
-        `Loaded Bob Demo data: ${details.vehiclesCount} vehicles now in garage.`
-      );
+      if (details.seededPdfs > 0) {
+        setBackfillMessage(
+          `Loaded Bob Demo data: ${details.vehiclesCount} vehicles now in garage with ${details.seededPdfs} real PDF attachments.`
+        );
+      } else {
+        setBackfillMessage(
+          `Loaded Bob Demo data: ${details.vehiclesCount} vehicles now in garage. Using synthetic attachment fallback (hosted PDF upload unavailable).`
+        );
+      }
     } catch (error) {
       setBackfillMessage(
         'Unable to load demo data: ' +

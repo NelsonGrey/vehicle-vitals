@@ -72,6 +72,165 @@ interface DemoAttachment {
   url: string;
   size: number;
   type: string;
+  analysis?: {
+    extracted?: {
+      documentCategory?: string;
+      serviceType?: string;
+      totalCost?: number;
+      currency?: string;
+      serviceDate?: string;
+      mileage?: number;
+    };
+    confidence: number;
+  };
+}
+
+function getDemoAnalysis(
+  itemId: string,
+  vehicle: DemoVehicleSeed,
+  docIndex: number
+): DemoAttachment['analysis'] {
+  const purchaseYear = parseInt(vehicle.purchaseDate.slice(0, 4), 10);
+  const mileageNum = parseInt(vehicle.mileage, 10);
+
+  // Vary dates/amounts slightly by docIndex so multi-file items look distinct
+  const offsetMonths = (docIndex - 1) * 4;
+  const refYear = purchaseYear + Math.floor(offsetMonths / 12);
+  const refMonth = String((offsetMonths % 12) + 1).padStart(2, '0');
+  const refDate = `${refYear}-${refMonth}-15`;
+
+  const costVariants = [89.95, 149.5, 212.0, 389.0, 47.0, 265.0, 72.5, 198.0];
+  const baseCost =
+    costVariants[
+      (parseInt(vehicle.vin.slice(-2), 36) + docIndex) % costVariants.length
+    ];
+
+  const serviceItems: Record<string, DemoAttachment['analysis']> = {
+    service_history: {
+      extracted: {
+        documentCategory: 'invoice',
+        serviceType: 'Vehicle Service',
+        totalCost: baseCost,
+        currency: 'USD',
+        serviceDate: refDate,
+        mileage: mileageNum - 5000 * docIndex,
+      },
+      confidence: 0.78,
+    },
+    repair_invoices: {
+      extracted: {
+        documentCategory: 'invoice',
+        serviceType: 'Repair Service',
+        totalCost: baseCost + 120,
+        currency: 'USD',
+        serviceDate: refDate,
+        mileage: mileageNum - 8000 * docIndex,
+      },
+      confidence: 0.74,
+    },
+    warranty_records: {
+      extracted: {
+        documentCategory: 'certificate',
+        serviceType: 'Warranty Claim',
+        serviceDate: refDate,
+      },
+      confidence: 0.68,
+    },
+    inspection_reports: {
+      extracted: {
+        documentCategory: 'invoice',
+        serviceType: 'Inspection',
+        totalCost: 55 + docIndex * 18,
+        currency: 'USD',
+        serviceDate: refDate,
+      },
+      confidence: 0.71,
+    },
+    title: {
+      extracted: {
+        documentCategory: 'certificate',
+        serviceDate: vehicle.purchaseDate,
+      },
+      confidence: 0.85,
+    },
+    registration: {
+      extracted: {
+        documentCategory: 'certificate',
+        serviceDate: `${parseInt(vehicle.purchaseDate.slice(0, 4), 10) + docIndex}-01-01`,
+      },
+      confidence: 0.82,
+    },
+    insurance: {
+      extracted: {
+        documentCategory: 'certificate',
+        serviceDate: `${new Date().getFullYear()}-01-01`,
+      },
+      confidence: 0.79,
+    },
+    bill_of_sale: {
+      extracted: {
+        documentCategory: 'receipt',
+        totalCost: mileageNum * 0.8 + 12000,
+        currency: 'USD',
+        serviceDate: vehicle.purchaseDate,
+      },
+      confidence: 0.83,
+    },
+    loan_or_lease: {
+      extracted: {
+        documentCategory: 'certificate',
+        serviceDate: vehicle.purchaseDate,
+      },
+      confidence: 0.72,
+    },
+    payment_history: {
+      extracted: {
+        documentCategory: 'receipt',
+        totalCost: baseCost * 3,
+        currency: 'USD',
+        serviceDate: refDate,
+      },
+      confidence: 0.66,
+    },
+    tax_receipts: {
+      extracted: {
+        documentCategory: 'receipt',
+        totalCost: baseCost + 30,
+        currency: 'USD',
+        serviceDate: refDate,
+      },
+      confidence: 0.69,
+    },
+    owners_manual: {
+      extracted: { documentCategory: 'manual' },
+      confidence: 0.46,
+    },
+    modifications: {
+      extracted: {
+        documentCategory: 'invoice',
+        serviceType: 'Modification',
+        totalCost: baseCost + 80,
+        currency: 'USD',
+        serviceDate: refDate,
+      },
+      confidence: 0.63,
+    },
+    accident_reports: {
+      extracted: { documentCategory: 'report', serviceDate: refDate },
+      confidence: 0.58,
+    },
+    photo_log: {
+      extracted: { documentCategory: 'other' },
+      confidence: 0.28,
+    },
+  };
+
+  return (
+    serviceItems[itemId] ?? {
+      extracted: { documentCategory: 'other' },
+      confidence: 0.4,
+    }
+  );
 }
 
 interface AttachmentTemplate {
@@ -276,6 +435,7 @@ function buildDemoAttachment(
     url: `https://storage.googleapis.com/vehicle-vitals-demo/${normalizedVin}/${categoryKey}/${itemId}-${docIndex}.${ext}`,
     size: 96_000 + docIndex * 28_000,
     type: mimeByExt[ext] || 'application/octet-stream',
+    analysis: getDemoAnalysis(itemId, vehicle, docIndex),
   };
 }
 

@@ -3,6 +3,8 @@ import {
   defaultVehicle,
 } from '@vehicle-vitals/shared';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
+import { generateAllDemoDocs } from '../utils/demoPdfGenerator';
 import { db } from './firebaseConfig';
 import {
   addMaintenanceEntry,
@@ -16,6 +18,10 @@ import {
   snoozeReminder,
   updateVehicle,
 } from './firestoreService';
+import {
+  generateVehicleRecordAttachmentPath,
+  uploadFile,
+} from './storageService';
 
 export interface SeedDetails {
   userDisplayName: string;
@@ -25,6 +31,88 @@ export interface SeedDetails {
   seededReminders: number;
   seededRecordPortfolios: number;
   preferencesUpdated: boolean;
+  seededPdfs: number;
+}
+
+// ─── PDF upload helper ─────────────────────────────────────────────────────
+
+/**
+ * Generate realistic PDF documents for a demo vehicle, upload each to Firebase
+ * Storage under the proper records path, and invoke the analysis callable so
+ * Firestore `attachmentAnalyses` docs get written with real extracted data.
+ *
+ * Returns:
+ *  - realFiles: map of portfolioItemId → uploaded file metadata (for injecting
+ *               real download URLs into the document portfolio before saving)
+ *  - count:     number of PDFs that were successfully uploaded
+ *
+ * All failures are silently swallowed so a storage outage never blocks demo
+ * seeding.
+ */
+async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
+  realFiles: Record<
+    string,
+    Array<{ name: string; url: string; size: number; type: string }>
+  >;
+  count: number;
+}> {
+  const allDocs = generateAllDemoDocs({
+    vin: vehicle.vin,
+    year: vehicle.year,
+    make: vehicle.make,
+    model: vehicle.model,
+    mileage: vehicle.mileage,
+    purchaseDate: vehicle.purchaseDate,
+    licensePlate: vehicle.licensePlate,
+    nickname: vehicle.nickname,
+    fuelType: vehicle.fuelType,
+  });
+
+  const realFiles: Record<
+    string,
+    Array<{ name: string; url: string; size: number; type: string }>
+  > = {};
+  let count = 0;
+
+  for (const genDoc of allDocs) {
+    try {
+      const file = new File([genDoc.blob], genDoc.fileName, {
+        type: genDoc.type,
+      });
+      const storagePath = await generateVehicleRecordAttachmentPath(
+        vehicle.vin,
+        genDoc.portfolioItemId,
+        genDoc.fileName
+      );
+      const uploaded = await uploadFile(file, storagePath);
+
+      if (!realFiles[genDoc.portfolioItemId]) {
+        realFiles[genDoc.portfolioItemId] = [];
+      }
+      realFiles[genDoc.portfolioItemId].push({
+        name: genDoc.fileName,
+        url: uploaded.url,
+        size: genDoc.blob.size,
+        type: genDoc.type,
+      });
+
+      // Fire-and-forget analysis; errors are non-fatal
+      analyzeAttachmentText({
+        vin: vehicle.vin,
+        storagePath: uploaded.path,
+        ocrText: genDoc.extractedText,
+        contentType: genDoc.type,
+      }).catch(() => {
+        /* analysis failure is non-fatal */
+      });
+
+      count += 1;
+    } catch {
+      // One PDF failed — continue with the rest
+    }
+  }
+
+  return { realFiles, count };
 }
 
 interface DemoVehicleSeed {
@@ -545,7 +633,8 @@ function createDemoPortfolio(vehicle: DemoVehicleSeed) {
       item.notes = `Bob Demo - ${vehicle.nickname}: ${item.title} ${
         item.status === 'ready' ? 'on file and verified.' : 'in progress.'
       }`;
-      item.files = getDemoAttachmentsForItem(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (item as any).files = getDemoAttachmentsForItem(
         vehicle,
         category.key,
         item.id,
@@ -588,9 +677,35 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
   let seededMaintenance = 0;
   let seededReminders = 0;
   let seededRecordPortfolios = 0;
+  let seededPdfs = 0;
 
   for (const vehicle of BOB_DEMO_VEHICLES) {
+    // Generate + upload real PDFs first so we can inject real download URLs
+    // into the portfolio before it's persisted.  Falls back to fake-URL items
+    // for any category whose upload fails.
+    const { realFiles, count: pdfCount } = await uploadDemoPdfs(vehicle).catch(
+      () => ({
+        realFiles: {} as Record<
+          string,
+          Array<{ name: string; url: string; size: number; type: string }>
+        >,
+        count: 0,
+      })
+    );
+    seededPdfs += pdfCount;
+
     const demoPortfolio = createDemoPortfolio(vehicle);
+
+    // Replace fake-URL file entries with real uploaded ones where available.
+    for (const category of demoPortfolio.categories ?? []) {
+      for (const item of category.items ?? []) {
+        if (realFiles[item.id]?.length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (item as any).files = realFiles[item.id];
+          item.status = 'ready';
+        }
+      }
+    }
 
     await addOrUpdateVehicle({
       ...defaultVehicle,
@@ -707,5 +822,6 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
     seededReminders,
     seededRecordPortfolios,
     preferencesUpdated: true,
+    seededPdfs,
   };
 }

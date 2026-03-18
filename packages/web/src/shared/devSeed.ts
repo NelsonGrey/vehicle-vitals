@@ -56,6 +56,17 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
   >;
   count: number;
 }> {
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+  // Hosted environments can have Storage bucket CORS restrictions that block
+  // browser uploads. For hosted dev-seed runs, skip direct uploads and fall
+  // back to synthetic attachment URLs/analysis to avoid user-facing failures.
+  if (!isLocalhost) {
+    return { realFiles: {}, count: 0 };
+  }
+
   const allDocs = generateAllDemoDocs({
     vin: vehicle.vin,
     year: vehicle.year,
@@ -787,7 +798,7 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
   }
 
   await setDoc(
-    doc(db, `users/${user.uid}/vehicles/__preferences__`),
+    doc(db, `users/${user.uid}/vehicles/preferences`),
     {
       profileName: 'Bob Demo',
       maintenanceAlertsEnabled: true,

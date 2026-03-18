@@ -110,7 +110,7 @@ export default function UpcomingTasks() {
   useEffect(() => {
     const loadUpcomingTasks = async () => {
       try {
-        const preferenceDoc = await getVehicle('__preferences__');
+        const preferenceDoc = await getVehicle('preferences');
         const enabledPreference = preferenceDoc?.maintenanceAlertsEnabled;
         const leadDays = Number(preferenceDoc?.preferredReminderTimingDays);
         const dailyMiles = Number(preferenceDoc?.preferredDailyMiles);

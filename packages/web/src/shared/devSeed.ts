@@ -156,11 +156,12 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
         type: genDoc.type,
       });
 
-      // Fire-and-forget analysis; errors are non-fatal
+      // Fire-and-forget analysis; errors are non-fatal.
+      // Do not send prefilled OCR text during demo seeding so backend Gemini
+      // extraction runs against the uploaded file bytes.
       analyzeAttachmentText({
         vin: vehicle.vin,
         storagePath: uploaded.path,
-        ocrText: genDoc.extractedText,
         contentType: genDoc.type,
       }).catch(() => {
         /* analysis failure is non-fatal */

@@ -1,4 +1,5 @@
 /* eslint-disable quotes, object-curly-spacing, arrow-parens, operator-linebreak, indent, max-len, quote-props */
+import { VertexAI } from '@google-cloud/vertexai';
 import { createHash } from 'crypto';
 import * as admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -282,10 +283,125 @@ function extractServiceDate(value: string): string | undefined {
   return undefined;
 }
 
+interface GeminiExtractedData {
+  documentCategory?: string;
+  serviceType?: string;
+  totalCost?: number;
+  currency?: string;
+  serviceDate?: string;
+  mileage?: number;
+  rawText?: string;
+}
+
+async function callGeminiAnalysis(
+  bucketName: string,
+  objectPath: string,
+  mimeType: string
+): Promise<GeminiExtractedData | null> {
+  try {
+    const projectId =
+      process.env.GCLOUD_PROJECT ||
+      process.env.GOOGLE_CLOUD_PROJECT ||
+      admin.app().options.projectId;
+    if (!projectId) {
+      logger.warn('Gemini: no project ID available, skipping');
+      return null;
+    }
+
+    // Download file bytes from Storage
+    const bucket = admin.storage().bucket(bucketName);
+    const file = bucket.file(objectPath);
+    const [fileBuffer] = await file.download();
+    const base64Data = fileBuffer.toString('base64');
+
+    // Cap at 10 MB to avoid Gemini payload limits on very large files
+    if (fileBuffer.byteLength > 10 * 1024 * 1024) {
+      logger.warn('Gemini: file too large (>10 MB), skipping', { objectPath });
+      return null;
+    }
+
+    const SUPPORTED_MIMES = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+      'image/gif',
+    ];
+    const effectiveMime = SUPPORTED_MIMES.includes(mimeType)
+      ? mimeType
+      : 'application/pdf';
+
+    const vertexAI = new VertexAI({
+      project: projectId,
+      location: 'us-central1',
+    });
+    const model = vertexAI.getGenerativeModel({
+      model: 'gemini-2.0-flash-001',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0,
+      },
+    });
+
+    const prompt = `You are a vehicle document parser. Analyze the attached document and extract structured data.
+
+Return a JSON object with ONLY these fields (omit any field you cannot find):
+{
+  "documentCategory": "receipt" | "invoice" | "image" | "document" | "other",
+  "serviceType": "short description of the service (e.g. Oil Change, Tire Rotation, Brake Service, Annual Inspection, etc.)",
+  "totalCost": <number, dollars, no currency symbol>,
+  "currency": "USD",
+  "serviceDate": "YYYY-MM-DD",
+  "mileage": <number, odometer reading if present>,
+  "rawText": "full text content of the document in a single string"
+}
+
+Rules:
+- Extract costs as plain numbers (e.g. 89.99, not "$89.99")
+- If the document has multiple line items, use the grand total for totalCost
+- Use the document date as serviceDate (not today's date)
+- Omit any field that is not clearly present in the document
+- For documentCategory: receipt = retail receipt, invoice = professional service invoice, image = photo with no text, document = general document`;
+
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: effectiveMime, data: base64Data } },
+          ],
+        },
+      ],
+    });
+
+    const responseText =
+      result.response?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!responseText) return null;
+
+    // Strip markdown code fences if Gemini wraps the JSON
+    const cleaned = responseText
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+    const parsed = JSON.parse(cleaned) as GeminiExtractedData;
+    return parsed;
+  } catch (err) {
+    logger.warn('Gemini analysis failed, falling back to heuristics', {
+      error: String(err),
+    });
+    return null;
+  }
+}
+
 function buildAttachmentAnalysis(
   objectName: string,
   mimeType: string | undefined,
-  customMetadata: Record<string, string> | undefined
+  customMetadata: Record<string, string> | undefined,
+  gemini?: GeminiExtractedData | null
 ): {
   extracted: AttachmentExtractedData;
   confidence: number;
@@ -298,17 +414,41 @@ function buildAttachmentAnalysis(
     customMetadata?.description,
     customMetadata?.notes,
     customMetadata?.ocrText,
+    gemini?.rawText,
   ]
     .filter(Boolean)
     .join(' ');
 
+  // Prefer Gemini-extracted values; fall back to heuristics for any missing field
+  const heuristicCategory = inferDocumentCategory(fileName, mimeType);
+  const heuristicServiceType = inferServiceType(metadataText);
+  const heuristicCost = extractCost(metadataText);
+  const heuristicDate = extractServiceDate(metadataText);
+  const heuristicMileage = extractMileage(metadataText);
+
+  const geminiCategory = gemini?.documentCategory as
+    | AttachmentExtractedData['documentCategory']
+    | undefined;
+  const validCategories: AttachmentExtractedData['documentCategory'][] = [
+    'receipt',
+    'invoice',
+    'image',
+    'document',
+    'other',
+  ];
+
   const extracted: AttachmentExtractedData = {
-    documentCategory: inferDocumentCategory(fileName, mimeType),
-    serviceType: inferServiceType(metadataText),
-    totalCost: extractCost(metadataText),
-    currency: 'USD',
-    serviceDate: extractServiceDate(metadataText),
-    mileage: extractMileage(metadataText),
+    documentCategory:
+      geminiCategory && validCategories.includes(geminiCategory)
+        ? geminiCategory
+        : heuristicCategory,
+    serviceType: gemini?.serviceType || heuristicServiceType,
+    totalCost:
+      typeof gemini?.totalCost === 'number' ? gemini.totalCost : heuristicCost,
+    currency: gemini?.currency || 'USD',
+    serviceDate: gemini?.serviceDate || heuristicDate,
+    mileage:
+      typeof gemini?.mileage === 'number' ? gemini.mileage : heuristicMileage,
   };
 
   const confidenceSignals = [
@@ -319,7 +459,12 @@ function buildAttachmentAnalysis(
     typeof extracted.mileage === 'number',
   ].filter(Boolean).length;
 
-  const confidence = Math.min(0.25 + confidenceSignals * 0.15, 0.9);
+  // Gemini analysis earns a base confidence bonus
+  const geminiBonus = gemini ? 0.3 : 0;
+  const confidence = Math.min(
+    0.25 + geminiBonus + confidenceSignals * 0.1,
+    0.95
+  );
 
   return { extracted, confidence, sourceText: metadataText };
 }
@@ -353,6 +498,7 @@ async function upsertAttachmentAnalysis(params: {
   sizeBytes?: number | null;
   customMetadata?: Record<string, string>;
   forceOcrText?: string;
+  skipGemini?: boolean;
 }) {
   const {
     uid,
@@ -363,6 +509,7 @@ async function upsertAttachmentAnalysis(params: {
     sizeBytes,
     customMetadata,
     forceOcrText,
+    skipGemini,
   } = params;
 
   const pathContext = parseAttachmentPath(objectPath);
@@ -390,10 +537,48 @@ async function upsertAttachmentAnalysis(params: {
     ...(forceOcrText ? { ocrText: forceOcrText } : {}),
   };
 
+  // Attempt Gemini analysis if we have a bucket reference and haven't been asked to skip
+  let geminiResult: GeminiExtractedData | null = null;
+  const effectiveBucket = bucket || admin.app().options.storageBucket || null;
+  const geminiEnabledMimes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+    'image/gif',
+  ];
+  const mimeForGemini = (contentType || '').toLowerCase();
+  const canUseGemini =
+    !skipGemini &&
+    !forceOcrText &&
+    effectiveBucket &&
+    (geminiEnabledMimes.includes(mimeForGemini) || mimeForGemini === '');
+
+  if (canUseGemini && effectiveBucket) {
+    logger.info('Running Gemini analysis', { objectPath, contentType });
+    geminiResult = await callGeminiAnalysis(
+      effectiveBucket,
+      objectPath,
+      mimeForGemini || 'application/pdf'
+    );
+    if (geminiResult) {
+      logger.info('Gemini analysis succeeded', {
+        objectPath,
+        serviceType: geminiResult.serviceType,
+        totalCost: geminiResult.totalCost,
+        confidence: 'computed-after-merge',
+      });
+    }
+  }
+
   const { extracted, confidence, sourceText } = buildAttachmentAnalysis(
     objectPath,
     contentType || undefined,
-    mergedMetadata
+    mergedMetadata,
+    geminiResult
   );
 
   const analysisDocId = encodeURIComponent(objectPath);
@@ -506,47 +691,60 @@ export const analyzeUploadedAttachment = storageAttachmentAnalysisEnabled
     })
   : undefined;
 
-export const analyzeAttachmentTextCallable = onCall(async request => {
-  const uid = request.auth?.uid;
-  if (!uid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
-  }
+export const analyzeAttachmentTextCallable = onCall(
+  { timeoutSeconds: 120 },
+  async request => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Missing auth context');
+    }
 
-  const { vin, storagePath, ocrText, contentType } =
-    (request.data as {
+    const {
+      vin,
+      storagePath,
+      ocrText,
+      contentType,
+      bucket: bucketParam,
+    } = (request.data as {
       vin?: string;
       storagePath?: string;
       ocrText?: string;
       contentType?: string;
+      bucket?: string;
     }) ?? {};
 
-  const normalizedVin = (vin || '').trim().toUpperCase();
-  const normalizedPath = (storagePath || '').trim();
-  const normalizedText = (ocrText || '').trim();
+    const normalizedVin = (vin || '').trim().toUpperCase();
+    const normalizedPath = (storagePath || '').trim();
+    const normalizedText = (ocrText || '').trim();
 
-  if (!normalizedVin || normalizedVin.length !== 17) {
-    throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
+    if (!normalizedVin || normalizedVin.length !== 17) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Valid 17-character VIN required'
+      );
+    }
+
+    if (!normalizedPath) {
+      throw new HttpsError('invalid-argument', 'storagePath is required');
+    }
+
+    const result = await upsertAttachmentAnalysis({
+      uid,
+      vin: normalizedVin,
+      objectPath: normalizedPath,
+      bucket: (bucketParam || '').trim() || null,
+      contentType: (contentType || '').trim() || null,
+      forceOcrText: normalizedText || undefined,
+    });
+
+    return {
+      success: true,
+      vin: normalizedVin,
+      storagePath: normalizedPath,
+      analysis: result,
+    };
   }
-
-  if (!normalizedPath) {
-    throw new HttpsError('invalid-argument', 'storagePath is required');
-  }
-
-  const result = await upsertAttachmentAnalysis({
-    uid,
-    vin: normalizedVin,
-    objectPath: normalizedPath,
-    contentType: (contentType || '').trim() || null,
-    forceOcrText: normalizedText || undefined,
-  });
-
-  return {
-    success: true,
-    vin: normalizedVin,
-    storagePath: normalizedPath,
-    analysis: result,
-  };
-});
+);
 
 async function decodeVinData(vinInput: string) {
   const vin = vinInput.trim().toUpperCase();

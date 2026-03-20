@@ -56,7 +56,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
 
           <div className="ml-0 lg:ml-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3 text-sm w-full lg:w-auto">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-              <span className={sectionLabelClass}>Marketing</span>
+              {(isDevelopmentEnvironment || isDevelopmentProject) && (
+                <span className={sectionLabelClass}>Marketing</span>
+              )}
               <Link to="/" className={linkClass}>
                 Home
               </Link>

@@ -17,6 +17,7 @@ import {
   getAttachmentAnalyses,
   getMaintenanceEntries,
 } from '../shared/firestoreService';
+import { buildDocumentSummary } from '../utils/documentAnalysisSummary';
 
 // ─── types ─────────────────────────────────────────────────────────────────
 
@@ -26,9 +27,26 @@ interface MaintenanceEntry {
   serviceType?: string;
   date?: string;
   cost?: number;
+  attachments?: Array<{
+    path?: string;
+    url?: string;
+    analysis?: {
+      extracted?: {
+        documentCategory?: string;
+        serviceType?: string;
+        totalCost?: number;
+        serviceDate?: string;
+        mileage?: number;
+      };
+      confidence?: number;
+      sourceText?: string;
+    };
+  }>;
 }
 
 interface AttachmentAnalysis {
+  path?: string;
+  url?: string;
   storagePath?: string;
   extracted?: {
     documentCategory?: string;
@@ -39,6 +57,7 @@ interface AttachmentAnalysis {
     mileage?: number;
   };
   confidence?: number;
+  sourceText?: string;
 }
 
 interface VehicleInfo {
@@ -93,21 +112,36 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
 
     async function load() {
       try {
-        const [maint, allPaths] = await Promise.all([
-          getMaintenanceEntries(vehicle.vin),
-          // Collect all file paths from the portfolio so we can batch-fetch analyses
-          Promise.resolve(
-            (
-              (vehicle.documentPortfolio?.categories ?? []) as Array<{
-                items?: Array<{ files?: Array<{ url?: string }> }>;
-              }>
-            ).flatMap(cat =>
-              (cat.items ?? []).flatMap(item =>
-                (item.files ?? []).flatMap(f => (f.url ? [f.url] : []))
-              )
-            )
-          ),
-        ]);
+        const maint = (await getMaintenanceEntries(vehicle.vin)) ?? [];
+
+        // Collect storage paths from both document portfolio files and maintenance attachments.
+        const portfolioPaths = (
+          (vehicle.documentPortfolio?.categories ?? []) as Array<{
+            items?: Array<{
+              files?: Array<{ path?: string; url?: string }>;
+            }>;
+          }>
+        ).flatMap(cat =>
+          (cat.items ?? []).flatMap(item =>
+            (item.files ?? []).flatMap(file => {
+              if (file.path) return [file.path];
+              if (file.url) return [file.url];
+              return [];
+            })
+          )
+        );
+
+        const maintenancePaths = maint.flatMap(entry =>
+          (entry.attachments ?? []).flatMap(attachment => {
+            if (attachment.path) return [attachment.path];
+            if (attachment.url) return [attachment.url];
+            return [];
+          })
+        );
+
+        const allPaths = Array.from(
+          new Set([...portfolioPaths, ...maintenancePaths])
+        );
 
         let fetchedAnalyses: AttachmentAnalysis[] = [];
         if (allPaths.length > 0) {
@@ -199,6 +233,19 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
 
   const maxAmount = Math.max(...breakdown.map(c => c.amount), 1);
   const monthlyAvg = hasData ? totalCOO / elapsedMonths : 0;
+
+  const documentInsights = analyses
+    .filter(a => a.extracted || a.sourceText)
+    .sort((a, b) => {
+      const aDate = a.extracted?.serviceDate
+        ? new Date(a.extracted.serviceDate).getTime()
+        : 0;
+      const bDate = b.extracted?.serviceDate
+        ? new Date(b.extracted.serviceDate).getTime()
+        : 0;
+      return bDate - aDate;
+    })
+    .slice(0, 5);
 
   // ── maintenance category breakdown ──────────────────────────────────────
 
@@ -297,6 +344,35 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
                 {label}
                 <span className="font-semibold">{formatCurrency(amt)}</span>
               </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {documentInsights.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+            Document-Derived Insights
+          </p>
+          <div className="space-y-1.5">
+            {documentInsights.map((analysis, index) => (
+              <div
+                key={`${analysis.storagePath || analysis.path || analysis.url || 'analysis'}-${index}`}
+                className="text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-2 py-1.5"
+              >
+                <div className="text-slate-700 dark:text-slate-300">
+                  {buildDocumentSummary(
+                    analysis.extracted,
+                    analysis.sourceText
+                  )}
+                </div>
+                <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  Confidence:{' '}
+                  {typeof analysis.confidence === 'number'
+                    ? `${Math.round(analysis.confidence * 100)}%`
+                    : 'n/a'}
+                </div>
+              </div>
             ))}
           </div>
         </div>

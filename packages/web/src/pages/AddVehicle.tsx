@@ -5,6 +5,10 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import { addOrUpdateVehicle } from '../shared/firestoreService';
+import {
+  normalizeLicensePlate,
+  validateLicensePlate,
+} from '../shared/licensePlateUtils';
 import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
 
 export default function AddVehicle() {
@@ -45,9 +49,15 @@ export default function AddVehicle() {
   };
 
   const handleSubmit = async () => {
+    const trimmedVin = (form.vin || '').trim();
+    if (!trimmedVin) {
+      alert('VIN is required before saving a vehicle.');
+      return;
+    }
     try {
       await addOrUpdateVehicle({
         ...form,
+        vin: trimmedVin,
         ...(insights
           ? {
               ...buildPersistedVinInsights(insights.rawInsights),

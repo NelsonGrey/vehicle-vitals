@@ -57,7 +57,10 @@ export function createFirestoreService({ db, auth, helpers }) {
     if (!userId) return [];
     const ref = vehiclesCollectionRef(userId);
     const snap = await readDocs(ref);
-    return snap.docs.map(d => d.data());
+    return snap.docs.map(d => {
+      const data = d.data();
+      return { ...data, vin: data.vin || d.id };
+    });
   }
 
   async function getVehicle(vin) {

@@ -13,6 +13,10 @@ import {
   uploadFile,
 } from '../shared/storageService';
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
+import {
+  buildDocumentSummary,
+  getSourceSnippet,
+} from '../utils/documentAnalysisSummary';
 
 type PortfolioItem = {
   id: string;
@@ -29,12 +33,14 @@ type PortfolioItem = {
     type?: string;
     analysis?: {
       extracted?: {
+        documentCategory?: string;
         serviceType?: string;
         totalCost?: number;
         serviceDate?: string;
         mileage?: number;
       };
       confidence?: number;
+      sourceText?: string;
     };
   }>;
 };
@@ -105,6 +111,15 @@ function getAnalysisBadge(confidence: number | undefined): {
   };
 }
 
+function getDocumentSummary(
+  file: NonNullable<PortfolioItem['files']>[number]
+): string {
+  return buildDocumentSummary(
+    file.analysis?.extracted,
+    file.analysis?.sourceText
+  );
+}
+
 export default function Records() {
   const { vin } = useParams();
   const navigate = useNavigate();
@@ -148,9 +163,7 @@ export default function Records() {
         try {
           const analyses = await getAttachmentAnalyses(vin, allPaths);
           const pathToAnalysis = new Map(
-            analyses
-              .filter((a: any) => a?.path)
-              .map((a: any) => [a.path, a])
+            analyses.filter((a: any) => a?.path).map((a: any) => [a.path, a])
           );
 
           if (pathToAnalysis.size > 0) {
@@ -167,6 +180,7 @@ export default function Records() {
                     analysis: {
                       extracted: analysis.extracted,
                       confidence: analysis.confidence,
+                      sourceText: analysis.sourceText,
                     },
                   };
                 });
@@ -290,6 +304,7 @@ export default function Records() {
             ? {
                 extracted: matched.extracted,
                 confidence: matched.confidence,
+                sourceText: matched.sourceText,
               }
             : undefined,
         });
@@ -507,6 +522,9 @@ export default function Records() {
                 {filteredItems.map(entry => {
                   const isSelected = entry.key === selectedItemKey;
                   const fileCount = entry.item.files?.length || 0;
+                  const summaryFiles = (entry.item.files || [])
+                    .slice(-2)
+                    .reverse();
 
                   return (
                     <button
@@ -534,6 +552,27 @@ export default function Records() {
                         {entry.item.required ? 'Required' : 'Optional'} •{' '}
                         {fileCount} file{fileCount === 1 ? '' : 's'}
                       </div>
+                      {summaryFiles.length > 0 && (
+                        <div className="mt-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-2 space-y-1">
+                          {summaryFiles.map((file, summaryIndex) => (
+                            <div
+                              key={`${file.path || file.url || file.name || 'file'}-${summaryIndex}`}
+                              className="text-[11px] text-slate-600 dark:text-slate-300"
+                            >
+                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                                {file.name || `Document ${summaryIndex + 1}`}:
+                              </span>{' '}
+                              <span>{getDocumentSummary(file)}</span>
+                            </div>
+                          ))}
+                          {fileCount > summaryFiles.length && (
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                              +{fileCount - summaryFiles.length} more document
+                              {fileCount - summaryFiles.length === 1 ? '' : 's'}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -644,6 +683,7 @@ export default function Records() {
                           file.analysis?.confidence
                         );
                         const extracted = file.analysis?.extracted;
+                        const summaryText = getDocumentSummary(file);
                         return (
                           <div
                             key={`${file.path || file.url || file.name}-${fileIndex}`}
@@ -688,22 +728,97 @@ export default function Records() {
                                   >
                                     {badge.label}
                                   </span>
-                                  {(extracted?.serviceType ||
-                                    typeof extracted?.totalCost === 'number' ||
-                                    extracted?.serviceDate) && (
-                                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                                      {extracted?.serviceType
-                                        ? extracted.serviceType
-                                        : 'Document insight'}
-                                      {typeof extracted?.totalCost === 'number'
-                                        ? ` • $${extracted.totalCost.toFixed(2)}`
-                                        : ''}
-                                      {extracted?.serviceDate
-                                        ? ` • ${extracted.serviceDate}`
-                                        : ''}
-                                    </span>
-                                  )}
+                                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {summaryText}
+                                  </span>
                                 </div>
+                                <details className="mt-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-2 py-1">
+                                  <summary className="cursor-pointer text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                    Analysis details
+                                  </summary>
+                                  <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                                    <div>
+                                      Confidence:{' '}
+                                      {typeof file.analysis?.confidence ===
+                                      'number'
+                                        ? `${Math.round(file.analysis.confidence * 100)}%`
+                                        : 'n/a'}
+                                    </div>
+                                    <div>
+                                      Category:{' '}
+                                      {extracted?.documentCategory || 'n/a'}
+                                    </div>
+                                    <div>
+                                      Service type:{' '}
+                                      {extracted?.serviceType || 'n/a'}
+                                    </div>
+                                    <div>
+                                      Total cost:{' '}
+                                      {typeof extracted?.totalCost === 'number'
+                                        ? `$${extracted.totalCost.toFixed(2)}`
+                                        : 'n/a'}
+                                    </div>
+                                    <div>
+                                      Service date:{' '}
+                                      {extracted?.serviceDate || 'n/a'}
+                                    </div>
+                                    <div>
+                                      Mileage:{' '}
+                                      {typeof extracted?.mileage === 'number'
+                                        ? `${extracted.mileage.toLocaleString()} mi`
+                                        : 'n/a'}
+                                    </div>
+                                    <div>
+                                      Source snippet:{' '}
+                                      {getSourceSnippet(
+                                        file.analysis?.sourceText
+                                      ) || 'n/a'}
+                                    </div>
+                                    {(extracted?.serviceType ||
+                                      typeof extracted?.totalCost ===
+                                        'number' ||
+                                      extracted?.serviceDate ||
+                                      typeof extracted?.mileage ===
+                                        'number') && (
+                                      <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            navigate(
+                                              `/app/edit-vehicle/${vin}`,
+                                              {
+                                                state: {
+                                                  maintenancePrefill: {
+                                                    title:
+                                                      extracted?.serviceType,
+                                                    cost:
+                                                      typeof extracted?.totalCost ===
+                                                      'number'
+                                                        ? extracted.totalCost.toFixed(
+                                                            2
+                                                          )
+                                                        : undefined,
+                                                    date: extracted?.serviceDate,
+                                                    mileage:
+                                                      typeof extracted?.mileage ===
+                                                      'number'
+                                                        ? String(
+                                                            extracted.mileage
+                                                          )
+                                                        : undefined,
+                                                  },
+                                                },
+                                              }
+                                            )
+                                          }
+                                          className="text-[11px] font-medium text-blue-700 dark:text-blue-300 bg-transparent border-0 cursor-pointer hover:underline p-0"
+                                        >
+                                          Add to maintenance log →
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </details>
                               </div>
                             </div>
                             <button

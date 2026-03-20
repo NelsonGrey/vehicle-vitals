@@ -1,11 +1,29 @@
-import { storage, auth } from './firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 import {
+  deleteObject,
+  getDownloadURL,
   ref,
   uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
 } from 'firebase/storage';
-import { onAuthStateChanged } from 'firebase/auth';
+import { auth, storage } from './firebaseConfig';
+
+const getCurrentUserIdOrThrow = async () => {
+  const current = auth.currentUser;
+  if (current?.uid) {
+    return current.uid;
+  }
+
+  return new Promise((resolve, reject) => {
+    const unsub = onAuthStateChanged(auth, user => {
+      unsub();
+      if (user?.uid) {
+        resolve(user.uid);
+      } else {
+        reject(new Error('No authenticated user available for upload path.'));
+      }
+    });
+  });
+};
 
 // Upload file to Firebase Storage
 export const uploadFile = async (file, path) => {
@@ -64,23 +82,7 @@ export const generateMaintenanceAttachmentPath = async (
   maintenanceId,
   fileName
 ) => {
-  // Get current user ID
-  const getCurrentUserId = () => {
-    return new Promise(resolve => {
-      const user = auth.currentUser;
-      if (user) {
-        resolve(user.uid);
-      } else {
-        // Wait for auth state change
-        const unsub = onAuthStateChanged(auth, u => {
-          unsub();
-          resolve(u?.uid || 'anonymous');
-        });
-      }
-    });
-  };
-
-  const userId = await getCurrentUserId();
+  const userId = await getCurrentUserIdOrThrow();
   const timestamp = Date.now();
   const extension = fileName.split('.').pop();
   return `users/${userId}/vehicles/${vin}/maintenance/${maintenanceId}/${timestamp}.${extension}`;
@@ -92,21 +94,7 @@ export const generateVehicleRecordAttachmentPath = async (
   recordId,
   fileName
 ) => {
-  const getCurrentUserId = () => {
-    return new Promise(resolve => {
-      const user = auth.currentUser;
-      if (user) {
-        resolve(user.uid);
-      } else {
-        const unsub = onAuthStateChanged(auth, u => {
-          unsub();
-          resolve(u?.uid || 'anonymous');
-        });
-      }
-    });
-  };
-
-  const userId = await getCurrentUserId();
+  const userId = await getCurrentUserIdOrThrow();
   const timestamp = Date.now();
   const extension = fileName.includes('.') ? fileName.split('.').pop() : 'bin';
   return `users/${userId}/vehicles/${vin}/records/${recordId}/${timestamp}.${extension}`;

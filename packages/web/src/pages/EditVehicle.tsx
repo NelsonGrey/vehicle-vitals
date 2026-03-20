@@ -1,8 +1,8 @@
 // -----------------------------
 // File: web/pages/EditVehicle.jsx
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import { formatFileDisplay } from '../shared/fileUtils';
 import {
@@ -93,6 +93,10 @@ interface MaintenanceEntry {
 export default function EditVehicle() {
   const { vin } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const maintenancePrefill = (location.state as any)?.maintenancePrefill as
+    | { title?: string; cost?: string; date?: string; mileage?: string }
+    | undefined;
   const [form, setForm] = useState<Vehicle | null>(null);
   const [plateValidationError, setPlateValidationError] = useState<string>();
   const { years, makes, models, loadingMakes, loadingModels } =
@@ -582,14 +586,22 @@ export default function EditVehicle() {
         <h3 className="font-serif font-bold text-2xl text-charcoal-800 dark:text-cream-100 mb-4">
           Maintenance
         </h3>
-        {vin && <MaintenanceList vin={vin} />}
+        {vin && <MaintenanceList vin={vin} prefill={maintenancePrefill} />}
       </div>
     </div>
   );
 }
 
-function MaintenanceList({ vin }: { vin: string }) {
+function MaintenanceList({
+  vin,
+  prefill,
+}: {
+  vin: string;
+  prefill?: { title?: string; cost?: string; date?: string; mileage?: string };
+}) {
   const [entries, setEntries] = useState<MaintenanceEntry[]>([]);
+  const [prefillDismissed, setPrefillDismissed] = useState(false);
+  const addEntryRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
     title: '',
     notes: '',
@@ -625,6 +637,25 @@ function MaintenanceList({ vin }: { vin: string }) {
     };
     load();
   }, [vin]);
+
+  useEffect(() => {
+    if (!prefill) return;
+    setForm(p => ({
+      ...p,
+      title: prefill.title || p.title,
+      cost: prefill.cost || p.cost,
+    }));
+    // Scroll to the Add Entry form so the user sees the pre-filled values
+    const timer = setTimeout(() => {
+      addEntryRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+    // Only run once on mount when prefill is provided
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -965,10 +996,28 @@ function MaintenanceList({ vin }: { vin: string }) {
         ))}
       </ul>
 
-      <div className="border-t border-charcoal-200 dark:border-charcoal-600 pt-4">
+      <div
+        ref={addEntryRef}
+        className="border-t border-charcoal-200 dark:border-charcoal-600 pt-4"
+      >
         <h4 className="font-serif font-bold text-xl text-charcoal-800 dark:text-cream-100 mb-4">
           Add Entry
         </h4>
+        {prefill && !prefillDismissed && (
+          <div className="mb-3 flex items-start justify-between gap-2 rounded-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 px-3 py-2 text-xs text-blue-800 dark:text-blue-200">
+            <span>
+              Pre-filled from document analysis. Review and adjust before
+              saving.
+            </span>
+            <button
+              type="button"
+              onClick={() => setPrefillDismissed(true)}
+              className="bg-transparent border-0 cursor-pointer text-blue-600 dark:text-blue-300 hover:opacity-70 p-0 flex-shrink-0 font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className="space-y-4">
           <div className="flex gap-3">
             <div className="flex-1">

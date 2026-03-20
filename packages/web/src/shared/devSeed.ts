@@ -33,6 +33,14 @@ export interface SeedDetails {
   seededRecordPortfolios: number;
   preferencesUpdated: boolean;
   seededPdfs: number;
+  pdfUploadStatus:
+    | 'ok'
+    | 'hosted-disabled'
+    | 'missing-bucket'
+    | 'probe-failed'
+    | 'upload-errors';
+  pdfUploadErrorCount: number;
+  pdfUploadErrors: string[];
 }
 
 // ─── PDF upload helper ─────────────────────────────────────────────────────
@@ -56,6 +64,13 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
     Array<{ name: string; url: string; size: number; type: string }>
   >;
   count: number;
+  status:
+    | 'ok'
+    | 'hosted-disabled'
+    | 'missing-bucket'
+    | 'probe-failed'
+    | 'upload-errors';
+  errors: string[];
 }> {
   const isLocalhost =
     typeof window !== 'undefined' &&
@@ -69,13 +84,19 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
     console.info(
       '[devSeed] Using synthetic demo attachments on hosted domain. Set VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=true after configuring Firebase Storage CORS to upload real PDFs.'
     );
-    return { realFiles: {}, count: 0 };
+    return {
+      realFiles: {},
+      count: 0,
+      status: 'hosted-disabled',
+      errors: [
+        'Hosted demo PDF uploads are disabled by VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS.',
+      ],
+    };
   }
 
-  // Even with CORS enabled, Firebase uploads can fail with HTTP 412 when the
-  // configured bucket isn't linked/authorized for Firebase Storage service
-  // accounts. Probe once and fall back to synthetic demo attachments if the
-  // endpoint isn't healthy.
+  // Validate bucket configuration up front, then rely on real upload attempts
+  // for diagnostics. Browser OPTIONS probes can fail with generic network
+  // errors even when uploads would succeed.
   if (!isLocalhost && allowHostedUploads) {
     const bucket = String(
       import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || ''
@@ -85,34 +106,12 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
       console.warn(
         '[devSeed] VITE_FIREBASE_STORAGE_BUCKET missing. Falling back to synthetic demo attachments.'
       );
-      return { realFiles: {}, count: 0 };
-    }
-
-    try {
-      const probeUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(
-        bucket
-      )}/o?name=seed-probe-${Date.now()}.txt`;
-      const probe = await fetch(probeUrl, {
-        method: 'OPTIONS',
-        headers: {
-          'Access-Control-Request-Method': 'POST',
-          'Access-Control-Request-Headers':
-            'authorization,content-type,x-goog-resumable',
-        },
-      });
-
-      if (!probe.ok) {
-        console.warn(
-          `[devSeed] Firebase Storage probe failed (${probe.status}). Falling back to synthetic attachments. Ensure bucket is linked in Firebase Storage and service accounts are authorized.`
-        );
-        return { realFiles: {}, count: 0 };
-      }
-    } catch (error) {
-      console.warn(
-        '[devSeed] Firebase Storage probe failed. Falling back to synthetic attachments.',
-        error
-      );
-      return { realFiles: {}, count: 0 };
+      return {
+        realFiles: {},
+        count: 0,
+        status: 'missing-bucket',
+        errors: ['VITE_FIREBASE_STORAGE_BUCKET is not configured.'],
+      };
     }
   }
 
@@ -133,6 +132,7 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
     Array<{ name: string; url: string; size: number; type: string }>
   > = {};
   let count = 0;
+  const errors: string[] = [];
 
   for (const genDoc of allDocs) {
     try {
@@ -167,12 +167,17 @@ async function uploadDemoPdfs(vehicle: DemoVehicleSeed): Promise<{
       });
 
       count += 1;
-    } catch {
+    } catch (error) {
       // One PDF failed — continue with the rest
+      errors.push(error instanceof Error ? error.message : String(error));
     }
   }
 
-  return { realFiles, count };
+  if (count === 0 && errors.length > 0) {
+    return { realFiles, count, status: 'upload-errors', errors };
+  }
+
+  return { realFiles, count, status: 'ok', errors };
 }
 
 interface DemoVehicleSeed {
@@ -738,21 +743,34 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
   let seededReminders = 0;
   let seededRecordPortfolios = 0;
   let seededPdfs = 0;
+  let pdfUploadStatus: SeedDetails['pdfUploadStatus'] = 'ok';
+  const pdfUploadErrors: string[] = [];
 
   for (const vehicle of BOB_DEMO_VEHICLES) {
     // Generate + upload real PDFs first so we can inject real download URLs
     // into the portfolio before it's persisted.  Falls back to fake-URL items
     // for any category whose upload fails.
-    const { realFiles, count: pdfCount } = await uploadDemoPdfs(vehicle).catch(
-      () => ({
-        realFiles: {} as Record<
-          string,
-          Array<{ name: string; url: string; size: number; type: string }>
-        >,
-        count: 0,
-      })
-    );
+    const {
+      realFiles,
+      count: pdfCount,
+      status,
+      errors,
+    } = await uploadDemoPdfs(vehicle).catch(() => ({
+      realFiles: {} as Record<
+        string,
+        Array<{ name: string; url: string; size: number; type: string }>
+      >,
+      count: 0,
+      status: 'upload-errors' as const,
+      errors: ['Unexpected failure while uploading demo PDFs.'],
+    }));
     seededPdfs += pdfCount;
+    if (status !== 'ok' && seededPdfs === 0) {
+      pdfUploadStatus = status;
+    }
+    if (errors.length) {
+      pdfUploadErrors.push(...errors.map(err => `${vehicle.vin}: ${err}`));
+    }
 
     const demoPortfolio = createDemoPortfolio(vehicle);
 
@@ -883,5 +901,8 @@ export async function seedBobDemo(user: SeedUser): Promise<SeedDetails> {
     seededRecordPortfolios,
     preferencesUpdated: true,
     seededPdfs,
+    pdfUploadStatus,
+    pdfUploadErrorCount: pdfUploadErrors.length,
+    pdfUploadErrors: pdfUploadErrors.slice(0, 5),
   };
 }

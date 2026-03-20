@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { formatFileDisplay } from '../shared/fileUtils';
 import { getMaintenanceEntries, getVehicles } from '../shared/firestoreService';
+import { buildDocumentSummary } from '../utils/documentAnalysisSummary';
 
 interface Vehicle {
   vin: string;
@@ -26,11 +27,24 @@ interface MaintenanceEntry {
         serviceType?: string;
         totalCost?: number;
         serviceDate?: string;
+        mileage?: number;
+        documentCategory?: string;
       };
       confidence?: number;
+      sourceText?: string;
     };
   }>;
   vehicle: Vehicle;
+}
+
+interface DocumentInsight {
+  key: string;
+  vehicleLabel: string;
+  eventDate: string;
+  confidence?: number;
+  category?: string;
+  summary: string;
+  extractedCost?: number;
 }
 
 function getAnalysisBadge(confidence: number | undefined): {
@@ -265,6 +279,65 @@ export default function TimelineDashboard() {
     return vehicleMatch && timeMatch;
   });
 
+  const documentInsights: DocumentInsight[] = filteredEntries.flatMap(entry =>
+    (entry.attachments ?? []).map((attachment, index) => {
+      const extracted = attachment.analysis?.extracted;
+      const fallbackEventDate = new Date(entry.date).toISOString().slice(0, 10);
+      const eventDate = extracted?.serviceDate || fallbackEventDate;
+      return {
+        key: `${entry.id || entry.date}-${attachment.url}-${index}`,
+        vehicleLabel: `${entry.vehicle.year} ${entry.vehicle.make} ${entry.vehicle.model}`,
+        eventDate,
+        confidence: attachment.analysis?.confidence,
+        category: extracted?.documentCategory,
+        summary: buildDocumentSummary(
+          extracted,
+          attachment.analysis?.sourceText
+        ),
+        extractedCost:
+          typeof extracted?.totalCost === 'number'
+            ? extracted.totalCost
+            : undefined,
+      };
+    })
+  );
+
+  const analyzedDocumentCount = documentInsights.filter(
+    insight =>
+      insight.summary !== 'No analysis summary available yet' ||
+      typeof insight.confidence === 'number'
+  ).length;
+
+  const lowConfidenceCount = documentInsights.filter(
+    insight =>
+      typeof insight.confidence === 'number' && insight.confidence < 0.4
+  ).length;
+
+  const extractedDocumentCostTotal = documentInsights.reduce(
+    (sum, insight) => sum + (insight.extractedCost ?? 0),
+    0
+  );
+
+  const documentCategoryCounts = documentInsights.reduce(
+    (acc, insight) => {
+      const category = (insight.category || 'uncategorized').toLowerCase();
+      acc[category] = (acc[category] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const topDocumentCategories = Object.entries(documentCategoryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+
+  const recentDocumentInsights = [...documentInsights]
+    .sort(
+      (a, b) =>
+        new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+    )
+    .slice(0, 8);
+
   const hasAllVehiclesSelected =
     vehicles.length > 0 && selectedVehicleVins.length === vehicles.length;
 
@@ -424,10 +497,61 @@ export default function TimelineDashboard() {
                 ? 'All vehicles'
                 : `${selectedVehicleVins.length} selected`}
             </div>
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
+                Document intelligence
+              </p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100 m-0">
+                {analyzedDocumentCount}/{documentInsights.length} analyzed •{' '}
+                {lowConfidenceCount} need review
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Extracted document costs: $
+                {extractedDocumentCostTotal.toFixed(2)}
+              </p>
+              {topDocumentCategories.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {topDocumentCategories.map(([category, count]) => (
+                    <span
+                      key={category}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-[11px]"
+                    >
+                      {category.replace(/_/g, ' ')}
+                      <span className="font-semibold">{count}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          {recentDocumentInsights.length > 0 && (
+            <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 mt-0 mb-2">
+                Recent Document Insights
+              </h3>
+              <div className="space-y-2">
+                {recentDocumentInsights.map(insight => (
+                  <div
+                    key={insight.key}
+                    className="text-xs rounded-md border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-2 py-1.5"
+                  >
+                    <div className="text-slate-700 dark:text-slate-300">
+                      {insight.summary}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      {insight.vehicleLabel} • {insight.eventDate} • Confidence:{' '}
+                      {typeof insight.confidence === 'number'
+                        ? `${Math.round(insight.confidence * 100)}%`
+                        : 'n/a'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {filteredEntries.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-slate-500 dark:text-slate-400 text-lg mb-2">
@@ -492,7 +616,12 @@ export default function TimelineDashboard() {
                                 const badge = getAnalysisBadge(
                                   attachment.analysis?.confidence
                                 );
-                                const extracted = attachment.analysis?.extracted;
+                                const extracted =
+                                  attachment.analysis?.extracted;
+                                const summaryText = buildDocumentSummary(
+                                  extracted,
+                                  undefined
+                                );
                                 return (
                                   <div
                                     key={attIndex}
@@ -519,22 +648,9 @@ export default function TimelineDashboard() {
                                         >
                                           {badge.label}
                                         </span>
-                                        {(extracted?.serviceType ||
-                                          typeof extracted?.totalCost === 'number' ||
-                                          extracted?.serviceDate) && (
-                                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                                            {extracted?.serviceType
-                                              ? extracted.serviceType
-                                              : 'Document insight'}
-                                            {typeof extracted?.totalCost ===
-                                            'number'
-                                              ? ` • $${extracted.totalCost.toFixed(2)}`
-                                              : ''}
-                                            {extracted?.serviceDate
-                                              ? ` • ${extracted.serviceDate}`
-                                              : ''}
-                                          </span>
-                                        )}
+                                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                          {summaryText}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>

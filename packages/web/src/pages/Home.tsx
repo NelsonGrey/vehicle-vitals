@@ -219,8 +219,12 @@ export default function Home() {
           `Loaded Bob Demo data: ${details.vehiclesCount} vehicles now in garage with ${details.seededPdfs} real PDF attachments.`
         );
       } else {
+        const uploadHint =
+          details.pdfUploadErrors?.length > 0
+            ? ` Upload diagnostics: ${details.pdfUploadErrors.join(' | ')}`
+            : ` Upload status: ${details.pdfUploadStatus || 'unknown'}.`;
         setBackfillMessage(
-          `Loaded Bob Demo data: ${details.vehiclesCount} vehicles now in garage. Using synthetic attachment fallback (hosted PDF upload unavailable).`
+          `Loaded Bob Demo data: ${details.vehiclesCount} vehicles now in garage. Using synthetic attachment fallback (hosted PDF upload unavailable).${uploadHint}`
         );
       }
     } catch (error) {
@@ -232,6 +236,12 @@ export default function Home() {
       setIsSeedingDemo(false);
     }
   };
+
+  const statusText = backfillMessage
+    ? backfillMessage
+    : showDemoSeedControls
+      ? 'No recent status yet. Click "Load Bob Demo Data" to run document seeding and show upload diagnostics here.'
+      : 'No recent status yet. Demo seed controls are disabled in this environment.';
 
   return (
     <div className="w-full max-w-7xl mx-auto px-5 py-5">
@@ -277,11 +287,12 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        {backfillMessage && (
-          <div className="mb-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
-            {backfillMessage}
-          </div>
-        )}
+        <div className="mb-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
+          <p className="m-0 font-semibold text-slate-900 dark:text-slate-100">
+            Status
+          </p>
+          <p className="m-0 mt-1">{statusText}</p>
+        </div>
         {vehicles.length === 0 ? (
           <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 my-4">
             <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-2">
@@ -328,59 +339,94 @@ export default function Home() {
                 />
               </div>
               <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
-                {filteredVehicles.map(v => {
+                {filteredVehicles.map((v, index) => {
                   const isSelected = v.vin === selectedVin;
                   const portfolioProgress = getPortfolioRequiredProgress(v);
-                  return (
-                    <button
-                      key={v.vin}
-                      type="button"
-                      onClick={() => setSelectedVin(v.vin)}
-                      className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                        isSelected
-                          ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
-                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
-                      }`}
-                    >
-                      <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
-                        {v.year} {v.make} {v.model}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                        {v.vin}
-                        {v.mileage ? ` • ${v.mileage} mi` : ''}
-                      </div>
-                      {Number(v.recallsCount || 0) > 0 && (
-                        <div className="mt-1.5 text-xs">
-                          <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5">
-                            {v.recallsCount} recall
-                            {Number(v.recallsCount) === 1 ? '' : 's'}
-                          </span>
+                  return (() => {
+                    const vinText = String(v.vin ?? '').trim();
+                    const makeText = String(v.make ?? '').trim();
+                    const modelText = String(v.model ?? '').trim();
+                    const yearText = String(v.year ?? '').trim();
+                    const isPhantom =
+                      !vinText || !makeText || !modelText || !yearText;
+
+                    if (isPhantom) {
+                      return (
+                        <div
+                          key={vinText || `phantom-${index}`}
+                          className="w-full text-left rounded-lg border border-dashed border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3"
+                        >
+                          <div className="font-medium text-red-700 dark:text-red-400 text-sm line-clamp-1">
+                            Corrupted entry
+                          </div>
+                          <div className="text-xs text-red-500 dark:text-red-500 line-clamp-1 mb-2">
+                            ID: {vinText || 'Missing document ID'}
+                          </div>
+                          <div className="text-xs text-red-600 dark:text-red-400 mb-2">
+                            Missing vehicle year/make/model fields
+                          </div>
+                          <button
+                            type="button"
+                            className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 rounded transition-colors cursor-pointer"
+                            onClick={() => handleDelete(vinText)}
+                            disabled={!vinText}
+                          >
+                            Delete
+                          </button>
                         </div>
-                      )}
-                      {portfolioProgress.required > 0 && (
-                        <div className="mt-1 text-xs">
-                          <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5">
-                            Records: {portfolioProgress.complete}/
-                            {portfolioProgress.required}
-                          </span>
+                      );
+                    }
+                    return (
+                      <button
+                        key={vinText}
+                        type="button"
+                        onClick={() => setSelectedVin(vinText)}
+                        className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                          isSelected
+                            ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
+                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
+                        }`}
+                      >
+                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
+                          {yearText} {makeText} {modelText}
                         </div>
-                      )}
-                      {vehicleAlerts[v.vin]?.level === 'urgent' && (
-                        <div className="mt-1 text-xs">
-                          <span className="inline-block rounded-full bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 px-2 py-0.5">
-                            ⚠ Maintenance due!
-                          </span>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                          {vinText}
+                          {v.mileage ? ` • ${v.mileage} mi` : ''}
                         </div>
-                      )}
-                      {vehicleAlerts[v.vin]?.level === 'soon' && (
-                        <div className="mt-1 text-xs">
-                          <span className="inline-block rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-2 py-0.5">
-                            Service due soon
-                          </span>
-                        </div>
-                      )}
-                    </button>
-                  );
+                        {Number(v.recallsCount || 0) > 0 && (
+                          <div className="mt-1.5 text-xs">
+                            <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5">
+                              {v.recallsCount} recall
+                              {Number(v.recallsCount) === 1 ? '' : 's'}
+                            </span>
+                          </div>
+                        )}
+                        {portfolioProgress.required > 0 && (
+                          <div className="mt-1 text-xs">
+                            <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5">
+                              Records: {portfolioProgress.complete}/
+                              {portfolioProgress.required}
+                            </span>
+                          </div>
+                        )}
+                        {vehicleAlerts[v.vin]?.level === 'urgent' && (
+                          <div className="mt-1 text-xs">
+                            <span className="inline-block rounded-full bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 px-2 py-0.5">
+                              ⚠ Maintenance due!
+                            </span>
+                          </div>
+                        )}
+                        {vehicleAlerts[v.vin]?.level === 'soon' && (
+                          <div className="mt-1 text-xs">
+                            <span className="inline-block rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-2 py-0.5">
+                              Service due soon
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })();
                 })}
                 {filteredVehicles.length === 0 && (
                   <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">

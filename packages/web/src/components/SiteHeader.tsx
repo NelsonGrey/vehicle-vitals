@@ -1,7 +1,10 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
-import { isDevelopmentEnvironment } from '../shared/environment';
+import {
+  isDevelopmentEnvironment,
+  isDevelopmentProject,
+} from '../shared/environment';
 import StackedVLogo from './StackedVLogo';
 
 interface SiteHeaderProps {
@@ -65,52 +68,56 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               </Link>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-              <span className={sectionLabelClass}>Account</span>
-              {user ? (
-                <>
-                  <Link to="/app/profile" className={linkClass}>
-                    Profile
-                  </Link>
-                  <button
-                    onClick={signOut}
-                    className={`p-0 bg-transparent border-none cursor-pointer ${linkClass}`}
-                  >
-                    Log out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/auth/login" className={linkClass}>
-                    Login
-                  </Link>
-                  <Link to="/auth/signup" className={linkClass}>
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
+            {(isDevelopmentEnvironment || isDevelopmentProject) && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
+                <span className={sectionLabelClass}>Account</span>
+                {user ? (
+                  <>
+                    <Link to="/app/profile" className={linkClass}>
+                      Profile
+                    </Link>
+                    <button
+                      onClick={signOut}
+                      className={`p-0 bg-transparent border-none cursor-pointer ${linkClass}`}
+                    >
+                      Log out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth/login" className={linkClass}>
+                      Login
+                    </Link>
+                    <Link to="/auth/signup" className={linkClass}>
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-              <span className={sectionLabelClass}>Application</span>
-              <Link to="/app" className={linkClass}>
-                Garage
-              </Link>
-              <Link to="/app/timeline" className={linkClass}>
-                Timeline
-              </Link>
-              <Link to="/app/upcoming" className={linkClass}>
-                Upcoming
-              </Link>
-              <Link to="/app/providers" className={linkClass}>
-                Providers
-              </Link>
-              {isDevelopmentEnvironment && (
-                <Link to="/app/dev-seed" className={linkClass}>
-                  Data Seed
+            {(isDevelopmentEnvironment || isDevelopmentProject) && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
+                <span className={sectionLabelClass}>Application</span>
+                <Link to="/app" className={linkClass}>
+                  Garage
                 </Link>
-              )}
-            </div>
+                <Link to="/app/timeline" className={linkClass}>
+                  Timeline
+                </Link>
+                <Link to="/app/upcoming" className={linkClass}>
+                  Upcoming
+                </Link>
+                <Link to="/app/providers" className={linkClass}>
+                  Providers
+                </Link>
+                {isDevelopmentEnvironment && (
+                  <Link to="/app/dev-seed" className={linkClass}>
+                    Data Seed
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         </nav>
       </div>

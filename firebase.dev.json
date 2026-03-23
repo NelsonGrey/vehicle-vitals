@@ -8,6 +8,7 @@
   "hosting": {
     "public": "packages/web/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "predeploy": ["npm --prefix packages/web run build:development"],
     "rewrites": [
       {
         "source": "**",

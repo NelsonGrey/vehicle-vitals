@@ -654,9 +654,9 @@ async function upsertAttachmentAnalysis(params: {
 }
 
 const storageAttachmentAnalysisEnabled =
-  (process.env.ENABLE_STORAGE_ATTACHMENT_ANALYSIS || 'false')
+  (process.env.ENABLE_STORAGE_ATTACHMENT_ANALYSIS || 'true')
     .trim()
-    .toLowerCase() === 'true';
+    .toLowerCase() !== 'false';
 
 if (!storageAttachmentAnalysisEnabled) {
   logger.info(

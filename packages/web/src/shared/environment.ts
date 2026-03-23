@@ -13,10 +13,18 @@ export const isDevelopmentProject = firebaseProjectId === 'vehicle-vitals-dev';
 export const showDemoSeedControls =
   isDevelopmentEnvironment || isDevelopmentProject;
 
+const explicitHostedUploadsFlag = String(
+  import.meta.env.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS || ''
+)
+  .trim()
+  .toLowerCase();
+
 export const enableHostedDemoPdfUploads =
-  String(import.meta.env.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS || '')
-    .trim()
-    .toLowerCase() === 'true';
+  explicitHostedUploadsFlag === 'true'
+    ? true
+    : explicitHostedUploadsFlag === 'false'
+      ? false
+      : showDemoSeedControls;
 
 const explicitAdsFlag = String(import.meta.env.VITE_ENABLE_ADS || '')
   .trim()

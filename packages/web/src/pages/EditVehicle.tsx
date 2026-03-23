@@ -611,6 +611,7 @@ function MaintenanceList({
       url: string;
       path?: string;
       type?: string;
+      analysisStatus?: 'analyzing' | 'extracted' | 'failed';
       analysis?: {
         extracted?: {
           serviceType?: string;
@@ -687,6 +688,18 @@ function MaintenanceList({
         .map(file => file.path)
         .filter((path): path is string => Boolean(path));
 
+      // Show 'analyzing' badge immediately while the Cloud Function runs
+      setForm(p => ({
+        ...p,
+        attachments: [
+          ...(p.attachments || []),
+          ...uploadedFiles.map(f => ({
+            ...f,
+            analysisStatus: 'analyzing' as const,
+          })),
+        ],
+      }));
+
       await Promise.allSettled(
         uploadedPaths.map(storagePath =>
           analyzeAttachmentText({
@@ -703,26 +716,12 @@ function MaintenanceList({
           .map((analysis: any) => [analysis.path, analysis])
       );
 
-      const enrichedUploadedFiles = uploadedFiles.map(file => {
-        const analysis = file.path ? pathToAnalysis.get(file.path) : undefined;
-        if (!analysis) {
-          return file;
-        }
-
-        return {
-          ...file,
-          analysis: {
-            extracted: analysis.extracted,
-            confidence: analysis.confidence,
-          },
-        };
-      });
-
       const firstExtracted = analyses.find(
         (analysis: any) =>
           analysis?.extracted?.totalCost || analysis?.extracted?.serviceType
       )?.extracted;
 
+      // Update each newly-added attachment with its final analysis result
       setForm(p => ({
         ...p,
         title: p.title.trim() || firstExtracted?.serviceType || '',
@@ -731,7 +730,27 @@ function MaintenanceList({
           (typeof firstExtracted?.totalCost === 'number'
             ? firstExtracted.totalCost.toFixed(2)
             : ''),
-        attachments: [...(p.attachments || []), ...enrichedUploadedFiles],
+        attachments: p.attachments.map(attachment => {
+          if (
+            !attachment.path ||
+            attachment.analysisStatus !== 'analyzing' ||
+            !uploadedPaths.includes(attachment.path)
+          ) {
+            return attachment;
+          }
+          const analysis = pathToAnalysis.get(attachment.path);
+          if (!analysis) {
+            return { ...attachment, analysisStatus: 'failed' as const };
+          }
+          return {
+            ...attachment,
+            analysisStatus: 'extracted' as const,
+            analysis: {
+              extracted: analysis.extracted,
+              confidence: analysis.confidence,
+            },
+          };
+        }),
       }));
     } catch (error) {
       alert(
@@ -1112,6 +1131,44 @@ function MaintenanceList({
                           <span className="text-sm text-charcoal-800 dark:text-cream-100">
                             {attachment.name}
                           </span>
+                          {attachment.analysisStatus === 'analyzing' && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                              <svg
+                                className="w-2.5 h-2.5 animate-spin"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                />
+                              </svg>
+                              Analyzing
+                            </span>
+                          )}
+                          {attachment.analysisStatus === 'extracted' && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              ✓{' '}
+                              {typeof attachment.analysis?.confidence ===
+                              'number'
+                                ? `${Math.round(attachment.analysis.confidence * 100)}%`
+                                : 'Analyzed'}
+                            </span>
+                          )}
+                          {attachment.analysisStatus === 'failed' && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                              No data
+                            </span>
+                          )}
                         </div>
                         {(extracted?.serviceType ||
                           typeof extracted?.totalCost === 'number' ||

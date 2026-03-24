@@ -178,6 +178,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
   }
 
   Future<void> _pickAndUploadFiles(int categoryIndex, int itemIndex) async {
+    if (_uploadingKey != null) {
+      return;
+    }
+
     final category = Map<String, dynamic>.from(
       _categories[categoryIndex] as Map,
     );
@@ -225,9 +229,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       final hasFailures = failedFiles.isNotEmpty;
       final uploadedLabel =
           '$uploadedCount file${uploadedCount == 1 ? '' : 's'} uploaded';
-      final failedLabel = hasFailures
-          ? ', ${failedFiles.length} failed'
-          : '';
+      final failedLabel = hasFailures ? ', ${failedFiles.length} failed' : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$uploadedLabel$failedLabel.'),
@@ -250,6 +252,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
   }
 
   Future<void> _retryFailedUploads(int categoryIndex, int itemIndex) async {
+    if (_uploadingKey != null) {
+      return;
+    }
+
     final uploadKey = _itemUploadKey(categoryIndex, itemIndex);
     final files = _failedUploadsByKey[uploadKey];
     if (files == null || files.isEmpty) {
@@ -370,6 +376,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
       }
     }
 
+    final hasUploadInFlight = _uploadingKey != null;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Vehicle Records')),
       body: Padding(
@@ -489,7 +497,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                     runSpacing: 8,
                                     children: [
                                       OutlinedButton.icon(
-                                        onPressed: _uploadingKey ==
+                                        onPressed:
+                                            _uploadingKey ==
                                                 _itemUploadKey(
                                                   categoryIndex,
                                                   itemIndex,
@@ -511,14 +520,15 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                         ),
                                       ),
                                       if ((_failedUploadsByKey[_itemUploadKey(
-                                            categoryIndex,
-                                            itemIndex,
-                                          )]
-                                              ?.length ??
-                                          0) >
+                                                    categoryIndex,
+                                                    itemIndex,
+                                                  )]
+                                                  ?.length ??
+                                              0) >
                                           0)
                                         OutlinedButton.icon(
-                                          onPressed: _uploadingKey ==
+                                          onPressed:
+                                              _uploadingKey ==
                                                   _itemUploadKey(
                                                     categoryIndex,
                                                     itemIndex,
@@ -536,11 +546,11 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                     ],
                                   ),
                                   if ((_failedUploadsByKey[_itemUploadKey(
-                                        categoryIndex,
-                                        itemIndex,
-                                      )]
-                                          ?.length ??
-                                      0) >
+                                                categoryIndex,
+                                                itemIndex,
+                                              )]
+                                              ?.length ??
+                                          0) >
                                       0)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 6),
@@ -613,9 +623,11 @@ class _RecordsScreenState extends State<RecordsScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isSaving ? null : _save,
+                onPressed: _isSaving || hasUploadInFlight ? null : _save,
                 child: _isSaving
                     ? const CircularProgressIndicator(color: Colors.white)
+                    : hasUploadInFlight
+                    ? const Text('Finish uploads before saving')
                     : const Text('Save Records'),
               ),
             ),

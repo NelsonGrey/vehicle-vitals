@@ -763,6 +763,10 @@ function MaintenanceList({
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (uploading || analysisBusy) {
+      return;
+    }
+
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
@@ -918,6 +922,7 @@ function MaintenanceList({
           (error instanceof Error ? error.message : String(error))
       );
     } finally {
+      e.target.value = '';
       setUploading(false);
     }
   };
@@ -930,7 +935,7 @@ function MaintenanceList({
   };
 
   const retryAttachmentAnalysis = async (storagePath?: string) => {
-    if (!storagePath) return;
+    if (!storagePath || analysisBusy || uploading) return;
 
     setAnalysisBusy(true);
     setUploadFeedback(null);
@@ -1438,7 +1443,16 @@ function MaintenanceList({
                             {attachment.path && (
                               <button
                                 type="button"
-                                disabled={analysisBusy || uploading}
+                                disabled={
+                                  analysisBusy ||
+                                  uploading ||
+                                  attachment.canRetryAnalysis === false
+                                }
+                                title={
+                                  attachment.canRetryAnalysis === false
+                                    ? 'Waiting for automatic recheck'
+                                    : 'Retry analysis'
+                                }
                                 onClick={() =>
                                   void retryAttachmentAnalysis(attachment.path)
                                 }
@@ -1447,14 +1461,6 @@ function MaintenanceList({
                                 Retry
                               </button>
                             )}
-                            disabled=
-                            {analysisBusy ||
-                              uploading ||
-                              attachment.canRetryAnalysis === false}
-                            title=
-                            {attachment.canRetryAnalysis === false
-                              ? 'Waiting for automatic recheck'
-                              : 'Retry analysis'}
                           </div>
                         )}
                         {(extracted?.serviceType ||

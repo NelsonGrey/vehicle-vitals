@@ -611,7 +611,8 @@ function MaintenanceList({
       url: string;
       path?: string;
       type?: string;
-      analysisStatus?: 'analyzing' | 'extracted' | 'failed';
+      analysisStatus?: 'uploading' | 'analyzing' | 'extracted' | 'failed';
+      analysisError?: string;
       analysis?: {
         extracted?: {
           serviceType?: string;
@@ -628,6 +629,41 @@ function MaintenanceList({
     'google' | 'apple' | 'ics'
   >('google');
   const [uploading, setUploading] = useState(false);
+  const [analysisBusy, setAnalysisBusy] = useState(false);
+  const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
+
+  const wait = (ms: number) =>
+    new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
+
+  const fetchAttachmentAnalysesWithRetry = async (
+    attachmentPaths: string[],
+    attempts = 5,
+    delayMs = 1200
+  ) => {
+    let analyses: any[] = [];
+
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      analyses = await getAttachmentAnalyses(vin, attachmentPaths);
+      const foundPaths = new Set(
+        analyses
+          .map((analysis: any) => analysis?.path)
+          .filter((path: string | undefined): path is string => Boolean(path))
+      );
+      const allFound = attachmentPaths.every(path => foundPaths.has(path));
+
+      if (allFound) {
+        break;
+      }
+
+      if (attempt < attempts - 1) {
+        await wait(delayMs);
+      }
+    }
+
+    return analyses;
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -670,20 +706,43 @@ function MaintenanceList({
     if (files.length === 0) return;
 
     setUploading(true);
+    setUploadFeedback(null);
     try {
-      const uploadPromises = files.map(async file => {
+      const uploadResults = await Promise.allSettled(
+        files.map(async file => {
         // Generate a temporary maintenance ID for upload path
-        const tempId = `temp_${Date.now()}`;
-        const path = await generateMaintenanceAttachmentPath(
-          vin,
-          tempId,
-          file.name
-        );
-        const result = await uploadFile(file, path);
-        return result;
-      });
+          const tempId = `temp_${Date.now()}`;
+          const path = await generateMaintenanceAttachmentPath(
+            vin,
+            tempId,
+            file.name
+          );
+          const result = await uploadFile(file, path);
+          return result;
+        })
+      );
 
-      const uploadedFiles = await Promise.all(uploadPromises);
+      const uploadedFiles = uploadResults
+        .filter(
+          (result): result is PromiseFulfilledResult<any> =>
+            result.status === 'fulfilled'
+        )
+        .map(result => result.value);
+
+      const failedUploads = uploadResults.filter(
+        result => result.status === 'rejected'
+      );
+
+      if (failedUploads.length > 0) {
+        setUploadFeedback(
+          `${failedUploads.length} file${failedUploads.length === 1 ? '' : 's'} failed to upload. You can reselect and try again.`
+        );
+      }
+
+      if (uploadedFiles.length === 0) {
+        return;
+      }
+
       const uploadedPaths = uploadedFiles
         .map(file => file.path)
         .filter((path): path is string => Boolean(path));
@@ -696,11 +755,12 @@ function MaintenanceList({
           ...uploadedFiles.map(f => ({
             ...f,
             analysisStatus: 'analyzing' as const,
+            analysisError: undefined,
           })),
         ],
       }));
 
-      await Promise.allSettled(
+      const analysisKickoffResults = await Promise.allSettled(
         uploadedPaths.map(storagePath =>
           analyzeAttachmentText({
             vin,
@@ -709,7 +769,19 @@ function MaintenanceList({
         )
       );
 
-      const analyses = await getAttachmentAnalyses(vin, uploadedPaths);
+      const kickoffErrors = new Map<string, string>();
+      analysisKickoffResults.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const path = uploadedPaths[index];
+          const message =
+            result.reason instanceof Error
+              ? result.reason.message
+              : String(result.reason || 'Unable to start analysis');
+          kickoffErrors.set(path, message);
+        }
+      });
+
+      const analyses = await fetchAttachmentAnalysesWithRetry(uploadedPaths);
       const pathToAnalysis = new Map(
         analyses
           .filter((analysis: any) => analysis?.path)
@@ -740,11 +812,18 @@ function MaintenanceList({
           }
           const analysis = pathToAnalysis.get(attachment.path);
           if (!analysis) {
-            return { ...attachment, analysisStatus: 'failed' as const };
+            return {
+              ...attachment,
+              analysisStatus: 'failed' as const,
+              analysisError:
+                kickoffErrors.get(attachment.path) ||
+                'Analysis did not complete yet. Retry to try again.',
+            };
           }
           return {
             ...attachment,
             analysisStatus: 'extracted' as const,
+            analysisError: undefined,
             analysis: {
               extracted: analysis.extracted,
               confidence: analysis.confidence,
@@ -752,6 +831,12 @@ function MaintenanceList({
           };
         }),
       }));
+
+      if (uploadedFiles.length > 0 && failedUploads.length === 0) {
+        setUploadFeedback(
+          `${uploadedFiles.length} file${uploadedFiles.length === 1 ? '' : 's'} uploaded. Analysis is now attached to each file.`
+        );
+      }
     } catch (error) {
       alert(
         'Error uploading files: ' +
@@ -767,6 +852,85 @@ function MaintenanceList({
       ...p,
       attachments: p.attachments.filter((_, i) => i !== index),
     }));
+  };
+
+  const retryAttachmentAnalysis = async (storagePath?: string) => {
+    if (!storagePath) return;
+
+    setAnalysisBusy(true);
+    setUploadFeedback(null);
+    try {
+      setForm(p => ({
+        ...p,
+        attachments: p.attachments.map(attachment =>
+          attachment.path === storagePath
+            ? {
+                ...attachment,
+                analysisStatus: 'analyzing' as const,
+                analysisError: undefined,
+              }
+            : attachment
+        ),
+      }));
+
+      await analyzeAttachmentText({ vin, storagePath });
+
+      const analyses = await fetchAttachmentAnalysesWithRetry([storagePath], 4);
+      const analysis = analyses.find((item: any) => item?.path === storagePath);
+
+      setForm(p => ({
+        ...p,
+        title:
+          p.title.trim() ||
+          (analysis?.extracted?.serviceType as string | undefined) ||
+          '',
+        cost:
+          p.cost.trim() ||
+          (typeof analysis?.extracted?.totalCost === 'number'
+            ? analysis.extracted.totalCost.toFixed(2)
+            : ''),
+        attachments: p.attachments.map(attachment => {
+          if (attachment.path !== storagePath) {
+            return attachment;
+          }
+          if (!analysis) {
+            return {
+              ...attachment,
+              analysisStatus: 'failed' as const,
+              analysisError: 'Analysis still unavailable. Try again shortly.',
+            };
+          }
+          return {
+            ...attachment,
+            analysisStatus: 'extracted' as const,
+            analysisError: undefined,
+            analysis: {
+              extracted: analysis.extracted,
+              confidence: analysis.confidence,
+            },
+          };
+        }),
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to retry attachment analysis.';
+      setForm(p => ({
+        ...p,
+        attachments: p.attachments.map(attachment =>
+          attachment.path === storagePath
+            ? {
+                ...attachment,
+                analysisStatus: 'failed' as const,
+                analysisError: message,
+              }
+            : attachment
+        ),
+      }));
+    } finally {
+      setAnalysisBusy(false);
+    }
   };
 
   const handleAdd = async () => {
@@ -839,6 +1003,11 @@ function MaintenanceList({
   const upcomingMaintenance = vehicle
     ? getUpcomingMaintenance(vehicle.make, vehicle.model, vehicle.mileage)
     : [];
+  const hasPendingAttachmentAnalysis = form.attachments.some(
+    attachment =>
+      attachment.analysisStatus === 'uploading' ||
+      attachment.analysisStatus === 'analyzing'
+  );
 
   const handleAddToCalendar = async (item: any) => {
     if (!vehicle?.vin) {
@@ -1096,6 +1265,16 @@ function MaintenanceList({
                 Uploading files...
               </p>
             )}
+            {analysisBusy && (
+              <p className="text-sm text-charcoal-600 dark:text-cream-300 mt-1">
+                Retrying document analysis...
+              </p>
+            )}
+            {uploadFeedback && (
+              <p className="text-xs mt-1 text-blue-700 dark:text-blue-300">
+                {uploadFeedback}
+              </p>
+            )}
           </div>
           {form.attachments && form.attachments.length > 0 && (
             <div>
@@ -1117,7 +1296,7 @@ function MaintenanceList({
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          {attachment.type?.startsWith('image/') ? (
+                          {attachment.url && attachment.type?.startsWith('image/') ? (
                             <img
                               src={attachment.url}
                               alt={attachment.name}
@@ -1165,11 +1344,31 @@ function MaintenanceList({
                             </span>
                           )}
                           {attachment.analysisStatus === 'failed' && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-                              No data
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                              Needs retry
                             </span>
                           )}
                         </div>
+                        {attachment.analysisStatus === 'failed' && (
+                          <div className="mt-1 flex items-center gap-2">
+                            <p className="text-xs text-red-600 dark:text-red-300 m-0">
+                              {attachment.analysisError ||
+                                'Analysis did not complete for this file.'}
+                            </p>
+                            {attachment.path && (
+                              <button
+                                type="button"
+                                disabled={analysisBusy || uploading}
+                                onClick={() =>
+                                  void retryAttachmentAnalysis(attachment.path)
+                                }
+                                className="text-xs px-2 py-0.5 rounded border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20"
+                              >
+                                Retry
+                              </button>
+                            )}
+                          </div>
+                        )}
                         {(extracted?.serviceType ||
                           typeof extracted?.totalCost === 'number' ||
                           extracted?.serviceDate ||
@@ -1206,10 +1405,12 @@ function MaintenanceList({
           )}
           <button
             onClick={handleAdd}
-            disabled={uploading}
+            disabled={uploading || analysisBusy || hasPendingAttachmentAnalysis}
             className="bg-oxblood-600 hover:bg-oxblood-700 disabled:bg-charcoal-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
           >
-            Add Maintenance
+            {hasPendingAttachmentAnalysis
+              ? 'Waiting for analysis...'
+              : 'Add Maintenance'}
           </button>
         </div>
       </div>

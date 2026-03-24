@@ -3,7 +3,7 @@
 **Project Overview**: A comprehensive vehicle management application with web and mobile frontends, featuring vehicle tracking, maintenance logging, VIN scanning, and user authentication.
 
 **Last Updated**: March 2026
-**Project Status**: ⚠️ **PARTIALLY IMPLEMENTED** | Web core flows implemented, mobile currently running TestFlight mock services, backend reminders/export integrations partial
+**Project Status**: ⚠️ **PARTIALLY IMPLEMENTED** | Web core flows implemented, mobile uses real Firebase paths with production validation pending, reminder delivery reliability and parity hardening in progress
 
 ---
 
@@ -20,7 +20,7 @@ This file is the delivery contract for what is implemented now versus what is pa
 | Feature Area                 | Product Design Intent | Current Delivery Reality                          | Primary Tracking Location                                                                                                                                          |
 | ---------------------------- | --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Core web vehicle workflows   | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                                                    |
-| Mobile production parity     | Required              | 🔴 Not production-capable in current build config | Implementation Reality Snapshot                                                                                                                                    |
+| Mobile production parity     | Required              | 🟡 Partial; release validation pending            | Implementation Reality Snapshot                                                                                                                                    |
 | Reminder lifecycle actions   | Required              | 🟡 Partial                                        | Lifecycle CRUD exists on web/mobile and web push reminders now route back into Upcoming Tasks; production delivery validation remains under reminder delivery work |
 | Reminder scheduling pipeline | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                                                    |
 | Export records               | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                                                    |
@@ -107,14 +107,14 @@ vehicle-vitals/
 
 ### Mobile Application (Flutter)
 
-**Status**: 🔴 **MOCK MODE (CURRENT BUILD CONFIG)** | **Location**: `/mobile/`
+**Status**: 🟡 **PARTIAL (REAL SERVICES, VALIDATION PENDING)** | **Location**: `/mobile/`
 
 | Feature                  | Status         | Implementation                                                                 |
 | ------------------------ | -------------- | ------------------------------------------------------------------------------ |
-| **Authentication**       | 🔴 Mocked      | Mock user/auth service in current build                                        |
-| **Vehicle Management**   | 🔴 Mocked      | Mock Firestore service in current build                                        |
+| **Authentication**       | 🟡 Partial     | Real Firebase auth path in use; release validation still required              |
+| **Vehicle Management**   | 🟡 Partial     | Real Firestore path in use; reliability and parity verification pending         |
 | **VIN Scanning**         | 🟡 Partial     | Screens exist; end-to-end live backend path not verified in current build mode |
-| **Maintenance Tracking** | 🔴 Mocked      | Uses mock maintenance data source                                              |
+| **Maintenance Tracking** | 🟡 Partial     | Real maintenance flows active; cross-platform depth and validation still needed |
 | **Navigation**           | 🟢 Implemented | GoRouter route structure                                                       |
 | **State Management**     | 🟢 Implemented | Provider pattern                                                               |
 | **Platform Support**     | 🟡 Partial     | Targets defined, but runtime parity depends on re-enabling disabled services   |
@@ -152,8 +152,8 @@ vehicle-vitals/
 
 | Service                | Status         | Configuration                                                |
 | ---------------------- | -------------- | ------------------------------------------------------------ |
-| **Authentication**     | 🟡 Partial     | Auth configured, but mobile runtime currently mock-backed    |
-| **Firestore Database** | 🟡 Partial     | Data model present; reminder lifecycle not fully implemented |
+| **Authentication**     | 🟡 Partial     | Auth configured on both clients; production delivery validation in progress |
+| **Firestore Database** | 🟡 Partial     | Data model present and lifecycle CRUD implemented; delivery reliability hardening pending |
 | **Firebase Hosting**   | 🟢 Implemented | Web deployment path active                                   |
 | **Security Rules**     | 🟢 Implemented | User-based access control                                    |
 

@@ -1,5 +1,4 @@
 /* eslint-disable quotes, object-curly-spacing, arrow-parens, operator-linebreak, indent, max-len, quote-props */
-import { VertexAI } from '@google-cloud/vertexai';
 import { createHash } from 'crypto';
 import * as admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -339,6 +338,9 @@ async function callGeminiAnalysis(
     const effectiveMime = SUPPORTED_MIMES.includes(mimeType)
       ? mimeType
       : 'application/pdf';
+
+    // Load Vertex SDK lazily so function discovery during deploy stays fast.
+    const { VertexAI } = await import('@google-cloud/vertexai');
 
     const vertexAI = new VertexAI({
       project: projectId,

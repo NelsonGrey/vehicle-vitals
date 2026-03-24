@@ -228,11 +228,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
 
       final hasFailures = failedFiles.isNotEmpty;
       final uploadedLabel =
-          '$uploadedCount file${uploadedCount == 1 ? '' : 's'} uploaded';
-      final failedLabel = hasFailures ? ', ${failedFiles.length} failed' : '';
+          '$uploadedCount attachment${uploadedCount == 1 ? '' : 's'} uploaded';
+      final failedLabel = hasFailures
+          ? ', ${failedFiles.length} attachment${failedFiles.length == 1 ? '' : 's'} failed'
+          : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$uploadedLabel$failedLabel.'),
+          content: Text('Upload summary: $uploadedLabel$failedLabel.'),
           backgroundColor: hasFailures ? Colors.orange : Colors.green,
         ),
       );
@@ -299,13 +301,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
       });
 
       final recoveredLabel =
-          '$recoveredCount retry upload${recoveredCount == 1 ? '' : 's'} succeeded';
+          '$recoveredCount attachment${recoveredCount == 1 ? '' : 's'} recovered';
       final remainingLabel = stillFailing.isNotEmpty
-          ? ', ${stillFailing.length} still failing'
+          ? ', ${stillFailing.length} attachment${stillFailing.length == 1 ? '' : 's'} still failing'
           : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$recoveredLabel$remainingLabel.'),
+          content: Text('Retry summary: $recoveredLabel$remainingLabel.'),
           backgroundColor: stillFailing.isEmpty ? Colors.green : Colors.orange,
         ),
       );
@@ -515,8 +517,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                                     categoryIndex,
                                                     itemIndex,
                                                   )
-                                              ? 'Uploading...'
-                                              : 'Attach files',
+                                              ? 'Upload in progress...'
+                                              : 'Upload attachments',
                                         ),
                                       ),
                                       if ((_failedUploadsByKey[_itemUploadKey(
@@ -540,7 +542,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                                 ),
                                           icon: const Icon(Icons.refresh),
                                           label: Text(
-                                            'Retry failed (${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length})',
+                                            'Retry failed uploads (${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length})',
                                           ),
                                         ),
                                     ],
@@ -555,7 +557,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                     Padding(
                                       padding: const EdgeInsets.only(top: 6),
                                       child: Text(
-                                        '${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length} upload${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length == 1 ? '' : 's'} pending retry',
+                                        '${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length} failed upload${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length == 1 ? '' : 's'} pending retry',
                                         style: TextStyle(
                                           color: Colors.orange[700],
                                           fontSize: 12,
@@ -627,7 +629,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
                 child: _isSaving
                     ? const CircularProgressIndicator(color: Colors.white)
                     : hasUploadInFlight
-                    ? const Text('Finish uploads before saving')
+                    ? const Text('Complete uploads to save')
                     : const Text('Save Records'),
               ),
             ),

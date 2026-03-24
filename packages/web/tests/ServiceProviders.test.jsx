@@ -83,7 +83,7 @@ describe('ServiceProviders', () => {
     render(<ServiceProviders />);
 
     await waitFor(() =>
-      expect(getVehicle).toHaveBeenCalledWith('__preferences__')
+      expect(getVehicle).toHaveBeenCalledWith('preferences')
     );
     expect(getVehicles).toHaveBeenCalled();
   });
@@ -174,7 +174,7 @@ describe('ServiceProviders', () => {
 
     await waitFor(() =>
       expect(updateVehicle).toHaveBeenCalledWith(
-        '__preferences__',
+        'preferences',
         expect.objectContaining({
           homeAddress: expect.objectContaining({ city: 'Naperville' }),
           preferredProviderRadiusMiles: 25,

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_bottom_nav.dart';
+import '../components/inline_ad_section.dart';
 import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../services/auth_service.dart';
@@ -328,6 +329,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: const Text('Add'),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                const InlineAdSection(
+                  placement: MobileAdPlacement.inlineContent,
                 ),
                 const SizedBox(height: 12),
                 Row(

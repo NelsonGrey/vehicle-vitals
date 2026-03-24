@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../components/inline_ad_section.dart';
 import '../theme/design_tokens.dart';
 
 class MarketingWelcomeScreen extends StatelessWidget {
@@ -36,6 +37,8 @@ class MarketingWelcomeScreen extends StatelessWidget {
             const _FeatureBullet(text: 'Service timeline and upcoming tasks'),
             const _FeatureBullet(text: 'Secure account with synced data'),
             const _FeatureBullet(text: 'Cross-platform access and continuity'),
+            const SizedBox(height: 8),
+            const InlineAdSection(),
             const Spacer(),
             Text(
               'Next: authenticate to access your secure garage.',

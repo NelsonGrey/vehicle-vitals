@@ -25,10 +25,10 @@ export default function Landing() {
               </p>
               <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <Link
-                  to="/app"
+                  to="/auth/signup"
                   className="inline-block w-full sm:w-auto text-center px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-800"
                 >
-                  Open the app
+                  Create your account
                 </Link>
                 <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
                   or{' '}

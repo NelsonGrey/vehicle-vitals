@@ -1092,6 +1092,26 @@ function MaintenanceList({
       attachment.analysisStatus === 'uploading' ||
       attachment.analysisStatus === 'analyzing'
   );
+  const attachmentStatusSummary = form.attachments.reduce(
+    (summary, attachment) => {
+      if (
+        attachment.analysisStatus === 'uploading' ||
+        attachment.analysisStatus === 'analyzing'
+      ) {
+        summary.inProgress += 1;
+      } else if (attachment.analysisStatus === 'extracted') {
+        summary.complete += 1;
+      } else if (attachment.analysisStatus === 'failed') {
+        if (attachment.canRetryAnalysis === false) {
+          summary.rechecking += 1;
+        } else {
+          summary.failed += 1;
+        }
+      }
+      return summary;
+    },
+    { inProgress: 0, complete: 0, rechecking: 0, failed: 0 }
+  );
 
   const handleAddToCalendar = async (item: any) => {
     if (!vehicle?.vin) {
@@ -1365,6 +1385,31 @@ function MaintenanceList({
               <h5 className="text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
                 Attachments
               </h5>
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                  Total: {form.attachments.length}
+                </span>
+                {attachmentStatusSummary.inProgress > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    In progress: {attachmentStatusSummary.inProgress}
+                  </span>
+                )}
+                {attachmentStatusSummary.rechecking > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                    Rechecking: {attachmentStatusSummary.rechecking}
+                  </span>
+                )}
+                {attachmentStatusSummary.complete > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                    Complete: {attachmentStatusSummary.complete}
+                  </span>
+                )}
+                {attachmentStatusSummary.failed > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                    Retry needed: {attachmentStatusSummary.failed}
+                  </span>
+                )}
+              </div>
               <div className="space-y-2">
                 {form.attachments.map((attachment, index) => {
                   const fileDisplay = formatFileDisplay(
@@ -1419,6 +1464,11 @@ function MaintenanceList({
                               Analysis in progress
                             </span>
                           )}
+                          {attachment.analysisStatus === 'uploading' && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                              Uploading
+                            </span>
+                          )}
                           {attachment.analysisStatus === 'extracted' && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                               ✓ Analysis complete{' '}
@@ -1428,11 +1478,18 @@ function MaintenanceList({
                                 : ''}
                             </span>
                           )}
-                          {attachment.analysisStatus === 'failed' && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                              Analysis failed
-                            </span>
-                          )}
+                          {attachment.analysisStatus === 'failed' &&
+                            attachment.canRetryAnalysis === false && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                Auto recheck pending
+                              </span>
+                            )}
+                          {attachment.analysisStatus === 'failed' &&
+                            attachment.canRetryAnalysis !== false && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                                Analysis failed
+                              </span>
+                            )}
                         </div>
                         {attachment.analysisStatus === 'failed' && (
                           <div className="mt-1 flex items-center gap-2">

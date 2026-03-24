@@ -22,6 +22,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String? _uploadingKey;
+  final Map<String, List<PlatformFile>> _failedUploadsByKey = {};
   Vehicle? _vehicle;
   Map<String, dynamic>? _portfolio;
 
@@ -61,6 +62,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
   }
 
   List<dynamic> get _categories => (_portfolio?['categories'] as List?) ?? [];
+
+  String _itemUploadKey(int categoryIndex, int itemIndex) =>
+      '$categoryIndex:$itemIndex';
 
   void _updateItemField(
     int categoryIndex,
@@ -179,7 +183,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
     );
     final items = (category['items'] as List?) ?? [];
     final item = Map<String, dynamic>.from(items[itemIndex] as Map);
-    final uploadKey = '$categoryIndex:$itemIndex';
+    final uploadKey = _itemUploadKey(categoryIndex, itemIndex);
 
     try {
       setState(() => _uploadingKey = uploadKey);
@@ -191,19 +195,119 @@ class _RecordsScreenState extends State<RecordsScreen> {
         return;
       }
 
+      final failedFiles = <PlatformFile>[];
+      var uploadedCount = 0;
+
       for (final file in result.files) {
-        final uploaded = await _recordStorageService.uploadVehicleRecordFile(
-          widget.vin,
-          (item['id'] ?? '').toString(),
-          file,
-        );
-        _appendItemFile(categoryIndex, itemIndex, uploaded);
+        try {
+          final uploaded = await _recordStorageService.uploadVehicleRecordFile(
+            widget.vin,
+            (item['id'] ?? '').toString(),
+            file,
+          );
+          _appendItemFile(categoryIndex, itemIndex, uploaded);
+          uploadedCount += 1;
+        } catch (_) {
+          failedFiles.add(file);
+        }
       }
+
+      if (!mounted) return;
+
+      setState(() {
+        if (failedFiles.isNotEmpty) {
+          _failedUploadsByKey[uploadKey] = failedFiles;
+        } else {
+          _failedUploadsByKey.remove(uploadKey);
+        }
+      });
+
+      final hasFailures = failedFiles.isNotEmpty;
+      final uploadedLabel =
+          '$uploadedCount file${uploadedCount == 1 ? '' : 's'} uploaded';
+      final failedLabel = hasFailures
+          ? ', ${failedFiles.length} failed'
+          : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$uploadedLabel$failedLabel.'),
+          backgroundColor: hasFailures ? Colors.orange : Colors.green,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error uploading attachment: ${e.toString()}'),
+          content: Text('Error selecting attachments: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _uploadingKey = null);
+      }
+    }
+  }
+
+  Future<void> _retryFailedUploads(int categoryIndex, int itemIndex) async {
+    final uploadKey = _itemUploadKey(categoryIndex, itemIndex);
+    final files = _failedUploadsByKey[uploadKey];
+    if (files == null || files.isEmpty) {
+      return;
+    }
+
+    final category = Map<String, dynamic>.from(
+      _categories[categoryIndex] as Map,
+    );
+    final items = (category['items'] as List?) ?? [];
+    final item = Map<String, dynamic>.from(items[itemIndex] as Map);
+
+    setState(() => _uploadingKey = uploadKey);
+
+    try {
+      final stillFailing = <PlatformFile>[];
+      var recoveredCount = 0;
+
+      for (final file in files) {
+        try {
+          final uploaded = await _recordStorageService.uploadVehicleRecordFile(
+            widget.vin,
+            (item['id'] ?? '').toString(),
+            file,
+          );
+          _appendItemFile(categoryIndex, itemIndex, uploaded);
+          recoveredCount += 1;
+        } catch (_) {
+          stillFailing.add(file);
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        if (stillFailing.isNotEmpty) {
+          _failedUploadsByKey[uploadKey] = stillFailing;
+        } else {
+          _failedUploadsByKey.remove(uploadKey);
+        }
+      });
+
+      final recoveredLabel =
+          '$recoveredCount retry upload${recoveredCount == 1 ? '' : 's'} succeeded';
+      final remainingLabel = stillFailing.isNotEmpty
+          ? ', ${stillFailing.length} still failing'
+          : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$recoveredLabel$remainingLabel.'),
+          backgroundColor: stillFailing.isEmpty ? Colors.green : Colors.orange,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Retry failed: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -385,9 +489,11 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                     runSpacing: 8,
                                     children: [
                                       OutlinedButton.icon(
-                                        onPressed:
-                                            _uploadingKey ==
-                                                '$categoryIndex:$itemIndex'
+                                        onPressed: _uploadingKey ==
+                                                _itemUploadKey(
+                                                  categoryIndex,
+                                                  itemIndex,
+                                                )
                                             ? null
                                             : () => _pickAndUploadFiles(
                                                 categoryIndex,
@@ -396,13 +502,57 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                         icon: const Icon(Icons.attach_file),
                                         label: Text(
                                           _uploadingKey ==
-                                                  '$categoryIndex:$itemIndex'
+                                                  _itemUploadKey(
+                                                    categoryIndex,
+                                                    itemIndex,
+                                                  )
                                               ? 'Uploading...'
                                               : 'Attach files',
                                         ),
                                       ),
+                                      if ((_failedUploadsByKey[_itemUploadKey(
+                                            categoryIndex,
+                                            itemIndex,
+                                          )]
+                                              ?.length ??
+                                          0) >
+                                          0)
+                                        OutlinedButton.icon(
+                                          onPressed: _uploadingKey ==
+                                                  _itemUploadKey(
+                                                    categoryIndex,
+                                                    itemIndex,
+                                                  )
+                                              ? null
+                                              : () => _retryFailedUploads(
+                                                  categoryIndex,
+                                                  itemIndex,
+                                                ),
+                                          icon: const Icon(Icons.refresh),
+                                          label: Text(
+                                            'Retry failed (${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length})',
+                                          ),
+                                        ),
                                     ],
                                   ),
+                                  if ((_failedUploadsByKey[_itemUploadKey(
+                                        categoryIndex,
+                                        itemIndex,
+                                      )]
+                                          ?.length ??
+                                      0) >
+                                      0)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        '${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length} upload${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length == 1 ? '' : 's'} pending retry',
+                                        style: TextStyle(
+                                          color: Colors.orange[700],
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
                                   ..._itemFiles(
                                     categoryIndex,
                                     itemIndex,

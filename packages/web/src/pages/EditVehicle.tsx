@@ -38,7 +38,6 @@ interface VinInsights {
 interface Recall {
   campaignNumber?: string;
   reportReceivedDate?: string;
-  component?: string;
   summary?: string;
   consequence?: string;
   remedy?: string;
@@ -613,6 +612,7 @@ function MaintenanceList({
       type?: string;
       analysisStatus?: 'uploading' | 'analyzing' | 'extracted' | 'failed';
       analysisError?: string;
+      canRetryAnalysis?: boolean;
       analysis?: {
         extracted?: {
           serviceType?: string;
@@ -636,6 +636,67 @@ function MaintenanceList({
     new Promise(resolve => {
       setTimeout(resolve, ms);
     });
+
+  const resolveDeferredAnalysisFailures = async (attachmentPaths: string[]) => {
+    if (attachmentPaths.length === 0) return;
+
+    await wait(3500);
+    const analyses = await fetchAttachmentAnalysesWithRetry(
+      attachmentPaths,
+      3,
+      1200
+    );
+    const pathToAnalysis = new Map(
+      analyses
+        .filter((analysis: any) => analysis?.path)
+        .map((analysis: any) => [analysis.path, analysis])
+    );
+
+    let recoveredCount = 0;
+    setForm(p => ({
+      ...p,
+      attachments: p.attachments.map(attachment => {
+        if (
+          !attachment.path ||
+          !attachmentPaths.includes(attachment.path) ||
+          attachment.analysisStatus !== 'failed'
+        ) {
+          return attachment;
+        }
+
+        const analysis = pathToAnalysis.get(attachment.path);
+        if (!analysis) {
+          return {
+            ...attachment,
+            canRetryAnalysis: true,
+            analysisError:
+              attachment.analysisError ===
+              'Analysis is still syncing. Rechecking shortly...'
+                ? 'Analysis still unavailable. Try again shortly.'
+                : attachment.analysisError,
+          };
+        }
+
+        recoveredCount += 1;
+        return {
+          ...attachment,
+          analysisStatus: 'extracted' as const,
+          analysisError: undefined,
+          canRetryAnalysis: false,
+          analysis: {
+            extracted: analysis.extracted,
+            confidence: analysis.confidence,
+          },
+        };
+      }),
+    }));
+
+    if (recoveredCount > 0) {
+      setUploadFeedback(
+        `${recoveredCount} file${recoveredCount === 1 ? '' : 's'} finished analysis after background refresh.`
+      );
+    }
+  };
 
   const fetchAttachmentAnalysesWithRetry = async (
     attachmentPaths: string[],
@@ -710,7 +771,7 @@ function MaintenanceList({
     try {
       const uploadResults = await Promise.allSettled(
         files.map(async file => {
-        // Generate a temporary maintenance ID for upload path
+          // Generate a temporary maintenance ID for upload path
           const tempId = `temp_${Date.now()}`;
           const path = await generateMaintenanceAttachmentPath(
             vin,
@@ -787,6 +848,7 @@ function MaintenanceList({
           .filter((analysis: any) => analysis?.path)
           .map((analysis: any) => [analysis.path, analysis])
       );
+      const deferredFailurePaths: string[] = [];
 
       const firstExtracted = analyses.find(
         (analysis: any) =>
@@ -812,18 +874,25 @@ function MaintenanceList({
           }
           const analysis = pathToAnalysis.get(attachment.path);
           if (!analysis) {
+            const kickoffMessage = kickoffErrors.get(attachment.path);
+            const awaitingBackgroundRecovery = !kickoffMessage;
+            if (awaitingBackgroundRecovery) {
+              deferredFailurePaths.push(attachment.path);
+            }
             return {
               ...attachment,
               analysisStatus: 'failed' as const,
-              analysisError:
-                kickoffErrors.get(attachment.path) ||
-                'Analysis did not complete yet. Retry to try again.',
+              canRetryAnalysis: !awaitingBackgroundRecovery,
+              analysisError: kickoffMessage
+                ? kickoffMessage
+                : 'Analysis is still syncing. Rechecking shortly...',
             };
           }
           return {
             ...attachment,
             analysisStatus: 'extracted' as const,
             analysisError: undefined,
+            canRetryAnalysis: false,
             analysis: {
               extracted: analysis.extracted,
               confidence: analysis.confidence,
@@ -831,6 +900,12 @@ function MaintenanceList({
           };
         }),
       }));
+
+      if (deferredFailurePaths.length > 0) {
+        void resolveDeferredAnalysisFailures(
+          Array.from(new Set(deferredFailurePaths))
+        );
+      }
 
       if (uploadedFiles.length > 0 && failedUploads.length === 0) {
         setUploadFeedback(
@@ -868,6 +943,7 @@ function MaintenanceList({
                 ...attachment,
                 analysisStatus: 'analyzing' as const,
                 analysisError: undefined,
+                canRetryAnalysis: false,
               }
             : attachment
         ),
@@ -898,12 +974,14 @@ function MaintenanceList({
               ...attachment,
               analysisStatus: 'failed' as const,
               analysisError: 'Analysis still unavailable. Try again shortly.',
+              canRetryAnalysis: true,
             };
           }
           return {
             ...attachment,
             analysisStatus: 'extracted' as const,
             analysisError: undefined,
+            canRetryAnalysis: false,
             analysis: {
               extracted: analysis.extracted,
               confidence: analysis.confidence,
@@ -924,6 +1002,7 @@ function MaintenanceList({
                 ...attachment,
                 analysisStatus: 'failed' as const,
                 analysisError: message,
+                canRetryAnalysis: true,
               }
             : attachment
         ),
@@ -1296,7 +1375,8 @@ function MaintenanceList({
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          {attachment.url && attachment.type?.startsWith('image/') ? (
+                          {attachment.url &&
+                          attachment.type?.startsWith('image/') ? (
                             <img
                               src={attachment.url}
                               alt={attachment.name}
@@ -1367,6 +1447,14 @@ function MaintenanceList({
                                 Retry
                               </button>
                             )}
+                            disabled=
+                            {analysisBusy ||
+                              uploading ||
+                              attachment.canRetryAnalysis === false}
+                            title=
+                            {attachment.canRetryAnalysis === false
+                              ? 'Waiting for automatic recheck'
+                              : 'Retry analysis'}
                           </div>
                         )}
                         {(extracted?.serviceType ||

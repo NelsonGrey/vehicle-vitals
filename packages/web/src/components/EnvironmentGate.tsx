@@ -26,22 +26,37 @@ export default function EnvironmentGate({
   const getEnvironmentPassword = () => {
     switch (environment) {
       case 'staging':
-        return import.meta.env.VITE_ACCESS_PASSWORD_STAGING || 'staging2025';
+        return (
+          import.meta.env.VITE_ACCESS_PASSWORD_STAGING ||
+          import.meta.env.VITE_ACCESS_PASSWORD ||
+          ''
+        );
       case 'development':
-        return import.meta.env.VITE_ACCESS_PASSWORD_DEVELOPMENT || 'dev2025';
+        return (
+          import.meta.env.VITE_ACCESS_PASSWORD_DEVELOPMENT ||
+          import.meta.env.VITE_ACCESS_PASSWORD ||
+          ''
+        );
       default:
-        return 'access2025';
+        return '';
     }
   };
+
+  const configuredPassword = getEnvironmentPassword();
+  const isPasswordConfigured = configuredPassword.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    const correctPassword = getEnvironmentPassword();
+    if (!isPasswordConfigured) {
+      setError('Environment access is not configured. Contact the development team.');
+      setIsLoading(false);
+      return;
+    }
 
-    if (password === correctPassword) {
+    if (password === configuredPassword) {
       setIsAuthenticated(true);
     } else {
       setError('Incorrect password. Please try again.');
@@ -80,6 +95,11 @@ export default function EnvironmentGate({
           <p className="text-slate-600 dark:text-slate-400">
             This is a {environment} environment. Access is restricted.
           </p>
+          {!isPasswordConfigured && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              Environment password is missing in configuration.
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

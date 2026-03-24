@@ -1,5 +1,9 @@
 name: "Master CI/CD Pipeline"
 
+concurrency:
+  group: master-pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
     inputs:

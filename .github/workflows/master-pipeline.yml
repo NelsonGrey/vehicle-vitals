@@ -389,8 +389,8 @@ jobs:
               APP_ID="$VITE_FIREBASE_APP_ID_DEVELOPMENT"
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT"
               SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_DEVELOPMENT"
-                ACCESS_PASSWORD_VAR_NAME="VITE_ACCESS_PASSWORD_DEVELOPMENT"
-                ACCESS_PASSWORD_VALUE="$VITE_ACCESS_PASSWORD_DEVELOPMENT"
+              ACCESS_PASSWORD_VAR_NAME="VITE_ACCESS_PASSWORD_DEVELOPMENT"
+              ACCESS_PASSWORD_VALUE="$VITE_ACCESS_PASSWORD_DEVELOPMENT"
               ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT"
               ;;
           esac
@@ -403,6 +403,13 @@ jobs:
           if [ -z "$API_KEY" ] || [ -z "$AUTH_DOMAIN" ] || [ -z "$PROJECT_ID" ] || [ -z "$STORAGE_BUCKET" ] || [ -z "$MESSAGING_SENDER_ID" ] || [ -z "$APP_ID" ]; then
             echo "❌ Missing required VITE_FIREBASE_* secrets for environment: $TARGET_ENV"
             exit 1
+          fi
+
+          if [ "$TARGET_ENV" = "staging" ] || [ "$TARGET_ENV" = "development" ]; then
+            if [ -z "${ACCESS_PASSWORD_VALUE:-}" ]; then
+              echo "❌ Missing required access password secret for environment: $TARGET_ENV"
+              exit 1
+            fi
           fi
 
           {

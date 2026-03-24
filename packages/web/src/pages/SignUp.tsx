@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { getRedirectQueryParam, withRedirect } from '../shared/authRedirect';
 
 export default function SignUp() {
   const { signUp, signInWithGoogle, signInWithApple } = useAuth();
@@ -12,6 +13,8 @@ export default function SignUp() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirect = getRedirectQueryParam(location.search);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,7 +27,7 @@ export default function SignUp() {
     }
     try {
       await signUp(email, password);
-      navigate('/app', { replace: true });
+      navigate(redirect, { replace: true });
     } catch (err: unknown) {
       const error = err as Error;
       const msg = String(error?.message || 'Failed to create account');
@@ -137,7 +140,7 @@ export default function SignUp() {
               setError('');
               try {
                 await signInWithGoogle();
-                navigate('/app', { replace: true });
+                navigate(redirect, { replace: true });
               } catch (err: unknown) {
                 const error = err as Error;
                 setError(String(error?.message || 'Google sign-in failed'));
@@ -157,7 +160,7 @@ export default function SignUp() {
               setError('');
               try {
                 await signInWithApple();
-                navigate('/app', { replace: true });
+                navigate(redirect, { replace: true });
               } catch (err: unknown) {
                 const error = err as Error;
                 setError(String(error?.message || 'Apple sign-in failed'));
@@ -173,7 +176,7 @@ export default function SignUp() {
       <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
         Already have an account?{' '}
         <Link
-          to="/auth/login"
+          to={withRedirect('/auth/login', redirect)}
           className="text-slate-700 dark:text-slate-300 hover:underline font-medium"
         >
           Sign in

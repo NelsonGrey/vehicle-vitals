@@ -14,6 +14,7 @@ import EnvironmentGate from './components/EnvironmentGate';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './shared/AuthContext';
+import { DEFAULT_APP_REDIRECT } from './shared/authRedirect';
 import { appEnvironment, isDevelopmentEnvironment } from './shared/environment';
 import {
   buildReminderNotificationPath,
@@ -159,6 +160,34 @@ const LoadingSpinner = () => (
   </div>
 );
 
+function MarketingRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (user && !user.isAnonymous) {
+    return <Navigate to={DEFAULT_APP_REDIRECT} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function AuthOnlyRoute() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (user && !user.isAnonymous) {
+    return <Navigate to={DEFAULT_APP_REDIRECT} replace />;
+  }
+
+  return <Outlet />;
+}
+
 function App() {
   // Check if we should show the coming soon page
   const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
@@ -210,7 +239,14 @@ function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Marketing (anonymous) pages */}
-            <Route path="/" element={<Landing />} />
+            <Route
+              path="/"
+              element={
+                <MarketingRoute>
+                  <Landing />
+                </MarketingRoute>
+              }
+            />
 
             {/* Marketing and user-app routes with main layout */}
             <Route path="/" element={<Layout />}>
@@ -352,11 +388,16 @@ function App() {
             </Route>
 
             {/* Authentication and authorization routes */}
-            <Route path="/auth" element={<AuthLayout />}>
-              <Route path="login" element={<Login />} />
-              <Route path="signup" element={<SignUp />} />
-              <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="/auth" element={<AuthOnlyRoute />}>
+              <Route element={<AuthLayout />}>
+                <Route path="login" element={<Login />} />
+                <Route path="signup" element={<SignUp />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+              </Route>
             </Route>
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </AuthProvider>

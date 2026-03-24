@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { getRedirectQueryParam, withRedirect } from '../shared/authRedirect';
 // Header and footer provided by Layout
 
 export default function Login() {
@@ -12,8 +13,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const redirect =
-    new URLSearchParams(location.search).get('redirect') || '/app';
+  const redirect = getRedirectQueryParam(location.search);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -144,7 +144,7 @@ export default function Login() {
       <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
         Forgot your password?{' '}
         <Link
-          to="/auth/forgot-password"
+          to={withRedirect('/auth/forgot-password', redirect)}
           className="text-slate-700 dark:text-slate-300 hover:underline"
         >
           Reset it
@@ -153,7 +153,7 @@ export default function Login() {
       <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
         Don't have an account?{' '}
         <Link
-          to="/auth/signup"
+          to={withRedirect('/auth/signup', redirect)}
           className="text-slate-700 dark:text-slate-300 hover:underline"
         >
           Sign up

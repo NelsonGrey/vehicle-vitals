@@ -24,7 +24,7 @@ function getFormatRules(locale: PlateLocale): PlateFormatRules {
       exampleFormat: 'ABC1234',
       validateFn: (plate: string) => {
         // US plates: 1-8 alphanumerics, may contain numbers, letters, hyphens
-        return /^[A-Z0-9\-]{1,8}$/.test(plate.toUpperCase());
+        return /^[A-Z0-9-]{1,8}$/.test(plate.toUpperCase());
       },
     },
     CA: {
@@ -36,7 +36,7 @@ function getFormatRules(locale: PlateLocale): PlateFormatRules {
         // But also support other formats
         const normalized = plate.toUpperCase();
         return (
-          /^[A-Z0-9\s\-]{1,8}$/.test(normalized) &&
+          /^[A-Z0-9\s-]{1,8}$/.test(normalized) &&
           /[A-Z]/.test(normalized) &&
           /[0-9]/.test(normalized)
         );
@@ -49,7 +49,7 @@ function getFormatRules(locale: PlateLocale): PlateFormatRules {
       validateFn: (plate: string) => {
         // Generic: allow alphanumerics, hyphens, spaces; 1-10 chars
         return (
-          /^[A-Z0-9\s\-]{1,10}$/i.test(plate) &&
+          /^[A-Z0-9\s-]{1,10}$/i.test(plate) &&
           plate.trim().length >= 1 &&
           plate.trim().length <= 10
         );

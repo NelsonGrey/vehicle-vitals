@@ -194,6 +194,12 @@ interface AttachmentExtractedData {
   mileage?: number;
 }
 
+function compactDefined<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entryValue]) => entryValue !== undefined)
+  ) as T;
+}
+
 function inferDocumentCategory(
   fileName: string,
   mimeType?: string
@@ -437,7 +443,7 @@ function buildAttachmentAnalysis(
     'other',
   ];
 
-  const extracted: AttachmentExtractedData = {
+  const extracted = compactDefined({
     documentCategory:
       geminiCategory && validCategories.includes(geminiCategory)
         ? geminiCategory
@@ -449,7 +455,7 @@ function buildAttachmentAnalysis(
     serviceDate: gemini?.serviceDate || heuristicDate,
     mileage:
       typeof gemini?.mileage === 'number' ? gemini.mileage : heuristicMileage,
-  };
+  }) as AttachmentExtractedData;
 
   const confidenceSignals = [
     extracted.documentCategory !== 'other',

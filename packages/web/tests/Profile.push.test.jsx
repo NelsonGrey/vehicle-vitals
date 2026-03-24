@@ -121,7 +121,7 @@ describe('Profile – push notification opt-in', () => {
       expect(requestNotificationPermission).toHaveBeenCalledTimes(1)
     );
     await waitFor(() =>
-      expect(updateVehicle).toHaveBeenCalledWith('__preferences__', {
+      expect(updateVehicle).toHaveBeenCalledWith('preferences', {
         fcmToken: TOKEN,
       })
     );
@@ -137,7 +137,7 @@ describe('Profile – push notification opt-in', () => {
     fireEvent.click(disableBtn);
 
     await waitFor(() =>
-      expect(updateVehicle).toHaveBeenCalledWith('__preferences__', {
+      expect(updateVehicle).toHaveBeenCalledWith('preferences', {
         fcmToken: '',
       })
     );
@@ -161,7 +161,7 @@ describe('Profile – push notification opt-in', () => {
       screen.getByText(/push notifications could not be enabled/i)
     );
     expect(updateVehicle).not.toHaveBeenCalledWith(
-      '__preferences__',
+      'preferences',
       expect.objectContaining({ fcmToken: expect.any(String) })
     );
   });

@@ -82,9 +82,7 @@ describe('ServiceProviders', () => {
   it('calls getVehicle for preferences and getVehicles for makes on mount', async () => {
     render(<ServiceProviders />);
 
-    await waitFor(() =>
-      expect(getVehicle).toHaveBeenCalledWith('preferences')
-    );
+    await waitFor(() => expect(getVehicle).toHaveBeenCalledWith('preferences'));
     expect(getVehicles).toHaveBeenCalled();
   });
 

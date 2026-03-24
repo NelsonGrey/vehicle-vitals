@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import HeaderAdBar from '../components/HeaderAdBar';
+import InlineAdSection from '../components/InlineAdSection';
 import SiteFooter from '../components/SiteFooter';
 import SiteHeader from '../components/SiteHeader';
 
@@ -40,6 +41,10 @@ export default function Landing() {
                   </Link>
                 </span>
               </div>
+            </div>
+
+            <div className="mt-8 sm:mt-10">
+              <InlineAdSection placement="inlineContent" />
             </div>
 
             {/* Feature Cards */}

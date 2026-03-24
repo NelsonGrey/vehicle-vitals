@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../components/inline_ad_section.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -202,6 +203,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                const InlineAdSection(placement: MobileAdPlacement.inlineAuth),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => context.go('/auth/signup'),

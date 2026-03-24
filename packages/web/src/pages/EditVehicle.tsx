@@ -693,7 +693,7 @@ function MaintenanceList({
 
     if (recoveredCount > 0) {
       setUploadFeedback(
-        `${recoveredCount} file${recoveredCount === 1 ? '' : 's'} finished analysis after background refresh.`
+        `Analysis completed for ${recoveredCount} attachment${recoveredCount === 1 ? '' : 's'} after background refresh.`
       );
     }
   };
@@ -800,7 +800,7 @@ function MaintenanceList({
 
       if (failedUploads.length > 0) {
         setUploadFeedback(
-          `${failedUploads.length} file${failedUploads.length === 1 ? '' : 's'} failed to upload. You can reselect and try again.`
+          `${failedUploads.length} attachment${failedUploads.length === 1 ? '' : 's'} failed to upload. Reselect and try again.`
         );
       }
 
@@ -913,7 +913,7 @@ function MaintenanceList({
 
       if (uploadedFiles.length > 0 && failedUploads.length === 0) {
         setUploadFeedback(
-          `${uploadedFiles.length} file${uploadedFiles.length === 1 ? '' : 's'} uploaded. Analysis is now attached to each file.`
+          `${uploadedFiles.length} attachment${uploadedFiles.length === 1 ? '' : 's'} uploaded. Analysis is in progress.`
         );
       }
     } catch (error) {
@@ -1346,12 +1346,12 @@ function MaintenanceList({
             />
             {uploading && (
               <p className="text-sm text-charcoal-600 dark:text-cream-300 mt-1">
-                Uploading files...
+                Uploading attachments...
               </p>
             )}
             {analysisBusy && (
               <p className="text-sm text-charcoal-600 dark:text-cream-300 mt-1">
-                Retrying document analysis...
+                Rechecking attachment analysis...
               </p>
             )}
             {uploadFeedback && (
@@ -1416,21 +1416,21 @@ function MaintenanceList({
                                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                                 />
                               </svg>
-                              Analyzing
+                              Analysis in progress
                             </span>
                           )}
                           {attachment.analysisStatus === 'extracted' && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                              ✓{' '}
+                              ✓ Analysis complete{' '}
                               {typeof attachment.analysis?.confidence ===
                               'number'
-                                ? `${Math.round(attachment.analysis.confidence * 100)}%`
-                                : 'Analyzed'}
+                                ? `• ${Math.round(attachment.analysis.confidence * 100)}%`
+                                : ''}
                             </span>
                           )}
                           {attachment.analysisStatus === 'failed' && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                              Needs retry
+                              Analysis failed
                             </span>
                           )}
                         </div>

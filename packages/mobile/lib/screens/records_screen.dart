@@ -379,6 +379,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
     }
 
     final hasUploadInFlight = _uploadingKey != null;
+    final pendingFailedUploads = _failedUploadsByKey.values.fold<int>(
+      0,
+      (count, files) => count + files.length,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Vehicle Records')),
@@ -401,6 +405,48 @@ class _RecordsScreenState extends State<RecordsScreen> {
                   Text(
                     'Required records complete: $completeCount/$requiredCount',
                   ),
+                  if (hasUploadInFlight) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Upload in progress. Please wait before saving.',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (pendingFailedUploads > 0) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$pendingFailedUploads failed upload${pendingFailedUploads == 1 ? '' : 's'} pending retry.',
+                        style: const TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -563,6 +609,30 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                         ),
+                                      ),
+                                    ),
+                                  if (_uploadingKey ==
+                                      _itemUploadKey(categoryIndex, itemIndex))
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: const [
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: LinearProgressIndicator(),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Updating attachment state...',
+                                            style: TextStyle(
+                                              color: Colors.blue,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ..._itemFiles(

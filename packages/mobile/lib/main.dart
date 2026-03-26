@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -58,6 +61,13 @@ void main() async {
     debugPrint(
       'Firebase initialized: project=${activeOptions.projectId}, appId=${activeOptions.appId}',
     );
+
+    // Wire Flutter and Dart error handlers to Crashlytics.
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
     rethrow;

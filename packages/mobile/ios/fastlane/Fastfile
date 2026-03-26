@@ -250,6 +250,17 @@ platform :ios do
       team_id: team_id
     )
 
+    # Build DART_DEFINES for production AdMob unit IDs if provided as environment variables
+    require 'base64'
+    dart_define_parts = []
+    { "ADMOB_BANNER_UNIT_ID" => ENV["ADMOB_BANNER_UNIT_ID"],
+      "ADMOB_INTERSTITIAL_UNIT_ID" => ENV["ADMOB_INTERSTITIAL_UNIT_ID"],
+      "ADMOB_REWARDED_UNIT_ID" => ENV["ADMOB_REWARDED_UNIT_ID"] }.each do |key, val|
+      dart_define_parts << Base64.strict_encode64("#{key}=#{val}") unless val.to_s.empty?
+    end
+    dart_defines_xcarg = dart_define_parts.empty? ? nil : "DART_DEFINES='#{dart_define_parts.join(',')}'"  
+    UI.message(dart_defines_xcarg ? "AdMob dart-defines injected" : "AdMob dart-defines not set; test unit IDs will be used")
+
     build_app(
       scheme: "Runner",
       workspace: "Runner.xcworkspace",
@@ -257,6 +268,7 @@ platform :ios do
       export_method: "app-store",
       output_directory: "./builds",
       output_name: "Vehicle-Vitals.ipa",
+      xcargs: dart_defines_xcarg,
       export_options: {
         provisioningProfiles: {
           app_id => profile_name

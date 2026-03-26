@@ -51,13 +51,13 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBbq4U14kQIQP_6hHcatdZG9CbCFVwD_P0',
-    appId: '1:919227980868:ios:6aa6e20c5110778ab5f011',
-    messagingSenderId: '919227980868',
-    projectId: 'vehicle-vitals-dev',
-    storageBucket: 'vehicle-vitals-dev.firebasestorage.app',
+    apiKey: 'AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU',
+    appId: '1:489413148337:ios:b55d0b37718e299368ac90',
+    messagingSenderId: '489413148337',
+    projectId: 'vehicle-vitals-prod',
+    storageBucket: 'vehicle-vitals-prod.firebasestorage.app',
     iosBundleId: 'com.nelsongrey.vehiclevitals.app.ios',
     iosClientId:
-        '919227980868-aj9r7328ah5j2fd1tq5tc8ogj5p2007r.apps.googleusercontent.com',
+        '489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com',
   );
 }

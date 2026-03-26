@@ -31,6 +31,23 @@ else
     exit 1
 fi
 
+# Inject production AdMob App ID into Info.plist if provided
+if [ -n "$ADMOB_IOS_APP_ID" ]; then
+    echo "📣 Injecting production AdMob App ID..."
+    /usr/libexec/PlistBuddy -c "Set :GADApplicationIdentifier $ADMOB_IOS_APP_ID" ios/Runner/Info.plist
+    echo "✅ AdMob App ID set to production"
+else
+    echo "⚠️  ADMOB_IOS_APP_ID not set — test AdMob App ID will be used"
+fi
+
+# Export AdMob unit IDs as environment variables for Fastlane to consume
+export ADMOB_BANNER_UNIT_ID="${ADMOB_BANNER_UNIT_ID:-}"
+export ADMOB_INTERSTITIAL_UNIT_ID="${ADMOB_INTERSTITIAL_UNIT_ID:-}"
+export ADMOB_REWARDED_UNIT_ID="${ADMOB_REWARDED_UNIT_ID:-}"
+
+# Export release notes for Fastlane lane
+export RELEASE_NOTES="$RELEASE_NOTES"
+
 # Check if Fastlane is installed
 if ! command -v fastlane &> /dev/null; then
     echo "💎 Installing Fastlane..."
@@ -49,13 +66,13 @@ fi
 echo "🏃 Running distribution..."
 if [ "$BUILD_TYPE" = "testflight" ]; then
     echo "📱 Deploying to TestFlight..."
-    fastlane ios testflight release_notes:"$RELEASE_NOTES"
+    fastlane ios beta
     echo "🎉 iOS app uploaded to TestFlight successfully!"
     echo "📱 Beta testers will receive notifications via TestFlight app"
 elif [ "$BUILD_TYPE" = "release" ]; then
-    fastlane ios release release_notes:"$RELEASE_NOTES"
+    fastlane ios beta
     echo "🎉 iOS app distributed to production testers!"
 else
-    fastlane ios debug release_notes:"$RELEASE_NOTES"
-    echo "🎉 iOS debug app distributed to internal testers!"
+    echo "⚠️  Only 'testflight' build type is currently supported for iOS. Skipping distribution."
+    echo "✅ Run with: ENVIRONMENT=production ./distribute-ios.sh testflight"
 fi

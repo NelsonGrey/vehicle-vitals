@@ -1,130 +1,141 @@
 # Next Features Execution Plan
 
-Last updated: March 24, 2026
+Last updated: April 13, 2026
 
-This plan turns current release recommendations into executable feature work with exit criteria.
+This plan converts current status into concrete completion work.
 
-## Priority Order
+Execution checklist:
 
-1. Reminder delivery reliability (R1 Must)
-2. Mobile runtime parity validation (R1 Must)
-3. Export parity completion (R1 Must)
-4. Calendar integration completion (R2 Should)
-5. Timeline depth and UX parity (R2 Should)
-6. API enrichment completion (R2/R3)
+- docs/R1_COMPLETION_CHECKLIST.md
+- docs/PROJECT_PLAN.md
 
-## 1) Reminder Delivery Reliability
+## Current Completion Snapshot
 
-Goal: ensure reminders are consistently generated, delivered, and reflected in client state.
+Completed in code:
 
-Scope:
-- Validate scheduled sweep execution and reminder fan-out behavior.
-- Validate send provider integration (email and push) with real environment toggles.
-- Ensure web and mobile surfaces show delivery outcomes and retry-safe status.
+- Reminder lifecycle CRUD across shared/web/mobile
+- Scheduled reminder sweep functions and manual reminder send path
+- Calendar creation path (callable-first with HTTP fallback on web)
+- Web and mobile CSV/PDF exports
+- Service provider callable and web UI integration
+- Premium verification and entitlement callables with mobile premium service wiring
 
-Exit criteria:
-- Scheduled reminder flow passes integration tests.
-- Manual send path and scheduled path produce persisted delivery records.
-- User-visible status shown for sent/failed/dismissed outcomes.
+Not yet complete for production claim:
 
-Validation:
-- Functions integration test run with reminder fixtures.
-- Web + mobile smoke verification against seeded reminder data.
+- End-to-end reminder delivery reliability evidence
+- Mobile release-mode parity validation evidence
+- Cross-platform export parity signoff
+- Calendar provider-account reliability signoff
 
-## 2) Mobile Runtime Parity Validation
+---
 
-Goal: verify iOS release path uses real backend services for core workflows.
+## R1 Must-Complete Work (Production-Capable Parity)
 
-Scope:
-- Auth sign-in/sign-out/session restore.
-- Vehicle CRUD and maintenance CRUD against Firestore.
-- Attachment upload/processing/retry behavior.
-- Push token registration and reminder notification receive path.
+### 1) Reminder Delivery Reliability
 
-Exit criteria:
-- Core workflows validated on release-like build (not debug-only assumptions).
-- No mock-only service path active in release config.
-- Critical regression checklist passes on iOS test cohort.
+Objective:
 
-Validation:
-- Flutter analyze.
-- iOS device/simulator acceptance run.
-- Firestore/function logs confirm real backend traffic for tested flows.
+- Ensure scheduled and manual reminder paths are reliable and observable.
 
-## 3) Export Parity Completion (Web + iOS)
+Tasks:
 
-Goal: close remaining parity gaps for CSV/PDF exports.
-
-Scope:
-- Match export fields and ordering between web and mobile outputs.
-- Handle edge cases: empty records, large datasets, missing optional fields.
-- Confirm share/download UX with consistent user messaging.
+- Validate scheduled sweep execution with seeded reminder fixtures.
+- Validate provider behavior (email and push) in production-like environment.
+- Confirm delivery outcomes are persisted and shown in client status surfaces.
 
 Exit criteria:
-- Cross-platform export output parity accepted for a shared test dataset.
-- QA signoff for both clients using common acceptance checklist.
 
-Validation:
-- Snapshot-style comparison for known fixture outputs.
-- Manual QA pass with seeded multi-vehicle and maintenance-history accounts.
+- Integration tests for reminder sweep and delivery pass.
+- Manual send and scheduled send both produce persisted sent/failed outcomes.
+- Evidence captured in `artifacts/smoke/` with timestamped logs.
 
-## 4) Calendar Integration Completion
+### 2) Mobile Runtime Parity Validation
 
-Goal: make calendar creation a first-class, reliable user workflow.
+Objective:
 
-Scope:
-- Trigger calendar actions directly from reminder/task surfaces.
-- Improve post-action UX: success states, failures, fallback guidance.
-- Validate target handling for google/apple/ics.
+- Prove release-like iOS runtime stability against real backend services.
 
-Exit criteria:
-- Reminder/task to calendar flow works end-to-end for supported targets.
-- Error handling is explicit and user-actionable.
+Tasks:
 
-Validation:
-- Existing callable-first + HTTP fallback path tests remain green.
-- Additional client tests for action-entry paths and failure UX.
-
-## 5) Timeline and UX Parity
-
-Goal: align mobile timeline depth and visual semantics with web.
-
-Scope:
-- Expand chronological depth and metadata on mobile timeline views.
-- Align urgency chips, iconography semantics, and spacing rhythm.
+- Build and run iOS in release-like mode.
+- Execute acceptance flow: auth, vehicle CRUD, maintenance CRUD, reminders, export.
+- Confirm backend traffic in Firestore/Functions logs.
 
 Exit criteria:
-- Mobile timeline supports parity-level browsing and context.
-- Shared visual semantics applied across top workflow surfaces.
 
-## 6) API Enrichment Completion
+- Acceptance checklist passes on release-like build.
+- No mock-only behavior found in core runtime paths.
+- Evidence artifacts stored under `artifacts/smoke/`.
 
-Goal: complete manuals/warranty/maintenance-plan provider-backed features.
+### 3) Export Parity Signoff (Web + Mobile)
 
-Scope:
-- Normalize endpoint contracts and provider fallbacks.
-- Persist source/confidence/expiry metadata for client trust.
+Objective:
+
+- Close parity gap between web and mobile export outputs.
+
+Tasks:
+
+- Run shared fixture dataset across both platforms.
+- Compare CSV field ordering and data integrity.
+- Compare PDF section structure and essential fields.
 
 Exit criteria:
-- Stable contracts for manuals, warranty summary, and maintenance plan.
-- Client integration points implemented with user-facing states.
 
-## Suggested Sprint Breakdown
+- Cross-platform parity checklist approved.
+- Any intentional differences documented and accepted.
 
-Sprint A (R1):
-- Reminder delivery reliability
-- Mobile runtime parity validation
+---
 
-Sprint B (R1/R2):
-- Export parity completion
-- Calendar integration completion
+## R2 Should-Complete Work
 
-Sprint C (R2/R3):
-- Timeline depth and UX parity
-- API enrichment completion
+### 4) Calendar Integration Completion
 
-## Tracking and Governance
+- Validate google/apple/ics targets with real provider accounts.
+- Improve post-action UX for success/failure and fallback guidance.
+- Add regression coverage for action-entry paths.
 
-- Keep capability statuses synchronized between REQUIREMENTS and RELEASE_SCOPE_MATRIX in the same commit.
-- Any scope-tier changes require updates to both documents plus this execution plan.
-- Use seeded demo/test data to keep acceptance runs repeatable.
+### 5) Timeline and UX Parity
+
+- Increase mobile timeline metadata depth and filtering parity.
+- Align urgency chips/icon semantics and spacing rhythm with web.
+
+### 6) API Enrichment Completion
+
+- Stabilize manuals/warranty/maintenance-plan contracts.
+- Surface source/confidence/expiry data in client UX.
+
+---
+
+## R3 Should-Complete Work
+
+### 7) Budget Forecasting Improvements
+
+- Add trend and forecast calculations with usable date and vehicle filters.
+- Define acceptance checks for forecast accuracy and clarity.
+
+---
+
+## R4 Later Work
+
+### 8) Service Provider Directory Expansion
+
+- Build mobile parity experience.
+- Add richer provider metadata and ranking quality controls.
+
+### 9) Fleet Manager Workflows
+
+- Implement fleet data model, role controls, and fleet reporting routes.
+
+### 10) Premium and Ad Flow Hardening
+
+- Validate real-store purchase verification end-to-end.
+- Validate entitlement transitions and ad suppression for premium users.
+
+---
+
+## Delivery Governance
+
+- Status updates must synchronize docs/REQUIREMENTS.md and docs/RELEASE_SCOPE_MATRIX.md.
+- Scope or order changes must update this file in the same commit.
+- Every completed milestone item requires evidence references (test outputs or smoke logs).
+- R1 gate execution must use and update docs/R1_COMPLETION_CHECKLIST.md.

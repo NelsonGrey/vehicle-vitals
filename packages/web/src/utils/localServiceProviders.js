@@ -1,28 +1,23 @@
+import { functions } from '../shared/firebaseConfig';
+import {
+  getLegacyFirebase,
+  getOrInitializeLegacyFirebaseApp,
+  hasLegacyFirebaseModules,
+} from '../shared/firebaseLegacy';
+
 const createFirebaseService = async () => {
   try {
-    const firebaseModule = await import('../shared/firebaseConfig');
-
-    if (firebaseModule.functions) {
+    if (functions) {
       const fn = await import('firebase/functions');
       return {
-        functions: firebaseModule.functions,
+        functions,
         httpsCallable: fn.httpsCallable,
       };
     }
 
-    if (window.firebase && window.firebase.functions) {
-      const firebase = window.firebase;
-      const firebaseConfig =
-        firebaseModule.firebaseConfig ||
-        firebaseModule.getFirebaseConfig?.() ||
-        null;
-
-      let app;
-      try {
-        app = firebase.app.getApp();
-      } catch {
-        app = firebase.app.initializeApp(firebaseConfig);
-      }
+    if (hasLegacyFirebaseModules(['functions'])) {
+      const firebase = getLegacyFirebase();
+      const app = getOrInitializeLegacyFirebaseApp(firebase);
 
       return {
         functions: firebase.functions.getFunctions(app),

@@ -1,3 +1,9 @@
+import { auth, db } from './firebaseConfig';
+import {
+  getLegacyFirebase,
+  getOrInitializeLegacyFirebaseApp,
+} from './firebaseLegacy';
+
 // Initialize Firestore service with dynamic imports to avoid build-time resolution
 let service = null;
 
@@ -5,39 +11,28 @@ const initializeFirestoreService = async () => {
   if (service) return service;
 
   try {
-    // Import config and factory
-    const firebaseModule = await import('./firebaseConfig');
     const { createFirestoreService } = await import('@vehicle-vitals/shared');
 
-    let db = firebaseModule.db;
-    let auth = firebaseModule.auth;
+    let dbInstance = db;
+    let authInstance = auth;
     let helpers = await import('firebase/firestore');
 
     // Fallback for legacy global Firebase bootstraps.
-    if ((!db || !auth) && window.firebase) {
-      const firebase = window.firebase;
-      const firebaseConfig =
-        firebaseModule.firebaseConfig ||
-        firebaseModule.getFirebaseConfig?.() ||
-        null;
-      let app;
-      try {
-        app = firebase.app.getApp();
-      } catch {
-        app = firebase.app.initializeApp(firebaseConfig);
-      }
-      db = firebase.firestore.getFirestore(app);
-      auth = firebase.auth.getAuth(app);
+    if (!dbInstance || !authInstance) {
+      const firebase = getLegacyFirebase();
+      const app = getOrInitializeLegacyFirebaseApp(firebase);
+      dbInstance = firebase.firestore.getFirestore(app);
+      authInstance = firebase.auth.getAuth(app);
       helpers = firebase.firestore;
     }
 
-    if (!db || !auth) {
+    if (!dbInstance || !authInstance) {
       throw new Error('Firebase SDKs failed to load');
     }
 
     service = createFirestoreService({
-      db,
-      auth,
+      db: dbInstance,
+      auth: authInstance,
       helpers,
     });
 

@@ -1303,9 +1303,17 @@ export async function runMaintenanceReminderSweep(
     usersScanned += 1;
 
     const emailRemindersEnabled = user.emailRemindersEnabled !== false;
+    const hasEmail = Boolean(user.email);
+    const userLevelFcmToken = (user.fcmToken || '').toString();
+    const canSendEmail = emailRemindersEnabled && hasEmail;
 
     const userId = (user.id || '').toString();
     if (!userId) {
+      continue;
+    }
+
+    // Skip loading vehicle collections when no delivery channel is available.
+    if (!canSendEmail && !userLevelFcmToken) {
       continue;
     }
 
@@ -1313,7 +1321,8 @@ export async function runMaintenanceReminderSweep(
 
     // Extract FCM token from the preferences doc (virtual vehicle record).
     const prefsDoc = (vehicles as any[]).find(v => v.id === '__preferences__');
-    const userFcmToken: string = (prefsDoc?.fcmToken || '').toString();
+    const userFcmToken: string =
+      userLevelFcmToken || (prefsDoc?.fcmToken || '').toString();
 
     for (const vehicle of vehicles as Vehicle[]) {
       // Skip the preferences sentinel – it is not a real vehicle.
@@ -1328,7 +1337,7 @@ export async function runMaintenanceReminderSweep(
         continue;
       }
 
-      if (emailRemindersEnabled && user.email) {
+      if (canSendEmail) {
         try {
           await deliverReminderEmail(user.email, vehicle, upcomingMaintenance);
           remindersSent += 1;

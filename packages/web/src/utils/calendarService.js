@@ -1,52 +1,24 @@
 // Calendar integration utility for web.
 
+import {
+  getOrInitializeLegacyFirebaseApp,
+  getResolvedFirebaseConfig,
+  waitForLegacyFirebaseModules,
+} from '../shared/firebaseLegacy';
+
 const createFirebaseService = async () => {
   try {
-    const checkFirebase = () => {
-      return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50;
-
-        const check = () => {
-          attempts++;
-          if (
-            window.firebase &&
-            window.firebase.firestore &&
-            window.firebase.functions &&
-            window.firebase.auth
-          ) {
-            resolve(window.firebase);
-          } else if (attempts >= maxAttempts) {
-            reject(new Error('Firebase SDKs failed to load within timeout'));
-          } else {
-            setTimeout(check, 100);
-          }
-        };
-
-        check();
-      });
-    };
-
-    const firebase = await checkFirebase();
-    const firebaseConfigModule = await import('../shared/firebaseConfig');
-    const firebaseConfig =
-      firebaseConfigModule.firebaseConfig ||
-      firebaseConfigModule.getFirebaseConfig?.() ||
-      null;
-
-    let app;
-    try {
-      app = firebase.app.getApp();
-    } catch {
-      app = firebase.app.initializeApp(firebaseConfig);
-    }
+    const firebase = await waitForLegacyFirebaseModules({
+      modules: ['firestore', 'functions', 'auth'],
+    });
+    const app = getOrInitializeLegacyFirebaseApp(firebase);
 
     const functions = firebase.functions.getFunctions(app);
     const auth = firebase.auth.getAuth(app);
     return {
       functions,
       auth,
-      firebaseConfig,
+      firebaseConfig: getResolvedFirebaseConfig(),
       httpsCallable: firebase.functions.httpsCallable,
     };
   } catch (error) {

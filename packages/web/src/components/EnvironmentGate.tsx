@@ -51,7 +51,9 @@ export default function EnvironmentGate({
     setIsLoading(true);
 
     if (!isPasswordConfigured) {
-      setError('Environment access is not configured. Contact the development team.');
+      setError(
+        'Environment access is not configured. Contact the development team.'
+      );
       setIsLoading(false);
       return;
     }

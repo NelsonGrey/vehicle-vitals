@@ -1,25 +1,21 @@
-// -----------------------------
-// File: web/src/utils/vehicleService.js
-
-// -----------------------------
-// File: web/src/utils/vehicleService.js
-
-// -----------------------------
-// File: web/src/utils/vehicleService.js
+import { auth, db, functions } from '../shared/firebaseConfig';
+import {
+  getLegacyFirebase,
+  getOrInitializeLegacyFirebaseApp,
+  hasLegacyFirebaseModules,
+} from '../shared/firebaseLegacy';
 
 // Create async Firebase service using global Firebase objects
 const createFirebaseService = async () => {
   try {
     // Prefer module exports from shared firebase config.
-    const firebaseModule = await import('../shared/firebaseConfig');
-
-    if (firebaseModule.db && firebaseModule.auth && firebaseModule.functions) {
+    if (db && auth && functions) {
       const firestore = await import('firebase/firestore');
       const fn = await import('firebase/functions');
       return {
-        db: firebaseModule.db,
-        auth: firebaseModule.auth,
-        functions: firebaseModule.functions,
+        db,
+        auth,
+        functions,
         doc: firestore.doc,
         setDoc: firestore.setDoc,
         httpsCallable: fn.httpsCallable,
@@ -27,24 +23,9 @@ const createFirebaseService = async () => {
     }
 
     // Fallback for legacy global Firebase bootstraps.
-    if (
-      window.firebase &&
-      window.firebase.firestore &&
-      window.firebase.functions &&
-      window.firebase.auth
-    ) {
-      const firebase = window.firebase;
-      const firebaseConfig =
-        firebaseModule.firebaseConfig ||
-        firebaseModule.getFirebaseConfig?.() ||
-        null;
-
-      let app;
-      try {
-        app = firebase.app.getApp();
-      } catch {
-        app = firebase.app.initializeApp(firebaseConfig);
-      }
+    if (hasLegacyFirebaseModules(['firestore', 'functions', 'auth'])) {
+      const firebase = getLegacyFirebase();
+      const app = getOrInitializeLegacyFirebaseApp(firebase);
 
       const db = firebase.firestore.getFirestore(app);
       const auth = firebase.auth.getAuth(app);

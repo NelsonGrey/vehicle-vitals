@@ -1,119 +1,73 @@
 # Vehicle Vitals - Deployment Status
 
-## ✅ Successfully Deployed
+Last updated: April 13, 2026
+Primary production project: `vehicle-vitals-prod`
 
-### 🌐 Web Application
+## Web Deployment
 
-- **Platform**: Firebase Hosting
-- **URL**: https://vehicle-vitals-prod.web.app
-- **Status**: ✅ Live and accessible
-- **Features**:
-  - Tailwind CSS styling
-  - AdSense integration for revenue
-  - Responsive design
-  - Firebase Authentication
-  - Firestore database
+Status: Live
 
-### 🔥 Firebase Services
+- Platform: Firebase Hosting
+- URL: https://vehicle-vitals-prod.web.app
+- Core state: deployed and accessible
+- Notes: production hardening and reminder/calendar/export reliability validation still in progress
 
-- **Firestore Rules**: ✅ Deployed
-- **Authentication**: ✅ Configured
-- **Hosting**: ✅ Active
+## Firebase Services
 
-## 📱 Mobile Application Status
+Status: Active
 
-### Android
+- Firestore rules: deployed
+- Authentication: configured
+- Hosting: active
+- Functions: active with reminder, calendar, premium, and integration endpoints
 
-- **Status**: ⏸️ ON HOLD
-- **Reason**: No active test/deployment path to Google Play Store
-- **Action**: Android CI/deployment disabled until testing and release workflow are restored
+## Mobile Deployment Readiness
 
 ### iOS
 
-- **Build**: ✅ Built (`packages/mobile/build/ios/iphoneos/Runner.app` - 96.3MB)
-- **Status**: Built without code signing
-- **Ready for**: App Store distribution (requires code signing)
+Status: Buildable, release validation pending
 
-## � Firebase Data Connect Status
+- Release-like build path exists.
+- Runtime uses real Firebase initialization/options in `packages/mobile/lib/main.dart`.
+- Remaining: release-confidence acceptance run, signing/distribution verification, production smoke evidence.
 
-### Current Status
+### Android
 
-- **Backend**: ✅ Firebase Data Connect with PostgreSQL
-- **GraphQL Schema**: ✅ Deployed and active
-- **Generated SDKs**: ✅ Available for web and shared packages
-- **Authentication**: ✅ Integrated with Firebase Auth
-- **Status**: ✅ Fully operational
+Status: Build path exists, production validation pending
 
-## 📊 Revenue Integration Status
+- Codebase includes active Android target/package.
+- Remaining: release testing and deployment workflow validation.
+
+## Revenue and Monetization Status
 
 ### Web (AdSense)
 
-- ✅ AdSense integration preserved
-- ✅ Environment configuration ready
-- ✅ Responsive ad containers
-- ✅ Revenue optimization maintained
+Status: Implemented
 
-### Mobile (AdMob)
+- Ad banner and placement configuration are wired via env-driven components.
+- Remaining: production monetization QA and placement optimization validation.
 
-- ✅ AdMob integration complete
-- ✅ Banner, interstitial, and rewarded ads
-- ✅ Strategic ad placement
-- ✅ Revenue functionality ready
+### Mobile (AdMob and Premium)
 
-## 🎯 Next Steps for Full Production
+Status: Implemented in code, production validation pending
 
-### Web Application
+- Ad components (banner/interstitial/rewarded helpers) are present.
+- Premium purchase and backend entitlement verification flows are wired.
+- Remaining: real-store purchase verification, entitlement transition QA, release monetization signoff.
 
-- ✅ Live at https://vehicle-vitals-prod.web.app
-- 🔍 Remaining: production hardening and end-to-end validation
+## DataConnect and Integrations
 
-### Mobile Applications
+Status: Configured with partial product integration
 
-#### Android
+- DataConnect artifacts and generated clients exist.
+- Manuals/warranty/maintenance-plan provider endpoints exist behind integration settings.
+- Remaining: client UX surfacing and full contract validation in production-like environments.
 
-- ⏸️ On hold (no active development/deployment commitment)
+## Remaining Go-Live Gates
 
-#### iOS (App Store)
+1. Close R1 reminder delivery reliability gate.
+2. Complete iOS release-mode parity validation with evidence logs.
+3. Complete web/mobile export parity signoff.
 
-1. **Restore production backend integration in mobile app** (replace current mock/stub service paths)
-2. **Set up Apple Developer Account and signing assets**
-3. **Build with proper provisioning profiles**:
-   ```bash
-   flutter build ios --release
-   ```
-4. **Distribute via App Store workflow after build validation**
+Production-ready completion is blocked until these gates are closed.
 
-### Firebase Data Connect
-
-- ✅ **COMPLETE** - GraphQL backend with PostgreSQL deployed and operational
-
-## 🔍 Testing & Validation
-
-### Web Application
-
-- ✅ Deployment successful
-- ✅ Accessible at production URL
-- ✅ Firebase services connected
-- ⏳ Ad revenue testing recommended
-
-### Mobile Applications
-
-- ✅ iOS build/analyze path works in current source tree
-- ⚠️ iOS app currently uses mock/stub backend flows in several core services
-- ⏳ App store submission pending
-- ⏳ Production testing and backend integration required
-
-## 💰 Revenue Optimization
-
-Both web and mobile platforms maintain full advertising integration:
-
-- **Web**: Google AdSense ready for traffic monetization
-- **Mobile**: Google AdMob ready for in-app revenue
-- **Analytics**: Ready for Google Analytics integration
-- **Performance**: Optimized builds maintain ad loading efficiency
-
----
-
-**Last Updated**: October 19, 2025
-**Deployment Date**: October 19, 2025
-**Firebase Project**: `vehicle-vitals-prod`

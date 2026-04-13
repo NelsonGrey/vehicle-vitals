@@ -1,494 +1,148 @@
-# Vehicle Vitals - Project Requirements & Status
+# Vehicle Vitals - Project Requirements and Delivery Status
 
-**Project Overview**: A comprehensive vehicle management application with web and mobile frontends, featuring vehicle tracking, maintenance logging, VIN scanning, and user authentication.
+Project overview: Vehicle Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
 
-**Last Updated**: March 2026
-**Project Status**: ⚠️ **PARTIALLY IMPLEMENTED** | Web core flows implemented, mobile uses real Firebase paths with production validation pending, reminder delivery reliability and parity hardening in progress
-
----
-
-## Document Relationship & Scope Contract
-
-This file is the delivery contract for what is implemented now versus what is partial or planned.
-
-- `docs/PRODUCT_DESIGN.md` defines vision, UX intent, and roadmap direction.
-- `docs/REQUIREMENTS.md` defines implementation truth for active releases.
-- If a conflict exists between these documents, treat this file as source of truth for delivery status.
-
-## Feature Traceability Baseline (March 2026)
-
-| Feature Area                 | Product Design Intent | Current Delivery Reality                          | Primary Tracking Location                                                                                                                                          |
-| ---------------------------- | --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Core web vehicle workflows   | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                                                    |
-| Mobile production parity     | Required              | 🟡 Partial; release validation pending            | Implementation Reality Snapshot                                                                                                                                    |
-| Reminder lifecycle actions   | Required              | 🟡 Partial                                        | Lifecycle CRUD exists on web/mobile and web push reminders now route back into Upcoming Tasks; production delivery validation remains under reminder delivery work |
-| Reminder scheduling pipeline | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                                                    |
-| Export records               | Required              | 🟡 Partial                                        | Implementation Reality Snapshot                                                                                                                                    |
-| Service provider directory   | Planned               | 🟡 Partial                                        | Web route /app/providers now supports local provider lookup via callable; mobile parity and richer provider data remain roadmap work                               |
-| Fleet manager workflows      | Planned               | ⏸ Not implemented                                | PRODUCT_DESIGN roadmap                                                                                                                                             |
-
-Planning companion:
-
-- `docs/RELEASE_SCOPE_MATRIX.md` defines Must/Should/Later scope tiers and milestone targets.
+Last updated: April 13, 2026
+Project status: PARTIALLY IMPLEMENTED, PRODUCTION HARDENING IN PROGRESS
 
 ---
 
-## Implementation Reality Snapshot (Code-Verified: March 2026)
+## Scope Contract
 
-| Capability                                                | Delivery Status | Code Evidence                                                                                                                                                                                                                   |
-| --------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Web app core (auth, vehicles, timeline, maintenance CRUD) | 🟡 Partial      | `packages/web/src/pages/Home.tsx`, `packages/web/src/pages/EditVehicle.tsx`, `packages/web/src/pages/TimelineDashboard.tsx`                                                                                                     |
-| Mobile runtime parity                                     | 🟡 Partial      | Firebase/Auth/Firestore/notifications use real SDKs; push notification end-to-end delivery not fully validated in production                                                                                                    |
-| Reminder lifecycle (add/snooze/dismiss/complete)          | 🟢 Implemented  | Full CRUD in `packages/shared/src/firestoreServiceFactory.js`; connected on web (`UpcomingTasks.tsx`) and mobile (`upcoming_tasks_screen.dart`)                                                                                 |
-| Scheduled reminder checks                                 | 🟢 Implemented  | Scheduled sweep + injectable `runMaintenanceReminderSweep` / `runMaintenanceReminderSchedule` in `packages/functions/src/index.ts`; tested                                                                                      |
-| Reminder delivery integration                             | 🟡 Partial      | `sendMaintenanceReminder` HTTP endpoint and `sendEmail` provider implemented; web reminder center now supports manual send + persisted delivery status, while production SendGrid reliability still needs end-to-end validation |
-| Data export                                               | 🟢 Implemented  | Web CSV/PDF in `packages/web/src/utils/dataExport.js`; mobile CSV/PDF via `packages/mobile/lib/services/data_export_service.dart` and share sheet                                                                               |
+This document is the implementation truth for delivery status.
 
-Legend: `🟢 Implemented`, `🟡 Partial`, `🔴 Not implemented`.
+- Product intent authority: docs/PRODUCT_DESIGN.md
+- Release scope authority: docs/RELEASE_SCOPE_MATRIX.md
+- Execution authority: docs/NEXT_FEATURES_EXECUTION_PLAN.md
+
+If these documents disagree, this file is source-of-truth for feature completion state.
 
 ---
 
-## 🏗️ Architecture Overview
+## Executive Completion Snapshot
 
-### Core Platforms
+Overall completion against active roadmap:
 
-| Platform         | Technology                  | Status     | Notes                                                                          |
-| ---------------- | --------------------------- | ---------- | ------------------------------------------------------------------------------ |
-| **Web Frontend** | React + Vite + React Router | 🟡 Partial | Core user flows implemented; some roadmap capabilities still missing           |
-| **Mobile App**   | Flutter                     | 🟡 Partial | Real Firebase services in use; push notification end-to-end validation pending |
-| **Backend**      | Firebase Suite              | 🟡 Partial | Core functions exist; reminder delivery integrations not fully wired           |
-| **Deployment**   | Firebase Hosting + CI/CD    | 🟡 Partial | Web delivery path works; mobile production parity pending                      |
+- Implemented in code: ~75%
+- Production-ready and validated: ~55%
+- Remaining work: validation, parity hardening, and release confidence gates
 
-### Package Structure
+Key reality:
 
-```
-vehicle-vitals/
-├── web/                    # React web application
-├── mobile/                 # Flutter mobile application
-├── shared/                 # Cross-platform utilities
-├── dataconnect/           # GraphQL schema & operations
-├── firebase/              # Firebase configuration
-└── scripts/               # Build & utility scripts
-```
+- Web core workflows are implemented and deployed.
+- Mobile uses real Firebase/runtime services (not mock/stub), but release-confidence validation remains open.
+- Reminder lifecycle is implemented; reminder delivery reliability is still a production hardening item.
+- Calendar and export capabilities exist on both clients; parity and provider-account validation are still open.
 
 ---
 
-## 📱 Frontend Applications
+## Feature Traceability Baseline (April 2026)
 
-### Web Application (React)
+| Feature Area                                               | Implementation Status | Production-Ready Status | Evidence                                                                                                                                                                                                                                 | Remaining for Production Claim                                         |
+| ---------------------------------------------------------- | --------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Web core workflows (auth, vehicles, maintenance, timeline) | Implemented           | Mostly Ready            | `packages/web/src/pages/Home.tsx`, `packages/web/src/pages/EditVehicle.tsx`, `packages/web/src/pages/TimelineDashboard.tsx`                                                                                                              | Final UX parity pass and regression signoff                            |
+| Mobile runtime parity (auth, firestore, functions)         | Partial               | Not Yet                 | `packages/mobile/lib/main.dart`, `packages/mobile/lib/services/firestore_service.dart`, `packages/mobile/lib/services/auth_service.dart`                                                                                                 | Release-mode acceptance run and production log evidence                |
+| Reminder lifecycle (add/snooze/dismiss/complete/reopen)    | Implemented           | Ready                   | `packages/shared/src/firestoreServiceFactory.js`, `packages/web/src/pages/UpcomingTasks.tsx`, `packages/mobile/lib/screens/upcoming_tasks_screen.dart`                                                                                   | None for lifecycle; keep regression coverage                           |
+| Reminder scheduling and delivery reliability               | Partial               | Not Yet                 | `packages/functions/src/index.ts` (`runMaintenanceReminderSchedule`, `runMaintenanceReminderSweep`, `sendMaintenanceReminder`), `packages/functions/src/email.provider.ts`                                                               | End-to-end scheduled sweep plus delivery evidence in prod-like env     |
+| Export records (CSV/PDF web + mobile)                      | Implemented           | Partial                 | `packages/web/src/utils/dataExport.js`, `packages/mobile/lib/services/data_export_service.dart`                                                                                                                                          | Cross-platform output parity signoff against shared dataset            |
+| Calendar integration (google/apple/ics)                    | Implemented           | Partial                 | `packages/functions/src/calendar.provider.ts`, `packages/functions/src/index.ts` (`createCalendarEventCallable`), `packages/web/src/utils/calendarService.js`, `packages/mobile/lib/services/calendar_service.dart`                      | Real provider-account validation and failure UX signoff                |
+| Service provider directory                                 | Partial               | Not Yet                 | `packages/functions/src/index.ts` (`getLocalServiceProvidersCallable`), `packages/web/src/pages/ServiceProviders.tsx`, `packages/web/src/utils/localServiceProviders.js`                                                                 | Mobile parity and richer provider metadata                             |
+| Premium entitlement and mobile ads                         | Partial               | Not Yet                 | `packages/functions/src/premium.provider.ts`, `packages/functions/src/index.ts` (`verifyPremiumPurchase`, `getPremiumEntitlement`), `packages/mobile/lib/services/premium_service.dart`, `packages/mobile/lib/components/ad_banner.dart` | Production purchase/entitlement validation and release monetization QA |
+| Fleet manager workflows                                    | Not Implemented       | Not Ready               | Roadmap only                                                                                                                                                                                                                             | Full feature design and implementation                                 |
+| Budget forecasting depth                                   | Partial               | Not Yet                 | `packages/web/src/components/CostAnalysisReportlet.tsx`, `packages/mobile/lib/screens/analytics_screen.dart`                                                                                                                             | Forecasting models, richer filters, and acceptance criteria            |
+| Manuals/warranty/maintenance-plan enrichment               | Partial               | Not Yet                 | `packages/functions/src/index.ts` (`getOwnerManuals`, `getWarrantySummary`, `getMaintenancePlan`), provider modules                                                                                                                      | Client UX integration and contract validation across environments      |
 
-**Status**: 🟡 **PARTIAL** | **Location**: `/web/`
-
-| Feature                  | Status         | Implementation                        |
-| ------------------------ | -------------- | ------------------------------------- |
-| **Authentication**       | 🟡 Partial     | Firebase Auth in web runtime          |
-| **Vehicle Management**   | 🟡 Partial     | CRUD operations with VIN validation   |
-| **VIN Decoding**         | 🟡 Partial     | NHTSA VPIC API via backend function   |
-| **Maintenance Tracking** | 🟡 Partial     | CRUD and timeline UI on web           |
-| **Responsive UI**        | 🟢 Implemented | Mobile-friendly design                |
-| **Routing**              | 🟢 Implemented | React Router protected routes         |
-| **State Management**     | 🟡 Partial     | Context + Firebase integration on web |
-
-#### Web Pages Inventory
-
-| Page               | File                                      | Status      | Functionality                       |
-| ------------------ | ----------------------------------------- | ----------- | ----------------------------------- |
-| Home               | `Home.jsx`                                | ✅ Complete | Vehicle list, delete, navigation    |
-| Add Vehicle        | `AddVehicle.jsx`                          | ✅ Complete | VIN decode, form validation         |
-| Edit Vehicle       | `EditVehicle.jsx`                         | ✅ Complete | Update vehicle, maintenance list    |
-| Login/SignUp       | `Login.jsx`, `SignUp.jsx`                 | ✅ Complete | Firebase authentication             |
-| Profile            | `Profile.jsx`                             | ✅ Complete | User account management             |
-| Landing            | `Landing.jsx`                             | ✅ Complete | Marketing page                      |
-| Legal Pages        | `Terms.jsx`, `Privacy.jsx`, `Contact.jsx` | ✅ Complete | Static content                      |
-| Instructions       | `Instructions.jsx`                        | ✅ Complete | User guide                          |
-| Dev Tools          | `DevSeed.jsx`                             | ✅ Complete | Development utilities               |
-| Timeline Dashboard | `TimelineDashboard.tsx`                   | ✅ Complete | Visual maintenance history timeline |
-| Coming Soon        | `ComingSoon.jsx`                          | ✅ Complete | Placeholder page                    |
-
-### Mobile Application (Flutter)
-
-**Status**: 🟡 **PARTIAL (REAL SERVICES, VALIDATION PENDING)** | **Location**: `/mobile/`
-
-| Feature                  | Status         | Implementation                                                                 |
-| ------------------------ | -------------- | ------------------------------------------------------------------------------ |
-| **Authentication**       | 🟡 Partial     | Real Firebase auth path in use; release validation still required              |
-| **Vehicle Management**   | 🟡 Partial     | Real Firestore path in use; reliability and parity verification pending         |
-| **VIN Scanning**         | 🟡 Partial     | Screens exist; end-to-end live backend path not verified in current build mode |
-| **Maintenance Tracking** | 🟡 Partial     | Real maintenance flows active; cross-platform depth and validation still needed |
-| **Navigation**           | 🟢 Implemented | GoRouter route structure                                                       |
-| **State Management**     | 🟢 Implemented | Provider pattern                                                               |
-| **Platform Support**     | 🟡 Partial     | Targets defined, but runtime parity depends on re-enabling disabled services   |
-
-#### Mobile Screens Inventory
-
-| Screen             | File                                                              | Status      | Functionality                      |
-| ------------------ | ----------------------------------------------------------------- | ----------- | ---------------------------------- |
-| Home               | `home_screen.dart`                                                | ✅ Complete | Vehicle cards with maintenance nav |
-| Add Vehicle        | `add_vehicle_screen.dart`                                         | ✅ Complete | Form with validation               |
-| Edit Vehicle       | `edit_vehicle_screen.dart`                                        | ✅ Complete | Update vehicle details             |
-| VIN Scanner        | `scan_vin_screen.dart`                                            | ✅ Complete | Camera barcode scanning            |
-| Maintenance List   | `maintenance_list_screen.dart`                                    | ✅ Complete | List with add/edit/delete          |
-| Maintenance Detail | `maintenance_detail_screen.dart`                                  | ✅ Complete | View/edit/delete entry             |
-| Account            | `account_screen.dart`                                             | ✅ Complete | Profile with password reset        |
-| Login/SignUp       | `login_screen.dart`, `signup_screen.dart`                         | ✅ Complete | Authentication flows               |
-| Legal Pages        | `terms_screen.dart`, `privacy_screen.dart`, `contact_screen.dart` | ✅ Complete | Static content                     |
-| Instructions       | `instructions_screen.dart`                                        | ✅ Complete | User guide                         |
-
-#### Mobile Package Configuration
-
-| Platform              | Package Name                               | Status      |
-| --------------------- | ------------------------------------------ | ----------- |
-| **Android**           | `com.nelsongrey.vehiclevitals.app.android` | ✅ Complete |
-| **iOS**               | `com.nelsongrey.vehiclevitals.app.ios`     | ✅ Complete |
-| **Deployment Target** | iOS 15.0+                                  | ✅ Complete |
+Legend: Implemented, Partial, Not Implemented
 
 ---
 
-## 🔧 Backend Services
+## Production Readiness Gates (R1)
 
-### Firebase Configuration
+R1 is the minimum release confidence gate.
 
-**Status**: 🟡 **PARTIAL** | **Location**: `/firebase/`, `/shared/`
+| Gate                             | Current State | Exit Criteria                                                                                | Evidence Required                         |
+| -------------------------------- | ------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Reminder delivery reliability    | Open          | Scheduled and manual paths produce persisted delivery outcomes with stable provider behavior | Integration test report + smoke logs      |
+| Mobile runtime parity validation | Open          | iOS release-like acceptance run confirms real backend traffic and stable core workflows      | Build logs + Firestore/Functions traces   |
+| Export parity signoff            | Open          | Web/mobile exports match expected field set and ordering for shared fixtures                 | Snapshot or diff artifacts + QA checklist |
 
-| Service                | Status         | Configuration                                                |
-| ---------------------- | -------------- | ------------------------------------------------------------ |
-| **Authentication**     | 🟡 Partial     | Auth configured on both clients; production delivery validation in progress |
-| **Firestore Database** | 🟡 Partial     | Data model present and lifecycle CRUD implemented; delivery reliability hardening pending |
-| **Firebase Hosting**   | 🟢 Implemented | Web deployment path active                                   |
-| **Security Rules**     | 🟢 Implemented | User-based access control                                    |
-
-### Data Model
-
-**Status**: ✅ **COMPLETE** | **Location**: `shared/types.js`, Firestore collections
-
-#### Firestore Collections Structure
-
-```
-users/{userId}/
-├── vehicles/{vin}/           # Vehicle documents keyed by VIN
-│   ├── maintenance/{id}/     # Maintenance subcollection
-│   └── reminders/{id}/       # Planned: reminder system
-```
-
-#### Data Types
-
-| Type            | Status      | Fields                                                  | Validation                  |
-| --------------- | ----------- | ------------------------------------------------------- | --------------------------- |
-| **Vehicle**     | ✅ Complete | make, model, year, vin, mileage, purchaseDate           | VIN format, year range      |
-| **Maintenance** | ✅ Complete | title, notes, date, cost, mileage, createdAt, updatedAt | Required fields, timestamps |
-| **User**        | ✅ Complete | Firebase Auth UID                                       | Authentication-based        |
-
-### External Integrations
-
-| Service            | Status      | Purpose      | Implementation      |
-| ------------------ | ----------- | ------------ | ------------------- |
-| **NHTSA VPIC API** | ✅ Complete | VIN decoding | Web vehicle service |
+R1 production-capable claim is blocked until all three gates are closed.
 
 ---
 
-## 🚀 DataConnect & GraphQL
+## Platform Delivery Status
 
-### Firebase DataConnect
+### Web
 
-**Status**: ✅ **CONFIGURED** | **Location**: `/dataconnect/`
+Status: Implemented, production-deployed, hardening in progress
 
-| Component                | Status      | Notes                            |
-| ------------------------ | ----------- | -------------------------------- |
-| **Schema Definition**    | ✅ Complete | Movie review example schema      |
-| **Code Generation**      | ✅ Complete | TypeScript & React clients       |
-| **Web Integration**      | ✅ Complete | `@dataconnect/generated` package |
-| **Connector Operations** | ✅ Complete | Queries and mutations            |
+Confirmed capabilities:
 
-#### Generated Clients
+- Auth flows and protected routes
+- Vehicle CRUD and maintenance CRUD
+- Timeline dashboard and upcoming tasks
+- Reminder lifecycle actions
+- Calendar event creation flow
+- CSV/PDF exports
+- Service provider lookup UI
 
-| Platform      | Location                         | Status      |
-| ------------- | -------------------------------- | ----------- |
-| **Shared**    | `src/dataconnect-generated/`     | ✅ Complete |
-| **Web React** | `web/src/dataconnect-generated/` | ✅ Complete |
+### Mobile (iOS/Android codebase)
 
----
+Status: Real-service runtime implemented, production validation pending
 
-## 🧪 Testing & Quality
+Confirmed capabilities:
 
-### Test Coverage
+- Firebase initialized from `firebase_options.dart`
+- Auth and Firestore services active
+- Upcoming tasks and reminder actions
+- Calendar preferences and event flow
+- CSV/PDF export service
+- Premium and ad components wired
 
-**Status**: ✅ **IMPLEMENTED** | **Location**: `/web/tests/`
+Open production items:
 
-| Test Type            | Status      | Framework                    | Coverage            |
-| -------------------- | ----------- | ---------------------------- | ------------------- |
-| **Unit Tests**       | ✅ Complete | Vitest                       | Firestore service   |
-| **Smoke Tests**      | ✅ Complete | Vitest                       | Factory patterns    |
-| **Firebase Rules**   | ✅ Complete | @firebase/rules-unit-testing | Security validation |
-| **Flutter Analysis** | ✅ Complete | `flutter analyze`            | No issues found     |
+- Release-mode acceptance evidence
+- Notification delivery validation in production-like environment
+- Monetization path QA (purchase verification and entitlement transitions)
 
-### Code Quality
+### Backend (Firebase Functions)
 
-| Tool                        | Status         | Result                   |
-| --------------------------- | -------------- | ------------------------ |
-| **Flutter Analyze**         | ✅ Passing     | 0 issues                 |
-| **Web Tests**               | ✅ Implemented | Firestore emulator tests |
-| **Firebase Security Rules** | ✅ Configured  | User-scoped access       |
+Status: Broad capability coverage, environment hardening still required
 
----
+Confirmed capabilities:
 
-## 🔄 Development & Deployment
+- Reminder scheduling + delivery endpoints
+- Calendar callable endpoint
+- Premium verification + entitlement endpoint
+- Manuals/warranty/maintenance-plan endpoints
+- Service provider lookup callable
+- Optional integration cache and request guardrails
 
-### Build System
+Open production items:
 
-**Status**: ✅ **COMPLETE**
-
-| Platform            | Command         | Status     | Output          |
-| ------------------- | --------------- | ---------- | --------------- |
-| **Web Development** | `npm run dev`   | ✅ Working | Vite dev server |
-| **Web Production**  | `npm run build` | ✅ Working | Static assets   |
-| **Mobile Debug**    | `flutter run`   | ✅ Working | Debug APK/IPA   |
-| **Mobile Release**  | `flutter build` | ✅ Working | Release builds  |
-
-### CI/CD Pipeline
-
-**Status**: ✅ **COMPLETE** | **Location**: `.github/workflows/`
-
-| Workflow            | Status        | Trigger      | Actions                     |
-| ------------------- | ------------- | ------------ | --------------------------- |
-| **Firebase Deploy** | ✅ Active     | Push to main | Build web → Deploy hosting  |
-| **Emulator Tests**  | ✅ Configured | PR/Push      | Run Firebase emulator tests |
-
-#### Deployment Configuration
-
-| Environment     | Service           | Status        | URL                        |
-| --------------- | ----------------- | ------------- | -------------------------- |
-| **Production**  | Firebase Hosting  | ✅ Configured | Auto-deploy from main      |
-| **Development** | Local dev servers | ✅ Working    | Web: Vite, Mobile: Flutter |
+- Provider reliability evidence across environments
+- End-to-end smoke coverage for key integration endpoints
 
 ---
 
-## 📦 Dependencies & Environment
+## Known Documentation Corrections Applied
 
-### Node.js/Web Dependencies
+This update corrects prior drift where docs claimed:
 
-**Status**: ✅ **UP TO DATE**
+- Mobile still relied on mock/stub runtime paths
+- Mobile AdMob and premium flow were missing
+- Route/status wording no longer matched implementation
 
-| Package          | Version | Purpose          | Status     |
-| ---------------- | ------- | ---------------- | ---------- |
-| **React**        | ^18.0.0 | UI framework     | ✅ Current |
-| **Firebase**     | ^10.0.0 | Backend services | ✅ Current |
-| **React Router** | ^6.0.0  | Navigation       | ✅ Current |
-| **Vite**         | ^5.0.0  | Build tool       | ✅ Current |
-| **Vitest**       | ^1.0.0  | Testing          | ✅ Current |
-
-### Flutter Dependencies
-
-**Status**: ✅ **UP TO DATE**
-
-| Package             | Version | Purpose              | Status     |
-| ------------------- | ------- | -------------------- | ---------- |
-| **Flutter SDK**     | ^3.8.0  | Framework            | ✅ Current |
-| **firebase_core**   | ^4.1.1  | Firebase integration | ✅ Current |
-| **firebase_auth**   | ^6.1.0  | Authentication       | ✅ Current |
-| **cloud_firestore** | ^6.0.2  | Database             | ✅ Current |
-| **go_router**       | ^16.2.4 | Navigation           | ✅ Current |
-| **provider**        | ^6.1.2  | State management     | ✅ Current |
-| **mobile_scanner**  | ^7.1.2  | Barcode scanning     | ✅ Current |
-
-### Environment Configuration
-
-| Platform   | File                    | Status      | Variables             |
-| ---------- | ----------------------- | ----------- | --------------------- |
-| **Web**    | `.env.example`          | ✅ Complete | Firebase config vars  |
-| **Mobile** | `firebase_options.dart` | ✅ Complete | FlutterFire generated |
+Current docs now reflect code reality as of April 13, 2026.
 
 ---
 
-## 🛠️ Utilities & Scripts
+## Governance Rules
 
-### Build Scripts
+When a feature status changes:
 
-**Status**: ✅ **COMPLETE** | **Location**: `/scripts/`
-
-| Script                     | Purpose                       | Status     |
-| -------------------------- | ----------------------------- | ---------- |
-| **export-logo.js**         | Generate logo assets          | ✅ Working |
-| **dataconnect-codegen.js** | DataConnect client generation | ✅ Working |
-
-### Shared Utilities
-
-**Status**: ✅ **COMPLETE** | **Location**: `/shared/`
-
-| Utility                        | Purpose                          | Status      |
-| ------------------------------ | -------------------------------- | ----------- |
-| **firestoreServiceFactory.js** | Cross-platform Firestore service | ✅ Complete |
-| **firestoreClient.js**         | Expo/React Native client         | ✅ Complete |
-| **types.js**                   | Shared data models               | ✅ Complete |
-
----
-
-## 📋 Core Features Completeness Analysis
-
-Based on the attached core features requirements, here's the comprehensive status assessment:
-
-### 1. User Account System
-
-| Requirement             | Web         | Mobile      | Status          | Notes                                 |
-| ----------------------- | ----------- | ----------- | --------------- | ------------------------------------- |
-| Email Sign up/login     | ✅ Complete | ✅ Complete | ✅ **COMPLETE** | Firebase Auth implementation          |
-| Google OAuth            | ✅ Complete | ✅ Complete | ✅ **COMPLETE** | Web: popup, Mobile: expo-auth-session |
-| Apple OAuth             | ✅ Complete | ✅ Complete | ✅ **COMPLETE** | Firebase Auth with Apple provider     |
-| Cloud sync multi-device | ✅ Complete | ✅ Complete | ✅ **COMPLETE** | Firebase Firestore real-time sync     |
-
-### 2. Vehicle Management
-
-| Requirement              | Web         | Mobile      | Status          | Notes                                         |
-| ------------------------ | ----------- | ----------- | --------------- | --------------------------------------------- |
-| Add/Edit/Delete vehicles | ✅ Complete | ✅ Complete | ✅ **COMPLETE** | Full CRUD operations                          |
-| Vehicle info fields      | ✅ Complete | ✅ Complete | ✅ **COMPLETE** | make, model, year, VIN, mileage, purchaseDate |
-| VIN decoding (NHTSA)     | ✅ Complete | ✅ Complete | ✅ **COMPLETE** | Firebase Functions implementation             |
-| VIN scanning             | ❌ N/A      | ✅ Complete | 🔄 **PARTIAL**  | Mobile only (camera barcode)                  |
-
-### 3. Maintenance Tracking
-
-| Requirement                    | Web              | Mobile           | Status          | Notes                                     |
-| ------------------------------ | ---------------- | ---------------- | --------------- | ----------------------------------------- |
-| Custom maintenance entries     | ✅ Complete      | ✅ Complete      | ✅ **COMPLETE** | Title, notes, cost, date                  |
-| Log completed services         | ✅ Complete      | ✅ Complete      | ✅ **COMPLETE** | Full CRUD with timestamps                 |
-| Preset schedule (manufacturer) | ✅ Complete      | ✅ Complete      | ✅ **COMPLETE** | Toyota, Honda, Ford schedules implemented |
-| Upload photos/receipts         | ✅ Complete      | ✅ Complete      | ✅ **COMPLETE** | Firebase Storage with file management     |
-| Mileage-based alerts           | 🚧 Backend Ready | 🚧 Backend Ready | 🚧 **PARTIAL**  | Backend stubs, no UI                      |
-| Time-based alerts              | 🚧 Backend Ready | 🚧 Backend Ready | 🚧 **PARTIAL**  | Backend stubs, no UI                      |
-
-### 4. Reminders & Notifications
-
-| Requirement          | Web         | Mobile      | Status         | Notes                                                                                                                                                                                         |
-| -------------------- | ----------- | ----------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Push reminders       | ✅ Complete | 🟡 Partial  | 🟡 **PARTIAL** | Web: FCM opt-in UI on Profile (token stored in `__preferences__`), reminder sweep delivers FCM push via admin.messaging(); mobile push not yet end-to-end validated                           |
-| Email reminders      | 🟡 Partial  | 🟡 Partial  | 🟡 **PARTIAL** | Web supports manual reminder send and delivery outcome tracking in Upcoming Tasks; full automated, cross-platform delivery reliability still needs production validation                      |
-| Calendar integration | ✅ Complete | ✅ Complete | 🟡 **PARTIAL** | Calendar event creation is available in web and mobile upcoming/maintenance flows via backend calendar endpoints; full provider-account sync reliability still requires production validation |
-
-### 5. Dashboard/History
-
-| Requirement               | Web         | Mobile                | Status          | Notes                                                                                                               |
-| ------------------------- | ----------- | --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Timeline view             | ✅ Complete | 🟡 Filtered Dashboard | 🟡 **PARTIAL**  | Web timeline remains richer, but mobile now supports a timeline dashboard with vehicle/date filters and event notes |
-| Cost tracking             | ✅ Complete | 🔄 Mocked             | 🟡 **PARTIAL**  | Web has tracked costs; mobile analytics path uses mock services                                                     |
-| Upcoming tasks view       | ✅ Complete | ✅ Complete           | ✅ **COMPLETE** | Reminder actions (complete/snooze/dismiss/restore) wired on both web and mobile                                     |
-| Export history (PDF, CSV) | ✅ Complete | ✅ Complete           | ✅ **COMPLETE** | Web export works; mobile CSV/PDF export via share sheet fully implemented                                           |
-
-### 6. Ad Integration
-
-| Requirement          | Web         | Mobile     | Status                 | Notes                                |
-| -------------------- | ----------- | ---------- | ---------------------- | ------------------------------------ |
-| Google AdSense (web) | ✅ Complete | N/A        | ✅ **COMPLETE**        | `AdBanner` component with env config |
-| AdMob (mobile)       | N/A         | ❌ Missing | ❌ **NOT IMPLEMENTED** | No mobile ads integration            |
-| Rewarded ads premium | ❌ Missing  | ❌ Missing | ❌ **NOT IMPLEMENTED** | No premium features or rewarded ads  |
-
-## 📊 Feature Implementation Summary
-
-### Current Maturity Snapshot
-
-- **Web application**: High maturity, production-deployed, broad feature coverage.
-- **iOS mobile application**: Medium maturity, buildable but still blocked by mock/stub service paths and release validation work.
-- **Android mobile application**: On hold by project decision (testing/deployment path not active).
-
-### Current Gaps
-
-1. **iOS backend integration**: Replace mock/stub data and service flows with production Firebase-backed behavior.
-2. **iOS release confidence**: Expand automated tests and complete App Store distribution readiness checks.
-3. **Cross-platform parity**: Keep scope aligned while Android remains paused.
-
-**Implementation Status: Partial**
-
-- Web: ✅ Mostly complete
-- iOS: ⚠️ Partial
-- Android: ⏸️ On hold
-
----
-
-## 🚦 Project Health Status
-
-### Overall Status: ⚠️ **PARTIALLY IMPLEMENTED**
-
-| Category                 | Status         | Score | Assessment                                                                   |
-| ------------------------ | -------------- | ----- | ---------------------------------------------------------------------------- |
-| **Core Functionality**   | ⚠️ Partial     | 65%   | Web core is solid; mobile remains in mocked runtime mode                     |
-| **Feature Completeness** | ⚠️ Partial     | 55%   | Major roadmap capabilities remain incomplete across platforms                |
-| **Code Quality**         | ✅ Good        | 75%   | Web checks are healthy; mobile quality cannot be fully assessed while mocked |
-| **User Experience**      | ⚠️ Partial     | 65%   | Web UX is stronger than current mobile parity                                |
-| **Monetization**         | ⚠️ Partial     | 55%   | Monetization assumptions need validation against true runtime feature set    |
-| **Testing**              | ⚠️ Partial     | 55%   | Additional integration tests needed for reminder/notification/export flows   |
-| **Documentation**        | ⚠️ In Progress | 75%   | This file is being normalized to match code reality                          |
-| **Deployment**           | ⚠️ Partial     | 60%   | Web deploy path is active; mobile production parity pending                  |
-
-### Current Assessment (March 2026)
-
-Vehicle Vitals is live and operational on web, while the iOS app remains in a pre-release hardening phase. The Android track is explicitly paused until testing and deployment constraints are resolved.
-
-### Known Issues
-
-| Issue                     | Severity | Platform | Status              |
-| ------------------------- | -------- | -------- | ------------------- |
-| CocoaPods config warning  | Low      | iOS      | ⚠️ Harmless warning |
-| VIN decode mobile missing | Medium   | Mobile   | 📋 Enhancement      |
-
-### Priority Next Steps (Reality-Aligned)
-
-#### Sprint 1 - Re-enable Real Mobile Runtime
-
-1. Replace mocked mobile auth/data services with real Firebase-backed services.
-2. Re-enable and validate mobile notifications in production-capable build configs.
-3. Re-enable mobile export and calendar integrations behind controlled feature flags.
-
-#### Sprint 2 - Complete Reminder Lifecycle
-
-4. Implement Firestore-backed reminder CRUD (`add`, `get`, `complete`, `snooze`) in shared service layer.
-5. Connect upcoming task actions to reminder state transitions on both web and mobile.
-6. Add integration tests for reminder generation, actioning, and notification delivery.
-
-#### Sprint 3 - Delivery Hardening and Parity
-
-7. Validate end-to-end email delivery integration for scheduled reminders.
-8. Align mobile/web feature availability and remove stale "complete" claims from remaining docs.
-9. Reassess premium/monetization assumptions after parity milestones are met.
-
-#### 🛠️ **Technical Debt (Ongoing)**
-
-14. **Test Coverage**: Expand test coverage for mobile app (Flutter widget tests)
-15. **Performance**: Optimize Firestore queries and implement pagination
-16. **Security**: Review and enhance Firebase security rules
-17. **Accessibility**: Improve WCAG compliance across platforms
-
----
-
-## 📞 Support & Maintenance
-
-### Key Files for Reference
-
-- **Configuration**: `docs/.github/Copilot-Instructions.md`
-- **Setup Guides**: `README.md`, `mobile/README.md`
-- **Deployment**: `DEPLOY.md`
-- **Architecture**: `shared/firestoreServiceFactory.js`
-
-### Development Commands
-
-| Platform   | Command                    | Purpose                        |
-| ---------- | -------------------------- | ------------------------------ |
-| **Web**    | `cd web && npm run dev`    | Start development server       |
-| **Mobile** | `cd mobile && flutter run` | Run on device/simulator        |
-| **Tests**  | `cd web && npm test`       | Run test suite                 |
-| **Deploy** | `git push origin main`     | Auto-deploy via GitHub Actions |
-
-### Development Notes
-
-#### Data Operations
-
-- **Vehicle Deletion**: Web UI exposes "Delete Vehicle" action which removes vehicle documents at `users/{userId}/vehicles/{vin}`
-- **Cascade Deletes**: Single-document delete does NOT cascade to maintenance subcollections. For cascading deletes, implement Cloud Function or recursive delete utility
-- **Maintenance Data**: Stored in subcollections under vehicle documents
-
-#### Future Improvements
-
-- Implement recursive delete for complete vehicle removal (including maintenance entries)
-- Add undo/snackbar notifications for delete operations to improve UX
-- Add pagination or real-time listeners for vehicle lists with larger datasets
-
----
-
-**Project Status**: Web delivery is strong, while mobile and cross-platform parity remain in progress. Core workflows are partially implemented overall, and roadmap features are still pending.
+1. Update this file and docs/RELEASE_SCOPE_MATRIX.md in the same commit.
+2. Update docs/NEXT_FEATURES_EXECUTION_PLAN.md if scope or ordering changes.
+3. Include evidence references (tests, smoke outputs, or logs).
+4. For R1 gate execution, keep docs/R1_COMPLETION_CHECKLIST.md current.
+5. Keep docs/PROJECT_PLAN.md aligned with milestone timing and ownership changes.

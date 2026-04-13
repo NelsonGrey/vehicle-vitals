@@ -15,6 +15,16 @@ export const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+const developmentFirebaseFallback = {
+  apiKey: 'AIzaSyAmyyfYTgNAurV-yZxrxwiwGD8_B8QInHs',
+  authDomain: 'vehicle-vitals-dev.firebaseapp.com',
+  projectId: 'vehicle-vitals-dev',
+  storageBucket: 'vehicle-vitals-dev.firebasestorage.app',
+  messagingSenderId: '919227980868',
+  appId: '1:919227980868:web:1144238b40fb4b9fb5f011',
+  measurementId: 'G-FQJQ74S5W4',
+};
+
 const isPlaceholderValue = value => {
   const normalized = String(value || '').trim();
   if (!normalized) {
@@ -68,6 +78,28 @@ const resolveEnvironmentName = () => {
   return String(raw).trim().toLowerCase();
 };
 
+const applyDevelopmentFirebaseFallback = () => {
+  if (resolveEnvironmentName() !== 'development') {
+    return;
+  }
+
+  const recoveredFields = [];
+  for (const [name, fallbackValue] of Object.entries(
+    developmentFirebaseFallback
+  )) {
+    if (isPlaceholderValue(firebaseConfig[name])) {
+      firebaseConfig[name] = fallbackValue;
+      recoveredFields.push(name);
+    }
+  }
+
+  if (recoveredFields.length > 0) {
+    console.warn(
+      `[firebaseConfig] Applied development fallback for: ${recoveredFields.join(', ')}`
+    );
+  }
+};
+
 const expectedProjectIdsByEnvironment = {
   development: ['vehicle-vitals-dev'],
   staging: ['vehicle-vitals-staging'],
@@ -97,6 +129,7 @@ const validateEnvironmentProjectAlignment = () => {
   }
 };
 
+applyDevelopmentFirebaseFallback();
 validateEnvironmentProjectAlignment();
 validateFirebaseClientConfig();
 

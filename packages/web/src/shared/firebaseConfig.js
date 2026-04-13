@@ -106,6 +106,49 @@ const expectedProjectIdsByEnvironment = {
   production: ['vehicle-vitals-prod'],
 };
 
+const canonicalHostedOriginsByEnvironment = {
+  development: {
+    fromHostnames: ['vehicle-vitals-dev.firebaseapp.com'],
+    toOrigin: 'https://vehicle-vitals-dev.web.app',
+  },
+  staging: {
+    fromHostnames: ['vehicle-vitals-staging.firebaseapp.com'],
+    toOrigin: 'https://vehicle-vitals-staging.web.app',
+  },
+  production: {
+    fromHostnames: ['vehicle-vitals-prod.firebaseapp.com'],
+    toOrigin: 'https://vehicle-vitals-prod.web.app',
+  },
+};
+
+const redirectToCanonicalHostedOrigin = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const environment = resolveEnvironmentName();
+  const canonicalConfig = canonicalHostedOriginsByEnvironment[environment];
+  if (!canonicalConfig) {
+    return;
+  }
+
+  if (!canonicalConfig.fromHostnames.includes(window.location.hostname)) {
+    return;
+  }
+
+  const nextUrl =
+    `${canonicalConfig.toOrigin}${window.location.pathname}` +
+    `${window.location.search}${window.location.hash}`;
+
+  console.warn(
+    `[firebaseConfig] Redirecting from ${window.location.hostname} to canonical host ${canonicalConfig.toOrigin}`
+  );
+  window.location.replace(nextUrl);
+  throw new Error(
+    `[firebaseConfig] Redirecting to canonical hosted origin: ${canonicalConfig.toOrigin}`
+  );
+};
+
 const validateEnvironmentProjectAlignment = () => {
   const environment = resolveEnvironmentName();
   const projectId = String(firebaseConfig.projectId || '').trim();
@@ -132,6 +175,7 @@ const validateEnvironmentProjectAlignment = () => {
 applyDevelopmentFirebaseFallback();
 validateEnvironmentProjectAlignment();
 validateFirebaseClientConfig();
+redirectToCanonicalHostedOrigin();
 
 const app =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];

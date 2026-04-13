@@ -1,7 +1,7 @@
 name: "Master CI/CD Pipeline"
 
 concurrency:
-  group: pipeline-${{ github.ref }}
+  group: master-pipeline-${{ github.ref }}
   cancel-in-progress: true
 
 on:

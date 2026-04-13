@@ -5,6 +5,8 @@ interface EnvironmentGateProps {
   environment: string;
 }
 
+const developmentAccessPasswordFallback = 'dev2025';
+
 export default function EnvironmentGate({
   children,
   environment,
@@ -35,7 +37,7 @@ export default function EnvironmentGate({
         return (
           import.meta.env.VITE_ACCESS_PASSWORD_DEVELOPMENT ||
           import.meta.env.VITE_ACCESS_PASSWORD ||
-          ''
+          developmentAccessPasswordFallback
         );
       default:
         return '';

@@ -1,50 +1,38 @@
 # Product Design Progress Tracker
 
-Last updated: March 13, 2026
+Last updated: April 13, 2026
 Source of truth: docs/PRODUCT_DESIGN.md
 
 ## Executive Snapshot
 
-- Web and iOS core flows are live.
-- UX visual parity is improving, but mobile still has screen-level drift where hardcoded legacy colors remain.
-- Delivery maturity is strongest in vehicle CRUD and basic maintenance capture.
-- Delivery maturity is partial for timeline depth, smart reminders, and exports.
+- Web and mobile core workflows are implemented.
+- Cross-platform visual and interaction parity is improving but still uneven in timeline depth and semantic consistency.
+- Delivery maturity is strongest in auth, vehicle CRUD, maintenance CRUD, and reminder lifecycle actions.
+- Delivery maturity is partial for reminder delivery reliability, calendar provider reliability, exports parity signoff, and forecasting depth.
 
 ## Progress Matrix Against Product Design
 
-| Product Area                         | Design Intent                                          | Current Delivery Status | Notes                                                                                     |
-| ------------------------------------ | ------------------------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------------- |
-| Cross-platform consistency           | Web and iOS should feel like one product               | In progress             | Theme parity implemented at token/theme level; residual screen-level drift being removed. |
-| Multi-vehicle management             | Manage several vehicles with clear dashboard hierarchy | Partial to strong       | Core CRUD works; hierarchy is present; polish and consistency still ongoing.              |
-| VIN decode and auto-populate         | Decode VIN, prefill profile fields and recalls         | Partial                 | Implemented in add/edit flows with callable fallback paths.                               |
-| Maintenance timeline                 | Clear, chronological, actionable timeline              | Partial                 | Timeline surfaces exist; still maturing depth and presentation consistency.               |
-| Smart alerts and reminder actions    | Dismiss, snooze, complete with clear urgency           | Partial                 | Reminder persistence APIs exist; full end-to-end UI behavior is still uneven.             |
-| Export records for compliance/resale | PDF/CSV exports with confidence                        | Partial                 | Export capability exists in web and limited mobile paths; not complete parity.            |
-| Fleet manager workflows              | Fleet overview and role-based control                  | Planned                 | Not implemented in active routes.                                                         |
-| Budget insights and forecasting      | Cost trends and forecasted spend                       | Partial                 | Analytics screens exist; advanced forecasting remains limited.                            |
+| Product Area | Design Intent | Current Delivery Status | Notes |
+| --- | --- | --- | --- |
+| Cross-platform consistency | Web and mobile should feel like one product | In progress | Shared design tokens are in use; some screen-level parity work remains |
+| Multi-vehicle management | Manage several vehicles with clear hierarchy | Strong | Core CRUD and primary dashboard workflows are implemented |
+| VIN decode and auto-populate | Decode VIN and prefill profile fields | Partial | VIN flows are present on web/mobile; release-confidence validation remains |
+| Maintenance timeline | Clear, chronological, actionable timeline | Partial | Both platforms have timeline surfaces; mobile depth and semantics still trail web |
+| Smart alerts and reminder actions | Dismiss, snooze, complete with urgency clarity | Partial | Lifecycle actions are implemented; delivery reliability and production validation remain open |
+| Export records for compliance/resale | CSV/PDF exports with confidence | Partial | Export features exist on web/mobile; parity signoff still open |
+| Service provider discovery | Nearby provider lookup and guidance | Partial | Web flow active; mobile parity and richer provider data remain |
+| Premium and monetization | Premium entitlement and ad strategy | Partial | Web ads and mobile premium/ad primitives exist; release monetization validation is pending |
+| Fleet manager workflows | Fleet overview and role-based control | Planned | Not implemented in active routes |
+| Budget insights and forecasting | Cost trends and forecasted spend | Partial | Base analytics exist; richer forecasting remains roadmap work |
 
-## iOS Visual Parity Focus
+## High-Priority Parity Focus
 
-Completed:
+1. Reminder delivery reliability visibility across web/mobile
+2. Mobile timeline metadata depth and UX semantics
+3. Export parity acceptance between web and mobile
+4. Calendar provider reliability and actionable failure messaging
 
-- Shared token palette moved to slate/teal style language.
-- Theme-level card, nav, and snackbar defaults aligned.
-- Primary navigation routes and profile path parity implemented.
-- Add/Edit/Upcoming/Offline screens moved from hardcoded legacy colors to semantic theme colors.
+## Operational Readiness Target
 
-Remaining high-priority parity work:
+A production-capable parity claim requires closure of all R1 gates in docs/NEXT_FEATURES_EXECUTION_PLAN.md.
 
-- Align iconography and urgency chips to the same semantic palette used in web.
-- Harmonize spacing and card rhythm in long-form data entry screens.
-
-## Demo and Test Data Readiness
-
-Completed in this pass:
-
-- Repeatable seed and purge scripts added under functions package.
-- Versioned dataset file added at scripts/test-data/demo-data.json.
-- Operator guide added at scripts/test-data/README.md.
-
-Operational target:
-
-- Any demo account can be reset in under 1 minute with seed and purge commands.

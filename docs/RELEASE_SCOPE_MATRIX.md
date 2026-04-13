@@ -1,48 +1,51 @@
 # Vehicle Vitals - Release Scope Matrix
 
-Last updated: March 24, 2026
+Last updated: April 13, 2026
 Source baseline: docs/REQUIREMENTS.md
 
 ## Purpose
 
-This matrix translates current requirements into release planning scope.
+This matrix translates requirements into milestone scope and release gating.
 
-- Must: required to claim production-capable parity for active platforms.
-- Should: important, high-value work that follows Must scope.
-- Later: roadmap items not required for near-term parity claims.
+- Must: required for production-capable parity claim
+- Should: high-value completion work after Must scope
+- Later: expansion roadmap items
 
 ## Scope Matrix
 
-| Capability                                                           | Current Status            | Scope Tier | Target Milestone | Exit Criteria                                                                                                   |
-| -------------------------------------------------------------------- | ------------------------- | ---------- | ---------------- | --------------------------------------------------------------------------------------------------------------- |
-| Mobile runtime parity (real auth/data services)                      | 🟡 Partial                | Must       | R1               | Real Firebase-backed auth and Firestore path validated in release build with push delivery verification         |
-| Reminder lifecycle actions (add/snooze/dismiss/complete)             | 🟢 Implemented            | Must       | R1               | Reminder CRUD fully wired in shared services and both clients with persisted state transitions                  |
-| Reminder delivery reliability (scheduled + push/email feedback loop) | 🟡 Partial                | Must       | R1               | Scheduled checks, delivery, and user-visible outcomes validated by integration tests                            |
-| Export parity (web + mobile)                                         | 🟡 Partial                | Must       | R1               | CSV/PDF export available in both web and iOS release path with basic QA signoff                                 |
-| Timeline parity (mobile depth vs web timeline)                       | 🟡 Partial                | Should     | R2               | Mobile timeline supports chronological browsing with usable metadata parity                                     |
-| iOS/web UX parity polish                                             | 🟡 Partial                | Should     | R2               | Core app surfaces use shared semantic design language and avoid legacy hardcoded styles                         |
-| Calendar integration                                                 | 🟡 Partial                | Should     | R2               | User can add reminders/tasks to device calendar from app actions with reliable success/failure UX              |
-| Budget forecasting improvements                                      | 🟡 Partial                | Should     | R3               | Trend and forecast views available with meaningful filters and summaries                                        |
-| Service provider directory                                           | 🟡 Partial                | Later      | R4               | Web workflow stable and mobile parity/richer provider data implemented                                          |
-| Fleet manager workflows                                              | ⏸ Planned                | Later      | R4               | Fleet views, role-oriented controls, and fleet-level reporting available                                        |
-| AdMob and rewarded premium flows                                     | ❌ Missing                | Later      | R4               | Mobile ad and premium gating strategy implemented and validated                                                 |
+| Capability | Current Status | Scope Tier | Target Milestone | Exit Criteria |
+| --- | --- | --- | --- | --- |
+| Mobile runtime parity (real auth/data services) | Partial | Must | R1 | Release-mode iOS validation confirms auth, Firestore CRUD, reminders, and exports against real backend |
+| Reminder lifecycle actions (add/snooze/dismiss/complete/reopen) | Implemented | Must | R1 | Lifecycle actions remain stable with regression tests and no data-loss regressions |
+| Reminder delivery reliability (scheduled plus push/email loop) | Partial | Must | R1 | Scheduled and manual delivery paths both produce persisted outcomes with stable provider behavior |
+| Export parity (web plus mobile) | Partial | Must | R1 | Shared fixture exports pass field-order/value parity checks and QA signoff |
+| Calendar integration reliability (google/apple/ics) | Partial | Should | R2 | End-to-end event creation is reliable with explicit success/failure UX on web and mobile |
+| Timeline parity (mobile depth vs web) | Partial | Should | R2 | Mobile timeline metadata, filtering, and chronology reach parity-level usability |
+| iOS/web UX parity polish | Partial | Should | R2 | Shared semantic patterns used across core workflow surfaces |
+| API enrichment (manuals, warranty, maintenance plan) | Partial | Should | R2/R3 | Stable endpoint contracts and client surfaces with fallback messaging |
+| Budget forecasting improvements | Partial | Should | R3 | Trend and forecast views with meaningful filters and summaries |
+| Service provider directory expansion | Partial | Later | R4 | Mobile parity plus richer provider data and quality controls |
+| Premium and ad monetization hardening | Partial | Later | R4 | Verified purchase/entitlement flow and validated ad behavior in release builds |
+| Fleet manager workflows | Not Implemented | Later | R4 | Fleet routes, role controls, and fleet-level reporting delivered |
 
 ## Milestone Definitions
 
-- R1: Production-capable parity foundation.
-- R2: Core workflow completeness and UX parity.
-- R3: Insights and operational depth.
-- R4: Expansion roadmap features.
-
-## Governance Rules
-
-- Delivery status authority remains docs/REQUIREMENTS.md.
-- Product intent and roadmap authority remains docs/PRODUCT_DESIGN.md.
-- If a capability moves scope tier, update this file and requirements status in the same commit.
+- R1: Production-capable parity foundation and confidence gates
+- R2: Core workflow completeness and UX parity
+- R3: Insights and operational depth
+- R4: Expansion roadmap
 
 ## Current Execution Order
 
-1. Reminder delivery reliability (scheduled + push/email feedback loop).
-2. Mobile runtime parity release validation and production hardening.
-3. Export parity QA signoff across web and iOS.
-4. Calendar integration UX completion from reminder/task actions.
+1. Reminder delivery reliability (Must)
+2. Mobile runtime parity validation (Must)
+3. Export parity signoff (Must)
+4. Calendar reliability and UX completion
+5. Timeline and UX parity completion
+6. API enrichment and forecasting depth
+
+## Governance
+
+- Keep this file synchronized with docs/REQUIREMENTS.md in the same commit.
+- Any scope-tier changes require updating docs/NEXT_FEATURES_EXECUTION_PLAN.md.
+

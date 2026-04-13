@@ -1,10 +1,16 @@
 import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatFileDisplay } from '../shared/fileUtils';
 import {
+  addReminder,
+  completeReminder,
+  dismissReminder,
   getAttachmentAnalyses,
+  getReminders,
   getVehicle,
+  reopenReminder,
+  snoozeReminder,
   updateVehicle,
 } from '../shared/firestoreService';
 import {
@@ -13,10 +19,12 @@ import {
   uploadFile,
 } from '../shared/storageService';
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
+import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import {
   buildDocumentSummary,
   getSourceSnippet,
 } from '../utils/documentAnalysisSummary';
+import { computeOwnershipInsights } from '../utils/ownershipInsights';
 
 type PortfolioItem = {
   id: string;
@@ -59,6 +67,29 @@ type VehicleRecord = {
   documentPortfolio?: {
     categories?: PortfolioCategory[];
   };
+};
+
+type InsightActionType =
+  | 'payment_reminder'
+  | 'payment_calendar'
+  | 'maintenance_follow_up'
+  | 'equity_review';
+
+type InsightReminderSummary = {
+  id: string;
+  title: string;
+  status: string;
+  dueDate?: string;
+  nextDueDate?: string;
+};
+
+const INSIGHT_ACTION_LABELS: Record<
+  Exclude<InsightActionType, 'payment_calendar'>,
+  string
+> = {
+  payment_reminder: 'Payment Reminder',
+  maintenance_follow_up: 'Maintenance Follow-Up',
+  equity_review: 'Value Review',
 };
 
 function clonePortfolio(categories: PortfolioCategory[]) {
@@ -120,6 +151,38 @@ function getDocumentSummary(
   );
 }
 
+function buildMonthStartDate(monthOffset = 1): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + monthOffset, 1, 9, 0, 0);
+}
+
+function buildFutureDate(daysAhead: number): Date {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return date;
+}
+
+function formatCurrency(value?: number): string {
+  if (typeof value !== 'number') {
+    return 'Unknown';
+  }
+
+  return `$${value.toFixed(2)}`;
+}
+
+function formatInsightDueDate(value?: string): string {
+  if (!value) {
+    return 'No due date';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString();
+}
+
 export default function Records() {
   const { vin } = useParams();
   const navigate = useNavigate();
@@ -129,6 +192,26 @@ export default function Records() {
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null);
+  const [savedInsightActions, setSavedInsightActions] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [savedInsightReminders, setSavedInsightReminders] = useState<
+    Partial<
+      Record<
+        Exclude<InsightActionType, 'payment_calendar'>,
+        InsightReminderSummary
+      >
+    >
+  >({});
+  const [workingInsightAction, setWorkingInsightAction] =
+    useState<InsightActionType | null>(null);
+  const [actingReminderIds, setActingReminderIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [insightActionMessage, setInsightActionMessage] = useState('');
+  const [calendarTarget, setCalendarTarget] = useState<
+    'google' | 'apple' | 'ics'
+  >('google');
   const [listFilter, setListFilter] = useState<
     'all' | 'required' | PortfolioItem['status']
   >('all');
@@ -190,6 +273,57 @@ export default function Records() {
         } catch {
           // Non-fatal: render without analysis enrichment
         }
+      }
+
+      try {
+        const existingReminders = await getReminders(vin);
+        const nextInsightReminders: Partial<
+          Record<
+            Exclude<InsightActionType, 'payment_calendar'>,
+            InsightReminderSummary
+          >
+        > = {};
+        const reminderKeys = existingReminders
+          .filter(
+            (reminder: any) =>
+              reminder?.serviceType &&
+              reminder?.status !== 'completed' &&
+              reminder?.status !== 'dismissed'
+          )
+          .map((reminder: any) => String(reminder.serviceType));
+
+        existingReminders.forEach((reminder: any) => {
+          const serviceType = reminder?.serviceType as
+            | Exclude<InsightActionType, 'payment_calendar'>
+            | undefined;
+          if (
+            serviceType &&
+            serviceType in INSIGHT_ACTION_LABELS &&
+            reminder?.status !== 'dismissed' &&
+            reminder?.status !== 'completed'
+          ) {
+            nextInsightReminders[serviceType] = {
+              id: String(reminder.id || serviceType),
+              title: String(
+                reminder.title || INSIGHT_ACTION_LABELS[serviceType]
+              ),
+              status: String(reminder.status || 'active'),
+              dueDate:
+                typeof reminder.dueDate === 'string'
+                  ? reminder.dueDate
+                  : undefined,
+              nextDueDate:
+                typeof reminder.nextDueDate === 'string'
+                  ? reminder.nextDueDate
+                  : undefined,
+            };
+          }
+        });
+
+        setSavedInsightActions(new Set(reminderKeys));
+        setSavedInsightReminders(nextInsightReminders);
+      } catch {
+        // Non-fatal: reminder actions stay available without preload state.
       }
 
       setCategories(initialCategories);
@@ -422,6 +556,232 @@ export default function Records() {
     entry => entry.key === selectedItemKey
   );
 
+  const insights = useMemo(
+    () => computeOwnershipInsights(categories, vehicle),
+    [categories, vehicle]
+  );
+
+  const runInsightReminderAction = async (action: InsightActionType) => {
+    if (!vin || !vehicle) {
+      return;
+    }
+
+    if (savedInsightActions.has(action)) {
+      setInsightActionMessage('This insight action is already scheduled.');
+      return;
+    }
+
+    setWorkingInsightAction(action);
+    setInsightActionMessage('');
+
+    try {
+      let dueDate = buildFutureDate(30);
+      let title = 'Ownership review';
+      let description = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+      let frequency = 'monthly';
+      let interval = 1;
+
+      if (action === 'payment_reminder') {
+        dueDate = buildMonthStartDate();
+        title = `Monthly payment for ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+        description = `Estimated payment ${formatCurrency(insights.estimatedMonthlyPayment)} based on uploaded finance documents.`;
+      }
+
+      if (action === 'maintenance_follow_up') {
+        dueDate = insights.latestServiceDate
+          ? new Date(
+              new Date(insights.latestServiceDate).getTime() +
+                90 * 24 * 60 * 60 * 1000
+            )
+          : buildFutureDate(45);
+        title = `Maintenance follow-up for ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+        description = `Review upcoming service needs after ${insights.maintenanceDocsCount} maintenance documents and ${formatCurrency(insights.maintenanceTotalCost)} in captured spend.`;
+        frequency = 'quarterly';
+        interval = 3;
+      }
+
+      if (action === 'equity_review') {
+        dueDate = buildFutureDate(180);
+        title = `Value review for ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+        description = `Check refinance, trade-in, or sale timing against estimated realized value of ${formatCurrency(insights.estimatedValueRealized)}.`;
+        frequency = 'semiannual';
+        interval = 6;
+      }
+
+      const createdReminder = await addReminder(vin, {
+        title,
+        description,
+        serviceType: action,
+        frequency,
+        interval,
+        status: 'active',
+        dueDate: dueDate.toLocaleDateString(),
+        nextDueDate: dueDate.toISOString(),
+        estimatedAmount:
+          action === 'payment_reminder'
+            ? insights.estimatedMonthlyPayment
+            : undefined,
+      });
+
+      setSavedInsightActions(prev => new Set(prev).add(action));
+      if (action !== 'payment_calendar') {
+        setSavedInsightReminders(prev => ({
+          ...prev,
+          [action]: {
+            id: createdReminder.id,
+            title,
+            status: 'active',
+            dueDate: dueDate.toLocaleDateString(),
+            nextDueDate: dueDate.toISOString(),
+          },
+        }));
+      }
+      setInsightActionMessage('Reminder saved to Upcoming Tasks.');
+    } catch (error) {
+      console.error('Failed to save insight reminder', error);
+      setInsightActionMessage('Failed to save reminder.');
+    } finally {
+      setWorkingInsightAction(null);
+    }
+  };
+
+  const updateSavedInsightReminder = (
+    action: Exclude<InsightActionType, 'payment_calendar'>,
+    updater: (current: InsightReminderSummary) => InsightReminderSummary | null
+  ) => {
+    setSavedInsightReminders(prev => {
+      const current = prev[action];
+      if (!current) {
+        return prev;
+      }
+
+      const nextValue = updater(current);
+      if (!nextValue) {
+        const next = { ...prev };
+        delete next[action];
+        return next;
+      }
+
+      return {
+        ...prev,
+        [action]: nextValue,
+      };
+    });
+  };
+
+  const handleInsightReminderStateChange = async (
+    action: Exclude<InsightActionType, 'payment_calendar'>,
+    operation: 'complete' | 'snooze' | 'dismiss' | 'resume'
+  ) => {
+    if (!vin) {
+      return;
+    }
+
+    const reminder = savedInsightReminders[action];
+    if (!reminder?.id) {
+      return;
+    }
+
+    setActingReminderIds(prev => new Set(prev).add(reminder.id));
+    setInsightActionMessage('');
+
+    try {
+      if (operation === 'complete') {
+        await completeReminder(vin, reminder.id);
+        updateSavedInsightReminder(action, () => null);
+        setSavedInsightActions(prev => {
+          const next = new Set(prev);
+          next.delete(action);
+          return next;
+        });
+        setInsightActionMessage('Reminder completed.');
+      }
+
+      if (operation === 'dismiss') {
+        await dismissReminder(vin, reminder.id);
+        updateSavedInsightReminder(action, () => null);
+        setSavedInsightActions(prev => {
+          const next = new Set(prev);
+          next.delete(action);
+          return next;
+        });
+        setInsightActionMessage('Reminder dismissed.');
+      }
+
+      if (operation === 'snooze') {
+        const snoozedUntil = new Date(
+          Date.now() + 14 * 24 * 60 * 60 * 1000
+        ).toISOString();
+        await snoozeReminder(vin, reminder.id, snoozedUntil);
+        updateSavedInsightReminder(action, current => ({
+          ...current,
+          status: 'snoozed',
+          nextDueDate: snoozedUntil,
+        }));
+        setInsightActionMessage('Reminder snoozed for 14 days.');
+      }
+
+      if (operation === 'resume') {
+        await reopenReminder(vin, reminder.id);
+        updateSavedInsightReminder(action, current => ({
+          ...current,
+          status: 'active',
+        }));
+        setSavedInsightActions(prev => new Set(prev).add(action));
+        setInsightActionMessage('Reminder resumed.');
+      }
+    } catch (error) {
+      console.error('Failed to update insight reminder state', error);
+      setInsightActionMessage('Failed to update reminder.');
+    } finally {
+      setActingReminderIds(prev => {
+        const next = new Set(prev);
+        next.delete(reminder.id);
+        return next;
+      });
+    }
+  };
+
+  const runInsightCalendarAction = async () => {
+    if (
+      !vin ||
+      !vehicle ||
+      typeof insights.estimatedMonthlyPayment !== 'number'
+    ) {
+      return;
+    }
+
+    setWorkingInsightAction('payment_calendar');
+    setInsightActionMessage('');
+
+    try {
+      const startAt = buildMonthStartDate().toISOString();
+      const endAt = new Date(
+        new Date(startAt).getTime() + 60 * 60 * 1000
+      ).toISOString();
+      const event = await createMaintenanceCalendarEvent({
+        vehicleVin: vin,
+        title: `Vehicle payment due for ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+        description: `Estimated payment ${formatCurrency(insights.estimatedMonthlyPayment)} based on uploaded finance documents.`,
+        startAt,
+        endAt,
+        target: calendarTarget,
+      });
+
+      const destination = event.actionUrl || event.downloadUrl;
+      if (destination) {
+        window.open(destination, '_blank', 'noopener,noreferrer');
+      }
+
+      setInsightActionMessage(`Calendar event created for ${calendarTarget}.`);
+    } catch (error) {
+      console.error('Failed to create payment calendar event', error);
+      setInsightActionMessage('Failed to create calendar event.');
+    } finally {
+      setWorkingInsightAction(null);
+    }
+  };
+
   const statusClassMap: Record<PortfolioItem['status'], string> = {
     missing:
       'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
@@ -464,6 +824,332 @@ export default function Records() {
       </div>
 
       <div className="space-y-4">
+        {flattenedItems.length > 0 && (
+          <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                  Ownership Insights
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-0">
+                  Estimates from extracted document data. Add finance contracts,
+                  payment statements, and purchase docs to increase precision.
+                </p>
+              </div>
+              <div className="text-xs text-slate-600 dark:text-slate-300">
+                Documents analyzed: {insights.analyzedDocumentCount}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Maintenance spend captured
+                </div>
+                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
+                  ${insights.maintenanceTotalCost.toFixed(2)}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {insights.maintenanceDocsCount} docs • Avg $
+                  {insights.maintenanceAverageCost.toFixed(2)}
+                  {insights.latestServiceDate
+                    ? ` • Latest ${new Date(insights.latestServiceDate).toLocaleDateString()}`
+                    : ''}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Estimated monthly payment
+                </div>
+                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
+                  {typeof insights.estimatedMonthlyPayment === 'number'
+                    ? `$${insights.estimatedMonthlyPayment.toFixed(2)}`
+                    : 'Add finance docs'}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Finance docs detected: {insights.financeDocsCount}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Value realized vs depreciation
+                </div>
+                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
+                  {typeof insights.estimatedValueRealized === 'number'
+                    ? `$${insights.estimatedValueRealized.toFixed(2)} realized`
+                    : 'Need principal doc'}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {typeof insights.estimatedCurrentValue === 'number'
+                    ? `Est. current value $${insights.estimatedCurrentValue.toFixed(2)}`
+                    : 'Upload purchase/loan principal to unlock estimate'}
+                </div>
+              </div>
+            </div>
+
+            {insights.upcomingPaymentDates.length > 0 &&
+              typeof insights.estimatedMonthlyPayment === 'number' && (
+                <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    Payment Calendar Projection
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">
+                    Upcoming monthly obligations from extracted finance records.
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                    {insights.upcomingPaymentDates.map(date => (
+                      <div
+                        key={date}
+                        className="rounded-md bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 px-2 py-1"
+                      >
+                        <div className="text-slate-600 dark:text-slate-300">
+                          {date}
+                        </div>
+                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                          ${insights.estimatedMonthlyPayment.toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {typeof insights.estimatedPaidToDate === 'number' && (
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                      Estimated paid to date: $
+                      {insights.estimatedPaidToDate.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+            <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    Turn Insights Into Actions
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Save reminder records or add projected obligations to your
+                    calendar.
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="recordsCalendarTarget"
+                    className="text-xs text-slate-500 dark:text-slate-400"
+                  >
+                    Calendar target
+                  </label>
+                  <select
+                    id="recordsCalendarTarget"
+                    value={calendarTarget}
+                    onChange={event =>
+                      setCalendarTarget(
+                        event.target.value as 'google' | 'apple' | 'ics'
+                      )
+                    }
+                    className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="google">Google</option>
+                    <option value="apple">Apple</option>
+                    <option value="ics">ICS download</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mt-3">
+                {typeof insights.estimatedMonthlyPayment === 'number' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void runInsightReminderAction('payment_reminder')
+                      }
+                      disabled={workingInsightAction !== null}
+                      className="px-3 py-2 text-sm rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 disabled:opacity-60"
+                    >
+                      {workingInsightAction === 'payment_reminder'
+                        ? 'Saving...'
+                        : savedInsightActions.has('payment_reminder')
+                          ? 'Payment Reminder Saved'
+                          : 'Save Payment Reminder'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void runInsightCalendarAction()}
+                      disabled={workingInsightAction !== null}
+                      className="px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 disabled:opacity-60"
+                    >
+                      {workingInsightAction === 'payment_calendar'
+                        ? 'Creating...'
+                        : 'Add Payment To Calendar'}
+                    </button>
+                  </>
+                )}
+
+                {insights.maintenanceDocsCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void runInsightReminderAction('maintenance_follow_up')
+                    }
+                    disabled={workingInsightAction !== null}
+                    className="px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 disabled:opacity-60"
+                  >
+                    {workingInsightAction === 'maintenance_follow_up'
+                      ? 'Saving...'
+                      : savedInsightActions.has('maintenance_follow_up')
+                        ? 'Maintenance Follow-Up Saved'
+                        : 'Schedule Maintenance Follow-Up'}
+                  </button>
+                )}
+
+                {typeof insights.estimatedValueRealized === 'number' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void runInsightReminderAction('equity_review')
+                    }
+                    disabled={workingInsightAction !== null}
+                    className="px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 disabled:opacity-60"
+                  >
+                    {workingInsightAction === 'equity_review'
+                      ? 'Saving...'
+                      : savedInsightActions.has('equity_review')
+                        ? 'Value Review Saved'
+                        : 'Schedule Value Review'}
+                  </button>
+                )}
+              </div>
+
+              {insightActionMessage && (
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-3">
+                  {insightActionMessage}
+                </div>
+              )}
+
+              {Object.keys(savedInsightReminders).length > 0 &&
+                vehicle?.vin && (
+                  <div className="mt-4 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 p-3">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          Scheduled Insight Actions
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          These reminders are already saved for this vehicle.
+                        </div>
+                      </div>
+                      <Link
+                        to={`/app/upcoming?vin=${encodeURIComponent(vehicle.vin)}`}
+                        className="text-xs text-slate-700 dark:text-slate-200 no-underline border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1"
+                      >
+                        Open Upcoming Tasks
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
+                      {(
+                        Object.entries(savedInsightReminders) as Array<
+                          [
+                            Exclude<InsightActionType, 'payment_calendar'>,
+                            InsightReminderSummary,
+                          ]
+                        >
+                      ).map(([action, reminder]) => (
+                        <div
+                          key={reminder.id}
+                          className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
+                        >
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {INSIGHT_ACTION_LABELS[action]}
+                          </div>
+                          <div className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-1">
+                            {reminder.title}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Status: {reminder.status}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            Due:{' '}
+                            {formatInsightDueDate(
+                              reminder.nextDueDate || reminder.dueDate
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {reminder.status === 'snoozed' ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void handleInsightReminderStateChange(
+                                    action,
+                                    'resume'
+                                  )
+                                }
+                                disabled={actingReminderIds.has(reminder.id)}
+                                className="px-2 py-1 text-[11px] rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 disabled:opacity-60"
+                              >
+                                {actingReminderIds.has(reminder.id)
+                                  ? 'Working...'
+                                  : 'Resume'}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void handleInsightReminderStateChange(
+                                    action,
+                                    'snooze'
+                                  )
+                                }
+                                disabled={actingReminderIds.has(reminder.id)}
+                                className="px-2 py-1 text-[11px] rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 disabled:opacity-60"
+                              >
+                                {actingReminderIds.has(reminder.id)
+                                  ? 'Working...'
+                                  : 'Snooze 14d'}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleInsightReminderStateChange(
+                                  action,
+                                  'complete'
+                                )
+                              }
+                              disabled={actingReminderIds.has(reminder.id)}
+                              className="px-2 py-1 text-[11px] rounded-md border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 disabled:opacity-60"
+                            >
+                              {actingReminderIds.has(reminder.id)
+                                ? 'Working...'
+                                : 'Complete'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleInsightReminderStateChange(
+                                  action,
+                                  'dismiss'
+                                )
+                              }
+                              disabled={actingReminderIds.has(reminder.id)}
+                              className="px-2 py-1 text-[11px] rounded-md border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 disabled:opacity-60"
+                            >
+                              {actingReminderIds.has(reminder.id)
+                                ? 'Working...'
+                                : 'Dismiss'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+            </div>
+          </section>
+        )}
+
         {categories.length === 0 && (
           <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <p className="text-slate-700 dark:text-slate-300 mt-0">

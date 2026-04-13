@@ -62,9 +62,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Brief delay so the GitHub concurrency group can settle before we
-          # enumerate stale runs, reducing the chance that two simultaneous
-          # runs cancel each other.
+          # Wait briefly so the GitHub concurrency group can settle; this
+          # reduces (but does not eliminate) the chance that two simultaneous
+          # runs cancel each other before the concurrency group has a chance
+          # to do so itself.
           sleep 5
           gh run list \
             --repo "${{ github.repository }}" \
@@ -72,8 +73,9 @@ jobs:
             --status queued \
             --json databaseId \
             --jq '.[].databaseId' | while read -r run_id; do
-              if [ "$run_id" != "${{ github.run_id }}" ]; then
-                echo "Cancelling queued run $run_id"
+              # Only cancel runs older than this one (lower ID = started earlier).
+              if [ "$run_id" -lt "${{ github.run_id }}" ]; then
+                echo "Cancelling stale queued run $run_id"
                 gh run cancel "$run_id" --repo "${{ github.repository }}" || true
               fi
             done
@@ -83,8 +85,9 @@ jobs:
             --status in_progress \
             --json databaseId \
             --jq '.[].databaseId' | while read -r run_id; do
-              if [ "$run_id" != "${{ github.run_id }}" ]; then
-                echo "Cancelling in-progress run $run_id"
+              # Only cancel runs older than this one (lower ID = started earlier).
+              if [ "$run_id" -lt "${{ github.run_id }}" ]; then
+                echo "Cancelling stale in-progress run $run_id"
                 gh run cancel "$run_id" --repo "${{ github.repository }}" || true
               fi
             done

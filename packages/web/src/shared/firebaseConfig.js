@@ -15,6 +15,53 @@ export const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+const isPlaceholderValue = value => {
+  const normalized = String(value || '').trim();
+  if (!normalized) {
+    return true;
+  }
+
+  const upper = normalized.toUpperCase();
+  return (
+    upper.startsWith('YOUR_') ||
+    upper.startsWith('REPLACE_WITH_') ||
+    normalized.includes('XXXXXXXX') ||
+    normalized === '000000000000'
+  );
+};
+
+const validateFirebaseClientConfig = () => {
+  const requiredFields = [
+    ['apiKey', firebaseConfig.apiKey],
+    ['authDomain', firebaseConfig.authDomain],
+    ['projectId', firebaseConfig.projectId],
+    ['storageBucket', firebaseConfig.storageBucket],
+    ['messagingSenderId', firebaseConfig.messagingSenderId],
+    ['appId', firebaseConfig.appId],
+  ];
+
+  const invalidFields = requiredFields
+    .filter(([, value]) => isPlaceholderValue(value))
+    .map(([name]) => name);
+
+  const apiKey = String(firebaseConfig.apiKey || '').trim();
+  if (apiKey && !apiKey.startsWith('AIza')) {
+    invalidFields.push('apiKey');
+  }
+
+  if (invalidFields.length === 0) {
+    return;
+  }
+
+  const environment = resolveEnvironmentName();
+  const message =
+    `[firebaseConfig] Invalid Firebase web configuration for environment ` +
+    `${environment}. Check VITE_FIREBASE_* values for: ` +
+    `${Array.from(new Set(invalidFields)).join(', ')}.`;
+
+  throw new Error(message);
+};
+
 const resolveEnvironmentName = () => {
   const raw =
     import.meta.env.VITE_ENVIRONMENT || import.meta.env.MODE || 'development';
@@ -51,6 +98,7 @@ const validateEnvironmentProjectAlignment = () => {
 };
 
 validateEnvironmentProjectAlignment();
+validateFirebaseClientConfig();
 
 const app =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];

@@ -405,6 +405,16 @@ jobs:
             exit 1
           fi
 
+          if [[ "$API_KEY" == YOUR_* ]] || [[ "$AUTH_DOMAIN" == YOUR_* ]] || [[ "$PROJECT_ID" == YOUR_* ]] || [[ "$STORAGE_BUCKET" == YOUR_* ]] || [[ "$MESSAGING_SENDER_ID" == YOUR_* ]] || [[ "$APP_ID" == YOUR_* ]]; then
+            echo "❌ Placeholder Firebase values detected for environment: $TARGET_ENV"
+            exit 1
+          fi
+
+          if [[ ! "$API_KEY" =~ ^AIza ]]; then
+            echo "❌ VITE_FIREBASE_API_KEY for $TARGET_ENV does not look valid"
+            exit 1
+          fi
+
           if [ "$TARGET_ENV" = "staging" ] || [ "$TARGET_ENV" = "development" ]; then
             if [ -z "${ACCESS_PASSWORD_VALUE:-}" ]; then
               echo "❌ Missing required access password secret for environment: $TARGET_ENV"

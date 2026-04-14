@@ -51,8 +51,50 @@ env:
   MANIFEST_PATH: ".cicd/projects/${{ github.event.repository.name }}.yml"
 
 jobs:
+  cancel-stale-runs:
+    name: Cancel Stale Runs
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel queued and in-progress runs of this workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Wait briefly so the GitHub concurrency group can settle; this
+          # reduces (but does not eliminate) the chance that two simultaneous
+          # runs cancel each other before the concurrency group has a chance
+          # to do so itself.
+          sleep 5
+          gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow "${{ github.workflow }}" \
+            --status queued \
+            --json databaseId \
+            --jq '.[].databaseId' | while read -r run_id; do
+              # Only cancel runs older than this one (lower ID = started earlier).
+              if [ "$run_id" -lt "${{ github.run_id }}" ]; then
+                echo "Cancelling stale queued run $run_id"
+                gh run cancel "$run_id" --repo "${{ github.repository }}" || true
+              fi
+            done
+          gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow "${{ github.workflow }}" \
+            --status in_progress \
+            --json databaseId \
+            --jq '.[].databaseId' | while read -r run_id; do
+              # Only cancel runs older than this one (lower ID = started earlier).
+              if [ "$run_id" -lt "${{ github.run_id }}" ]; then
+                echo "Cancelling stale in-progress run $run_id"
+                gh run cancel "$run_id" --repo "${{ github.repository }}" || true
+              fi
+            done
+
   load-config:
     name: Load Project Configuration
+    needs: cancel-stale-runs
     runs-on: ubuntu-latest
     env:
       APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -181,6 +223,7 @@ jobs:
       (needs.load-config.outputs.trigger_context == 'build_all' ||
        needs.load-config.outputs.trigger_context == 'build_and_deploy')
     runs-on: self-hosted
+    timeout-minutes: 60
     env:
       COCOAPODS_DISABLE_STATS: true
     steps:
@@ -603,7 +646,7 @@ jobs:
         build-chrome-extension,
       ]
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Pipeline Summary
         run: |

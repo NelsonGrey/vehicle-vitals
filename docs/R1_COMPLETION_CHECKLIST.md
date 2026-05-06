@@ -11,6 +11,7 @@ Purpose: convert R1 production-readiness gates into execution-ready tasks with e
 - Gate 1: Automated reliability checks are green (12/12 reminder tests), but authenticated deployed HTTP/manual-send validation is still open.
 - Gate 1 blocker detail: anonymous token minting is disabled for this project (`ADMIN_ONLY_OPERATION`), so authenticated validation requires a real test user token.
 - Gate 2: Build/runtime smoke is green (analyze + iOS release no-codesign), but hands-on acceptance execution and backend-traffic evidence are still open.
+- Gate 2 blocker detail: attached iOS run currently fails until Developer Mode is enabled on the connected device.
 - Gate 3: Automated CSV + PDF structural parity is green; manual visual QA + signoff entry are still open.
 
 ### Immediate Next-Step Sequence
@@ -147,6 +148,8 @@ Status: In progress
 - `artifacts/smoke/r1-mobile-backend-traffic-20260413T194544Z.log` (backend traffic log template scaffold generated)
 - `artifacts/smoke/r1-mobile-backend-traffic-20260506T154131Z.log` (backend traffic log template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-backend-traffic-20260506T213424Z.log` (backend traffic log template scaffold refreshed)
+- Runtime attempt note (2026-05-06): `flutter run -d ios` resolved stale UUID targeting but exited with Developer Mode requirement on device `HADES`.
+- `artifacts/smoke/r1-mobile-attached-run-udid-20260506T220717Z.log` (attached device launch attempt captured; blocked pending Developer Mode/trust flow)
 
 ### Acceptance Helper Generated
 
@@ -155,6 +158,8 @@ Status: In progress
 ### Remaining to Close Gate
 
 1. Run the mobile app on iOS simulator or device (using latest build from `r1-mobile-build-20260506T213134Z.log`)
+   - If running on physical device: enable Developer Mode (Settings -> Privacy & Security -> Developer Mode), reconnect, trust host, then rerun `flutter run -d ios`.
+   - If using attached device explicitly: `flutter run -d 00008020-00060DAE0C69002E`.
 2. Follow the acceptance checklist phases in order:
    - Phase 1: Authentication & sign-in
    - Phase 2: Vehicle CRUD (create, edit, view)

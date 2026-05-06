@@ -121,6 +121,36 @@ const canonicalHostedOriginsByEnvironment = {
   },
 };
 
+const normalizeHostedAuthDomain = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const environment = resolveEnvironmentName();
+  const canonicalConfig = canonicalHostedOriginsByEnvironment[environment];
+  if (!canonicalConfig) {
+    return;
+  }
+
+  const canonicalHostname = new URL(canonicalConfig.toOrigin).hostname;
+  const currentHostname = String(window.location.hostname || '').toLowerCase();
+  const configuredAuthDomain = String(firebaseConfig.authDomain || '')
+    .trim()
+    .toLowerCase();
+
+  const isHostedOrigin =
+    currentHostname === canonicalHostname ||
+    canonicalConfig.fromHostnames.includes(currentHostname);
+  const usesFirebaseAppDomain = configuredAuthDomain.endsWith('.firebaseapp.com');
+
+  if (isHostedOrigin && usesFirebaseAppDomain) {
+    firebaseConfig.authDomain = canonicalHostname;
+    console.warn(
+      `[firebaseConfig] Normalized authDomain to hosted domain ${canonicalHostname} for ${environment} environment.`
+    );
+  }
+};
+
 const redirectToCanonicalHostedOrigin = () => {
   if (typeof window === 'undefined') {
     return;
@@ -173,6 +203,7 @@ const validateEnvironmentProjectAlignment = () => {
 };
 
 applyDevelopmentFirebaseFallback();
+normalizeHostedAuthDomain();
 validateEnvironmentProjectAlignment();
 validateFirebaseClientConfig();
 redirectToCanonicalHostedOrigin();

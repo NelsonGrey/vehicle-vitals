@@ -207,13 +207,14 @@ What this guards against:
 
 Backups are written to `~/.keychain-backups` before any repair.
 
-This project supports multiple Firebase environments for development, staging, and production.
+This project supports multiple Firebase environments for development, demonstration, staging, and production.
 
 ### Environments
 
 - **Production**: `vehicle-vitals-prod` - Live application
 - **Staging**: `vehicle-vitals-staging` - Testing environment
 - **Development**: `vehicle-vitals-dev` - Development environment
+- **Demonstration**: `vehicle-vitals-dev` - Demo branch deployment with separate build mode
 
 ### Quick Deploy
 
@@ -228,6 +229,9 @@ Use the deployment script for easy environment switching:
 
 # Deploy to development
 ./deploy.sh development
+
+# Deploy to demonstration
+./deploy.sh demonstration
 ```
 
 ### Manual Deployment
@@ -236,6 +240,7 @@ Use the deployment script for easy environment switching:
 # Build for specific environment
 cd packages/web
 npm run build:staging    # or build:development
+npm run build:demonstration
 
 # Deploy using Firebase CLI
 firebase use staging     # or development

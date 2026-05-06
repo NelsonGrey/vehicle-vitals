@@ -1,6 +1,6 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: April 13, 2026
+Last updated: May 6, 2026
 Primary production project: `vehicle-vitals-prod`
 
 ## Web Deployment
@@ -10,7 +10,18 @@ Status: Live
 - Platform: Firebase Hosting
 - URL: https://vehicle-vitals-prod.web.app
 - Core state: deployed and accessible
-- Notes: production hardening and reminder/calendar/export reliability validation still in progress
+- Notes: production web is constrained to marketing routes only; app/auth routes are redirected in production mode.
+
+## Environment Security Posture
+
+Status: Hardened in application layer
+
+- Development: password-gated via environment access password.
+- Demonstration: password-gated via environment access password.
+- Staging: password-gated via environment access password.
+- Production: marketing-only routing enabled (no user app/auth surface exposed).
+
+Reference: `docs/SECURE_ENVIRONMENTS.md`.
 
 ## Firebase Services
 
@@ -29,7 +40,7 @@ Status: Buildable, release validation pending
 
 - Release-like build path exists.
 - Runtime uses real Firebase initialization/options in `packages/mobile/lib/main.dart`.
-- Remaining: release-confidence acceptance run, signing/distribution verification, production smoke evidence.
+- Remaining: release-confidence acceptance run, signing/distribution verification, backend-traffic evidence capture.
 
 ### Android
 
@@ -63,6 +74,17 @@ Status: Configured with partial product integration
 - Manuals/warranty/maintenance-plan provider endpoints exist behind integration settings.
 - Remaining: client UX surfacing and full contract validation in production-like environments.
 
+## R1 Gate Execution Status
+
+As of May 6, 2026:
+
+- Gate 1 (Reminder delivery reliability): automated checks PASS; authenticated manual-send validation pending.
+- Gate 1 blocker: project currently rejects anonymous token minting (`ADMIN_ONLY_OPERATION`), so validation requires a real test-user ID token.
+- Gate 2 (Mobile runtime parity): build/analyze PASS; manual acceptance checklist execution pending.
+- Gate 3 (Export parity): CSV/PDF structural parity PASS; manual visual QA signoff pending.
+
+Primary evidence index: `docs/R1_COMPLETION_CHECKLIST.md`.
+
 ## Remaining Go-Live Gates
 
 1. Close R1 reminder delivery reliability gate.
@@ -70,4 +92,3 @@ Status: Configured with partial product integration
 3. Complete web/mobile export parity signoff.
 
 Production-ready completion is blocked until these gates are closed.
-

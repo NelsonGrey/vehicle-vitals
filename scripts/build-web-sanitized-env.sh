@@ -14,9 +14,12 @@ case "$MODE" in
   development)
     WEB_BUILD_SCRIPT="build:development"
     ;;
+  demonstration)
+    WEB_BUILD_SCRIPT="build:demonstration"
+    ;;
   *)
     echo "Invalid mode: $MODE"
-    echo "Valid options: production, staging, development"
+    echo "Valid options: production, staging, development, demonstration"
     exit 1
     ;;
 esac
@@ -47,7 +50,8 @@ for var_name in \
   VITE_ADSENSE_CLIENT \
   VITE_ADSENSE_SLOT \
   VITE_ACCESS_PASSWORD_STAGING \
-  VITE_ACCESS_PASSWORD_DEVELOPMENT
+  VITE_ACCESS_PASSWORD_DEVELOPMENT \
+  VITE_ACCESS_PASSWORD_DEMONSTRATION
   do
   unset "$var_name" || true
 done

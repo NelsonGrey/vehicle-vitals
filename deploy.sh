@@ -2,7 +2,7 @@
 
 # Vehicle Vitals Deployment Script
 # Usage: ./deploy.sh [environment]
-# Environments: production, staging, development
+# Environments: production, staging, development, demonstration
 
 set -e
 
@@ -14,12 +14,12 @@ echo "🚀 Deploying Vehicle Vitals to $ENVIRONMENT environment"
 
 # Validate environment
 case $ENVIRONMENT in
-    production|staging|development)
+    production|staging|development|demonstration)
         echo "✅ Environment: $ENVIRONMENT"
         ;;
     *)
         echo "❌ Invalid environment: $ENVIRONMENT"
-        echo "Valid options: production, staging, development"
+        echo "Valid options: production, staging, development, demonstration"
         exit 1
         ;;
 esac
@@ -33,6 +33,9 @@ case $ENVIRONMENT in
         FIREBASE_PROJECT="vehicle-vitals-staging"
         ;;
     development)
+        FIREBASE_PROJECT="vehicle-vitals-dev"
+        ;;
+    demonstration)
         FIREBASE_PROJECT="vehicle-vitals-dev"
         ;;
 esac

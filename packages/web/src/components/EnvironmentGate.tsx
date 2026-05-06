@@ -11,6 +11,7 @@ export default function EnvironmentGate({
 }: EnvironmentGateProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,6 +43,7 @@ export default function EnvironmentGate({
       case 'demonstration':
         return (
           import.meta.env.VITE_ACCESS_PASSWORD_DEMONSTRATION ||
+          import.meta.env.VITE_ACCESS_PASSWORD_DEVELOPMENT ||
           import.meta.env.VITE_ACCESS_PASSWORD ||
           ''
         );
@@ -130,17 +132,27 @@ export default function EnvironmentGate({
             >
               Access Password
             </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
-              placeholder={`Enter ${environment} password`}
-              autoComplete="current-password"
-              required
-              autoFocus
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full px-4 py-3 pr-20 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                placeholder={`Enter ${environment} password`}
+                autoComplete="current-password"
+                required
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(current => !current)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-700 dark:text-slate-300 px-2 py-1 rounded border border-slate-300 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-600"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
 
           {error && (

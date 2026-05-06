@@ -15,7 +15,11 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './shared/AuthContext';
 import { DEFAULT_APP_REDIRECT } from './shared/authRedirect';
-import { appEnvironment, isDevelopmentEnvironment } from './shared/environment';
+import {
+  appEnvironment,
+  isDevelopmentEnvironment,
+  isMarketingOnlyEnvironment,
+} from './shared/environment';
 import {
   buildReminderNotificationPath,
   subscribeToForegroundMessages,
@@ -192,6 +196,7 @@ function App() {
   // Check if we should show the coming soon page
   const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
   const environment = appEnvironment;
+  const marketingOnlyMode = isMarketingOnlyEnvironment;
 
   // Track app initialization
   useEffect(() => {
@@ -335,66 +340,99 @@ function App() {
               />
 
               {/* Protected user application */}
-              <Route
-                path="app"
-                element={
-                  <ProtectedRoute>
-                    <Outlet />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Home />} />
-                <Route path="add-vehicle" element={<AddVehicle />} />
-                <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
-                <Route path="records/:vin" element={<Records />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="providers" element={<ServiceProviders />} />
-                <Route path="timeline" element={<TimelineDashboard />} />
-                <Route path="upcoming" element={<UpcomingTasks />} />
-                {isDevelopmentEnvironment && (
-                  <Route path="dev-seed" element={<DevSeed />} />
-                )}
-              </Route>
+              {marketingOnlyMode ? (
+                <>
+                  <Route path="app/*" element={<Navigate to="/" replace />} />
+                  <Route
+                    path="add-vehicle"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route
+                    path="edit-vehicle/:vin"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route
+                    path="providers"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route path="profile" element={<Navigate to="/" replace />} />
+                  <Route
+                    path="timeline"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route
+                    path="upcoming"
+                    element={<Navigate to="/" replace />}
+                  />
+                </>
+              ) : (
+                <>
+                  <Route
+                    path="app"
+                    element={
+                      <ProtectedRoute>
+                        <Outlet />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Home />} />
+                    <Route path="add-vehicle" element={<AddVehicle />} />
+                    <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
+                    <Route path="records/:vin" element={<Records />} />
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="providers" element={<ServiceProviders />} />
+                    <Route path="timeline" element={<TimelineDashboard />} />
+                    <Route path="upcoming" element={<UpcomingTasks />} />
+                    {isDevelopmentEnvironment && (
+                      <Route path="dev-seed" element={<DevSeed />} />
+                    )}
+                  </Route>
 
-              {/* Legacy protected URLs */}
-              <Route
-                path="add-vehicle"
-                element={<Navigate to="/app/add-vehicle" replace />}
-              />
-              <Route
-                path="edit-vehicle/:vin"
-                element={
-                  <ProtectedRoute>
-                    <EditVehicle />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="providers"
-                element={<Navigate to="/app/providers" replace />}
-              />
-              <Route
-                path="profile"
-                element={<Navigate to="/app/profile" replace />}
-              />
-              <Route
-                path="timeline"
-                element={<Navigate to="/app/timeline" replace />}
-              />
-              <Route
-                path="upcoming"
-                element={<Navigate to="/app/upcoming" replace />}
-              />
+                  {/* Legacy protected URLs */}
+                  <Route
+                    path="add-vehicle"
+                    element={<Navigate to="/app/add-vehicle" replace />}
+                  />
+                  <Route
+                    path="edit-vehicle/:vin"
+                    element={
+                      <ProtectedRoute>
+                        <EditVehicle />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="providers"
+                    element={<Navigate to="/app/providers" replace />}
+                  />
+                  <Route
+                    path="profile"
+                    element={<Navigate to="/app/profile" replace />}
+                  />
+                  <Route
+                    path="timeline"
+                    element={<Navigate to="/app/timeline" replace />}
+                  />
+                  <Route
+                    path="upcoming"
+                    element={<Navigate to="/app/upcoming" replace />}
+                  />
+                </>
+              )}
             </Route>
 
             {/* Authentication and authorization routes */}
-            <Route path="/auth" element={<AuthOnlyRoute />}>
-              <Route element={<AuthLayout />}>
-                <Route path="login" element={<Login />} />
-                <Route path="signup" element={<SignUp />} />
-                <Route path="forgot-password" element={<ForgotPassword />} />
+            {marketingOnlyMode ? (
+              <Route path="/auth/*" element={<Navigate to="/" replace />} />
+            ) : (
+              <Route path="/auth" element={<AuthOnlyRoute />}>
+                <Route element={<AuthLayout />}>
+                  <Route path="login" element={<Login />} />
+                  <Route path="signup" element={<SignUp />} />
+                  <Route path="forgot-password" element={<ForgotPassword />} />
+                </Route>
               </Route>
-            </Route>
+            )}
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,6 +1,6 @@
 # Deploying the web app to Firebase Hosting
 
-This repository supports multiple Firebase environments: Production, Staging, and Development. Each environment has its own Firebase project and configuration.
+This repository supports multiple Firebase environments: Production, Staging, Development, and Demonstration. Each environment has environment-specific configuration.
 
 ## Environment Setup
 
@@ -9,6 +9,7 @@ This repository supports multiple Firebase environments: Production, Staging, an
 - **Production**: `vehicle-vitals-prod`
 - **Staging**: `vehicle-vitals-staging`
 - **Development**: `vehicle-vitals-dev`
+- **Demonstration**: Uses `vehicle-vitals-dev` with `demonstration` build mode
 
 ### 2. Environment Configuration
 
@@ -17,6 +18,7 @@ Each environment has its own `.env` file:
 - `.env` - Production (default)
 - `.env.staging` - Staging environment
 - `.env.development` - Development environment
+- `.env.demonstration` - Demonstration environment
 
 Update the placeholder values in `.env.staging` and `.env.development` with your actual Firebase project configurations.
 
@@ -54,6 +56,9 @@ npm run build:staging
 
 # Development
 npm run build:development
+
+# Demonstration
+npm run build:demonstration
 ```
 
 #### Deploy to specific environment:
@@ -70,6 +75,10 @@ firebase deploy --only hosting
 # Development
 firebase use development
 firebase deploy --only hosting
+
+# Demonstration (project alias may remain development depending on local firebase aliases)
+firebase use development
+firebase deploy --only hosting
 ```
 
 ## Environment URLs
@@ -77,6 +86,7 @@ firebase deploy --only hosting
 - **Production**: https://vehicle-vitals-prod.web.app
 - **Staging**: https://vehicle-vitals-staging.web.app
 - **Development**: https://vehicle-vitals-dev.web.app
+- **Demonstration**: https://vehicle-vitals-dev.web.app (demonstration branch release)
 
 ## Notes
 

@@ -1,22 +1,31 @@
-# Securing STAGING and DEV Environments
+# Securing Development Lifecycle Environments
 
 ## Overview
 
-This guide will help you secure the staging and development environments with password protection to prevent unauthorized public access.
+This guide secures all non-production lifecycle environments with password protection while keeping production marketing-only.
 
 ## Environment URLs
 
 - **Staging**: `https://vehicle-vitals-staging.web.app`
-- **Development**: `https://vehicle-vitals-development.web.app`
+- **Development**: `https://vehicle-vitals-dev.web.app`
+- **Demonstration**: `https://vehicle-vitals-dev.web.app` (demonstration branch deployment)
+- **Production (Marketing Only)**: `https://vehicle-vitals-prod.web.app`
 
 ## Security Implementation
 
-The app now includes an `EnvironmentGate` component that requires password authentication for staging and development environments.
+The app includes an `EnvironmentGate` component that requires password authentication for development, demonstration, and staging environments.
 
-### Default Passwords (Change These!)
+### Password Variables
 
-- **Staging**: `staging2025`
-- **Development**: `dev2025`
+Set these variables in each environment's deployment configuration:
+
+- `VITE_ACCESS_PASSWORD_STAGING`
+- `VITE_ACCESS_PASSWORD_DEVELOPMENT`
+- `VITE_ACCESS_PASSWORD_DEMONSTRATION`
+
+Optional shared fallback:
+
+- `VITE_ACCESS_PASSWORD`
 
 ## Setting Custom Passwords
 
@@ -30,6 +39,9 @@ gh secret set VITE_ACCESS_PASSWORD_STAGING --body 'your-secure-staging-password'
 
 # Set development password
 gh secret set VITE_ACCESS_PASSWORD_DEVELOPMENT --body 'your-secure-dev-password'
+
+# Set demonstration password
+gh secret set VITE_ACCESS_PASSWORD_DEMONSTRATION --body 'your-secure-demo-password'
 ```
 
 ### Via Environment Variables (Local Development)
@@ -42,18 +54,21 @@ VITE_ACCESS_PASSWORD_STAGING=your-secure-staging-password
 
 # .env.development
 VITE_ACCESS_PASSWORD_DEVELOPMENT=your-secure-dev-password
+
+# .env.demonstration
+VITE_ACCESS_PASSWORD_DEMONSTRATION=your-secure-demo-password
 ```
 
 ## How It Works
 
-1. **Environment Detection**: The app checks `VITE_ENVIRONMENT` to determine if it's running in staging or development
-2. **Password Gate**: If in staging/dev, users must enter the correct password before accessing the app
-3. **Firebase Auth**: After password verification, users are signed in anonymously to Firebase for full app access
-4. **Session Persistence**: Authentication persists until the browser session ends
+1. **Environment Detection**: The app checks `VITE_ENVIRONMENT`.
+2. **Password Gate**: If environment is `development`, `demonstration`, or `staging`, users must enter the configured password before access.
+3. **Production Lockdown**: If environment is `production`, app/auth routes are redirected to `/`, exposing only marketing routes.
+4. **Session Persistence**: Gate authentication persists until browser session ends.
 
 ## User Experience
 
-When accessing staging or dev environments, users will see:
+When accessing development, demonstration, or staging environments, users will see:
 
 - A clean password entry screen with environment branding
 - Error messages for incorrect passwords
@@ -70,14 +85,17 @@ gh workflow run ci-cd-pipeline.yml -f environment=STAGING
 
 # Deploy development
 gh workflow run ci-cd-pipeline.yml -f environment=DEVELOPMENT
+
+# Deploy demonstration
+gh workflow run ci-cd-pipeline.yml -f environment=DEMONSTRATION
 ```
 
 ## Verification
 
-1. Visit the staging/dev URLs
+1. Visit development, demonstration, and staging URLs.
 2. Confirm password protection is active
 3. Test with correct and incorrect passwords
-4. Verify full app functionality after authentication
+4. Confirm production redirects `/app/*` and `/auth/*` to `/`.
 
 ## Security Best Practices
 
@@ -91,7 +109,7 @@ gh workflow run ci-cd-pipeline.yml -f environment=DEVELOPMENT
 
 - **Password not working**: Check that secrets are set correctly and deployments are current
 - **Firebase auth issues**: Ensure Firebase configuration is correct for the environment
-- **Environment detection**: Verify `VITE_ENVIRONMENT` is set to 'staging' or 'development'
+- **Environment detection**: Verify `VITE_ENVIRONMENT` is set correctly (`development`, `demonstration`, `staging`, `production`)
 
 ## Emergency Access
 

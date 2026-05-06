@@ -8,6 +8,7 @@
     "build": "./scripts/vite-sanitized-env.sh build production",
     "build:staging": "./scripts/vite-sanitized-env.sh build staging",
     "build:development": "./scripts/vite-sanitized-env.sh build development",
+    "build:demonstration": "./scripts/vite-sanitized-env.sh build demonstration",
     "build:production": "./scripts/vite-sanitized-env.sh build production",
     "preview": "./scripts/vite-sanitized-env.sh preview production",
     "test": "vitest run",

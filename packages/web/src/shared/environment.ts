@@ -9,6 +9,10 @@ const firebaseProjectId = String(import.meta.env.VITE_FIREBASE_PROJECT_ID || '')
   .toLowerCase();
 
 export const isDevelopmentEnvironment = appEnvironment === 'development';
+export const isDemonstrationEnvironment = appEnvironment === 'demonstration';
+export const isStagingEnvironment = appEnvironment === 'staging';
+export const isProductionEnvironment = appEnvironment === 'production';
+export const isMarketingOnlyEnvironment = isProductionEnvironment;
 export const isDevelopmentProject = firebaseProjectId === 'vehicle-vitals-dev';
 export const showDemoSeedControls =
   isDevelopmentEnvironment || isDevelopmentProject;

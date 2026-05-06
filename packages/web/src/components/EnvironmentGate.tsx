@@ -5,8 +5,6 @@ interface EnvironmentGateProps {
   environment: string;
 }
 
-const developmentAccessPasswordFallback = 'dev2025';
-
 export default function EnvironmentGate({
   children,
   environment,
@@ -16,9 +14,11 @@ export default function EnvironmentGate({
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Only show gate for staging and development
+  // Password-protect all non-production lifecycle environments.
   const requiresAuth =
-    environment === 'staging' || environment === 'development';
+    environment === 'staging' ||
+    environment === 'development' ||
+    environment === 'demonstration';
 
   if (!requiresAuth) {
     return <>{children}</>;
@@ -37,7 +37,13 @@ export default function EnvironmentGate({
         return (
           import.meta.env.VITE_ACCESS_PASSWORD_DEVELOPMENT ||
           import.meta.env.VITE_ACCESS_PASSWORD ||
-          developmentAccessPasswordFallback
+          ''
+        );
+      case 'demonstration':
+        return (
+          import.meta.env.VITE_ACCESS_PASSWORD_DEMONSTRATION ||
+          import.meta.env.VITE_ACCESS_PASSWORD ||
+          ''
         );
       default:
         return '';

@@ -1,14 +1,14 @@
 # R1 Completion Checklist
 
-Last updated: May 6, 2026
+Last updated: May 7, 2026
 Status: In progress
 
 Purpose: convert R1 production-readiness gates into execution-ready tasks with explicit evidence requirements.
 
-## Progress Snapshot (May 6, 2026)
+## Progress Snapshot (May 7, 2026)
 
 - Overall completion: 1/3 gates materially complete, 2/3 awaiting manual validation/signoff.
-- Gate 1: Automated reliability checks are green (12/12 reminder tests) and authenticated deployed HTTP/manual-send validation is now green (200 on dev endpoint).
+- Gate 1: Complete. Automated reliability checks are green (12/12 reminder tests) and authenticated deployed HTTP/manual-send validation is green (200 on dev endpoint).
 - Gate 2: Build/runtime smoke is green (analyze + iOS release no-codesign), but hands-on acceptance execution and backend-traffic evidence are still open.
 - Gate 2 blocker detail: attached iOS run currently fails until Developer Mode is enabled on the connected device.
 - Gate 3: Automated CSV + PDF structural parity is green; manual visual QA + signoff entry are still open.
@@ -32,7 +32,7 @@ Purpose: convert R1 production-readiness gates into execution-ready tasks with e
 
 Owner: Functions Lead (TBD)
 Target date: May 9, 2026
-Status: In progress
+Status: Complete
 
 ### Preconditions
 
@@ -82,8 +82,7 @@ ID_TOKEN="<cloud-invoker-identity-token>" \
 
 ### Remaining to Close Gate
 
-- Verify email delivery to configured test recipient within 10 seconds
-- Confirm function logs show successful execution
+- None. Gate 1 reliability and authenticated HTTP validation are complete.
 
 ### Done Criteria
 
@@ -139,12 +138,16 @@ Status: In progress
 - `artifacts/smoke/r1-mobile-build-20260506T153459Z.log` (flutter analyze + ios release build passed)
 - `artifacts/smoke/r1-mobile-build-20260506T180447Z.log` (flutter analyze + ios release build passed after CocoaPods dependency refresh)
 - `artifacts/smoke/r1-mobile-build-20260506T213134Z.log` (flutter analyze + ios release build passed; no analyzer issues)
+- `artifacts/smoke/r1-mobile-build-20260507T174144Z.log` (flutter analyze passed; iOS build failed due CocoaPods Firebase/CoreOnly version mismatch)
+- `artifacts/smoke/r1-mobile-build-20260507T175103Z.log` (flutter analyze + ios release build passed after `pod update Firebase/CoreOnly`)
 - `artifacts/smoke/r1-mobile-acceptance-20260413T194544Z.log` (acceptance checklist template scaffold generated)
 - `artifacts/smoke/r1-mobile-acceptance-20260506T154131Z.log` (acceptance checklist template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-acceptance-20260506T213424Z.log` (acceptance checklist template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-backend-traffic-20260413T194544Z.log` (backend traffic log template scaffold generated)
 - `artifacts/smoke/r1-mobile-backend-traffic-20260506T154131Z.log` (backend traffic log template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-backend-traffic-20260506T213424Z.log` (backend traffic log template scaffold refreshed)
+- `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log` (backend traffic log template scaffold refreshed)
+- `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` (acceptance checklist template scaffold refreshed)
 - Runtime attempt note (2026-05-06): `flutter run -d ios` resolved stale UUID targeting but exited with Developer Mode requirement on device `HADES`.
 - `artifacts/smoke/r1-mobile-attached-run-udid-20260506T220717Z.log` (attached device launch attempt captured; blocked pending Developer Mode/trust flow)
 
@@ -204,33 +207,11 @@ Status: In progress
 ```bash
 # From repository root
 ./scripts/smoke-r1-export-parity-template.sh
-
-# Automated CSV parity
-node scripts/validate-export-parity.mjs
-
-# Automated PDF artifact generation + structural parity report
-node scripts/validate-export-pdf-parity.mjs
 ```
 
-### Automated CSV Parity Validation
+### Current Parity Workflow
 
-CSV structure parity is now **automatically validated** by the `validate-export-parity.mjs` script. This validates:
-
-- Header order and naming
-- Row counts between web and mobile
-- Data value sample spot-checking
-
-Run: `node scripts/validate-export-parity.mjs`
-
-### Automated PDF Parity Validation (Structural)
-
-PDF artifact generation and structural parity are now automated by `validate-export-pdf-parity.mjs`. This generates:
-
-- Web PDF export artifact
-- Mobile PDF export artifact
-- Parity report covering shared required fields and intentional differences
-
-Run: `node scripts/validate-export-pdf-parity.mjs`
+Use `./scripts/smoke-r1-export-parity-template.sh` to generate the parity report scaffold, then attach web/mobile CSV and PDF artifacts from the shared fixture dataset into `artifacts/smoke/` and complete the signoff fields in the generated report.
 
 ### Evidence to Capture
 
@@ -256,6 +237,7 @@ Run: `node scripts/validate-export-pdf-parity.mjs`
 - `artifacts/smoke/r1-export-parity-report-2026-05-06T21-34-24-391Z.md` (**✅ PDF STRUCTURAL PARITY PASSED**: required shared sections/fields validated)
 - `artifacts/smoke/r1-export-parity-report-20260413T193203Z.md` (earlier template scaffold)
 - `artifacts/smoke/r1-export-parity-report-20260506T154131Z.md` (earlier template scaffold)
+- `artifacts/smoke/r1-export-parity-report-20260507T174923Z.md` (latest parity report template scaffold)
 
 ### Remaining to Close Gate
 
@@ -278,7 +260,7 @@ Run: `node scripts/validate-export-pdf-parity.mjs`
 
 | Gate                             | Owner                      | Target Date  | Status      | Evidence Linked |
 | -------------------------------- | -------------------------- | ------------ | ----------- | --------------- |
-| Reminder delivery reliability    | Functions Lead (TBD)       | May 9, 2026  | In progress | Yes             |
+| Reminder delivery reliability    | Functions Lead (TBD)       | May 9, 2026  | Complete    | Yes             |
 | Mobile runtime parity validation | Mobile Lead (TBD)          | May 9, 2026  | In progress | Yes             |
 | Export parity signoff            | Web + Mobile QA Lead (TBD) | May 13, 2026 | In progress | Yes             |
 

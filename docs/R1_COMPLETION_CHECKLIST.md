@@ -9,15 +9,15 @@ Purpose: convert R1 production-readiness gates into execution-ready tasks with e
 
 - Overall completion: 1/3 gates complete, 1/3 in active execution, 1/3 automated-complete (manual acceptance pending).
 - Gate 1: ✅ Complete. Automated reliability checks are green (12/12 reminder tests) and authenticated deployed HTTP/manual-send validation is green (200 on dev endpoint).
-- Gate 2: Build/runtime smoke is green (analyze + iOS release no-codesign). Simulator acceptance run launched on iPhone 16e (AA12D964); manual acceptance log fill still open.
+- Gate 2: Build/runtime smoke is green (analyze + iOS release no-codesign). Acceptance is currently blocked on launch prerequisites: physical device requires Developer Mode/trust confirmation, and simulator launch has not yet produced a successful runtime session in this execution window.
 - Gate 3: ✅ Automated complete. CSV parity PASS, PDF structural parity PASS, parity report signed off (automated validation pipeline). Manual visual QA recommended but not blocking.
 
 ### Immediate Next-Step Sequence
 
 1. Gate 2 manual acceptance run
-   - Monitor simulator run on iPhone 16e; execute 7-phase acceptance checklist.
-   - Fill `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` and backend-traffic log with observed evidence.
-2. Gate 2 manual acceptance: Deliver final sign-off once simulator run completes.
+   - On device `HADES`, enable Developer Mode (Settings -> Privacy & Security) and trust host from Xcode/device prompt.
+   - Re-run `flutter run -d 00008020-00060DAE0C69002E` and execute 7-phase acceptance checklist.
+2. Gate 2 manual acceptance: convert blocker-marked evidence logs to PASS/FAIL with actual runtime/backend observations.
 3. Gate 3 optional: Visual PDF readability check recommended for highest-confidence sign-off.
 
 ## How to Use This Checklist
@@ -148,7 +148,10 @@ Status: In progress
 - `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` (acceptance checklist template scaffold refreshed)
 - Runtime attempt note (2026-05-06): `flutter run -d ios` resolved stale UUID targeting but exited with Developer Mode requirement on device `HADES`.
 - `artifacts/smoke/r1-mobile-attached-run-udid-20260506T220717Z.log` (attached device launch attempt captured; blocked pending Developer Mode/trust flow)
-- Simulator run launched (2026-05-07): `flutter run -d AA12D964-3359-43A2-8A24-B1C7A70685DC` on iPhone 16e simulator (bypasses Developer Mode requirement); Xcode build in progress
+- Runtime attempt note (2026-05-07): simulator build attempts reached Xcode compile but did not complete a successful launch session in this execution window.
+- Runtime attempt note (2026-05-07): physical-device launch on `HADES` confirmed current blocker message: enable Developer Mode and trust host before development deploy.
+- `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` (updated with BLOCKED result summary and blocker evidence)
+- `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log` (updated with BLOCKED status pending runtime launch)
 
 ### Acceptance Helper Generated
 
@@ -157,9 +160,9 @@ Status: In progress
 ### Remaining to Close Gate
 
 1. ✅ Release build confirmed (`r1-mobile-build-20260507T175103Z.log`)
-2. Simulator acceptance run: `flutter run -d AA12D964-3359-43A2-8A24-B1C7A70685DC` on iPhone 16e — in progress (2026-05-07)
-3. Fill acceptance checklist evidence in `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log`
-4. Attach Firestore/Functions log excerpts to `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log`
+2. Resolve launch prerequisite on physical device `HADES` (Developer Mode + trust flow)
+3. Re-run Gate 2 acceptance flow and replace BLOCKED markers in `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log`
+4. Capture backend evidence and replace BLOCKED markers in `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log`
 5. Final sign-off when acceptance phases pass
 
 ### Done Criteria

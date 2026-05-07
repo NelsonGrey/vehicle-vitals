@@ -1,0 +1,15 @@
+R1 Mobile Acceptance Log
+Generated: 2026-05-07T17:57:04Z
+
+Checklist:
+[ ] Auth sign-in or sign-up (blocked: app launch not completed)
+[ ] Add vehicle (blocked: app launch not completed)
+[ ] Maintenance CRUD (blocked: app launch not completed)
+[ ] Reminder actions (blocked: app launch not completed)
+[ ] Export flow (blocked: app launch not completed)
+
+Result Summary:
+- Status: BLOCKED (execution prerequisite not met)
+- Tester: Copilot automated execution run
+- Device/Simulator: HADES (00008020-00060DAE0C69002E), iPhone 16e simulator (AA12D964-3359-43A2-8A24-B1C7A70685DC)
+- Notes: 2026-05-07 run attempts performed. Physical device launch blocked by iOS Developer Mode requirement. Simulator path reached Xcode build but did not reach successful app launch in this run window. Dependency lockfiles were realigned to fix prior CocoaPods Google-Mobile-Ads mismatch (google_mobile_ads 6.0.0 with Google-Mobile-Ads-SDK 12.2.0).

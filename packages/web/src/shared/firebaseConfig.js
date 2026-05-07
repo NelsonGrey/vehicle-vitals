@@ -1,8 +1,20 @@
 // Firebase configuration for web app
+import {
+  isSupported as analyticsIsSupported,
+  getAnalytics,
+  logEvent,
+} from 'firebase/analytics';
 import { getApps, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
+import {
+  fetchAndActivate,
+  getBoolean,
+  getNumber,
+  getRemoteConfig,
+  getString,
+} from 'firebase/remote-config';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
 
 export const firebaseConfig = {
@@ -121,36 +133,6 @@ const canonicalHostedOriginsByEnvironment = {
   },
 };
 
-const normalizeHostedAuthDomain = () => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  const environment = resolveEnvironmentName();
-  const canonicalConfig = canonicalHostedOriginsByEnvironment[environment];
-  if (!canonicalConfig) {
-    return;
-  }
-
-  const canonicalHostname = new URL(canonicalConfig.toOrigin).hostname;
-  const currentHostname = String(window.location.hostname || '').toLowerCase();
-  const configuredAuthDomain = String(firebaseConfig.authDomain || '')
-    .trim()
-    .toLowerCase();
-
-  const isHostedOrigin =
-    currentHostname === canonicalHostname ||
-    canonicalConfig.fromHostnames.includes(currentHostname);
-  const usesFirebaseAppDomain = configuredAuthDomain.endsWith('.firebaseapp.com');
-
-  if (isHostedOrigin && usesFirebaseAppDomain) {
-    firebaseConfig.authDomain = canonicalHostname;
-    console.warn(
-      `[firebaseConfig] Normalized authDomain to hosted domain ${canonicalHostname} for ${environment} environment.`
-    );
-  }
-};
-
 const redirectToCanonicalHostedOrigin = () => {
   if (typeof window === 'undefined') {
     return;
@@ -203,7 +185,6 @@ const validateEnvironmentProjectAlignment = () => {
 };
 
 applyDevelopmentFirebaseFallback();
-normalizeHostedAuthDomain();
 validateEnvironmentProjectAlignment();
 validateFirebaseClientConfig();
 redirectToCanonicalHostedOrigin();
@@ -214,6 +195,79 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(app);
 const storage = getStorage(app);
+
+// ─── Firebase Analytics ─────────────────────────────────────────────────────
+// Only initialize Analytics when the environment supports it (i.e. not in
+// SSR, Web Workers, or browsers that block it). measurementId must be set.
+let analytics = null;
+let _analyticsReady = false;
+
+if (firebaseConfig.measurementId) {
+  analyticsIsSupported()
+    .then(supported => {
+      if (supported) {
+        analytics = getAnalytics(app);
+        _analyticsReady = true;
+      }
+    })
+    .catch(() => {
+      // Analytics blocked by browser extension or privacy settings – non-fatal.
+    });
+}
+
+/**
+ * Log a Firebase Analytics event. Safe to call unconditionally; no-ops when
+ * Analytics is not supported or has not yet initialised.
+ *
+ * @param {string} eventName  Standard or custom GA4 event name
+ * @param {object} [params]   Optional key/value event parameters
+ */
+export function trackEvent(eventName, params = {}) {
+  if (_analyticsReady && analytics) {
+    try {
+      logEvent(analytics, eventName, params);
+    } catch {
+      // Never throw from a tracking helper
+    }
+  }
+}
+
+// ─── Remote Config ──────────────────────────────────────────────────────────
+// Provides feature flags and runtime-adjustable settings without a redeploy.
+const remoteConfig = getRemoteConfig(app);
+
+// Minimum fetch interval: 1 hour in production, 0 in development for fast iteration.
+remoteConfig.settings.minimumFetchIntervalMillis =
+  resolveEnvironmentName() === 'production' ? 3_600_000 : 0;
+
+// Safe defaults — used immediately before a fetch completes.
+// Must stay in sync with seedRemoteConfigDefaults Cloud Function.
+remoteConfig.defaultConfig = {
+  enable_premium_features: 'false',
+  enable_ads: 'false',
+  max_vehicles_free_tier: '3',
+  maintenance_reminder_days_ahead: '30',
+  enable_vin_decode: 'true',
+  enable_export: 'true',
+  enable_calendar_sync: 'true',
+  enable_ai_attachment_analysis: 'false',
+  enable_provider_discovery: 'true',
+  onboarding_vehicle_limit_prompt: '1',
+};
+
+// Fetch and activate in background; app uses defaults until this resolves.
+fetchAndActivate(remoteConfig).catch(() => {
+  // Network unavailable or fetch throttled — defaults remain active.
+});
+
+/**
+ * Remote Config helpers — always return a value (cache, defaults, or fetched).
+ */
+export const remoteConfigFlag = {
+  bool: key => getBoolean(remoteConfig, key),
+  str: key => getString(remoteConfig, key),
+  num: key => getNumber(remoteConfig, key),
+};
 
 // Emulators are explicit opt-in to avoid accidentally bypassing environment backends.
 if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
@@ -228,7 +282,7 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
 }
 
 // Export Firebase services
-export { app, auth, db, functions, storage };
+export { analytics, app, auth, db, functions, remoteConfig, storage };
 
 // Legacy exports for compatibility
 export const getFirebaseConfig = () => firebaseConfig;

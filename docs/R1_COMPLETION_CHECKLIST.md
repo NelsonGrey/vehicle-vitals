@@ -5,11 +5,11 @@ Status: In progress
 
 Purpose: convert R1 production-readiness gates into execution-ready tasks with explicit evidence requirements.
 
-## Progress Snapshot (May 7, 2026 — updated)
+## Progress Snapshot (May 7, 2026 — updated, latest run 21:47Z)
 
 - Overall completion: 1/3 gates complete, 1/3 in active execution, 1/3 automated-complete (manual acceptance pending).
 - Gate 1: ✅ Complete. Automated reliability checks are green (12/12 reminder tests) and authenticated deployed HTTP/manual-send validation is green (200 on dev endpoint).
-- Gate 2: Build/runtime smoke is green (analyze + iOS release no-codesign). Acceptance is currently blocked on launch prerequisites: physical device requires Developer Mode/trust confirmation, and simulator launch has not yet produced a successful runtime session in this execution window.
+- Gate 2: Build/runtime smoke is green on latest run (`artifacts/smoke/r1-mobile-build-20260507T214730Z.log`: analyze pass + iOS release no-codesign pass). Acceptance is currently blocked on launch prerequisites: physical device requires Developer Mode/trust confirmation, and simulator launch has not yet produced a successful runtime session in this execution window.
 - Gate 3: ✅ Automated complete. CSV parity PASS, PDF structural parity PASS, parity report signed off (automated validation pipeline). Manual visual QA recommended but not blocking.
 
 ### Immediate Next-Step Sequence
@@ -138,6 +138,7 @@ Status: In progress
 - `artifacts/smoke/r1-mobile-build-20260506T213134Z.log` (flutter analyze + ios release build passed; no analyzer issues)
 - `artifacts/smoke/r1-mobile-build-20260507T174144Z.log` (flutter analyze passed; iOS build failed due CocoaPods Firebase/CoreOnly version mismatch)
 - `artifacts/smoke/r1-mobile-build-20260507T175103Z.log` (flutter analyze + ios release build passed after `pod update Firebase/CoreOnly`)
+- `artifacts/smoke/r1-mobile-build-20260507T214730Z.log` (flutter analyze + ios release build passed after lockfile realignment and CocoaPods sync recovery)
 - `artifacts/smoke/r1-mobile-acceptance-20260413T194544Z.log` (acceptance checklist template scaffold generated)
 - `artifacts/smoke/r1-mobile-acceptance-20260506T154131Z.log` (acceptance checklist template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-acceptance-20260506T213424Z.log` (acceptance checklist template scaffold refreshed)
@@ -159,7 +160,7 @@ Status: In progress
 
 ### Remaining to Close Gate
 
-1. ✅ Release build confirmed (`r1-mobile-build-20260507T175103Z.log`)
+1. ✅ Release build confirmed (latest: `r1-mobile-build-20260507T214730Z.log`)
 2. Resolve launch prerequisite on physical device `HADES` (Developer Mode + trust flow)
 3. Re-run Gate 2 acceptance flow and replace BLOCKED markers in `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log`
 4. Capture backend evidence and replace BLOCKED markers in `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log`

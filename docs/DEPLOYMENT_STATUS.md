@@ -1,6 +1,6 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 6, 2026
+Last updated: May 7, 2026
 Primary production project: `vehicle-vitals-prod`
 
 ## Web Deployment
@@ -76,19 +76,18 @@ Status: Configured with partial product integration
 
 ## R1 Gate Execution Status
 
-As of May 6, 2026:
+As of May 7, 2026:
 
-- Gate 1 (Reminder delivery reliability): automated checks PASS; authenticated manual-send validation PASS (dev endpoint HTTP 200 with Cloud invoker identity token).
-- Gate 2 (Mobile runtime parity): build/analyze PASS; manual acceptance checklist execution pending.
+- Gate 1 (Reminder delivery reliability): COMPLETE (automated checks pass and authenticated manual-send validation returns HTTP 200 on dev endpoint).
+- Gate 2 (Mobile runtime parity): build/analyze PASS on latest run (`artifacts/smoke/r1-mobile-build-20260507T175103Z.log`); manual acceptance checklist execution pending.
 - Gate 2 blocker evidence: `artifacts/smoke/r1-mobile-attached-run-udid-20260506T220717Z.log` records Developer Mode/trust prerequisite on attached device `HADES`.
-- Gate 3 (Export parity): CSV/PDF structural parity PASS; manual visual QA signoff pending.
+- Gate 3 (Export parity): parity artifacts available and template refreshed (`artifacts/smoke/r1-export-parity-report-20260507T174923Z.md`); manual visual QA signoff pending.
 
 Primary evidence index: `docs/R1_COMPLETION_CHECKLIST.md`.
 
 ## Remaining Go-Live Gates
 
-1. Close R1 reminder delivery reliability gate.
-2. Complete iOS release-mode parity validation with evidence logs.
-3. Complete web/mobile export parity signoff.
+1. Complete iOS release-mode parity validation with acceptance and backend-traffic evidence logs.
+2. Complete web/mobile export visual parity signoff.
 
 Production-ready completion is blocked until these gates are closed.

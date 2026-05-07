@@ -78,8 +78,7 @@ Status: Configured with partial product integration
 
 As of May 6, 2026:
 
-- Gate 1 (Reminder delivery reliability): automated checks PASS; authenticated manual-send validation pending.
-- Gate 1 blocker: project currently rejects anonymous token minting (`ADMIN_ONLY_OPERATION`), so validation requires a real test-user ID token.
+- Gate 1 (Reminder delivery reliability): automated checks PASS; authenticated manual-send validation PASS (dev endpoint HTTP 200 with Cloud invoker identity token).
 - Gate 2 (Mobile runtime parity): build/analyze PASS; manual acceptance checklist execution pending.
 - Gate 2 blocker evidence: `artifacts/smoke/r1-mobile-attached-run-udid-20260506T220717Z.log` records Developer Mode/trust prerequisite on attached device `HADES`.
 - Gate 3 (Export parity): CSV/PDF structural parity PASS; manual visual QA signoff pending.

@@ -10,7 +10,8 @@ Optional environment variables:
   EVIDENCE_DIR             Directory for evidence files (default: artifacts/smoke)
   EVIDENCE_LOG_FILE        Explicit log path (overrides EVIDENCE_DIR)
   FUNCTIONS_BASE_URL       Base URL for deployed functions, e.g. https://us-central1-<project>.cloudfunctions.net
-  ID_TOKEN                 Firebase ID token for authenticated manual send request
+  ID_TOKEN                 Identity token for authenticated manual send request
+                           (Cloud invoker token via gcloud auth print-identity-token)
   REMINDER_EMAIL           Recipient email for manual send check (default: qa@example.com)
   REMINDER_VIN             VIN for manual send payload (default: 1HGCM82633A123456)
 
@@ -78,8 +79,24 @@ echo "[Step 1/2] Running functions integration endpoints tests"
 
 echo "[Step 1/2] Completed"
 
-if [[ -n "$FUNCTIONS_BASE_URL" && -n "$ID_TOKEN" ]]; then
+if [[ -n "$FUNCTIONS_BASE_URL" ]]; then
   require_cmd curl
+
+  if [[ -z "$ID_TOKEN" ]]; then
+    if command -v gcloud >/dev/null 2>&1; then
+      ID_TOKEN="$(gcloud auth print-identity-token 2>/dev/null || true)"
+      if [[ -n "$ID_TOKEN" ]]; then
+        echo "[Step 2/2] Acquired invoker identity token from gcloud"
+      fi
+    fi
+  fi
+
+  if [[ -z "$ID_TOKEN" ]]; then
+    echo "[Step 2/2] Skipped manual send HTTP check (no ID_TOKEN and unable to auto-acquire via gcloud)"
+    echo "PASS: R1 reminder reliability smoke run completed"
+    exit 0
+  fi
+
   URL="${FUNCTIONS_BASE_URL%/}/sendMaintenanceReminder"
   echo "[Step 2/2] Running authenticated manual send HTTP check -> $URL"
 
@@ -123,7 +140,7 @@ JSON
 
   echo "[Step 2/2] Completed"
 else
-  echo "[Step 2/2] Skipped manual send HTTP check (FUNCTIONS_BASE_URL and ID_TOKEN not both provided)"
+  echo "[Step 2/2] Skipped manual send HTTP check (FUNCTIONS_BASE_URL not provided)"
 fi
 
 echo "PASS: R1 reminder reliability smoke run completed"

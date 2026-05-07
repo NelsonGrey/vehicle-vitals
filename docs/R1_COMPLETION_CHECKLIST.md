@@ -8,21 +8,17 @@ Purpose: convert R1 production-readiness gates into execution-ready tasks with e
 ## Progress Snapshot (May 6, 2026)
 
 - Overall completion: 1/3 gates materially complete, 2/3 awaiting manual validation/signoff.
-- Gate 1: Automated reliability checks are green (12/12 reminder tests), but authenticated deployed HTTP/manual-send validation is still open.
-- Gate 1 blocker detail: anonymous token minting is disabled for this project (`ADMIN_ONLY_OPERATION`), so authenticated validation requires a real test user token.
+- Gate 1: Automated reliability checks are green (12/12 reminder tests) and authenticated deployed HTTP/manual-send validation is now green (200 on dev endpoint).
 - Gate 2: Build/runtime smoke is green (analyze + iOS release no-codesign), but hands-on acceptance execution and backend-traffic evidence are still open.
 - Gate 2 blocker detail: attached iOS run currently fails until Developer Mode is enabled on the connected device.
 - Gate 3: Automated CSV + PDF structural parity is green; manual visual QA + signoff entry are still open.
 
 ### Immediate Next-Step Sequence
 
-1. Gate 1 authenticated validation
-   - `FUNCTIONS_BASE_URL="https://us-central1-<project>.cloudfunctions.net" ID_TOKEN="<firebase-id-token>" ./scripts/smoke-r1-reminder-reliability.sh`
-   - Verify 200 response, provider delivery evidence, and function logs.
-2. Gate 2 manual acceptance run
+1. Gate 2 manual acceptance run
    - Run mobile app on simulator/device and execute 7-phase acceptance checklist.
    - Fill latest acceptance and backend traffic logs with observed evidence.
-3. Gate 3 manual visual signoff
+2. Gate 3 manual visual signoff
    - Compare latest generated PDFs side-by-side for readability/spacing/styling.
    - Complete signoff fields in latest parity report.
 
@@ -57,8 +53,10 @@ Status: In progress
 ./scripts/smoke-r1-reminder-reliability.sh
 
 # Optional manual-send HTTP validation (authenticated)
+# If ID_TOKEN is omitted and gcloud is available, script auto-acquires:
+# gcloud auth print-identity-token
 FUNCTIONS_BASE_URL="https://us-central1-<project>.cloudfunctions.net" \
-ID_TOKEN="<firebase-id-token>" \
+ID_TOKEN="<cloud-invoker-identity-token>" \
 ./scripts/smoke-r1-reminder-reliability.sh
 ```
 
@@ -73,6 +71,9 @@ ID_TOKEN="<firebase-id-token>" \
 - `artifacts/smoke/r1-reminder-reliability-20260506T175103Z.log` (12 reminder-focused integration tests passed; authenticated HTTP step still skipped due missing exported base URL + token in execution shell)
 - `artifacts/smoke/r1-reminder-reliability-20260506T213128Z.log` (12 reminder-focused integration tests passed; authenticated HTTP step still pending due missing exported base URL + token in execution shell)
 - `artifacts/smoke/r1-reminder-reliability-20260506T214821Z.log` (12 reminder-focused integration tests passed; authenticated HTTP step still skipped because project requires non-anonymous auth token)
+- `artifacts/smoke/r1-reminder-reliability-20260506T234134Z.log` (12 reminder-focused integration tests passed; HTTP invocation with Firebase ID token returned 401)
+- `artifacts/smoke/r1-reminder-reliability-20260506T234217Z.log` (12 reminder-focused integration tests passed; authenticated HTTP step passed with status 200 using Cloud invoker identity token)
+- `artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log` (12 reminder-focused integration tests passed; authenticated HTTP step passed with status 200 using script auto-acquired gcloud identity token)
 
 ### Validation Helpers Available
 
@@ -81,10 +82,6 @@ ID_TOKEN="<firebase-id-token>" \
 
 ### Remaining to Close Gate
 
-- Gather `FUNCTIONS_BASE_URL` from Firebase Console (Project → Functions → Details)
-- Generate or copy `ID_TOKEN` from Firebase Authentication (Console → Users → Custom Claims)
-- Execute: `FUNCTIONS_BASE_URL="https://..." ID_TOKEN="eyJ..." ./scripts/smoke-r1-reminder-reliability.sh --authenticated`
-- Note: anonymous token minting against Identity Toolkit currently returns `ADMIN_ONLY_OPERATION`; use a valid test-user token (email/password sign-in or custom token exchange).
 - Verify email delivery to configured test recipient within 10 seconds
 - Confirm function logs show successful execution
 

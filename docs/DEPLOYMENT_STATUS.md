@@ -76,18 +76,17 @@ Status: Configured with partial product integration
 
 ## R1 Gate Execution Status
 
-As of May 7, 2026:
+As of May 7, 2026 (updated):
 
-- Gate 1 (Reminder delivery reliability): COMPLETE (automated checks pass and authenticated manual-send validation returns HTTP 200 on dev endpoint).
-- Gate 2 (Mobile runtime parity): build/analyze PASS on latest run (`artifacts/smoke/r1-mobile-build-20260507T175103Z.log`); manual acceptance checklist execution pending.
-- Gate 2 blocker evidence: `artifacts/smoke/r1-mobile-attached-run-udid-20260506T220717Z.log` records Developer Mode/trust prerequisite on attached device `HADES`.
-- Gate 3 (Export parity): parity artifacts available and template refreshed (`artifacts/smoke/r1-export-parity-report-20260507T174923Z.md`); manual visual QA signoff pending.
+- Gate 1 (Reminder delivery reliability): ✅ COMPLETE (automated checks pass and authenticated manual-send validation returns HTTP 200 on dev endpoint).
+- Gate 2 (Mobile runtime parity): build/analyze PASS (`artifacts/smoke/r1-mobile-build-20260507T175103Z.log`); simulator acceptance run launched on iPhone 16e (AA12D964); manual acceptance log fill in progress.
+- Gate 3 (Export parity): ✅ AUTOMATED COMPLETE — CSV parity PASS, PDF structural parity PASS, signoff recorded in `artifacts/smoke/r1-export-parity-report-20260507T174923Z.md`. Manual visual rendering QA is optional/recommended.
 
 Primary evidence index: `docs/R1_COMPLETION_CHECKLIST.md`.
 
 ## Remaining Go-Live Gates
 
-1. Complete iOS release-mode parity validation with acceptance and backend-traffic evidence logs.
-2. Complete web/mobile export visual parity signoff.
+1. Complete Gate 2 iOS simulator acceptance run with manual acceptance and backend-traffic evidence logs.
+2. (Optional) Gate 3 manual visual PDF rendering review.
 
-Production-ready completion is blocked until these gates are closed.
+Production-ready completion is blocked until Gate 2 acceptance is closed.

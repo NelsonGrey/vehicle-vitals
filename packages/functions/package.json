@@ -3,7 +3,7 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
-    "test": "npm run build && node --test test/**/*.test.js",
+    "test": "npm run build && FIREBASE_CONFIG='{\"projectId\":\"vehicle-vitals-dev\",\"storageBucket\":\"vehicle-vitals-dev.firebasestorage.app\",\"locationId\":\"us-central1\"}' GCLOUD_PROJECT=vehicle-vitals-dev node --test test/**/*.test.js",
     "seed:demo-data": "node scripts/seed-demo-data.js",
     "purge:demo-data": "node scripts/purge-demo-data.js",
     "build:watch": "tsc --watch",

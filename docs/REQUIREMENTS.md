@@ -2,8 +2,8 @@
 
 Project overview: Vehicle Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
 
-Last updated: April 13, 2026
-Project status: PARTIALLY IMPLEMENTED, PRODUCTION HARDENING IN PROGRESS
+Last updated: May 8, 2026
+Project status: CORE IMPLEMENTED, R1 GATE CLOSURE IN PROGRESS
 
 ---
 
@@ -60,13 +60,13 @@ Legend: Implemented, Partial, Not Implemented
 
 R1 is the minimum release confidence gate.
 
-| Gate                             | Current State | Exit Criteria                                                                                | Evidence Required                         |
-| -------------------------------- | ------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| Reminder delivery reliability    | Open          | Scheduled and manual paths produce persisted delivery outcomes with stable provider behavior | Integration test report + smoke logs      |
-| Mobile runtime parity validation | Open          | iOS release-like acceptance run confirms real backend traffic and stable core workflows      | Build logs + Firestore/Functions traces   |
-| Export parity signoff            | Open          | Web/mobile exports match expected field set and ordering for shared fixtures                 | Snapshot or diff artifacts + QA checklist |
+| Gate                             | Current State                                | Exit Criteria                                                                                | Evidence Required                                                                                                        |
+| -------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Reminder delivery reliability    | ✅ Complete (May 7, 2026)                    | Scheduled and manual paths produce persisted delivery outcomes with stable provider behavior | `artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log` (12/12 pass, HTTP 200)                                    |
+| Mobile runtime parity validation | In Progress — build PASS, acceptance pending | iOS release-like acceptance run confirms real backend traffic and stable core workflows      | `artifacts/smoke/r1-mobile-build-20260507T214730Z.log` (build PASS); runtime acceptance blocker: Developer Mode on HADES |
+| Export parity signoff            | ✅ Automated Complete (May 7, 2026)          | Web/mobile exports match expected field set and ordering for shared fixtures                 | `artifacts/smoke/r1-export-parity-report-20260507T174923Z.md` (CSV PASS, PDF structural PASS)                            |
 
-R1 production-capable claim is blocked until all three gates are closed.
+R1 production-capable claim is blocked until Gate 2 runtime acceptance is closed. Gates 1 and 3 are complete.
 
 ---
 

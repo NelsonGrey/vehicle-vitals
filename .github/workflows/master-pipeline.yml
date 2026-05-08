@@ -265,6 +265,14 @@ jobs:
           export PATH="$HOME/flutter/bin:$PATH"
           flutter clean
           rm -rf ios/Pods ios/Podfile.lock
+          
+          # Normalize DerivedData permissions before removing
+          # macOS self-hosted runners can have restrictive ACLs that prevent rm -rf
+          if [ -d "$HOME/Library/Developer/Xcode/DerivedData" ]; then
+            chmod -R u+rwX "$HOME/Library/Developer/Xcode/DerivedData" || true
+            chmod -RN "$HOME/Library/Developer/Xcode/DerivedData" || true
+            xattr -cr "$HOME/Library/Developer/Xcode/DerivedData" || true
+          fi
           rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
 
       - name: Normalize Workspace Permissions

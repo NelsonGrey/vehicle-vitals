@@ -1,8 +1,8 @@
 # Vehicle Vitals - Business Requirements & Strategic Analysis
 
-**Version**: 1.1  
-**Last Updated**: March 9, 2026  
-**Status**: ⚠️ PARTIALLY OPERATIONAL (web core delivered, mobile/runtime parity in progress)  
+**Version**: 1.2  
+**Last Updated**: May 8, 2026  
+**Status**: 🟡 R1 NEAR-COMPLETE (web + mobile real-service runtime operational; Gate 2 acceptance pending)  
 **Owner**: Mark Nelson
 
 ---
@@ -22,19 +22,19 @@
 
 **Business Model**: Freemium with optional premium features (maintenance planning, advanced analytics, diagnostic integration).
 
-**Current Status**: ⚠️ Web core is operational, but platform parity and several MVP-adjacent capabilities remain partial in current code paths (mobile services, reminder actions, and some integrations).
+**Current Status**: 🟡 Web core and mobile real-service runtime are both operational. R1 production gates are near-complete: Gate 1 (reminders) and Gate 3 (export parity) are closed; Gate 2 (mobile runtime acceptance) is the remaining blocker.
 
 ---
 
-## Delivery Reality Snapshot (Code-Verified: March 9, 2026)
+## Delivery Reality Snapshot (Code-Verified: May 8, 2026)
 
 | Business-Critical Capability                             | Current Delivery State | Code Evidence                                                                                                                                  |
 | -------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Multi-platform user experience parity                    | 🟡 Partial             | Web implemented, mobile services mocked in `packages/mobile/lib/main.dart` and `packages/mobile/lib/services/*`                                |
-| Proactive maintenance reminder operations                | 🔴 Incomplete          | Reminder lifecycle stubs in `packages/shared/src/firestoreServiceFactory.js`                                                                   |
-| Notification execution (email/push)                      | 🟡 Partial             | Scheduler exists in `packages/functions/src/index.ts`; email integration still TODO; mobile push currently mock                                |
-| Export/reporting for user value and compliance workflows | 🟡 Partial             | Web export exists in `packages/web/src/utils/dataExport.js`; mobile export disabled in `packages/mobile/lib/services/data_export_service.dart` |
-| Fleet/provider/community roadmap features                | ⏸ Planned             | Not represented in current active web/mobile route surfaces                                                                                    |
+| Multi-platform user experience parity                    | 🟡 Substantial           | Web deployed; mobile uses real Firebase/Auth/Firestore/Functions services in `packages/mobile/lib/main.dart` and `packages/mobile/lib/services/*` |
+| Proactive maintenance reminder operations                | 🟢 Implemented           | Reminder lifecycle implemented in `packages/shared/src/firestoreServiceFactory.js`; Gate 1 reliability smoke PASS (12/12 tests + HTTP 200)      |
+| Notification execution (email/push)                      | 🟡 Partial             | Email provider active via `packages/functions/src/email.provider.ts`; mobile FCM initialized; end-to-end production delivery evidence pending   |
+| Export/reporting for user value and compliance workflows | 🟡 Partial             | Web + mobile CSV/PDF exports implemented; export parity validated (Gate 3 automated complete, `r1-export-parity-report-20260507T174923Z.md`)     |
+| Fleet/provider/community roadmap features                | ⏸ Planned             | Web service-provider lookup UI exists; fleet manager workflows not yet implemented                                                              |
 
 Implication for business planning:
 

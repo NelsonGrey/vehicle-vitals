@@ -1,6 +1,6 @@
 # Vehicle Vitals - Release Scope Matrix
 
-Last updated: April 13, 2026
+Last updated: May 8, 2026
 Source baseline: docs/REQUIREMENTS.md
 
 ## Purpose
@@ -37,9 +37,9 @@ This matrix translates requirements into milestone scope and release gating.
 
 ## Current Execution Order
 
-1. Reminder delivery reliability (Must)
-2. Mobile runtime parity validation (Must)
-3. Export parity signoff (Must)
+1. ✅ Reminder delivery reliability (Must — Gate 1 complete, May 7, 2026)
+2. Mobile runtime parity validation (Must — build PASS, runtime acceptance pending)
+3. ✅ Export parity signoff (Must — Gate 3 automated complete, May 7, 2026)
 4. Calendar reliability and UX completion
 5. Timeline and UX parity completion
 6. API enrichment and forecasting depth

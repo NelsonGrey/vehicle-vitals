@@ -1,8 +1,8 @@
 # Vehicle Vitals - Architecture Design Document
 
-**Version**: 1.0  
-**Last Updated**: February 16, 2026  
-**Status**: ⚠️ PARTIALLY PRODUCTION READY  
+**Version**: 1.1  
+**Last Updated**: May 8, 2026  
+**Status**: 🟡 R1 NEAR-COMPLETE (web deployed, mobile real-service runtime validated, Gate 2 acceptance pending)  
 **Owner**: Mark Nelson
 
 ---

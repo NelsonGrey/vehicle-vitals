@@ -26,6 +26,19 @@ import {
 } from '../utils/documentAnalysisSummary';
 import { computeOwnershipInsights } from '../utils/ownershipInsights';
 
+type AnalysisData = {
+  path?: string;
+  extracted?: {
+    documentCategory?: string;
+    serviceType?: string;
+    totalCost?: number;
+    serviceDate?: string;
+    mileage?: number;
+  };
+  confidence?: number;
+  sourceText?: string;
+};
+
 type PortfolioItem = {
   id: string;
   title: string;
@@ -245,8 +258,10 @@ export default function Records() {
       if (allPaths.length > 0) {
         try {
           const analyses = await getAttachmentAnalyses(vin, allPaths);
-          const pathToAnalysis = new Map(
-            analyses.filter((a: any) => a?.path).map((a: any) => [a.path, a])
+          const pathToAnalysis = new Map<string | undefined, AnalysisData>(
+            analyses
+              .filter((a: AnalysisData) => a?.path)
+              .map((a: AnalysisData) => [a.path, a])
           );
 
           if (pathToAnalysis.size > 0) {

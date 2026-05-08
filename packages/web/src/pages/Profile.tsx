@@ -6,6 +6,7 @@ import {
   updateVehicle,
 } from '../shared/firestoreService';
 import { requestNotificationPermission } from '../shared/notificationService';
+import { getLocalServiceProviders } from '../utils/localServiceProviders';
 
 // Declare Firebase global
 declare global {

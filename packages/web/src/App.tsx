@@ -232,8 +232,6 @@ function App() {
     );
   }
 
-  console.log('App component rendering with full routing');
-
   const appContent = (
     <BrowserRouter
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}

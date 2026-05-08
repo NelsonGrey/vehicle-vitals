@@ -73,7 +73,7 @@ describe('licensePlateUtils', () => {
       const validPlates = ['ABC123', 'AB1234', 'A1234', 'ABC1234'];
       validPlates.forEach(plate => {
         const result = validateLicensePlate(plate);
-        expect(result.isValid).toBe(true, `Expected ${plate} to be valid`);
+        expect(result.isValid).toBe(true);
       });
     });
 

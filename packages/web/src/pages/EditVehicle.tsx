@@ -14,6 +14,10 @@ import {
   updateVehicle,
 } from '../shared/firestoreService';
 import {
+  normalizeLicensePlate,
+  validateLicensePlate,
+} from '../shared/licensePlateUtils';
+import {
   generateMaintenanceAttachmentPath,
   uploadFile,
 } from '../shared/storageService';
@@ -42,6 +46,14 @@ interface Recall {
   consequence?: string;
   remedy?: string;
   manufacturer?: string;
+  component?: string;
+}
+
+interface AnalysisResult {
+  path?: string;
+  extracted?: Record<string, unknown>;
+  confidence?: number;
+  sourceText?: string;
 }
 
 interface Vehicle {
@@ -1024,10 +1036,10 @@ function MaintenanceList({
         .filter((path): path is string => Boolean(path));
 
       const analyses = await getAttachmentAnalyses(vin, attachmentPaths);
-      const pathToAnalysis = new Map(
+      const pathToAnalysis = new Map<string | undefined, AnalysisResult>(
         analyses
-          .filter((analysis: any) => analysis?.path)
-          .map((analysis: any) => [analysis.path, analysis])
+          .filter((analysis: AnalysisResult) => analysis?.path)
+          .map((analysis: AnalysisResult) => [analysis.path, analysis])
       );
 
       const enrichedAttachments = (form.attachments || []).map(attachment => {
@@ -1049,7 +1061,7 @@ function MaintenanceList({
       });
 
       const firstExtracted = analyses.find(
-        (analysis: any) =>
+        (analysis: AnalysisResult) =>
           analysis?.extracted?.totalCost ||
           analysis?.extracted?.serviceType ||
           analysis?.extracted?.serviceDate

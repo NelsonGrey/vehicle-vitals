@@ -402,6 +402,12 @@ jobs:
           VITE_SHOW_COMING_SOON_DEVELOPMENT: ${{ secrets.VITE_SHOW_COMING_SOON_DEVELOPMENT }}
           VITE_ACCESS_PASSWORD_STAGING: ${{ secrets.VITE_ACCESS_PASSWORD_STAGING }}
           VITE_ACCESS_PASSWORD_DEVELOPMENT: ${{ secrets.VITE_ACCESS_PASSWORD_DEVELOPMENT }}
+          VITE_ALLOWED_EMAIL_DOMAINS_PRODUCTION: ${{ secrets.VITE_ALLOWED_EMAIL_DOMAINS_PRODUCTION }}
+          VITE_ALLOWED_EMAIL_DOMAINS_STAGING: ${{ secrets.VITE_ALLOWED_EMAIL_DOMAINS_STAGING }}
+          VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT: ${{ secrets.VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT }}
+          VITE_ALLOWED_EMAILS_PRODUCTION: ${{ secrets.VITE_ALLOWED_EMAILS_PRODUCTION }}
+          VITE_ALLOWED_EMAILS_STAGING: ${{ secrets.VITE_ALLOWED_EMAILS_STAGING }}
+          VITE_ALLOWED_EMAILS_DEVELOPMENT: ${{ secrets.VITE_ALLOWED_EMAILS_DEVELOPMENT }}
           VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION }}
           VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING }}
           VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT }}
@@ -417,6 +423,8 @@ jobs:
               MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION"
               SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_PRODUCTION"
               ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION"
+              VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_PRODUCTION"
+              VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_PRODUCTION"
               ;;
             staging)
               API_KEY="$VITE_FIREBASE_API_KEY_STAGING"
@@ -430,6 +438,8 @@ jobs:
               ACCESS_PASSWORD_VAR_NAME="VITE_ACCESS_PASSWORD_STAGING"
               ACCESS_PASSWORD_VALUE="$VITE_ACCESS_PASSWORD_STAGING"
               ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING"
+              VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_STAGING"
+              VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_STAGING"
               ;;
             *)
               API_KEY="$VITE_FIREBASE_API_KEY_DEVELOPMENT"
@@ -443,6 +453,8 @@ jobs:
               ACCESS_PASSWORD_VAR_NAME="VITE_ACCESS_PASSWORD_DEVELOPMENT"
               ACCESS_PASSWORD_VALUE="$VITE_ACCESS_PASSWORD_DEVELOPMENT"
               ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT"
+              VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT"
+              VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_DEVELOPMENT"
               ;;
           esac
 
@@ -467,8 +479,18 @@ jobs:
           fi
 
           if [ "$TARGET_ENV" = "staging" ] || [ "$TARGET_ENV" = "development" ]; then
-            if [ -z "${ACCESS_PASSWORD_VALUE:-}" ]; then
-              echo "❌ Missing required access password secret for environment: $TARGET_ENV"
+            # Require either password (legacy) or OAuth config (new)
+            HAS_PASSWORD="${ACCESS_PASSWORD_VALUE:-}"
+            HAS_OAUTH_CONFIG=0
+            if [ -n "${VITE_ALLOWED_EMAIL_DOMAINS:-}" ] || [ -n "${VITE_ALLOWED_EMAILS:-}" ]; then
+              HAS_OAUTH_CONFIG=1
+            fi
+            
+            if [ -z "$HAS_PASSWORD" ] && [ "$HAS_OAUTH_CONFIG" -eq 0 ]; then
+              echo "❌ Missing access control configuration for environment: $TARGET_ENV"
+              echo "   Provide either:"
+              echo "   - VITE_ACCESS_PASSWORD_$TARGET_ENV (legacy password-based)"
+              echo "   - VITE_ALLOWED_EMAIL_DOMAINS_$TARGET_ENV or VITE_ALLOWED_EMAILS_$TARGET_ENV (OAuth-based)"
               exit 1
             fi
           fi
@@ -486,6 +508,13 @@ jobs:
             printf 'VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=%s\n' "$ENABLE_HOSTED_DEMO_PDF_UPLOADS"
             if [ -n "${ACCESS_PASSWORD_VAR_NAME:-}" ] && [ -n "${ACCESS_PASSWORD_VALUE:-}" ]; then
               printf '%s=%s\n' "$ACCESS_PASSWORD_VAR_NAME" "$ACCESS_PASSWORD_VALUE"
+            fi
+            # OAuth-based environment access control
+            if [ -n "${VITE_ALLOWED_EMAIL_DOMAINS:-}" ]; then
+              printf 'VITE_ALLOWED_EMAIL_DOMAINS=%s\n' "$VITE_ALLOWED_EMAIL_DOMAINS"
+            fi
+            if [ -n "${VITE_ALLOWED_EMAILS:-}" ]; then
+              printf 'VITE_ALLOWED_EMAILS=%s\n' "$VITE_ALLOWED_EMAILS"
             fi
           } > packages/web/.env.production
 

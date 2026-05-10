@@ -5,11 +5,15 @@ interface EnvironmentGateProps {
   environment: string;
 }
 
+const SESSION_KEY = 'vv_env_gate_auth';
+
 export default function EnvironmentGate({
   children,
   environment,
 }: EnvironmentGateProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => sessionStorage.getItem(SESSION_KEY) === environment
+  );
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -69,6 +73,7 @@ export default function EnvironmentGate({
     }
 
     if (password === configuredPassword) {
+      sessionStorage.setItem(SESSION_KEY, environment);
       setIsAuthenticated(true);
     } else {
       setError('Incorrect password. Please try again.');

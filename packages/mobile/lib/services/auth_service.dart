@@ -4,6 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+const String _screenshotEmail = String.fromEnvironment('VV_SCREENSHOT_EMAIL');
+const String _screenshotPassword = String.fromEnvironment(
+  'VV_SCREENSHOT_PASSWORD',
+);
+
 // App-level user model used by screens.
 class User {
   final String uid;
@@ -48,6 +54,25 @@ class AuthService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     });
+
+    if (_screenshotMode && _currentUser == null) {
+      _signInForScreenshots();
+    }
+  }
+
+  Future<void> _signInForScreenshots() async {
+    if (_screenshotEmail.isEmpty || _screenshotPassword.isEmpty) {
+      debugPrint(
+        'Screenshot mode enabled but demo credentials were not provided.',
+      );
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(_screenshotEmail, _screenshotPassword);
+    } catch (e) {
+      debugPrint('Screenshot auto sign-in failed: $e');
+    }
   }
 
   User? _mapUser(firebase_auth.User? user) {

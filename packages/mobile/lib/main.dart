@@ -87,6 +87,15 @@ void main() async {
   runApp(VehicleVitalsApp(notificationService: notificationService));
 }
 
+String _resolveInitialRoute() {
+  final routeName = PlatformDispatcher.instance.defaultRouteName.trim();
+  if (routeName.isEmpty || routeName == '/') {
+    return '/marketing';
+  }
+
+  return routeName;
+}
+
 class VehicleVitalsApp extends StatelessWidget {
   final NotificationService notificationService;
 
@@ -130,7 +139,7 @@ class VehicleVitalsApp extends StatelessWidget {
 
   GoRouter _createRouter(AuthService authService) {
     return GoRouter(
-      initialLocation: '/marketing',
+      initialLocation: _resolveInitialRoute(),
       redirect: (context, state) {
         final isLoggedIn = authService.currentUser != null;
         final isLoading = authService.isLoading;

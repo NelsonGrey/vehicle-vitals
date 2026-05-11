@@ -10,7 +10,6 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
-import EnvironmentGate from './components/EnvironmentGate';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './shared/AuthContext';
@@ -440,10 +439,7 @@ function App() {
     </BrowserRouter>
   );
 
-  // Wrap with environment gate for staging and dev
-  return (
-    <EnvironmentGate environment={environment}>{appContent}</EnvironmentGate>
-  );
+  return appContent;
 }
 
 export default App;

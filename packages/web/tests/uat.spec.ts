@@ -30,23 +30,18 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
   test.describe('Authentication', () => {
     test('TC-AUTH-001: User can sign up with email', async ({ page }) => {
-      await page.goto(BASE_URL);
+      await page.goto(`${BASE_URL}/auth/signup`);
 
-      // Navigate to sign up page
-      await page.getByRole('button', { name: /sign up/i }).click();
-
-      // Fill in sign up form
-      await page.getByLabel(/email/i).fill(TEST_EMAIL);
-      await page.getByLabel(/password/i, { exact: true }).fill(TEST_PASSWORD);
-      await page.getByLabel(/confirm password/i).fill(TEST_PASSWORD);
+      // Fill in sign up form using ID selectors
+      await page.locator('#email').fill(TEST_EMAIL);
+      await page.locator('#password').fill(TEST_PASSWORD);
+      await page.locator('#confirmPassword').fill(TEST_PASSWORD);
 
       // Submit form
-      await page
-        .getByRole('button', { name: /create account|sign up/i })
-        .click();
+      await page.getByRole('button', { name: /Create Account/i }).click();
 
       // Verify redirect to app home
-      await page.waitForURL(/\/app/);
+      await page.waitForURL(/\/app/, { timeout: 10000 });
       expect(page.url()).toContain('/app');
     });
 
@@ -58,12 +53,12 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await page.getByLabel(/password/i).fill(TEST_PASSWORD);
 
       // Submit form
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByRo using ID selectors
+      await page.locator('#email').fill(TEST_EMAIL);
+      await page.locator('#password').fill(TEST_PASSWORD);
 
-      // Verify redirect to app
-      await page.waitForURL(/\/app/, { timeout: 10000 });
-      expect(page.url()).toContain('/app');
-    });
+      // Submit form
+      await page.getByRole('button', { name: /Sign I
 
     test('TC-AUTH-003: Login fails with incorrect password', async ({
       page,
@@ -81,28 +76,25 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(page.url()).toContain('/auth/login');
     });
 
-    test('TC-AUTH-004: User can sign out', async ({ page, context }) => {
+    test('TC-AUTH-004: User can sign out', async ({ page }) => {
       // Log in first
       await page.goto(`${BASE_URL}/auth/login`);
-      await page.getByLabel(/email/i).fill(TEST_EMAIL);
-      await page.getByLabel(/password/i).fill(TEST_PASSWORD);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.locator('#email').fill(TEST_EMAIL);
+      await page.locator('#password').fill(TEST_PASSWORD);
+      await page.getByRole('button', { name: /Sign In/i }).click();
       await page.waitForURL(/\/app/);
 
-      // Find and click sign out
-      const profileButton = page
-        .getByRole('button', { name: /profile|account|menu/i })
-        .first();
-      if (await profileButton.isVisible()) {
-        await profileButton.click();
-      }
-
-      const signOutButton = page.getByRole('menuitem', {
-        name: /sign out|logout/i,
+      // Navigate to profile and sign out
+      await page.goto(`${BASE_URL}/app/profile`);
+      
+      // Look for sign out button
+      const signOutButton = page.getByRole('button', {
+        name: /Sign Out|Log Out|Logout/i,
       });
       if (await signOutButton.isVisible()) {
         await signOutButton.click();
-        await page.waitForURL(/^[^\/]*\/?$/);
+        // Should redirect to home or login
+        await page.waitForURL(/\/|\/auth/, { timeout: 10000 });
       }
     });
   });

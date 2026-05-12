@@ -356,22 +356,20 @@ jobs:
           xcodebuild -version
 
       - name: Ensure iOS Platform Support
-        env:
-          REQUIRED_IOS_SDK: '26.5'
         run: |
           set -e
           echo "Checking installed Apple SDKs"
           xcodebuild -showsdks
 
-          if xcodebuild -showsdks | grep -q "iphoneos${REQUIRED_IOS_SDK}"; then
-            echo "iOS SDK ${REQUIRED_IOS_SDK} is already installed"
+          if xcodebuild -showsdks | grep -q "iphoneos"; then
+            echo "At least one iOS device SDK is installed"
           else
-            echo "[warn] iOS SDK ${REQUIRED_IOS_SDK} not detected. Attempting platform download via xcodebuild"
+            echo "[warn] No iOS device SDK detected. Attempting platform download via xcodebuild"
             xcodebuild -downloadPlatform iOS || true
             xcodebuild -showsdks
 
-            if ! xcodebuild -showsdks | grep -q "iphoneos${REQUIRED_IOS_SDK}"; then
-              echo "::error::Missing iOS SDK ${REQUIRED_IOS_SDK} on this runner. Install it in Xcode > Settings > Components or update runner Xcode version."
+            if ! xcodebuild -showsdks | grep -q "iphoneos"; then
+              echo "::error::No iOS device SDK found on this runner. Install iOS platform components in Xcode > Settings > Components."
               exit 1
             fi
           fi
@@ -413,22 +411,39 @@ jobs:
           cd ios
           pod install --repo-update
 
+      - name: Validate iOS Build Destinations
+        run: |
+          set -e
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}/ios"
+
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -showdestinations 2>&1 | tee /tmp/ios-destinations.log
+
+          if grep -Eiq "error:iOS [0-9.]+ is not installed|Unable to find a destination matching" /tmp/ios-destinations.log; then
+            echo "::error::Runner is missing required iOS platform support for the current device/runtime. Install the matching iOS platform in Xcode > Settings > Components (or update Xcode on the runner)."
+            exit 1
+          fi
+
       - name: Build iOS (No Codesign)
         run: |
           cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           export PATH="$HOME/flutter/bin:$PATH"
           set +e
-          flutter build ios --release --no-codesign
-          BUILD_EXIT=$?
+          flutter build ios --release --no-codesign 2>&1 | tee /tmp/flutter-ios-build.log
+          BUILD_EXIT=${PIPESTATUS[0]}
 
           if [ $BUILD_EXIT -ne 0 ]; then
+            if grep -Eiq "error:iOS [0-9.]+ is not installed|Unable to find a destination matching" /tmp/flutter-ios-build.log; then
+              echo "::error::Build failed due to missing iOS platform support on this runner. Update Xcode/iOS Components before retrying."
+              exit $BUILD_EXIT
+            fi
+
             echo "[warn] Initial iOS build failed; retrying once after resetting Flutter build intermediates"
             find .dart_tool/flutter_build -path '*/arm64/App.framework/App' -print -exec ls -lO@ {} \; 2>/dev/null || true
             rm -rf .dart_tool/flutter_build
             chmod -R u+rwX .dart_tool || true
             xattr -cr .dart_tool || true
-            flutter build ios --release --no-codesign
-            BUILD_EXIT=$?
+            flutter build ios --release --no-codesign 2>&1 | tee /tmp/flutter-ios-build-retry.log
+            BUILD_EXIT=${PIPESTATUS[0]}
           fi
 
           exit $BUILD_EXIT

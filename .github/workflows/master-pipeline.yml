@@ -330,6 +330,37 @@ jobs:
           export PATH="$HOME/flutter/bin:$PATH"
           flutter doctor -v
 
+      - name: Setup Xcode Context
+        run: |
+          set -e
+          echo "Current xcode-select path: $(xcode-select -p)"
+          if [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
+            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer || xcode-select -s /Applications/Xcode.app/Contents/Developer
+          fi
+          xcode-select -p
+          xcodebuild -version
+
+      - name: Ensure iOS Platform Support
+        env:
+          REQUIRED_IOS_SDK: '26.5'
+        run: |
+          set -e
+          echo "Checking installed Apple SDKs"
+          xcodebuild -showsdks
+
+          if xcodebuild -showsdks | grep -q "iphoneos${REQUIRED_IOS_SDK}"; then
+            echo "iOS SDK ${REQUIRED_IOS_SDK} is already installed"
+          else
+            echo "[warn] iOS SDK ${REQUIRED_IOS_SDK} not detected. Attempting platform download via xcodebuild"
+            xcodebuild -downloadPlatform iOS || true
+            xcodebuild -showsdks
+
+            if ! xcodebuild -showsdks | grep -q "iphoneos${REQUIRED_IOS_SDK}"; then
+              echo "::error::Missing iOS SDK ${REQUIRED_IOS_SDK} on this runner. Install it in Xcode > Settings > Components or update runner Xcode version."
+              exit 1
+            fi
+          fi
+
       - name: Clean iOS Build State
         run: |
           cd "${{ steps.ios_workspace.outputs.mobile_dir }}"

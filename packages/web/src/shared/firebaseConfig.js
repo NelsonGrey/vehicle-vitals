@@ -53,6 +53,10 @@ const isPlaceholderValue = value => {
 };
 
 const validateFirebaseClientConfig = () => {
+  if (resolveEnvironmentName() === 'test') {
+    return;
+  }
+
   const requiredFields = [
     ['apiKey', firebaseConfig.apiKey],
     ['authDomain', firebaseConfig.authDomain],

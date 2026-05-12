@@ -1,8 +1,18 @@
 import react from '@vitejs/plugin-react';
+import path from 'path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@vehicle-vitals/shared': path.resolve(
+        __dirname,
+        '../shared/src/index.js'
+      ),
+      shared: path.resolve(__dirname, '../shared/src'),
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.js'],

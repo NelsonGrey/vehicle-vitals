@@ -215,6 +215,77 @@ jobs:
             echo "[warn] No Flutter pubspec found at repo root"
           fi
 
+  web-unit-tests:
+    name: Web Unit Tests
+    needs: load-config
+    if: |
+      needs.load-config.outputs.trigger_context == 'test_all' ||
+      needs.load-config.outputs.trigger_context == 'build_all' ||
+      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Web Unit Tests
+        run: |
+          cd packages/web
+          npm run test:unit
+
+  web-uat-tests:
+    name: Web UAT (${{ matrix.browser }})
+    needs: [load-config, web-unit-tests]
+    if: |
+      needs.load-config.outputs.trigger_context == 'test_all' ||
+      needs.load-config.outputs.trigger_context == 'build_all' ||
+      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: |
+          cd packages/web
+          npx playwright install --with-deps
+
+      - name: Run Web UAT (${{ matrix.browser }})
+        run: |
+          cd packages/web
+          npm run test:uat:${{ matrix.browser }}
+
+      - name: Upload UAT Artifacts (${{ matrix.browser }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-uat-${{ matrix.browser }}-artifacts
+          path: |
+            packages/web/test-results
+            packages/web/test-results-html
+          if-no-files-found: ignore
+
   build-ios:
     name: Build iOS App
     needs: load-config

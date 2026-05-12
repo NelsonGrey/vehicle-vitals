@@ -333,10 +333,25 @@ jobs:
       - name: Setup Xcode Context
         run: |
           set -e
-          echo "Current xcode-select path: $(xcode-select -p)"
-          if [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
-            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer || xcode-select -s /Applications/Xcode.app/Contents/Developer
+          TARGET_XCODE="/Applications/Xcode.app/Contents/Developer"
+          CURRENT_XCODE="$(xcode-select -p 2>/dev/null || true)"
+
+          echo "Current xcode-select path: ${CURRENT_XCODE}"
+
+          if [ "${CURRENT_XCODE}" = "${TARGET_XCODE}" ]; then
+            echo "Xcode is already set to the expected path"
+          elif [ -d "${TARGET_XCODE}" ]; then
+            if [ "$(id -u)" -eq 0 ]; then
+              xcode-select -s "${TARGET_XCODE}"
+            elif sudo -n true 2>/dev/null; then
+              sudo xcode-select -s "${TARGET_XCODE}"
+            else
+              echo "::warning::Cannot switch Xcode path without passwordless sudo. Continuing with current selection (${CURRENT_XCODE})."
+            fi
+          else
+            echo "::warning::Expected Xcode path not found at ${TARGET_XCODE}."
           fi
+
           xcode-select -p
           xcodebuild -version
 

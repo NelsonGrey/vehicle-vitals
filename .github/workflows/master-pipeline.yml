@@ -745,6 +745,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
 
+      - name: Enforce No Data Migration Policy
+        run: |
+          chmod +x scripts/ci-guard-no-data-migration.sh
+          ./scripts/ci-guard-no-data-migration.sh
+
       - name: Deploy Firestore and Functions Only
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
@@ -786,6 +791,7 @@ jobs:
             --token="$FIREBASE_TOKEN" \
             --only firestore,functions \
             --message="Firestore/Functions deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+            --force \
             --non-interactive
 
   build-chrome-extension:

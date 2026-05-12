@@ -297,6 +297,7 @@ jobs:
     timeout-minutes: 60
     env:
       COCOAPODS_DISABLE_STATS: true
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

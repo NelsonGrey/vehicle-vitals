@@ -194,9 +194,8 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
     test('TC-UI-001: Landing page loads', async ({ page }) => {
       await page.goto(BASE_URL);
 
-      // Check for main content
-      const content = page.locator('main, [role="main"], body');
-      await expect(content).toBeVisible();
+      // Prefer a single locator to avoid Playwright strict-mode multi-match errors.
+      await expect(page.locator('body')).toBeVisible();
     });
 
     test('TC-UI-002: No console errors on landing', async ({ page }) => {

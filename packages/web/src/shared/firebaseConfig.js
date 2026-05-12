@@ -94,8 +94,20 @@ const resolveEnvironmentName = () => {
   return String(raw).trim().toLowerCase();
 };
 
+const isTestRuntime = () => {
+  return import.meta.env.MODE === 'test' || Boolean(import.meta.env.VITEST);
+};
+
+const applyTestFirebaseFallback = () => {
+  if (!isTestRuntime()) {
+    return;
+  }
+
+  Object.assign(firebaseConfig, developmentFirebaseFallback);
+};
+
 const applyDevelopmentFirebaseFallback = () => {
-  if (resolveEnvironmentName() !== 'development') {
+  if (resolveEnvironmentName() !== 'development' && !isTestRuntime()) {
     return;
   }
 
@@ -130,6 +142,10 @@ const canonicalHostedOriginsByHostname = {
 };
 
 const redirectToCanonicalHostedOrigin = () => {
+  if (isTestRuntime()) {
+    return;
+  }
+
   if (typeof window === 'undefined') {
     return;
   }
@@ -153,6 +169,10 @@ const redirectToCanonicalHostedOrigin = () => {
 };
 
 const validateEnvironmentProjectAlignment = () => {
+  if (isTestRuntime()) {
+    return;
+  }
+
   const environment = resolveEnvironmentName();
   const projectId = String(firebaseConfig.projectId || '').trim();
   const expectedProjects = expectedProjectIdsByEnvironment[environment] || [];
@@ -175,6 +195,7 @@ const validateEnvironmentProjectAlignment = () => {
   }
 };
 
+applyTestFirebaseFallback();
 applyDevelopmentFirebaseFallback();
 validateEnvironmentProjectAlignment();
 validateFirebaseClientConfig();

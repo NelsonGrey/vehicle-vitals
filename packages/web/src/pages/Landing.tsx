@@ -43,10 +43,6 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="mt-8 sm:mt-10">
-              <InlineAdSection placement="maintenanceHistory" />
-            </div>
-
             {/* Feature Cards */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mt-10 sm:mt-12 lg:mt-14">
               <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
@@ -112,6 +108,9 @@ export default function Landing() {
             </section>
           </div>
         </section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-5 mt-6 sm:mt-8">
+          <InlineAdSection placement="maintenanceHistory" />
+        </div>
       </main>
       <SiteFooter />
     </div>

@@ -6,6 +6,7 @@ import AddVehicle from '../src/pages/AddVehicle';
 
 const mockNavigate = vi.fn();
 const mockAddOrUpdateVehicle = vi.fn();
+const mockGetVehicles = vi.fn();
 const mockDecodeVin = vi.fn();
 const mockBuildPersistedVinInsights = vi.fn();
 
@@ -33,6 +34,7 @@ vi.mock('../src/hooks/useVehicleOptions', () => ({
 
 vi.mock('../src/shared/firestoreService', () => ({
   addOrUpdateVehicle: (...args) => mockAddOrUpdateVehicle(...args),
+  getVehicles: (...args) => mockGetVehicles(...args),
 }));
 
 vi.mock('../src/shared/licensePlateUtils', () => ({
@@ -72,6 +74,7 @@ describe('AddVehicle page', () => {
     vi.clearAllMocks();
     vi.stubGlobal('alert', vi.fn());
     mockBuildPersistedVinInsights.mockReturnValue({ persisted: true });
+    mockGetVehicles.mockResolvedValue([]);
   });
 
   afterEach(() => {

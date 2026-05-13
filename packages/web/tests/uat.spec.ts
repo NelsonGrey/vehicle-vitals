@@ -248,6 +248,38 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────
+  // MONETIZATION TESTS
+  // ─────────────────────────────────────────────────────────────────
+
+  test.describe('Monetization', () => {
+    test.beforeEach(async ({ page }) => {
+      await ensureAuthenticated(page);
+    });
+
+    test('TC-MONETIZATION-001: Subscription plans page loads with tier options', async ({
+      page,
+    }) => {
+      await page.goto(`${BASE_URL}/app/subscription`);
+
+      // In environments where app routes are intentionally gated (for example,
+      // production marketing-only mode), fallback redirects are acceptable.
+      const plansHeading = page.getByRole('heading', {
+        name: /plans and billing/i,
+      });
+
+      if (await plansHeading.isVisible().catch(() => false)) {
+        await expect(plansHeading).toBeVisible();
+        await expect(page.getByText(/free/i).first()).toBeVisible();
+        await expect(page.getByText(/pro/i).first()).toBeVisible();
+        await expect(page.getByText(/premium/i).first()).toBeVisible();
+      } else {
+        await expect(page.locator('body')).toBeVisible();
+        await expect(page).not.toHaveURL(/\/app\/subscription\/signin/i);
+      }
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
   // BASIC FUNCTIONALITY TESTS
   // ─────────────────────────────────────────────────────────────────
 

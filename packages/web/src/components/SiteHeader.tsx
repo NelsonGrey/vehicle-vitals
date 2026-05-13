@@ -113,6 +113,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 <Link to="/app/providers" className={linkClass}>
                   Providers
                 </Link>
+                <Link to="/app/subscription" className={linkClass}>
+                  Plans
+                </Link>
                 {isDevelopmentEnvironment && (
                   <Link to="/app/dev-seed" className={linkClass}>
                     Data Seed

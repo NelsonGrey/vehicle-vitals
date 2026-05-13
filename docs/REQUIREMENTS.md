@@ -56,7 +56,80 @@ Legend: Implemented, Partial, Not Implemented
 
 ---
 
-## Production Readiness Gates (R1)
+## Feature Tier Implementation Status
+
+**Monetization Model**: Three-tier freemium with feature gating and advertising (see [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md))
+
+### Free Tier Feature Implementation
+
+| Feature                       | Status         | Notes                                                        |
+| ----------------------------- | -------------- | ------------------------------------------------------------ |
+| 3-vehicle limit               | ⏸ Planned     | Quota enforcement needed in firestore security rules         |
+| Basic mileage-based reminders | 🟡 Partial     | Reminder lifecycle implemented; mileage-based logic complete |
+| CSV export only               | 🟡 Partial     | CSV export working; PDF/Excel gated for Pro/Premium          |
+| 10 receipt uploads/month      | ⏸ Planned     | Quota tracking and enforcement in Cloud Functions needed     |
+| Ad placements (3-5/page)      | ⏸ Planned     | Ad network integration (Google AdSense, Criteo) required     |
+| Community support only        | 🟢 Implemented | Support portal and forums infrastructure ready               |
+
+### Pro Tier Feature Implementation ($2.99/month)
+
+| Feature                           | Status     | Notes                                                                                    |
+| --------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| 10-vehicle limit                  | ⏸ Planned | Quota system in security rules needed                                                    |
+| Advanced time + mileage reminders | 🟡 Partial | Mileage-based working; time-based interval logic needs implementation                    |
+| PDF + CSV + Excel export          | ⏸ Planned | PDF export framework exists; multi-format parity needed                                  |
+| 100 receipt uploads/month         | ⏸ Planned | Quota tracking across tiers required                                                     |
+| Calendar sync (Google/Outlook)    | 🟡 Partial | `packages/functions/src/calendar.provider.ts` exists; provider-account validation needed |
+| AI attachment analysis (5/month)  | ⏸ Planned | Google Cloud Vision integration + quota system needed                                    |
+| 12-month maintenance planning     | ⏸ Planned | Forecasting algorithm + UI components needed                                             |
+| 1-2 ads/page (reduced)            | ⏸ Planned | Ad placement reduction logic + rendering conditional                                     |
+| Priority email support (24-48h)   | ⏸ Planned | Support ticketing system required                                                        |
+
+### Premium Tier Feature Implementation ($6.99/month)
+
+| Feature                                | Status         | Notes                                              |
+| -------------------------------------- | -------------- | -------------------------------------------------- |
+| Unlimited vehicles                     | ⏸ Planned     | Remove quota enforcement for Premium tier          |
+| Advanced + AI predictions              | ⏸ Planned     | Predictive ML model + integration needed           |
+| Unlimited receipt uploads              | 🟢 Implemented | No limits for Premium tier                         |
+| PDF + CSV + Excel + cloud sync         | ⏸ Planned     | Cloud sync backend infrastructure needed           |
+| No ads (ad-free)                       | ⏸ Planned     | Ad rendering conditional on tier                   |
+| All calendar providers                 | ⏸ Planned     | Calendar sync extended to Apple, Microsoft, others |
+| Unlimited AI analysis                  | ⏸ Planned     | Remove quota for Premium tier                      |
+| 36-month maintenance planning          | ⏸ Planned     | Extended forecasting models                        |
+| Multi-vehicle dashboard (customizable) | ⏸ Planned     | Dashboard UI with per-vehicle alert thresholds     |
+| API/integrations (Zapier, IFTTT)       | ⏸ Planned     | REST API + webhook infrastructure needed           |
+| Priority phone support (4-8h)          | ⏸ Planned     | Phone support staffing and infrastructure          |
+
+### Billing & Subscription System Status
+
+| Component                          | Status     | Notes                                                                                   |
+| ---------------------------------- | ---------- | --------------------------------------------------------------------------------------- |
+| Stripe integration                 | ⏸ Planned | Stripe library in dependencies; payment flow not yet implemented                        |
+| RevenueCat (mobile)                | ⏸ Planned | Mobile IAP abstraction layer not yet integrated                                         |
+| Subscription state in Firestore    | ⏸ Planned | User document schema needs `subscription` field with `tier`, `renewalDate`, `autoRenew` |
+| Tier enforcement (web)             | ⏸ Planned | Feature flag system needed to gate features by tier                                     |
+| Tier enforcement (mobile)          | ⏸ Planned | Mobile feature gate logic required                                                      |
+| Free trial (7-day Pro)             | ⏸ Planned | Trial claim + expiration tracking needed                                                |
+| Grace period after failed payment  | ⏸ Planned | 7-day access continuation logic + retry workflow                                        |
+| Churn prevention (email reminders) | ⏸ Planned | Automated renewal reminder emails (14 days, 1 day before expiry)                        |
+| Win-back campaigns (lapsed users)  | ⏸ Planned | Segment lapsed Premium users; offer re-engagement discounts                             |
+
+Legend: 🟢 Implemented, 🟡 Partial, ⏸ Planned
+
+**Next Steps for Monetization Launch** (Phase 2 - Month 4+):
+
+1. Implement Stripe + RevenueCat integration
+2. Add subscription state to Firestore schema
+3. Implement tier quota enforcement (vehicle limits, upload quotas)
+4. Add feature gate system (web + mobile)
+5. Integrate ad networks (Google AdSense minimum viable)
+6. Create upgrade prompt flows (3rd vehicle, calendar sync, etc.)
+7. QA: Test all tier transitions and grace period flows
+
+---
+
+## Feature Traceability Baseline (April 2026)
 
 R1 is the minimum release confidence gate.
 

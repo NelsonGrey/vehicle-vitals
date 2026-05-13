@@ -1,5 +1,5 @@
-import AdBanner from './AdBanner';
-import { getAdSlot, WebAdPlacement } from '../shared/adPlacements';
+import type { WebAdPlacement } from '../shared/adPlacements';
+import AdPlacement from './AdPlacement';
 
 interface InlineAdSectionProps {
   placement?: WebAdPlacement;
@@ -8,7 +8,7 @@ interface InlineAdSectionProps {
 }
 
 export default function InlineAdSection({
-  placement = 'inlineContent',
+  placement = 'maintenanceHistory',
   className,
   label = 'Sponsored',
 }: InlineAdSectionProps) {
@@ -20,7 +20,7 @@ export default function InlineAdSection({
       <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </p>
-      <AdBanner className="my-0" slot={getAdSlot(placement)} />
+      <AdPlacement placement={placement} className="my-0" hideLabel />
     </section>
   );
 }

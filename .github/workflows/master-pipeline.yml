@@ -272,8 +272,22 @@ jobs:
           npx playwright install --with-deps
 
       - name: Run Web UAT (${{ matrix.browser }})
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
         run: |
           cd packages/web
+          case "$TARGET_ENV" in
+            production)
+              export BASE_URL="https://vehicle-vitals-prod.web.app"
+              ;;
+            staging)
+              export BASE_URL="https://vehicle-vitals-staging.web.app"
+              ;;
+            *)
+              export BASE_URL="https://vehicle-vitals-dev.web.app"
+              ;;
+          esac
+          echo "Running Web UAT against BASE_URL=$BASE_URL"
           npm run test:uat:${{ matrix.browser }}
 
       - name: Upload UAT Artifacts (${{ matrix.browser }})

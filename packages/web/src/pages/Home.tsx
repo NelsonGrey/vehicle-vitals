@@ -3,6 +3,7 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import AdPlacement from '../components/AdPlacement';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
@@ -584,6 +585,10 @@ export default function Home() {
                           Delete Vehicle
                         </button>
                       </div>
+                      <AdPlacement
+                        placement="sidebar"
+                        className="mt-4 hidden lg:block"
+                      />
                     </>
                   );
                 })()

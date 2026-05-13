@@ -37,11 +37,11 @@ export default function AuthLayout() {
 
       <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 py-6 sm:py-8">
         <div className="w-full max-w-7xl mx-auto">
-          <div className="w-full max-w-2xl mx-auto mb-4">
-            <InlineAdSection placement="maintenanceHistory" />
-          </div>
           <div className="w-full max-w-2xl mx-auto">
             <Outlet />
+          </div>
+          <div className="w-full max-w-2xl mx-auto mt-4">
+            <InlineAdSection placement="maintenanceHistory" />
           </div>
         </div>
       </main>

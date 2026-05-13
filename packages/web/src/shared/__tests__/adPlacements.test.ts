@@ -38,4 +38,15 @@ describe('adPlacements tier behavior', () => {
     expect(freeHeader.shouldShow).toBe(true);
     expect(typeof freeHeader.adSlot).toBe('string');
   });
+
+  it('does not throw for unknown runtime placement values', () => {
+    const unknownPlacement = 'inlineAuth' as any;
+
+    expect(shouldShowAd(unknownPlacement, 'free')).toBe(false);
+    expect(getAdDisplayConfig(unknownPlacement, 'free', false)).toMatchObject({
+      shouldShow: false,
+      maxImpressions: 0,
+      dismissible: false,
+    });
+  });
 });

@@ -44,7 +44,7 @@ export default function Landing() {
             </div>
 
             <div className="mt-8 sm:mt-10">
-              <InlineAdSection placement="inlineContent" />
+              <InlineAdSection placement="maintenanceHistory" />
             </div>
 
             {/* Feature Cards */}

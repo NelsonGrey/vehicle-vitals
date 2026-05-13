@@ -176,6 +176,10 @@ export function shouldShowAd(
   tier: UserTier
 ): boolean {
   const unit = AD_PLACEMENTS[placement];
+  if (!unit) {
+    return false;
+  }
+
   return !unit.disabled && unit.showForTiers.includes(tier);
 }
 
@@ -203,6 +207,10 @@ export function getAdSize(
   isMobile: boolean
 ): string {
   const unit = AD_PLACEMENTS[placement];
+  if (!unit) {
+    return '';
+  }
+
   return isMobile ? unit.mobileSize : unit.desktopSize;
 }
 
@@ -211,6 +219,10 @@ export function getAdSize(
  */
 export function isAdVisibleOnMobile(placement: WebAdPlacement): boolean {
   const unit = AD_PLACEMENTS[placement];
+  if (!unit) {
+    return false;
+  }
+
   return unit.mobileSize.length > 0;
 }
 
@@ -219,6 +231,10 @@ export function isAdVisibleOnMobile(placement: WebAdPlacement): boolean {
  */
 export function isAdVisibleOnDesktop(placement: WebAdPlacement): boolean {
   const unit = AD_PLACEMENTS[placement];
+  if (!unit) {
+    return false;
+  }
+
   return unit.desktopSize.length > 0;
 }
 
@@ -244,8 +260,21 @@ export function getAdDisplayConfig(
   tier: UserTier,
   isMobile: boolean
 ): AdDisplayConfig {
-  const shouldShow = shouldShowAd(placement, tier);
   const unit = AD_PLACEMENTS[placement];
+  if (!unit) {
+    return {
+      placement,
+      tier,
+      shouldShow: false,
+      size: '',
+      adSlot: '',
+      maxImpressions: 0,
+      dismissible: false,
+      frequency: 'always',
+    };
+  }
+
+  const shouldShow = shouldShowAd(placement, tier);
 
   return {
     placement,

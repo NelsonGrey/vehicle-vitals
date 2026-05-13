@@ -836,13 +836,29 @@ jobs:
 
           cp "$CONFIG_FILE" firebase.json
 
+          set +e
           firebase deploy \
             --project="$PROJECT_ID" \
             --token="$FIREBASE_TOKEN" \
             --only firestore,functions \
             --message="Firestore/Functions deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
             --force \
-            --non-interactive
+            --non-interactive 2>&1 | tee /tmp/firebase-deploy.log
+          DEPLOY_EXIT=${PIPESTATUS[0]}
+
+          if [ $DEPLOY_EXIT -ne 0 ] && [ "$TARGET_ENV" = "staging" ] && grep -q "Can't find the storage bucket region" /tmp/firebase-deploy.log; then
+            echo "[warn] Staging hit storage bucket region issue; retrying firestore-only deploy"
+            firebase deploy \
+              --project="$PROJECT_ID" \
+              --token="$FIREBASE_TOKEN" \
+              --only firestore \
+              --message="Firestore-only fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+              --force \
+              --non-interactive
+            DEPLOY_EXIT=$?
+          fi
+
+          exit $DEPLOY_EXIT
 
   build-chrome-extension:
     name: Build Chrome Extension

@@ -115,7 +115,7 @@ const isAiAnalysisEnabled = useFeatureFlag('ai_analysis', userTier, {
 
 **Purpose**: Implement all 6 ad placements per monetization strategy
 
-**Current State**: Basic ad slots exist; need expansion
+**Current State**: All 6 placements defined and wired to their target pages
 
 **Updates to `packages/web/src/shared/adPlacements.ts`**:
 
@@ -145,6 +145,7 @@ export interface AdConfig {
   - Tier gating (hide for premium)
   - Impression tracking
   - Error handling (fallback if no ad loads)
+  - All 6 placements wired: `header` (HeaderAdBar), `sidebar` (Home/vehicle detail), `maintenanceHistory` (Layout/AuthLayout/Landing), `providerDirectory` (ServiceProviders), `reminderNotification` (UpcomingTasks), `exportReport` (EditVehicle)
 
 - [ ] **Mobile**: `packages/mobile/lib/components/ad_banner.dart`
   - Google Mobile Ads SDK integration (already started)
@@ -320,11 +321,11 @@ export const createCheckoutSession = functions.https.onCall(
 
 **Components**:
 
-- [ ] Unit tests for feature flags
-- [ ] Unit tests for subscription service
-- [ ] Integration tests for tier gating
-- [ ] Smoke test for ad placements
-- [ ] Update developer docs (`docs/MONETIZATION_IMPLEMENTATION.md`)
+- [x] Unit tests for feature flags
+- [x] Unit tests for subscription service
+- [x] Integration tests for tier gating
+- [x] Smoke test for ad placements
+- [x] Update developer docs (`docs/MONETIZATION_IMPLEMENTATION.md`)
 
 ---
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import AdPlacement from '../components/AdPlacement';
 import {
   getVehicle,
   getVehicles,
@@ -412,6 +413,7 @@ export default function ServiceProviders() {
                 ) : null}
               </article>
             ))}
+            <AdPlacement placement="providerDirectory" className="mt-3" />
           </div>
         )}
       </div>

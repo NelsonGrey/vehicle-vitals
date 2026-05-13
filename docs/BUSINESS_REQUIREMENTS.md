@@ -28,13 +28,13 @@
 
 ## Delivery Reality Snapshot (Code-Verified: May 8, 2026)
 
-| Business-Critical Capability                             | Current Delivery State | Code Evidence                                                                                                                                  |
-| -------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Multi-platform user experience parity                    | 🟡 Substantial           | Web deployed; mobile uses real Firebase/Auth/Firestore/Functions services in `packages/mobile/lib/main.dart` and `packages/mobile/lib/services/*` |
-| Proactive maintenance reminder operations                | 🟢 Implemented           | Reminder lifecycle implemented in `packages/shared/src/firestoreServiceFactory.js`; Gate 1 reliability smoke PASS (12/12 tests + HTTP 200)      |
-| Notification execution (email/push)                      | 🟡 Partial             | Email provider active via `packages/functions/src/email.provider.ts`; mobile FCM initialized; end-to-end production delivery evidence pending   |
-| Export/reporting for user value and compliance workflows | 🟡 Partial             | Web + mobile CSV/PDF exports implemented; export parity validated (Gate 3 automated complete, `r1-export-parity-report-20260507T174923Z.md`)     |
-| Fleet/provider/community roadmap features                | ⏸ Planned             | Web service-provider lookup UI exists; fleet manager workflows not yet implemented                                                              |
+| Business-Critical Capability                             | Current Delivery State | Code Evidence                                                                                                                                     |
+| -------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Multi-platform user experience parity                    | 🟡 Substantial         | Web deployed; mobile uses real Firebase/Auth/Firestore/Functions services in `packages/mobile/lib/main.dart` and `packages/mobile/lib/services/*` |
+| Proactive maintenance reminder operations                | 🟢 Implemented         | Reminder lifecycle implemented in `packages/shared/src/firestoreServiceFactory.js`; Gate 1 reliability smoke PASS (12/12 tests + HTTP 200)        |
+| Notification execution (email/push)                      | 🟡 Partial             | Email provider active via `packages/functions/src/email.provider.ts`; mobile FCM initialized; end-to-end production delivery evidence pending     |
+| Export/reporting for user value and compliance workflows | 🟡 Partial             | Web + mobile CSV/PDF exports implemented; export parity validated (Gate 3 automated complete, `r1-export-parity-report-20260507T174923Z.md`)      |
+| Fleet/provider/community roadmap features                | ⏸ Planned             | Web service-provider lookup UI exists; fleet manager workflows not yet implemented                                                                |
 
 Implication for business planning:
 
@@ -417,17 +417,66 @@ Implication for business planning:
 
 ---
 
-## 💰 Financial Projections
+## 💰 Financial Projections & Monetization Strategy
 
-### Revenue Model Breakdown
+**Comprehensive monetization strategy documented in**: [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md)
 
-| Channel             | Y1 Vol       | Y1 Revenue | Y3 Vol        | Y3 Revenue | Notes                            |
-| ------------------- | ------------ | ---------- | ------------- | ---------- | -------------------------------- |
-| **Free Users**      | 100K         | $0         | 1M            | $0         | Freemium base, engagement driver |
-| **Premium Sub**     | 5K           | $645K      | 50K           | $6.45M     | $129/year, 5% conversion         |
-| **Add-on Features** | 1K           | $75K       | 10K           | $750K      | Analytics + Dealer network       |
-| **B2B Fleet**       | 50 customers | $30K       | 500 customers | $300K      | 50 vehicles avg × $12/year       |
-| **TOTAL**           | —            | **$750K**  | —             | **$7.5M**  | —                                |
+### Revenue Model: Freemium + Advertising + Tiered Features
+
+Vehicle Vitals adopts a **three-tier freemium model** with **contextual advertising** to generate sustainable revenue while maintaining user accessibility.
+
+#### Subscription Tiers
+
+| Feature                    | **Free (Ad-Supported)** | **Pro ($2.99/mo)**        | **Premium ($6.99/mo)**    |
+| -------------------------- | ----------------------- | ------------------------- | ------------------------- |
+| **Vehicles Tracked**       | 3                       | 10                        | Unlimited                 |
+| **Maintenance Reminders**  | Basic (mileage)         | Advanced (time + mileage) | Advanced + AI             |
+| **PDF Receipt Upload**     | 10/month                | 100/month                 | Unlimited                 |
+| **Export Reports**         | CSV only                | PDF + CSV + Excel         | PDF + CSV + Excel + cloud |
+| **Ads Shown**              | 3-5/page                | 1-2/page                  | 0 ads (ad-free)           |
+| **Calendar Sync**          | ❌                      | ✅ Google/Outlook         | ✅ All platforms          |
+| **AI Attachment Analysis** | ❌                      | ✅ 5/month                | ✅ Unlimited              |
+| **Priority Support**       | Community               | Email (24-48h)            | Email (4-8h) + phone      |
+| **API/Integrations**       | ❌                      | ❌                        | ✅ Zapier, IFTTT          |
+
+#### Revenue Breakdown (Year 1)
+
+| Channel                     | Volume           | Monthly Revenue | Annual Revenue | Mix      |
+| --------------------------- | ---------------- | --------------- | -------------- | -------- |
+| **Advertising (Free Tier)** | 100K free users  | $30-40K         | $360-480K      | 30%      |
+| **Pro Subscriptions**       | 6,000 users      | $18K            | $216K          | 30%      |
+| **Premium Subscriptions**   | 1,500 users      | $10.5K          | $126K          | 15%      |
+| **Sponsored Listings**      | 50+ mechanics    | $0.6-0.9K       | $7.2-10.8K     | 10%      |
+| **Affiliate Commissions**   | Service bookings | $0.45-0.6K      | $5.4-7.2K      | 5%       |
+| **Cloud Storage Overage**   | Free tier users  | $1.5-2K         | $18-24K        | 3%       |
+| **TOTAL MRR @ Month 12**    | —                | **$60-70K**     | **$733-864K**  | **100%** |
+
+**Target**: $1.2M - $1.5M Year 1 revenue with steady 7.5% paid conversion rate
+
+#### Financial Health Metrics
+
+- **Customer Acquisition Cost (CAC)**: <$3 (organic + referral heavy)
+- **Lifetime Value (LTV)**: >$100 per paying user
+- **LTV:CAC Ratio**: >30:1 (excellent SaaS metrics)
+- **Gross Margin**: 70-80% (high software margin)
+- **Break-even Users**: ~110K (achieved by Month 12 projection)
+- **Path to Profitability**: Month 15-18 (with operational efficiency)
+
+#### Cost Structure (per active user)
+
+- **Infrastructure (Firebase, compute, CDN)**: $0.30-0.50/user/month
+- **Third-party APIs (VIN decode, storage, email)**: $0.30-0.40/user/month
+  - _(Email/SMS costs reduced via Postmark migration, estimated $0.05/user/month)_
+- **Support & Operations**: $0.10-0.15/user/month
+- **COGS Total**: $0.70-1.05/user/month
+- **Gross Margin per Paid User**: 75-80%
+
+**See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for:**
+
+- Detailed ad placement strategy (6 optimal placements, CPM targets)
+- Third-party service cost recovery analysis
+- Revenue roadmap (Phase 1-3 implementation timeline)
+- Risk mitigation & contingency planning
 
 ### Unit Economics
 

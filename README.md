@@ -17,11 +17,22 @@ packages/
 
 Comprehensive project documentation is available in the [`docs/`](/docs) folder:
 
+**Product & Business**:
+
+- **[BUSINESS_REQUIREMENTS.md](/docs/BUSINESS_REQUIREMENTS.md)** - Business strategy, market analysis, revenue projections
+- **[MONETIZATION_STRATEGY.md](/docs/MONETIZATION_STRATEGY.md)** - Detailed monetization plan (ad placements, subscription tiers, pricing)
+- **[PRODUCT_DESIGN.md](/docs/PRODUCT_DESIGN.md)** - Product vision, feature specifications, UX flows
+
+**Technical & Deployment**:
+
 - **[REQUIREMENTS.md](/docs/REQUIREMENTS.md)** - Complete project requirements, feature status, and implementation roadmap
 - **[DEPLOY.md](/docs/DEPLOY.md)** - Detailed deployment guide for all environments (dev/staging/prod)
 - **[ENVIRONMENT_SETUP.md](/docs/ENVIRONMENT_SETUP.md)** - Environment configuration and GitHub secrets setup
 - **[DEPLOYMENT_STATUS.md](/docs/DEPLOYMENT_STATUS.md)** - Current deployment status and environment details
 - **[FIREBASE_CONFIG.md](/docs/FIREBASE_CONFIG.md)** - Firebase configuration patterns and best practices
+
+**Operations & Infrastructure**:
+
 - **[PROD_SETUP_GUIDE.md](/docs/PROD_SETUP_GUIDE.md)** - Production environment setup and secrets management
 - **[BETA_TESTING_GUIDE.md](/docs/BETA_TESTING_GUIDE.md)** - Beta testing preparation and distribution guide
 - **[SECURE_ENVIRONMENTS.md](/docs/SECURE_ENVIRONMENTS.md)** - Security practices for environment management

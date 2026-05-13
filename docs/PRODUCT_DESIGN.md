@@ -59,6 +59,72 @@ Legend:
 
 ---
 
+## 💳 Subscription Tiers & Feature Gating
+
+**Strategy**: Freemium model with three tiers designed to provide value at every level while creating natural upgrade paths for power users.
+
+### Tier Comparison Matrix
+
+| Feature                     | **Free (Ad-Supported)** | **Pro ($2.99/mo)**             | **Premium ($6.99/mo)**       |
+| --------------------------- | ----------------------- | ------------------------------ | ---------------------------- |
+| **Vehicles**                | 3                       | 10                             | Unlimited                    |
+| **Maintenance Reminders**   | Basic (mileage)         | Advanced (time + mileage + AI) | Advanced + predictive        |
+| **Receipt Uploads**         | 10/month                | 100/month                      | Unlimited                    |
+| **Export Formats**          | CSV                     | PDF, CSV, Excel                | PDF, CSV, Excel + cloud sync |
+| **Ads Displayed**           | 3-5/page                | 1-2/page (reduced)             | None (ad-free)               |
+| **Calendar Sync**           | ❌                      | ✅ Google/Outlook              | ✅ All platforms             |
+| **AI Analysis**             | ❌                      | ✅ 5 analyses/month            | ✅ Unlimited                 |
+| **Maintenance Planning**    | ❌                      | ✅ 12-month forecasts          | ✅ 36-month forecasts        |
+| **Multi-Vehicle Dashboard** | ❌                      | ✅                             | ✅ Customizable alerts       |
+| **API Access**              | ❌                      | ❌                             | ✅ Zapier, IFTTT             |
+| **Priority Support**        | Community forums        | Email (24-48h)                 | Email (4-8h) + Phone         |
+
+### Upgrade Trigger Points (UX Design)
+
+**Free → Pro Trigger**:
+
+- User attempts to add 4th vehicle → "Add more vehicles with Pro"
+- User attempts to enable calendar sync → "Calendar sync is a Pro feature"
+- User attempts to upload 11th receipt → "Unlimited uploads with Pro"
+
+**Pro → Premium Trigger**:
+
+- Power user (10+ vehicles) views Pro limit → "Manage unlimited vehicles with Premium"
+- User attempts unlimited AI analysis → "Unlimited AI with Premium"
+- User attempts API access → "Integrations available with Premium"
+
+**Ad Reduction as Motivation**:
+
+- Premium tier prominently marketed as "Ad-free experience"
+- Pro tier shows: "Fewer ads (1-2 vs 3-5)"
+
+### Ad Placement Strategy by Tier
+
+**Free Tier (3-5 Ad Placements)**:
+
+1. Dashboard banner (320x50 mobile, 728x90 web)
+2. Sidebar rectangle (300x600 desktop)
+3. Below maintenance history (300x250)
+4. Within reminders (native)
+5. Export report footer (728x90)
+
+**Pro Tier (1-2 Ad Placements)**:
+
+- Sidebar removed (main revenue trade)
+- Reduced frequency: dashboard banner rotates daily instead of hourly
+- Below maintenance history removed
+- Reminders ad-free
+
+**Premium Tier (0-1 Ad Placements)**:
+
+- Fully ad-free experience
+- Maximum UX polish
+- Optional: "Sponsored content" section (educational, non-intrusive)
+
+See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for detailed ad placement specifications and CPM targets.
+
+---
+
 ## 🎨 Design Language & UX Principles
 
 ### Design Principles

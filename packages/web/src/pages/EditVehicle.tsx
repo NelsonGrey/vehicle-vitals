@@ -3,6 +3,7 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import UpgradeModal from '../components/UpgradeModal';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import { formatFileDisplay } from '../shared/fileUtils';
 import {
@@ -21,6 +22,11 @@ import {
   generateMaintenanceAttachmentPath,
   uploadFile,
 } from '../shared/storageService';
+import {
+  useFeatureFlag,
+  useSubscription,
+  useUpgradePrompt,
+} from '../shared/useMonetization';
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { decodeVin } from '../utils/vehicleService';
@@ -610,6 +616,18 @@ function MaintenanceList({
   vin: string;
   prefill?: { title?: string; cost?: string; date?: string; mileage?: string };
 }) {
+  const { tier } = useSubscription();
+  const hasCalendarSync = useFeatureFlag('calendar_sync');
+  const hasCsvExport = useFeatureFlag('excel_export');
+  const hasPdfExport = useFeatureFlag('pdf_export');
+  const hasAiAnalysis = useFeatureFlag('ai_analysis');
+  const {
+    shouldShowModal,
+    targetTier,
+    trigger,
+    openUpgradeModal,
+    closeUpgradeModal,
+  } = useUpgradePrompt();
   const [entries, setEntries] = useState<MaintenanceEntry[]>([]);
   const [prefillDismissed, setPrefillDismissed] = useState(false);
   const addEntryRef = useRef<HTMLDivElement>(null);
@@ -824,6 +842,19 @@ function MaintenanceList({
         .map(file => file.path)
         .filter((path): path is string => Boolean(path));
 
+      if (!hasAiAnalysis) {
+        setForm(p => ({
+          ...p,
+          attachments: [...(p.attachments || []), ...uploadedFiles],
+        }));
+
+        setUploadFeedback(
+          'Attachments uploaded. AI extraction is available on Pro and Premium plans.'
+        );
+        openUpgradeModal('pro', 'ai_analysis_upload_attachment');
+        return;
+      }
+
       // Show 'analyzing' badge immediately while the Cloud Function runs
       setForm(p => ({
         ...p,
@@ -948,6 +979,11 @@ function MaintenanceList({
 
   const retryAttachmentAnalysis = async (storagePath?: string) => {
     if (!storagePath || analysisBusy || uploading) return;
+
+    if (!hasAiAnalysis) {
+      openUpgradeModal('pro', 'ai_analysis_retry_attachment');
+      return;
+    }
 
     setAnalysisBusy(true);
     setUploadFeedback(null);
@@ -1126,6 +1162,12 @@ function MaintenanceList({
   );
 
   const handleAddToCalendar = async (item: any) => {
+    if (!hasCalendarSync) {
+      const requiredTier = tier === 'free' ? 'pro' : 'premium';
+      openUpgradeModal(requiredTier, 'calendar_sync_add_to_calendar');
+      return;
+    }
+
     if (!vehicle?.vin) {
       alert('Vehicle VIN is required to create calendar events.');
       return;
@@ -1165,6 +1207,26 @@ function MaintenanceList({
     }
   };
 
+  const handleExportCsv = async () => {
+    if (!hasCsvExport) {
+      openUpgradeModal('pro', 'export_csv_maintenance_history');
+      return;
+    }
+
+    const { exportMaintenanceAsCSV } = await import('../utils/dataExport');
+    exportMaintenanceAsCSV(entries, form);
+  };
+
+  const handleExportPdf = async () => {
+    if (!hasPdfExport) {
+      openUpgradeModal('pro', 'export_pdf_maintenance_history');
+      return;
+    }
+
+    const { exportMaintenanceAsPDF } = await import('../utils/dataExport');
+    exportMaintenanceAsPDF(entries, form);
+  };
+
   return (
     <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-md p-6">
       {/* Manufacturer Schedules Section */}
@@ -1190,6 +1252,7 @@ function MaintenanceList({
                   )
                 }
                 className="px-2 py-1 border border-charcoal-300 dark:border-charcoal-600 rounded-md text-sm dark:bg-charcoal-700 dark:text-cream-100"
+                disabled={!hasCalendarSync}
               >
                 <option value="google">Google</option>
                 <option value="apple">Apple</option>
@@ -1197,6 +1260,11 @@ function MaintenanceList({
               </select>
             </div>
           </div>
+          {!hasCalendarSync && (
+            <p className="mb-3 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-200">
+              Calendar sync is available on Pro and Premium plans.
+            </p>
+          )}
           <p className="text-sm text-charcoal-600 dark:text-cream-300 mb-3">
             {vehicle.make} {vehicle.model} ({vehicle.year}) • Current mileage:{' '}
             {vehicle.mileage}
@@ -1252,26 +1320,20 @@ function MaintenanceList({
         </h3>
         <div className="flex gap-2">
           <button
-            onClick={async () => {
-              const { exportMaintenanceAsCSV } = await import(
-                '../utils/dataExport'
-              );
-              exportMaintenanceAsCSV(entries, form);
+            onClick={() => {
+              void handleExportCsv();
             }}
             className="bg-slate-600 hover:bg-slate-700 text-white font-medium py-1 px-3 rounded-md transition-colors duration-200 text-sm"
           >
-            Export CSV
+            {hasCsvExport ? 'Export CSV' : 'Export CSV (Pro)'}
           </button>
           <button
-            onClick={async () => {
-              const { exportMaintenanceAsPDF } = await import(
-                '../utils/dataExport'
-              );
-              exportMaintenanceAsPDF(entries, form);
+            onClick={() => {
+              void handleExportPdf();
             }}
             className="bg-slate-600 hover:bg-slate-700 text-white font-medium py-1 px-3 rounded-md transition-colors duration-200 text-sm"
           >
-            Export PDF
+            {hasPdfExport ? 'Export PDF' : 'Export PDF (Pro)'}
           </button>
         </div>
       </div>
@@ -1367,6 +1429,12 @@ function MaintenanceList({
             <label className="block text-sm font-medium text-charcoal-700 dark:text-cream-200 mb-2">
               Photos/Receipts
             </label>
+            {!hasAiAnalysis && (
+              <p className="mb-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-200">
+                AI receipt extraction is a Pro and Premium feature. Attachments
+                will still upload for manual record-keeping.
+              </p>
+            )}
             <input
               type="file"
               multiple
@@ -1577,6 +1645,14 @@ function MaintenanceList({
           </button>
         </div>
       </div>
+
+      <UpgradeModal
+        isOpen={shouldShowModal}
+        currentTier={tier}
+        targetTier={targetTier || 'pro'}
+        trigger={trigger || 'maintenance_monetization_gate'}
+        onClose={closeUpgradeModal}
+      />
     </div>
   );
 }

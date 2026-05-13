@@ -12,7 +12,7 @@ export default function Layout() {
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="w-full px-4 sm:px-5 py-4">
           <div className="max-w-7xl mx-auto mb-4">
-            <InlineAdSection placement="inlineContent" />
+            <InlineAdSection placement="maintenanceHistory" />
           </div>
           <Outlet />
         </div>

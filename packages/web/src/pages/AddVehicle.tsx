@@ -3,12 +3,18 @@
 import { defaultVehicle } from '@vehicle-vitals/shared';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import UpgradeModal from '../components/UpgradeModal';
 import useVehicleOptions from '../hooks/useVehicleOptions';
-import { addOrUpdateVehicle } from '../shared/firestoreService';
+import { addOrUpdateVehicle, getVehicles } from '../shared/firestoreService';
 import {
   normalizeLicensePlate,
   validateLicensePlate,
 } from '../shared/licensePlateUtils';
+import {
+  useSubscription,
+  useUpgradePrompt,
+  useVehicleLimit,
+} from '../shared/useMonetization';
 import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
 
 export default function AddVehicle() {
@@ -29,6 +35,10 @@ export default function AddVehicle() {
     rawInsights: Record<string, unknown>;
   } | null>(null);
   const navigate = useNavigate();
+  const { tier } = useSubscription();
+  const vehicleLimit = useVehicleLimit();
+  const { shouldShowModal, targetTier, openUpgradeModal, closeUpgradeModal } =
+    useUpgradePrompt();
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form.year, make: form.make });
 
@@ -54,7 +64,24 @@ export default function AddVehicle() {
       alert('VIN is required before saving a vehicle.');
       return;
     }
+
     try {
+      let existingVehicles: Array<{ vin?: string }> = [];
+      try {
+        existingVehicles = (await getVehicles()) as Array<{ vin?: string }>;
+      } catch {
+        existingVehicles = [];
+      }
+      const alreadyExists = existingVehicles.some(
+        vehicle => (vehicle?.vin || '').trim() === trimmedVin
+      );
+
+      if (!alreadyExists && existingVehicles.length >= vehicleLimit) {
+        const requiredTier = tier === 'free' ? 'pro' : 'premium';
+        openUpgradeModal(requiredTier, 'vehicle_limit_add_vehicle');
+        return;
+      }
+
       await addOrUpdateVehicle({
         ...form,
         vin: trimmedVin,
@@ -410,6 +437,14 @@ export default function AddVehicle() {
           )}
         </div>
       </section>
+
+      <UpgradeModal
+        isOpen={shouldShowModal}
+        currentTier={tier}
+        targetTier={targetTier || 'pro'}
+        trigger="vehicle_limit_add_vehicle"
+        onClose={closeUpgradeModal}
+      />
     </div>
   );
 }

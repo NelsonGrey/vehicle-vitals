@@ -54,6 +54,25 @@ It creates a markdown report in `artifacts/release/` containing:
 - Required secret-name presence checks
 - A final go/no-go recommendation
 
+After a `GO` report, prepare (or create) the promotion PR:
+
+```bash
+bash scripts/open-staging-to-production-pr.sh
+```
+
+Create the PR automatically when ready:
+
+```bash
+bash scripts/open-staging-to-production-pr.sh --create-pr
+```
+
+The PR helper:
+
+- Re-runs readiness generation first
+- Blocks PR creation on `NO-GO`
+- Generates a PR body artifact in `artifacts/release/`
+- Targets `staging` -> `production`
+
 ## Decision Rule
 
 - **GO** only when:

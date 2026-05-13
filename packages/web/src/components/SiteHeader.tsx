@@ -68,6 +68,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               <Link to="/contact" className={linkClass}>
                 Contact
               </Link>
+              <Link to="/subscription" className={linkClass}>
+                Plans
+              </Link>
             </div>
 
             {(isDevelopmentEnvironment || isDevelopmentProject) && (
@@ -112,9 +115,6 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 </Link>
                 <Link to="/app/providers" className={linkClass}>
                   Providers
-                </Link>
-                <Link to="/app/subscription" className={linkClass}>
-                  Plans
                 </Link>
                 {isDevelopmentEnvironment && (
                   <Link to="/app/dev-seed" className={linkClass}>

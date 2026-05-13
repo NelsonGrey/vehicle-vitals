@@ -408,10 +408,7 @@ function App() {
                     path="profile"
                     element={<Navigate to="/app/profile" replace />}
                   />
-                  <Route
-                    path="subscription"
-                    element={<Navigate to="/app/subscription" replace />}
-                  />
+                  <Route path="subscription" element={<SubscriptionPage />} />
                   <Route
                     path="timeline"
                     element={<Navigate to="/app/timeline" replace />}

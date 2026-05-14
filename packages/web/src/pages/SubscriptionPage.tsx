@@ -41,7 +41,7 @@ function formatVehicleLimit(tier: UserTier): string {
   if (tier === 'pro') {
     return 'Up to 10 vehicles';
   }
-  return 'Up to 50 vehicles';
+  return 'Up to 25 vehicles';
 }
 
 export default function SubscriptionPage() {
@@ -198,6 +198,29 @@ export default function SubscriptionPage() {
             </article>
           );
         })}
+      </div>
+
+      <div className="mt-5 rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-50/50 p-5 dark:border-purple-800 dark:from-purple-950/40 dark:to-purple-900/30">
+        <h2 className="text-xl font-semibold text-purple-900 dark:text-purple-200">
+          Enterprise (25+ vehicles)
+        </h2>
+        <p className="mt-2 text-sm text-purple-800/90 dark:text-purple-100/90">
+          For larger fleets and commercial operations. Custom plans, priority
+          support, and dedicated account management available.
+        </p>
+        <p className="mt-3 text-sm font-semibold text-purple-900 dark:text-purple-200">
+          Custom pricing
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href =
+              'mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet.';
+          }}
+          className="mt-4 w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800"
+        >
+          Contact Sales
+        </button>
       </div>
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">

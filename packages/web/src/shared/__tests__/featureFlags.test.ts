@@ -21,7 +21,7 @@ describe('featureFlags monetization rules', () => {
   it('enforces expected vehicle limits', () => {
     expect(getVehicleLimit('free')).toBe(2);
     expect(getVehicleLimit('pro')).toBe(10);
-    expect(getVehicleLimit('premium')).toBe(50);
+    expect(getVehicleLimit('premium')).toBe(25);
   });
 
   it('returns quota limits with premium override', () => {

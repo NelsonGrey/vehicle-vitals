@@ -150,7 +150,7 @@ export function getVehicleLimit(tier: UserTier): number {
     case 'pro':
       return 10;
     case 'premium':
-      return 50; // Explicitly limited to prevent fleet/commercial exploitation
+      return 25; // Medium fleet support; 25+ vehicles requires Enterprise
     default:
       return 2;
   }

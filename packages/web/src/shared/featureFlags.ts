@@ -146,13 +146,13 @@ export const FEATURE_FLAGS: Record<string, FeatureFlagConfig> = {
 export function getVehicleLimit(tier: UserTier): number {
   switch (tier) {
     case 'free':
-      return 3;
+      return 2;
     case 'pro':
       return 10;
     case 'premium':
-      return 999; // Effectively unlimited
+      return 50; // Explicitly limited to prevent fleet/commercial exploitation
     default:
-      return 3;
+      return 2;
   }
 }
 

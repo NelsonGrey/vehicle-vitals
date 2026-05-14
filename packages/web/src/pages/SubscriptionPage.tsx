@@ -36,12 +36,12 @@ const featureOrder = [
 
 function formatVehicleLimit(tier: UserTier): string {
   if (tier === 'free') {
-    return 'Up to 3 vehicles';
+    return 'Up to 2 vehicles';
   }
   if (tier === 'pro') {
     return 'Up to 10 vehicles';
   }
-  return 'Unlimited vehicles';
+  return 'Up to 50 vehicles';
 }
 
 export default function SubscriptionPage() {

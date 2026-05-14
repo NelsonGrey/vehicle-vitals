@@ -11,6 +11,11 @@ export default function InlineAdSection({
   className,
 }: InlineAdSectionProps) {
   return (
-    <AdPlacement placement={placement} className={`my-0 ${className || ''}`} />
+    <AdPlacement
+      placement={placement}
+      className={`my-0 ${className || ''}`}
+      hideLabel
+      surface="flat"
+    />
   );
 }

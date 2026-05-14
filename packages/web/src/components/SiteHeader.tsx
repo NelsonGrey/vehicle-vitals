@@ -24,10 +24,10 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
 
   return (
     <header
-      className={`shrink-0 border-b ${
+      className={`shrink-0 ${
         overlay
-          ? 'bg-transparent border-white/25'
-          : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'
+          ? 'bg-transparent border-b border-white/25'
+          : 'bg-slate-50 dark:bg-slate-900'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-5 py-3 w-full">

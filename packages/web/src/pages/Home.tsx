@@ -245,7 +245,7 @@ export default function Home() {
       : 'No recent status yet. Demo seed controls are disabled in this environment.';
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <main>
         <div className="flex items-end justify-between mb-6">
           <div>

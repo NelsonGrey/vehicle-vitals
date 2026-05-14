@@ -245,13 +245,13 @@ export default function EditVehicle() {
 
   if (!form)
     return (
-      <div className="w-full max-w-7xl mx-auto px-5 py-5">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
         <p className="text-charcoal-600 dark:text-cream-300">Loading...</p>
       </div>
     );
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h2 className="font-serif font-bold text-3xl text-charcoal-800 dark:text-cream-100 m-0">

@@ -9,9 +9,9 @@ export default function Landing() {
     <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <SiteHeader overlay={false} />
       <HeaderAdBar />
-      <main className="flex-1 overflow-y-auto overflow-x-hidden">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900">
         {/* Clean Slate Hero Section */}
-        <section className="bg-slate-100 dark:bg-slate-800 py-10 sm:py-14 lg:py-16">
+        <section className="py-10 sm:py-14 lg:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-5">
             <div className="text-center py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto">
               <div className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">
@@ -45,7 +45,7 @@ export default function Landing() {
 
             {/* Feature Cards */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mt-10 sm:mt-12 lg:mt-14">
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   VIN decode & quick add
                 </h3>
@@ -60,7 +60,7 @@ export default function Landing() {
                   Open VIN Decode Demo
                 </Link>
               </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   Maintenance, organized
                 </h3>
@@ -75,7 +75,7 @@ export default function Landing() {
                   Open Maintenance Planning Demo
                 </Link>
               </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   Your garage, anywhere
                 </h3>
@@ -90,7 +90,7 @@ export default function Landing() {
                   Open Cross Platform Access Demo
                 </Link>
               </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   Own your history
                 </h3>
@@ -108,7 +108,7 @@ export default function Landing() {
             </section>
           </div>
         </section>
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 mt-6 sm:mt-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-5 mt-6 sm:mt-8">
           <InlineAdSection placement="maintenanceHistory" />
         </div>
       </main>

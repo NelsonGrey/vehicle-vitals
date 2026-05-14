@@ -204,7 +204,7 @@ export default function ServiceProviders() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
         Service Providers
       </h1>

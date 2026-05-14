@@ -60,10 +60,10 @@ export default function ComingSoon() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       {/* Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-5 py-6">
+      <header className="shrink-0 bg-slate-50 dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-5 py-3">
           <div className="flex items-center justify-center">
             <StackedVLogo
               size={40}
@@ -78,11 +78,11 @@ export default function ComingSoon() {
 
       <HeaderAdBar />
 
-      <main className="pt-8 pb-16">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900 pt-8 pb-16">
         {/* Hero Section */}
-        <section className="bg-slate-100 dark:bg-slate-800 py-20">
-          <div className="max-w-7xl mx-auto px-5">
-            <div className="text-center py-12 max-w-7xl mx-auto">
+        <section className="py-10 sm:py-14 lg:py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-5">
+            <div className="text-center py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto">
               <div className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">
                 Care for every mile
               </div>
@@ -96,7 +96,7 @@ export default function ComingSoon() {
               </div>
 
               {/* Email Signup Form */}
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mb-12">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mb-12">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-4">
                   Get notified when we launch
                 </h3>
@@ -132,7 +132,7 @@ export default function ComingSoon() {
 
             {/* Feature Cards */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   VIN decode & quick add
                 </h3>
@@ -141,7 +141,7 @@ export default function ComingSoon() {
                   database.
                 </p>
               </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   Maintenance, organized
                 </h3>
@@ -150,7 +150,7 @@ export default function ComingSoon() {
                   next.
                 </p>
               </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   Your garage, anywhere
                 </h3>
@@ -159,7 +159,7 @@ export default function ComingSoon() {
                   apps.
                 </p>
               </div>
-              <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-6 rounded-xl shadow-sm">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
                   Own your history
                 </h3>
@@ -171,7 +171,7 @@ export default function ComingSoon() {
             </section>
 
             {/* Suggestion Form */}
-            <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mt-12">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mt-12">
               <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-4 text-center">
                 Have a suggestion?
               </h3>

@@ -737,7 +737,7 @@ export default function Profile() {
     : 'Undo Last Broaden';
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">

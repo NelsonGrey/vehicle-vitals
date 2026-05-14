@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart' as iap;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'entitlements_service.dart';
+import 'feature_flags_service.dart';
+
 class ProductDetails {
   final String id;
   final String title;
@@ -21,17 +24,31 @@ class ProductDetails {
 
 class PremiumService extends ChangeNotifier {
   static const String _premiumStatusKey = 'premium_status';
+  static const String _subscriptionTierKey = 'subscription_tier';
+  static const String _vehicleLimitKey = 'vehicle_limit';
   static const String _premiumProductId = 'premium_ad_free';
 
   bool _isPremium = false;
   bool _isLoading = false;
+  String _subscriptionTier = FeatureFlagsService.freeTier;
+  int _vehicleLimit = FeatureFlagsService.getVehicleLimit(
+    FeatureFlagsService.freeTier,
+  );
+  Map<String, bool> _featureEntitlements =
+      FeatureFlagsService.getFeaturesForTier(FeatureFlagsService.freeTier);
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  final EntitlementsService _entitlementsService = EntitlementsService();
   iap.ProductDetails? _storePremiumProduct;
   StreamSubscription<List<iap.PurchaseDetails>>? _purchaseSubscription;
   ProductDetails? _premiumProduct;
+  String? _lastSyncedUid;
 
   bool get isPremium => _isPremium;
   bool get isLoading => _isLoading;
+  String get subscriptionTier => _subscriptionTier;
+  int get vehicleLimit => _vehicleLimit;
+  Map<String, bool> get featureEntitlements =>
+      Map<String, bool>.from(_featureEntitlements);
   ProductDetails? get premiumProduct => _premiumProduct;
 
   PremiumService() {
@@ -41,12 +58,49 @@ class PremiumService extends ChangeNotifier {
   Future<void> _initialize() async {
     await _loadPremiumStatus();
     await _initializeInAppPurchase();
+    await _refreshEntitlementsFromBackend();
     await _refreshPremiumStatusFromBackend();
+  }
+
+  Future<void> refreshEntitlementsForCurrentUser() async {
+    await _refreshEntitlementsFromBackend();
+    await _refreshPremiumStatusFromBackend();
+  }
+
+  Future<void> syncForAuthUser(String? uid) async {
+    if (uid == _lastSyncedUid) {
+      return;
+    }
+
+    _lastSyncedUid = uid;
+    if (uid == null || uid.isEmpty) {
+      await _saveEntitlements(
+        tier: FeatureFlagsService.freeTier,
+        vehicleLimit: FeatureFlagsService.getVehicleLimit(
+          FeatureFlagsService.freeTier,
+        ),
+        features: FeatureFlagsService.getFeaturesForTier(
+          FeatureFlagsService.freeTier,
+        ),
+      );
+      return;
+    }
+
+    await refreshEntitlementsForCurrentUser();
   }
 
   Future<void> _loadPremiumStatus() async {
     final prefs = await SharedPreferences.getInstance();
     _isPremium = prefs.getBool(_premiumStatusKey) ?? false;
+    _subscriptionTier = FeatureFlagsService.normalizeTier(
+      prefs.getString(_subscriptionTierKey),
+    );
+    _vehicleLimit =
+        prefs.getInt(_vehicleLimitKey) ??
+        FeatureFlagsService.getVehicleLimit(_subscriptionTier);
+    _featureEntitlements = FeatureFlagsService.getFeaturesForTier(
+      _subscriptionTier,
+    );
 
     _premiumProduct = ProductDetails(
       id: _premiumProductId,
@@ -62,6 +116,71 @@ class PremiumService extends ChangeNotifier {
     await prefs.setBool(_premiumStatusKey, status);
     _isPremium = status;
     notifyListeners();
+  }
+
+  Future<void> _saveEntitlements({
+    required String tier,
+    required int vehicleLimit,
+    required Map<String, bool> features,
+  }) async {
+    final normalizedTier = FeatureFlagsService.normalizeTier(tier);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_subscriptionTierKey, normalizedTier);
+    await prefs.setInt(_vehicleLimitKey, vehicleLimit);
+
+    _subscriptionTier = normalizedTier;
+    _vehicleLimit = vehicleLimit;
+    _featureEntitlements = Map<String, bool>.from(features);
+    _isPremium =
+        normalizedTier == FeatureFlagsService.premiumTier ||
+        normalizedTier == FeatureFlagsService.enterpriseTier;
+    await prefs.setBool(_premiumStatusKey, _isPremium);
+    notifyListeners();
+  }
+
+  Future<void> _refreshEntitlementsFromBackend() async {
+    try {
+      final bootstrapData = await _entitlementsService
+          .bootstrapEnterpriseContext();
+      final bootstrapOrgId = (bootstrapData['orgId'] ?? '').toString();
+      final entitlements = await _entitlementsService.getEffectiveEntitlements(
+        orgId: bootstrapOrgId,
+      );
+
+      final tier = FeatureFlagsService.normalizeTier(
+        (entitlements['tier'] ?? FeatureFlagsService.freeTier).toString(),
+      );
+      final vehicleLimit =
+          (entitlements['vehicleLimit'] as num?)?.toInt() ??
+          FeatureFlagsService.getVehicleLimit(tier);
+      final backendFeatures = Map<String, bool>.from(
+        (entitlements['features'] as Map? ?? const <String, dynamic>{}).map(
+          (key, value) => MapEntry(key.toString(), value == true),
+        ),
+      );
+      final features = {
+        ...FeatureFlagsService.getFeaturesForTier(tier),
+        ...backendFeatures,
+      };
+
+      await _saveEntitlements(
+        tier: tier,
+        vehicleLimit: vehicleLimit,
+        features: features,
+      );
+    } catch (error) {
+      debugPrint('Entitlement resolution failed: $error');
+
+      // Keep mobile functional when entitlement callables are unavailable.
+      final fallbackTier = _isPremium
+          ? FeatureFlagsService.premiumTier
+          : FeatureFlagsService.freeTier;
+      await _saveEntitlements(
+        tier: fallbackTier,
+        vehicleLimit: FeatureFlagsService.getVehicleLimit(fallbackTier),
+        features: FeatureFlagsService.getFeaturesForTier(fallbackTier),
+      );
+    }
   }
 
   Future<void> _initializeInAppPurchase() async {
@@ -196,6 +315,8 @@ class PremiumService extends ChangeNotifier {
       if (backendPremium != _isPremium) {
         await _savePremiumStatus(backendPremium);
       }
+
+      await _refreshEntitlementsFromBackend();
     } on FirebaseFunctionsException catch (error) {
       debugPrint('Entitlement refresh function error: ${error.message}');
     } catch (error) {
@@ -205,6 +326,7 @@ class PremiumService extends ChangeNotifier {
 
   Future<void> _deliverProduct() async {
     await _savePremiumStatus(true);
+    await _refreshEntitlementsFromBackend();
     _isLoading = false;
     notifyListeners();
   }
@@ -240,15 +362,23 @@ class PremiumService extends ChangeNotifier {
   }
 
   bool shouldShowAds() {
-    return !_isPremium;
+    return !(_featureEntitlements['ad_free'] ?? false);
+  }
+
+  bool canAccessFeature(String featureName) {
+    if (_featureEntitlements.containsKey(featureName)) {
+      return _featureEntitlements[featureName] ?? false;
+    }
+
+    return FeatureFlagsService.isFeatureEnabled(featureName, _subscriptionTier);
   }
 
   Map<String, bool> getPremiumFeatures() {
     return {
-      'adFree': _isPremium,
-      'advancedAnalytics': _isPremium,
-      'unlimitedExports': _isPremium,
-      'prioritySupport': _isPremium,
+      'adFree': canAccessFeature('ad_free'),
+      'advancedAnalytics': canAccessFeature('ai_analysis'),
+      'unlimitedExports': canAccessFeature('pdf_export'),
+      'prioritySupport': canAccessFeature('priority_support'),
     };
   }
 

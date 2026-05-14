@@ -100,7 +100,7 @@ class _AdBannerState extends State<AdBanner> {
     // Check if user is premium - hide ads for premium users
     return Consumer<PremiumService>(
       builder: (context, premiumService, child) {
-        if (premiumService.isPremium) {
+        if (!premiumService.shouldShowAds()) {
           return const SizedBox.shrink(); // Hide ads for premium users
         }
 

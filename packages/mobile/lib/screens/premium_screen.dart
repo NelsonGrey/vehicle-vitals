@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../services/premium_service.dart';
 
 class PremiumScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Widget _buildPremiumActiveView(PremiumService premiumService) {
     final features = premiumService.getPremiumFeatures();
+    final tierLabel = premiumService.subscriptionTier.toUpperCase();
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -56,7 +58,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Thank you for supporting Vehicle Vitals!',
+                          'Current tier: $tierLabel • Vehicle limit: ${premiumService.vehicleLimit}',
                           style: TextStyle(color: Colors.green.shade700),
                         ),
                       ],
@@ -108,6 +110,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   Widget _buildPremiumPurchaseView(PremiumService premiumService) {
+    final tierLabel = premiumService.subscriptionTier.toUpperCase();
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -122,9 +126,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Unlock advanced features and enjoy an ad-free experience',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+          Text(
+            'Current tier: $tierLabel • Vehicle limit: ${premiumService.vehicleLimit}',
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -143,25 +147,27 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     icon: Icons.block,
                     title: 'Ad-Free Experience',
                     description: 'Remove all banner and interstitial ads',
-                    isActive: false,
+                    isActive: premiumService.canAccessFeature('ad_free'),
                   ),
                   _buildFeatureItem(
                     icon: Icons.analytics,
                     title: 'Advanced Analytics',
                     description: 'Detailed maintenance insights and trends',
-                    isActive: false,
+                    isActive: premiumService.canAccessFeature('ai_analysis'),
                   ),
                   _buildFeatureItem(
                     icon: Icons.file_download,
                     title: 'Unlimited Exports',
                     description: 'Export data without any restrictions',
-                    isActive: false,
+                    isActive: premiumService.canAccessFeature('pdf_export'),
                   ),
                   _buildFeatureItem(
                     icon: Icons.support_agent,
                     title: 'Priority Support',
                     description: 'Get faster responses to your questions',
-                    isActive: false,
+                    isActive: premiumService.canAccessFeature(
+                      'priority_support',
+                    ),
                   ),
                   const SizedBox(height: 24),
                   if (premiumService.premiumProduct != null) ...[

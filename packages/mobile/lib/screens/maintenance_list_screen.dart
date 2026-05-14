@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/ad_banner.dart';
@@ -133,7 +134,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
 
       // Show interstitial ad after adding maintenance entry (only for non-premium users)
       final premiumService = context.read<PremiumService>();
-      if (!premiumService.isPremium) {
+      if (premiumService.shouldShowAds()) {
         InterstitialAdHelper.showAd();
       }
     } catch (e) {
@@ -178,7 +179,39 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     }
   }
 
+  Future<void> exportAsExcel() async {
+    try {
+      await _exportService.exportMaintenanceAsExcel(widget.vin);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Maintenance data exported as Excel')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   Future<void> _syncToCalendar() async {
+    final premiumService = context.read<PremiumService>();
+    if (!premiumService.canAccessFeature('calendar_sync')) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Calendar sync requires Pro or Premium. Upgrade to continue.',
+            ),
+          ),
+        );
+        context.push('/app/premium');
+      }
+      return;
+    }
+
     try {
       final eventsAdded = await _calendarService
           .syncUpcomingMaintenanceToCalendar();
@@ -204,6 +237,10 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final premiumService = context.watch<PremiumService>();
+    final canExportPdf = premiumService.canAccessFeature('pdf_export');
+    final canExportExcel = premiumService.canAccessFeature('excel_export');
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Maintenance - ${widget.vin}'),
@@ -222,6 +259,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                 case 'export_pdf':
                   exportAsPDF();
                   break;
+                case 'export_excel':
+                  exportAsExcel();
+                  break;
               }
             },
             itemBuilder: (context) => [
@@ -229,10 +269,16 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                 value: 'export_csv',
                 child: Text('Export as CSV'),
               ),
-              const PopupMenuItem(
-                value: 'export_pdf',
-                child: Text('Export as PDF'),
-              ),
+              if (canExportPdf)
+                const PopupMenuItem(
+                  value: 'export_pdf',
+                  child: Text('Export as PDF'),
+                ),
+              if (canExportExcel)
+                const PopupMenuItem(
+                  value: 'export_excel',
+                  child: Text('Export as Excel'),
+                ),
             ],
           ),
         ],

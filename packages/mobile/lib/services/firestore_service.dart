@@ -169,6 +169,9 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> _remindersCollection(String vin) =>
       _vehiclesCollection.doc(vin).collection('reminders');
 
+  DocumentReference<Map<String, dynamic>> get _preferencesDocument =>
+      _vehiclesCollection.doc('preferences');
+
   // Get all vehicles for current user
   Future<List<Vehicle>> getVehicles() async {
     final snapshot = await _vehiclesCollection.get();
@@ -313,6 +316,18 @@ class FirestoreService {
   Future<void> reopenReminder(String vin, String reminderId) async {
     await _remindersCollection(vin).doc(reminderId).set({
       'status': 'active',
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<Map<String, dynamic>> getPreferences() async {
+    final snapshot = await _preferencesDocument.get();
+    return snapshot.data() ?? <String, dynamic>{};
+  }
+
+  Future<void> updatePreferences(Map<String, dynamic> preferences) async {
+    await _preferencesDocument.set({
+      ...preferences,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

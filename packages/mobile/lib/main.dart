@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -28,7 +29,9 @@ import 'screens/offline_settings_screen.dart';
 import 'screens/premium_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/records_screen.dart';
+import 'screens/reminder_preferences_screen.dart';
 import 'screens/scan_vin_screen.dart';
+import 'screens/service_providers_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/timeline_dashboard_screen.dart';
@@ -108,7 +111,14 @@ class VehicleVitalsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthService()),
         Provider(create: (context) => FirestoreService()),
         Provider(create: (context) => notificationService),
-        ChangeNotifierProvider(create: (context) => PremiumService()),
+        ChangeNotifierProxyProvider<AuthService, PremiumService>(
+          create: (context) => PremiumService(),
+          update: (context, authService, premiumService) {
+            final service = premiumService ?? PremiumService();
+            unawaited(service.syncForAuthUser(authService.currentUser?.uid));
+            return service;
+          },
+        ),
         ChangeNotifierProvider(create: (context) => OfflineService()),
         ChangeNotifierProvider(create: (context) => AnalyticsService()),
       ],
@@ -247,6 +257,14 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/app/calendar-preferences',
           builder: (context, state) => const CalendarPreferencesScreen(),
+        ),
+        GoRoute(
+          path: '/app/reminder-preferences',
+          builder: (context, state) => const ReminderPreferencesScreen(),
+        ),
+        GoRoute(
+          path: '/app/service-providers',
+          builder: (context, state) => const ServiceProvidersScreen(),
         ),
         GoRoute(
           path: '/app/premium',

@@ -1,4 +1,4 @@
-import { verifyPremiumReceipt } from './premium.provider';
+import {verifyPremiumReceipt} from "./premium.provider";
 
 export interface BillingPurchaseVerificationInput {
   productId: string;
@@ -16,11 +16,11 @@ export interface BillingVerificationResult {
 export async function verifyBillingPurchase(
   input: BillingPurchaseVerificationInput
 ): Promise<BillingVerificationResult> {
-  const normalizedSource = (input.source || 'unknown').toString();
+  const normalizedSource = (input.source || "unknown").toString();
 
   // Current implementation delegates to premium receipt verification.
   // The abstraction allows future Stripe/enterprise invoice providers.
-  if (input.productId === 'premium_ad_free') {
+  if (input.productId === "premium_ad_free") {
     const verification = await verifyPremiumReceipt({
       productId: input.productId,
       source: normalizedSource,
@@ -37,8 +37,8 @@ export async function verifyBillingPurchase(
 
   return {
     verified: false,
-    verificationState: 'unsupported_product',
-    provider: 'billing_abstraction',
-    reason: 'Unsupported product for billing verification',
+    verificationState: "unsupported_product",
+    provider: "billing_abstraction",
+    reason: "Unsupported product for billing verification",
   };
 }

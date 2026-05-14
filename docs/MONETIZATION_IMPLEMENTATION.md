@@ -45,16 +45,16 @@ This document tracks the implementation of the Vehicle Vitals monetization strat
 
 ### Enterprise Foundation Status (May 14, 2026)
 
-| Capability | Status | Evidence |
-| --- | --- | --- |
-| Org bootstrap and membership persistence | Implemented | `packages/functions/src/index.ts` (`bootstrapEnterpriseContextCallable`) |
+| Capability                                             | Status      | Evidence                                                                                                             |
+| ------------------------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| Org bootstrap and membership persistence               | Implemented | `packages/functions/src/index.ts` (`bootstrapEnterpriseContextCallable`)                                             |
 | Effective entitlements resolver (server-authoritative) | Implemented | `packages/functions/src/index.ts` (`getEffectiveEntitlementsCallable`), `packages/web/src/shared/useMonetization.ts` |
-| Admin org role controls | Implemented | `packages/functions/src/index.ts` (`setOrganizationMemberRoleCallable`), `packages/web/src/pages/AdminSupport.tsx` |
-| Retention policy management | Implemented | `packages/functions/src/index.ts` (`applyRetentionPolicyCallable`), `packages/web/src/pages/AdminSupport.tsx` |
-| Compliance export/deletion intake | Implemented | `packages/functions/src/index.ts` (`requestUserDataExportCallable`, `requestUserDataDeletionCallable`) |
-| Idempotency for privileged operations | Implemented | `packages/functions/src/index.ts` (`reserveIdempotencyKey`, `completeIdempotencyKey`) |
-| Audit logging for privileged actions | Implemented | `packages/functions/src/index.ts` (`writeAuditEvent`) |
-| Personal-org migration for existing users | Implemented | `scripts/backfill-personal-org-memberships.js` |
+| Admin org role controls                                | Implemented | `packages/functions/src/index.ts` (`setOrganizationMemberRoleCallable`), `packages/web/src/pages/AdminSupport.tsx`   |
+| Retention policy management                            | Implemented | `packages/functions/src/index.ts` (`applyRetentionPolicyCallable`), `packages/web/src/pages/AdminSupport.tsx`        |
+| Compliance export/deletion intake                      | Implemented | `packages/functions/src/index.ts` (`requestUserDataExportCallable`, `requestUserDataDeletionCallable`)               |
+| Idempotency for privileged operations                  | Implemented | `packages/functions/src/index.ts` (`reserveIdempotencyKey`, `completeIdempotencyKey`)                                |
+| Audit logging for privileged actions                   | Implemented | `packages/functions/src/index.ts` (`writeAuditEvent`)                                                                |
+| Personal-org migration for existing users              | Implemented | `scripts/backfill-personal-org-memberships.js`                                                                       |
 
 ---
 

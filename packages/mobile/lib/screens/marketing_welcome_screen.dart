@@ -14,7 +14,7 @@ class MarketingWelcomeScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Vehicle Vitals')),
+      appBar: AppBar(title: const Text('Garage')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(

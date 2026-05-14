@@ -125,7 +125,7 @@ class VehicleVitalsApp extends StatelessWidget {
       child: Consumer<AuthService>(
         builder: (context, authService, child) {
           return MaterialApp.router(
-            title: 'Vehicle Vitals',
+            title: 'Garage',
             theme: AppTheme.lightTheme(),
             darkTheme: AppTheme.darkTheme(),
             themeMode: ThemeMode.system,

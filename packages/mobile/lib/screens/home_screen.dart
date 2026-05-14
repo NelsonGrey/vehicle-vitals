@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'My Garage',
+          'Garage',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
         ),
         actions: [

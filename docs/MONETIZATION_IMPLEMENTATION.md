@@ -1,7 +1,7 @@
 # Monetization Implementation Roadmap
 
-**Version**: 1.1  
-**Last Updated**: May 13, 2026  
+**Version**: 1.2  
+**Last Updated**: May 14, 2026  
 **Phase**: 1 (MVP Foundation) - Months 1-3  
 **Owner**: Engineering Team
 
@@ -15,7 +15,7 @@ This document tracks the implementation of the Vehicle Vitals monetization strat
 **Target Completion**: Month 3  
 **Success Criteria**: Ad placements rendering, tier system tracking, feature flags functional, and upgrade prompts integrated in key user actions (no payment processing yet)
 
-## Current Progress Snapshot (May 13, 2026)
+## Current Progress Snapshot (May 14, 2026)
 
 - Completed web monetization infrastructure and component integration for Phase 1.
 - Implemented upgrade prompts in user action flows:
@@ -24,8 +24,12 @@ This document tracks the implementation of the Vehicle Vitals monetization strat
   - Maintenance CSV/PDF export
   - AI attachment analysis/retry
 - Added/updated automated coverage:
-  - Unit tests for feature flags and ad placement tier rules
+  - Unit tests for feature flags and ad placement tier rules (298/298 passing)
   - UAT test for subscription plans page availability
+- Recent updates (May 14):
+  - Adjusted tier vehicle limits to protect profitability: Free (3→2), Premium (50→25)
+  - Added Enterprise tier option for 25+ vehicles with sales contact flow
+  - Moved inline body ad from top to bottom to improve visual ad separation
 - Remaining critical path for launch readiness:
   - Stripe checkout + webhook end-to-end
   - Firestore rules finalization for subscription/quota writes
@@ -62,7 +66,7 @@ const isAiAnalysisEnabled = useFeatureFlag('ai_analysis', userTier, {
 
 **Flags to Implement**:
 
-- `vehicle_limit` (Free: 3, Pro: 10, Premium: unlimited)
+- `vehicle_limit` (Free: 2, Pro: 10, Premium: 25, Enterprise: custom)
 - `calendar_sync` (Free: false, Pro: true, Premium: true)
 - `ai_analysis` (Free: false, Pro: true, Premium: true)
 - `ad_free` (Free: false, Pro: false, Premium: true)
@@ -214,6 +218,7 @@ VITE_AD_CLICK_TRACKING=true
   - Pricing display ($2.99 Pro, $6.99 Premium)
   - Annual discount callout
   - Free 7-day trial button
+  - Enterprise tier card with sales contact flow (25+ vehicles)
 
 - [ ] **Mobile**: `packages/mobile/lib/screens/subscription_screen.dart`
   - Similar tier comparison UI

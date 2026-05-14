@@ -192,8 +192,10 @@ export async function incrementQuotaUsage(
   const fieldName = fieldMap[quotaType];
 
   try {
+    const currentUsage = (await getDoc(quotaRef)).data()?.[fieldName] || 0;
+
     await updateDoc(quotaRef, {
-      [fieldName]: (await getDoc(quotaRef)).data()?.[fieldName] || 0 + amount,
+      [fieldName]: currentUsage + amount,
       updatedAt: Timestamp.now(),
     });
   } catch (error) {

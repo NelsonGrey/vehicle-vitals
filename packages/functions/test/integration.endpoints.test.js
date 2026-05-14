@@ -9,6 +9,13 @@ const {
   createCalendarEventCallable,
   getPremiumEntitlement,
   verifyPremiumPurchase,
+  bootstrapEnterpriseContextCallable,
+  getEffectiveEntitlementsCallable,
+  getOrganizationMembersCallable,
+  setOrganizationMemberRoleCallable,
+  applyRetentionPolicyCallable,
+  requestUserDataExportCallable,
+  requestUserDataDeletionCallable,
   deriveUpcomingMaintenanceItems,
   runMaintenanceReminderSweep,
   runMaintenanceReminderSchedule,
@@ -1146,6 +1153,169 @@ test('getPremiumEntitlement returns active provisional entitlement after verific
   assert.equal(entitlement.entitlement.verified, false);
   assert.equal(entitlement.entitlement.verificationState, 'provisional');
   assert.equal(entitlement.entitlement.productId, 'premium_ad_free');
+});
+
+test('bootstrapEnterpriseContextCallable rejects without auth context', async () => {
+  await assert.rejects(
+    () => bootstrapEnterpriseContextCallable.run({}),
+    error => {
+      assert.equal(error.code, 'unauthenticated');
+      return true;
+    }
+  );
+});
+
+test('bootstrapEnterpriseContextCallable returns org and entitlements for authenticated user', async () => {
+  const uid = `enterprise-bootstrap-${Date.now()}`;
+  const result = await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email: `${uid}@example.com` } },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.orgId, `personal_${uid}`);
+  assert.equal(result.entitlements.orgId, `personal_${uid}`);
+  assert.equal(result.entitlements.tier, 'free');
+  assert.equal(result.entitlements.vehicleLimit, 2);
+});
+
+test('getEffectiveEntitlementsCallable returns premium tier when premium entitlement is active', async () => {
+  process.env.PREMIUM_VERIFICATION_REQUIRED = 'false';
+  const uid = `enterprise-entitlement-${Date.now()}`;
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email: `${uid}@example.com` } },
+  });
+
+  await verifyPremiumPurchase.run({
+    auth: { uid },
+    data: {
+      productId: 'premium_ad_free',
+      purchaseId: `purchase-${uid}`,
+      verificationData: `receipt-${uid}`,
+      source: 'unknown_store',
+    },
+  });
+
+  const entitlements = await getEffectiveEntitlementsCallable.run({
+    auth: { uid, token: { email: `${uid}@example.com` } },
+  });
+
+  assert.equal(entitlements.success, true);
+  assert.equal(entitlements.entitlements.tier, 'premium');
+  assert.equal(entitlements.entitlements.vehicleLimit, 25);
+  assert.equal(entitlements.entitlements.features.ad_free, true);
+});
+
+test('organization membership and role management callables work for org owner', async () => {
+  const ownerUid = `org-owner-${Date.now()}`;
+  const targetUid = `${ownerUid}-member`;
+
+  const ownerContext = await bootstrapEnterpriseContextCallable.run({
+    auth: { uid: ownerUid, token: { email: `${ownerUid}@example.com` } },
+  });
+
+  const orgId = ownerContext.orgId;
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid: targetUid, token: { email: `${targetUid}@example.com` } },
+  });
+
+  const admin = require('firebase-admin');
+  await admin
+    .firestore()
+    .doc(`orgs/${orgId}/members/${targetUid}`)
+    .set(
+      {
+        uid: targetUid,
+        email: `${targetUid}@example.com`,
+        role: 'read_only',
+        status: 'active',
+        joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  await admin.firestore().doc(`users/${targetUid}/orgMemberships/${orgId}`).set(
+    {
+      orgId,
+      role: 'read_only',
+      status: 'active',
+    },
+    { merge: true }
+  );
+
+  const membersBefore = await getOrganizationMembersCallable.run({
+    auth: { uid: ownerUid },
+    data: { orgId },
+  });
+  assert.equal(membersBefore.success, true);
+  assert.equal(
+    membersBefore.members.some(member => member.uid === targetUid),
+    true
+  );
+
+  const roleUpdate = await setOrganizationMemberRoleCallable.run({
+    auth: { uid: ownerUid },
+    data: {
+      orgId,
+      targetUid,
+      role: 'org_admin',
+      idempotencyKey: `role-update-${Date.now()}`,
+    },
+  });
+
+  assert.equal(roleUpdate.success, true);
+  assert.equal(roleUpdate.role, 'org_admin');
+});
+
+test('applyRetentionPolicyCallable requires super-admin context', async () => {
+  const uid = `retention-${Date.now()}`;
+  const context = await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email: `${uid}@example.com` } },
+  });
+
+  await assert.rejects(
+    () =>
+      applyRetentionPolicyCallable.run({
+        auth: { uid },
+        data: { orgId: context.orgId, retentionDays: 365 },
+      }),
+    error => {
+      assert.equal(error.code, 'permission-denied');
+      return true;
+    }
+  );
+
+  const result = await applyRetentionPolicyCallable.run({
+    auth: { uid, token: { superAdmin: true } },
+    data: {
+      orgId: context.orgId,
+      retentionDays: 400,
+      idempotencyKey: `retention-${Date.now()}`,
+    },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.retentionDays, 400);
+});
+
+test('compliance request callables return requested status', async () => {
+  const uid = `compliance-${Date.now()}`;
+
+  const exportRequest = await requestUserDataExportCallable.run({
+    auth: { uid },
+    data: { idempotencyKey: `export-${Date.now()}` },
+  });
+
+  assert.equal(exportRequest.success, true);
+  assert.equal(exportRequest.status, 'requested');
+
+  const deletionRequest = await requestUserDataDeletionCallable.run({
+    auth: { uid },
+    data: { idempotencyKey: `deletion-${Date.now()}` },
+  });
+
+  assert.equal(deletionRequest.success, true);
+  assert.equal(deletionRequest.status, 'requested');
 });
 
 test.after(() => {

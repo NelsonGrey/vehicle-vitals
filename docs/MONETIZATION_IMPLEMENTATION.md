@@ -18,6 +18,12 @@ This document tracks the implementation of the Vehicle Vitals monetization strat
 ## Current Progress Snapshot (May 14, 2026)
 
 - Completed web monetization infrastructure and component integration for Phase 1.
+- Completed enterprise-ready monetization architecture foundations:
+  - Organization bootstrap and membership model (`orgs/{orgId}`, `members`, `users/{uid}/orgMemberships`)
+  - Server-resolved effective entitlements callable and web hook integration
+  - Super-admin support tooling with org member role management and retention policy controls
+  - Privileged-flow idempotency keys and immutable audit trail writes
+  - Compliance request callables for export/deletion lifecycle intake
 - Implemented upgrade prompts in user action flows:
   - Add vehicle above tier limit
   - Calendar sync action
@@ -25,15 +31,30 @@ This document tracks the implementation of the Vehicle Vitals monetization strat
   - AI attachment analysis/retry
 - Added/updated automated coverage:
   - Unit tests for feature flags and ad placement tier rules (298/298 passing)
-  - UAT test for subscription plans page availability
+  - Integration tests for enterprise callables (org bootstrap, entitlements, role changes, retention, compliance requests)
+  - UAT coverage for subscription plans and admin support console route behavior
 - Recent updates (May 14):
   - Adjusted tier vehicle limits to protect profitability: Free (3→2), Premium (50→25)
   - Added Enterprise tier option for 25+ vehicles with sales contact flow
   - Moved inline body ad from top to bottom to improve visual ad separation
 - Remaining critical path for launch readiness:
   - Stripe checkout + webhook end-to-end
-  - Firestore rules finalization for subscription/quota writes
+  - Firestore rules hardening for full org-scope domain entities (beyond current org/compliance/audit paths)
   - Mobile parity for gated actions
+  - Production workflow validation for enterprise admin operations
+
+### Enterprise Foundation Status (May 14, 2026)
+
+| Capability | Status | Evidence |
+| --- | --- | --- |
+| Org bootstrap and membership persistence | Implemented | `packages/functions/src/index.ts` (`bootstrapEnterpriseContextCallable`) |
+| Effective entitlements resolver (server-authoritative) | Implemented | `packages/functions/src/index.ts` (`getEffectiveEntitlementsCallable`), `packages/web/src/shared/useMonetization.ts` |
+| Admin org role controls | Implemented | `packages/functions/src/index.ts` (`setOrganizationMemberRoleCallable`), `packages/web/src/pages/AdminSupport.tsx` |
+| Retention policy management | Implemented | `packages/functions/src/index.ts` (`applyRetentionPolicyCallable`), `packages/web/src/pages/AdminSupport.tsx` |
+| Compliance export/deletion intake | Implemented | `packages/functions/src/index.ts` (`requestUserDataExportCallable`, `requestUserDataDeletionCallable`) |
+| Idempotency for privileged operations | Implemented | `packages/functions/src/index.ts` (`reserveIdempotencyKey`, `completeIdempotencyKey`) |
+| Audit logging for privileged actions | Implemented | `packages/functions/src/index.ts` (`writeAuditEvent`) |
+| Personal-org migration for existing users | Implemented | `scripts/backfill-personal-org-memberships.js` |
 
 ---
 

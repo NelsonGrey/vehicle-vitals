@@ -2,6 +2,27 @@ rules_version='2'
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function orgMemberDoc(orgId) {
+      return /databases/$(database)/documents/orgs/$(orgId)/members/$(request.auth.uid);
+    }
+
+    function isOrgMember(orgId) {
+      return isSignedIn() && exists(orgMemberDoc(orgId));
+    }
+
+    function isOrgAdmin(orgId) {
+      return isOrgMember(orgId)
+        && get(orgMemberDoc(orgId)).data.role in ['org_owner', 'org_admin', 'billing_admin', 'support_agent'];
+    }
+
     // Allow public writes to launch signups and suggestions for Coming Soon page
     match /launch_signups/{document} {
       allow create: if request.auth == null && request.resource.data.keys().hasAll(['email', 'timestamp', 'source']);
@@ -15,7 +36,39 @@ service cloud.firestore {
 
     // Authenticated user data - users can only access their own data
     match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSelf(userId);
+    }
+
+    // Organization-scoped enterprise model
+    match /orgs/{orgId} {
+      allow read: if isOrgMember(orgId);
+      allow write: if false; // Managed via Cloud Functions
+
+      match /members/{memberId} {
+        allow read: if isOrgMember(orgId);
+        allow write: if false; // Managed via Cloud Functions
+      }
+
+      match /audit/{auditId} {
+        allow read: if isOrgAdmin(orgId);
+        allow write: if false; // Immutable audit log via Cloud Functions
+      }
+
+      match /compliance/{docId} {
+        allow read: if isOrgAdmin(orgId);
+        allow write: if false; // Managed via Cloud Functions
+      }
+    }
+
+    // Compliance lifecycle requests are server-managed; users can read own requests
+    match /complianceRequests/{requestId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Idempotency keys must never be directly writable by clients
+    match /idempotencyKeys/{keyId} {
+      allow read, write: if false;
     }
   }
 }

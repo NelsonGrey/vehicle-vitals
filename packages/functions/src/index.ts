@@ -8,6 +8,7 @@ import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
+import { verifyBillingPurchase } from './billing.provider';
 import {
   buildAppleCalendarEvent,
   buildGoogleCalendarEvent,
@@ -20,7 +21,6 @@ import {
 } from './integration.cache';
 import { getIntegrationConfig } from './integrations.config';
 import { lookupOwnerManuals } from './manuals.provider';
-import { verifyPremiumReceipt } from './premium.provider';
 import { enforceRateLimit, requireAuthenticatedUser } from './request.guards';
 import { buildMaintenancePlan } from './schedule.provider';
 import { lookupWarrantySummary } from './warranty.provider';
@@ -112,6 +112,432 @@ interface ReminderScheduleRunDependencies {
   onInfo: (message: string, payload?: unknown) => void;
   onError: (message: string, error: unknown) => void;
 }
+
+interface SupportAuthToken {
+  email?: string;
+  superAdmin?: boolean;
+  admin?: boolean;
+  supportAdmin?: boolean;
+}
+
+interface SupportAuthContext {
+  uid?: string;
+  token?: SupportAuthToken;
+}
+
+interface SupportAccessContext {
+  isSuperAdmin: boolean;
+  accessReason: string;
+}
+
+interface SupportUserSummary {
+  uid: string;
+  email: string;
+  displayName: string;
+  disabled: boolean;
+  createdAt: string | null;
+  lastSignInTime: string | null;
+  subscriptionTier: string;
+  subscriptionStatus: string;
+  vehicleCount: number;
+  premiumActive: boolean;
+  premiumVerified: boolean;
+  vehicleLimit: number;
+}
+
+type UserTier = 'free' | 'pro' | 'premium';
+
+type OrgRole =
+  | 'org_owner'
+  | 'org_admin'
+  | 'support_agent'
+  | 'billing_admin'
+  | 'read_only';
+
+interface EffectiveEntitlements {
+  orgId: string;
+  tier: UserTier;
+  vehicleLimit: number;
+  features: Record<string, boolean>;
+}
+
+interface IdempotencyReservation {
+  isReplay: boolean;
+  result?: Record<string, unknown>;
+  ref?: admin.firestore.DocumentReference;
+}
+
+const parseCsvEnvList = (value: string | undefined): string[] =>
+  (value || '')
+    .split(',')
+    .map(item => item.trim().toLowerCase())
+    .filter(Boolean);
+
+const SUPER_ADMIN_EMAILS = parseCsvEnvList(process.env.SUPER_ADMIN_EMAILS);
+const SUPER_ADMIN_UIDS = parseCsvEnvList(process.env.SUPER_ADMIN_UIDS);
+
+const ROLE_RANK: Record<OrgRole, number> = {
+  org_owner: 5,
+  org_admin: 4,
+  billing_admin: 3,
+  support_agent: 2,
+  read_only: 1,
+};
+
+const tierRank = (tier: UserTier): number => {
+  switch (tier) {
+    case 'premium':
+      return 3;
+    case 'pro':
+      return 2;
+    default:
+      return 1;
+  }
+};
+
+const normalizeTier = (tier: unknown): UserTier => {
+  const value = (tier || 'free').toString();
+  if (value === 'premium' || value === 'pro') {
+    return value;
+  }
+
+  return 'free';
+};
+
+const getVehicleLimitForTier = (tier: UserTier): number => {
+  switch (tier) {
+    case 'premium':
+      return 25;
+    case 'pro':
+      return 10;
+    default:
+      return 2;
+  }
+};
+
+const getFeatureSetForTier = (tier: UserTier): Record<string, boolean> => ({
+  vehicle_limit: true,
+  calendar_sync: tier !== 'free',
+  pdf_export: tier !== 'free',
+  excel_export: tier !== 'free',
+  ai_analysis: tier !== 'free',
+  ad_free: tier === 'premium',
+  priority_support: tier !== 'free',
+  phone_support: tier === 'premium',
+  api_access: tier === 'premium',
+});
+
+const getDefaultOrgId = (uid: string): string => `personal_${uid}`;
+
+const toOrgRole = (value: unknown): OrgRole => {
+  const role = (value || 'read_only').toString() as OrgRole;
+  return ROLE_RANK[role] ? role : 'read_only';
+};
+
+async function writeAuditEvent(params: {
+  orgId: string;
+  actorUid: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details?: Record<string, unknown>;
+}) {
+  const db = admin.firestore();
+  await db.collection(`orgs/${params.orgId}/audit`).add({
+    actorUid: params.actorUid,
+    action: params.action,
+    targetType: params.targetType,
+    targetId: params.targetId,
+    details: params.details || {},
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+async function ensurePersonalOrganization(
+  uid: string,
+  email?: string | null
+): Promise<string> {
+  const db = admin.firestore();
+  const orgId = getDefaultOrgId(uid);
+  const orgRef = db.doc(`orgs/${orgId}`);
+  const memberRef = db.doc(`orgs/${orgId}/members/${uid}`);
+  const userMembershipRef = db.doc(`users/${uid}/orgMemberships/${orgId}`);
+
+  const [orgSnap, memberSnap] = await Promise.all([
+    orgRef.get(),
+    memberRef.get(),
+  ]);
+
+  const batch = db.batch();
+
+  if (!orgSnap.exists) {
+    batch.set(orgRef, {
+      orgId,
+      name: `Personal Garage (${uid.slice(0, 6)})`,
+      type: 'personal',
+      planTier: 'free',
+      createdByUid: uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  if (!memberSnap.exists) {
+    batch.set(memberRef, {
+      uid,
+      email: (email || '').toString(),
+      role: 'org_owner',
+      status: 'active',
+      joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  batch.set(
+    userMembershipRef,
+    {
+      orgId,
+      role: 'org_owner',
+      status: 'active',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  await batch.commit();
+  return orgId;
+}
+
+async function getPrimaryOrgIdForUser(uid: string): Promise<string> {
+  const db = admin.firestore();
+  const memberships = await db
+    .collection(`users/${uid}/orgMemberships`)
+    .where('status', '==', 'active')
+    .limit(1)
+    .get();
+
+  if (!memberships.empty) {
+    return memberships.docs[0].id;
+  }
+
+  return ensurePersonalOrganization(uid);
+}
+
+async function resolveEffectiveEntitlements(
+  uid: string,
+  requestedOrgId?: string
+): Promise<EffectiveEntitlements> {
+  const db = admin.firestore();
+  const fallbackOrgId = await getPrimaryOrgIdForUser(uid);
+  const orgId = requestedOrgId || fallbackOrgId;
+
+  const [subscriptionSnap, premiumSnap, orgSnap] = await Promise.all([
+    db.doc(`users/${uid}/subscription/current`).get(),
+    db.doc(`users/${uid}/entitlements/premium`).get(),
+    db.doc(`orgs/${orgId}`).get(),
+  ]);
+
+  const subscriptionTier = normalizeTier(subscriptionSnap.data()?.tier);
+  const premiumActive = premiumSnap.data()?.active === true;
+  const orgTier = normalizeTier(orgSnap.data()?.planTier);
+
+  let effectiveTier = subscriptionTier;
+  if (tierRank(orgTier) > tierRank(effectiveTier)) {
+    effectiveTier = orgTier;
+  }
+  if (premiumActive) {
+    effectiveTier = 'premium';
+  }
+
+  return {
+    orgId,
+    tier: effectiveTier,
+    vehicleLimit: getVehicleLimitForTier(effectiveTier),
+    features: getFeatureSetForTier(effectiveTier),
+  };
+}
+
+async function requireOrgRole(
+  uid: string,
+  orgId: string,
+  allowedRoles: OrgRole[]
+): Promise<OrgRole> {
+  const db = admin.firestore();
+  const memberSnap = await db.doc(`orgs/${orgId}/members/${uid}`).get();
+
+  if (!memberSnap.exists) {
+    throw new HttpsError('permission-denied', 'User is not an org member');
+  }
+
+  const role = toOrgRole(memberSnap.data()?.role);
+  if (!allowedRoles.includes(role)) {
+    throw new HttpsError('permission-denied', 'Insufficient organization role');
+  }
+
+  return role;
+}
+
+async function reserveIdempotencyKey(params: {
+  uid: string;
+  operation: string;
+  idempotencyKey?: string;
+}): Promise<IdempotencyReservation> {
+  const key = (params.idempotencyKey || '').trim();
+  if (!key) {
+    return { isReplay: false };
+  }
+
+  const db = admin.firestore();
+  const digest = createHash('sha256')
+    .update(`${params.uid}:${params.operation}:${key}`)
+    .digest('hex');
+  const ref = db.doc(`idempotencyKeys/${digest}`);
+  const snap = await ref.get();
+
+  if (snap.exists) {
+    const data = snap.data() || {};
+    if (data.status === 'completed' && typeof data.result === 'object') {
+      return {
+        isReplay: true,
+        result: data.result as Record<string, unknown>,
+      };
+    }
+
+    throw new HttpsError(
+      'already-exists',
+      'Duplicate idempotency key is currently processing'
+    );
+  }
+
+  await ref.create({
+    uid: params.uid,
+    operation: params.operation,
+    status: 'in_progress',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { isReplay: false, ref };
+}
+
+async function completeIdempotencyKey(
+  reservation: IdempotencyReservation,
+  result: Record<string, unknown>
+) {
+  if (!reservation.ref) {
+    return;
+  }
+
+  await reservation.ref.set(
+    {
+      status: 'completed',
+      result,
+      completedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+async function markIdempotencyFailed(
+  reservation: IdempotencyReservation,
+  reason: string
+) {
+  if (!reservation.ref) {
+    return;
+  }
+
+  await reservation.ref.set(
+    {
+      status: 'failed',
+      error: reason,
+      failedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+const getSupportAccessContext = (request: {
+  auth?: SupportAuthContext;
+}): SupportAccessContext => {
+  const auth = request.auth;
+
+  if (!auth) {
+    return { isSuperAdmin: false, accessReason: 'Missing auth context' };
+  }
+
+  const uid = (auth.uid || '').toLowerCase();
+  const email = (auth.token?.email || '').toLowerCase();
+  const token = auth.token || {};
+  const isClaimedAdmin =
+    token.superAdmin === true ||
+    token.admin === true ||
+    token.supportAdmin === true;
+  const isAllowlisted =
+    SUPER_ADMIN_UIDS.includes(uid) || SUPER_ADMIN_EMAILS.includes(email);
+
+  if (isClaimedAdmin) {
+    return { isSuperAdmin: true, accessReason: 'Granted by custom claim' };
+  }
+
+  if (isAllowlisted) {
+    return {
+      isSuperAdmin: true,
+      accessReason: 'Granted by environment allowlist',
+    };
+  }
+
+  return {
+    isSuperAdmin: false,
+    accessReason: 'User is not a super-administrator',
+  };
+};
+
+const requireSuperAdmin = (request: {
+  auth?: SupportAuthContext;
+}): SupportAccessContext => {
+  const access = getSupportAccessContext(request);
+
+  if (!access.isSuperAdmin) {
+    throw new HttpsError('permission-denied', access.accessReason);
+  }
+
+  return access;
+};
+
+const buildSupportUserSummary = async (
+  userRecord: admin.auth.UserRecord
+): Promise<SupportUserSummary> => {
+  const uid = userRecord.uid;
+  const db = admin.firestore();
+  const subscriptionSnap = await db
+    .doc(`users/${uid}/subscription/current`)
+    .get();
+  const entitlementSnap = await db
+    .doc(`users/${uid}/entitlements/premium`)
+    .get();
+  const vehicleSnap = await db.collection(`users/${uid}/vehicles`).get();
+
+  const subscription = subscriptionSnap.data() || {};
+  const entitlement = entitlementSnap.data() || {};
+  const vehicleCount = vehicleSnap.docs.filter(
+    doc => doc.id !== '__preferences__'
+  ).length;
+  const tier = (subscription.tier || 'free').toString();
+
+  return {
+    uid,
+    email: (userRecord.email || '').toString(),
+    displayName: (userRecord.displayName || '').toString(),
+    disabled: userRecord.disabled === true,
+    createdAt: userRecord.metadata.creationTime || null,
+    lastSignInTime: userRecord.metadata.lastSignInTime || null,
+    subscriptionTier: tier,
+    subscriptionStatus: (subscription.status || 'active').toString(),
+    vehicleCount,
+    premiumActive: entitlement.active === true,
+    premiumVerified: entitlement.verified === true,
+    vehicleLimit: tier === 'premium' ? 25 : tier === 'pro' ? 10 : 2,
+  };
+};
 
 /**
  * Firestore CRUD helpers for Firebase Functions
@@ -1926,13 +2352,21 @@ export const verifyPremiumPurchase = onCall(async request => {
     throw new HttpsError('unauthenticated', 'Missing auth context');
   }
 
-  const { productId, purchaseId, verificationData, source } =
-    (request.data as {
-      productId?: string;
-      purchaseId?: string;
-      verificationData?: string;
-      source?: string;
-    }) ?? {};
+  const {
+    productId,
+    purchaseId,
+    verificationData,
+    source,
+    idempotencyKey,
+    orgId: requestedOrgId,
+  } = (request.data as {
+    productId?: string;
+    purchaseId?: string;
+    verificationData?: string;
+    source?: string;
+    idempotencyKey?: string;
+    orgId?: string;
+  }) ?? {};
 
   if (productId !== 'premium_ad_free') {
     throw new HttpsError('invalid-argument', 'Unsupported premium productId');
@@ -1948,85 +2382,124 @@ export const verifyPremiumPurchase = onCall(async request => {
 
   const receiptHash = createHash('sha256').update(receipt).digest('hex');
   const purchaseSource = (source || 'unknown').toString();
+  const orgId = (requestedOrgId || '').toString().trim();
 
-  const verification = await verifyPremiumReceipt({
-    productId,
-    source: purchaseSource,
-    receipt,
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'verifyPremiumPurchase',
+    idempotencyKey,
   });
-
-  const strictVerification =
-    (process.env.PREMIUM_VERIFICATION_REQUIRED || 'false')
-      .trim()
-      .toLowerCase() === 'true';
-
-  if (strictVerification && !verification.verified) {
-    throw new HttpsError(
-      'failed-precondition',
-      verification.reason ||
-        'Premium receipt verification failed in strict verification mode'
-    );
+  if (reservation.isReplay) {
+    return reservation.result;
   }
 
-  const db = admin.firestore();
-  const receiptRef = db.doc(`premiumReceipts/${receiptHash}`);
-  const entitlementRef = db.doc(`users/${uid}/entitlements/premium`);
+  try {
+    const verification = await verifyBillingPurchase({
+      productId,
+      source: purchaseSource,
+      receipt,
+    });
 
-  await db.runTransaction(async tx => {
-    const receiptSnap = await tx.get(receiptRef);
-    if (receiptSnap.exists) {
-      const existingUid = (receiptSnap.data()?.uid || '').toString();
-      if (existingUid && existingUid !== uid) {
-        throw new HttpsError(
-          'permission-denied',
-          'Receipt is already linked to another account'
-        );
-      }
+    const strictVerification =
+      (process.env.PREMIUM_VERIFICATION_REQUIRED || 'false')
+        .trim()
+        .toLowerCase() === 'true';
+
+    if (strictVerification && !verification.verified) {
+      throw new HttpsError(
+        'failed-precondition',
+        verification.reason ||
+          'Premium receipt verification failed in strict verification mode'
+      );
     }
 
-    tx.set(
-      receiptRef,
-      {
-        uid,
+    const db = admin.firestore();
+    const receiptRef = db.doc(`premiumReceipts/${receiptHash}`);
+    const entitlementRef = db.doc(`users/${uid}/entitlements/premium`);
+
+    await db.runTransaction(async tx => {
+      const receiptSnap = await tx.get(receiptRef);
+      if (receiptSnap.exists) {
+        const existingUid = (receiptSnap.data()?.uid || '').toString();
+        if (existingUid && existingUid !== uid) {
+          throw new HttpsError(
+            'permission-denied',
+            'Receipt is already linked to another account'
+          );
+        }
+      }
+
+      tx.set(
+        receiptRef,
+        {
+          uid,
+          productId,
+          source: purchaseSource,
+          purchaseId: (purchaseId || '').toString(),
+          receiptHash,
+          verified: verification.verified,
+          verificationState: verification.verificationState,
+          verificationProvider: verification.provider,
+          verificationReason: (verification.reason || '').toString(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      tx.set(
+        entitlementRef,
+        {
+          active: true,
+          productId,
+          source: purchaseSource,
+          purchaseId: (purchaseId || '').toString(),
+          receiptHash,
+          verificationState: verification.verificationState,
+          verified: verification.verified,
+          verificationProvider: verification.provider,
+          verificationReason: (verification.reason || '').toString(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    });
+
+    const ensuredOrgId = orgId || (await ensurePersonalOrganization(uid));
+    await writeAuditEvent({
+      orgId: ensuredOrgId,
+      actorUid: uid,
+      action: 'billing.verify_premium_purchase',
+      targetType: 'entitlement',
+      targetId: 'premium',
+      details: {
         productId,
         source: purchaseSource,
-        purchaseId: (purchaseId || '').toString(),
-        receiptHash,
+        verificationState: verification.verificationState,
+      },
+    });
+
+    const result = {
+      success: true,
+      entitlement: {
+        premium: true,
         verified: verification.verified,
         verificationState: verification.verificationState,
-        verificationProvider: verification.provider,
-        verificationReason: (verification.reason || '').toString(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
-      { merge: true }
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
     );
 
-    tx.set(
-      entitlementRef,
-      {
-        active: true,
-        productId,
-        source: purchaseSource,
-        purchaseId: (purchaseId || '').toString(),
-        receiptHash,
-        verificationState: verification.verificationState,
-        verified: verification.verified,
-        verificationProvider: verification.provider,
-        verificationReason: (verification.reason || '').toString(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
     );
-  });
-
-  return {
-    success: true,
-    entitlement: {
-      premium: true,
-      verified: verification.verified,
-      verificationState: verification.verificationState,
-    },
-  };
+    throw error;
+  }
 });
 
 export const getPremiumEntitlement = onCall(async request => {
@@ -2050,5 +2523,478 @@ export const getPremiumEntitlement = onCall(async request => {
       productId: (data.productId || '').toString(),
       updatedAt: data.updatedAt || null,
     },
+  };
+});
+
+export const bootstrapEnterpriseContextCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const orgId = await ensurePersonalOrganization(
+    uid,
+    (request.auth?.token?.email || '').toString()
+  );
+  const entitlements = await resolveEffectiveEntitlements(uid, orgId);
+
+  await writeAuditEvent({
+    orgId,
+    actorUid: uid,
+    action: 'enterprise.bootstrap_context',
+    targetType: 'organization',
+    targetId: orgId,
+  });
+
+  return {
+    success: true,
+    orgId,
+    entitlements,
+  };
+});
+
+export const getEffectiveEntitlementsCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const requestedOrgId = (request.data?.orgId || '').toString().trim();
+  if (!requestedOrgId) {
+    await ensurePersonalOrganization(
+      uid,
+      (request.auth?.token?.email || '').toString()
+    );
+  }
+
+  const entitlements = await resolveEffectiveEntitlements(uid, requestedOrgId);
+  return {
+    success: true,
+    entitlements,
+  };
+});
+
+export const getOrganizationMembersCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const requestedOrgId = (request.data?.orgId || '').toString().trim();
+  const orgId = requestedOrgId || (await getPrimaryOrgIdForUser(uid));
+
+  await requireOrgRole(uid, orgId, [
+    'org_owner',
+    'org_admin',
+    'support_agent',
+    'billing_admin',
+    'read_only',
+  ]);
+
+  const membersSnap = await admin
+    .firestore()
+    .collection(`orgs/${orgId}/members`)
+    .get();
+
+  const members = membersSnap.docs.map(doc => ({
+    uid: doc.id,
+    ...doc.data(),
+  }));
+
+  return {
+    success: true,
+    orgId,
+    members,
+  };
+});
+
+export const setOrganizationMemberRoleCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const orgId = (request.data?.orgId || '').toString().trim();
+  const targetUid = (request.data?.targetUid || '').toString().trim();
+  const newRole = toOrgRole(request.data?.role);
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!orgId || !targetUid) {
+    throw new HttpsError(
+      'invalid-argument',
+      'orgId and targetUid are required'
+    );
+  }
+
+  await requireOrgRole(actorUid, orgId, ['org_owner', 'org_admin']);
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'setOrganizationMemberRole',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const memberRef = admin
+      .firestore()
+      .doc(`orgs/${orgId}/members/${targetUid}`);
+    const memberSnap = await memberRef.get();
+    if (!memberSnap.exists) {
+      throw new HttpsError('not-found', 'Organization member not found');
+    }
+
+    await memberRef.set(
+      {
+        role: newRole,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await admin
+      .firestore()
+      .doc(`users/${targetUid}/orgMemberships/${orgId}`)
+      .set(
+        {
+          orgId,
+          role: newRole,
+          status: 'active',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: 'organization.set_member_role',
+      targetType: 'member',
+      targetId: targetUid,
+      details: { role: newRole },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      targetUid,
+      role: newRole,
+    };
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const requestUserDataExportCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'requestUserDataExport',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const requestRef = await admin
+      .firestore()
+      .collection('complianceRequests')
+      .add({
+        uid,
+        type: 'export',
+        status: 'requested',
+        piiTags: [
+          'email',
+          'vehicle_data',
+          'maintenance_history',
+          'subscription',
+        ],
+        requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+    const result = {
+      success: true,
+      requestId: requestRef.id,
+      status: 'requested',
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const requestUserDataDeletionCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'requestUserDataDeletion',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const requestRef = await admin
+      .firestore()
+      .collection('complianceRequests')
+      .add({
+        uid,
+        type: 'deletion',
+        status: 'requested',
+        piiTags: [
+          'email',
+          'vehicle_data',
+          'maintenance_history',
+          'subscription',
+        ],
+        requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+    const result = {
+      success: true,
+      requestId: requestRef.id,
+      status: 'requested',
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const applyRetentionPolicyCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  requireSuperAdmin(request);
+
+  const orgId = (request.data?.orgId || '').toString().trim();
+  const retentionDaysRaw = Number(request.data?.retentionDays || 365);
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!orgId) {
+    throw new HttpsError('invalid-argument', 'orgId is required');
+  }
+
+  const retentionDays = Number.isFinite(retentionDaysRaw)
+    ? Math.max(30, Math.min(3650, Math.floor(retentionDaysRaw)))
+    : 365;
+
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'applyRetentionPolicy',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    await admin.firestore().doc(`orgs/${orgId}/compliance/retention`).set(
+      {
+        retentionDays,
+        updatedByUid: uid,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await writeAuditEvent({
+      orgId,
+      actorUid: uid,
+      action: 'compliance.apply_retention_policy',
+      targetType: 'retention_policy',
+      targetId: orgId,
+      details: { retentionDays },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      retentionDays,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const recordSupportActionCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  requireSuperAdmin(request);
+
+  const orgId = (request.data?.orgId || '').toString().trim();
+  const targetUid = (request.data?.targetUid || '').toString().trim();
+  const action = (request.data?.action || '').toString().trim();
+  const notes = (request.data?.notes || '').toString().trim();
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!orgId || !targetUid || !action) {
+    throw new HttpsError(
+      'invalid-argument',
+      'orgId, targetUid, and action are required'
+    );
+  }
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'recordSupportAction',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: `support.${action}`,
+      targetType: 'user',
+      targetId: targetUid,
+      details: { notes },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      targetUid,
+      action,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const getSupportAccessContextCallable = onCall(async request => {
+  if (!request.auth?.uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const access = getSupportAccessContext(request);
+  return {
+    success: true,
+    ...access,
+  };
+});
+
+export const searchSupportUsersCallable = onCall(async request => {
+  requireSuperAdmin(request);
+
+  const rawQuery =
+    typeof request.data?.query === 'string' ? request.data.query : '';
+  const query = rawQuery.trim().toLowerCase();
+  const rawLimit = Number(request.data?.limit || 12);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.max(1, Math.min(25, Math.floor(rawLimit)))
+    : 12;
+
+  const auth = admin.auth();
+  const results: SupportUserSummary[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const page = await auth.listUsers(1000, pageToken);
+
+    for (const userRecord of page.users) {
+      if (results.length >= limit) {
+        break;
+      }
+
+      const haystack = [
+        userRecord.uid,
+        userRecord.email,
+        userRecord.displayName,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      if (query && !haystack.includes(query)) {
+        continue;
+      }
+
+      results.push(await buildSupportUserSummary(userRecord));
+    }
+
+    pageToken = page.pageToken || undefined;
+  } while (pageToken && results.length < limit);
+
+  return {
+    success: true,
+    query,
+    results,
   };
 });

@@ -13,11 +13,19 @@ import {
   UserCredential,
 } from 'firebase/auth';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { getSupportAccessContext } from '../utils/supportAdminService';
 import { auth } from './firebaseConfig';
+
+export interface SupportAccessContext {
+  isSuperAdmin: boolean;
+  accessReason: string;
+}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  supportAccess: SupportAccessContext | null;
+  supportAccessLoading: boolean;
   signIn: (email: string, password: string) => Promise<UserCredential>;
   signUp: (email: string, password: string) => Promise<UserCredential>;
   signOut: () => Promise<void>;
@@ -31,6 +39,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  supportAccess: null,
+  supportAccessLoading: true,
   signIn: async () => {
     throw new Error('Firebase not initialized');
   },
@@ -64,6 +74,9 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [supportAccess, setSupportAccess] =
+    useState<SupportAccessContext | null>(null);
+  const [supportAccessLoading, setSupportAccessLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, user => {
@@ -73,6 +86,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadSupportAccess = async () => {
+      if (!user) {
+        setSupportAccess(null);
+        setSupportAccessLoading(false);
+        return;
+      }
+
+      setSupportAccessLoading(true);
+
+      try {
+        const access = await getSupportAccessContext();
+
+        if (!isActive) {
+          return;
+        }
+
+        setSupportAccess(access);
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setSupportAccess({
+          isSuperAdmin: false,
+          accessReason: 'Support access unavailable',
+        });
+      } finally {
+        if (isActive) {
+          setSupportAccessLoading(false);
+        }
+      }
+    };
+
+    void loadSupportAccess();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user]);
 
   const value = useMemo(() => {
     const googleProvider = new GoogleAuthProvider();
@@ -140,6 +196,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return {
       user,
       loading,
+      supportAccess,
+      supportAccessLoading,
       signIn: (email: string, password: string) =>
         signInWithEmailAndPassword(auth, email, password),
       signUp: (email: string, password: string) =>
@@ -151,7 +209,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       linkWithApple: () => linkCurrentUserWithProvider(appleProvider),
       resetPassword: (email: string) => sendPasswordResetEmail(auth, email),
     };
-  }, [user, loading]);
+  }, [user, loading, supportAccess, supportAccessLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

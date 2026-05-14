@@ -8,6 +8,7 @@ import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,6 +21,33 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _searchTerm = '';
   String? _selectedVin;
+
+  void _handleAddVehicleTap({
+    required int currentVehicleCount,
+    required int vehicleLimit,
+    required String tier,
+  }) {
+    if (currentVehicleCount < vehicleLimit) {
+      context.push('/app/add-vehicle');
+      return;
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final isPremiumLike = tier == 'premium' || tier == 'enterprise';
+    final message = isPremiumLike
+        ? 'Your current plan has reached the vehicle limit. Contact support for Enterprise expansion.'
+        : 'Vehicle limit reached for your current plan. Upgrade to add more vehicles.';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: colorScheme.secondary),
+    );
+
+    if (isPremiumLike) {
+      context.push('/app/contact');
+    } else {
+      context.push('/app/premium');
+    }
+  }
 
   Widget? _maintenanceUrgencyChip(Vehicle vehicle, ColorScheme colorScheme) {
     final items = MaintenanceSchedule.getUpcomingMaintenance(
@@ -136,6 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final premiumService = Provider.of<PremiumService>(context);
     final firestoreService = FirestoreService();
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -277,6 +306,8 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           final vehicles = snapshot.data ?? [];
+          final vehicleLimit = premiumService.vehicleLimit;
+          final currentTier = premiumService.subscriptionTier;
           final filtered = vehicles.where((vehicle) {
             final q = _searchTerm.toLowerCase();
             return vehicle.vin.toLowerCase().contains(q) ||
@@ -324,9 +355,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton.icon(
-                      onPressed: () => context.push('/app/add-vehicle'),
+                      onPressed: () => _handleAddVehicleTap(
+                        currentVehicleCount: vehicles.length,
+                        vehicleLimit: vehicleLimit,
+                        tier: currentTier,
+                      ),
                       icon: const Icon(Icons.add),
-                      label: const Text('Add'),
+                      label: Text(
+                        vehicles.length >= vehicleLimit
+                            ? 'Limit Reached'
+                            : 'Add',
+                      ),
                     ),
                   ],
                 ),

@@ -207,6 +207,24 @@ class _AccountScreenState extends State<AccountScreen> {
                         onTap: () => context.push('/app/calendar-preferences'),
                       ),
                       ListTile(
+                        leading: const Icon(Icons.tune),
+                        title: const Text('Reminder Preferences'),
+                        subtitle: const Text(
+                          'Lead time and daily mileage settings',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/reminder-preferences'),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.build_circle),
+                        title: const Text('Service Providers'),
+                        subtitle: const Text(
+                          'Find nearby repair shops and dealerships',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/service-providers'),
+                      ),
+                      ListTile(
                         leading: const Icon(Icons.star),
                         title: const Text('Premium Features'),
                         subtitle: const Text(

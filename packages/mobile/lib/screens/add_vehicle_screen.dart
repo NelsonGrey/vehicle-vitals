@@ -5,9 +5,11 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
+import '../services/premium_service.dart';
 
 class AddVehicleScreen extends StatefulWidget {
   const AddVehicleScreen({super.key, this.initialVin});
@@ -217,10 +219,41 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    final premiumService = context.read<PremiumService>();
 
     try {
+      final normalizedVin = _vinController.text.trim().toUpperCase();
+      final existingVehicle = await _firestoreService.getVehicle(normalizedVin);
+      if (existingVehicle == null) {
+        final allVehicles = await _firestoreService.getVehicles();
+        final vehicleLimit = premiumService.vehicleLimit;
+
+        if (allVehicles.length >= vehicleLimit) {
+          if (!mounted) return;
+
+          final currentTier = premiumService.subscriptionTier;
+          final isPremiumLike =
+              currentTier == 'premium' || currentTier == 'enterprise';
+          final colorScheme = Theme.of(context).colorScheme;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isPremiumLike
+                    ? 'Your vehicle limit is reached. Contact support for Enterprise expansion.'
+                    : 'Vehicle limit reached. Upgrade to add more vehicles.',
+              ),
+              backgroundColor: colorScheme.secondary,
+            ),
+          );
+
+          context.push(isPremiumLike ? '/app/contact' : '/app/premium');
+          return;
+        }
+      }
+
       final vehicle = Vehicle(
-        vin: _vinController.text.trim().toUpperCase(),
+        vin: normalizedVin,
         make: _makeController.text.trim(),
         model: _modelController.text.trim(),
         year: int.parse(_yearController.text),

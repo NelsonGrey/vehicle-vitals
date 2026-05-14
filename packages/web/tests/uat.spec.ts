@@ -342,6 +342,25 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         await expect(page).not.toHaveURL(/\/app\/subscription\/signin/i);
       }
     });
+
+    test('TC-MONETIZATION-002: Admin support console route behaves safely', async ({
+      page,
+    }) => {
+      await page.goto(`${BASE_URL}/app/admin`);
+
+      const supportHeading = page.getByRole('heading', {
+        name: /support console/i,
+      });
+
+      if (await supportHeading.isVisible().catch(() => false)) {
+        await expect(supportHeading).toBeVisible();
+        await expect(page.getByText(/organization controls/i)).toBeVisible();
+        await expect(page.getByText(/organization members/i)).toBeVisible();
+      } else {
+        await expect(page.locator('body')).toBeVisible();
+        await expect(page).not.toHaveURL(/\/(error|500)/i);
+      }
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────

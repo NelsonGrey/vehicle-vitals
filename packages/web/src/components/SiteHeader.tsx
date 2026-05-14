@@ -12,7 +12,7 @@ interface SiteHeaderProps {
 }
 
 export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, supportAccess } = useAuth();
 
   const linkClass = `hover:opacity-80 transition-opacity whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-900 ${
     overlay ? 'text-gray-100 hover:text-white' : 'text-current'
@@ -116,6 +116,11 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 <Link to="/app/providers" className={linkClass}>
                   Providers
                 </Link>
+                {supportAccess?.isSuperAdmin && (
+                  <Link to="/app/admin" className={linkClass}>
+                    Admin
+                  </Link>
+                )}
                 {isDevelopmentEnvironment && (
                   <Link to="/app/dev-seed" className={linkClass}>
                     Data Seed

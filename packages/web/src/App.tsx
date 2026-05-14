@@ -12,6 +12,8 @@ import {
 import AuthLayout from './components/AuthLayout';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import SuperAdminRoute from './components/SuperAdminRoute';
+import AdminSupport from './pages/AdminSupport';
 import { AuthProvider, useAuth } from './shared/AuthContext';
 import { DEFAULT_APP_REDIRECT } from './shared/authRedirect';
 import {
@@ -382,6 +384,16 @@ function App() {
                     <Route path="providers" element={<ServiceProviders />} />
                     <Route path="timeline" element={<TimelineDashboard />} />
                     <Route path="upcoming" element={<UpcomingTasks />} />
+                    <Route
+                      path="admin"
+                      element={
+                        <SuperAdminRoute>
+                          <Outlet />
+                        </SuperAdminRoute>
+                      }
+                    >
+                      <Route index element={<AdminSupport />} />
+                    </Route>
                     {isDevelopmentEnvironment && (
                       <Route path="dev-seed" element={<DevSeed />} />
                     )}

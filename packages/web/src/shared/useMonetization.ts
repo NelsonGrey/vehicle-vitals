@@ -12,6 +12,11 @@ import {
 } from './adAnalytics';
 import { useAuth } from './AuthContext';
 import {
+  bootstrapEnterpriseContext,
+  getEffectiveEntitlements,
+  type EffectiveEntitlements,
+} from './entitlementsService';
+import {
   canAccessFeature,
   getVehicleLimit,
   isFeatureEnabled,
@@ -48,6 +53,11 @@ export function useSubscription(): {
 
     setIsLoading(true);
 
+    // Ensure a personal organization exists for enterprise-ready entitlements.
+    void bootstrapEnterpriseContext().catch(() => {
+      // Keep subscription UX resilient if enterprise context is unavailable.
+    });
+
     // Watch subscription in real-time
     const unsubscribe = watchSubscription(user.uid, sub => {
       setSubscription(sub);
@@ -68,6 +78,57 @@ export function useSubscription(): {
 }
 
 /**
+ * Hook: Resolve effective entitlements from backend (tier + org + overrides)
+ */
+export function useEffectiveEntitlements(): {
+  entitlements: EffectiveEntitlements | null;
+  isLoading: boolean;
+} {
+  const { user } = useAuth();
+  const [entitlements, setEntitlements] =
+    useState<EffectiveEntitlements | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setEntitlements(null);
+      setIsLoading(false);
+      return;
+    }
+
+    let isActive = true;
+    setIsLoading(true);
+
+    void getEffectiveEntitlements()
+      .then(nextEntitlements => {
+        if (!isActive) {
+          return;
+        }
+
+        setEntitlements(nextEntitlements);
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setEntitlements(null);
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [user]);
+
+  return { entitlements, isLoading };
+}
+
+/**
  * Hook: Check if a feature is available for current user
  * Automatically handles subscription loading and updates
  */
@@ -76,11 +137,14 @@ export function useFeatureFlag(
   options?: { onDenied?: () => void }
 ): boolean {
   const { tier, subscription } = useSubscription();
+  const { entitlements } = useEffectiveEntitlements();
   const { user } = useAuth();
   const [isEnabled, setIsEnabled] = useState(false);
 
   useEffect(() => {
-    const enabled = isFeatureEnabled(featureName, tier);
+    const enabled =
+      entitlements?.features?.[featureName] ??
+      isFeatureEnabled(featureName, tier);
     setIsEnabled(enabled);
 
     // Track if user is denied access
@@ -88,7 +152,7 @@ export function useFeatureFlag(
       trackFeatureDenied(featureName, tier, tier);
       options?.onDenied?.();
     }
-  }, [featureName, tier, user, options]);
+  }, [featureName, tier, user, options, entitlements]);
 
   return isEnabled;
 }
@@ -98,7 +162,8 @@ export function useFeatureFlag(
  */
 export function useVehicleLimit(): number {
   const { tier } = useSubscription();
-  return getVehicleLimit(tier);
+  const { entitlements } = useEffectiveEntitlements();
+  return entitlements?.vehicleLimit || getVehicleLimit(tier);
 }
 
 /**

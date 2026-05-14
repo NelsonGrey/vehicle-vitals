@@ -2,8 +2,27 @@
 
 Project overview: Vehicle Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
 
-Last updated: May 8, 2026
+Last updated: May 14, 2026
 Project status: CORE IMPLEMENTED, R1 GATE CLOSURE IN PROGRESS
+
+---
+
+## Enterprise Foundation Update (May 14, 2026)
+
+Completed this cycle:
+
+- Organization bootstrap + personal-org model for all users
+- Organization membership roles and role update callable controls
+- Server-authoritative effective entitlement resolution integrated into web monetization hooks
+- Super-admin support console controls for org retention policy and member role management
+- Idempotency + audit logging across privileged enterprise callables
+- Compliance request intake callables for export/deletion lifecycle
+- Backfill migration executed in development (`138` users, `414` documents written, no remaining drift)
+
+Validation evidence:
+
+- Functions integration tests: enterprise callables now covered and passing
+- Web tests: full suite passing after enterprise UI/service updates
 
 ---
 

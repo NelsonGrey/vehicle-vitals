@@ -16,6 +16,7 @@ interface AdPlacementProps {
   advertiserId?: string;
   campaignId?: string;
   hideLabel?: boolean;
+  surface?: 'card' | 'flat';
 }
 
 function isMobileViewport(): boolean {
@@ -35,6 +36,7 @@ export default function AdPlacement({
   advertiserId,
   campaignId,
   hideLabel = false,
+  surface = 'card',
 }: AdPlacementProps) {
   const { tier } = useSubscription();
   const [isMobile, setIsMobile] = useState(isMobileViewport());
@@ -115,7 +117,11 @@ export default function AdPlacement({
     <section
       ref={containerRef}
       aria-label={`Sponsored placement: ${adUnit.name}`}
-      className={`rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800 ${className || ''}`}
+      className={`${
+        surface === 'card'
+          ? 'rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800'
+          : 'border-0 bg-transparent rounded-none px-0 py-0'
+      } ${className || ''}`}
       onClick={() => trackAdClick(placement, tier, advertiserId, campaignId)}
     >
       {!hideLabel && (

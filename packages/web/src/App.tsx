@@ -160,7 +160,7 @@ const DevSeed = lazy(() => import('./pages/DevSeed'));
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-600 dark:border-slate-300"></div>
   </div>
 );
 

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 export default function SiteFooter() {
   return (
-    <footer className="shrink-0 border-t border-slate-200 dark:border-slate-700 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-sm">
+    <footer className="shrink-0 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-5 py-4 w-full">
         <div className="flex flex-wrap items-center justify-center gap-3 text-slate-600 dark:text-slate-400 text-sm">
           <Link

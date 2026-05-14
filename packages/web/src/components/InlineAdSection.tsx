@@ -11,11 +11,6 @@ export default function InlineAdSection({
   className,
 }: InlineAdSectionProps) {
   return (
-    <section
-      aria-label="Sponsored content"
-      className={`rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800 ${className || ''}`}
-    >
-      <AdPlacement placement={placement} className="my-0" />
-    </section>
+    <AdPlacement placement={placement} className={`my-0 ${className || ''}`} />
   );
 }

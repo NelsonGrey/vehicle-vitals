@@ -16,7 +16,7 @@ export default function FeatureDemo({
   appCtaLabel,
 }: FeatureDemoProps) {
   return (
-    <div className="w-full max-w-7xl mx-auto px-5 py-8 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-8 space-y-6">
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
         <h1 className="font-serif text-4xl text-slate-900 dark:text-slate-100 mb-3">
           {title} Demo

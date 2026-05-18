@@ -26,5 +26,7 @@ Notes:
 
 Current repository state:
 
-- The demo and help filenames above are now populated with generated walkthrough clips based on current product screenshots.
-- Replace these clips with fully narrated recordings when final production assets are available.
+- The demo and help filenames above are now populated with narrated multi-scene walkthrough clips based on current product screenshots.
+- Narrated clips can be regenerated with: `npm run videos:generate:narrated`
+- Narration defaults to macOS voice `Samantha` at rate `170`; override with `VV_NARRATION_VOICE` and `VV_NARRATION_RATE`.
+- Source visuals are read from `docs/screenshots/`; refresh screenshots first when product UI changes.

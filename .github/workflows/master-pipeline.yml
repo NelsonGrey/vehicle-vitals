@@ -70,24 +70,26 @@ jobs:
           gh run list \
             --repo "${{ github.repository }}" \
             --workflow "${{ github.workflow }}" \
+            --branch "${{ github.ref_name }}" \
             --status queued \
             --json databaseId \
             --jq '.[].databaseId' | while read -r run_id; do
-              # Only cancel runs older than this one (lower ID = started earlier).
+              # Only cancel runs older than this one on the same ref.
               if [ "$run_id" -lt "${{ github.run_id }}" ]; then
-                echo "Cancelling stale queued run $run_id"
+                echo "Cancelling stale queued run $run_id on ${{ github.ref_name }}"
                 gh run cancel "$run_id" --repo "${{ github.repository }}" || true
               fi
             done
           gh run list \
             --repo "${{ github.repository }}" \
             --workflow "${{ github.workflow }}" \
+            --branch "${{ github.ref_name }}" \
             --status in_progress \
             --json databaseId \
             --jq '.[].databaseId' | while read -r run_id; do
-              # Only cancel runs older than this one (lower ID = started earlier).
+              # Only cancel runs older than this one on the same ref.
               if [ "$run_id" -lt "${{ github.run_id }}" ]; then
-                echo "Cancelling stale in-progress run $run_id"
+                echo "Cancelling stale in-progress run $run_id on ${{ github.ref_name }}"
                 gh run cancel "$run_id" --repo "${{ github.repository }}" || true
               fi
             done

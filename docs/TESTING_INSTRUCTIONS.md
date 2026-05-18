@@ -5,8 +5,8 @@
 Run these before triggering GitHub Actions to validate navigation and shell/ad layout behavior.
 
 1. `cd packages/web`
-2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx`
-3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006"`
+2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/MarketingVideoPanel.test.jsx`
+3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006|TC-UI-007"`
 
 Coverage objective for this update:
 
@@ -15,6 +15,8 @@ Coverage objective for this update:
 - Header auth control remains in fixed location and toggles by auth state.
 - Site shell is centered and width-limited to `1024px`.
 - Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
+- Marketing feature atlas renders real app capability screenshots.
+- Marketing video lanes render playable clips when available and gracefully fall back to poster preview when clips are missing.
 
 ## Step 1: Test Emulator Tests Workflow
 

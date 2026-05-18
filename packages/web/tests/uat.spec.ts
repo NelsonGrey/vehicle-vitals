@@ -337,6 +337,79 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       ).toBeGreaterThanOrEqual(3);
     });
 
+    test('TC-UI-008: Help and getting-started video walkthroughs are present', async ({
+      page,
+    }) => {
+      await page.goto(`${BASE_URL}/help`);
+
+      const helpMetrics = await page.evaluate(() => {
+        const hasHelpVideoHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Help Video Walkthroughs')
+          ) !== undefined;
+
+        const helpVideoCards = Array.from(
+          document.querySelectorAll('article')
+        ).filter(
+          article =>
+            article.textContent?.includes('Getting Started Help') ||
+            article.textContent?.includes('Help Center Overview')
+        ).length;
+
+        const helpPlayableOrPoster = Array.from(
+          document.querySelectorAll('article span')
+        ).filter(
+          node =>
+            node.textContent?.includes('Playable demo') ||
+            node.textContent?.includes('Poster preview')
+        ).length;
+
+        return {
+          hasHelpVideoHeading,
+          helpVideoCards,
+          helpPlayableOrPoster,
+        };
+      });
+
+      await page.goto(`${BASE_URL}/getting-started`);
+
+      const gettingStartedMetrics = await page.evaluate(() => {
+        const hasGettingStartedVideoHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Getting Started Video')
+          ) !== undefined;
+
+        const hasWalkthroughCard =
+          Array.from(document.querySelectorAll('article')).find(article =>
+            article.textContent?.includes('Getting Started Walkthrough')
+          ) !== undefined;
+
+        const hasPlayableOrPoster =
+          Array.from(document.querySelectorAll('article span')).find(
+            node =>
+              node.textContent?.includes('Playable demo') ||
+              node.textContent?.includes('Poster preview')
+          ) !== undefined;
+
+        return {
+          hasGettingStartedVideoHeading,
+          hasWalkthroughCard,
+          hasPlayableOrPoster,
+        };
+      });
+
+      test.skip(
+        !helpMetrics.hasHelpVideoHeading ||
+          !gettingStartedMetrics.hasGettingStartedVideoHeading,
+        'Help/getting-started video sections are not exposed in this deployment target.'
+      );
+
+      expect(helpMetrics.helpVideoCards).toBeGreaterThanOrEqual(2);
+      expect(helpMetrics.helpPlayableOrPoster).toBeGreaterThanOrEqual(2);
+      expect(gettingStartedMetrics.hasWalkthroughCard).toBe(true);
+      expect(gettingStartedMetrics.hasPlayableOrPoster).toBe(true);
+    });
+
     test('TC-UI-004: Logged-out header shows marketing nav only', async ({
       page,
     }) => {

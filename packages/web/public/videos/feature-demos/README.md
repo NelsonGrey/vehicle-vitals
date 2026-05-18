@@ -14,6 +14,8 @@ Expected filenames used by the web marketing pages:
 - cross-platform-access-demo.mp4
 - ownership-history-demo.mp4
 - generic-feature-demo.mp4
+- getting-started-help.mp4
+- help-center-overview.mp4
 
 Notes:
 
@@ -21,3 +23,8 @@ Notes:
 - Recommended resolution: 1280x720 or 1920x1080.
 - Keep clips concise (30-90 seconds) for faster loading.
 - Include product captions in the video when possible.
+
+Current repository state:
+
+- The demo and help filenames above are now populated with generated walkthrough clips based on current product screenshots.
+- Replace these clips with fully narrated recordings when final production assets are available.

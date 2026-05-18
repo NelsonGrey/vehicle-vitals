@@ -2,11 +2,12 @@
 
 ## Local Quick Validation (May 18, 2026 update)
 
-Run these before triggering GitHub Actions to validate navigation and shell/ad layout behavior.
+Run these before triggering GitHub Actions to validate navigation, shell/ad layout behavior, and video/help walkthrough presence.
 
 1. `cd packages/web`
 2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/MarketingVideoPanel.test.jsx`
-3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006|TC-UI-007"`
+3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006|TC-UI-007|TC-UI-008"`
+4. `ls -lh public/videos/feature-demos/*.mp4`
 
 Coverage objective for this update:
 
@@ -17,6 +18,7 @@ Coverage objective for this update:
 - Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
 - Marketing feature atlas renders real app capability screenshots.
 - Marketing video lanes render playable clips when available and gracefully fall back to poster preview when clips are missing.
+- Help and Getting Started routes surface walkthrough video sections with playable/fallback states.
 
 ## Step 1: Test Emulator Tests Workflow
 

@@ -5,6 +5,8 @@ interface MarketingVideoPanelProps {
   description: string;
   poster: string;
   videoPath: string;
+  fallbackHref?: string;
+  fallbackLabel?: string;
   className?: string;
 }
 
@@ -13,6 +15,8 @@ export default function MarketingVideoPanel({
   description,
   poster,
   videoPath,
+  fallbackHref,
+  fallbackLabel = 'Open interactive demo',
   className = '',
 }: MarketingVideoPanelProps) {
   const [videoFailed, setVideoFailed] = useState(false);
@@ -24,7 +28,7 @@ export default function MarketingVideoPanel({
     <article
       className={`overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 ${className}`.trim()}
     >
-      <div className="relative h-36">
+      <div className="relative h-56 sm:h-64 lg:h-72">
         {showVideo ? (
           <video
             className="h-full w-full object-cover"
@@ -64,6 +68,14 @@ export default function MarketingVideoPanel({
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             Video not found at {videoPath}. Add the clip to enable playback.
           </p>
+        )}
+        {!showVideo && fallbackHref && (
+          <a
+            href={fallbackHref}
+            className="mt-3 inline-flex items-center rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+          >
+            {fallbackLabel}
+          </a>
         )}
       </div>
     </article>

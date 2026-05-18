@@ -137,6 +137,8 @@ export default function Landing() {
         'Video-ready slot for a full VIN-to-garage onboarding demonstration.',
       poster: '/images/features/add-vehicle.png',
       videoPath: '/videos/feature-demos/onboarding-walkthrough.mp4',
+      fallbackHref: '/getting-started',
+      fallbackLabel: 'Open guided onboarding',
     },
     {
       title: 'Maintenance Lifecycle Tour',
@@ -144,6 +146,8 @@ export default function Landing() {
         'Video-ready slot for records, timeline, and upcoming tasks flow.',
       poster: '/images/features/timeline.png',
       videoPath: '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
+      fallbackHref: '/maintenance-planning-demo',
+      fallbackLabel: 'Open maintenance demo',
     },
     {
       title: 'Cross-Platform Continuity',
@@ -151,6 +155,8 @@ export default function Landing() {
         'Video-ready slot for web-to-mobile continuity and account sync.',
       poster: '/images/features/ios-home.png',
       videoPath: '/videos/feature-demos/cross-platform-continuity.mp4',
+      fallbackHref: '/cross-platform-access-demo',
+      fallbackLabel: 'Open continuity demo',
     },
   ];
 
@@ -228,7 +234,7 @@ export default function Landing() {
                     key={item.title}
                     className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <div className="relative h-44 overflow-hidden">
+                    <div className="relative h-56 sm:h-64 overflow-hidden">
                       <img
                         src={item.image}
                         alt={`${item.title} capability preview`}
@@ -270,13 +276,13 @@ export default function Landing() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {applicationFeatureAtlas.map(feature => (
                   <article
                     key={feature.title}
                     className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <div className="relative h-40 overflow-hidden">
+                    <div className="relative h-56 sm:h-64 overflow-hidden">
                       <img
                         src={feature.image}
                         alt={`${feature.title} application screenshot`}
@@ -318,7 +324,7 @@ export default function Landing() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 {demoVideoReady.map(item => (
                   <MarketingVideoPanel
                     key={item.title}
@@ -326,6 +332,8 @@ export default function Landing() {
                     description={item.description}
                     poster={item.poster}
                     videoPath={item.videoPath}
+                    fallbackHref={item.fallbackHref}
+                    fallbackLabel={item.fallbackLabel}
                   />
                 ))}
               </div>

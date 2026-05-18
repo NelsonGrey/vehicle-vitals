@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import MarketingVideoPanel from '../components/MarketingVideoPanel';
 // Header and footer provided by Layout
 
 export default function Instructions() {
@@ -56,6 +57,24 @@ export default function Instructions() {
             your driving habits.
           </li>
         </ol>
+      </section>
+
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+          Getting Started Video
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Watch a guided walkthrough of first-time setup and core ownership
+          flows.
+        </p>
+        <MarketingVideoPanel
+          title="Getting Started Walkthrough"
+          description="From account creation to logging your first maintenance entry in under a minute."
+          poster="/images/features/add-vehicle.png"
+          videoPath="/videos/feature-demos/getting-started-help.mp4"
+          fallbackHref="/auth/signup"
+          fallbackLabel="Start your account"
+        />
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">

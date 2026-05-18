@@ -1,11 +1,11 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 18, 2026
+Last updated: May 18, 2026 (video/help media release update)
 Primary production project: `vehicle-vitals-prod`
 
 ## Development Progress Update (May 18, 2026)
 
-Status: In active iteration; web navigation/help, shell layout hardening, and robust marketing media/video presentation are complete and under CI/UAT validation.
+Status: In active iteration; web navigation/help, shell layout hardening, and robust marketing media/video presentation are complete, including generated demo/help clips and expanded automation coverage.
 
 - Added explicit `Getting Started` workflow and dedicated `Help` section in web routes and content pages.
 - Partitioned header navigation by authentication state:
@@ -19,6 +19,11 @@ Status: In active iteration; web navigation/help, shell layout hardening, and ro
 - Implemented robust marketing-side visual system with real application screenshots across major app capabilities (web + mobile) and dedicated video showcase lanes.
 - Added runtime-safe video handling in marketing pages: if a demo clip is missing or fails, UI automatically falls back to poster preview without page break.
 - Centralized marketing video rendering in reusable component `packages/web/src/components/MarketingVideoPanel.tsx`.
+- Generated and committed placeholder MP4 clips for all referenced marketing demo lanes in `packages/web/public/videos/feature-demos/`.
+- Added dedicated help/getting-started video surfaces in `packages/web/src/pages/Help.tsx` and `packages/web/src/pages/Instructions.tsx`.
+- Expanded automation for media release quality gates:
+  - Unit: CTA fallback rendering behavior in `packages/web/tests/MarketingVideoPanel.test.jsx`.
+  - UAT: Help + getting-started video section coverage (`TC-UI-008`) in `packages/web/tests/uat.spec.ts`.
 
 Immediate next implementation focus:
 

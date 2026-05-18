@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import MarketingVideoPanel from '../components/MarketingVideoPanel';
 // Header and footer provided by Layout
 
 const helpTopics = [
@@ -57,6 +58,33 @@ export default function Help() {
               </p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+          Help Video Walkthroughs
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Short walkthrough clips for common setup and support tasks.
+        </p>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <MarketingVideoPanel
+            title="Getting Started Help"
+            description="Account setup, first vehicle entry, and records flow in one concise walkthrough."
+            poster="/images/features/add-vehicle.png"
+            videoPath="/videos/feature-demos/getting-started-help.mp4"
+            fallbackHref="/getting-started"
+            fallbackLabel="Open getting started"
+          />
+          <MarketingVideoPanel
+            title="Help Center Overview"
+            description="Where to find troubleshooting topics, provider guidance, and support routes."
+            poster="/images/features/providers.png"
+            videoPath="/videos/feature-demos/help-center-overview.mp4"
+            fallbackHref="/contact"
+            fallbackLabel="Contact support"
+          />
         </div>
       </section>
 

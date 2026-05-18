@@ -66,4 +66,38 @@ describe('MarketingVideoPanel', () => {
     expect(screen.getByText('Poster preview')).toBeInTheDocument();
     expect(screen.getByAltText('Poster Lane video poster')).toBeInTheDocument();
   });
+
+  it('renders fallback CTA when video is unavailable and link is provided', () => {
+    render(
+      <MarketingVideoPanel
+        title="Guided Lane"
+        description="Guided description"
+        poster="/images/features/profile.png"
+        videoPath=""
+        fallbackHref="/getting-started"
+        fallbackLabel="Open guided onboarding"
+      />
+    );
+
+    const cta = screen.getByRole('link', { name: 'Open guided onboarding' });
+    expect(cta).toBeInTheDocument();
+    expect(cta.getAttribute('href')).toBe('/getting-started');
+  });
+
+  it('does not render fallback CTA while playable video is active', () => {
+    render(
+      <MarketingVideoPanel
+        title="Video Lane"
+        description="Video description"
+        poster="/images/features/add-vehicle.png"
+        videoPath="/videos/feature-demos/demo.mp4"
+        fallbackHref="/getting-started"
+        fallbackLabel="Open guided onboarding"
+      />
+    );
+
+    expect(
+      screen.queryByRole('link', { name: 'Open guided onboarding' })
+    ).toBeNull();
+  });
 });

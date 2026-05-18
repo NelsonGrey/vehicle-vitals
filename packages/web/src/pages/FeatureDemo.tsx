@@ -105,19 +105,22 @@ export default function FeatureDemo({
         <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-4">
           Visual Product Gallery
         </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {media.gallery.map((imagePath, index) => (
-            <div
+            <a
               key={`${title}-gallery-${index + 1}`}
+              href={imagePath}
+              target="_blank"
+              rel="noreferrer"
               className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
             >
               <img
                 src={imagePath}
                 alt={`${title} gallery preview ${index + 1}`}
-                className="h-40 w-full object-cover"
+                className="h-64 sm:h-72 w-full object-cover"
                 loading="lazy"
               />
-            </div>
+            </a>
           ))}
         </div>
       </section>
@@ -146,6 +149,8 @@ export default function FeatureDemo({
           description="Narrated product walkthrough lane for this capability."
           poster={media.videoPoster}
           videoPath={media.videoPath}
+          fallbackHref="/getting-started"
+          fallbackLabel="Open the interactive walkthrough"
           className="border-slate-200 dark:border-slate-700"
         />
       </section>

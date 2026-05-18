@@ -8,7 +8,7 @@ export default function AuthLayout() {
   return (
     <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <header className="shrink-0 bg-slate-50 dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 py-3 w-full">
+        <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-3">
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/70 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between">
             <Link
               to="/"
@@ -36,15 +36,18 @@ export default function AuthLayout() {
       <HeaderAdBar />
 
       <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900 px-4 sm:px-5 py-6 sm:py-8">
-        <div className="w-full max-w-7xl mx-auto">
+        <div className="w-full max-w-[1024px] mx-auto">
           <div className="w-full max-w-2xl mx-auto">
             <Outlet />
           </div>
-          <div className="w-full max-w-5xl mx-auto mt-4">
-            <InlineAdSection placement="maintenanceHistory" />
-          </div>
         </div>
       </main>
+
+      <div className="shrink-0 bg-slate-50 dark:bg-slate-900">
+        <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-3">
+          <InlineAdSection placement="maintenanceHistory" />
+        </div>
+      </div>
 
       <SiteFooter />
     </div>

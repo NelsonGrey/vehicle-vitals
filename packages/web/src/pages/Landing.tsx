@@ -12,8 +12,8 @@ export default function Landing() {
       <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900">
         {/* Clean Slate Hero Section */}
         <section className="py-10 sm:py-14 lg:py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-5">
-            <div className="text-center py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto">
+          <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5">
+            <div className="text-center py-6 sm:py-8 lg:py-10 max-w-[1024px] mx-auto">
               <div className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">
                 Care for every mile
               </div>
@@ -108,10 +108,12 @@ export default function Landing() {
             </section>
           </div>
         </section>
-        <div className="max-w-5xl mx-auto px-4 sm:px-5 mt-6 sm:mt-8">
+      </main>
+      <div className="shrink-0 bg-slate-50 dark:bg-slate-900">
+        <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-3">
           <InlineAdSection placement="maintenanceHistory" />
         </div>
-      </main>
+      </div>
       <SiteFooter />
     </div>
   );

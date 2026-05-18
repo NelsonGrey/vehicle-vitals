@@ -20,7 +20,7 @@ vi.mock('../src/shared/AuthContext', () => ({
 }));
 
 vi.mock('../src/shared/environment', () => ({
-  isDevelopmentEnvironment: false,
+  isDemonstrationEnvironment: false,
 }));
 
 vi.mock('../src/components/StackedVLogo', () => ({

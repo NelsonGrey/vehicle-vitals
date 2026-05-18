@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
-import { isDevelopmentEnvironment } from '../shared/environment';
+import { isDemonstrationEnvironment } from '../shared/environment';
 import StackedVLogo from './StackedVLogo';
 
 interface SiteHeaderProps {
@@ -24,7 +24,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
           : 'bg-slate-50 dark:bg-slate-900'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 py-3 w-full">
+      <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-3">
         <nav
           className={`rounded-xl border px-4 py-2.5 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between ${
             overlay
@@ -48,8 +48,8 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             </Link>
           </div>
 
-          <div className="ml-0 lg:ml-auto flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4 text-sm w-full lg:w-auto">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
+          <div className="ml-0 lg:ml-auto flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4 text-base w-full lg:w-auto">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1">
               {isLoggedIn ? (
                 <>
                   <Link to="/app" className={linkClass}>
@@ -72,7 +72,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                       Admin
                     </Link>
                   )}
-                  {isDevelopmentEnvironment && (
+                  {isDemonstrationEnvironment && (
                     <Link to="/app/dev-seed" className={linkClass}>
                       Data Seed
                     </Link>
@@ -99,7 +99,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               )}
             </div>
 
-            <div className="flex items-center sm:justify-end rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80 min-w-[8rem] sm:min-w-[10rem]">
+            <div className="flex items-center sm:justify-end rounded-lg px-2 py-1 min-w-[8rem] sm:min-w-[10rem]">
               {isLoggedIn ? (
                 <button
                   onClick={signOut}

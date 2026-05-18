@@ -5,21 +5,23 @@ Primary production project: `vehicle-vitals-prod`
 
 ## Development Progress Update (May 18, 2026)
 
-Status: In active iteration; latest web UX partitioning complete and under CI/UAT validation.
+Status: In active iteration; web navigation/help and shell layout hardening complete and under CI/UAT validation.
 
 - Added explicit `Getting Started` workflow and dedicated `Help` section in web routes and content pages.
 - Partitioned header navigation by authentication state:
   - Logged out: marketing nav only.
   - Logged in: application nav only.
 - Kept auth action in a fixed header slot while toggling state (`Login / Sign Up` vs `Sign Out`).
-- Consolidated shared cross-surface links into footer (`Plans`, `Getting Started`, `Help`, `Terms`, `Privacy`, `Contact`).
-- Added automation coverage for this behavior in both unit and UAT test suites.
+- Restricted `Data Seed` header navigation visibility to demonstration environment only.
+- Standardized centered shell width to `1024px` across header/main/footer/auth/landing containers.
+- Converted ads to standalone ad-break sections and removed embedded in-flow ad placements from feature pages.
+- Added/updated automation coverage for header behavior and shell/ad-break architecture in unit and UAT suites.
 
 Immediate next implementation focus:
 
 1. Validate develop and demonstration CI workflow outcomes on pushed branches.
 2. Resolve any failing checks before merge/review handoff.
-3. Proceed with post-beta navigation/content refinements and follow-on UX backlog.
+3. Add route-level shell conformance checks for remaining non-standard pages.
 
 ## Web Deployment
 

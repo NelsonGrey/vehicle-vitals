@@ -2,17 +2,19 @@
 
 ## Local Quick Validation (May 18, 2026 update)
 
-Run these before triggering GitHub Actions to validate the latest navigation partitioning changes.
+Run these before triggering GitHub Actions to validate navigation and shell/ad layout behavior.
 
 1. `cd packages/web`
-2. `npm run test:unit -- tests/SiteHeader.test.jsx`
-3. `npm run test:uat:chromium -- tests/uat.spec.ts`
+2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx`
+3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006"`
 
 Coverage objective for this update:
 
 - Logged-out users see marketing header navigation only.
 - Logged-in users see application header navigation only.
 - Header auth control remains in fixed location and toggles by auth state.
+- Site shell is centered and width-limited to `1024px`.
+- Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
 
 ## Step 1: Test Emulator Tests Workflow
 

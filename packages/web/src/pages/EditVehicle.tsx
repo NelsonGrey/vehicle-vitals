@@ -3,7 +3,6 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import AdPlacement from '../components/AdPlacement';
 import UpgradeModal from '../components/UpgradeModal';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import { formatFileDisplay } from '../shared/fileUtils';
@@ -1338,8 +1337,6 @@ function MaintenanceList({
           </button>
         </div>
       </div>
-
-      <AdPlacement placement="exportReport" className="mb-4" />
 
       <ul className="space-y-4 mb-6">
         {entries.map(e => (

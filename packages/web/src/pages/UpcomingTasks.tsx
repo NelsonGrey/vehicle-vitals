@@ -1,7 +1,6 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import AdPlacement from '../components/AdPlacement';
 import {
   addReminder,
   completeReminder,
@@ -938,8 +937,6 @@ export default function UpcomingTasks() {
                   </div>
                 ))}
               </div>
-
-              <AdPlacement placement="reminderNotification" className="mt-6" />
 
               <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
                 <h4 className="font-semibold mb-2 mt-0">Legend</h4>

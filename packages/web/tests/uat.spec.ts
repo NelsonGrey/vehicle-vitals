@@ -238,6 +238,44 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await expect(page.locator('body')).toBeVisible();
     });
 
+    test('TC-UI-006: Shell uses centered 1024px layout and standalone ad break', async ({
+      page,
+    }) => {
+      await page.goto(BASE_URL);
+
+      const shellMetrics = await page.evaluate(() => {
+        const headerContainer = document.querySelector('header > div');
+        const main = document.querySelector('main');
+        const adBreak = main?.nextElementSibling;
+
+        return {
+          shellAvailable: !!headerContainer && !!main,
+          headerMaxWidth: headerContainer
+            ? getComputedStyle(headerContainer as Element).maxWidth
+            : null,
+          headerCentered:
+            !!headerContainer &&
+            getComputedStyle(headerContainer as Element).marginLeft ===
+              'auto' &&
+            getComputedStyle(headerContainer as Element).marginRight === 'auto',
+          adBreakOutsideMain: !!main && !!adBreak && adBreak !== main,
+          sponsoredInsideMain: !!main?.querySelector(
+            '[aria-label^="Sponsored placement"], ins.adsbygoogle'
+          ),
+        };
+      });
+
+      test.skip(
+        !shellMetrics.shellAvailable,
+        'Shell structure is gated in this deployment target.'
+      );
+
+      expect(shellMetrics.headerMaxWidth).toBe('1024px');
+      expect(shellMetrics.headerCentered).toBe(true);
+      expect(shellMetrics.adBreakOutsideMain).toBe(true);
+      expect(shellMetrics.sponsoredInsideMain).toBe(false);
+    });
+
     test('TC-UI-004: Logged-out header shows marketing nav only', async ({
       page,
     }) => {

@@ -269,7 +269,20 @@ jobs:
       - name: Install Playwright Browsers
         run: |
           cd packages/web
-          npx playwright install --with-deps
+          # Install only the target browser to reduce download surface area.
+          # Retry to tolerate transient CDN/network failures on hosted runners.
+          for attempt in 1 2 3; do
+            echo "Playwright install attempt ${attempt}/3 for browser '${{ matrix.browser }}'"
+            if npx playwright install --with-deps "${{ matrix.browser }}"; then
+              echo "Playwright browser install succeeded"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Install failed, retrying..."
+            fi
+          done
+          echo "Playwright browser install failed after 3 attempts"
+          exit 1
 
       - name: Run Web UAT (${{ matrix.browser }})
         env:

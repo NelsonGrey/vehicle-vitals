@@ -1,5 +1,19 @@
 # 🚀 IMMEDIATE TESTING INSTRUCTIONS
 
+## Local Quick Validation (May 18, 2026 update)
+
+Run these before triggering GitHub Actions to validate the latest navigation partitioning changes.
+
+1. `cd packages/web`
+2. `npm run test:unit -- tests/SiteHeader.test.jsx`
+3. `npm run test:uat:chromium -- tests/uat.spec.ts`
+
+Coverage objective for this update:
+
+- Logged-out users see marketing header navigation only.
+- Logged-in users see application header navigation only.
+- Header auth control remains in fixed location and toggles by auth state.
+
 ## Step 1: Test Emulator Tests Workflow
 
 1. Go to: https://github.com/mnelson3/vehicle-vitals/actions

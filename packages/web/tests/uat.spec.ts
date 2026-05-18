@@ -238,6 +238,69 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await expect(page.locator('body')).toBeVisible();
     });
 
+    test('TC-UI-004: Logged-out header shows marketing nav only', async ({
+      page,
+    }) => {
+      await page.goto(BASE_URL);
+
+      const header = page.locator('header').first();
+      const marketingHeaderAvailable = await header
+        .getByRole('link', { name: /Login \/ Sign Up/i })
+        .isVisible()
+        .catch(() => false);
+      test.skip(
+        !marketingHeaderAvailable,
+        'Marketing header is not directly visible in this deployment target.'
+      );
+
+      await expect(header.getByRole('link', { name: /^Home$/i })).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /VIN Decode/i })
+      ).toBeVisible();
+
+      await expect(header.getByRole('link', { name: /^Garage$/i })).toHaveCount(
+        0
+      );
+      await expect(
+        header.getByRole('button', { name: /Sign Out/i })
+      ).toHaveCount(0);
+    });
+
+    test('TC-UI-005: Logged-in header shows application nav only', async ({
+      page,
+    }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Logged-in header validation requires auth UI in this deployment target.'
+      );
+
+      await ensureAuthenticated(page);
+      await page.goto(`${BASE_URL}/app`);
+
+      const header = page.locator('header').first();
+
+      await expect(
+        header.getByRole('link', { name: /^Garage$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Timeline$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Upcoming$/i })
+      ).toBeVisible();
+
+      await expect(header.getByRole('link', { name: /^Home$/i })).toHaveCount(
+        0
+      );
+      await expect(
+        header.getByRole('link', { name: /VIN Decode/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('button', { name: /Sign Out/i })
+      ).toBeVisible();
+    });
+
     test('TC-UI-002: No console errors on landing', async ({ page }) => {
       const errors: string[] = [];
 

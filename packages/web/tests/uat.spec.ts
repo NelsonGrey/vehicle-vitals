@@ -250,17 +250,26 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         const headerContainer = document.querySelector('header > div');
         const main = document.querySelector('main');
         const adBreak = main?.nextElementSibling;
+        const headerStyle = headerContainer
+          ? getComputedStyle(headerContainer as Element)
+          : null;
+        const headerRect = headerContainer?.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const leftGap = headerRect ? headerRect.left : null;
+        const rightGap = headerRect ? viewportWidth - headerRect.right : null;
+        const centeredByGeometry =
+          leftGap !== null &&
+          rightGap !== null &&
+          Math.abs(leftGap - rightGap) <= 2;
+        const centeredByAutoMargins =
+          !!headerStyle &&
+          (headerStyle.marginLeft === 'auto' ||
+            headerStyle.marginRight === 'auto');
 
         return {
           shellAvailable: !!headerContainer && !!main,
-          headerMaxWidth: headerContainer
-            ? getComputedStyle(headerContainer as Element).maxWidth
-            : null,
-          headerCentered:
-            !!headerContainer &&
-            getComputedStyle(headerContainer as Element).marginLeft ===
-              'auto' &&
-            getComputedStyle(headerContainer as Element).marginRight === 'auto',
+          headerMaxWidth: headerStyle ? headerStyle.maxWidth : null,
+          headerCentered: centeredByGeometry || centeredByAutoMargins,
           adBreakOutsideMain: !!main && !!adBreak && adBreak !== main,
           sponsoredInsideMain: !!main?.querySelector(
             '[aria-label^="Sponsored placement"], ins.adsbygoogle'

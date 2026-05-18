@@ -1,7 +1,25 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 7, 2026
+Last updated: May 18, 2026
 Primary production project: `vehicle-vitals-prod`
+
+## Development Progress Update (May 18, 2026)
+
+Status: In active iteration; latest web UX partitioning complete and under CI/UAT validation.
+
+- Added explicit `Getting Started` workflow and dedicated `Help` section in web routes and content pages.
+- Partitioned header navigation by authentication state:
+  - Logged out: marketing nav only.
+  - Logged in: application nav only.
+- Kept auth action in a fixed header slot while toggling state (`Login / Sign Up` vs `Sign Out`).
+- Consolidated shared cross-surface links into footer (`Plans`, `Getting Started`, `Help`, `Terms`, `Privacy`, `Contact`).
+- Added automation coverage for this behavior in both unit and UAT test suites.
+
+Immediate next implementation focus:
+
+1. Validate develop and demonstration CI workflow outcomes on pushed branches.
+2. Resolve any failing checks before merge/review handoff.
+3. Proceed with post-beta navigation/content refinements and follow-on UX backlog.
 
 ## Web Deployment
 

@@ -34,10 +34,10 @@ export default function Landing() {
                 <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
                   or{' '}
                   <Link
-                    to="/instructions"
+                    to="/getting-started"
                     className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 underline transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-800"
                   >
-                    read the instructions
+                    view the getting started workflow
                   </Link>
                 </span>
               </div>

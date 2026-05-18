@@ -25,8 +25,8 @@ export default function AuthLayout() {
             </Link>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Need help?{' '}
-              <Link to="/contact" className="underline hover:no-underline">
-                Contact us
+              <Link to="/help" className="underline hover:no-underline">
+                Visit Help
               </Link>
             </p>
           </div>

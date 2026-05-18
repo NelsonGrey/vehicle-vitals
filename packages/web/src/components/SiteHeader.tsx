@@ -1,10 +1,7 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
-import {
-  isDevelopmentEnvironment,
-  isDevelopmentProject,
-} from '../shared/environment';
+import { isDevelopmentEnvironment } from '../shared/environment';
 import StackedVLogo from './StackedVLogo';
 
 interface SiteHeaderProps {
@@ -13,13 +10,10 @@ interface SiteHeaderProps {
 
 export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
   const { user, signOut, supportAccess } = useAuth();
+  const isLoggedIn = Boolean(user && !user.isAnonymous);
 
   const linkClass = `hover:opacity-80 transition-opacity whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-900 ${
     overlay ? 'text-gray-100 hover:text-white' : 'text-current'
-  }`;
-
-  const sectionLabelClass = `text-[10px] font-semibold uppercase tracking-wider ${
-    overlay ? 'text-gray-200/90' : 'text-slate-500 dark:text-slate-400'
   }`;
 
   return (
@@ -54,80 +48,71 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             </Link>
           </div>
 
-          <div className="ml-0 lg:ml-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3 text-sm w-full lg:w-auto">
+          <div className="ml-0 lg:ml-auto flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4 text-sm w-full lg:w-auto">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-              {(isDevelopmentEnvironment || isDevelopmentProject) && (
-                <span className={sectionLabelClass}>Marketing</span>
+              {isLoggedIn ? (
+                <>
+                  <Link to="/app" className={linkClass}>
+                    Garage
+                  </Link>
+                  <Link to="/app/profile" className={linkClass}>
+                    Profile
+                  </Link>
+                  <Link to="/app/timeline" className={linkClass}>
+                    Timeline
+                  </Link>
+                  <Link to="/app/upcoming" className={linkClass}>
+                    Upcoming
+                  </Link>
+                  <Link to="/app/providers" className={linkClass}>
+                    Providers
+                  </Link>
+                  {supportAccess?.isSuperAdmin && (
+                    <Link to="/app/admin" className={linkClass}>
+                      Admin
+                    </Link>
+                  )}
+                  {isDevelopmentEnvironment && (
+                    <Link to="/app/dev-seed" className={linkClass}>
+                      Data Seed
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Link to="/" className={linkClass}>
+                    Home
+                  </Link>
+                  <Link to="/vin-decode-demo" className={linkClass}>
+                    VIN Decode
+                  </Link>
+                  <Link to="/maintenance-planning-demo" className={linkClass}>
+                    Maintenance
+                  </Link>
+                  <Link to="/cross-platform-access-demo" className={linkClass}>
+                    Cross Platform
+                  </Link>
+                  <Link to="/ownership-history-demo" className={linkClass}>
+                    Ownership History
+                  </Link>
+                </>
               )}
-              <Link to="/" className={linkClass}>
-                Home
-              </Link>
-              <Link to="/instructions" className={linkClass}>
-                Instructions
-              </Link>
-              <Link to="/contact" className={linkClass}>
-                Contact
-              </Link>
-              <Link to="/subscription" className={linkClass}>
-                Plans
-              </Link>
             </div>
 
-            {(isDevelopmentEnvironment || isDevelopmentProject) && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-                <span className={sectionLabelClass}>Account</span>
-                {user ? (
-                  <>
-                    <Link to="/app/profile" className={linkClass}>
-                      Profile
-                    </Link>
-                    <button
-                      onClick={signOut}
-                      className={`p-0 bg-transparent border-none cursor-pointer ${linkClass}`}
-                    >
-                      Log out
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/auth/login" className={linkClass}>
-                      Login
-                    </Link>
-                    <Link to="/auth/signup" className={linkClass}>
-                      Sign Up
-                    </Link>
-                  </>
-                )}
-              </div>
-            )}
-
-            {(isDevelopmentEnvironment || isDevelopmentProject) && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-                <span className={sectionLabelClass}>Application</span>
-                <Link to="/app" className={linkClass}>
-                  Garage
+            <div className="flex items-center sm:justify-end rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80 min-w-[8rem] sm:min-w-[10rem]">
+              {isLoggedIn ? (
+                <button
+                  onClick={signOut}
+                  className={`p-0 bg-transparent border-none cursor-pointer ${linkClass}`}
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link to="/auth/login" className={linkClass}>
+                  Login / Sign Up
                 </Link>
-                <Link to="/app/timeline" className={linkClass}>
-                  Timeline
-                </Link>
-                <Link to="/app/upcoming" className={linkClass}>
-                  Upcoming
-                </Link>
-                <Link to="/app/providers" className={linkClass}>
-                  Providers
-                </Link>
-                {supportAccess?.isSuperAdmin && (
-                  <Link to="/app/admin" className={linkClass}>
-                    Admin
-                  </Link>
-                )}
-                {isDevelopmentEnvironment && (
-                  <Link to="/app/dev-seed" className={linkClass}>
-                    Data Seed
-                  </Link>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </nav>
       </div>

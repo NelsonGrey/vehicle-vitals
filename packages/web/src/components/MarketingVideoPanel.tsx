@@ -50,8 +50,8 @@ export default function MarketingVideoPanel({
             loading="lazy"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/10" />
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 to-black/10" />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">
             {showVideo ? 'Playable demo' : 'Poster preview'}
           </span>

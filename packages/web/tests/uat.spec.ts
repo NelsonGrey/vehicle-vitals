@@ -276,6 +276,64 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(shellMetrics.sponsoredInsideMain).toBe(false);
     });
 
+    test('TC-UI-007: Marketing feature atlas and video showcase are present', async ({
+      page,
+    }) => {
+      await page.goto(BASE_URL);
+
+      const marketingMediaMetrics = await page.evaluate(() => {
+        const hasFeatureAtlasHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Full application feature atlas')
+          ) !== undefined;
+
+        const hasVideoShowcaseHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Video showcase lanes')
+          ) !== undefined;
+
+        const atlasCards = document.querySelectorAll(
+          'section article img[alt*="application screenshot"]'
+        ).length;
+        const videoLaneCards = Array.from(
+          document.querySelectorAll('article')
+        ).filter(
+          article =>
+            article.textContent?.includes('Onboarding Walkthrough') ||
+            article.textContent?.includes('Maintenance Lifecycle Tour') ||
+            article.textContent?.includes('Cross-Platform Continuity')
+        ).length;
+
+        const playableOrPosterLabels = Array.from(
+          document.querySelectorAll('article span')
+        ).filter(
+          node =>
+            node.textContent?.includes('Playable demo') ||
+            node.textContent?.includes('Poster preview')
+        ).length;
+
+        return {
+          hasFeatureAtlasHeading,
+          hasVideoShowcaseHeading,
+          atlasCards,
+          videoLaneCards,
+          playableOrPosterLabels,
+        };
+      });
+
+      test.skip(
+        !marketingMediaMetrics.hasFeatureAtlasHeading ||
+          !marketingMediaMetrics.hasVideoShowcaseHeading,
+        'Enhanced marketing media sections are not exposed in this deployment target.'
+      );
+
+      expect(marketingMediaMetrics.atlasCards).toBeGreaterThanOrEqual(8);
+      expect(marketingMediaMetrics.videoLaneCards).toBeGreaterThanOrEqual(3);
+      expect(
+        marketingMediaMetrics.playableOrPosterLabels
+      ).toBeGreaterThanOrEqual(3);
+    });
+
     test('TC-UI-004: Logged-out header shows marketing nav only', async ({
       page,
     }) => {

@@ -5,7 +5,7 @@ Primary production project: `vehicle-vitals-prod`
 
 ## Development Progress Update (May 18, 2026)
 
-Status: In active iteration; web navigation/help and shell layout hardening complete and under CI/UAT validation.
+Status: In active iteration; web navigation/help, shell layout hardening, and robust marketing media/video presentation are complete and under CI/UAT validation.
 
 - Added explicit `Getting Started` workflow and dedicated `Help` section in web routes and content pages.
 - Partitioned header navigation by authentication state:
@@ -16,12 +16,15 @@ Status: In active iteration; web navigation/help and shell layout hardening comp
 - Standardized centered shell width to `1024px` across header/main/footer/auth/landing containers.
 - Converted ads to standalone ad-break sections and removed embedded in-flow ad placements from feature pages.
 - Added/updated automation coverage for header behavior and shell/ad-break architecture in unit and UAT suites.
+- Implemented robust marketing-side visual system with real application screenshots across major app capabilities (web + mobile) and dedicated video showcase lanes.
+- Added runtime-safe video handling in marketing pages: if a demo clip is missing or fails, UI automatically falls back to poster preview without page break.
+- Centralized marketing video rendering in reusable component `packages/web/src/components/MarketingVideoPanel.tsx`.
 
 Immediate next implementation focus:
 
 1. Validate develop and demonstration CI workflow outcomes on pushed branches.
 2. Resolve any failing checks before merge/review handoff.
-3. Add route-level shell conformance checks for remaining non-standard pages.
+3. Add/ingest finalized demo clips in `packages/web/public/videos/feature-demos/` and validate autoplay/captions/transcript quality for release marketing.
 
 ## Web Deployment
 

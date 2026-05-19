@@ -140,7 +140,7 @@ export const websiteFaq: FaqItem[] = [
   {
     question: 'How do profile preferences affect reminders?',
     answers: [
-      'Profile settings include reminder lead-time and usa and how early Upcoming Tasks starts surfacing service workge assumptions (for example average driving patterns).',
+      'Profile settings include reminder lead-time and usage assumptions (for example average driving patterns) that control how early Upcoming Tasks starts surfacing service work.',
       'These values influence when reminder windows appear.',
       'Save profile preferences to apply changes.',
     ],

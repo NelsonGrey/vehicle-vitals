@@ -5,15 +5,61 @@
     "rules": "firebase/firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "storage": {
-    "rules": "firebase/storage.rules"
-  },
   "hosting": {
     "public": "packages/web/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "predeploy": ["npm --prefix packages/web run build:development"],
     "rewrites": [
       {
-        "source": "**",
+        "source": "/",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/app/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/auth/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/subscription",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/getting-started",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/help",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/terms",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/privacy",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/contact",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/*-demo",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/instructions",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/feature-demo",
         "destination": "/index.html"
       }
     ],
@@ -66,18 +112,9 @@
     ]
   },
   "emulators": {
-    "firestore": {
-      "port": 8080
-    },
     "dataconnect": {
       "dataDir": "dataconnect/.dataconnect/pgliteData"
-    },
-    "ui": {
-      "enabled": true
     }
-  },
-  "dataconnect": {
-    "source": "dataconnect"
   },
   "functions": [
     {

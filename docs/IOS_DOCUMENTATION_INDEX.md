@@ -10,6 +10,18 @@ This collection provides everything needed to set up iOS projects with professio
 
 ## 📖 Available Guides
 
+### End-User FAQ (Website + iOS)
+
+**File**: [`USER_FAQ_WEBSITE_IOS.md`](./USER_FAQ_WEBSITE_IOS.md)
+**Purpose**: Step-by-step user guidance for core actions across the website and iOS app
+**Use When**: Training users, onboarding, and support issue triage
+**Includes**:
+
+- Account and authentication flows
+- Garage, add/edit vehicle, VIN decode/scan
+- Records, reminders, upcoming tasks, and calendar actions
+- Profile, service providers, premium, and troubleshooting
+
 ### 1. iOS Certificate Setup Guide
 
 **File**: [`IOS_CERTIFICATE_SETUP_GUIDE.md`](./IOS_CERTIFICATE_SETUP_GUIDE.md)

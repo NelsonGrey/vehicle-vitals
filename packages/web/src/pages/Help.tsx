@@ -1,5 +1,13 @@
 import { Link } from 'react-router-dom';
 import MarketingVideoPanel from '../components/MarketingVideoPanel';
+import {
+  iosFaq,
+  iosRoutes,
+  troubleshootingFaq,
+  websiteFaq,
+  websiteRoutes,
+  type FaqItem,
+} from '../data/helpFaq';
 // Header and footer provided by Layout
 
 const helpTopics = [
@@ -29,6 +37,38 @@ const helpTopics = [
       'Web and mobile use the same account. Keep app notifications enabled to receive reminder and schedule alerts.',
   },
 ];
+
+function FaqList({ items }: { items: FaqItem[] }) {
+  return (
+    <div className="space-y-3">
+      {items.map((item, index) => (
+        <details
+          key={item.question}
+          className="group rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 px-4 py-3"
+        >
+          <summary className="cursor-pointer list-none text-slate-900 dark:text-slate-100 font-semibold flex items-start justify-between gap-3">
+            <span>
+              {index + 1}. {item.question}
+            </span>
+            <span className="text-slate-500 group-open:rotate-45 transition-transform">
+              +
+            </span>
+          </summary>
+          <div className="mt-3 space-y-2">
+            {item.answers.map(answer => (
+              <p
+                key={`${item.question}-${answer}`}
+                className="text-slate-700 dark:text-slate-300"
+              >
+                {answer}
+              </p>
+            ))}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
 
 export default function Help() {
   return (
@@ -85,6 +125,62 @@ export default function Help() {
             fallbackHref="/contact"
             fallbackLabel="Contact support"
           />
+        </div>
+      </section>
+
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm space-y-6">
+        <div>
+          <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-2">
+            Complete FAQ
+          </h2>
+          <p className="text-slate-700 dark:text-slate-300">
+            This Help page includes the full Website FAQ, iOS FAQ, and
+            cross-platform troubleshooting answers.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            Website FAQ
+          </h3>
+          <FaqList items={websiteFaq} />
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            iOS App FAQ
+          </h3>
+          <FaqList items={iosFaq} />
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            Cross-Platform Troubleshooting
+          </h3>
+          <FaqList items={troubleshootingFaq} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              Website Route Quick List
+            </h3>
+            <ul className="space-y-1 text-slate-700 dark:text-slate-300 text-sm sm:text-base">
+              {websiteRoutes.map(route => (
+                <li key={route}>{route}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              iOS Route Quick List
+            </h3>
+            <ul className="space-y-1 text-slate-700 dark:text-slate-300 text-sm sm:text-base">
+              {iosRoutes.map(route => (
+                <li key={route}>{route}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
 

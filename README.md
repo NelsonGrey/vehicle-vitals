@@ -22,6 +22,7 @@ Comprehensive project documentation is available in the [`docs/`](/docs) folder:
 - **[BUSINESS_REQUIREMENTS.md](/docs/BUSINESS_REQUIREMENTS.md)** - Business strategy, market analysis, revenue projections
 - **[MONETIZATION_STRATEGY.md](/docs/MONETIZATION_STRATEGY.md)** - Detailed monetization plan (ad placements, subscription tiers, pricing)
 - **[PRODUCT_DESIGN.md](/docs/PRODUCT_DESIGN.md)** - Product vision, feature specifications, UX flows
+- **[USER_FAQ_WEBSITE_IOS.md](/docs/USER_FAQ_WEBSITE_IOS.md)** - End-user FAQ for performing website and iOS app workflows
 
 **Technical & Deployment**:
 

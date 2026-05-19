@@ -385,7 +385,7 @@ export default function AdminSupport() {
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 {submittedQuery
-                  ? `Showing matches for \"${submittedQuery}\"`
+                  ? `Showing matches for "${submittedQuery}"`
                   : 'Showing the first accessible support page of users'}
               </p>
             </div>

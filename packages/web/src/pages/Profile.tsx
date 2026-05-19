@@ -889,6 +889,12 @@ export default function Profile() {
               Control whether maintenance reminders are generated and when they
               should appear before service is due.
             </p>
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+              Upcoming Tasks uses these settings to decide which services appear
+              now and how far in advance to surface them. Higher values show
+              work earlier; lower values keep the queue focused on near-term
+              needs.
+            </div>
 
             <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-4">
               <label className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-200">
@@ -905,6 +911,10 @@ export default function Profile() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                 Preferred reminder lead time (days)
               </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+                Example: 14 means the app starts showing work about two weeks
+                before it estimates the service will be due.
+              </p>
               <input
                 type="number"
                 min={1}
@@ -924,6 +934,11 @@ export default function Profile() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 mt-4">
                 Average driving distance (miles/day)
               </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+                This helps convert mileage-based schedules into a practical
+                reminder window. If you usually drive 35 miles a day, a 14-day
+                lead time shows tasks roughly 490 miles before they are due.
+              </p>
               <input
                 type="number"
                 min={1}

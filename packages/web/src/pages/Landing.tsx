@@ -76,7 +76,7 @@ export default function Landing() {
     {
       title: 'Service Providers',
       description:
-        'Track shops, vendors, and preferred providers for every vehicle.',
+        'Search nearby repair shops and dealerships using your saved address and provider preferences.',
       image: '/images/features/providers.png',
       appPath: '/app/providers',
       platform: 'Web',
@@ -134,7 +134,7 @@ export default function Landing() {
     {
       title: 'Onboarding Walkthrough',
       description:
-        'Video-ready slot for a full VIN-to-garage onboarding demonstration.',
+        'A guided preview of account setup, first vehicle entry, and the secured garage flow.',
       poster: '/images/features/add-vehicle.png',
       videoPath: '/videos/feature-demos/onboarding-walkthrough.mp4',
       fallbackHref: '/getting-started',
@@ -143,7 +143,7 @@ export default function Landing() {
     {
       title: 'Maintenance Lifecycle Tour',
       description:
-        'Video-ready slot for records, timeline, and upcoming tasks flow.',
+        'A walkthrough of records, timeline, and upcoming maintenance planning.',
       poster: '/images/features/timeline.png',
       videoPath: '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
       fallbackHref: '/maintenance-planning-demo',
@@ -152,7 +152,7 @@ export default function Landing() {
     {
       title: 'Cross-Platform Continuity',
       description:
-        'Video-ready slot for web-to-mobile continuity and account sync.',
+        'A preview of the same account experience across web and mobile surfaces.',
       poster: '/images/features/ios-home.png',
       videoPath: '/videos/feature-demos/cross-platform-continuity.mp4',
       fallbackHref: '/cross-platform-access-demo',
@@ -180,12 +180,13 @@ export default function Landing() {
                   Vehicle Vitals Platform
                 </div>
                 <h1 className="mt-4 max-w-2xl font-serif text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
-                  A complete ownership platform, now shown as a full visual tour
+                  Vehicle ownership tools explained with real screens and guided
+                  demos
                 </h1>
                 <p className="mt-4 max-w-2xl text-base text-slate-100/90 sm:text-lg">
-                  Explore every core capability across dashboard, planning,
-                  timeline, providers, records, and mobile continuity through a
-                  richer marketing experience.
+                  See what the product does today across garage setup,
+                  maintenance planning, ownership history, nearby providers, and
+                  cross-device access before you sign in.
                 </p>
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <Link
@@ -203,13 +204,13 @@ export default function Landing() {
                 </div>
                 <div className="mt-6 grid grid-cols-1 gap-3 text-sm text-slate-100 sm:grid-cols-3">
                   <div className="rounded-xl bg-white/10 px-3 py-2 ring-1 ring-white/20">
-                    End-to-end feature coverage
+                    Real workflow coverage
                   </div>
                   <div className="rounded-xl bg-white/10 px-3 py-2 ring-1 ring-white/20">
                     Real application screenshots
                   </div>
                   <div className="rounded-xl bg-white/10 px-3 py-2 ring-1 ring-white/20">
-                    Video-ready demo storytelling
+                    Guided product walkthroughs
                   </div>
                 </div>
               </div>
@@ -222,8 +223,8 @@ export default function Landing() {
                     Flagship capability demos
                   </h2>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-                    Focused walkthrough entries that connect marketing
-                    narratives to application behavior.
+                    Focused previews that show what each capability is for and
+                    where it leads inside the secured app.
                   </p>
                 </div>
               </div>
@@ -271,8 +272,8 @@ export default function Landing() {
                   Full application feature atlas
                 </h2>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-                  Every major application-side workflow represented with real
-                  screenshots from web and mobile experiences.
+                  Real screenshots from the web and mobile product so you can
+                  see the main workflows before opening the secured app.
                 </p>
               </div>
 
@@ -305,7 +306,7 @@ export default function Landing() {
                         to="/auth/login"
                         className="mt-3 inline-flex items-center text-sm font-medium text-slate-700 underline transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
                       >
-                        Open in app ({feature.appPath})
+                        Sign in to open {feature.appPath}
                       </Link>
                     </div>
                   </article>
@@ -319,8 +320,8 @@ export default function Landing() {
                   Video showcase lanes
                 </h2>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-                  Dedicated lanes for narrated product demos with automatic
-                  poster fallback when a clip is not yet present.
+                  Narrated product demos with poster fallback, so the page stays
+                  usable even when a clip is unavailable.
                 </p>
               </div>
 

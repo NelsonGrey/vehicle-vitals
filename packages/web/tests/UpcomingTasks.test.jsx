@@ -128,7 +128,7 @@ describe('UpcomingTasks reminder actions', () => {
 
     await waitFor(() => screen.getByText('Oil Change'));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Snooze 2 Weeks' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Snooze 14 Days' }));
 
     await waitFor(() => {
       expect(snoozeReminder).toHaveBeenCalledWith(
@@ -170,7 +170,7 @@ describe('UpcomingTasks reminder actions', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('No reminders in this view.')
+        screen.getByText('No saved reminders match this filter yet.')
       ).toBeInTheDocument();
     });
   });
@@ -235,7 +235,7 @@ describe('UpcomingTasks reminder actions', () => {
     renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
-    fireEvent.change(screen.getByLabelText('Reminder Email'), {
+    fireEvent.change(screen.getByLabelText('Send reminder email to'), {
       target: { value: 'owner@example.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send Email Now' }));
@@ -255,7 +255,9 @@ describe('UpcomingTasks reminder actions', () => {
         deliveryStatus: 'sent',
       })
     );
-    expect(window.alert).toHaveBeenCalledWith('Reminder email sent.');
+    expect(window.alert).toHaveBeenCalledWith(
+      'Reminder email sent to owner@example.com.'
+    );
   });
 
   it('persists failed delivery status when email send fails', async () => {
@@ -263,7 +265,7 @@ describe('UpcomingTasks reminder actions', () => {
     renderUpcomingTasks();
 
     await waitFor(() => screen.getByText('Oil Change'));
-    fireEvent.change(screen.getByLabelText('Reminder Email'), {
+    fireEvent.change(screen.getByLabelText('Send reminder email to'), {
       target: { value: 'owner@example.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send Email Now' }));

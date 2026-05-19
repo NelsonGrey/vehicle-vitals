@@ -19,6 +19,10 @@ export default function Instructions() {
         <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-4">
           Getting Started Workflow
         </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+          Start with account access first. The garage, records, timeline, and
+          planning pages are secured and open after you sign in.
+        </p>
         <ol className="list-decimal pl-5 space-y-3 text-slate-700 dark:text-slate-300">
           <li>
             Create an account or sign in from the{' '}
@@ -31,18 +35,18 @@ export default function Instructions() {
             .
           </li>
           <li>
-            Open the{' '}
+            After you sign in, open the{' '}
             <Link
               to="/app"
               className="underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
             >
               web app
             </Link>{' '}
-            and add your first vehicle.
+            to reach your garage and add your first vehicle.
           </li>
           <li>
-            Use VIN decode for faster setup, or enter Year, Make, and Model
-            manually.
+            Enter the VIN, use VIN decode for faster setup, and fill any missing
+            Year, Make, and Model details manually if needed.
           </li>
           <li>
             Log maintenance entries with date, mileage, title, notes, and cost
@@ -83,8 +87,12 @@ export default function Instructions() {
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">
           Our iOS and Android apps sync with your account so you can scan a VIN,
-          update mileage, and add notes on the go. Store listings are coming
-          soon.
+          update mileage, and add notes on the go. Public App Store and Google
+          Play listings are not available yet.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400">
+          Mobile access is currently limited to controlled distribution and
+          internal testing while store launch work is in progress.
         </p>
         <p className="text-slate-600 dark:text-slate-400">
           Need troubleshooting or support details? Visit the{' '}

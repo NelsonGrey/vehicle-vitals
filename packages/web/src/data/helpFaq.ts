@@ -33,7 +33,8 @@ export const websiteFaq: FaqItem[] = [
     question: 'How do I add my first vehicle?',
     answers: [
       'Go to Garage and select Add Vehicle.',
-      'Enter VIN (17 characters) and run decode, or fill Year/Make/Model manually if needed.',
+      'Enter the VIN and run decode for faster setup.',
+      'If VIN lookup misses details, fill the remaining Year/Make/Model fields manually before saving.',
       'Add mileage and save.',
       'The vehicle appears in Garage and is available to Records, Upcoming, and Timeline features.',
     ],
@@ -43,7 +44,7 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'VIN decode can auto-populate vehicle details (for example make/model/year and additional profile data where available).',
       'After decoding, review fields for accuracy and save.',
-      'If decode is unavailable, enter details manually and continue.',
+      'If decode is unavailable or incomplete, keep the VIN entered and complete the missing details manually before saving.',
     ],
   },
   {
@@ -109,7 +110,8 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'Open Upcoming from navigation.',
       'Review tasks sorted by urgency.',
-      'For each task, save reminder state and choose action: Complete, Snooze, Dismiss, or Reopen where supported.',
+      'By default, the list focuses on work estimated to be due inside your saved reminder window. Use Show all recommendations if you want the broader queue.',
+      'For each task, save reminder state and choose action: Send Email Now, Complete, Snooze, Dismiss, or Reopen where supported.',
     ],
   },
   {
@@ -117,7 +119,7 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'Yes.',
       'In reminder or insight-supported flows, choose the calendar action.',
-      'The app creates a calendar event using configured calendar integration behavior.',
+      'Google Calendar opens in a new tab, while Apple Calendar and ICS options download calendar files you can import.',
     ],
   },
   {
@@ -138,7 +140,7 @@ export const websiteFaq: FaqItem[] = [
   {
     question: 'How do profile preferences affect reminders?',
     answers: [
-      'Profile settings include reminder lead-time and usage assumptions (for example average driving patterns).',
+      'Profile settings include reminder lead-time and usa and how early Upcoming Tasks starts surfacing service workge assumptions (for example average driving patterns).',
       'These values influence when reminder windows appear.',
       'Save profile preferences to apply changes.',
     ],

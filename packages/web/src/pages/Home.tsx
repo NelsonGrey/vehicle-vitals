@@ -1,7 +1,7 @@
 // -----------------------------
 // File: web/pages/Home.jsx
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { useAuth } from '../shared/AuthContext';
@@ -84,10 +84,10 @@ export default function Home() {
     Record<string, VehicleAlert>
   >({});
 
-  const refreshVehicles = async () => {
+  const refreshVehicles = useCallback(async () => {
     const list = await getVehicles();
     setVehicles(list);
-  };
+  }, []);
 
   const normalizedSearch = searchTerm.toLowerCase();
   const filteredVehicles = vehicles.filter(v => {
@@ -110,7 +110,7 @@ export default function Home() {
       await refreshVehicles();
     };
     fetchVehicles();
-  }, []);
+  }, [refreshVehicles]);
 
   useEffect(() => {
     if (vehicles.length === 0) return;
@@ -154,50 +154,56 @@ export default function Home() {
     }
   }, [selectedVin, vehicles]);
 
-  const backfillVinInsights = async (automatic = false) => {
-    const candidates = vehicles.filter(
-      vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
-    );
-
-    if (candidates.length === 0) {
-      if (!automatic) {
-        setBackfillMessage('All vehicles already have full VIN insights.');
-      }
-      return;
-    }
-
-    setIsBackfillingInsights(true);
-    setBackfillMessage(null);
-
-    let successCount = 0;
-    let failureCount = 0;
-
-    for (const vehicle of candidates) {
-      try {
-        const insights = await getVehicleInsights(vehicle.vin);
-        await updateVehicle(vehicle.vin, buildPersistedVinInsights(insights));
-        successCount += 1;
-      } catch (error) {
-        console.error(`VIN insight backfill failed for ${vehicle.vin}`, error);
-        failureCount += 1;
-      }
-    }
-
-    await refreshVehicles();
-
-    const modeLabel = automatic ? 'Auto VIN sync' : 'VIN insights backfill';
-    if (failureCount === 0) {
-      setBackfillMessage(
-        `${modeLabel} complete: ${successCount} vehicle${successCount === 1 ? '' : 's'} updated.`
+  const backfillVinInsights = useCallback(
+    async (automatic = false) => {
+      const candidates = vehicles.filter(
+        vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
       );
-    } else {
-      setBackfillMessage(
-        `${modeLabel} finished: ${successCount} updated, ${failureCount} failed. Automatic retry will continue.`
-      );
-    }
 
-    setIsBackfillingInsights(false);
-  };
+      if (candidates.length === 0) {
+        if (!automatic) {
+          setBackfillMessage('All vehicles already have full VIN insights.');
+        }
+        return;
+      }
+
+      setIsBackfillingInsights(true);
+      setBackfillMessage(null);
+
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const vehicle of candidates) {
+        try {
+          const insights = await getVehicleInsights(vehicle.vin);
+          await updateVehicle(vehicle.vin, buildPersistedVinInsights(insights));
+          successCount += 1;
+        } catch (error) {
+          console.error(
+            `VIN insight backfill failed for ${vehicle.vin}`,
+            error
+          );
+          failureCount += 1;
+        }
+      }
+
+      await refreshVehicles();
+
+      const modeLabel = automatic ? 'Auto VIN sync' : 'VIN insights backfill';
+      if (failureCount === 0) {
+        setBackfillMessage(
+          `${modeLabel} complete: ${successCount} vehicle${successCount === 1 ? '' : 's'} updated.`
+        );
+      } else {
+        setBackfillMessage(
+          `${modeLabel} finished: ${successCount} updated, ${failureCount} failed. Automatic retry will continue.`
+        );
+      }
+
+      setIsBackfillingInsights(false);
+    },
+    [refreshVehicles, vehicles]
+  );
 
   useEffect(() => {
     const hasCandidates = vehicles.some(
@@ -226,7 +232,7 @@ export default function Home() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [isBackfillingInsights, vehicles]);
+  }, [backfillVinInsights, isBackfillingInsights, vehicles]);
 
   const handleDelete = async (vin: string) => {
     const ok = window.confirm('Delete this vehicle? This cannot be undone.');

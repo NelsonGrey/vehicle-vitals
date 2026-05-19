@@ -136,7 +136,7 @@ export function useFeatureFlag(
   featureName: string,
   options?: { onDenied?: () => void }
 ): boolean {
-  const { tier, subscription } = useSubscription();
+  const { tier } = useSubscription();
   const { entitlements } = useEffectiveEntitlements();
   const { user } = useAuth();
   const [isEnabled, setIsEnabled] = useState(false);
@@ -258,8 +258,7 @@ export function useIfFeatureAvailable(featureName: string): {
   openUpgrade: (trigger: string) => void;
 } {
   const { tier } = useSubscription();
-  const { shouldShowModal, openUpgradeModal, closeUpgradeModal } =
-    useUpgradePrompt();
+  const { openUpgradeModal } = useUpgradePrompt();
   const isAvailable = isFeatureEnabled(featureName, tier);
 
   return {

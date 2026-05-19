@@ -6,7 +6,10 @@ import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
-import { showDemoSeedControls } from '../shared/environment';
+import {
+  isDemonstrationEnvironment,
+  showDemoSeedControls,
+} from '../shared/environment';
 import {
   deleteVehicle,
   getVehicles,
@@ -69,6 +72,8 @@ function getPortfolioRequiredProgress(vehicle: Vehicle) {
 
 export default function Home() {
   const { user } = useAuth();
+  const showBobDemoSeedControls =
+    showDemoSeedControls && isDemonstrationEnvironment;
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isBackfillingInsights, setIsBackfillingInsights] = useState(false);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
@@ -149,13 +154,15 @@ export default function Home() {
     }
   }, [selectedVin, vehicles]);
 
-  const backfillVinInsights = async () => {
+  const backfillVinInsights = async (automatic = false) => {
     const candidates = vehicles.filter(
       vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
     );
 
     if (candidates.length === 0) {
-      setBackfillMessage('All vehicles already have full VIN insights.');
+      if (!automatic) {
+        setBackfillMessage('All vehicles already have full VIN insights.');
+      }
       return;
     }
 
@@ -178,18 +185,48 @@ export default function Home() {
 
     await refreshVehicles();
 
+    const modeLabel = automatic ? 'Auto VIN sync' : 'VIN insights backfill';
     if (failureCount === 0) {
       setBackfillMessage(
-        `VIN insights backfill complete: ${successCount} vehicle${successCount === 1 ? '' : 's'} updated.`
+        `${modeLabel} complete: ${successCount} vehicle${successCount === 1 ? '' : 's'} updated.`
       );
     } else {
       setBackfillMessage(
-        `VIN insights backfill finished: ${successCount} updated, ${failureCount} failed.`
+        `${modeLabel} finished: ${successCount} updated, ${failureCount} failed. Automatic retry will continue.`
       );
     }
 
     setIsBackfillingInsights(false);
   };
+
+  useEffect(() => {
+    const hasCandidates = vehicles.some(
+      vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
+    );
+
+    if (!hasCandidates || isBackfillingInsights) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const run = async () => {
+      if (cancelled || isBackfillingInsights) {
+        return;
+      }
+      await backfillVinInsights(true);
+    };
+
+    void run();
+    const intervalId = window.setInterval(() => {
+      void run();
+    }, 45000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isBackfillingInsights, vehicles]);
 
   const handleDelete = async (vin: string) => {
     const ok = window.confirm('Delete this vehicle? This cannot be undone.');
@@ -239,8 +276,8 @@ export default function Home() {
 
   const statusText = backfillMessage
     ? backfillMessage
-    : showDemoSeedControls
-      ? 'No recent status yet. Click "Load Bob Demo Data" to run document seeding and show upload diagnostics here.'
+    : showBobDemoSeedControls
+      ? 'No recent status yet. Use "Load Bob Demo Data" to seed demonstration fixtures. VIN insight sync runs automatically.'
       : 'No recent status yet. Demo seed controls are disabled in this environment.';
 
   return (
@@ -259,7 +296,7 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {showDemoSeedControls && (
+            {showBobDemoSeedControls && (
               <button
                 onClick={() => void handleSeedDemo()}
                 disabled={isSeedingDemo}
@@ -270,15 +307,6 @@ export default function Home() {
                   : `Load Bob Demo Data (${bobDemoVehicleCount} vehicles)`}
               </button>
             )}
-            <button
-              onClick={() => void backfillVinInsights()}
-              disabled={isBackfillingInsights || vehicles.length === 0}
-              className="px-4 py-2.5 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isBackfillingInsights
-                ? 'Backfilling VIN...'
-                : 'Backfill VIN Data'}
-            </button>
             <Link
               to="/add-vehicle"
               className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
@@ -309,7 +337,7 @@ export default function Home() {
               >
                 Add your first vehicle
               </Link>
-              {showDemoSeedControls && (
+              {showBobDemoSeedControls && (
                 <button
                   onClick={() => void handleSeedDemo()}
                   disabled={isSeedingDemo}

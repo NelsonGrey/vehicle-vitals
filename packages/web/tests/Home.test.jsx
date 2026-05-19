@@ -186,4 +186,12 @@ describe('Home – smart maintenance alert badges', () => {
     const link = screen.getByText('View all →').closest('a');
     expect(link).toHaveAttribute('href', '/app/upcoming');
   });
+
+  it('does not render manual backfill or Bob demo seed buttons by default', async () => {
+    renderHome();
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
+
+    expect(screen.queryByRole('button', { name: /Backfill VIN Data/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Load Bob Demo Data/i })).toBeNull();
+  });
 });

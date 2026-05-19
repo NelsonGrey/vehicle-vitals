@@ -208,8 +208,8 @@ export default function ServiceProviders() {
         Service Providers
       </h1>
       <p className="text-slate-600 dark:text-slate-300 mt-2 mb-6">
-        Find local repair shops and dealerships using your saved profile
-        preferences.
+        Find nearby repair shops and dealerships using your saved address,
+        radius, and provider preferences.
       </p>
 
       {status && (
@@ -233,6 +233,10 @@ export default function ServiceProviders() {
         <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
           Search Preferences
         </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+          Save your home-area search settings here, then rerun the lookup any
+          time you want a fresh nearby-provider list.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="text-sm text-slate-700 dark:text-slate-300">

@@ -102,7 +102,9 @@ export default function AddVehicle() {
   const handleDecodeVin = async () => {
     const vin = (form.vin || '').trim();
     if (!vin) {
-      alert('Enter a VIN first');
+      alert(
+        'Enter the VIN first. If VIN lookup cannot fill every field, you can still type Year, Make, and Model yourself before saving.'
+      );
       return;
     }
     try {
@@ -153,7 +155,10 @@ export default function AddVehicle() {
       });
     } catch (e: unknown) {
       const error = e as Error;
-      alert(error?.message || 'Failed to decode VIN');
+      alert(
+        error?.message ||
+          'VIN lookup could not return vehicle details. Review the VIN and continue by filling any missing fields manually.'
+      );
     }
   };
 
@@ -165,8 +170,8 @@ export default function AddVehicle() {
             Add Vehicle
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
-            Capture a vehicle profile, decode the VIN, and store backfilled
-            specs before saving.
+            Enter the VIN, decode it for faster setup, then review or complete
+            the vehicle details before saving.
           </p>
         </div>
         <Link
@@ -294,8 +299,9 @@ export default function AddVehicle() {
                 />
                 {field === 'vin' && (
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                    Decode VIN fills the year, make, model, specs, and recall
-                    data before save.
+                    VIN is required to save a vehicle. Decode fills year, make,
+                    model, specs, and recall data for you, and you can edit any
+                    missing fields before saving.
                   </p>
                 )}
                 {field === 'licensePlate' && plateValidationError && (
@@ -337,6 +343,10 @@ export default function AddVehicle() {
               >
                 Add Vehicle
               </button>
+              <p className="m-0 text-xs text-slate-500 dark:text-slate-400">
+                Decode is optional, but a VIN is still required as the vehicle's
+                primary identifier.
+              </p>
             </div>
           </div>
         </div>
@@ -349,7 +359,8 @@ export default function AddVehicle() {
           {!insights ? (
             <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
               Decode a VIN to preview the vehicle profile, recall count, and
-              spec fields that will be saved with this record.
+              spec fields that will be saved with this vehicle. If lookup is
+              incomplete, update the form manually and continue.
             </div>
           ) : (
             <div className="space-y-5">

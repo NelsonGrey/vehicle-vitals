@@ -223,9 +223,10 @@ export function getSubscriptionStatusDisplay(sub: SubscriptionData): string {
   }
 
   switch (sub.status) {
-    case 'active':
+    case 'active': {
       const daysUntil = getDaysUntilRenewal(sub);
       return `Active • Renews in ${daysUntil} days`;
+    }
     case 'past_due':
       return 'Payment Issue • Update required';
     case 'canceled':

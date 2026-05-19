@@ -178,6 +178,8 @@ describe('AddVehicle page', () => {
   it('shows decode alert if VIN is blank', async () => {
     renderPage();
     await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
-    expect(global.alert).toHaveBeenCalledWith('Enter a VIN first');
+    expect(global.alert).toHaveBeenCalledWith(
+      'Enter the VIN first. If VIN lookup cannot fill every field, you can still type Year, Make, and Model yourself before saving.'
+    );
   });
 });

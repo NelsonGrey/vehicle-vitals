@@ -126,9 +126,7 @@ describe('Login page', () => {
     await userEvent.type(screen.getByLabelText(/^password/i), 'pw');
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
-    // Button text changes to "Signing in…" while busy — find submit button by type
-    // eslint-disable-next-line testing-library/no-node-access
-    const submitBtn = document.querySelector('button[type="submit"]');
+    const submitBtn = screen.getByRole('button', { name: /signing in/i });
     expect(submitBtn).toBeDisabled();
 
     resolveSignIn();

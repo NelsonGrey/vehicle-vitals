@@ -57,6 +57,40 @@ interface ReminderItem {
   lastDeliveryError?: string;
 }
 
+const reminderFilterDescriptions: Record<
+  'all' | 'active' | 'snoozed' | 'completed' | 'dismissed',
+  string
+> = {
+  all: 'See every saved reminder across active, snoozed, completed, and dismissed states.',
+  active:
+    'Active reminders still need a next action such as email, snooze, complete, or dismiss.',
+  snoozed:
+    'Snoozed reminders are temporarily hidden until the selected date passes.',
+  completed:
+    'Completed reminders are finished service items kept for reference.',
+  dismissed:
+    'Dismissed reminders were intentionally removed from your working list and can be restored later.',
+};
+
+const calendarTargetOptionLabels = {
+  google: 'Google Calendar (opens a new tab)',
+  apple: 'Apple Calendar (.ics file)',
+  ics: 'ICS file download',
+} as const;
+
+function getCalendarSuccessMessage(target: 'google' | 'apple' | 'ics') {
+  switch (target) {
+    case 'google':
+      return 'Opened Google Calendar event details in a new tab.';
+    case 'apple':
+      return 'Downloaded an Apple Calendar-compatible event file.';
+    case 'ics':
+      return 'Downloaded an ICS calendar file.';
+    default:
+      return 'Prepared your calendar event.';
+  }
+}
+
 export default function UpcomingTasks() {
   const location = useLocation();
   const [upcomingItems, setUpcomingItems] = useState<UpcomingItem[]>([]);
@@ -87,6 +121,7 @@ export default function UpcomingTasks() {
   const [sendingReminderIds, setSendingReminderIds] = useState<Set<string>>(
     () => new Set()
   );
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
   const [vehicleLookup, setVehicleLookup] = useState<Record<string, Vehicle>>(
     {}
   );
@@ -233,13 +268,6 @@ export default function UpcomingTasks() {
       return;
     }
 
-    if (item.milesUntilDue > leadMilesThreshold) {
-      alert(
-        `This reminder is outside your preferred lead time (${preferredLeadDays} days at ${preferredDailyMiles} miles/day).`
-      );
-      return;
-    }
-
     const reminderKey = buildReminderKey(item.vehicle.vin, item.serviceType);
     if (savedReminderKeys.has(reminderKey)) {
       return;
@@ -312,7 +340,7 @@ export default function UpcomingTasks() {
         window.open(destination, '_blank', 'noopener,noreferrer');
       }
 
-      alert(`Calendar event created for ${calendarTarget}.`);
+      alert(getCalendarSuccessMessage(calendarTarget));
     } catch (error) {
       alert(
         'Failed to create calendar event: ' +
@@ -444,7 +472,9 @@ export default function UpcomingTasks() {
 
     const recipient = deliveryEmail.trim();
     if (!recipient || !recipient.includes('@')) {
-      alert('Enter a valid reminder email address.');
+      alert(
+        'Enter the email address that should receive this reminder before sending.'
+      );
       return;
     }
 
@@ -491,7 +521,7 @@ export default function UpcomingTasks() {
             : item
         )
       );
-      alert('Reminder email sent.');
+      alert(`Reminder email sent to ${recipient}.`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to send reminder';
@@ -519,7 +549,7 @@ export default function UpcomingTasks() {
             : item
         )
       );
-      alert(`Failed to send reminder email: ${message}`);
+      alert(`Could not send reminder email to ${recipient}: ${message}`);
     } finally {
       setSendingReminderIds(prev => {
         const next = new Set(prev);
@@ -559,11 +589,20 @@ export default function UpcomingTasks() {
           return false;
         }
 
-        return item.milesUntilDue <= leadMilesThreshold;
+        return (
+          showAllRecommendations || item.milesUntilDue <= leadMilesThreshold
+        );
       })
     : [];
 
   const selectedVehicle = selectedVin ? vehicleLookup[selectedVin] : undefined;
+  const recommendationsOutsideWindow = upcomingItems.filter(item => {
+    if (selectedVin && item.vehicle.vin.toUpperCase() !== selectedVin) {
+      return false;
+    }
+
+    return item.milesUntilDue > leadMilesThreshold;
+  }).length;
 
   const getUrgencyColor = (milesUntilDue: number) => {
     if (milesUntilDue <= 1000) return 'text-red-600 bg-red-50 border-red-200';
@@ -629,6 +668,11 @@ export default function UpcomingTasks() {
           <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
             Reminder Center
           </h2>
+          <p className="mb-3 px-1 text-sm text-slate-600 dark:text-slate-400">
+            This page estimates when service should surface based on your lead
+            time and average daily driving. You can still reveal everything and
+            save a reminder early when you want more manual control.
+          </p>
           <div className="mb-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
             Alerts: <strong>{alertsEnabled ? 'Enabled' : 'Disabled'}</strong>
             <br />
@@ -636,15 +680,36 @@ export default function UpcomingTasks() {
             <br />
             Average driving: <strong>{preferredDailyMiles} miles/day</strong>
             <br />
-            Alert window:{' '}
+            Current reminder window:{' '}
             <strong>{leadMilesThreshold.toLocaleString()} miles</strong>
+          </div>
+          <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-3 text-sm text-teal-900 dark:border-teal-900/40 dark:bg-teal-950/30 dark:text-teal-100">
+            <div>
+              Tasks due within about <strong>{preferredLeadDays} days</strong>{' '}
+              at <strong>{preferredDailyMiles} miles/day</strong> appear by
+              default.
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAllRecommendations(current => !current)}
+                className="rounded-md border border-teal-300 px-3 py-1.5 text-sm font-medium text-teal-800 hover:bg-teal-100 dark:border-teal-700 dark:text-teal-200 dark:hover:bg-teal-900/40"
+              >
+                {showAllRecommendations
+                  ? 'Show only tasks due soon'
+                  : 'Show all recommendations'}
+              </button>
+              <Link to="/app/profile" className="font-medium underline">
+                Adjust reminder preferences
+              </Link>
+            </div>
           </div>
           <div className="mb-3">
             <label
               htmlFor="reminderDeliveryEmail"
               className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1"
             >
-              Reminder Email
+              Send reminder email to
             </label>
             <input
               id="reminderDeliveryEmail"
@@ -654,6 +719,10 @@ export default function UpcomingTasks() {
               placeholder="you@example.com"
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
             />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Use this for one-time reminder emails when you choose Send Email
+              Now. It does not start an automatic email campaign.
+            </p>
           </div>
 
           <div className="mb-3 flex flex-wrap gap-2">
@@ -680,6 +749,9 @@ export default function UpcomingTasks() {
               </button>
             ))}
           </div>
+          <p className="mb-3 px-1 text-xs text-slate-500 dark:text-slate-400">
+            {reminderFilterDescriptions[reminderFilter]}
+          </p>
 
           <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
             {visibleReminders.map(reminder => (
@@ -744,7 +816,7 @@ export default function UpcomingTasks() {
                         }
                         className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        Snooze 2 Weeks
+                        Snooze 14 Days
                       </button>
                       <button
                         onClick={() => void handleCompleteReminder(reminder)}
@@ -773,13 +845,40 @@ export default function UpcomingTasks() {
             ))}
             {visibleReminders.length === 0 && (
               <div className="rounded-md border border-dashed border-slate-300 dark:border-slate-600 p-3 text-sm text-slate-600 dark:text-slate-400">
-                No reminders in this view.
+                No saved reminders match this filter yet.
               </div>
             )}
           </div>
         </div>
 
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
+              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                In range now
+              </p>
+              <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                {visibleUpcomingItems.length}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
+              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Saved reminders
+              </p>
+              <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                {savedReminders.length}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
+              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Outside window
+              </p>
+              <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                {recommendationsOutsideWindow}
+              </p>
+            </div>
+          </div>
+
           {visibleUpcomingItems.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">✅</div>
@@ -788,9 +887,28 @@ export default function UpcomingTasks() {
               </h3>
               <p className="text-slate-600 dark:text-slate-400">
                 {alertsEnabled
-                  ? 'No upcoming maintenance tasks found in your preferred lead-time window.'
+                  ? showAllRecommendations
+                    ? 'No upcoming maintenance recommendations were found for the selected vehicles.'
+                    : 'No upcoming maintenance tasks fall inside your current reminder window.'
                   : 'Maintenance alerts are disabled in Profile settings.'}
               </p>
+              {alertsEnabled && !showAllRecommendations ? (
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllRecommendations(true)}
+                    className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                  >
+                    Show all recommendations
+                  </button>
+                  <Link
+                    to="/app/profile"
+                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                  >
+                    Edit reminder preferences
+                  </Link>
+                </div>
+              ) : null}
             </div>
           ) : (
             <>
@@ -803,13 +921,18 @@ export default function UpcomingTasks() {
                     {visibleUpcomingItems.length} recommendation
                     {visibleUpcomingItems.length === 1 ? '' : 's'} in range
                   </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Due dates are estimated from current mileage and your saved
+                    driving pace. Save reminders whenever you want a manual
+                    follow-up point, even if the task is still far out.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
                   <label
                     htmlFor="upcomingCalendarTarget"
-                    className="text-sm text-slate-700 dark:text-slate-300"
+                    className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
                   >
-                    Calendar
+                    Default calendar action
                   </label>
                   <select
                     id="upcomingCalendarTarget"
@@ -819,11 +942,17 @@ export default function UpcomingTasks() {
                         event.target.value as 'google' | 'apple' | 'ics'
                       )
                     }
-                    className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-900"
+                    className="mt-2 min-w-[15rem] px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-900"
                   >
-                    <option value="google">Google</option>
-                    <option value="apple">Apple</option>
-                    <option value="ics">ICS</option>
+                    <option value="google">
+                      {calendarTargetOptionLabels.google}
+                    </option>
+                    <option value="apple">
+                      {calendarTargetOptionLabels.apple}
+                    </option>
+                    <option value="ics">
+                      {calendarTargetOptionLabels.ics}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -874,10 +1003,16 @@ export default function UpcomingTasks() {
                             {item.milesUntilDue.toLocaleString()}
                           </div>
                         </div>
+                        {item.milesUntilDue > leadMilesThreshold ? (
+                          <p className="mt-3 mb-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                            Outside your current reminder window. You can still
+                            save it now if you want to track it early.
+                          </p>
+                        ) : null}
                       </div>
 
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
+                      <div className="min-w-[14rem]">
+                        <div className="flex flex-col items-stretch gap-2 sm:items-end">
                           <button
                             onClick={() => void handleSaveReminder(item)}
                             disabled={
@@ -894,7 +1029,7 @@ export default function UpcomingTasks() {
                                 )
                               )
                             }
-                            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                           >
                             {savingReminderKeys.has(
                               buildReminderKey(
@@ -910,7 +1045,9 @@ export default function UpcomingTasks() {
                                     )
                                   )
                                 ? 'Reminder Saved'
-                                : 'Save Reminder'}
+                                : item.milesUntilDue > leadMilesThreshold
+                                  ? 'Save Reminder Anyway'
+                                  : 'Save Reminder'}
                           </button>
                           <button
                             onClick={() => void handleAddToCalendar(item)}
@@ -920,7 +1057,7 @@ export default function UpcomingTasks() {
                                 item.serviceType
                               )
                             )}
-                            className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                           >
                             {savingCalendarKeys.has(
                               buildReminderKey(
@@ -931,6 +1068,10 @@ export default function UpcomingTasks() {
                               ? 'Adding...'
                               : 'Add to Calendar'}
                           </button>
+                          <p className="m-0 text-xs text-slate-500 dark:text-slate-400 sm:text-right">
+                            Save a reminder first if you want the item to stay
+                            in your Reminder Center after you leave this page.
+                          </p>
                         </div>
                       </div>
                     </div>

@@ -20,8 +20,6 @@ const TEST_EMAIL = `test-${Date.now()}@example.com`;
 const TEST_PASSWORD = 'TestPassword123!@#';
 const TEST_VEHICLE_MAKE = 'Toyota';
 const TEST_VEHICLE_MODEL = 'Camry';
-const TEST_VEHICLE_YEAR = '2020';
-const TEST_VEHICLE_VIN = '12345ABCDE67890FGH00';
 
 test.describe('Vehicle Vitals - User Acceptance Testing', () => {
   const isAuthUiAvailable = async (
@@ -443,7 +441,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         const contentType = (headers['content-type'] || '').toLowerCase();
         expect(contentType).toContain('video/mp4');
 
-        const contentLength = Number.parseInt(headers['content-length'] || '0', 10);
+        const contentLength = Number.parseInt(
+          headers['content-length'] || '0',
+          10
+        );
         expect(Number.isFinite(contentLength)).toBe(true);
         expect(contentLength).toBeGreaterThan(100000);
       }
@@ -540,7 +541,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(criticalErrors.length).toBeLessThan(50);
     });
 
-    test('TC-UI-003: Responsive design', async ({ page, context }) => {
+    test('TC-UI-003: Responsive design', async ({ page }) => {
       // Test on mobile viewport
       await page.setViewportSize({ width: 375, height: 812 });
 
@@ -674,7 +675,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
     });
 
     test('TC-FUNC-004: No unhandled promise rejections', async ({ page }) => {
-      let rejections: string[] = [];
+      const rejections: string[] = [];
 
       page.on('pageerror', error => {
         rejections.push(error.message);

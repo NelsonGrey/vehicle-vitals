@@ -54,7 +54,7 @@ describe('Home – smart maintenance alert badges', () => {
   it('shows no maintenance badge when getUpcomingMaintenance returns empty', async () => {
     getUpcomingMaintenance.mockReturnValue([]);
     renderHome();
-    await waitFor(() => screen.getAllByText("2022 Toyota Camry"));
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
     expect(screen.queryByText(/maintenance due/i)).toBeNull();
     expect(screen.queryByText(/service due soon/i)).toBeNull();
   });
@@ -69,7 +69,7 @@ describe('Home – smart maintenance alert badges', () => {
       },
     ]);
     renderHome();
-    await waitFor(() => screen.getAllByText("2022 Toyota Camry"));
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
     expect(screen.queryByText(/maintenance due/i)).toBeNull();
     expect(screen.queryByText(/service due soon/i)).toBeNull();
   });
@@ -191,7 +191,11 @@ describe('Home – smart maintenance alert badges', () => {
     renderHome();
     await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
 
-    expect(screen.queryByRole('button', { name: /Backfill VIN Data/i })).toBeNull();
-    expect(screen.queryByRole('button', { name: /Load Bob Demo Data/i })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Backfill VIN Data/i })
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Load Bob Demo Data/i })
+    ).toBeNull();
   });
 });

@@ -30,3 +30,16 @@ Current repository state:
 - Narrated clips can be regenerated with: `npm run videos:generate:narrated`
 - Narration defaults to macOS voice `Samantha` at rate `170`; override with `VV_NARRATION_VOICE` and `VV_NARRATION_RATE`.
 - Source visuals are read from `docs/screenshots/`; refresh screenshots first when product UI changes.
+
+Interactive generation:
+
+- Generate all interactive marketing/demo clips with real clicks, route changes, and typed fields:
+  `npm run videos:generate:interactive`
+- Generate only the VIN interactive pilot clip:
+  `npm run videos:generate:interactive:vin`
+- The all-video interactive script supports scoped generation with `VV_INTERACTIVE_ONLY`:
+  `VV_INTERACTIVE_ONLY=vin-decode-demo,help-center-overview npm run videos:generate:interactive`
+- For neural narration, set `VV_TTS_PROVIDER=openai` and `OPENAI_API_KEY`.
+- Optional OpenAI voice settings: `VV_OPENAI_TTS_MODEL` (default `gpt-4o-mini-tts`) and `VV_OPENAI_TTS_VOICE` (default `alloy`).
+- Without OpenAI settings, narration falls back to macOS `say`.
+- If the environment access gate is enabled, provide `VV_MARKETING_GATE_PASSWORD` before running the script.

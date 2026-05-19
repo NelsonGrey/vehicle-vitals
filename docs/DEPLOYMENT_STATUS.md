@@ -1,11 +1,11 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 18, 2026 (video/help media release update)
+Last updated: May 19, 2026 (interactive demo pipeline update)
 Primary production project: `vehicle-vitals-prod`
 
-## Development Progress Update (May 18, 2026)
+## Development Progress Update (May 19, 2026)
 
-Status: In active iteration; web navigation/help, shell layout hardening, and robust marketing media/video presentation are complete, including generated demo/help clips and expanded automation coverage.
+Status: In active iteration; interactive marketing demo generation is now implemented and all demo assets have been regenerated as real UI interaction recordings with synchronized narration output.
 
 - Added explicit `Getting Started` workflow and dedicated `Help` section in web routes and content pages.
 - Partitioned header navigation by authentication state:
@@ -24,12 +24,20 @@ Status: In active iteration; web navigation/help, shell layout hardening, and ro
 - Expanded automation for media release quality gates:
   - Unit: CTA fallback rendering behavior in `packages/web/tests/MarketingVideoPanel.test.jsx`.
   - UAT: Help + getting-started video section coverage (`TC-UI-008`) in `packages/web/tests/uat.spec.ts`.
+- Added reusable interaction-based generation pipeline:
+  - `scripts/generate-interactive-feature-demos.js` for all demo/help clips.
+  - `scripts/generate-interactive-vin-demo.js` for VIN-focused targeted generation.
+  - Root scripts: `videos:generate:interactive` and `videos:generate:interactive:vin` in `package.json`.
+- Regenerated all 10 marketing demo/help clips in `packages/web/public/videos/feature-demos/` as interaction recordings with narration audio streams.
+- Added unit coverage for landing media surface integrity and expected MP4 source wiring (`packages/web/tests/Landing.media.test.jsx`).
+- Added UAT coverage for hosted MP4 asset availability/content type validation (`TC-UI-009`) in `packages/web/tests/uat.spec.ts`.
 
 Immediate next implementation focus:
 
 1. Validate develop and demonstration CI workflow outcomes on pushed branches.
 2. Resolve any failing checks before merge/review handoff.
-3. Add/ingest finalized demo clips in `packages/web/public/videos/feature-demos/` and validate autoplay/captions/transcript quality for release marketing.
+3. Enable neural narration in production generation runs via `VV_TTS_PROVIDER=openai` and `OPENAI_API_KEY`, then regenerate clips for final non-robotic voice quality.
+4. Add per-clip transcript/caption assets and include transcript quality checks in release review.
 
 ## Web Deployment
 

@@ -419,6 +419,36 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(gettingStartedMetrics.hasPlayableOrPoster).toBe(true);
     });
 
+    test('TC-UI-009: Hosted marketing demo MP4 assets resolve as video content', async ({
+      request,
+    }) => {
+      const demoVideoPaths = [
+        '/videos/feature-demos/onboarding-walkthrough.mp4',
+        '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
+        '/videos/feature-demos/cross-platform-continuity.mp4',
+        '/videos/feature-demos/vin-decode-demo.mp4',
+        '/videos/feature-demos/maintenance-planning-demo.mp4',
+        '/videos/feature-demos/cross-platform-access-demo.mp4',
+        '/videos/feature-demos/ownership-history-demo.mp4',
+        '/videos/feature-demos/generic-feature-demo.mp4',
+        '/videos/feature-demos/getting-started-help.mp4',
+        '/videos/feature-demos/help-center-overview.mp4',
+      ];
+
+      for (const videoPath of demoVideoPaths) {
+        const response = await request.get(`${BASE_URL}${videoPath}`);
+        expect(response.ok()).toBe(true);
+
+        const headers = response.headers();
+        const contentType = (headers['content-type'] || '').toLowerCase();
+        expect(contentType).toContain('video/mp4');
+
+        const contentLength = Number.parseInt(headers['content-length'] || '0', 10);
+        expect(Number.isFinite(contentLength)).toBe(true);
+        expect(contentLength).toBeGreaterThan(100000);
+      }
+    });
+
     test('TC-UI-004: Logged-out header shows marketing nav only', async ({
       page,
     }) => {

@@ -798,7 +798,7 @@ Vehicle Vitals adopts a **three-tier freemium model** with **contextual advertis
 - **Rationale**: Fleet customers (property managers, delivery, car rental) have 5-10x higher LTV
 - **Trade-off**: More complex UX, requires clear separation from consumer tier
 
-### Decision 4: Self-Hosted Infrastructure (via Nelson-grey CI/CD)
+### Decision 4: Self-Hosted Infrastructure (Vehicle Vitals CI/CD)
 
 **Decision**: Use Firebase + GitHub Actions for zero-touch automation
 

@@ -95,6 +95,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                   <Link to="/ownership-history-demo" className={linkClass}>
                     Ownership History
                   </Link>
+                  <Link to="/getting-started" className={linkClass}>
+                    Getting Started
+                  </Link>
                 </>
               )}
             </div>

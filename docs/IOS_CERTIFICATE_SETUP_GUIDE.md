@@ -31,19 +31,22 @@ This guide provides a complete, reusable setup for iOS code signing certificates
 
    ```bash
    # Repository naming convention: {project-name}-certificates
-   # Example: nelson-grey
    ```
+
+# Example: vehicle-vitals-certificates
+
+````
 
 2. **Generate GitHub Personal Access Token**
-   - Go to: [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)
-   - Create token with `repo` scope
-   - **Save the token securely** - you'll need it for CI/CD
+- Go to: [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)
+- Create token with `repo` scope
+- **Save the token securely** - you'll need it for CI/CD
 
 3. **Set Repository URL**
-   ```bash
-   # Format: https://oauth2:{token}@github.com/{username}/{repo-name}.git
-   CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN_HERE@github.com/mnelson3/nelson-grey.git"
-   ```
+```bash
+# Format: https://oauth2:{token}@github.com/{username}/{repo-name}.git
+CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN_HERE@github.com/mnelson3/vehicle-vitals-certificates.git"
+````
 
 ### Step 2: Initialize Fastlane Match
 
@@ -109,11 +112,11 @@ APP_STORE_CONNECT_ISSUER_ID=YOUR_ISSUER_ID
 APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----
 
 # Match Configuration
-MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/nelson-grey.git
+MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/vehicle-vitals-certificates.git
 MATCH_PASSWORD=your_match_password
 
 # Legacy Beta Channel Configuration
-BETA_FEEDBACK_EMAIL=feedback@nelsongrey.com
+BETA_FEEDBACK_EMAIL=support@vehicle-vitals.com
 ```
 
 ### Step 5: Initialize Certificates

@@ -248,7 +248,7 @@ cp automate.sh.template /path/to/new/project/automate.sh
 cp .env.automation.development.example /path/to/new/project/.env.automation.development
 
 # 2. Customize project names
-sed -i 's/vehicle-vitals/your-project-name/g' automate.sh
+sed -i 's/vehicle-vitals/vehicle-vitals/g' automate.sh
 
 # 3. Test compatibility
 bash --version  # Must be 3.2+ for macOS

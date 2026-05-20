@@ -206,7 +206,13 @@ Discussion prompts:
 
 ### SB-05-Mobile
 
-![iOS Upcoming](screenshots/ios-upcoming.png)
+```mermaid
+flowchart TD
+    A[Authenticated Mobile Session] --> B[Open Upcoming Tasks]
+    B --> C[Load Reminder Queue]
+    C --> D[Complete, Snooze, or Dismiss]
+    D --> E[Persist Reminder Lifecycle State]
+```
 
 ---
 
@@ -235,7 +241,13 @@ Discussion prompts:
 
 ### SB-06-Mobile
 
-![iOS Home](screenshots/ios-home.png)
+```mermaid
+flowchart TD
+    A[Authenticated Home Screen] --> B[Vehicle Overview Cards]
+    B --> C[Timeline Snapshot]
+    C --> D[Upcoming Alerts Preview]
+    D --> E[Navigate to Full Timeline or Upcoming]
+```
 
 ---
 
@@ -389,7 +401,13 @@ Discussion prompts:
 
 ### SB-10-Mobile
 
-![iOS Profile](screenshots/ios-profile.png)
+```mermaid
+flowchart TD
+    A[Authenticated Profile Screen] --> B[Account Overview]
+    B --> C[Maintenance Alert Preferences]
+    C --> D[Home Address and Provider Radius]
+    D --> E[Save Preferences and Re-run Provider Lookup]
+```
 
 ---
 

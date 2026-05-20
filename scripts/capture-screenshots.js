@@ -7,15 +7,16 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const BASE_URL = 'http://localhost:5173';
+const BASE_URL = process.env.VV_DEMO_BASE_URL || 'http://localhost:5173';
 const SCREENSHOTS_DIR = path.join(__dirname, '../docs/screenshots');
 const WEB_FEATURE_IMAGES_DIR = path.join(
   __dirname,
   '../packages/web/public/images/features'
 );
 const SCREENSHOT_VIEWPORT = { width: 1280, height: 1800 };
-const DEMO_EMAIL = 'demo@vehiclevitals.com';
-const DEMO_PASSWORD = 'Demo2025!';
+const DEMO_EMAIL = process.env.VV_SCREENSHOT_EMAIL || 'demo@vehiclevitals.com';
+const DEMO_PASSWORD =
+  process.env.VV_SCREENSHOT_PASSWORD || 'Demo2025!';
 
 // Inject sessionStorage key that bypasses the EnvironmentGate component
 const BYPASS_SCRIPT = () => {
@@ -71,6 +72,16 @@ async function goto(page, url, waitMs = 1500) {
   await page.goto(url, { waitUntil: 'load', timeout: 30000 });
   await page.evaluate(BYPASS_SCRIPT); // re-inject after every navigation
   await page.waitForTimeout(waitMs);
+}
+
+async function waitForProfileContent(page) {
+  // Profile can briefly render null while auth + preference data resolves.
+  // Wait for a stable heading and a known preferences section before capture.
+  await page.waitForSelector('h1:has-text("Profile")', { timeout: 30000 });
+  await page.waitForSelector('text=Maintenance Alert Preferences', {
+    timeout: 30000,
+  });
+  await page.waitForTimeout(1000);
 }
 
 async function run() {
@@ -170,6 +181,7 @@ async function run() {
   // ─── 14. Profile page ─────────────────────────────────────────────────────
   console.log('\n[14] Profile page');
   await goto(page, `${BASE_URL}/app/profile`, 1500);
+  await waitForProfileContent(page);
   await saveScreenshot(page, 'profile.png', true);
 
   await browser.close();

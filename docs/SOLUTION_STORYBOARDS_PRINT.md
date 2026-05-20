@@ -178,7 +178,7 @@ Discussion prompts:
 
 ### SB-05-Mobile
 
-![iOS Upcoming](screenshots/ios-upcoming.png)
+![Storyboard Diagram 04](screenshots/storyboards-mermaid/diagram-04.png)
 
 ---
 
@@ -207,7 +207,7 @@ Discussion prompts:
 
 ### SB-06-Mobile
 
-![iOS Home](screenshots/ios-home.png)
+![Storyboard Diagram 05](screenshots/storyboards-mermaid/diagram-05.png)
 
 ---
 
@@ -236,7 +236,7 @@ Discussion prompts:
 
 ### SB-07-Mobile
 
-![Storyboard Diagram 04](screenshots/storyboards-mermaid/diagram-04.png)
+![Storyboard Diagram 06](screenshots/storyboards-mermaid/diagram-06.png)
 
 ---
 
@@ -262,11 +262,11 @@ Discussion prompts:
 
 ### SB-08-Web
 
-![Storyboard Diagram 05](screenshots/storyboards-mermaid/diagram-05.png)
+![Storyboard Diagram 07](screenshots/storyboards-mermaid/diagram-07.png)
 
 ### SB-08-Mobile
 
-![Storyboard Diagram 06](screenshots/storyboards-mermaid/diagram-06.png)
+![Storyboard Diagram 08](screenshots/storyboards-mermaid/diagram-08.png)
 
 ---
 
@@ -291,11 +291,11 @@ Discussion prompts:
 
 ### SB-09-Web
 
-![Storyboard Diagram 07](screenshots/storyboards-mermaid/diagram-07.png)
+![Storyboard Diagram 09](screenshots/storyboards-mermaid/diagram-09.png)
 
 ### SB-09-Mobile
 
-![Storyboard Diagram 08](screenshots/storyboards-mermaid/diagram-08.png)
+![Storyboard Diagram 10](screenshots/storyboards-mermaid/diagram-10.png)
 
 ---
 
@@ -325,7 +325,7 @@ Discussion prompts:
 
 ### SB-10-Mobile
 
-![iOS Profile](screenshots/ios-profile.png)
+![Storyboard Diagram 11](screenshots/storyboards-mermaid/diagram-11.png)
 
 ---
 
@@ -351,11 +351,11 @@ Discussion prompts:
 
 ### SB-11-Web
 
-![Storyboard Diagram 09](screenshots/storyboards-mermaid/diagram-09.png)
+![Storyboard Diagram 12](screenshots/storyboards-mermaid/diagram-12.png)
 
 ### SB-11-Mobile
 
-![Storyboard Diagram 10](screenshots/storyboards-mermaid/diagram-10.png)
+![Storyboard Diagram 13](screenshots/storyboards-mermaid/diagram-13.png)
 
 ---
 
@@ -380,11 +380,11 @@ Discussion prompts:
 
 ### SB-12-Web
 
-![Storyboard Diagram 11](screenshots/storyboards-mermaid/diagram-11.png)
+![Storyboard Diagram 14](screenshots/storyboards-mermaid/diagram-14.png)
 
 ### SB-12-Mobile
 
-![Storyboard Diagram 12](screenshots/storyboards-mermaid/diagram-12.png)
+![Storyboard Diagram 15](screenshots/storyboards-mermaid/diagram-15.png)
 
 ---
 

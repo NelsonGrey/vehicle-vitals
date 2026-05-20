@@ -62,13 +62,13 @@ This will:
 
 ```bash
 # Start Docker runners
-for repo in modulo-squares vehicle-vitals your-project; do
+for repo in vehicle-vitals; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner"
   ./manage-docker-runner.sh start
 done
 
 # Start macOS runners
-for repo in modulo-squares vehicle-vitals your-project; do
+for repo in vehicle-vitals; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner/actions-runner"
   ./run.sh &
 done
@@ -78,19 +78,17 @@ done
 
 Check that runners appear online in GitHub:
 
-- https://github.com/mnelson3/modulo-squares/settings/actions/runners
-- https://github.com/nelsongrey/vehicle-vitals/settings/actions/runners
-- https://github.com/nelsongrey/your-project/settings/actions/runners
+- https://github.com/mnelson3/vehicle-vitals/settings/actions/runners
 
 ```bash
 # Start Docker runners
-for repo in modulo-squares vehicle-vitals your-project; do
+for repo in vehicle-vitals; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner"
   ./manage-docker-runner.sh start
 done
 
 # Start macOS runners
-for repo in modulo-squares vehicle-vitals your-project; do
+for repo in vehicle-vitals; do
   cd "/Users/marknelson/Circus/Repositories/${repo}-actions-runner/actions-runner"
   ./run.sh &
 done
@@ -100,9 +98,7 @@ done
 
 Check that runners appear online in GitHub:
 
-- https://github.com/nelsongrey/modulo-squares/settings/actions/runners
-- https://github.com/nelsongrey/vehicle-vitals/settings/actions/runners
-- https://github.com/nelsongrey/your-project/settings/actions/runners
+- https://github.com/mnelson3/vehicle-vitals/settings/actions/runners
 
 ## 🔧 Manual GitHub App Setup
 
@@ -112,7 +108,7 @@ If you prefer manual setup:
 
 1. Go to https://github.com/settings/apps/new
 2. **App name**: `Zero-Touch Runner Manager`
-3. **Homepage URL**: `https://github.com/nelsongrey`
+3. **Homepage URL**: `https://github.com/mnelson3/vehicle-vitals`
 4. **Description**: `Automated GitHub Actions runner token management`
 
 ### Permissions
@@ -163,7 +159,7 @@ GITHUB_APP_PRIVATE_KEY_PATH=/path/to/private-key.pem
 
 ```bash
 # Check runner health
-cd /Users/marknelson/Circus/Repositories/modulo-squares
+cd /Users/marknelson/Circus/Repositories/vehicle-vitals
 ./token-refresh.sh health_check
 ```
 
@@ -171,7 +167,7 @@ cd /Users/marknelson/Circus/Repositories/modulo-squares
 
 ```bash
 # Force token refresh
-cd /Users/marknelson/Circus/Repositories/modulo-squares
+cd /Users/marknelson/Circus/Repositories/vehicle-vitals
 ./token-refresh.sh force_refresh
 ```
 

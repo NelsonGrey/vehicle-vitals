@@ -19,6 +19,8 @@
     "build:web": "./scripts/build-web-sanitized-env.sh production",
     "dev:web": "npm run dev --workspace=@vehicle-vitals/web",
     "test:web": "npm run test --workspace=@vehicle-vitals/web",
+    "test:unit:all": "./scripts/run-unit-tests.sh",
+    "test:uat:all": "./scripts/run-uat-tests.sh",
     "export:logo": "node scripts/export-logo.js",
     "dataconnect:codegen": "node scripts/dataconnect-codegen.js",
     "install:all": "npm install",

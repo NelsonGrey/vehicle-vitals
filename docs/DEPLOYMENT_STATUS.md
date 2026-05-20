@@ -3,6 +3,35 @@
 Last updated: May 19, 2026 (interactive demo pipeline update)
 Primary production project: `vehicle-vitals-prod`
 
+## Development Progress Update (May 20, 2026)
+
+Status: Quality automation strengthened; baseline local verification passed.
+
+Progress evaluation completed today:
+
+- Web unit tests: PASS (`311/311`) via `npm run test:unit` in `packages/web`.
+- Mobile unit tests: PASS via `flutter test` in `packages/mobile`.
+- Web UAT (chromium): PASS (`8` passed, `14` skipped) against `https://vehicle-vitals-dev.web.app`.
+
+Automation updates delivered:
+
+- Added root test automation scripts:
+  - `npm run test:unit:all` -> runs web + mobile unit suites.
+  - `npm run test:uat:all` -> runs chromium UAT against env-selected hosted URL.
+- Added script implementations:
+  - `scripts/run-unit-tests.sh`
+  - `scripts/run-uat-tests.sh`
+- CI workflow hardening (`.github/workflows/master-pipeline.yml`):
+  - Added explicit `mobile-unit-tests` job.
+  - Added explicit `quality-gate` job requiring successful web unit, mobile unit, and web UAT matrix completion.
+  - Wired `build-web` to require `quality-gate` success for `build_all` and `build_and_deploy` triggers.
+  - Expanded pipeline summary output to include gate-level status lines.
+
+Operational impact:
+
+- Build/deploy paths now have deterministic quality checks for both platforms and browser UAT before web build proceeds in build flows.
+- Local reproducibility improved with single-command automation entry points for ongoing release confidence checks.
+
 ## Development Progress Update (May 19, 2026)
 
 Status: In active iteration; interactive marketing demo generation is now implemented and all demo assets have been regenerated as real UI interaction recordings with synchronized narration output.

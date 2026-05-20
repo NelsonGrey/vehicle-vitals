@@ -243,6 +243,33 @@ jobs:
           cd packages/web
           npm run test:unit
 
+  mobile-unit-tests:
+    name: Mobile Unit Tests
+    needs: load-config
+    if: |
+      needs.load-config.outputs.trigger_context == 'test_all' ||
+      needs.load-config.outputs.trigger_context == 'build_all' ||
+      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Mobile Dependencies
+        run: |
+          cd packages/mobile
+          flutter pub get
+
+      - name: Run Mobile Unit Tests
+        run: |
+          cd packages/mobile
+          flutter test
+
   web-uat-tests:
     name: Web UAT (${{ matrix.browser }})
     needs: [load-config, web-unit-tests]
@@ -314,6 +341,39 @@ jobs:
             packages/web/test-results
             packages/web/test-results-html
           if-no-files-found: ignore
+
+  quality-gate:
+    name: Quality Gate
+    needs: [load-config, web-unit-tests, mobile-unit-tests, web-uat-tests]
+    if: |
+      always() &&
+      (needs.load-config.outputs.trigger_context == 'test_all' ||
+       needs.load-config.outputs.trigger_context == 'build_all' ||
+       needs.load-config.outputs.trigger_context == 'build_and_deploy')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate test and UAT gates
+        run: |
+          echo "web-unit-tests=${{ needs.web-unit-tests.result }}"
+          echo "mobile-unit-tests=${{ needs.mobile-unit-tests.result }}"
+          echo "web-uat-tests=${{ needs.web-uat-tests.result }}"
+
+          if [ "${{ needs.web-unit-tests.result }}" != "success" ]; then
+            echo "::error::Web unit tests did not pass"
+            exit 1
+          fi
+
+          if [ "${{ needs.mobile-unit-tests.result }}" != "success" ]; then
+            echo "::error::Mobile unit tests did not pass"
+            exit 1
+          fi
+
+          if [ "${{ needs.web-uat-tests.result }}" != "success" ]; then
+            echo "::error::Web UAT matrix did not pass"
+            exit 1
+          fi
+
+          echo "All quality gates passed"
 
   build-ios:
     name: Build iOS App
@@ -500,18 +560,54 @@ jobs:
       needs.load-config.outputs.android_enabled == 'true' &&
       (needs.load-config.outputs.trigger_context == 'build_all' ||
        needs.load-config.outputs.trigger_context == 'build_and_deploy')
-    uses: mnelson3/nelson-grey/.github/workflows/android-build.yml@main
-    with:
-      project_name: ${{ needs.load-config.outputs.project_name }}
-      build_type: ${{ needs.load-config.outputs.trigger_context == 'build_and_deploy' && 'release' || 'debug' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/mobile
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Debug APK
+        if: needs.load-config.outputs.trigger_context != 'build_and_deploy'
+        run: flutter build apk --debug
+
+      - name: Build Release App Bundle
+        if: needs.load-config.outputs.trigger_context == 'build_and_deploy'
+        run: flutter build appbundle --release
+
+      - name: Upload Android Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-${{ needs.load-config.outputs.trigger_context == 'build_and_deploy' && 'release' || 'debug' }}
+          path: |
+            packages/mobile/build/app/outputs/**/*.apk
+            packages/mobile/build/app/outputs/**/*.aab
+          if-no-files-found: warn
 
   build-web:
     name: Build Web App
-    needs: load-config
+    needs: [load-config, quality-gate]
     if: |
       needs.load-config.outputs.web_enabled == 'true' &&
-      (needs.load-config.outputs.trigger_context == 'build_all' ||
-       needs.load-config.outputs.trigger_context == 'build_and_deploy' ||
+      (((needs.load-config.outputs.trigger_context == 'build_all' ||
+         needs.load-config.outputs.trigger_context == 'build_and_deploy') &&
+        needs.quality-gate.result == 'success') ||
        needs.load-config.outputs.trigger_context == 'deploy_only')
     runs-on: ubuntu-latest
     steps:
@@ -910,16 +1006,38 @@ jobs:
     name: Build Chrome Extension
     needs: load-config
     if: needs.load-config.outputs.chrome_extension == 'true'
-    uses: mnelson3/nelson-grey/.github/workflows/chrome-extension-submit.yml@develop
-    with:
-      project_name: ${{ needs.load-config.outputs.project_name }}
-      publish: false
-      node_version: "18"
-    secrets:
-      chrome_extension_id: ${{ secrets['CHROME_EXTENSION_ID'] }}
-      chrome_client_id: ${{ secrets['CHROME_CLIENT_ID'] }}
-      chrome_client_secret: ${{ secrets['CHROME_CLIENT_SECRET'] }}
-      chrome_refresh_token: ${{ secrets['CHROME_REFRESH_TOKEN'] }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Detect Extension Project
+        id: detect
+        run: |
+          if [ -d "packages/chrome-extension" ]; then
+            echo "dir=packages/chrome-extension" >> "$GITHUB_OUTPUT"
+          elif [ -d "packages/extension" ]; then
+            echo "dir=packages/extension" >> "$GITHUB_OUTPUT"
+          else
+            echo "dir=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Extension
+        if: steps.detect.outputs.dir != ''
+        run: |
+          cd "${{ steps.detect.outputs.dir }}"
+          npm ci
+          npm run build
+
+      - name: Skip Message
+        if: steps.detect.outputs.dir == ''
+        run: |
+          echo "No Chrome extension package directory found. Skipping extension build."
 
   pipeline-summary:
     name: Pipeline Summary
@@ -927,6 +1045,10 @@ jobs:
       [
         load-config,
         test,
+        web-unit-tests,
+        mobile-unit-tests,
+        web-uat-tests,
+        quality-gate,
         build-ios,
         build-android,
         build-web,
@@ -946,6 +1068,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Status" >> $GITHUB_STEP_SUMMARY
           echo "- Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web Unit Tests: ${{ needs.web-unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Mobile Unit Tests: ${{ needs.mobile-unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web UAT: ${{ needs.web-uat-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Quality Gate: ${{ needs.quality-gate.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- iOS: ${{ needs.build-ios.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Android: ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Web: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY

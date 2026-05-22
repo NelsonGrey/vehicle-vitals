@@ -10,11 +10,13 @@ import {
   normalizeLicensePlate,
   validateLicensePlate,
 } from '../shared/licensePlateUtils';
+import { generateVehiclePhotoPath, uploadFile } from '../shared/storageService';
 import {
   useSubscription,
   useUpgradePrompt,
   useVehicleLimit,
 } from '../shared/useMonetization';
+import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
 
 const VEHICLE_TYPE_OPTIONS = [
@@ -30,9 +32,15 @@ const VEHICLE_TYPE_OPTIONS = [
   'Other',
 ];
 
+const VEHICLE_STATUS_OPTIONS = [
+  { value: 'active', label: 'In Garage' },
+  { value: 'stored', label: 'In Storage' },
+];
+
 export default function AddVehicle() {
   const [form, setForm] = useState({ ...defaultVehicle });
   const [plateValidationError, setPlateValidationError] = useState<string>();
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [insights, setInsights] = useState<{
     recallsCount: number;
     recallsSource: string;
@@ -95,9 +103,34 @@ export default function AddVehicle() {
         return;
       }
 
+      let resolvedPhoto = {
+        photoUrl: (form as any).photoUrl || '',
+        photoSource: (form as any).photoSource || '',
+        photoAttributionUrl: (form as any).photoAttributionUrl || '',
+        photoAttributionText: (form as any).photoAttributionText || '',
+      };
+
+      if (!resolvedPhoto.photoUrl) {
+        const candidate = await findVehiclePhotoFromWeb({
+          year: form.year,
+          make: form.make,
+          model: form.model,
+          vehicleType: (form as any).vehicleType,
+        });
+        if (candidate) {
+          resolvedPhoto = {
+            photoUrl: candidate.url,
+            photoSource: candidate.source,
+            photoAttributionUrl: candidate.attributionUrl || '',
+            photoAttributionText: candidate.attributionText || '',
+          };
+        }
+      }
+
       await addOrUpdateVehicle({
         ...form,
         vin: trimmedVin,
+        ...resolvedPhoto,
         ...(insights
           ? {
               ...buildPersistedVinInsights(insights.rawInsights),
@@ -173,6 +206,82 @@ export default function AddVehicle() {
         error?.message ||
           'VIN lookup could not return vehicle details. Review the VIN and continue by filling any missing fields manually.'
       );
+    }
+  };
+
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const trimmedVin = (form.vin || '').trim();
+    if (!trimmedVin) {
+      alert('Enter a vehicle ID before uploading a photo.');
+      event.target.value = '';
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      const path = await generateVehiclePhotoPath(trimmedVin, file.name);
+      const uploaded = await uploadFile(file, path);
+      setForm(prev => ({
+        ...prev,
+        photoUrl: uploaded.url,
+        photoPath: uploaded.path,
+        photoSource: 'user_upload',
+        photoAttributionUrl: '',
+        photoAttributionText: '',
+      }));
+    } catch (error) {
+      alert(
+        'Failed to upload photo: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setPhotoBusy(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleAutoPhotoLookup = async () => {
+    if (!form.make || !form.model) {
+      alert(
+        'Provide at least make and model before searching for a web photo.'
+      );
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      const candidate = await findVehiclePhotoFromWeb({
+        year: form.year,
+        make: form.make,
+        model: form.model,
+        vehicleType: (form as any).vehicleType,
+      });
+
+      if (!candidate) {
+        alert('No web photo match was found. You can upload your own image.');
+        return;
+      }
+
+      setForm(prev => ({
+        ...prev,
+        photoUrl: candidate.url,
+        photoPath: '',
+        photoSource: candidate.source,
+        photoAttributionUrl: candidate.attributionUrl || '',
+        photoAttributionText: candidate.attributionText || '',
+      }));
+    } catch (error) {
+      alert(
+        'Web photo lookup failed: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setPhotoBusy(false);
     }
   };
 
@@ -278,6 +387,32 @@ export default function AddVehicle() {
 
             <div>
               <label
+                htmlFor="vehicleStatus"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
+              >
+                Location Status
+              </label>
+              <select
+                id="vehicleStatus"
+                name="vehicleStatus"
+                value={(form as any).vehicleStatus || 'active'}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                {VEHICLE_STATUS_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Move special-use vehicles into storage so they appear separately
+                from your active garage.
+              </p>
+            </div>
+
+            <div>
+              <label
                 htmlFor="model"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
               >
@@ -367,6 +502,47 @@ export default function AddVehicle() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                Vehicle Photo
+              </label>
+              {(form as any).photoUrl ? (
+                <div className="mb-2 rounded-md border border-slate-200 dark:border-slate-700 p-2">
+                  <img
+                    src={(form as any).photoUrl}
+                    alt="Vehicle preview"
+                    className="h-28 w-full object-cover rounded"
+                  />
+                  {(form as any).photoSource === 'wikimedia' && (
+                    <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Source: Wikimedia
+                    </p>
+                  )}
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={photoBusy}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  onClick={handleAutoPhotoLookup}
+                  disabled={photoBusy}
+                  className="w-full bg-slate-500 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-60"
+                >
+                  Find Free Web Photo (Beta)
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Web photos use public Wikimedia results and may not always be an
+                exact trim match.
+              </p>
             </div>
 
             <div className="flex flex-col gap-2 pt-2">

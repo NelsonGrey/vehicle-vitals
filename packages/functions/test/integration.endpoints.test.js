@@ -11,6 +11,7 @@ const {
   verifyPremiumPurchase,
   bootstrapEnterpriseContextCallable,
   getEffectiveEntitlementsCallable,
+  transferVehicleCallable,
   getOrganizationMembersCallable,
   setOrganizationMemberRoleCallable,
   applyRetentionPolicyCallable,
@@ -1265,6 +1266,80 @@ test('organization membership and role management callables work for org owner',
 
   assert.equal(roleUpdate.success, true);
   assert.equal(roleUpdate.role, 'org_admin');
+});
+
+test('transferVehicleCallable moves vehicle document and related subcollections', async () => {
+  const senderUid = `transfer-sender-${Date.now()}`;
+  const recipientUid = `transfer-recipient-${Date.now()}`;
+  const senderEmail = `${senderUid}@example.com`;
+  const recipientEmail = `${recipientUid}@example.com`;
+  const vin = `TRANSFER-${Date.now()}`;
+  const admin = require('firebase-admin');
+
+  await admin.auth().createUser({
+    uid: senderUid,
+    email: senderEmail,
+  });
+  await admin.auth().createUser({
+    uid: recipientUid,
+    email: recipientEmail,
+  });
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid: senderUid, token: { email: senderEmail } },
+  });
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid: recipientUid, token: { email: recipientEmail } },
+  });
+
+  const sourceVehicleRef = admin
+    .firestore()
+    .doc(`users/${senderUid}/vehicles/${vin}`);
+  await sourceVehicleRef.set({
+    vin,
+    make: 'Ford',
+    model: 'Bronco',
+    year: 2022,
+    mileage: 12000,
+    vehicleStatus: 'stored',
+  });
+  await sourceVehicleRef.collection('maintenance').doc('entry-1').set({
+    title: 'Battery tender',
+    date: '2025-05-01',
+  });
+  await sourceVehicleRef.collection('reminders').doc('reminder-1').set({
+    title: 'Start engine monthly',
+    status: 'active',
+  });
+
+  const result = await transferVehicleCallable.run({
+    auth: { uid: senderUid, token: { email: senderEmail } },
+    data: {
+      vin,
+      recipientEmail,
+      idempotencyKey: `transfer-${Date.now()}`,
+    },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.recipientUid, recipientUid);
+  assert.equal(result.recipientEmail, recipientEmail);
+
+  const [sourceVehicleSnap, targetVehicleSnap, targetMaintenanceSnap] =
+    await Promise.all([
+      admin.firestore().doc(`users/${senderUid}/vehicles/${vin}`).get(),
+      admin.firestore().doc(`users/${recipientUid}/vehicles/${vin}`).get(),
+      admin
+        .firestore()
+        .collection(`users/${recipientUid}/vehicles/${vin}/maintenance`)
+        .get(),
+    ]);
+
+  assert.equal(sourceVehicleSnap.exists, false);
+  assert.equal(targetVehicleSnap.exists, true);
+  assert.equal(targetVehicleSnap.data().vehicleStatus, 'stored');
+  assert.equal(targetVehicleSnap.data().transferredFromUid, senderUid);
+  assert.equal(targetMaintenanceSnap.size, 1);
 });
 
 test('applyRetentionPolicyCallable requires super-admin context', async () => {

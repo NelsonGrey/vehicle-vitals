@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,8 @@ import 'package:provider/provider.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/premium_service.dart';
+import '../services/record_storage_service.dart';
+import '../services/vehicle_photo_service.dart';
 
 const List<String> _vehicleTypeOptions = [
   'Car',
@@ -22,6 +25,11 @@ const List<String> _vehicleTypeOptions = [
   'Trailer',
   'ATV/UTV',
   'Other',
+];
+
+const List<DropdownMenuItem<String>> _vehicleStatusOptions = [
+  DropdownMenuItem(value: 'active', child: Text('In Garage')),
+  DropdownMenuItem(value: 'stored', child: Text('In Storage')),
 ];
 
 class AddVehicleScreen extends StatefulWidget {
@@ -44,6 +52,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _mileageController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isPhotoBusy = false;
   int? _recallsCount;
   String? _recallsSource;
   String? _engineType;
@@ -53,9 +62,18 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   String? _transmissionStyle;
   String? _trim;
   String? _vehicleType;
+  String _vehicleStatus = 'active';
   List<Map<String, dynamic>> _recallsItems = const [];
   Map<String, dynamic> _vinProfile = const {};
   Map<String, dynamic> _vinInsights = const {};
+  String? _photoUrl;
+  String? _photoPath;
+  String? _photoSource;
+  String? _photoAttributionUrl;
+  String? _photoAttributionText;
+
+  final _recordStorageService = RecordStorageService();
+  final _vehiclePhotoService = VehiclePhotoService();
 
   bool _looksLikeVin(String value) => value.trim().length == 17;
 
@@ -278,12 +296,41 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         }
       }
 
+      var photoUrl = _photoUrl;
+      var photoPath = _photoPath;
+      var photoSource = _photoSource;
+      var photoAttributionUrl = _photoAttributionUrl;
+      var photoAttributionText = _photoAttributionText;
+
+      if ((photoUrl == null || photoUrl.isEmpty) &&
+          _makeController.text.trim().isNotEmpty &&
+          _modelController.text.trim().isNotEmpty) {
+        final candidate = await _vehiclePhotoService.findVehiclePhotoFromWeb(
+          year: _yearController.text.trim(),
+          make: _makeController.text.trim(),
+          model: _modelController.text.trim(),
+          vehicleType: _vehicleType,
+        );
+        if (candidate != null && (candidate['url'] ?? '').isNotEmpty) {
+          photoUrl = candidate['url'];
+          photoPath = '';
+          photoSource = candidate['source'];
+          photoAttributionUrl = candidate['attributionUrl'];
+          photoAttributionText = candidate['attributionText'];
+        }
+      }
+
       final vehicle = Vehicle(
         vin: normalizedVin,
         make: _makeController.text.trim(),
         model: _modelController.text.trim(),
         year: int.parse(_yearController.text),
         mileage: int.parse(_mileageController.text),
+        photoUrl: photoUrl,
+        photoPath: photoPath,
+        photoSource: photoSource,
+        photoAttributionUrl: photoAttributionUrl,
+        photoAttributionText: photoAttributionText,
         recallsCount: _recallsCount ?? 0,
         recallsSource: _recallsSource,
         engineType: _engineType,
@@ -293,6 +340,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         transmissionStyle: _transmissionStyle,
         trim: _trim,
         vehicleType: _vehicleType,
+        vehicleStatus: _vehicleStatus,
         recallsItems: _recallsItems,
         vinProfile: _vinProfile,
         vinInsights: _vinInsights,
@@ -336,6 +384,118 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    final vin = _vinController.text.trim().toUpperCase();
+    if (vin.isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Enter a vehicle ID before uploading a photo.'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isPhotoBusy = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final uploaded = await _recordStorageService.uploadVehiclePhoto(
+        vin,
+        result.files.first,
+      );
+
+      setState(() {
+        _photoUrl = uploaded['url']?.toString();
+        _photoPath = uploaded['path']?.toString();
+        _photoSource = 'user_upload';
+        _photoAttributionUrl = null;
+        _photoAttributionText = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Photo upload failed: ${e.toString()}'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPhotoBusy = false);
+      }
+    }
+  }
+
+  Future<void> _findPhotoFromWeb() async {
+    if (_makeController.text.trim().isEmpty ||
+        _modelController.text.trim().isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Add make and model before searching for a web photo.',
+          ),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isPhotoBusy = true);
+    try {
+      final candidate = await _vehiclePhotoService.findVehiclePhotoFromWeb(
+        year: _yearController.text.trim(),
+        make: _makeController.text.trim(),
+        model: _modelController.text.trim(),
+        vehicleType: _vehicleType,
+      );
+
+      if (candidate == null || (candidate['url'] ?? '').isEmpty) {
+        if (!mounted) return;
+        final colorScheme = Theme.of(context).colorScheme;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'No web photo match found. Try uploading your own image.',
+            ),
+            backgroundColor: colorScheme.secondary,
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        _photoUrl = candidate['url'];
+        _photoPath = '';
+        _photoSource = candidate['source'];
+        _photoAttributionUrl = candidate['attributionUrl'];
+        _photoAttributionText = candidate['attributionText'];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Web photo lookup failed: ${e.toString()}'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPhotoBusy = false);
       }
     }
   }
@@ -431,6 +591,18 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      DropdownButtonFormField<String>(
+                        initialValue: _vehicleStatus,
+                        decoration: const InputDecoration(
+                          labelText: 'Location Status',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _vehicleStatusOptions,
+                        onChanged: (value) {
+                          setState(() => _vehicleStatus = value ?? 'active');
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         initialValue: _vehicleType,
                         decoration: const InputDecoration(
@@ -586,6 +758,90 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Vehicle Photo',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 140,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: colorScheme.outline),
+                              color: colorScheme.surface,
+                            ),
+                            child: _photoUrl != null && _photoUrl!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      _photoUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Center(
+                                                child: Icon(
+                                                  Icons.directions_car,
+                                                  size: 42,
+                                                ),
+                                              ),
+                                    ),
+                                  )
+                                : const Center(
+                                    child: Icon(Icons.directions_car, size: 42),
+                                  ),
+                          ),
+                          if (_photoSource == 'wikimedia')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                'Source: Wikimedia (free public media)',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isPhotoBusy
+                                      ? null
+                                      : _pickAndUploadPhoto,
+                                  icon: const Icon(Icons.upload),
+                                  label: const Text('Upload Photo'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isPhotoBusy
+                                      ? null
+                                      : _findPhotoFromWeb,
+                                  icon: const Icon(Icons.image_search),
+                                  label: const Text('Find Free Web Photo'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            'Web lookup is best-effort and may not match exact trim or color.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

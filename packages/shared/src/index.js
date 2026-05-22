@@ -5,7 +5,13 @@
  * @property {string} model
  * @property {string} year
  * @property {string} vin
+ * @property {'active'|'stored'} [vehicleStatus]
  * @property {string} [vehicleType]
+ * @property {string} [photoUrl]
+ * @property {string} [photoPath]
+ * @property {string} [photoSource]
+ * @property {string} [photoAttributionUrl]
+ * @property {string} [photoAttributionText]
  * @property {string} [licensePlate]
  * @property {string} mileage
  * @property {string} purchaseDate
@@ -39,7 +45,13 @@ export const defaultVehicle = {
   model: '',
   year: '',
   vin: '',
+  vehicleStatus: 'active',
   vehicleType: '',
+  photoUrl: '',
+  photoPath: '',
+  photoSource: '',
+  photoAttributionUrl: '',
+  photoAttributionText: '',
   licensePlate: '',
   mileage: '',
   purchaseDate: '', // ISO date string (e.g., '2025-09-30')

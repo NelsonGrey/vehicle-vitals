@@ -24,7 +24,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
           : 'bg-slate-50 dark:bg-slate-900'
       }`}
     >
-      <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-3">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-3">
         <nav
           className={`rounded-xl border px-4 py-2.5 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between ${
             overlay

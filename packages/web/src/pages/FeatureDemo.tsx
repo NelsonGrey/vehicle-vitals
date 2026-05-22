@@ -81,7 +81,7 @@ export default function FeatureDemo({
   };
 
   return (
-    <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-8 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-8 space-y-6">
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
         <img
           src={media.hero}

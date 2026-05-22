@@ -60,7 +60,53 @@ class RecordStorageService {
     };
   }
 
+  Future<Map<String, dynamic>> uploadVehiclePhoto(
+    String vin,
+    PlatformFile file,
+  ) async {
+    final extension = file.extension?.trim().isNotEmpty == true
+        ? file.extension!
+        : 'jpg';
+    final path =
+        'users/$_userId/vehicles/$vin/photo/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    final ref = _storage.ref(path);
+    final metadata = SettableMetadata(
+      customMetadata: {
+        'originalName': file.name,
+        'extension': extension,
+        'vin': vin,
+        'assetType': 'vehicle_photo',
+      },
+    );
+
+    UploadTask uploadTask;
+    final Uint8List? bytes = file.bytes;
+    if (bytes != null) {
+      uploadTask = ref.putData(bytes, metadata);
+    } else if (file.path != null) {
+      uploadTask = ref.putFile(File(file.path!), metadata);
+    } else {
+      throw Exception('Unable to read selected image');
+    }
+
+    await uploadTask;
+    final url = await ref.getDownloadURL();
+
+    return {
+      'name': file.name,
+      'url': url,
+      'path': path,
+      'size': file.size,
+      'type': extension,
+      'source': 'user_upload',
+    };
+  }
+
   Future<void> deleteVehicleRecordFile(String path) async {
+    await _storage.ref(path).delete();
+  }
+
+  Future<void> deleteVehiclePhoto(String path) async {
     await _storage.ref(path).delete();
   }
 

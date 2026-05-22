@@ -539,6 +539,84 @@ const buildSupportUserSummary = async (
   };
 };
 
+const TRANSFERABLE_VEHICLE_SUBCOLLECTIONS = [
+  'maintenance',
+  'reminders',
+  'attachmentAnalyses',
+];
+
+async function resolveVehicleTransferTarget(params: {
+  recipientUid?: unknown;
+  recipientEmail?: unknown;
+}): Promise<{ uid: string; email: string }> {
+  const explicitUid = (params.recipientUid || '').toString().trim();
+  if (explicitUid) {
+    const userRecord = await admin.auth().getUser(explicitUid);
+    return {
+      uid: userRecord.uid,
+      email: (userRecord.email || '').toString(),
+    };
+  }
+
+  const recipientEmail = (params.recipientEmail || '').toString().trim();
+  if (!recipientEmail) {
+    throw new HttpsError(
+      'invalid-argument',
+      'recipientEmail or recipientUid is required'
+    );
+  }
+
+  try {
+    const userRecord = await admin.auth().getUserByEmail(recipientEmail);
+    return {
+      uid: userRecord.uid,
+      email: (userRecord.email || recipientEmail).toString(),
+    };
+  } catch (error) {
+    throw new HttpsError(
+      'not-found',
+      'Recipient account was not found for that email'
+    );
+  }
+}
+
+async function queueVehicleTransferOperations(params: {
+  batch: admin.firestore.WriteBatch;
+  sourceVehicleRef: admin.firestore.DocumentReference;
+  targetVehicleRef: admin.firestore.DocumentReference;
+  sourceVehicleData: Record<string, unknown>;
+  actorUid: string;
+  recipientUid: string;
+}) {
+  params.batch.set(
+    params.targetVehicleRef,
+    {
+      ...params.sourceVehicleData,
+      transferredFromUid: params.actorUid,
+      transferredToUid: params.recipientUid,
+      transferredAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  for (const subcollectionName of TRANSFERABLE_VEHICLE_SUBCOLLECTIONS) {
+    const sourceSubcollection =
+      params.sourceVehicleRef.collection(subcollectionName);
+    const sourceSnapshot = await sourceSubcollection.get();
+
+    sourceSnapshot.docs.forEach(docSnap => {
+      const targetDocRef = params.targetVehicleRef
+        .collection(subcollectionName)
+        .doc(docSnap.id);
+      params.batch.set(targetDocRef, docSnap.data(), { merge: true });
+      params.batch.delete(docSnap.ref);
+    });
+  }
+
+  params.batch.delete(params.sourceVehicleRef);
+}
+
 /**
  * Firestore CRUD helpers for Firebase Functions
  */
@@ -2272,11 +2350,8 @@ function buildCalendarEventResponse(input: unknown) {
   const vin = (vehicleVin || '').toString().trim().toUpperCase();
   const allowedTargets = new Set(['google', 'apple', 'ics']);
 
-  if (!vin || vin.length !== 17) {
-    throw new HttpsError(
-      'invalid-argument',
-      'Valid 17-character vehicleVin required'
-    );
+  if (!vin) {
+    throw new HttpsError('invalid-argument', 'vehicleVin is required');
   }
 
   if (!title || !startAt || !target || !allowedTargets.has(target)) {
@@ -2572,6 +2647,109 @@ export const getEffectiveEntitlementsCallable = onCall(async request => {
     success: true,
     entitlements,
   };
+});
+
+export const transferVehicleCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const vin = (request.data?.vin || '').toString().trim();
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!vin) {
+    throw new HttpsError('invalid-argument', 'vin is required');
+  }
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'transferVehicle',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const targetUser = await resolveVehicleTransferTarget({
+      recipientUid: request.data?.recipientUid,
+      recipientEmail: request.data?.recipientEmail,
+    });
+
+    if (targetUser.uid === actorUid) {
+      throw new HttpsError(
+        'invalid-argument',
+        'You cannot transfer a vehicle to your own account'
+      );
+    }
+
+    const db = admin.firestore();
+    const sourceVehicleRef = db.doc(`users/${actorUid}/vehicles/${vin}`);
+    const targetVehicleRef = db.doc(`users/${targetUser.uid}/vehicles/${vin}`);
+
+    const [sourceVehicleSnap, targetVehicleSnap] = await Promise.all([
+      sourceVehicleRef.get(),
+      targetVehicleRef.get(),
+      ensurePersonalOrganization(targetUser.uid, targetUser.email || undefined),
+    ]);
+
+    if (!sourceVehicleSnap.exists) {
+      throw new HttpsError('not-found', 'Vehicle was not found');
+    }
+
+    if (targetVehicleSnap.exists) {
+      throw new HttpsError(
+        'already-exists',
+        'Recipient already has a vehicle with that ID'
+      );
+    }
+
+    const sourceVehicleData = sourceVehicleSnap.data() || {};
+    const batch = db.batch();
+    await queueVehicleTransferOperations({
+      batch,
+      sourceVehicleRef,
+      targetVehicleRef,
+      sourceVehicleData,
+      actorUid,
+      recipientUid: targetUser.uid,
+    });
+    await batch.commit();
+
+    const orgId = await getPrimaryOrgIdForUser(actorUid);
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: 'vehicle.transfer',
+      targetType: 'vehicle',
+      targetId: vin,
+      details: {
+        recipientUid: targetUser.uid,
+        recipientEmail: targetUser.email,
+      },
+    });
+
+    const result = {
+      success: true,
+      vin,
+      recipientUid: targetUser.uid,
+      recipientEmail: targetUser.email,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
 });
 
 export const getOrganizationMembersCallable = onCall(async request => {

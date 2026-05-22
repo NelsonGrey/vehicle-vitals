@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../components/app_bottom_nav.dart';
 import '../models/maintenance_schedule.dart';
@@ -24,6 +29,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   Set<String> _savedReminderKeys = <String>{};
   Set<String> _savingReminderKeys = <String>{};
   Set<String> _actingReminderIds = <String>{};
+  List<Map<String, String>> _calendarTargets = const [
+    {'id': 'google', 'name': 'Google Calendar (opens app/browser)'},
+    {'id': 'apple', 'name': 'Apple Calendar (share .ics file)'},
+    {'id': 'ics', 'name': 'ICS file'},
+  ];
+  String _calendarTarget = 'google';
   bool _loading = true;
   final CalendarService _calendarService = CalendarService();
 
@@ -55,6 +66,27 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
     try {
       final firestoreService = context.read<FirestoreService>();
       final vehicles = await firestoreService.getVehicles();
+      final calendarPrefs = await _calendarService.getCalendarPreferences();
+      final rawTargets = await _calendarService.getAvailableCalendars();
+
+      final normalizedTargets = rawTargets
+          .map(
+            (target) => {
+              'id': (target['id'] ?? '').toString(),
+              'name': (target['name'] ?? target['id'] ?? '').toString(),
+            },
+          )
+          .where((target) => target['id']!.isNotEmpty)
+          .toList();
+
+      var selectedCalendarTarget = (calendarPrefs['calendarId'] ?? 'google')
+          .toString();
+      if (normalizedTargets.isNotEmpty &&
+          !normalizedTargets.any(
+            (target) => target['id'] == selectedCalendarTarget,
+          )) {
+        selectedCalendarTarget = normalizedTargets.first['id']!;
+      }
 
       final allUpcoming = <Map<String, dynamic>>[];
       final nextSavedReminders = <Map<String, dynamic>>[];
@@ -96,6 +128,10 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         _upcomingItems = allUpcoming;
         _savedReminders = nextSavedReminders;
         _savedReminderKeys = nextSavedReminderKeys;
+        _calendarTargets = normalizedTargets.isNotEmpty
+            ? normalizedTargets
+            : _calendarTargets;
+        _calendarTarget = selectedCalendarTarget;
         _loading = false;
       });
     } catch (e) {
@@ -148,7 +184,10 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         description: 'Maintenance reminder from Vehicle Vitals',
         dueDate: dueDate,
         vehicleInfo: '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+        target: _calendarTarget,
       );
+
+      await _openCalendarDestination(event);
 
       if (!mounted) return;
       final target = (event['target'] ?? 'calendar').toString();
@@ -169,6 +208,65 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _openCalendarDestination(Map<String, dynamic> event) async {
+    final actionUrl = (event['actionUrl'] ?? '').toString().trim();
+    final downloadUrl = (event['downloadUrl'] ?? '').toString().trim();
+
+    if (actionUrl.isNotEmpty) {
+      final actionUri = Uri.tryParse(actionUrl);
+      if (actionUri != null) {
+        final launched = await launchUrl(
+          actionUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (launched) {
+          return;
+        }
+      }
+    }
+
+    if (downloadUrl.isEmpty) {
+      return;
+    }
+
+    if (downloadUrl.startsWith('data:text/calendar')) {
+      final separatorIndex = downloadUrl.indexOf(',');
+      if (separatorIndex == -1) {
+        return;
+      }
+
+      final encodedPayload = downloadUrl.substring(separatorIndex + 1);
+      final decodedPayload = Uri.decodeComponent(encodedPayload);
+      final tempDir = await getTemporaryDirectory();
+      final icsFile = File(
+        '${tempDir.path}/vehicle-vitals-${DateTime.now().millisecondsSinceEpoch}.ics',
+      );
+      await icsFile.writeAsString(decodedPayload);
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(icsFile.path)],
+          text: 'Calendar event from Vehicle Vitals',
+        ),
+      );
+      return;
+    }
+
+    final downloadUri = Uri.tryParse(downloadUrl);
+    if (downloadUri != null) {
+      await launchUrl(downloadUri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _updateCalendarTarget(String targetId) async {
+    setState(() => _calendarTarget = targetId);
+    final prefs = await _calendarService.getCalendarPreferences();
+    await _calendarService.updateCalendarPreferences(
+      (prefs['calendarSyncEnabled'] as bool?) ?? false,
+      calendarId: targetId,
+    );
   }
 
   Future<void> _saveReminder(Vehicle vehicle, Map<String, dynamic> item) async {
@@ -517,6 +615,28 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                 Text(
                   'Urgent: $urgentCount  •  Soon: $soonCount  •  Queue: ${_upcomingItems.length}',
                   style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                SizedBox(height: TwSpace.s3),
+                DropdownButtonFormField<String>(
+                  initialValue: _calendarTarget,
+                  decoration: const InputDecoration(
+                    labelText: 'Default calendar action',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _calendarTargets
+                      .map(
+                        (target) => DropdownMenuItem<String>(
+                          value: target['id'],
+                          child: Text(target['name'] ?? target['id'] ?? ''),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null || value == _calendarTarget) {
+                      return;
+                    }
+                    _updateCalendarTarget(value);
+                  },
                 ),
               ],
             ),

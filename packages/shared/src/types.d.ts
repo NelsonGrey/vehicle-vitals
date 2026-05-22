@@ -5,7 +5,13 @@ export interface Vehicle {
   model: string;
   year: string;
   vin: string;
+  vehicleStatus?: 'active' | 'stored';
   vehicleType?: string;
+  photoUrl?: string;
+  photoPath?: string;
+  photoSource?: string;
+  photoAttributionUrl?: string;
+  photoAttributionText?: string;
   mileage: string;
   purchaseDate: string;
   nextDueByMiles?: string;

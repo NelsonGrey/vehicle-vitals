@@ -28,6 +28,7 @@ const TOYOTA = {
   year: '2022',
   mileage: '30000',
   recallsCount: 0,
+  vehicleStatus: 'active',
 };
 
 function renderHome() {
@@ -197,5 +198,29 @@ describe('Home – smart maintenance alert badges', () => {
     expect(
       screen.queryByRole('button', { name: /Load Bob Demo Data/i })
     ).toBeNull();
+  });
+
+  it('renders active and storage sections with status summary', async () => {
+    getVehicles.mockResolvedValue([
+      { ...TOYOTA, vin: 'VIN001', vehicleStatus: 'active' },
+      {
+        ...TOYOTA,
+        vin: 'VIN002',
+        make: 'Ford',
+        model: 'Bronco',
+        year: '2021',
+        vehicleStatus: 'stored',
+      },
+    ]);
+
+    renderHome();
+
+    await waitFor(() =>
+      expect(screen.getByText(/1 active vehicle/i)).toBeInTheDocument()
+    );
+    expect(screen.getByText(/1 in storage/i)).toBeInTheDocument();
+    expect(screen.getByText('Active Garage')).toBeInTheDocument();
+    expect(screen.getByText('Storage')).toBeInTheDocument();
+    expect(screen.getByText('Stored')).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 # Vehicle Vitals - Developer Guide
 
 **Version**: 1.0  
-**Last Updated**: February 16, 2026  
+**Last Updated**: May 22, 2026
 **Status**: ✅ ACTIVE  
 **Owner**: Mark Nelson
 
@@ -594,9 +594,28 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 **Run Tests**:
 
 ```bash
-npm run test:web         # Run all tests
+cd packages/web
+npm run test             # Run all unit tests (Vitest)
 npm run test:watch       # Watch mode
+npm run test:uat:chromium  # Playwright UAT (Chromium)
 ```
+
+### Functions Testing
+
+**Run Tests**:
+
+```bash
+cd packages/functions
+npm run build
+npm run test
+```
+
+**Focus areas covered**:
+
+- Callable authentication and argument validation
+- Calendar and reminder callable contracts
+- Enterprise/member-role callables
+- Vehicle transfer callable migration behavior
 
 **Example: Component Test**:
 
@@ -676,6 +695,7 @@ describe('Vehicle Service', () => {
 ```bash
 cd packages/mobile
 flutter test
+flutter analyze
 ```
 
 **Example: Widget Test**:
@@ -712,7 +732,8 @@ void main() {
 
 Before submitting PR:
 
-- [ ] All unit tests pass
+- [ ] All unit tests pass (web, mobile, functions)
+- [ ] UAT checks pass for impacted web flows
 - [ ] New features have test coverage
 - [ ] Manual testing on dev environment
 - [ ] Cross-browser testing (Chrome, Safari, Firefox)

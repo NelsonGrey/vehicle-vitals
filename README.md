@@ -2,6 +2,22 @@
 
 A modern vehicle management application with web and mobile clients, built with React, Flutter, and Firebase.
 
+## Recent Development Highlights (May 22, 2026)
+
+- Added vehicle lifecycle status support (`active` and `stored`) across shared models, web, and mobile.
+- Updated Garage experiences to separate active vehicles from storage vehicles on both platforms.
+- Added secure vehicle transfer capability between users via backend callable transfer flow.
+- Expanded automated coverage for transfer/storage behaviors in web unit tests, mobile model tests, functions integration tests, and web UAT.
+- Updated responsive shell quality checks to the 1280px baseline.
+
+### Latest Validation Snapshot
+
+- Web unit tests: pass (`npm --workspace=packages/web run test`)
+- Mobile tests: pass (`cd packages/mobile && flutter test`)
+- Web UAT (Chromium): pass with environment-based skips (`npm --workspace=packages/web run test:uat:chromium`)
+
+See [docs/DEPLOYMENT_STATUS.md](/docs/DEPLOYMENT_STATUS.md) for full progress details and [docs/DEVELOPER_GUIDE.md](/docs/DEVELOPER_GUIDE.md) for updated testing workflow.
+
 ## 🏗️ Architecture
 
 This is a monorepo containing multiple packages that work together:

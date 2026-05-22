@@ -74,9 +74,9 @@ export default function Landing() {
       platform: 'Web',
     },
     {
-      title: 'Service Providers',
+      title: 'Mechanics',
       description:
-        'Search nearby repair shops and dealerships using your saved address and provider preferences.',
+        'Search nearby mechanics and dealerships using your saved address and preferences.',
       image: '/images/features/providers.png',
       appPath: '/app/providers',
       platform: 'Web',
@@ -185,7 +185,7 @@ export default function Landing() {
                 </h1>
                 <p className="mt-4 max-w-2xl text-base text-slate-100/90 sm:text-lg">
                   See what the product does today across garage setup,
-                  maintenance planning, ownership history, nearby providers, and
+                  maintenance planning, ownership history, nearby mechanics, and
                   cross-device access before you sign in.
                 </p>
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">

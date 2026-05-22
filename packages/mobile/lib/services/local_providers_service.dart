@@ -26,7 +26,7 @@ class LocalProvidersService {
 
     final data = Map<String, dynamic>.from(response.data as Map? ?? const {});
     if (data['success'] != true) {
-      throw Exception((data['error'] ?? 'Provider lookup failed').toString());
+      throw Exception((data['error'] ?? 'Mechanic lookup failed').toString());
     }
 
     return {

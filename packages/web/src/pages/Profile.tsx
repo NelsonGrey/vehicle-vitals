@@ -557,13 +557,13 @@ export default function Profile() {
       setHasProviderLookupRun(true);
       setStatus(
         options?.successStatus ||
-          'Nearby providers updated from your saved address.'
+          'Nearby mechanics updated from your saved address.'
       );
     } catch (providerError) {
       setError(
         providerError instanceof Error
           ? providerError.message
-          : 'Failed to find nearby providers'
+          : 'Failed to find nearby mechanics'
       );
       setHasProviderLookupRun(true);
       setNearbyProviders([]);
@@ -1122,7 +1122,7 @@ export default function Profile() {
                       }
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
                     >
-                      <option value="all">All providers</option>
+                      <option value="all">All mechanics</option>
                       <option value="repair_shop">Repair shops only</option>
                       <option value="dealership">Dealerships only</option>
                     </select>
@@ -1223,7 +1223,7 @@ export default function Profile() {
               <div className="mt-5 rounded-md border border-slate-200 dark:border-slate-700 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h6 className="font-semibold text-slate-900 dark:text-slate-100 m-0">
-                    Nearby Services ({preferredProviderRadiusMiles} mi,{' '}
+                    Nearby Mechanics ({preferredProviderRadiusMiles} mi,{' '}
                     {providerTypeLabel})
                   </h6>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -1286,7 +1286,7 @@ export default function Profile() {
               nearbyProviders.length === 0 &&
               !providerLookupLoading && (
                 <div className="mt-5 rounded-md border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
-                  No providers found within {preferredProviderRadiusMiles}{' '}
+                  No mechanics found within {preferredProviderRadiusMiles}{' '}
                   miles. Try increasing the search radius.
                   <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     Garage context: {garageContextLabel}

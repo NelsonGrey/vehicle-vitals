@@ -51,7 +51,7 @@ function normalizeAddress(address: HomeAddress): HomeAddress {
 
 function validateAddress(address: HomeAddress): string {
   if (!address.street1 || !address.city || !address.stateProvince) {
-    return 'Street, city, and state are required to find nearby providers.';
+    return 'Street, city, and state are required to find nearby mechanics.';
   }
   return '';
 }
@@ -181,7 +181,7 @@ export default function ServiceProviders() {
 
       setProviders(result.providers || []);
       setLookupSource(result.source || 'unknown');
-      setStatus('Nearby providers updated.');
+      setStatus('Nearby mechanics updated.');
 
       await updateVehicle('preferences', {
         homeAddress: normalizedAddress,
@@ -195,7 +195,7 @@ export default function ServiceProviders() {
       setError(
         lookupError instanceof Error
           ? lookupError.message
-          : 'Failed to find nearby providers'
+          : 'Failed to find nearby mechanics'
       );
     } finally {
       setLoading(false);
@@ -205,11 +205,11 @@ export default function ServiceProviders() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-        Service Providers
+        Mechanics
       </h1>
       <p className="text-slate-600 dark:text-slate-300 mt-2 mb-6">
-        Find nearby repair shops and dealerships using your saved address,
-        radius, and provider preferences.
+        Find nearby mechanics and dealerships using your saved address, radius,
+        and preferences.
       </p>
 
       {status && (
@@ -235,7 +235,7 @@ export default function ServiceProviders() {
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
           Save your home-area search settings here, then rerun the lookup any
-          time you want a fresh nearby-provider list.
+          time you want a fresh nearby-mechanic list.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,7 +294,7 @@ export default function ServiceProviders() {
             />
           </label>
           <label className="text-sm text-slate-700 dark:text-slate-300">
-            Provider Type
+            Mechanic Type
             <select
               className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
               value={preferredProviderType}
@@ -345,7 +345,7 @@ export default function ServiceProviders() {
             disabled={loading}
             className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-md disabled:opacity-60"
           >
-            {loading ? 'Searching...' : 'Find Nearby Providers'}
+            {loading ? 'Searching...' : 'Find Nearby Mechanics'}
           </button>
         </div>
 
@@ -366,7 +366,7 @@ export default function ServiceProviders() {
 
         {providers.length === 0 ? (
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
-            No providers yet. Run a search to view local options.
+            No mechanics yet. Run a search to view local options.
           </p>
         ) : (
           <div className="space-y-3">

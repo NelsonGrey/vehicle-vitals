@@ -132,11 +132,11 @@ export const websiteFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'How do I find nearby service providers?',
+    question: 'How do I find nearby mechanics?',
     answers: [
-      'Open Service Providers.',
+      'Open Mechanics.',
       'Enter location context and search criteria.',
-      'Use filtering options where available to narrow provider type and results.',
+      'Use filtering options where available to narrow mechanic type and results.',
     ],
   },
   {
@@ -148,11 +148,11 @@ export const websiteFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'Can I store location and provider preferences?',
+    question: 'Can I store location and mechanic preferences?',
     answers: [
       'Yes.',
-      'Profile supports location fields and provider search preferences.',
-      'These settings are used by nearby provider lookup and recommendation behavior.',
+      'Profile supports location fields and mechanic search preferences.',
+      'These settings are used by nearby mechanic lookup and recommendation behavior.',
     ],
   },
   {
@@ -343,10 +343,10 @@ export const iosFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'How do I find service providers on iOS?',
+    question: 'How do I find mechanics on iOS?',
     answers: [
-      'Open Service Providers from app routes.',
-      'Search using available location and provider options.',
+      'Open Mechanics from app routes.',
+      'Search using available location and mechanic options.',
     ],
   },
   {
@@ -395,7 +395,7 @@ export const iosFaq: FaqItem[] = [
   {
     question: 'Is there parity between web and iOS features?',
     answers: [
-      'Core vehicle, records, upcoming, timeline, auth, profile, and provider workflows are available across both platforms.',
+      'Core vehicle, records, upcoming, timeline, auth, profile, and mechanic workflows are available across both platforms.',
       'Some environment-dependent or admin-focused functions may vary by deployment mode.',
     ],
   },

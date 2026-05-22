@@ -52,6 +52,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1">
               {isLoggedIn ? (
                 <>
+                  <Link to="/getting-started" className={linkClass}>
+                    Getting Started
+                  </Link>
                   <Link to="/app" className={linkClass}>
                     Garage
                   </Link>
@@ -65,7 +68,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                     Upcoming
                   </Link>
                   <Link to="/app/providers" className={linkClass}>
-                    Providers
+                    Mechanics
                   </Link>
                   {supportAccess?.isSuperAdmin && (
                     <Link to="/app/admin" className={linkClass}>
@@ -80,8 +83,8 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 </>
               ) : (
                 <>
-                  <Link to="/" className={linkClass}>
-                    Home
+                  <Link to="/getting-started" className={linkClass}>
+                    Getting Started
                   </Link>
                   <Link to="/vin-decode-demo" className={linkClass}>
                     VIN Decode
@@ -94,9 +97,6 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                   </Link>
                   <Link to="/ownership-history-demo" className={linkClass}>
                     Ownership History
-                  </Link>
-                  <Link to="/getting-started" className={linkClass}>
-                    Getting Started
                   </Link>
                 </>
               )}

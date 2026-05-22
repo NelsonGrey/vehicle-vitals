@@ -1,7 +1,34 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 19, 2026 (interactive demo pipeline update)
+Last updated: May 22, 2026 (navigation + terminology alignment update)
 Primary production project: `vehicle-vitals-prod`
+
+## Development Progress Update (May 22, 2026 - Navigation & Terminology Alignment)
+
+Status: User-facing terminology and top-level navigation are aligned across web and mobile.
+
+Progress evaluation completed:
+
+- User-facing web/mobile copy now consistently uses `Mechanics` in nearby shop discovery flows.
+- Header navigation now surfaces `Getting Started` as the first nav item for both:
+  - logged-out marketing navigation
+  - logged-in application navigation
+- Marketing header no longer includes a separate `Home` link; the Vehicle Vitals logo remains the home path.
+- Footer navigation no longer duplicates `Getting Started`.
+
+Automation updates delivered:
+
+- Web unit tests updated to validate:
+  - marketing header omits `Home`
+  - `Getting Started` is first in both marketing and authenticated header nav sequences
+- New footer unit coverage validates `Getting Started` is no longer present in footer links.
+- Web UAT expanded with navigation checks for both marketing and authenticated header sequences.
+
+Validation snapshot:
+
+- Web unit suite: PASS (`316/316`)
+- Web UAT (Chromium): PASS with environment-gated skips (`8` passed, `17` skipped)
+- Flutter analyzer: PASS (`No issues found`)
 
 ## Development Progress Update (May 22, 2026)
 

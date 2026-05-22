@@ -7,7 +7,7 @@
  * - Maintenance Records (Add, View, Delete)
  * - Timeline Dashboard
  * - Upcoming Tasks/Reminders
- * - Service Providers
+ * - Mechanics
  * - User Profile
  *
  * Run with: npm run test:uat
@@ -237,6 +237,62 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       // Prefer a single locator to avoid Playwright strict-mode multi-match errors.
       await expect(page.locator('body')).toBeVisible();
+    });
+
+    test('TC-UI-010: Marketing header starts with Getting Started and omits Home link', async ({
+      page,
+    }) => {
+      await page.goto(BASE_URL);
+
+      const marketingNavMetrics = await page.evaluate(() => {
+        const navRow = document.querySelector('header nav > div:nth-child(2)');
+        const marketingLinks = Array.from(
+          navRow?.querySelectorAll('div:first-child a') ?? []
+        ).map(link => link.textContent?.trim() || '');
+
+        return {
+          hasLinks: marketingLinks.length > 0,
+          firstLink: marketingLinks[0] || null,
+          hasHome: marketingLinks.includes('Home'),
+        };
+      });
+
+      test.skip(
+        !marketingNavMetrics.hasLinks,
+        'Marketing header links are unavailable in this deployment target.'
+      );
+
+      expect(marketingNavMetrics.firstLink).toBe('Getting Started');
+      expect(marketingNavMetrics.hasHome).toBe(false);
+    });
+
+    test('TC-UI-011: Authenticated app header starts with Getting Started', async ({
+      page,
+    }) => {
+      await ensureAuthenticated(page);
+
+      await page.goto(`${BASE_URL}/app`);
+
+      const appNavMetrics = await page.evaluate(() => {
+        const navRow = document.querySelector('header nav > div:nth-child(2)');
+        const appLinks = Array.from(
+          navRow?.querySelectorAll('div:first-child a') ?? []
+        ).map(link => link.textContent?.trim() || '');
+
+        return {
+          hasLinks: appLinks.length > 0,
+          firstLink: appLinks[0] || null,
+          hasGarage: appLinks.includes('Garage'),
+        };
+      });
+
+      test.skip(
+        !appNavMetrics.hasLinks,
+        'Authenticated header links are unavailable in this deployment target.'
+      );
+
+      expect(appNavMetrics.firstLink).toBe('Getting Started');
+      expect(appNavMetrics.hasGarage).toBe(true);
     });
 
     test('TC-UI-006: Shell uses centered 1280px layout and standalone ad break', async ({

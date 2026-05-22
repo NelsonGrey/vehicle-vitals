@@ -259,7 +259,7 @@ export default function Help() {
           />
           <MarketingVideoPanel
             title="Help Center Overview"
-            description="Where to find troubleshooting topics, provider guidance, and support routes."
+            description="Where to find troubleshooting topics, mechanic guidance, and support routes."
             poster="/images/features/providers.png"
             videoPath="/videos/feature-demos/help-center-overview.mp4"
             fallbackHref="/contact"
@@ -292,7 +292,7 @@ export default function Help() {
             type="search"
             value={faqQuery}
             onChange={event => setFaqQuery(event.target.value)}
-            placeholder="Search for reminders, VIN, providers, billing, iOS..."
+            placeholder="Search for reminders, VIN, mechanics, billing, iOS..."
             className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-slate-100"
           />
           <p className="mt-2 mb-0 text-xs text-slate-500 dark:text-slate-400">
@@ -332,7 +332,7 @@ export default function Help() {
         {faqQuery.trim() && totalFaqMatches === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
             No FAQ entries matched that search. Try a broader term such as VIN,
-            reminders, providers, billing, or account.
+            reminders, mechanics, billing, or account.
           </div>
         ) : null}
 

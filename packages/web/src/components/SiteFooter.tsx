@@ -13,13 +13,6 @@ export default function SiteFooter() {
           </Link>
           <span>•</span>
           <Link
-            to="/getting-started"
-            className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-          >
-            Getting Started
-          </Link>
-          <span>•</span>
-          <Link
             to="/help"
             className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >

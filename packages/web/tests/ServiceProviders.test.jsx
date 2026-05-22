@@ -72,10 +72,10 @@ describe('ServiceProviders', () => {
   it('renders page heading and key form controls', async () => {
     render(<ServiceProviders />);
 
-    await waitFor(() => screen.getByText('Service Providers'));
+    await waitFor(() => screen.getByText('Mechanics'));
     expect(screen.getByText('Search Preferences')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /find nearby mechanics/i })
     ).toBeInTheDocument();
   });
 
@@ -110,10 +110,10 @@ describe('ServiceProviders', () => {
 
   it('shows validation error when required address fields are absent', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Service Providers'));
+    await waitFor(() => screen.getByText('Mechanics'));
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /find nearby mechanics/i })
     );
 
     await waitFor(() =>
@@ -124,7 +124,7 @@ describe('ServiceProviders', () => {
 
   it('calls getLocalServiceProviders with form values and renders results', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Service Providers'));
+    await waitFor(() => screen.getByText('Mechanics'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '99 Oak Blvd' },
@@ -137,7 +137,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /find nearby mechanics/i })
     );
 
     await waitFor(() =>
@@ -154,7 +154,7 @@ describe('ServiceProviders', () => {
 
   it('persists preferences via updateVehicle after a successful lookup', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Service Providers'));
+    await waitFor(() => screen.getByText('Mechanics'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '1 Maple Dr' },
@@ -167,7 +167,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /find nearby mechanics/i })
     );
 
     await waitFor(() =>
@@ -185,7 +185,7 @@ describe('ServiceProviders', () => {
     getLocalServiceProviders.mockRejectedValue(new Error('Network timeout'));
 
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Service Providers'));
+    await waitFor(() => screen.getByText('Mechanics'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '5 Pine Ave' },
@@ -198,7 +198,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /find nearby mechanics/i })
     );
 
     await waitFor(() => screen.getByText(/network timeout/i));
@@ -227,7 +227,7 @@ describe('ServiceProviders', () => {
 
   it('shows success status after providers load', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Service Providers'));
+    await waitFor(() => screen.getByText('Mechanics'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '7 Birch Ln' },
@@ -240,9 +240,9 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /find nearby mechanics/i })
     );
 
-    await waitFor(() => screen.getByText(/nearby providers updated/i));
+    await waitFor(() => screen.getByText(/nearby mechanics updated/i));
   });
 });

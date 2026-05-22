@@ -9,6 +9,8 @@ A modern vehicle management application with web and mobile clients, built with 
 - Added secure vehicle transfer capability between users via backend callable transfer flow.
 - Expanded automated coverage for transfer/storage behaviors in web unit tests, mobile model tests, functions integration tests, and web UAT.
 - Updated responsive shell quality checks to the 1280px baseline.
+- Standardized user-facing nearby service terminology to `Mechanics` across web/mobile UI copy.
+- Updated web navigation: `Getting Started` is now the first header link for both marketing and authenticated app headers, marketing `Home` nav link removed, and footer `Getting Started` removed.
 
 ### Latest Validation Snapshot
 

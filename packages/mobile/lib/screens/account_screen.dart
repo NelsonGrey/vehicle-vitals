@@ -217,9 +217,9 @@ class _AccountScreenState extends State<AccountScreen> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.build_circle),
-                        title: const Text('Service Providers'),
+                        title: const Text('Mechanics'),
                         subtitle: const Text(
-                          'Find nearby repair shops and dealerships',
+                          'Find nearby mechanics and dealerships',
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/service-providers'),

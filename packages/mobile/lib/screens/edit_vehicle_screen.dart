@@ -9,6 +9,19 @@ import 'package:go_router/go_router.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 
+const List<String> _vehicleTypeOptions = [
+  'Car',
+  'Truck',
+  'Motorcycle',
+  'Recreational Vehicle (RV)',
+  'Boat',
+  'Van',
+  'SUV',
+  'Trailer',
+  'ATV/UTV',
+  'Other',
+];
+
 class EditVehicleScreen extends StatefulWidget {
   final String vin;
 
@@ -45,6 +58,8 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   List<Map<String, dynamic>> _recallsItems = const [];
   Map<String, dynamic> _vinProfile = const {};
   Map<String, dynamic> _vinInsights = const {};
+
+  bool _looksLikeVin(String value) => value.trim().length == 17;
 
   @override
   void initState() {
@@ -107,11 +122,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
 
   Future<void> _decodeVinInsights() async {
     final vin = _vinController.text.trim().toUpperCase();
-    if (vin.length != 17) {
+    if (!_looksLikeVin(vin)) {
       final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('VIN must be 17 characters to decode.'),
+          content: const Text(
+            'VIN decode requires a 17-character VIN. Non-VIN assets can still be tracked manually.',
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -419,7 +436,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                       TextFormField(
                         controller: _vinController,
                         decoration: const InputDecoration(
-                          labelText: 'VIN',
+                          labelText: 'Vehicle ID (VIN/HIN/Serial)',
                           border: OutlineInputBorder(),
                         ),
                         readOnly: true,
@@ -442,7 +459,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           label: Text(
                             _isDecoding
                                 ? 'Decoding VIN...'
-                                : 'Refresh VIN Insights',
+                                : 'Refresh VIN Insights (VIN only)',
                           ),
                         ),
                       ),
@@ -514,6 +531,25 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           return null;
                         },
                         textCapitalization: TextCapitalization.words,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _vehicleType,
+                        decoration: const InputDecoration(
+                          labelText: 'Vehicle Type',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _vehicleTypeOptions
+                            .map(
+                              (type) => DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() => _vehicleType = value);
+                        },
                       ),
                       const SizedBox(height: 16),
                       TextFormField(

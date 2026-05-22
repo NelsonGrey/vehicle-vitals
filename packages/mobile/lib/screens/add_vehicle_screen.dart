@@ -11,6 +11,19 @@ import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/premium_service.dart';
 
+const List<String> _vehicleTypeOptions = [
+  'Car',
+  'Truck',
+  'Motorcycle',
+  'Recreational Vehicle (RV)',
+  'Boat',
+  'Van',
+  'SUV',
+  'Trailer',
+  'ATV/UTV',
+  'Other',
+];
+
 class AddVehicleScreen extends StatefulWidget {
   const AddVehicleScreen({super.key, this.initialVin});
 
@@ -44,6 +57,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   Map<String, dynamic> _vinProfile = const {};
   Map<String, dynamic> _vinInsights = const {};
 
+  bool _looksLikeVin(String value) => value.trim().length == 17;
+
   @override
   void initState() {
     super.initState();
@@ -65,7 +80,18 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   Future<void> _decodeVIN() async {
     final vin = _vinController.text.trim().toUpperCase();
-    if (vin.length != 17) return;
+    if (!_looksLikeVin(vin)) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'VIN decode requires a 17-character VIN. You can still save using a vehicle ID.',
+          ),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -359,7 +385,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Enter VIN and decode to auto-fill core details and insights.',
+                              'Enter a vehicle ID (VIN/HIN/Serial). VIN decode can auto-fill details for compatible VINs.',
                               style: TextStyle(
                                 color: colorScheme.onSurfaceVariant,
                                 fontSize: 12,
@@ -376,23 +402,20 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             child: TextFormField(
                               controller: _vinController,
                               decoration: const InputDecoration(
-                                labelText: 'VIN*',
+                                labelText: 'Vehicle ID (VIN/HIN/Serial)*',
                                 border: OutlineInputBorder(),
-                                hintText: '17-character VIN',
+                                hintText: 'VIN, HIN, or serial number',
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter the VIN';
-                                }
-                                if (value.length != 17) {
-                                  return 'VIN must be 17 characters';
+                                  return 'Please enter a vehicle ID';
                                 }
                                 return null;
                               },
                               textCapitalization: TextCapitalization.characters,
                               onChanged: (value) {
-                                // Auto-decode when VIN is complete
-                                if (value.length == 17 && !_isLoading) {
+                                // Auto-decode only when ID appears to be a VIN.
+                                if (_looksLikeVin(value) && !_isLoading) {
                                   _decodeVIN();
                                 }
                               },
@@ -402,9 +425,29 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           IconButton(
                             onPressed: _isLoading ? null : _decodeVIN,
                             icon: const Icon(Icons.search),
-                            tooltip: 'Decode VIN',
+                            tooltip: 'Decode VIN (17-character VIN only)',
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      DropdownButtonFormField<String>(
+                        initialValue: _vehicleType,
+                        decoration: const InputDecoration(
+                          labelText: 'Vehicle Type',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _vehicleTypeOptions
+                            .map(
+                              (type) => DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() => _vehicleType = value);
+                        },
                       ),
                       const SizedBox(height: 16),
 

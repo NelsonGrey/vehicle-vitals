@@ -33,6 +33,7 @@ export const websiteFaq: FaqItem[] = [
     question: 'How do I add my first vehicle?',
     answers: [
       'Go to Garage and select Add Vehicle.',
+      'Choose the vehicle type (for example car, truck, motorcycle, RV, boat, trailer, or other).',
       'Enter the VIN and run decode for faster setup.',
       'If VIN lookup misses details, fill the remaining Year/Make/Model fields manually before saving.',
       'Add mileage and save.',
@@ -43,6 +44,7 @@ export const websiteFaq: FaqItem[] = [
     question: 'How does VIN Decode help me?',
     answers: [
       'VIN decode can auto-populate vehicle details (for example make/model/year and additional profile data where available).',
+      'For boats, trailers, and other non-VIN assets, skip decode and enter details manually with your vehicle ID.',
       'After decoding, review fields for accuracy and save.',
       'If decode is unavailable or incomplete, keep the VIN entered and complete the missing details manually before saving.',
     ],
@@ -252,7 +254,8 @@ export const iosFaq: FaqItem[] = [
     question: 'How do I add a vehicle on iOS?',
     answers: [
       'From Garage, tap Add Vehicle.',
-      'Enter VIN and decode, or fill fields manually.',
+      'Select the vehicle type (car, truck, motorcycle, RV, boat, trailer, or other).',
+      'Enter a vehicle ID (VIN/HIN/Serial), then decode if it is a VIN, or fill fields manually.',
       'Provide mileage and save.',
       'If plan limits are reached, app guidance routes to Premium or Contact flows.',
     ],
@@ -269,7 +272,7 @@ export const iosFaq: FaqItem[] = [
     question: 'What happens if VIN decode fails on iOS?',
     answers: [
       'The app shows an error and you can retry.',
-      'You can still enter Year/Make/Model manually and save.',
+      'You can still enter vehicle details manually and save using your vehicle ID.',
     ],
   },
   {

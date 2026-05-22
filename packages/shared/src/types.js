@@ -7,6 +7,7 @@ export const defaultVehicle = {
   model: '',
   year: '',
   vin: '',
+  vehicleType: '',
   licensePlate: '',
   mileage: '',
   purchaseDate: '', // ISO date string (e.g., '2025-09-30')

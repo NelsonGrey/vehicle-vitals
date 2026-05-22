@@ -17,6 +17,19 @@ import {
 } from '../shared/useMonetization';
 import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
 
+const VEHICLE_TYPE_OPTIONS = [
+  'Car',
+  'Truck',
+  'Motorcycle',
+  'Recreational Vehicle (RV)',
+  'Boat',
+  'Van',
+  'SUV',
+  'Trailer',
+  'ATV/UTV',
+  'Other',
+];
+
 export default function AddVehicle() {
   const [form, setForm] = useState({ ...defaultVehicle });
   const [plateValidationError, setPlateValidationError] = useState<string>();
@@ -61,7 +74,7 @@ export default function AddVehicle() {
   const handleSubmit = async () => {
     const trimmedVin = (form.vin || '').trim();
     if (!trimmedVin) {
-      alert('VIN is required before saving a vehicle.');
+      alert('A vehicle ID (VIN/HIN/Serial) is required before saving.');
       return;
     }
 
@@ -103,7 +116,7 @@ export default function AddVehicle() {
     const vin = (form.vin || '').trim();
     if (!vin) {
       alert(
-        'Enter the VIN first. If VIN lookup cannot fill every field, you can still type Year, Make, and Model yourself before saving.'
+        'Enter a VIN first for decode. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
       );
       return;
     }
@@ -130,6 +143,7 @@ export default function AddVehicle() {
         make: make || prev.make,
         model: model || prev.model,
         year: year || prev.year,
+        vehicleType: vehicleType || prev.vehicleType,
       }));
       setInsights({
         recallsCount: Number(recallsCount || 0),
@@ -170,8 +184,9 @@ export default function AddVehicle() {
             Add Vehicle
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
-            Enter the VIN, decode it for faster setup, then review or complete
-            the vehicle details before saving.
+            Enter a vehicle ID (VIN/HIN/Serial). VIN decode is available for
+            compatible vehicles, and you can complete details manually for all
+            vehicle types.
           </p>
         </div>
         <Link
@@ -240,6 +255,29 @@ export default function AddVehicle() {
 
             <div>
               <label
+                htmlFor="vehicleType"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
+              >
+                Vehicle Type
+              </label>
+              <select
+                id="vehicleType"
+                name="vehicleType"
+                value={form.vehicleType || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                <option value="">Select Vehicle Type</option>
+                {VEHICLE_TYPE_OPTIONS.map(type => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
                 htmlFor="model"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
               >
@@ -276,7 +314,9 @@ export default function AddVehicle() {
                 >
                   {field === 'licensePlate'
                     ? 'License Plate'
-                    : field.charAt(0).toUpperCase() + field.slice(1)}
+                    : field === 'vin'
+                      ? 'Vehicle ID (VIN/HIN/Serial)'
+                      : field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
                   id={field}
@@ -286,7 +326,7 @@ export default function AddVehicle() {
                   onChange={handleChange}
                   placeholder={
                     field === 'vin'
-                      ? 'Vehicle Identification Number'
+                      ? 'VIN, HIN, or serial number'
                       : field === 'licensePlate'
                         ? 'Plate number (optional)'
                         : 'Current mileage'
@@ -299,9 +339,9 @@ export default function AddVehicle() {
                 />
                 {field === 'vin' && (
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                    VIN is required to save a vehicle. Decode fills year, make,
-                    model, specs, and recall data for you, and you can edit any
-                    missing fields before saving.
+                    A vehicle ID is required to save. VIN decode can fill year,
+                    make, model, specs, and recall data for compatible VIN
+                    assets, and you can edit missing fields before saving.
                   </p>
                 )}
                 {field === 'licensePlate' && plateValidationError && (
@@ -344,8 +384,7 @@ export default function AddVehicle() {
                 Add Vehicle
               </button>
               <p className="m-0 text-xs text-slate-500 dark:text-slate-400">
-                Decode is optional, but a VIN is still required as the vehicle's
-                primary identifier.
+                Decode is optional. A vehicle ID remains the primary identifier.
               </p>
             </div>
           </div>

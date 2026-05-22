@@ -91,7 +91,9 @@ describe('AddVehicle page', () => {
     expect(screen.getByLabelText(/year/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/make/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/model/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^vin$/i)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i)
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /decode vin/i })
     ).toBeInTheDocument();
@@ -106,7 +108,7 @@ describe('AddVehicle page', () => {
     await userEvent.click(screen.getByRole('button', { name: /add vehicle/i }));
 
     expect(global.alert).toHaveBeenCalledWith(
-      'VIN is required before saving a vehicle.'
+      'A vehicle ID (VIN/HIN/Serial) is required before saving.'
     );
     expect(mockAddOrUpdateVehicle).not.toHaveBeenCalled();
   });
@@ -144,7 +146,10 @@ describe('AddVehicle page', () => {
 
     renderPage();
 
-    await userEvent.type(screen.getByLabelText(/^vin$/i), '1HGCM82633A004352');
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      '1HGCM82633A004352'
+    );
     await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
 
     await waitFor(() => {
@@ -160,7 +165,7 @@ describe('AddVehicle page', () => {
     renderPage();
 
     await userEvent.type(
-      screen.getByLabelText(/^vin$/i),
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
       ' 1HGCM82633A004352 '
     );
     await userEvent.type(screen.getByLabelText(/mileage/i), '50000');
@@ -179,7 +184,7 @@ describe('AddVehicle page', () => {
     renderPage();
     await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
     expect(global.alert).toHaveBeenCalledWith(
-      'Enter the VIN first. If VIN lookup cannot fill every field, you can still type Year, Make, and Model yourself before saving.'
+      'Enter a VIN first for decode. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
     );
   });
 });

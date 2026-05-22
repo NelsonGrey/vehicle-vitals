@@ -31,6 +31,19 @@ import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { decodeVin } from '../utils/vehicleService';
 
+const VEHICLE_TYPE_OPTIONS = [
+  'Car',
+  'Truck',
+  'Motorcycle',
+  'Recreational Vehicle (RV)',
+  'Boat',
+  'Van',
+  'SUV',
+  'Trailer',
+  'ATV/UTV',
+  'Other',
+];
+
 interface VinInsights {
   vin?: string;
   make?: string;
@@ -158,7 +171,9 @@ export default function EditVehicle() {
     if (!form) return;
     const v = (form.vin || '').trim();
     if (!v) {
-      alert('Enter a VIN first');
+      alert(
+        'Enter a VIN first for decode. Non-VIN assets can be saved using the vehicle ID.'
+      );
       return;
     }
     try {
@@ -368,13 +383,36 @@ export default function EditVehicle() {
               </select>
             </div>
 
+            <div>
+              <label
+                htmlFor="vehicleType"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Vehicle Type
+              </label>
+              <select
+                id="vehicleType"
+                name="vehicleType"
+                value={form.vehicleType || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                <option value="">Select Vehicle Type</option>
+                {VEHICLE_TYPE_OPTIONS.map(type => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* VIN */}
             <div>
               <label
                 htmlFor="vin"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                VIN
+                Vehicle ID (VIN/HIN/Serial)
               </label>
               <input
                 id="vin"
@@ -382,11 +420,12 @@ export default function EditVehicle() {
                 name="vin"
                 value={form.vin || ''}
                 onChange={handleChange}
-                placeholder="Vehicle Identification Number"
+                placeholder="VIN, HIN, or serial number"
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               />
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Enter VIN and click Decode to prefill vehicle details
+                Enter VIN and click Decode to prefill compatible vehicle
+                details, or maintain this vehicle manually for non-VIN assets.
               </p>
             </div>
 

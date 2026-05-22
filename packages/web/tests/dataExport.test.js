@@ -263,7 +263,7 @@ describe('dataExport', () => {
           20
         );
         expect(mockJsPDF.text).toHaveBeenCalledWith(
-          'VIN: 1HGBH41JXMN109186',
+          'Vehicle ID: 1HGBH41JXMN109186',
           20,
           35
         );

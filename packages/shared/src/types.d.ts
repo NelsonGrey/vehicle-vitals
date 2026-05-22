@@ -5,6 +5,7 @@ export interface Vehicle {
   model: string;
   year: string;
   vin: string;
+  vehicleType?: string;
   mileage: string;
   purchaseDate: string;
   nextDueByMiles?: string;

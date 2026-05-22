@@ -99,3 +99,10 @@ export const generateVehicleRecordAttachmentPath = async (
   const extension = fileName.includes('.') ? fileName.split('.').pop() : 'bin';
   return `users/${userId}/vehicles/${vin}/records/${recordId}/${timestamp}.${extension}`;
 };
+
+export const generateVehiclePhotoPath = async (vin, fileName) => {
+  const userId = await getCurrentUserIdOrThrow();
+  const timestamp = Date.now();
+  const extension = fileName.includes('.') ? fileName.split('.').pop() : 'jpg';
+  return `users/${userId}/vehicles/${vin}/photo/${timestamp}.${extension}`;
+};

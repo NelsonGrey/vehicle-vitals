@@ -130,9 +130,10 @@ class CalendarService {
       event = await _callCalendarEventHttp(payload);
     }
 
+    final prefixLength = vehicleVin.length < 8 ? vehicleVin.length : 8;
     _logger.info('Calendar event created', {
       'target': selectedTarget,
-      'vehicleVinPrefix': vehicleVin.substring(0, 8),
+      'vehicleVinPrefix': vehicleVin.substring(0, prefixLength),
     });
     return event;
   }

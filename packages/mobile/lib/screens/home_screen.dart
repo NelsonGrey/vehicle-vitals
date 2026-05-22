@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../components/app_bottom_nav.dart';
 import '../components/inline_ad_section.dart';
@@ -21,6 +22,51 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _searchTerm = '';
   String? _selectedVin;
+
+  bool _isStored(Vehicle vehicle) => vehicle.vehicleStatus == 'stored';
+
+  String _statusLabel(Vehicle vehicle) =>
+      _isStored(vehicle) ? 'Stored' : 'In Garage';
+
+  Future<void> _openAttributionUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      return;
+    }
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildVehicleThumbnail({required Vehicle vehicle, double width = 72}) {
+    final imageUrl = (vehicle.photoUrl ?? '').trim();
+    if (imageUrl.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          imageUrl,
+          width: width,
+          height: 52,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: width,
+            height: 52,
+            color: Colors.grey.shade200,
+            child: const Icon(Icons.directions_car, size: 20),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: width,
+      height: 52,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.directions_car, size: 20),
+    );
+  }
 
   void _handleAddVehicleTap({
     required int currentVehicleCount,
@@ -315,20 +361,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 vehicle.model.toLowerCase().contains(q) ||
                 vehicle.year.toString().contains(q);
           }).toList();
+          final activeVehicles = filtered
+              .where((vehicle) => !_isStored(vehicle))
+              .toList();
+          final storedVehicles = filtered
+              .where((vehicle) => _isStored(vehicle))
+              .toList();
+          final displayVehicles = [...activeVehicles, ...storedVehicles];
 
-          if (_selectedVin == null && filtered.isNotEmpty) {
-            _selectedVin = filtered.first.vin;
+          if (_selectedVin == null && displayVehicles.isNotEmpty) {
+            _selectedVin = displayVehicles.first.vin;
           }
 
           Vehicle? selected;
           if (_selectedVin != null) {
-            for (final vehicle in filtered) {
+            for (final vehicle in displayVehicles) {
               if (vehicle.vin == _selectedVin) {
                 selected = vehicle;
                 break;
               }
             }
-            selected ??= filtered.isNotEmpty ? filtered.first : null;
+            selected ??= displayVehicles.isNotEmpty
+                ? displayVehicles.first
+                : null;
             _selectedVin = selected?.vin;
           }
 
@@ -394,6 +449,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
+                Text(
+                  '${activeVehicles.length} active • ${storedVehicles.length} stored',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 12),
                 Expanded(
                   child: filtered.isEmpty
                       ? const Center(
@@ -405,89 +465,140 @@ class _HomeScreenState extends State<HomeScreen> {
                               flex: 3,
                               child: Card(
                                 margin: EdgeInsets.zero,
-                                child: ListView.builder(
+                                child: ListView(
                                   padding: const EdgeInsets.all(12),
-                                  itemCount: filtered.length,
-                                  itemBuilder: (context, index) {
-                                    final vehicle = filtered[index];
-                                    final isSelected =
-                                        vehicle.vin == selected?.vin;
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 8),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? colorScheme.primary.withValues(
-                                                alpha: 0.12,
-                                              )
-                                            : colorScheme.surface,
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? colorScheme.primary.withValues(
-                                                  alpha: 0.45,
-                                                )
-                                              : colorScheme.outline,
+                                  children: [
+                                    for (final section in [
+                                      ('Active Garage', activeVehicles),
+                                      ('Storage', storedVehicles),
+                                    ]) ...[
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8,
+                                          top: 4,
                                         ),
-                                      ),
-                                      child: ListTile(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedVin = vehicle.vin;
-                                          });
-                                        },
-                                        title: Text(
-                                          '${vehicle.year} ${vehicle.make} ${vehicle.model}',
-                                          style: const TextStyle(
+                                        child: Text(
+                                          section.$1,
+                                          style: TextStyle(
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w700,
+                                            color: colorScheme.onSurfaceVariant,
                                           ),
                                         ),
-                                        subtitle: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'VIN: ${vehicle.vin}',
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            Builder(
-                                              builder: (ctx) {
-                                                final chip =
-                                                    _maintenanceUrgencyChip(
-                                                      vehicle,
-                                                      colorScheme,
-                                                    );
-                                                return chip ??
-                                                    const SizedBox.shrink();
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        trailing: vehicle.recallsCount > 0
-                                            ? Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: colorScheme.secondary
-                                                      .withValues(alpha: 0.18),
-                                                  borderRadius:
-                                                      BorderRadius.circular(99),
-                                                ),
-                                                child: Text(
-                                                  '${vehicle.recallsCount} recalls',
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              )
-                                            : null,
                                       ),
-                                    );
-                                  },
+                                      if (section.$2.isEmpty)
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                            bottom: 8,
+                                          ),
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: colorScheme.outline,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            section.$1 == 'Storage'
+                                                ? 'No stored vehicles match this filter.'
+                                                : 'No active vehicles match this filter.',
+                                          ),
+                                        ),
+                                      for (final vehicle in section.$2)
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                            bottom: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: vehicle.vin == selected?.vin
+                                                ? colorScheme.primary
+                                                      .withValues(alpha: 0.12)
+                                                : colorScheme.surface,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            border: Border.all(
+                                              color:
+                                                  vehicle.vin == selected?.vin
+                                                  ? colorScheme.primary
+                                                        .withValues(alpha: 0.45)
+                                                  : colorScheme.outline,
+                                            ),
+                                          ),
+                                          child: ListTile(
+                                            onTap: () {
+                                              setState(() {
+                                                _selectedVin = vehicle.vin;
+                                              });
+                                            },
+                                            leading: _buildVehicleThumbnail(
+                                              vehicle: vehicle,
+                                              width: 64,
+                                            ),
+                                            title: Text(
+                                              '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            subtitle: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  'VIN: ${vehicle.vin}',
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                Text(_statusLabel(vehicle)),
+                                                Builder(
+                                                  builder: (ctx) {
+                                                    final chip =
+                                                        _maintenanceUrgencyChip(
+                                                          vehicle,
+                                                          colorScheme,
+                                                        );
+                                                    return chip ??
+                                                        const SizedBox.shrink();
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                            trailing: vehicle.recallsCount > 0
+                                                ? Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 4,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: colorScheme
+                                                          .secondary
+                                                          .withValues(
+                                                            alpha: 0.18,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            99,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      '${vehicle.recallsCount} recalls',
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ),
@@ -500,89 +611,169 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ? const Center(
                                         child: Text('Select a vehicle'),
                                       )
-                                    : Padding(
-                                        padding: const EdgeInsets.all(14),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${selected.year} ${selected.make} ${selected.model}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 18,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text('VIN: ${selected.vin}'),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Mileage: ${selected.mileage} miles',
-                                            ),
-                                            const SizedBox(height: 8),
-                                            if (selected.recallsCount > 0)
-                                              Text(
-                                                'Open recalls: ${selected.recallsCount}',
-                                                style: TextStyle(
-                                                  color: colorScheme.secondary,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            _buildMaintenanceSection(
-                                              context,
-                                              selected,
-                                              colorScheme,
-                                            ),
-                                            const Spacer(),
-                                            Row(
+                                    : Builder(
+                                        builder: (context) {
+                                          final activeVehicle = selected;
+                                          if (activeVehicle == null) {
+                                            return const SizedBox.shrink();
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.all(14),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                Expanded(
-                                                  child: OutlinedButton.icon(
-                                                    onPressed: () => context.push(
-                                                      '/app/edit-vehicle/${selected!.vin}',
-                                                    ),
-                                                    icon: const Icon(
-                                                      Icons.edit,
-                                                      size: 16,
-                                                    ),
-                                                    label: const Text('Edit'),
+                                                _buildVehicleThumbnail(
+                                                  vehicle: activeVehicle,
+                                                  width: 120,
+                                                ),
+                                                const SizedBox(height: 10),
+                                                Text(
+                                                  '${activeVehicle.year} ${activeVehicle.make} ${activeVehicle.model}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 18,
                                                   ),
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: OutlinedButton.icon(
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'VIN: ${activeVehicle.vin}',
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Mileage: ${activeVehicle.mileage} miles',
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 4,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        _isStored(activeVehicle)
+                                                        ? colorScheme
+                                                              .surfaceContainerHighest
+                                                        : colorScheme.primary
+                                                              .withValues(
+                                                                alpha: 0.12,
+                                                              ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          99,
+                                                        ),
+                                                  ),
+                                                  child: Text(
+                                                    _statusLabel(activeVehicle),
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (activeVehicle.photoSource ==
+                                                        'wikimedia' &&
+                                                    (activeVehicle
+                                                                .photoAttributionUrl ??
+                                                            '')
+                                                        .isNotEmpty) ...[
+                                                  const SizedBox(height: 4),
+                                                  GestureDetector(
+                                                    onTap: () =>
+                                                        _openAttributionUrl(
+                                                          activeVehicle
+                                                                  .photoAttributionUrl ??
+                                                              '',
+                                                        ),
+                                                    child: Text(
+                                                      'Image source: Wikimedia (view source)',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            colorScheme.primary,
+                                                        decoration:
+                                                            TextDecoration
+                                                                .underline,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                                const SizedBox(height: 8),
+                                                if (activeVehicle.recallsCount >
+                                                    0)
+                                                  Text(
+                                                    'Open recalls: ${activeVehicle.recallsCount}',
+                                                    style: TextStyle(
+                                                      color:
+                                                          colorScheme.secondary,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                _buildMaintenanceSection(
+                                                  context,
+                                                  activeVehicle,
+                                                  colorScheme,
+                                                ),
+                                                const Spacer(),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: OutlinedButton.icon(
+                                                        onPressed: () =>
+                                                            context.push(
+                                                              '/app/edit-vehicle/${activeVehicle.vin}',
+                                                            ),
+                                                        icon: const Icon(
+                                                          Icons.edit,
+                                                          size: 16,
+                                                        ),
+                                                        label: const Text(
+                                                          'Edit',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: OutlinedButton.icon(
+                                                        onPressed: () =>
+                                                            context.push(
+                                                              '/app/records/${activeVehicle.vin}',
+                                                            ),
+                                                        icon: const Icon(
+                                                          Icons.folder_open,
+                                                          size: 16,
+                                                        ),
+                                                        label: const Text(
+                                                          'Records',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8),
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: ElevatedButton.icon(
                                                     onPressed: () => context.push(
-                                                      '/app/records/${selected!.vin}',
+                                                      '/app/maintenance/${activeVehicle.vin}',
                                                     ),
                                                     icon: const Icon(
-                                                      Icons.folder_open,
+                                                      Icons.build,
                                                       size: 16,
                                                     ),
                                                     label: const Text(
-                                                      'Records',
+                                                      'Maintenance',
                                                     ),
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 8),
-                                            SizedBox(
-                                              width: double.infinity,
-                                              child: ElevatedButton.icon(
-                                                onPressed: () => context.push(
-                                                  '/app/maintenance/${selected!.vin}',
-                                                ),
-                                                icon: const Icon(
-                                                  Icons.build,
-                                                  size: 16,
-                                                ),
-                                                label: const Text(
-                                                  'Maintenance',
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                          );
+                                        },
                                       ),
                               ),
                             ),

@@ -20,6 +20,7 @@ import {
 } from '../shared/licensePlateUtils';
 import {
   generateMaintenanceAttachmentPath,
+  generateVehiclePhotoPath,
   uploadFile,
 } from '../shared/storageService';
 import {
@@ -29,7 +30,9 @@ import {
 } from '../shared/useMonetization';
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
+import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { decodeVin } from '../utils/vehicleService';
+import { transferVehicle } from '../utils/vehicleTransferService';
 
 const VEHICLE_TYPE_OPTIONS = [
   'Car',
@@ -42,6 +45,11 @@ const VEHICLE_TYPE_OPTIONS = [
   'Trailer',
   'ATV/UTV',
   'Other',
+];
+
+const VEHICLE_STATUS_OPTIONS = [
+  { value: 'active', label: 'In Garage' },
+  { value: 'stored', label: 'In Storage' },
 ];
 
 interface VinInsights {
@@ -80,6 +88,12 @@ interface Vehicle {
   make: string;
   model: string;
   year: string;
+  vehicleStatus?: 'active' | 'stored';
+  photoUrl?: string;
+  photoPath?: string;
+  photoSource?: string;
+  photoAttributionUrl?: string;
+  photoAttributionText?: string;
   licensePlate?: string;
   mileage: string;
   purchaseDate?: string;
@@ -128,7 +142,10 @@ export default function EditVehicle() {
     | { title?: string; cost?: string; date?: string; mileage?: string }
     | undefined;
   const [form, setForm] = useState<Vehicle | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [plateValidationError, setPlateValidationError] = useState<string>();
+  const [transferEmail, setTransferEmail] = useState('');
+  const [transferBusy, setTransferBusy] = useState(false);
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form?.year, make: form?.make });
 
@@ -136,7 +153,14 @@ export default function EditVehicle() {
     const fetchVehicle = async () => {
       if (!vin) return;
       const v = await getVehicle(vin);
-      setForm(v);
+      setForm(
+        v
+          ? {
+              ...v,
+              vehicleStatus: v.vehicleStatus === 'stored' ? 'stored' : 'active',
+            }
+          : v
+      );
     };
     fetchVehicle();
   }, [vin]);
@@ -158,12 +182,120 @@ export default function EditVehicle() {
   };
 
   const handleUpdate = async () => {
+    if (!form) return;
     try {
-      await updateVehicle(vin, form);
+      let updates: Vehicle = { ...form };
+
+      if (!updates.photoUrl && updates.make && updates.model) {
+        const candidate = await findVehiclePhotoFromWeb({
+          year: updates.year,
+          make: updates.make,
+          model: updates.model,
+          vehicleType: updates.vehicleType,
+        });
+
+        if (candidate) {
+          updates = {
+            ...updates,
+            photoUrl: candidate.url,
+            photoSource: candidate.source,
+            photoAttributionUrl: candidate.attributionUrl,
+            photoAttributionText: candidate.attributionText,
+          };
+        }
+      }
+
+      await updateVehicle(vin, updates);
       alert('Vehicle updated successfully');
       navigate('/');
     } catch (err) {
       alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
+  const handleVehiclePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!form) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const trimmedVin = (form.vin || '').trim();
+    if (!trimmedVin) {
+      alert('Vehicle ID is required to upload a photo.');
+      event.target.value = '';
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      const path = await generateVehiclePhotoPath(trimmedVin, file.name);
+      const uploaded = await uploadFile(file, path);
+      setForm(prev =>
+        prev
+          ? {
+              ...prev,
+              photoUrl: uploaded.url,
+              photoPath: uploaded.path,
+              photoSource: 'user_upload',
+              photoAttributionUrl: '',
+              photoAttributionText: '',
+            }
+          : prev
+      );
+    } catch (error) {
+      alert(
+        'Photo upload failed: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setPhotoBusy(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleLookupVehiclePhoto = async () => {
+    if (!form) return;
+    if (!form.make || !form.model) {
+      alert(
+        'Provide at least make and model before searching for a web photo.'
+      );
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      const candidate = await findVehiclePhotoFromWeb({
+        year: form.year,
+        make: form.make,
+        model: form.model,
+        vehicleType: form.vehicleType,
+      });
+
+      if (!candidate) {
+        alert('No matching web photo found. You can upload your own photo.');
+        return;
+      }
+
+      setForm(prev =>
+        prev
+          ? {
+              ...prev,
+              photoUrl: candidate.url,
+              photoPath: '',
+              photoSource: candidate.source,
+              photoAttributionUrl: candidate.attributionUrl,
+              photoAttributionText: candidate.attributionText,
+            }
+          : prev
+      );
+    } catch (error) {
+      alert(
+        'Web photo lookup failed: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setPhotoBusy(false);
     }
   };
 
@@ -254,6 +386,40 @@ export default function EditVehicle() {
       alert(
         'Error deleting: ' + (err instanceof Error ? err.message : String(err))
       );
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (!form) return;
+
+    const recipientEmail = transferEmail.trim().toLowerCase();
+    if (!recipientEmail) {
+      alert('Enter the recipient email before transferring this vehicle.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Transfer ${form.year} ${form.make} ${form.model} to ${recipientEmail}? This will remove it from your garage.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setTransferBusy(true);
+    try {
+      await transferVehicle({
+        vin: form.vin,
+        recipientEmail,
+      });
+      alert(`Vehicle transferred to ${recipientEmail}.`);
+      navigate('/app');
+    } catch (error) {
+      alert(
+        'Transfer failed: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setTransferBusy(false);
     }
   };
 
@@ -385,6 +551,32 @@ export default function EditVehicle() {
 
             <div>
               <label
+                htmlFor="vehicleStatus"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Location Status
+              </label>
+              <select
+                id="vehicleStatus"
+                name="vehicleStatus"
+                value={form.vehicleStatus || 'active'}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                {VEHICLE_STATUS_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Stored vehicles remain tracked but display separately from your
+                active garage.
+              </p>
+            </div>
+
+            <div>
+              <label
                 htmlFor="vehicleType"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
@@ -492,6 +684,75 @@ export default function EditVehicle() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="transferEmail"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Transfer Vehicle
+              </label>
+              <input
+                id="transferEmail"
+                type="email"
+                value={transferEmail}
+                onChange={event => setTransferEmail(event.target.value)}
+                placeholder="Recipient account email"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">
+                Transfer moves this vehicle and its maintenance/reminder history
+                to another existing user account.
+              </p>
+              <button
+                type="button"
+                onClick={handleTransfer}
+                disabled={transferBusy}
+                className="w-full px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-60"
+              >
+                {transferBusy ? 'Transferring...' : 'Transfer Vehicle'}
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Vehicle Photo
+              </label>
+              {form.photoUrl ? (
+                <div className="mb-2 rounded-md border border-slate-200 dark:border-slate-700 p-2">
+                  <img
+                    src={form.photoUrl}
+                    alt="Vehicle preview"
+                    className="h-28 w-full object-cover rounded"
+                  />
+                  {form.photoSource === 'wikimedia' && (
+                    <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Source: Wikimedia
+                    </p>
+                  )}
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleVehiclePhotoUpload}
+                  disabled={photoBusy}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  onClick={handleLookupVehiclePhoto}
+                  disabled={photoBusy}
+                  className="w-full px-3 py-2 bg-slate-500 hover:bg-slate-600 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-60"
+                >
+                  Find Free Web Photo (Beta)
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Public web matches may not always reflect exact trim or color.
+              </p>
             </div>
 
             {/* Buttons */}

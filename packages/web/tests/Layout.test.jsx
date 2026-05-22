@@ -48,7 +48,7 @@ describe('Layout Component', () => {
     expect(screen.getByTestId('site-footer')).toBeInTheDocument();
   });
 
-  it('uses a centered 1024px shell and keeps inline ad outside main content', () => {
+  it('uses a centered 1280px shell and keeps inline ad outside main content', () => {
     const { container } = render(
       <MemoryRouter
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
@@ -62,9 +62,7 @@ describe('Layout Component', () => {
 
     const mainContentContainer = container.querySelector('main > div');
     expect(mainContentContainer).toBeTruthy();
-    expect(mainContentContainer?.classList.contains('max-w-[1024px]')).toBe(
-      true
-    );
+    expect(mainContentContainer?.classList.contains('max-w-7xl')).toBe(true);
     expect(mainContentContainer?.classList.contains('mx-auto')).toBe(true);
 
     const mainEl = container.querySelector('main');

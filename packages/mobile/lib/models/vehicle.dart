@@ -4,6 +4,7 @@ class Vehicle {
   final String model;
   final int year;
   final int mileage;
+  final String vehicleStatus;
   final int recallsCount;
   final String? recallsSource;
   final String? engineType;
@@ -13,6 +14,11 @@ class Vehicle {
   final String? transmissionStyle;
   final String? trim;
   final String? vehicleType;
+  final String? photoUrl;
+  final String? photoPath;
+  final String? photoSource;
+  final String? photoAttributionUrl;
+  final String? photoAttributionText;
   final List<Map<String, dynamic>>? recallsItems;
   final Map<String, dynamic>? vinProfile;
   final Map<String, dynamic>? vinInsights;
@@ -29,6 +35,7 @@ class Vehicle {
     required this.model,
     required this.year,
     required this.mileage,
+    this.vehicleStatus = 'active',
     this.recallsCount = 0,
     this.recallsSource,
     this.engineType,
@@ -38,6 +45,11 @@ class Vehicle {
     this.transmissionStyle,
     this.trim,
     this.vehicleType,
+    this.photoUrl,
+    this.photoPath,
+    this.photoSource,
+    this.photoAttributionUrl,
+    this.photoAttributionText,
     this.recallsItems,
     this.vinProfile,
     this.vinInsights,
@@ -56,6 +68,7 @@ class Vehicle {
       model: map['model'] ?? '',
       year: map['year'] ?? 0,
       mileage: map['mileage'] ?? 0,
+      vehicleStatus: (map['vehicleStatus'] ?? 'active').toString(),
       recallsCount: map['recallsCount'] ?? 0,
       recallsSource: map['recallsSource'],
       engineType: map['engineType'],
@@ -65,6 +78,11 @@ class Vehicle {
       transmissionStyle: map['transmissionStyle'],
       trim: map['trim'],
       vehicleType: map['vehicleType'],
+      photoUrl: map['photoUrl'],
+      photoPath: map['photoPath'],
+      photoSource: map['photoSource'],
+      photoAttributionUrl: map['photoAttributionUrl'],
+      photoAttributionText: map['photoAttributionText'],
       recallsItems: (map['recallsItems'] as List?)
           ?.map((item) => Map<String, dynamic>.from(item as Map))
           .toList(),
@@ -92,6 +110,7 @@ class Vehicle {
       'model': model,
       'year': year,
       'mileage': mileage,
+      'vehicleStatus': vehicleStatus,
       'recallsCount': recallsCount,
       'recallsSource': recallsSource,
       'engineType': engineType,
@@ -101,6 +120,11 @@ class Vehicle {
       'transmissionStyle': transmissionStyle,
       'trim': trim,
       'vehicleType': vehicleType,
+      'photoUrl': photoUrl,
+      'photoPath': photoPath,
+      'photoSource': photoSource,
+      'photoAttributionUrl': photoAttributionUrl,
+      'photoAttributionText': photoAttributionText,
       'recallsItems': recallsItems,
       'vinProfile': vinProfile,
       'vinInsights': vinInsights,
@@ -127,6 +151,7 @@ class Vehicle {
     String? model,
     int? year,
     int? mileage,
+    String? vehicleStatus,
     int? recallsCount,
     String? recallsSource,
     String? engineType,
@@ -136,6 +161,11 @@ class Vehicle {
     String? transmissionStyle,
     String? trim,
     String? vehicleType,
+    String? photoUrl,
+    String? photoPath,
+    String? photoSource,
+    String? photoAttributionUrl,
+    String? photoAttributionText,
     List<Map<String, dynamic>>? recallsItems,
     Map<String, dynamic>? vinProfile,
     Map<String, dynamic>? vinInsights,
@@ -152,6 +182,7 @@ class Vehicle {
       model: model ?? this.model,
       year: year ?? this.year,
       mileage: mileage ?? this.mileage,
+      vehicleStatus: vehicleStatus ?? this.vehicleStatus,
       recallsCount: recallsCount ?? this.recallsCount,
       recallsSource: recallsSource ?? this.recallsSource,
       engineType: engineType ?? this.engineType,
@@ -161,6 +192,11 @@ class Vehicle {
       transmissionStyle: transmissionStyle ?? this.transmissionStyle,
       trim: trim ?? this.trim,
       vehicleType: vehicleType ?? this.vehicleType,
+      photoUrl: photoUrl ?? this.photoUrl,
+      photoPath: photoPath ?? this.photoPath,
+      photoSource: photoSource ?? this.photoSource,
+      photoAttributionUrl: photoAttributionUrl ?? this.photoAttributionUrl,
+      photoAttributionText: photoAttributionText ?? this.photoAttributionText,
       recallsItems: recallsItems ?? this.recallsItems,
       vinProfile: vinProfile ?? this.vinProfile,
       vinInsights: vinInsights ?? this.vinInsights,

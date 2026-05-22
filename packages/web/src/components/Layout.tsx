@@ -10,12 +10,12 @@ export default function Layout() {
       <SiteHeader overlay={false} />
       <HeaderAdBar />
       <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900">
-        <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-4">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-4">
           <Outlet />
         </div>
       </main>
       <div className="shrink-0 bg-slate-50 dark:bg-slate-900">
-        <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-3">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-3">
           <InlineAdSection placement="maintenanceHistory" />
         </div>
       </div>

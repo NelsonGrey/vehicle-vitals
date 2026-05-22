@@ -166,7 +166,7 @@ export default function Landing() {
       <HeaderAdBar />
       <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900">
         <section className="py-8 sm:py-10 lg:py-12">
-          <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5">
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-5">
             <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-900 shadow-2xl">
               <img
                 src="/images/hero-garage.jpg"
@@ -389,7 +389,7 @@ export default function Landing() {
         </section>
       </main>
       <div className="shrink-0 bg-slate-50 dark:bg-slate-900">
-        <div className="w-full max-w-[1024px] mx-auto px-4 sm:px-5 py-3">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-3">
           <InlineAdSection placement="maintenanceHistory" />
         </div>
       </div>

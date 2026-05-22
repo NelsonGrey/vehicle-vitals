@@ -3,6 +3,40 @@
 Last updated: May 19, 2026 (interactive demo pipeline update)
 Primary production project: `vehicle-vitals-prod`
 
+## Development Progress Update (May 22, 2026)
+
+Status: Garage lifecycle and ownership transfer capability implemented across backend, web, and mobile.
+
+Progress evaluation completed:
+
+- Vehicle lifecycle state added as `vehicleStatus` (`active` or `stored`) across shared/web/mobile data models.
+- Garage UI now separates active vehicles and storage vehicles on both web and mobile.
+- Vehicle edit flows now support status changes (`In Garage` / `In Storage`) on web and mobile.
+- New secure callable `transferVehicleCallable` implemented in functions:
+  - Transfers vehicle doc ownership between users by recipient email/uid.
+  - Copies and moves subcollections: `maintenance`, `reminders`, `attachmentAnalyses`.
+  - Prevents self-transfer and duplicate VIN transfer collisions.
+  - Preserves idempotency behavior and writes transfer audit events.
+
+Automation updates delivered:
+
+- Functions integration testing now includes transfer callable coverage for document/subcollection migration behavior.
+- Web unit testing expanded to validate:
+  - Edit flow status persistence (`vehicleStatus`).
+  - Transfer flow validation and successful transfer action handling.
+  - Garage active/storage section rendering and status summary.
+- Web UAT updated:
+  - Shell width assertion aligned to 1280px baseline.
+  - Add Vehicle acceptance now validates location status options.
+- Mobile unit testing expanded with model-level coverage for `vehicleStatus` defaults and serialization/copy behavior.
+
+Validation snapshot:
+
+- Functions build: PASS (`npm --workspace=packages/functions run build`)
+- Functions integration tests (focused transfer + adjacent callables): PASS
+- Web unit suite: PASS (`311/311`)
+- Flutter analyzer: PASS (`No issues found`)
+
 ## Development Progress Update (May 20, 2026)
 
 Status: Quality automation strengthened; baseline local verification passed.

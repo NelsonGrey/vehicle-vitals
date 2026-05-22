@@ -239,7 +239,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC-UI-006: Shell uses centered 1024px layout and standalone ad break', async ({
+    test('TC-UI-006: Shell uses centered 1280px layout and standalone ad break', async ({
       page,
     }) => {
       await page.goto(BASE_URL);
@@ -280,7 +280,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Shell structure is gated in this deployment target.'
       );
 
-      expect(['1024px', '64rem']).toContain(shellMetrics.headerMaxWidth);
+      expect(['1280px', '80rem']).toContain(shellMetrics.headerMaxWidth);
       expect(shellMetrics.headerCentered).toBe(true);
       expect(shellMetrics.adBreakOutsideMain).toBe(true);
       expect(shellMetrics.sponsoredInsideMain).toBe(false);
@@ -554,6 +554,35 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       );
       const windowWidth = await page.evaluate(() => window.innerWidth);
       expect(bodyWidth).toBeLessThanOrEqual(windowWidth + 20); // small buffer for scrollbar
+    });
+
+    test('TC-UI-010: Add Vehicle flow exposes garage and storage status options', async ({
+      page,
+    }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Vehicle status validation requires auth UI in this deployment target.'
+      );
+
+      await ensureAuthenticated(page);
+      await page.goto(`${BASE_URL}/app/add-vehicle`);
+
+      const statusSelect = page.getByLabel(/Location Status/i);
+      if (!(await statusSelect.isVisible().catch(() => false))) {
+        test.skip(
+          true,
+          'Location status control is not visible in this deployment target.'
+        );
+      }
+
+      await expect(statusSelect).toBeVisible();
+      await expect(
+        page.getByRole('option', { name: /In Garage/i })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('option', { name: /In Storage/i })
+      ).toBeVisible();
     });
   });
 

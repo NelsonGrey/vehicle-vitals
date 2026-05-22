@@ -9,6 +9,7 @@ const mockGetVehicle = vi.fn();
 const mockUpdateVehicle = vi.fn();
 const mockDeleteVehicle = vi.fn();
 const mockDecodeVin = vi.fn();
+const mockTransferVehicle = vi.fn();
 
 vi.mock('../src/hooks/useVehicleOptions', () => ({
   default: () => ({
@@ -46,6 +47,10 @@ vi.mock('../src/utils/vehicleService', () => ({
   decodeVin: (...args) => mockDecodeVin(...args),
 }));
 
+vi.mock('../src/utils/vehicleTransferService', () => ({
+  transferVehicle: (...args) => mockTransferVehicle(...args),
+}));
+
 vi.mock('@vehicle-vitals/shared', () => ({
   getUpcomingMaintenance: vi.fn(() => []),
 }));
@@ -78,6 +83,7 @@ const BASE_VEHICLE = {
   mileage: '45000',
   licensePlate: 'ABC123',
   purchaseDate: '2020-01-01',
+  vehicleStatus: 'active',
 };
 
 describe('EditVehicle page', () => {
@@ -123,10 +129,78 @@ describe('EditVehicle page', () => {
     await waitFor(() => {
       expect(mockUpdateVehicle).toHaveBeenCalledWith(
         'TESTVIN123',
-        expect.objectContaining({ mileage: '50000' })
+        expect.objectContaining({ mileage: '50000', vehicleStatus: 'active' })
       );
       expect(global.alert).toHaveBeenCalledWith('Vehicle updated successfully');
       expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('saves storage status selection', async () => {
+    mockUpdateVehicle.mockResolvedValue(undefined);
+    renderPage();
+
+    await waitFor(() => screen.getByLabelText(/location status/i));
+    await userEvent.selectOptions(
+      screen.getByLabelText(/location status/i),
+      'stored'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /save changes/i })
+    );
+
+    await waitFor(() => {
+      expect(mockUpdateVehicle).toHaveBeenCalledWith(
+        'TESTVIN123',
+        expect.objectContaining({ vehicleStatus: 'stored' })
+      );
+    });
+  });
+
+  it('requires recipient email before transferring', async () => {
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'Enter the recipient email before transferring this vehicle.'
+    );
+    expect(mockTransferVehicle).not.toHaveBeenCalled();
+  });
+
+  it('transfers vehicle and navigates to app', async () => {
+    mockTransferVehicle.mockResolvedValue({
+      success: true,
+      recipientEmail: 'recipient@example.com',
+    });
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByPlaceholderText(/recipient account email/i)
+    );
+    await userEvent.type(
+      screen.getByPlaceholderText(/recipient account email/i),
+      'recipient@example.com'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+
+    await waitFor(() => {
+      expect(global.confirm).toHaveBeenCalled();
+      expect(mockTransferVehicle).toHaveBeenCalledWith({
+        vin: 'TESTVIN123',
+        recipientEmail: 'recipient@example.com',
+      });
+      expect(global.alert).toHaveBeenCalledWith(
+        'Vehicle transferred to recipient@example.com.'
+      );
+      expect(mockNavigate).toHaveBeenCalledWith('/app');
     });
   });
 

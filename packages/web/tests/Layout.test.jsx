@@ -46,6 +46,9 @@ describe('Layout Component', () => {
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
     expect(screen.getByTestId('inline-ad-section')).toBeInTheDocument();
     expect(screen.getByTestId('site-footer')).toBeInTheDocument();
+    expect(
+      screen.getByText(/you are viewing: product overview/i)
+    ).toBeInTheDocument();
   });
 
   it('uses a centered 1280px shell and keeps inline ad outside main content', () => {
@@ -68,5 +71,41 @@ describe('Layout Component', () => {
     const mainEl = container.querySelector('main');
     const inlineAdEl = screen.getAllByTestId('inline-ad-section')[0];
     expect(mainEl?.contains(inlineAdEl)).toBe(false);
+  });
+
+  it('shows app workspace context cues on app routes', () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/app']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <Layout />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText(/you are viewing: application workspace/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: /help & how-to/i }).length
+    ).toBeGreaterThan(0);
+  });
+
+  it('shows help context cues on help routes', () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/help']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <Layout />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText(/you are viewing: help & how-to/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: /application workspace/i }).length
+    ).toBeGreaterThan(0);
   });
 });

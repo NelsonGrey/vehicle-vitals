@@ -1,24 +1,24 @@
 # 🚀 IMMEDIATE TESTING INSTRUCTIONS
 
-## Local Quick Validation (May 18, 2026 update)
+## Local Quick Validation (May 26, 2026 update)
 
 Run these before triggering GitHub Actions to validate navigation, shell/ad layout behavior, and video/help walkthrough presence.
 
 1. `cd packages/web`
-2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/MarketingVideoPanel.test.jsx`
-3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006|TC-UI-007|TC-UI-008"`
+2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/Landing.media.test.jsx tests/AddVehicle.test.jsx tests/EditVehicle.test.jsx`
+3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006|TC-UI-007|TC-UI-008|TC-UI-010|TC-UI-011|TC-UI-012"`
 4. `ls -lh public/videos/feature-demos/*.mp4`
 
 Coverage objective for this update:
 
-- Logged-out users see marketing header navigation only.
-- Logged-in users see application header navigation only.
+- Logged-out users see marketing header navigation with context markers (`Product Overview`, `Help & How-To`) and no legacy `Home` link.
+- Logged-in users see application navigation plus persistent context markers (`Product Overview`, `Help & How-To`) and no marketing-only feature links.
 - Header auth control remains in fixed location and toggles by auth state.
-- Site shell is centered and width-limited to `1024px`.
+- Site shell is centered and width-limited to `1280px` (`max-w-7xl`).
 - Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
 - Marketing feature atlas renders real app capability screenshots.
 - Marketing video lanes render playable clips when available and gracefully fall back to poster preview when clips are missing.
-- Help and Getting Started routes surface walkthrough video sections with playable/fallback states.
+- Help and Getting Started routes preserve clear purpose boundaries, including explicit context labeling and walkthrough video/fallback states.
 
 ## Step 1: Test Emulator Tests Workflow
 

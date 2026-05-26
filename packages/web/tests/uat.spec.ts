@@ -239,7 +239,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC-UI-010: Marketing header starts with Getting Started and omits Home link', async ({
+    test('TC-UI-010: Marketing header exposes Product Overview and Help context links', async ({
       page,
     }) => {
       await page.goto(BASE_URL);
@@ -253,6 +253,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         return {
           hasLinks: marketingLinks.length > 0,
           firstLink: marketingLinks[0] || null,
+          hasProductOverview: marketingLinks.includes('Product Overview'),
+          hasHelpHowTo: marketingLinks.includes('Help & How-To'),
+          hasGettingStarted: marketingLinks.includes('Getting Started'),
           hasHome: marketingLinks.includes('Home'),
         };
       });
@@ -262,11 +265,14 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Marketing header links are unavailable in this deployment target.'
       );
 
-      expect(marketingNavMetrics.firstLink).toBe('Getting Started');
+      expect(marketingNavMetrics.firstLink).toBe('Product Overview');
+      expect(marketingNavMetrics.hasProductOverview).toBe(true);
+      expect(marketingNavMetrics.hasHelpHowTo).toBe(true);
+      expect(marketingNavMetrics.hasGettingStarted).toBe(true);
       expect(marketingNavMetrics.hasHome).toBe(false);
     });
 
-    test('TC-UI-011: Authenticated app header starts with Getting Started', async ({
+    test('TC-UI-011: Authenticated app header preserves Product Overview and Help context links', async ({
       page,
     }) => {
       await ensureAuthenticated(page);
@@ -282,6 +288,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         return {
           hasLinks: appLinks.length > 0,
           firstLink: appLinks[0] || null,
+          hasProductOverview: appLinks.includes('Product Overview'),
+          hasHelpHowTo: appLinks.includes('Help & How-To'),
+          hasGettingStarted: appLinks.includes('Getting Started'),
           hasGarage: appLinks.includes('Garage'),
         };
       });
@@ -296,7 +305,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Hosted environment still uses legacy authenticated nav ordering.'
       );
 
-      expect(appNavMetrics.firstLink).toBe('Getting Started');
+      expect(appNavMetrics.firstLink).toBe('Product Overview');
+      expect(appNavMetrics.hasProductOverview).toBe(true);
+      expect(appNavMetrics.hasHelpHowTo).toBe(true);
+      expect(appNavMetrics.hasGettingStarted).toBe(true);
       expect(appNavMetrics.hasGarage).toBe(true);
     });
 
@@ -347,32 +359,32 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(shellMetrics.sponsoredInsideMain).toBe(false);
     });
 
-    test('TC-UI-007: Marketing feature atlas and video showcase are present', async ({
+    test('TC-UI-007: Simplified marketing screenshots and short video tours are present', async ({
       page,
     }) => {
       await page.goto(BASE_URL);
 
       const marketingMediaMetrics = await page.evaluate(() => {
-        const hasFeatureAtlasHeading =
+        const hasScreensHeading =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Full application feature atlas')
+            node.textContent?.includes('Everyday screens you will use')
           ) !== undefined;
 
-        const hasVideoShowcaseHeading =
+        const hasShortVideosHeading =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Video showcase lanes')
+            node.textContent?.includes('Short video tours')
           ) !== undefined;
 
-        const atlasCards = document.querySelectorAll(
+        const screenshotCards = document.querySelectorAll(
           'section article img[alt*="application screenshot"]'
         ).length;
-        const videoLaneCards = Array.from(
+        const videoCards = Array.from(
           document.querySelectorAll('article')
         ).filter(
           article =>
-            article.textContent?.includes('Onboarding Walkthrough') ||
-            article.textContent?.includes('Maintenance Lifecycle Tour') ||
-            article.textContent?.includes('Cross-Platform Continuity')
+            article.textContent?.includes('Getting started video') ||
+            article.textContent?.includes('Service tracking video') ||
+            article.textContent?.includes('Web and mobile video')
         ).length;
 
         const playableOrPosterLabels = Array.from(
@@ -384,58 +396,75 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         ).length;
 
         return {
-          hasFeatureAtlasHeading,
-          hasVideoShowcaseHeading,
-          atlasCards,
-          videoLaneCards,
+          hasScreensHeading,
+          hasShortVideosHeading,
+          screenshotCards,
+          videoCards,
           playableOrPosterLabels,
         };
       });
 
       test.skip(
-        !marketingMediaMetrics.hasFeatureAtlasHeading ||
-          !marketingMediaMetrics.hasVideoShowcaseHeading,
-        'Enhanced marketing media sections are not exposed in this deployment target.'
+        !marketingMediaMetrics.hasScreensHeading ||
+          !marketingMediaMetrics.hasShortVideosHeading,
+        'Simplified marketing sections are not exposed in this deployment target.'
       );
 
-      expect(marketingMediaMetrics.atlasCards).toBeGreaterThanOrEqual(8);
-      expect(marketingMediaMetrics.videoLaneCards).toBeGreaterThanOrEqual(3);
+      expect(marketingMediaMetrics.screenshotCards).toBeGreaterThanOrEqual(6);
+      expect(marketingMediaMetrics.videoCards).toBeGreaterThanOrEqual(3);
       expect(
         marketingMediaMetrics.playableOrPosterLabels
       ).toBeGreaterThanOrEqual(3);
     });
 
-    test('TC-UI-008: Help and getting-started video walkthroughs are present', async ({
+    test('TC-UI-008: Help clearly separates product overview from how-to guidance', async ({
       page,
     }) => {
       await page.goto(`${BASE_URL}/help`);
 
       const helpMetrics = await page.evaluate(() => {
-        const hasHelpVideoHeading =
-          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Help Video Walkthroughs')
+        const hasHelpContextLabel =
+          Array.from(document.querySelectorAll('p, h1, h2, h3')).find(node =>
+            node.textContent?.includes('You are viewing: Help & How-To')
           ) !== undefined;
 
-        const helpVideoCards = Array.from(
-          document.querySelectorAll('article')
-        ).filter(
-          article =>
-            article.textContent?.includes('Getting Started Help') ||
-            article.textContent?.includes('Help Center Overview')
-        ).length;
+        const hasSeparationHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Product overview vs. Help')
+          ) !== undefined;
 
-        const helpPlayableOrPoster = Array.from(
-          document.querySelectorAll('article span')
-        ).filter(
-          node =>
-            node.textContent?.includes('Playable demo') ||
-            node.textContent?.includes('Poster preview')
+        const hasOverviewCard =
+          Array.from(document.querySelectorAll('article')).find(article =>
+            article.textContent?.includes('Use Product Overview for')
+          ) !== undefined;
+
+        const hasHelpCard =
+          Array.from(document.querySelectorAll('article')).find(article =>
+            article.textContent?.includes('Use Help for')
+          ) !== undefined;
+
+        const hasOverviewLink =
+          Array.from(document.querySelectorAll('a')).find(link =>
+            link.textContent?.includes('Go to product overview')
+          ) !== undefined;
+
+        const hasSetupLink =
+          Array.from(document.querySelectorAll('a')).find(link =>
+            link.textContent?.includes('Open setup steps')
+          ) !== undefined;
+
+        const helpArticles = Array.from(
+          document.querySelectorAll('article')
         ).length;
 
         return {
-          hasHelpVideoHeading,
-          helpVideoCards,
-          helpPlayableOrPoster,
+          hasHelpContextLabel,
+          hasSeparationHeading,
+          hasOverviewCard,
+          hasHelpCard,
+          hasOverviewLink,
+          hasSetupLink,
+          helpArticles,
         };
       });
 
@@ -444,12 +473,12 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       const gettingStartedMetrics = await page.evaluate(() => {
         const hasGettingStartedVideoHeading =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Getting Started Video')
+            node.textContent?.includes('Simple setup walkthrough')
           ) !== undefined;
 
         const hasWalkthroughCard =
           Array.from(document.querySelectorAll('article')).find(article =>
-            article.textContent?.includes('Getting Started Walkthrough')
+            article.textContent?.includes('Simple setup walkthrough')
           ) !== undefined;
 
         const hasPlayableOrPoster =
@@ -467,13 +496,17 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       });
 
       test.skip(
-        !helpMetrics.hasHelpVideoHeading ||
+        !helpMetrics.hasSeparationHeading ||
           !gettingStartedMetrics.hasGettingStartedVideoHeading,
-        'Help/getting-started video sections are not exposed in this deployment target.'
+        'Help/getting-started separation sections are not exposed in this deployment target.'
       );
 
-      expect(helpMetrics.helpVideoCards).toBeGreaterThanOrEqual(2);
-      expect(helpMetrics.helpPlayableOrPoster).toBeGreaterThanOrEqual(2);
+      expect(helpMetrics.hasOverviewCard).toBe(true);
+      expect(helpMetrics.hasHelpCard).toBe(true);
+      expect(helpMetrics.hasHelpContextLabel).toBe(true);
+      expect(helpMetrics.hasOverviewLink).toBe(true);
+      expect(helpMetrics.hasSetupLink).toBe(true);
+      expect(helpMetrics.helpArticles).toBeGreaterThanOrEqual(2);
       expect(gettingStartedMetrics.hasWalkthroughCard).toBe(true);
       expect(gettingStartedMetrics.hasPlayableOrPoster).toBe(true);
     });
@@ -526,7 +559,12 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Marketing header is not directly visible in this deployment target.'
       );
 
-      await expect(header.getByRole('link', { name: /^Home$/i })).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Product Overview/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Help & How-To/i })
+      ).toBeVisible();
       await expect(
         header.getByRole('link', { name: /VIN Decode/i })
       ).toBeVisible();
@@ -561,6 +599,12 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       ).toBeVisible();
       await expect(
         header.getByRole('link', { name: /^Upcoming$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Product Overview/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Help & How-To/i })
       ).toBeVisible();
 
       await expect(header.getByRole('link', { name: /^Home$/i })).toHaveCount(
@@ -617,7 +661,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(bodyWidth).toBeLessThanOrEqual(windowWidth + 20); // small buffer for scrollbar
     });
 
-    test('TC-UI-010: Add Vehicle flow exposes garage and storage status options', async ({
+    test('TC-UI-012: Add Vehicle flow exposes garage and storage status options', async ({
       page,
     }) => {
       const authUiAvailable = await isAuthUiAvailable(page);
@@ -702,6 +746,24 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         await expect(page.getByText(/free/i).first()).toBeVisible();
         await expect(page.getByText(/pro/i).first()).toBeVisible();
         await expect(page.getByText(/premium/i).first()).toBeVisible();
+        await expect(page.getByText(/enterprise/i).first()).toBeVisible();
+        await expect(
+          page.getByRole('button', { name: /contact sales/i })
+        ).toBeVisible();
+        await expect(
+          page.getByText(/25\+ vehicles \(contract\)/i)
+        ).toBeVisible();
+
+        const comparisonTable = page.getByRole('table').first();
+        await expect(comparisonTable).toBeVisible();
+        await expect(comparisonTable.getByText(/free/i).first()).toBeVisible();
+        await expect(comparisonTable.getByText(/pro/i).first()).toBeVisible();
+        await expect(
+          comparisonTable.getByText(/premium/i).first()
+        ).toBeVisible();
+        await expect(
+          comparisonTable.getByText(/enterprise/i).first()
+        ).toBeVisible();
       } else {
         await expect(page.locator('body')).toBeVisible();
         await expect(page).not.toHaveURL(/\/app\/subscription\/signin/i);
@@ -721,6 +783,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         await expect(supportHeading).toBeVisible();
         await expect(page.getByText(/organization controls/i)).toBeVisible();
         await expect(page.getByText(/organization members/i)).toBeVisible();
+        await expect(page.getByText(/finance drafts/i)).toBeVisible();
+        await expect(
+          page.getByText(/billing|retention/i).first()
+        ).toBeVisible();
       } else {
         await expect(page.locator('body')).toBeVisible();
         await expect(page).not.toHaveURL(/\/(error|500)/i);

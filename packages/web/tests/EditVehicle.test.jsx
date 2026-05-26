@@ -10,6 +10,7 @@ const mockUpdateVehicle = vi.fn();
 const mockDeleteVehicle = vi.fn();
 const mockDecodeVin = vi.fn();
 const mockTransferVehicle = vi.fn();
+const mockFindVehiclePhotoFromWeb = vi.fn();
 
 vi.mock('../src/hooks/useVehicleOptions', () => ({
   default: () => ({
@@ -49,6 +50,10 @@ vi.mock('../src/utils/vehicleService', () => ({
 
 vi.mock('../src/utils/vehicleTransferService', () => ({
   transferVehicle: (...args) => mockTransferVehicle(...args),
+}));
+
+vi.mock('../src/utils/vehiclePhotoService', () => ({
+  findVehiclePhotoFromWeb: (...args) => mockFindVehiclePhotoFromWeb(...args),
 }));
 
 vi.mock('@vehicle-vitals/shared', () => ({
@@ -95,6 +100,7 @@ describe('EditVehicle page', () => {
       vi.fn(() => true)
     );
     mockGetVehicle.mockResolvedValue({ ...BASE_VEHICLE });
+    mockFindVehiclePhotoFromWeb.mockResolvedValue(null);
   });
 
   afterEach(() => {

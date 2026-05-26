@@ -1,7 +1,42 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 22, 2026 (navigation + terminology alignment update)
+Last updated: May 26, 2026 (context separation + test reliability update)
 Primary production project: `vehicle-vitals-prod`
+
+## Development Progress Update (May 26, 2026 - Context Separation and Reliability)
+
+Status: Marketing, Help, and App workspace boundaries are now explicit in both page content and global navigation.
+
+Progress evaluation completed:
+
+- Added persistent route-aware context messaging in the shared app shell (`Product Overview`, `Help & How-To`, `Application Workspace`).
+- Added explicit context panel on landing so first-time users understand they are in product-overview mode.
+- Reinforced Help route labeling and retained a clear `Product overview vs. Help` separation section.
+- Promoted cross-context navigation in header for both logged-out and logged-in users:
+  - `Product Overview`
+  - `Help & How-To`
+  - Existing functional app links remain intact.
+
+Automation updates delivered:
+
+- Unit tests updated for context-aware UX and navigation behavior:
+  - `packages/web/tests/Layout.test.jsx`
+  - `packages/web/tests/Landing.media.test.jsx`
+  - `packages/web/tests/SiteHeader.test.jsx`
+- Unit test reliability hardening:
+  - `packages/web/tests/AddVehicle.test.jsx` now mocks `findVehiclePhotoFromWeb` for deterministic save-path assertions.
+  - `packages/web/tests/EditVehicle.test.jsx` now mocks `findVehiclePhotoFromWeb` for deterministic save-path assertions.
+- UAT coverage updated in `packages/web/tests/uat.spec.ts`:
+  - Marketing/authenticated header expectations aligned to `Product Overview` first-link model.
+  - Explicit checks added for `Help & How-To` visibility in both nav states.
+  - Help context label assertions added.
+  - Duplicate UI test case ID corrected (`TC-UI-012`).
+
+Validation snapshot:
+
+- Web unit suite: PASS (`322/322`) via `npm --prefix packages/web run test`.
+- Focused context/navigation suites: PASS.
+- UAT spec updated and ready for hosted Chromium validation in CI.
 
 ## Development Progress Update (May 22, 2026 - Navigation & Terminology Alignment)
 

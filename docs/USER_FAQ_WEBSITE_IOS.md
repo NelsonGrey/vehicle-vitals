@@ -143,8 +143,8 @@ Include relevant VIN/context when asking about record-specific issues.
 
 ### 23) How do I use Help and Getting Started pages?
 
-Use Getting Started for onboarding sequence and first-run actions.
-Use Help for common troubleshooting and task-based guidance.
+Use Getting Started for onboarding sequence and first-run actions after you are logged in.
+Use Help for common troubleshooting and task-based guidance from the footer Help link.
 Video walkthrough lanes are included where media is available.
 
 ### 24) Why do I sometimes see poster images instead of videos?

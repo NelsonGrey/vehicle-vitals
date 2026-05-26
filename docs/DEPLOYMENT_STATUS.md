@@ -1,7 +1,29 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 26, 2026 (context separation + test reliability update)
+Last updated: May 26, 2026 (header navigation visibility hardening)
 Primary production project: `vehicle-vitals-prod`
+
+## Development Progress Update (May 26, 2026 - Header Visibility Rules)
+
+Status: Header navigation now enforces role/state-specific visibility exactly as requested.
+
+Progress evaluation completed:
+
+- Logged-in header now hides `Product Overview`.
+- Header `Help & How-To` link removed; footer `Help` remains the primary help entry point.
+- `Getting Started` now renders only for authenticated users.
+- Logged-out marketing nav remains focused on feature demos (`VIN Decode`, `Maintenance`, `Cross Platform`, `Ownership History`) plus auth action.
+
+Automation updates delivered:
+
+- Unit coverage updated in `packages/web/tests/SiteHeader.test.jsx` to assert:
+  - Logged-out state: no `Product Overview`, no `Help & How-To`, no `Getting Started`.
+  - Logged-in state: `Getting Started` is visible while `Product Overview` and `Help & How-To` are absent.
+- UAT coverage updated in `packages/web/tests/uat.spec.ts` (`TC-UI-004`, `TC-UI-005`, `TC-UI-010`, `TC-UI-011`) to validate the same auth-aware visibility rules.
+
+Validation snapshot:
+
+- Web unit suite: PASS (`333/333`) via `npm run test` in `packages/web`.
 
 ## Development Progress Update (May 26, 2026 - Context Separation and Reliability)
 

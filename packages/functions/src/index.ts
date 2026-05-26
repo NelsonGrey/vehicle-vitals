@@ -1315,6 +1315,10 @@ async function decodeVinData(vinInput: string) {
     throw new Error('Valid 17-character VIN required');
   }
 
+  if (!hasValidVinChecksum(vin)) {
+    throw new Error('Valid VIN checksum required');
+  }
+
   logger.info(`Decoding VIN: ${vin.substring(0, 8)}...`);
 
   const nhtsaUrl =
@@ -1376,6 +1380,10 @@ async function lookupNhtsaRecalls(vinInput: string) {
     throw new Error('Valid 17-character VIN required');
   }
 
+  if (!hasValidVinChecksum(vin)) {
+    throw new Error('Valid VIN checksum required');
+  }
+
   const recallsUrl =
     'https://api.nhtsa.gov/recalls/recallsByVehicle?vin=' +
     encodeURIComponent(vin);
@@ -1407,6 +1415,61 @@ function hashToSeed(value: string): number {
     hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
   }
   return hash;
+}
+
+const VIN_TRANSLITERATION: Record<string, number> = {
+  A: 1,
+  B: 2,
+  C: 3,
+  D: 4,
+  E: 5,
+  F: 6,
+  G: 7,
+  H: 8,
+  J: 1,
+  K: 2,
+  L: 3,
+  M: 4,
+  N: 5,
+  P: 7,
+  R: 9,
+  S: 2,
+  T: 3,
+  U: 4,
+  V: 5,
+  W: 6,
+  X: 7,
+  Y: 8,
+  Z: 9,
+};
+
+const VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+
+function hasValidVinChecksum(vinInput: string): boolean {
+  const vin = vinInput.trim().toUpperCase();
+
+  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+    return false;
+  }
+
+  let sum = 0;
+  for (let i = 0; i < vin.length; i += 1) {
+    const char = vin[i];
+    const parsedNumeric = Number(char);
+    const numericValue = Number.isFinite(parsedNumeric)
+      ? parsedNumeric
+      : VIN_TRANSLITERATION[char];
+
+    if (numericValue === undefined) {
+      return false;
+    }
+
+    sum += numericValue * VIN_WEIGHTS[i];
+  }
+
+  const remainder = sum % 11;
+  const expectedCheckDigit = remainder === 10 ? 'X' : String(remainder);
+  return vin[8] === expectedCheckDigit;
 }
 
 function deterministicShuffle<T>(items: T[], seed: number): T[] {
@@ -1523,11 +1586,16 @@ export const decodeVIN = onRequest(
       }
 
       const { vin } = request.body;
-      if (!vin || typeof vin !== 'string') {
+      const normalizedVin = (vin || '').toString().trim().toUpperCase();
+      if (!normalizedVin || normalizedVin.length !== 17) {
         response.status(400).json({ error: 'Valid 17-character VIN required' });
         return;
       }
-      const vehicle = await decodeVinData(vin);
+      if (!hasValidVinChecksum(normalizedVin)) {
+        response.status(400).json({ error: 'Valid VIN checksum required' });
+        return;
+      }
+      const vehicle = await decodeVinData(normalizedVin);
 
       response.json({
         success: true,
@@ -1549,12 +1617,17 @@ export const decodeVINCallable = onCall(async request => {
   }
 
   const vin = (request.data?.vin || '').toString();
-  if (vin.length !== 17) {
+  const normalizedVin = vin.trim().toUpperCase();
+  if (normalizedVin.length !== 17) {
     throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
   }
 
+  if (!hasValidVinChecksum(normalizedVin)) {
+    throw new HttpsError('invalid-argument', 'Valid VIN checksum required');
+  }
+
   try {
-    const vehicle = await decodeVinData(vin);
+    const vehicle = await decodeVinData(normalizedVin);
     return {
       success: true,
       vehicle,
@@ -1575,8 +1648,12 @@ export const getVehicleInsightsCallable = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
   }
 
+  const normalizedVin = vin.trim().toUpperCase();
+  if (!hasValidVinChecksum(normalizedVin)) {
+    throw new HttpsError('invalid-argument', 'Valid VIN checksum required');
+  }
+
   try {
-    const normalizedVin = vin.trim().toUpperCase();
     const [vehicleResult, recallsResult] = await Promise.allSettled([
       decodeVinData(normalizedVin),
       lookupNhtsaRecalls(normalizedVin),

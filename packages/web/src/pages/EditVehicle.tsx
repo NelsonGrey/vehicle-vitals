@@ -33,6 +33,7 @@ import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { decodeVin } from '../utils/vehicleService';
 import { transferVehicle } from '../utils/vehicleTransferService';
+import { getVinDecodeValidationError } from '../utils/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
   'Car',
@@ -330,6 +331,13 @@ export default function EditVehicle() {
       );
       return;
     }
+
+    const vinValidationError = getVinDecodeValidationError(v);
+    if (vinValidationError) {
+      alert(vinValidationError);
+      return;
+    }
+
     try {
       const {
         make,

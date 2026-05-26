@@ -73,6 +73,10 @@ web/build/
 coverage/
 *.lcov
 
+# Web test artifacts
+packages/web/test-results/
+packages/web/test-results-html/
+
 # Database files
 *.db
 *.db-journal

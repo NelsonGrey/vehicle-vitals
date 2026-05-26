@@ -1,12 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import {
   iosFaq,
-  iosRoutes,
   troubleshootingFaq,
   websiteFaq,
-  websiteRoutes,
   type FaqItem,
 } from '../data/helpFaq';
 // Header and footer provided by Layout
@@ -18,24 +15,24 @@ const helpTopics = [
       'Use the login and forgot password flows to recover access. If your email changed, contact support for account assistance.',
   },
   {
-    title: 'Adding or editing vehicles',
+    title: 'Adding or changing a vehicle',
     details:
-      'Add a vehicle from the Garage with VIN decode, then review and complete any remaining fields before saving.',
+      'Add a vehicle from the Garage, use the lookup for faster setup, and fill in any missing details before saving.',
   },
   {
     title: 'Maintenance history and reminders',
     details:
-      'Log services with date, mileage, notes, and cost. Review Timeline and Upcoming views to stay ahead of recommended work.',
+      'Save services with date, mileage, notes, and cost. Use Timeline and Upcoming to stay ahead of work that is coming up.',
   },
   {
-    title: 'Subscription and billing',
+    title: 'Plans and billing',
     details:
-      'Open Plans to review available tiers and manage subscription status from your profile and billing screens.',
+      'Open Plans to compare options and manage billing from your profile and billing screens.',
   },
   {
     title: 'Mobile sync and notifications',
     details:
-      'Web and mobile use the same account. Keep app notifications enabled to receive reminder and schedule alerts.',
+      'Web and mobile use the same account. Keep app notifications on to get reminder and schedule alerts.',
   },
 ];
 
@@ -43,7 +40,7 @@ const quickActions = [
   {
     title: 'Start your garage setup',
     details:
-      'Use the guided onboarding flow if you are creating an account, adding your first vehicle, or learning where the main app pages live.',
+      'Use the guided setup if you are creating an account, adding your first vehicle, or learning where the main app pages live.',
     to: '/getting-started',
     ctaLabel: 'Open getting started',
   },
@@ -78,6 +75,52 @@ const supportPaths = [
     title: 'Need a human response',
     summary: 'Open support with browser/app version and issue details.',
     to: '/contact',
+  },
+];
+
+const glossaryTerms = [
+  {
+    term: 'Vehicle ID',
+    meaning:
+      'The unique number for your vehicle, such as VIN, HIN, or another serial number.',
+  },
+  {
+    term: 'Vehicle Lookup',
+    meaning:
+      'A quick tool that can fill in details like year, make, and model from your vehicle ID.',
+  },
+  {
+    term: 'Garage',
+    meaning: 'Your main list of saved vehicles.',
+  },
+  {
+    term: 'Records',
+    meaning: 'Where you save service history, notes, costs, and attachments.',
+  },
+  {
+    term: 'Upcoming Tasks',
+    meaning:
+      'A list of service items that may be due soon, based on your vehicle history and settings.',
+  },
+  {
+    term: 'Timeline',
+    meaning: 'A date-by-date view of work completed on your vehicle.',
+  },
+  {
+    term: 'Snooze reminder',
+    meaning: 'Push a reminder to show again later.',
+  },
+  {
+    term: 'Dismiss reminder',
+    meaning: 'Hide a reminder for now. You can bring it back later if needed.',
+  },
+  {
+    term: 'Plans and billing',
+    meaning: 'Where you compare plan options and manage your billing details.',
+  },
+  {
+    term: 'Premium',
+    meaning: 'Paid plan options that include extra features and higher limits.',
   },
 ];
 
@@ -150,15 +193,30 @@ export default function Help() {
         <div className="grid gap-5 lg:grid-cols-[1.4fr_0.9fr] lg:items-start">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 dark:text-teal-400">
-              Support hub
+              You are viewing: Help & How-To
             </p>
             <h1 className="font-serif text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-3">
               Help Center
             </h1>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl">
-              Find answers for the most common Vehicle Vitals questions and get
-              to the right next step faster.
+              This page is for using the app: setup steps, common tasks, and
+              troubleshooting. If you are deciding whether the app is right for
+              you, use the product overview page.
             </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                to="/"
+                className="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-800 dark:text-slate-200"
+              >
+                View product overview
+              </Link>
+              <Link
+                to="/getting-started"
+                className="inline-flex items-center rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+              >
+                Open setup guide
+              </Link>
+            </div>
           </div>
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/50 p-4">
             <h2 className="mt-0 mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -183,14 +241,51 @@ export default function Help() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+          Product overview vs. Help
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 p-4">
+            <h3 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Use Product Overview for
+            </h3>
+            <p className="m-0 mt-2 text-slate-700 dark:text-slate-300">
+              Learning what the app does, who it helps, and whether it fits your
+              needs.
+            </p>
+            <Link
+              to="/"
+              className="mt-3 inline-flex items-center text-sm font-medium text-teal-700 underline dark:text-teal-300"
+            >
+              Go to product overview
+            </Link>
+          </article>
+          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 p-4">
+            <h3 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Use Help for
+            </h3>
+            <p className="m-0 mt-2 text-slate-700 dark:text-slate-300">
+              Step-by-step setup, daily tasks, troubleshooting, and support
+              contact.
+            </p>
+            <Link
+              to="/getting-started"
+              className="mt-3 inline-flex items-center text-sm font-medium text-teal-700 underline dark:text-teal-300"
+            >
+              Open setup steps
+            </Link>
+          </article>
+        </div>
+      </section>
+
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-1">
-              Start Here
+              Quick help
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
-              Choose the most likely next step instead of scanning the full FAQ
-              first.
+              Pick the most likely next step without reading the full FAQ.
             </p>
           </div>
           <Link
@@ -241,42 +336,15 @@ export default function Help() {
         </div>
       </section>
 
-      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
-          Help Video Walkthroughs
-        </h2>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Short walkthrough clips for common setup and support tasks.
-        </p>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <MarketingVideoPanel
-            title="Getting Started Help"
-            description="Account setup, first vehicle entry, and records flow in one concise walkthrough."
-            poster="/images/features/add-vehicle.png"
-            videoPath="/videos/feature-demos/getting-started-help.mp4"
-            fallbackHref="/getting-started"
-            fallbackLabel="Open getting started"
-          />
-          <MarketingVideoPanel
-            title="Help Center Overview"
-            description="Where to find troubleshooting topics, mechanic guidance, and support routes."
-            poster="/images/features/providers.png"
-            videoPath="/videos/feature-demos/help-center-overview.mp4"
-            fallbackHref="/contact"
-            fallbackLabel="Contact support"
-          />
-        </div>
-      </section>
-
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm space-y-6">
         <div>
           <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-2">
-            Detailed FAQs
+            More answers
           </h2>
           <p className="text-slate-700 dark:text-slate-300">
             Search across website, iOS, and troubleshooting answers when you
             need a specific detail. Use the quick actions above when you just
-            need the right next step.
+            need the next step.
           </p>
         </div>
 
@@ -292,20 +360,20 @@ export default function Help() {
             type="search"
             value={faqQuery}
             onChange={event => setFaqQuery(event.target.value)}
-            placeholder="Search for reminders, VIN, mechanics, billing, iOS..."
+            placeholder="Search for reminders, vehicle ID, mechanics, billing, iOS..."
             className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-slate-100"
           />
           <p className="mt-2 mb-0 text-xs text-slate-500 dark:text-slate-400">
             {faqQuery.trim()
               ? `${totalFaqMatches} matching FAQ ${totalFaqMatches === 1 ? 'entry' : 'entries'} found.`
-              : 'Browse the full FAQ library below.'}
+              : 'Browse the answers below.'}
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3">
             <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Website FAQ
+              Website answers
             </p>
             <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
               {filteredWebsiteFaq.length}
@@ -313,7 +381,7 @@ export default function Help() {
           </div>
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3">
             <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              iOS FAQ
+              iOS answers
             </p>
             <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
               {filteredIosFaq.length}
@@ -321,7 +389,7 @@ export default function Help() {
           </div>
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3">
             <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Troubleshooting
+              Troubleshooting help
             </p>
             <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
               {filteredTroubleshootingFaq.length}
@@ -331,63 +399,64 @@ export default function Help() {
 
         {faqQuery.trim() && totalFaqMatches === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
-            No FAQ entries matched that search. Try a broader term such as VIN,
+            No answers matched that search. Try a broader term like vehicle ID,
             reminders, mechanics, billing, or account.
           </div>
         ) : null}
 
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
-            Website FAQ
+            Website answers
           </h3>
           <FaqList items={filteredWebsiteFaq} />
         </div>
 
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
-            iOS App FAQ
+            iOS answers
           </h3>
           <FaqList items={filteredIosFaq} />
         </div>
 
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
-            Cross-Platform Troubleshooting
+            Troubleshooting help
           </h3>
           <FaqList items={filteredTroubleshootingFaq} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-              Website route reference
-            </h3>
-            <ul className="space-y-1 text-slate-700 dark:text-slate-300 text-sm sm:text-base">
-              {websiteRoutes.map(route => (
-                <li key={route}>{route}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-              iOS route reference
-            </h3>
-            <ul className="space-y-1 text-slate-700 dark:text-slate-300 text-sm sm:text-base">
-              {iosRoutes.map(route => (
-                <li key={route}>{route}</li>
-              ))}
-            </ul>
-          </div>
         </div>
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
-          Need More Help?
+          Plain-language glossary
+        </h2>
+        <p className="text-slate-700 dark:text-slate-300 mb-4">
+          Quick definitions for common terms used in the app.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {glossaryTerms.map(item => (
+            <article
+              key={item.term}
+              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 px-4 py-3"
+            >
+              <h3 className="m-0 text-base font-semibold text-slate-900 dark:text-slate-100">
+                {item.term}
+              </h3>
+              <p className="m-0 mt-1 text-sm text-slate-700 dark:text-slate-300">
+                {item.meaning}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+          Need more help?
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">
-          If you still need assistance, contact support and include your browser
-          or app version plus a short description of what happened.
+          If you still need help, contact support and include your browser or
+          app version plus a short description of what happened.
         </p>
         <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
           <Link
@@ -400,7 +469,7 @@ export default function Help() {
             to="/getting-started"
             className="underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
           >
-            View Getting Started Workflow
+            Open getting started
           </Link>
         </div>
       </section>

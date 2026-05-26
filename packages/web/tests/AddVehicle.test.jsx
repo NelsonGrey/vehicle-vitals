@@ -9,6 +9,7 @@ const mockAddOrUpdateVehicle = vi.fn();
 const mockGetVehicles = vi.fn();
 const mockDecodeVin = vi.fn();
 const mockBuildPersistedVinInsights = vi.fn();
+const mockFindVehiclePhotoFromWeb = vi.fn();
 
 vi.mock('@vehicle-vitals/shared', () => ({
   defaultVehicle: {
@@ -51,6 +52,10 @@ vi.mock('../src/utils/vehicleService', () => ({
     mockBuildPersistedVinInsights(...args),
 }));
 
+vi.mock('../src/utils/vehiclePhotoService', () => ({
+  findVehiclePhotoFromWeb: (...args) => mockFindVehiclePhotoFromWeb(...args),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -75,6 +80,7 @@ describe('AddVehicle page', () => {
     vi.stubGlobal('alert', vi.fn());
     mockBuildPersistedVinInsights.mockReturnValue({ persisted: true });
     mockGetVehicles.mockResolvedValue([]);
+    mockFindVehiclePhotoFromWeb.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -184,7 +190,7 @@ describe('AddVehicle page', () => {
     renderPage();
     await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
     expect(global.alert).toHaveBeenCalledWith(
-      'Enter a VIN first for decode. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
+      'Enter a vehicle ID first to look up details. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
     );
   });
 });

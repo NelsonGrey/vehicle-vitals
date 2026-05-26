@@ -52,6 +52,12 @@ describe('SiteHeader', () => {
     renderHeader();
 
     const header = screen.getByRole('banner');
+    const productOverviewLink = within(header).getByRole('link', {
+      name: /Product Overview/i,
+    });
+    const helpLink = within(header).getByRole('link', {
+      name: /Help & How-To/i,
+    });
     const gettingStartedLink = within(header).getByRole('link', {
       name: /Getting Started/i,
     });
@@ -59,6 +65,8 @@ describe('SiteHeader', () => {
       name: /VIN Decode/i,
     });
 
+    expect(productOverviewLink).toBeVisible();
+    expect(helpLink).toBeVisible();
     expect(gettingStartedLink).toBeVisible();
     expect(vinDecodeLink).toBeVisible();
     expect(
@@ -82,9 +90,13 @@ describe('SiteHeader', () => {
       within(header).getByRole('link', { name: /Login \/ Sign Up/i })
     ).toBeVisible();
 
-    // Getting Started should be first in the marketing nav sequence.
+    // Product Overview should lead the marketing nav sequence.
     expect(
-      gettingStartedLink.compareDocumentPosition(vinDecodeLink) &
+      productOverviewLink.compareDocumentPosition(gettingStartedLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeGreaterThan(0);
+    expect(
+      helpLink.compareDocumentPosition(gettingStartedLink) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeGreaterThan(0);
   });
@@ -95,6 +107,12 @@ describe('SiteHeader', () => {
     renderHeader();
 
     const header = screen.getByRole('banner');
+    const productOverviewLink = within(header).getByRole('link', {
+      name: /Product Overview/i,
+    });
+    const helpLink = within(header).getByRole('link', {
+      name: /Help & How-To/i,
+    });
     const gettingStartedLink = within(header).getByRole('link', {
       name: /Getting Started/i,
     });
@@ -107,6 +125,8 @@ describe('SiteHeader', () => {
       within(header).queryByRole('link', { name: /VIN Decode/i })
     ).not.toBeInTheDocument();
 
+    expect(productOverviewLink).toBeVisible();
+    expect(helpLink).toBeVisible();
     expect(garageLink).toBeVisible();
     expect(gettingStartedLink).toBeVisible();
     expect(
@@ -119,9 +139,13 @@ describe('SiteHeader', () => {
       within(header).getByRole('link', { name: /^Upcoming$/i })
     ).toBeVisible();
 
-    // Getting Started should be first in the authenticated app nav sequence.
+    // Product Overview and Help should appear before app workspace links.
     expect(
-      gettingStartedLink.compareDocumentPosition(garageLink) &
+      productOverviewLink.compareDocumentPosition(garageLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeGreaterThan(0);
+    expect(
+      helpLink.compareDocumentPosition(garageLink) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeGreaterThan(0);
 

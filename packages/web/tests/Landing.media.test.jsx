@@ -30,7 +30,10 @@ describe('Landing media surfaces', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /Video showcase lanes/i })
+      screen.getByRole('heading', { name: /Short video tours/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/you are viewing: product overview/i)
     ).toBeInTheDocument();
 
     const expectedVideoPaths = [

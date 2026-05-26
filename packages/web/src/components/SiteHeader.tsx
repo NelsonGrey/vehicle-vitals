@@ -52,6 +52,12 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1">
               {isLoggedIn ? (
                 <>
+                  <Link to="/" className={linkClass}>
+                    Product Overview
+                  </Link>
+                  <Link to="/help" className={linkClass}>
+                    Help & How-To
+                  </Link>
                   <Link to="/getting-started" className={linkClass}>
                     Getting Started
                   </Link>
@@ -83,6 +89,12 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 </>
               ) : (
                 <>
+                  <Link to="/" className={linkClass}>
+                    Product Overview
+                  </Link>
+                  <Link to="/help" className={linkClass}>
+                    Help & How-To
+                  </Link>
                   <Link to="/getting-started" className={linkClass}>
                     Getting Started
                   </Link>

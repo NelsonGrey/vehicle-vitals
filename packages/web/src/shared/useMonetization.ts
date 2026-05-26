@@ -18,6 +18,7 @@ import {
 } from './entitlementsService';
 import {
   canAccessFeature,
+  getTierRank,
   getVehicleLimit,
   isFeatureEnabled,
   type UserTier,
@@ -207,7 +208,7 @@ export function useUpgradePrompt(): {
   const requiredTier: UserTier = targetTier || 'pro';
 
   const openUpgradeModal = (requiredTier: UserTier, triggerName: string) => {
-    if (tier === 'premium' || (tier === 'pro' && requiredTier !== 'premium')) {
+    if (getTierRank(tier) >= getTierRank(requiredTier)) {
       // User already has access
       return;
     }

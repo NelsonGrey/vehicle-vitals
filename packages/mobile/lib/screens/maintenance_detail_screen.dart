@@ -1,7 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/firestore_service.dart';
+
 import '../models/maintenance.dart';
+import '../services/firestore_service.dart';
+
+String _performedByLabel(String value) {
+  switch (value) {
+    case 'self':
+      return 'Self-service';
+    case 'business':
+      return 'Business-maintained';
+    default:
+      return 'Mechanic';
+  }
+}
+
+String _coverageLabel(String value) {
+  switch (value) {
+    case 'parts_only':
+      return 'Parts only';
+    default:
+      return 'Parts and labor';
+  }
+}
 
 class MaintenanceDetailScreen extends StatefulWidget {
   final String vin;
@@ -22,6 +43,8 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
+  String _performedBy = 'mechanic';
+  String _coverage = 'parts_and_labor';
   Maintenance? _entry;
   bool _loading = true;
   DateTime _selectedDate = DateTime.now();
@@ -55,6 +78,8 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
           _titleController.text = entry.title;
           _notesController.text = entry.notes;
           _costController.text = entry.cost.toString();
+          _performedBy = entry.performedBy;
+          _coverage = entry.coverage;
           _selectedDate = entry.date;
           _loading = false;
         });
@@ -105,6 +130,8 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
         title: _titleController.text.trim(),
         notes: _notesController.text.trim(),
         cost: cost,
+        performedBy: _performedBy,
+        coverage: _coverage,
         date: _selectedDate,
         updatedAt: DateTime.now(),
       );
@@ -222,6 +249,65 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                     maxLines: 4,
                   ),
                   const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          initialValue: _performedBy,
+                          decoration: const InputDecoration(
+                            labelText: 'Who did it',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'self',
+                              child: Text('Self-service'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'mechanic',
+                              child: Text('Mechanic'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'business',
+                              child: Text('Business-maintained'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _performedBy = value);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: _coverage,
+                          decoration: const InputDecoration(
+                            labelText: 'Receipt type',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'parts_only',
+                              child: Text('Parts only'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'parts_and_labor',
+                              child: Text('Parts and labor'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _coverage = value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: _costController,
                     decoration: const InputDecoration(
@@ -230,6 +316,11 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                       prefixText: '\$',
                     ),
                     keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '${_performedByLabel(_performedBy)} • ${_coverageLabel(_coverage)}',
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 16),
                   Row(

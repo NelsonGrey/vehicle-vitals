@@ -1,6 +1,6 @@
 # Next Features Execution Plan
 
-Last updated: April 13, 2026
+Last updated: May 23, 2026
 
 This plan converts current status into concrete completion work.
 
@@ -11,6 +11,13 @@ Execution checklist:
 
 ## Current Completion Snapshot
 
+Progress evaluation (May 23, 2026 cycle):
+
+- Web monetization unit coverage validated: 17 tests passed (feature flags, subscription, maintenance, edit vehicle).
+- Mobile monetization unit/widget coverage validated: 10 tests passed and `flutter analyze` clean.
+- Enterprise entitlement integration test path made deterministic for local/CI environments by skipping when Firestore integration runtime is not configured.
+- Monetization UAT assertions were expanded; current deployment target still gates/skip-paths these UAT checks.
+
 Completed in code:
 
 - Reminder lifecycle CRUD across shared/web/mobile
@@ -19,6 +26,11 @@ Completed in code:
 - Web and mobile CSV/PDF exports
 - Service provider callable and web UI integration
 - Premium verification and entitlement callables with mobile premium service wiring
+- Maintenance records now support self-service, mechanic, and business-maintained entries with receipt type metadata (`parts_only` / `parts_and_labor`) across shared/web/mobile/export paths
+- Monetization tier model aligned to four plans (Free, Pro, Premium, Enterprise) across web feature flags, subscription UI, and backend entitlement resolution
+- Mobile subscription screen now includes four-tier plan catalog, enterprise contact-sales path, and feature-comparison matrix for parity with web monetization messaging
+- Automated monetization coverage now includes web unit tests, mobile unit/widget tests, and UAT assertions for Enterprise plan visibility and comparison-table presence
+- AR/AP foundation now includes shared invoice/payable draft contracts and backend callable scaffolds (`createInvoiceDraftCallable`, `createPayableDraftCallable`) with org-role and idempotency handling
 
 Not yet complete for production claim:
 
@@ -26,6 +38,7 @@ Not yet complete for production claim:
 - Mobile release-mode parity validation evidence
 - Cross-platform export parity signoff
 - Calendar provider-account reliability signoff
+- Stripe checkout and billing workflow production hardening (web + backend)
 
 ---
 
@@ -104,32 +117,59 @@ Exit criteria:
 - Stabilize manuals/warranty/maintenance-plan contracts.
 - Surface source/confidence/expiry data in client UX.
 
+### 7) Monetization and Entitlement Reliability
+
+- Complete four-tier parity validation across web/mobile/backend.
+- Add dedicated UAT and integration assertions for Enterprise plan visibility and entitlement resolution.
+- Validate no downgraded UX for existing Free/Pro/Premium users after tier-model changes.
+
 ---
 
 ## R3 Should-Complete Work
 
-### 7) Budget Forecasting Improvements
+### 8) Budget Forecasting Improvements
 
 - Add trend and forecast calculations with usable date and vehicle filters.
 - Define acceptance checks for forecast accuracy and clarity.
+
+### 9) Business Operations Foundation
+
+- Introduce account-management domain slice (org profiles, role boundaries, account ownership).
+- Define AR/AP phase entry criteria and shared finance event model.
+- Sequence first implementation slice for invoicing and receivable tracking.
 
 ---
 
 ## R4 Later Work
 
-### 8) Service Provider Directory Expansion
+### 10) Service Provider Directory Expansion
 
 - Build mobile parity experience.
 - Add richer provider metadata and ranking quality controls.
 
-### 9) Fleet Manager Workflows
+### 11) Fleet Manager Workflows
 
 - Implement fleet data model, role controls, and fleet reporting routes.
 
-### 10) Premium and Ad Flow Hardening
+### 12) Premium and Ad Flow Hardening
 
 - Validate real-store purchase verification end-to-end.
 - Validate entitlement transitions and ad suppression for premium users.
+
+### 13) Accounts Receivable and Accounts Payable
+
+- Implement receivable workflows (invoice lifecycle, aging, status transitions).
+- Implement payable workflows (vendor bills, due dates, payment reconciliation).
+- Integrate accounting exports and role-based approval controls.
+
+---
+
+## Immediate Next Action Plan (As of May 23, 2026)
+
+1. Close remaining R1 evidence collection and update `docs/R1_COMPLETION_CHECKLIST.md` with linked artifacts.
+2. Finalize backend Enterprise entitlement integration reliability by running callable/integration tests against Firestore emulator or an enabled test project.
+3. Connect AR/AP draft callable scaffolds to first web admin flow (create/list draft invoices and payables).
+4. Add emulator-backed integration tests for AR/AP callable success paths and retention of audit events.
 
 ---
 

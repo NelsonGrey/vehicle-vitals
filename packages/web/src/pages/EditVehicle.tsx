@@ -117,6 +117,8 @@ interface MaintenanceEntry {
   notes: string;
   cost: string;
   date: string;
+  performedBy?: 'self' | 'mechanic' | 'business';
+  coverage?: 'parts_only' | 'parts_and_labor';
   attachments?: Array<{
     name: string;
     url: string;
@@ -132,6 +134,26 @@ interface MaintenanceEntry {
       confidence?: number;
     };
   }>;
+}
+
+function formatPerformedBy(value?: string) {
+  switch (value) {
+    case 'self':
+      return 'Self-service';
+    case 'business':
+      return 'Business-maintained';
+    default:
+      return 'Mechanic';
+  }
+}
+
+function formatCoverage(value?: string) {
+  switch (value) {
+    case 'parts_only':
+      return 'Parts only';
+    default:
+      return 'Parts and labor';
+  }
 }
 
 export default function EditVehicle() {
@@ -935,6 +957,8 @@ function MaintenanceList({
     title: '',
     notes: '',
     cost: '',
+    performedBy: 'mechanic',
+    coverage: 'parts_and_labor',
     attachments: [] as Array<{
       name: string;
       url: string;
@@ -1426,7 +1450,14 @@ function MaintenanceList({
       await addMaintenanceEntry(vin, entry);
       const list = await getMaintenanceEntries(vin);
       setEntries(list);
-      setForm({ title: '', notes: '', cost: '', attachments: [] });
+      setForm({
+        title: '',
+        notes: '',
+        cost: '',
+        performedBy: 'mechanic',
+        coverage: 'parts_and_labor',
+        attachments: [],
+      });
     } catch (err) {
       alert('Error: ' + (err instanceof Error ? err.message : String(err)));
     }
@@ -1656,6 +1687,9 @@ function MaintenanceList({
               ${e.cost}
             </div>
             <div className="text-xs text-charcoal-500 dark:text-cream-400">
+              {formatPerformedBy(e.performedBy)} • {formatCoverage(e.coverage)}
+            </div>
+            <div className="text-xs text-charcoal-500 dark:text-cream-400">
               {e.notes}
             </div>
           </li>
@@ -1713,6 +1747,49 @@ function MaintenanceList({
                 aria-label="Cost"
                 className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
               />
+            </div>
+          </div>
+          <div className="rounded-md border border-charcoal-200 dark:border-charcoal-600 bg-charcoal-50/70 dark:bg-charcoal-700/40 p-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="performedBy"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-cream-200"
+                >
+                  Who did it
+                </label>
+                <select
+                  id="performedBy"
+                  name="performedBy"
+                  value={form.performedBy}
+                  onChange={handleChange}
+                  aria-label="Who did it"
+                  className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+                >
+                  <option value="self">Self-service</option>
+                  <option value="mechanic">Mechanic</option>
+                  <option value="business">Business-maintained</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="coverage"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-cream-200"
+                >
+                  Receipt type
+                </label>
+                <select
+                  id="coverage"
+                  name="coverage"
+                  value={form.coverage}
+                  onChange={handleChange}
+                  aria-label="Receipt type"
+                  className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+                >
+                  <option value="parts_only">Parts only</option>
+                  <option value="parts_and_labor">Parts and labor</option>
+                </select>
+              </div>
             </div>
           </div>
           <div>

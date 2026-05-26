@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import EditVehicle from '../src/pages/EditVehicle';
 
+const ROUTE_VIN = '1HGCM82633A004352';
+
 const mockNavigate = vi.fn();
 const mockGetVehicle = vi.fn();
 const mockUpdateVehicle = vi.fn();
@@ -66,7 +68,7 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     useNavigate: () => mockNavigate,
     useLocation: () => ({ state: undefined }),
-    useParams: () => ({ vin: 'TESTVIN123' }),
+    useParams: () => ({ vin: ROUTE_VIN }),
   };
 });
 
@@ -81,7 +83,7 @@ function renderPage() {
 }
 
 const BASE_VEHICLE = {
-  vin: 'TESTVIN123',
+  vin: ROUTE_VIN,
   year: '2020',
   make: 'Toyota',
   model: 'Camry',
@@ -117,7 +119,7 @@ describe('EditVehicle page', () => {
       expect(
         screen.getByRole('heading', { name: /edit vehicle/i })
       ).toBeInTheDocument();
-      expect(screen.getByDisplayValue('TESTVIN123')).toBeInTheDocument();
+      expect(screen.getByDisplayValue(ROUTE_VIN)).toBeInTheDocument();
     });
   });
 
@@ -134,7 +136,7 @@ describe('EditVehicle page', () => {
 
     await waitFor(() => {
       expect(mockUpdateVehicle).toHaveBeenCalledWith(
-        'TESTVIN123',
+        ROUTE_VIN,
         expect.objectContaining({ mileage: '50000', vehicleStatus: 'active' })
       );
       expect(global.alert).toHaveBeenCalledWith('Vehicle updated successfully');
@@ -157,7 +159,7 @@ describe('EditVehicle page', () => {
 
     await waitFor(() => {
       expect(mockUpdateVehicle).toHaveBeenCalledWith(
-        'TESTVIN123',
+        ROUTE_VIN,
         expect.objectContaining({ vehicleStatus: 'stored' })
       );
     });
@@ -200,7 +202,7 @@ describe('EditVehicle page', () => {
     await waitFor(() => {
       expect(global.confirm).toHaveBeenCalled();
       expect(mockTransferVehicle).toHaveBeenCalledWith({
-        vin: 'TESTVIN123',
+        vin: ROUTE_VIN,
         recipientEmail: 'recipient@example.com',
       });
       expect(global.alert).toHaveBeenCalledWith(
@@ -223,7 +225,7 @@ describe('EditVehicle page', () => {
 
     await waitFor(() => {
       expect(global.confirm).toHaveBeenCalled();
-      expect(mockDeleteVehicle).toHaveBeenCalledWith('TESTVIN123');
+      expect(mockDeleteVehicle).toHaveBeenCalledWith(ROUTE_VIN);
       expect(global.alert).toHaveBeenCalledWith('Vehicle deleted');
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
@@ -267,7 +269,7 @@ describe('EditVehicle page', () => {
     await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
 
     await waitFor(() => {
-      expect(mockDecodeVin).toHaveBeenCalledWith('TESTVIN123');
+      expect(mockDecodeVin).toHaveBeenCalledWith(ROUTE_VIN);
       expect(screen.getByText(/1 recall/i)).toBeInTheDocument();
       expect(screen.getByText(/source: nhtsa/i)).toBeInTheDocument();
     });

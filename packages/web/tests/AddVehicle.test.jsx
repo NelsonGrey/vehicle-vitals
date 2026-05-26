@@ -194,4 +194,19 @@ describe('AddVehicle page', () => {
     expect(alertMessage).toMatch(/non-VIN assets/i);
     expect(alertMessage).toMatch(/Year\/Make\/Model/i);
   });
+
+  it('blocks decode when VIN check digit is invalid', async () => {
+    renderPage();
+
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      '1HGCM82633A004353'
+    );
+    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'VIN decode requires a valid 17-character VIN with a correct check digit.'
+    );
+    expect(mockDecodeVin).not.toHaveBeenCalled();
+  });
 });

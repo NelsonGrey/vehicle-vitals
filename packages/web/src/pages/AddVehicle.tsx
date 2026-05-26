@@ -18,6 +18,7 @@ import {
 } from '../shared/useMonetization';
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
+import { getVinDecodeValidationError } from '../utils/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
   'Car',
@@ -153,6 +154,13 @@ export default function AddVehicle() {
       );
       return;
     }
+
+    const vinValidationError = getVinDecodeValidationError(vin);
+    if (vinValidationError) {
+      alert(vinValidationError);
+      return;
+    }
+
     try {
       const {
         make,

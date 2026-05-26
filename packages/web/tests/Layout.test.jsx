@@ -46,9 +46,7 @@ describe('Layout Component', () => {
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
     expect(screen.getByTestId('inline-ad-section')).toBeInTheDocument();
     expect(screen.getByTestId('site-footer')).toBeInTheDocument();
-    expect(
-      screen.getByText(/you are viewing: product overview/i)
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/you are viewing:/i)).not.toBeInTheDocument();
   });
 
   it('uses a centered 1280px shell and keeps inline ad outside main content', () => {
@@ -73,7 +71,7 @@ describe('Layout Component', () => {
     expect(mainEl?.contains(inlineAdEl)).toBe(false);
   });
 
-  it('shows app workspace context cues on app routes', () => {
+  it('does not render context cue banner on app routes', () => {
     render(
       <MemoryRouter
         initialEntries={['/app']}
@@ -83,15 +81,10 @@ describe('Layout Component', () => {
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByText(/you are viewing: application workspace/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole('link', { name: /help & how-to/i }).length
-    ).toBeGreaterThan(0);
+    expect(screen.queryByText(/you are viewing:/i)).not.toBeInTheDocument();
   });
 
-  it('shows help context cues on help routes', () => {
+  it('does not render context cue banner on help routes', () => {
     render(
       <MemoryRouter
         initialEntries={['/help']}
@@ -101,11 +94,6 @@ describe('Layout Component', () => {
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByText(/you are viewing: help & how-to/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole('link', { name: /application workspace/i }).length
-    ).toBeGreaterThan(0);
+    expect(screen.queryByText(/you are viewing:/i)).not.toBeInTheDocument();
   });
 });

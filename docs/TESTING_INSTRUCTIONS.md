@@ -1,23 +1,23 @@
-# 🚀 IMMEDIATE TESTING INSTRUCTIONS
+# IMMEDIATE TESTING INSTRUCTIONS
 
 ## Local Quick Validation (May 26, 2026 update)
 
-Run these before triggering GitHub Actions to validate navigation, shell/ad layout behavior, and video/help walkthrough presence.
+Run these before triggering GitHub Actions to validate navigation, shell/ad layout behavior, and dedicated marketing preview routes.
 
 1. `cd packages/web`
-2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/Landing.media.test.jsx tests/AddVehicle.test.jsx tests/EditVehicle.test.jsx`
+2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/Landing.media.test.jsx tests/StartSteps.test.jsx tests/EverydayScreens.test.jsx tests/ShortVideoTours.test.jsx tests/AddVehicle.test.jsx tests/EditVehicle.test.jsx`
 3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006|TC-UI-007|TC-UI-008|TC-UI-010|TC-UI-011|TC-UI-012"`
 4. `ls -lh public/videos/feature-demos/*.mp4`
 
 Coverage objective for this update:
 
-- Logged-out users see marketing header navigation with context markers (`Product Overview`, `Help & How-To`) and no legacy `Home` link.
-- Logged-in users see application navigation plus persistent context markers (`Product Overview`, `Help & How-To`) and no marketing-only feature links.
+- Logged-out users see marketing header navigation and no legacy `Home` link.
+- Logged-in users see application navigation and no marketing-only feature links.
 - Header auth control remains in fixed location and toggles by auth state.
 - Site shell is centered and width-limited to `1280px` (`max-w-7xl`).
 - Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
-- Marketing feature atlas renders real app capability screenshots.
-- Marketing video lanes render playable clips when available and gracefully fall back to poster preview when clips are missing.
+- Landing page links users to dedicated preview routes (`/start-steps`, `/everyday-screens`, `/short-video-tours`) instead of rendering all media-heavy sections inline.
+- Dedicated screenshot and video routes render real app capability media and preserve fallback behavior.
 - Help and Getting Started routes preserve clear purpose boundaries, including explicit context labeling and walkthrough video/fallback states.
 
 ## Step 1: Test Emulator Tests Workflow
@@ -57,4 +57,4 @@ Share the output from the Fastlane + Flutter build steps for debugging.
 
 ---
 
-**Current Status**: All fixes committed and ready for testing! 🎯
+Current status: Ready for validation.

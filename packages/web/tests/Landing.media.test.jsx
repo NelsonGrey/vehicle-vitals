@@ -20,8 +20,8 @@ vi.mock('../src/components/InlineAdSection', () => ({
 }));
 
 describe('Landing media surfaces', () => {
-  it('renders marketing video showcase cards with expected MP4 paths', () => {
-    const { container } = render(
+  it('links to dedicated preview pages instead of rendering heavy media sections inline', () => {
+    render(
       <MemoryRouter
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
@@ -30,24 +30,27 @@ describe('Landing media surfaces', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /Short video tours/i })
+      screen.getByRole('heading', { name: /Explore product previews/i })
     ).toBeInTheDocument();
+    expect(screen.queryByText(/you are viewing:/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/you are viewing: product overview/i)
-    ).toBeInTheDocument();
+      screen.queryByRole('heading', { name: /Start in 3 simple steps/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /Everyday screens you will use/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /Short video tours/i })
+    ).not.toBeInTheDocument();
 
-    const expectedVideoPaths = [
-      '/videos/feature-demos/onboarding-walkthrough.mp4',
-      '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
-      '/videos/feature-demos/cross-platform-continuity.mp4',
-    ];
-
-    for (const path of expectedVideoPaths) {
-      const source = container.querySelector(`video source[src="${path}"]`);
-      expect(source).toBeTruthy();
-    }
-
-    const videoElements = container.querySelectorAll('video');
-    expect(videoElements.length).toBeGreaterThanOrEqual(3);
+    expect(
+      screen.getByRole('link', { name: /Open steps page/i })
+    ).toHaveAttribute('href', '/start-steps');
+    expect(
+      screen.getByRole('link', { name: /Open screens page/i })
+    ).toHaveAttribute('href', '/everyday-screens');
+    expect(
+      screen.getByRole('link', { name: /Open video tours/i })
+    ).toHaveAttribute('href', '/short-video-tours');
   });
 });

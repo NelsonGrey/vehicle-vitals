@@ -192,9 +192,6 @@ export default function Help() {
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <div className="grid gap-5 lg:grid-cols-[1.4fr_0.9fr] lg:items-start">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 dark:text-teal-400">
-              You are viewing: Help & How-To
-            </p>
             <h1 className="font-serif text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-3">
               Help Center
             </h1>

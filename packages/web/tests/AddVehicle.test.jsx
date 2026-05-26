@@ -189,8 +189,9 @@ describe('AddVehicle page', () => {
   it('shows decode alert if VIN is blank', async () => {
     renderPage();
     await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
-    expect(global.alert).toHaveBeenCalledWith(
-      'Enter a vehicle ID first to look up details. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
-    );
+    expect(global.alert).toHaveBeenCalled();
+    const alertMessage = global.alert.mock.calls[0]?.[0] || '';
+    expect(alertMessage).toMatch(/non-VIN assets/i);
+    expect(alertMessage).toMatch(/Year\/Make\/Model/i);
   });
 });

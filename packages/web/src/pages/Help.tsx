@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   iosFaq,
   troubleshootingFaq,
@@ -174,6 +174,7 @@ function FaqList({ items }: { items: FaqItem[] }) {
 
 export default function Help() {
   const [faqQuery, setFaqQuery] = useState('');
+  const location = useLocation();
   const filteredWebsiteFaq = useMemo(
     () => filterFaqItems(websiteFaq, faqQuery),
     [faqQuery]
@@ -190,6 +191,18 @@ export default function Help() {
     filteredWebsiteFaq.length +
     filteredIosFaq.length +
     filteredTroubleshootingFaq.length;
+
+  useEffect(() => {
+    if (location.hash !== '#maintenance-history-and-reminders') {
+      return;
+    }
+
+    const targetElement = document.getElementById(
+      'maintenance-history-and-reminders'
+    );
+
+    targetElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [location.hash]);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5 sm:space-y-6">
@@ -319,7 +332,11 @@ export default function Help() {
         </h2>
         <div className="space-y-4">
           {helpTopics.map(topic => (
-            <article key={topic.title} id={createSectionId(topic.title)}>
+            <article
+              key={topic.title}
+              id={createSectionId(topic.title)}
+              tabIndex={-1}
+            >
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
                 {topic.title}
               </h3>

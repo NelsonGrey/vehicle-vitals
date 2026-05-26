@@ -437,10 +437,14 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
             article.textContent?.includes('2) Track service and costs') ||
             article.textContent?.includes('3) Stay on top of what is next')
         ).length;
+        const reminderLink = Array.from(document.querySelectorAll('a')).find(
+          link => link.textContent?.includes('See reminders demo')
+        );
 
         return {
           hasStartStepsHeading,
           stepCards,
+          reminderHref: reminderLink?.getAttribute('href'),
         };
       });
 
@@ -454,10 +458,14 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         const screenshotCards = document.querySelectorAll(
           'section article img[alt*="application screenshot"]'
         ).length;
+        const publicDemoLinks = Array.from(document.querySelectorAll('a'))
+          .filter(link => link.textContent?.includes('Open the public demo for'))
+          .map(link => link.getAttribute('href'));
 
         return {
           hasScreensHeading,
           screenshotCards,
+          publicDemoLinks,
         };
       });
 
@@ -493,6 +501,14 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       expect(screensPageMetrics.hasScreensHeading).toBe(true);
       expect(screensPageMetrics.screenshotCards).toBeGreaterThanOrEqual(6);
+      expect(screensPageMetrics.publicDemoLinks).toEqual(
+        expect.arrayContaining([
+          '/cross-platform-access-demo',
+          '/ownership-history-demo',
+          '/vin-decode-demo',
+          '/maintenance-planning-demo',
+        ])
+      );
       expect(videosPageMetrics.hasShortVideosHeading).toBe(true);
       expect(videosPageMetrics.videoCards).toBeGreaterThanOrEqual(3);
       expect(videosPageMetrics.playableOrPosterLabels).toBeGreaterThanOrEqual(
@@ -500,6 +516,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       );
       expect(startStepsPageMetrics.hasStartStepsHeading).toBe(true);
       expect(startStepsPageMetrics.stepCards).toBeGreaterThanOrEqual(3);
+      expect(startStepsPageMetrics.reminderHref).toBe(
+        '/help#maintenance-history-and-reminders'
+      );
     });
 
     test('TC-UI-008: Help clearly separates product overview from how-to guidance', async ({
@@ -532,6 +551,13 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           Array.from(document.querySelectorAll('a')).find(link =>
             link.textContent?.includes('Open setup steps')
           ) !== undefined;
+        const reminderPreferencesLink = Array.from(
+          document.querySelectorAll('a')
+        ).find(link => link.textContent?.includes('Open reminder preferences'));
+        const hasSkipToSupportContact =
+          Array.from(document.querySelectorAll('a')).find(link =>
+            link.textContent?.includes('Skip to support contact')
+          ) !== undefined;
 
         const helpArticles = Array.from(
           document.querySelectorAll('article')
@@ -543,6 +569,8 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           hasHelpCard,
           hasOverviewLink,
           hasSetupLink,
+          reminderPreferencesHref: reminderPreferencesLink?.getAttribute('href'),
+          hasSkipToSupportContact,
           helpArticles,
         };
       });
@@ -584,6 +612,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(helpMetrics.hasHelpCard).toBe(true);
       expect(helpMetrics.hasOverviewLink).toBe(true);
       expect(helpMetrics.hasSetupLink).toBe(true);
+      expect(helpMetrics.reminderPreferencesHref).toBe(
+        '/help#maintenance-history-and-reminders'
+      );
+      expect(helpMetrics.hasSkipToSupportContact).toBe(false);
       expect(helpMetrics.helpArticles).toBeGreaterThanOrEqual(2);
       expect(gettingStartedMetrics.hasWalkthroughCard).toBe(true);
       expect(gettingStartedMetrics.hasPlayableOrPoster).toBe(true);

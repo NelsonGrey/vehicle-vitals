@@ -191,15 +191,6 @@ export default function FeatureDemo({
           </Link>
         </div>
       </section>
-
-      <div>
-        <Link
-          to="/"
-          className="text-slate-700 dark:text-slate-300 hover:underline"
-        >
-          Back to Home
-        </Link>
-      </div>
     </div>
   );
 }

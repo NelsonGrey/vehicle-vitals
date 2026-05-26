@@ -459,7 +459,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           'section article img[alt*="application screenshot"]'
         ).length;
         const publicDemoLinks = Array.from(document.querySelectorAll('a'))
-          .filter(link => link.textContent?.includes('Open the public demo for'))
+          .filter(link =>
+            link.textContent?.includes('Open the public demo for')
+          )
           .map(link => link.getAttribute('href'));
 
         return {
@@ -569,7 +571,8 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           hasHelpCard,
           hasOverviewLink,
           hasSetupLink,
-          reminderPreferencesHref: reminderPreferencesLink?.getAttribute('href'),
+          reminderPreferencesHref:
+            reminderPreferencesLink?.getAttribute('href'),
           hasSkipToSupportContact,
           helpArticles,
         };

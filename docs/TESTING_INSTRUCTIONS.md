@@ -2,7 +2,7 @@
 
 ## Local Quick Validation (May 26, 2026 update)
 
-Run these before triggering GitHub Actions to validate navigation, shell/ad layout behavior, and dedicated marketing preview routes.
+Run these before triggering GitHub Actions to validate navigation, auth-aware header visibility, shell/ad layout behavior, and dedicated marketing preview routes.
 
 1. `cd packages/web`
 2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/Landing.media.test.jsx tests/StartSteps.test.jsx tests/EverydayScreens.test.jsx tests/ShortVideoTours.test.jsx tests/AddVehicle.test.jsx tests/EditVehicle.test.jsx`
@@ -11,9 +11,10 @@ Run these before triggering GitHub Actions to validate navigation, shell/ad layo
 
 Coverage objective for this update:
 
-- Logged-out users see marketing header navigation and no legacy `Home` link.
-- Logged-in users see application navigation and no marketing-only feature links.
+- Logged-out users see marketing demo links and no `Product Overview`, `Help & How-To`, or `Getting Started` links in the header.
+- Logged-in users see `Getting Started` in the header while `Product Overview` and `Help & How-To` remain hidden.
 - Header auth control remains in fixed location and toggles by auth state.
+- Footer `Help` remains available as the primary always-on navigation entry for help content.
 - Site shell is centered and width-limited to `1280px` (`max-w-7xl`).
 - Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
 - Landing page links users to dedicated preview routes (`/start-steps`, `/everyday-screens`, `/short-video-tours`) instead of rendering all media-heavy sections inline.

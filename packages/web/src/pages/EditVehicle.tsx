@@ -33,7 +33,10 @@ import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { decodeVin } from '../utils/vehicleService';
 import { transferVehicle } from '../utils/vehicleTransferService';
-import { getVinDecodeValidationError } from '../utils/vinValidation';
+import {
+  detectVehicleIdentifierType,
+  getVinDecodeValidationError,
+} from '../utils/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
   'Car',
@@ -171,6 +174,18 @@ export default function EditVehicle() {
   const [transferBusy, setTransferBusy] = useState(false);
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form?.year, make: form?.make });
+  const detectedIdentifierType = detectVehicleIdentifierType(
+    form?.vin || '',
+    form?.vehicleType
+  );
+  const detectedIdentifierLabel =
+    detectedIdentifierType === 'vin'
+      ? 'VIN'
+      : detectedIdentifierType === 'hin'
+        ? 'HIN'
+        : detectedIdentifierType === 'serial'
+          ? 'Serial/Other'
+          : 'Not detected';
 
   useEffect(() => {
     const fetchVehicle = async () => {
@@ -328,6 +343,16 @@ export default function EditVehicle() {
     if (!v) {
       alert(
         'Enter a VIN first for decode. Non-VIN assets can be saved using the vehicle ID.'
+      );
+      return;
+    }
+
+    const identifierType = detectVehicleIdentifierType(v, form.vehicleType);
+    if (identifierType !== 'vin') {
+      const detectedTypeLabel =
+        identifierType === 'hin' ? 'HIN' : 'Serial/Other';
+      alert(
+        `Decode currently supports VIN only. Detected ${detectedTypeLabel}. You can still save this vehicle ID and edit details manually.`
       );
       return;
     }
@@ -649,6 +674,10 @@ export default function EditVehicle() {
                 Enter VIN and click Decode to prefill compatible vehicle
                 details, or maintain this vehicle manually for non-VIN assets.
               </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Identifier type detected: {detectedIdentifierLabel}. Decode
+                currently supports VIN only.
+              </p>
             </div>
 
             {/* Mileage */}
@@ -792,7 +821,7 @@ export default function EditVehicle() {
                 onClick={handleDecodeVin}
                 className="w-full px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium rounded-md transition-colors"
               >
-                Decode VIN
+                Decode VIN (VIN only)
               </button>
               <button
                 onClick={handleUpdate}

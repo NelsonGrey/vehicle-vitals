@@ -18,7 +18,10 @@ import {
 } from '../shared/useMonetization';
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
-import { getVinDecodeValidationError } from '../utils/vinValidation';
+import {
+  detectVehicleIdentifierType,
+  getVinDecodeValidationError,
+} from '../utils/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
   'Car',
@@ -63,6 +66,18 @@ export default function AddVehicle() {
     useUpgradePrompt();
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form.year, make: form.make });
+  const detectedIdentifierType = detectVehicleIdentifierType(
+    form.vin || '',
+    (form as any).vehicleType
+  );
+  const detectedIdentifierLabel =
+    detectedIdentifierType === 'vin'
+      ? 'VIN'
+      : detectedIdentifierType === 'hin'
+        ? 'HIN'
+        : detectedIdentifierType === 'serial'
+          ? 'Serial/Other'
+          : 'Not detected';
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -151,6 +166,19 @@ export default function AddVehicle() {
     if (!vin) {
       alert(
         'Enter a vehicle ID first to look up details. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
+      );
+      return;
+    }
+
+    const identifierType = detectVehicleIdentifierType(
+      vin,
+      (form as any).vehicleType
+    );
+    if (identifierType !== 'vin') {
+      const detectedTypeLabel =
+        identifierType === 'hin' ? 'HIN' : 'Serial/Other';
+      alert(
+        `Decode currently supports VIN only. Detected ${detectedTypeLabel}. You can still save this vehicle ID and complete details manually.`
       );
       return;
     }
@@ -487,6 +515,12 @@ export default function AddVehicle() {
                     vehicles, and you can edit missing fields before saving.
                   </p>
                 )}
+                {field === 'vin' && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                    Identifier type detected: {detectedIdentifierLabel}. Decode
+                    currently supports VIN only.
+                  </p>
+                )}
                 {field === 'licensePlate' && plateValidationError && (
                   <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                     {plateValidationError}
@@ -559,7 +593,7 @@ export default function AddVehicle() {
                 onClick={handleDecodeVin}
                 className="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
               >
-                Decode VIN
+                Decode VIN (VIN only)
               </button>
               <button
                 onClick={handleSubmit}

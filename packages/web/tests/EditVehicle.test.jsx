@@ -274,4 +274,22 @@ describe('EditVehicle page', () => {
       expect(screen.getByText(/source: nhtsa/i)).toBeInTheDocument();
     });
   });
+
+  it('blocks decode for HIN identifiers', async () => {
+    mockGetVehicle.mockResolvedValue({
+      ...BASE_VEHICLE,
+      vin: 'ABC12345A595',
+      vehicleType: 'Boat',
+    });
+
+    renderPage();
+
+    await waitFor(() => screen.getByRole('button', { name: /decode vin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'Decode currently supports VIN only. Detected HIN. You can still save this vehicle ID and edit details manually.'
+    );
+    expect(mockDecodeVin).not.toHaveBeenCalled();
+  });
 });

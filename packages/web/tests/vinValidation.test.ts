@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  detectVehicleIdentifierType,
   getVinDecodeValidationError,
+  hasValidHinFormat,
   hasValidVinChecksum,
 } from '../src/utils/vinValidation';
 
@@ -21,5 +23,14 @@ describe('vinValidation', () => {
     expect(getVinDecodeValidationError('TESTVIN123')).toMatch(
       /17-character VIN/i
     );
+  });
+
+  it('detects HIN and validates supported format', () => {
+    expect(hasValidHinFormat('ABC12345A595')).toBe(true);
+    expect(detectVehicleIdentifierType('ABC12345A595', 'Boat')).toBe('hin');
+  });
+
+  it('falls back to serial for non-standard identifiers', () => {
+    expect(detectVehicleIdentifierType('SN-123-ABC', 'Other')).toBe('serial');
   });
 });

@@ -209,4 +209,20 @@ describe('AddVehicle page', () => {
     );
     expect(mockDecodeVin).not.toHaveBeenCalled();
   });
+
+  it('blocks decode for HIN identifiers and allows manual save path', async () => {
+    renderPage();
+
+    await userEvent.selectOptions(screen.getByLabelText(/vehicle type/i), 'Boat');
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      'ABC12345A595'
+    );
+    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'Decode currently supports VIN only. Detected HIN. You can still save this vehicle ID and complete details manually.'
+    );
+    expect(mockDecodeVin).not.toHaveBeenCalled();
+  });
 });

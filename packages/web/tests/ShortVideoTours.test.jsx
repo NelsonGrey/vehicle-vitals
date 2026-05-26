@@ -16,10 +16,6 @@ describe('ShortVideoTours page', () => {
     expect(
       screen.getByRole('heading', { name: /Short video tours/i })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Back to product overview/i })
-    ).toHaveAttribute('href', '/');
-
     const expectedVideoPaths = [
       '/videos/feature-demos/onboarding-walkthrough.mp4',
       '/videos/feature-demos/maintenance-lifecycle-tour.mp4',

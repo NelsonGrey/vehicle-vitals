@@ -47,8 +47,8 @@ const quickActions = [
   {
     title: 'Fix reminder timing',
     details:
-      'Go straight to profile if Upcoming Tasks is showing too much, too little, or not when you expect.',
-    to: '/app/profile',
+      'Review the public reminder guidance when Upcoming Tasks is showing too much, too little, or not when you expect.',
+    to: '/help#maintenance-history-and-reminders',
     ctaLabel: 'Open reminder preferences',
   },
   {
@@ -69,7 +69,7 @@ const supportPaths = [
   {
     title: 'Reminders look wrong',
     summary: 'Adjust lead time, daily miles, and task visibility.',
-    to: '/app/profile',
+    to: '/help#maintenance-history-and-reminders',
   },
   {
     title: 'Need a human response',
@@ -134,6 +134,10 @@ function filterFaqItems(items: FaqItem[], query: string) {
     const haystack = [item.question, ...item.answers].join(' ').toLowerCase();
     return haystack.includes(normalizedQuery);
   });
+}
+
+function createSectionId(title: string) {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
 function FaqList({ items }: { items: FaqItem[] }) {
@@ -285,12 +289,6 @@ export default function Help() {
               Pick the most likely next step without reading the full FAQ.
             </p>
           </div>
-          <Link
-            to="/contact"
-            className="text-sm font-medium text-teal-700 underline dark:text-teal-300"
-          >
-            Skip to support contact
-          </Link>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {quickActions.map(action => (
@@ -321,7 +319,7 @@ export default function Help() {
         </h2>
         <div className="space-y-4">
           {helpTopics.map(topic => (
-            <article key={topic.title}>
+            <article key={topic.title} id={createSectionId(topic.title)}>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
                 {topic.title}
               </h3>

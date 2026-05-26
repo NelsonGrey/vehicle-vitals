@@ -7,7 +7,7 @@ export default function EverydayScreens() {
       description:
         'See all vehicles in one place and jump to what you need quickly.',
       image: '/images/features/garage-vehicles.png',
-      appPath: '/app',
+      demoPath: '/cross-platform-access-demo',
       platform: 'Web',
     },
     {
@@ -15,14 +15,14 @@ export default function EverydayScreens() {
       description:
         'Review mileage, past service, and recent activity for one vehicle.',
       image: '/images/features/garage-detail.png',
-      appPath: '/app',
+      demoPath: '/ownership-history-demo',
       platform: 'Web',
     },
     {
       title: 'Add vehicle screen',
       description: 'A simple form to set up your first vehicle.',
       image: '/images/features/add-vehicle.png',
-      appPath: '/app/add-vehicle',
+      demoPath: '/vin-decode-demo',
       platform: 'Web',
     },
     {
@@ -30,21 +30,21 @@ export default function EverydayScreens() {
       description:
         'Save what was done, when it happened, and how much it cost.',
       image: '/images/features/records.png',
-      appPath: '/app',
+      demoPath: '/maintenance-planning-demo',
       platform: 'Web',
     },
     {
       title: 'Find mechanics nearby',
       description: 'Find local shops close to your saved location.',
       image: '/images/features/providers.png',
-      appPath: '/app/providers',
+      demoPath: '/cross-platform-access-demo',
       platform: 'Web',
     },
     {
       title: 'Timeline view',
       description: 'See your vehicle history in date order.',
       image: '/images/features/timeline.png',
-      appPath: '/app/timeline',
+      demoPath: '/ownership-history-demo',
       platform: 'Web',
     },
   ];
@@ -58,12 +58,6 @@ export default function EverydayScreens() {
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
           A small set of screenshots to show the most common tasks.
         </p>
-        <Link
-          to="/"
-          className="mt-3 inline-flex items-center text-sm font-medium text-slate-700 underline transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
-        >
-          Back to product overview
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -92,10 +86,10 @@ export default function EverydayScreens() {
                 {feature.description}
               </p>
               <Link
-                to="/auth/login"
+                to={feature.demoPath}
                 className="mt-3 inline-flex items-center text-sm font-medium text-slate-700 underline transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
               >
-                Sign in to open {feature.appPath}
+                Open the public demo for {feature.title}
               </Link>
             </div>
           </article>

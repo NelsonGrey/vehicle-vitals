@@ -24,7 +24,7 @@ export default function StartSteps() {
         'Get simple reminders for upcoming service so you can plan ahead.',
       image: '/images/features/upcoming.png',
       ctaLabel: 'See reminders demo',
-      to: '/cross-platform-access-demo',
+      to: '/help#maintenance-history-and-reminders',
     },
   ];
 
@@ -37,12 +37,6 @@ export default function StartSteps() {
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
           A simple first-use flow for new users who want to get value quickly.
         </p>
-        <Link
-          to="/"
-          className="mt-3 inline-flex items-center text-sm font-medium text-slate-700 underline transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
-        >
-          Back to product overview
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">

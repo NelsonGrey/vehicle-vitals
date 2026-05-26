@@ -213,7 +213,10 @@ describe('AddVehicle page', () => {
   it('blocks decode for HIN identifiers and allows manual save path', async () => {
     renderPage();
 
-    await userEvent.selectOptions(screen.getByLabelText(/vehicle type/i), 'Boat');
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'Boat'
+    );
     await userEvent.type(
       screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
       'ABC12345A595'

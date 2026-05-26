@@ -18,10 +18,6 @@ describe('StartSteps page', () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole('link', { name: /Back to product overview/i })
-    ).toHaveAttribute('href', '/');
-
-    expect(
       screen.getByRole('link', { name: /See add-vehicle demo/i })
     ).toHaveAttribute('href', '/getting-started');
     expect(
@@ -29,6 +25,6 @@ describe('StartSteps page', () => {
     ).toHaveAttribute('href', '/maintenance-planning-demo');
     expect(
       screen.getByRole('link', { name: /See reminders demo/i })
-    ).toHaveAttribute('href', '/cross-platform-access-demo');
+    ).toHaveAttribute('href', '/help#maintenance-history-and-reminders');
   });
 });

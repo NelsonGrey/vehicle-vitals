@@ -1,7 +1,27 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 26, 2026 (header navigation visibility hardening)
+Last updated: May 26, 2026 (marketing link cleanup and navigation hardening)
 Primary production project: `vehicle-vitals-prod`
+
+## Development Progress Update (May 26, 2026 - Marketing Link Cleanup)
+
+Status: Public marketing pages now stay on public routes and no longer funnel users into login-only app screens.
+
+Progress evaluation completed:
+
+- `Start in 3 simple steps` now points its reminders CTA to the public help anchor instead of the cross-platform demo.
+- `Everyday screens you will use` now routes each card to a public demo or help destination instead of `/app/*`.
+- `Help Center` reminder guidance uses a public anchor and no longer shows the support skip link.
+- Redundant bottom back-home/product-overview links were removed from the public marketing pages.
+
+Automation updates delivered:
+
+- Unit tests updated in `packages/web/tests/StartSteps.test.jsx`, `packages/web/tests/EverydayScreens.test.jsx`, `packages/web/tests/ShortVideoTours.test.jsx`, and `packages/web/tests/Help.test.jsx`.
+- UAT coverage updated in `packages/web/tests/uat.spec.ts` to assert the public marketing hrefs and help anchor behavior.
+
+Validation snapshot:
+
+- Web unit suite: PASS (`334/334`) via `npm run test` in `packages/web`.
 
 ## Development Progress Update (May 26, 2026 - Header Visibility Rules)
 

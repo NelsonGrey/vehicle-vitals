@@ -16,18 +16,30 @@ describe('EverydayScreens page', () => {
     expect(
       screen.getByRole('heading', { name: /Everyday screens you will use/i })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Back to product overview/i })
-    ).toHaveAttribute('href', '/');
-
     const screenshots = container.querySelectorAll(
       'img[alt*="application screenshot"]'
     );
     expect(screenshots.length).toBeGreaterThanOrEqual(6);
 
-    const signInLinks = screen.getAllByRole('link', {
-      name: /Sign in to open/i,
-    });
-    expect(signInLinks.length).toBeGreaterThanOrEqual(6);
+    expect(
+      screen.getByRole('link', {
+        name: /Open the public demo for Your garage overview/i,
+      })
+    ).toHaveAttribute('href', '/cross-platform-access-demo');
+    expect(
+      screen.getByRole('link', {
+        name: /Open the public demo for Vehicle details/i,
+      })
+    ).toHaveAttribute('href', '/ownership-history-demo');
+    expect(
+      screen.getByRole('link', {
+        name: /Open the public demo for Add vehicle screen/i,
+      })
+    ).toHaveAttribute('href', '/vin-decode-demo');
+    expect(
+      screen.getByRole('link', {
+        name: /Open the public demo for Service records/i,
+      })
+    ).toHaveAttribute('href', '/maintenance-planning-demo');
   });
 });

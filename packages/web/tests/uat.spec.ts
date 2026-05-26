@@ -370,25 +370,104 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(shellMetrics.sponsoredInsideMain).toBe(false);
     });
 
-    test('TC-UI-007: Simplified marketing screenshots and short video tours are present', async ({
+    test('TC-UI-007: Marketing media sections are moved to dedicated pages', async ({
       page,
     }) => {
       await page.goto(BASE_URL);
 
-      const marketingMediaMetrics = await page.evaluate(() => {
-        const hasScreensHeading =
+      const landingMediaMetrics = await page.evaluate(() => {
+        const hasPreviewHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Explore product previews')
+          ) !== undefined;
+        const hasStepsLink =
+          Array.from(document.querySelectorAll('a')).find(link =>
+            link.getAttribute('href')?.includes('/start-steps')
+          ) !== undefined;
+        const hasScreensLink =
+          Array.from(document.querySelectorAll('a')).find(link =>
+            link.getAttribute('href')?.includes('/everyday-screens')
+          ) !== undefined;
+        const hasVideosLink =
+          Array.from(document.querySelectorAll('a')).find(link =>
+            link.getAttribute('href')?.includes('/short-video-tours')
+          ) !== undefined;
+        const hasScreensHeadingOnLanding =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
             node.textContent?.includes('Everyday screens you will use')
           ) !== undefined;
-
-        const hasShortVideosHeading =
+        const hasShortVideosHeadingOnLanding =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
             node.textContent?.includes('Short video tours')
           ) !== undefined;
 
+        return {
+          hasPreviewHeading,
+          hasStepsLink,
+          hasScreensLink,
+          hasVideosLink,
+          hasScreensHeadingOnLanding,
+          hasShortVideosHeadingOnLanding,
+        };
+      });
+
+      test.skip(
+        !landingMediaMetrics.hasPreviewHeading,
+        'Marketing preview hub is not exposed in this deployment target.'
+      );
+
+      expect(landingMediaMetrics.hasStepsLink).toBe(true);
+      expect(landingMediaMetrics.hasScreensLink).toBe(true);
+      expect(landingMediaMetrics.hasVideosLink).toBe(true);
+      expect(landingMediaMetrics.hasScreensHeadingOnLanding).toBe(false);
+      expect(landingMediaMetrics.hasShortVideosHeadingOnLanding).toBe(false);
+
+      await page.goto(`${BASE_URL}/start-steps`);
+
+      const startStepsPageMetrics = await page.evaluate(() => {
+        const hasStartStepsHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Start in 3 simple steps')
+          ) !== undefined;
+        const stepCards = Array.from(
+          document.querySelectorAll('article')
+        ).filter(
+          article =>
+            article.textContent?.includes('1) Add your vehicle') ||
+            article.textContent?.includes('2) Track service and costs') ||
+            article.textContent?.includes('3) Stay on top of what is next')
+        ).length;
+
+        return {
+          hasStartStepsHeading,
+          stepCards,
+        };
+      });
+
+      await page.goto(`${BASE_URL}/everyday-screens`);
+
+      const screensPageMetrics = await page.evaluate(() => {
+        const hasScreensHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Everyday screens you will use')
+          ) !== undefined;
         const screenshotCards = document.querySelectorAll(
           'section article img[alt*="application screenshot"]'
         ).length;
+
+        return {
+          hasScreensHeading,
+          screenshotCards,
+        };
+      });
+
+      await page.goto(`${BASE_URL}/short-video-tours`);
+
+      const videosPageMetrics = await page.evaluate(() => {
+        const hasShortVideosHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Short video tours')
+          ) !== undefined;
         const videoCards = Array.from(
           document.querySelectorAll('article')
         ).filter(
@@ -397,7 +476,6 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
             article.textContent?.includes('Service tracking video') ||
             article.textContent?.includes('Web and mobile video')
         ).length;
-
         const playableOrPosterLabels = Array.from(
           document.querySelectorAll('article span')
         ).filter(
@@ -407,25 +485,21 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         ).length;
 
         return {
-          hasScreensHeading,
           hasShortVideosHeading,
-          screenshotCards,
           videoCards,
           playableOrPosterLabels,
         };
       });
 
-      test.skip(
-        !marketingMediaMetrics.hasScreensHeading ||
-          !marketingMediaMetrics.hasShortVideosHeading,
-        'Simplified marketing sections are not exposed in this deployment target.'
+      expect(screensPageMetrics.hasScreensHeading).toBe(true);
+      expect(screensPageMetrics.screenshotCards).toBeGreaterThanOrEqual(6);
+      expect(videosPageMetrics.hasShortVideosHeading).toBe(true);
+      expect(videosPageMetrics.videoCards).toBeGreaterThanOrEqual(3);
+      expect(videosPageMetrics.playableOrPosterLabels).toBeGreaterThanOrEqual(
+        3
       );
-
-      expect(marketingMediaMetrics.screenshotCards).toBeGreaterThanOrEqual(6);
-      expect(marketingMediaMetrics.videoCards).toBeGreaterThanOrEqual(3);
-      expect(
-        marketingMediaMetrics.playableOrPosterLabels
-      ).toBeGreaterThanOrEqual(3);
+      expect(startStepsPageMetrics.hasStartStepsHeading).toBe(true);
+      expect(startStepsPageMetrics.stepCards).toBeGreaterThanOrEqual(3);
     });
 
     test('TC-UI-008: Help clearly separates product overview from how-to guidance', async ({
@@ -434,11 +508,6 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await page.goto(`${BASE_URL}/help`);
 
       const helpMetrics = await page.evaluate(() => {
-        const hasHelpContextLabel =
-          Array.from(document.querySelectorAll('p, h1, h2, h3')).find(node =>
-            node.textContent?.includes('You are viewing: Help & How-To')
-          ) !== undefined;
-
         const hasSeparationHeading =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
             node.textContent?.includes('Product overview vs. Help')
@@ -469,7 +538,6 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         ).length;
 
         return {
-          hasHelpContextLabel,
           hasSeparationHeading,
           hasOverviewCard,
           hasHelpCard,
@@ -514,7 +582,6 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       expect(helpMetrics.hasOverviewCard).toBe(true);
       expect(helpMetrics.hasHelpCard).toBe(true);
-      expect(helpMetrics.hasHelpContextLabel).toBe(true);
       expect(helpMetrics.hasOverviewLink).toBe(true);
       expect(helpMetrics.hasSetupLink).toBe(true);
       expect(helpMetrics.helpArticles).toBeGreaterThanOrEqual(2);

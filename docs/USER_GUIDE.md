@@ -61,6 +61,12 @@ When you first visit Vehicle Vitals, you'll see the landing page with an overvie
 
 Click **Get Started** or **Sign In** in the header to proceed to the sign-in page.
 
+The landing page now links to three focused preview pages:
+
+- **Start in 3 simple steps** (`/start-steps`) for onboarding flow highlights
+- **Everyday screens you will use** (`/everyday-screens`) for screenshot gallery browsing
+- **Short video tours** (`/short-video-tours`) for media walkthroughs
+
 ### Sign In
 
 ![Sign-in page](./screenshots/login.png)
@@ -221,6 +227,10 @@ At the top of the Records page, the **Ownership Insights** panel extracts financ
 ## 7. Maintenance Timeline
 
 The Timeline gives you a bird's-eye view of all service events across your entire garage, in reverse chronological order.
+
+Vehicle Vitals supports three maintenance user types: self-service owners, mechanic-managed service, and business-maintained fleets. It also supports parts-only receipts, so you can record work even when labor was not billed or no paper invoice exists for the labor portion.
+
+For the full maintenance scenario matrix, see [Maintenance User Cases and Types](./MAINTENANCE_USER_CASES.md).
 
 ![Maintenance timeline showing all 3 vehicles' service history](./screenshots/timeline.png)
 

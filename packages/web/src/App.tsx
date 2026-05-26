@@ -143,6 +143,9 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const FeatureDemo = lazy(() => import('./pages/FeatureDemo'));
 const Instructions = lazy(() => import('./pages/Instructions'));
 const Help = lazy(() => import('./pages/Help'));
+const StartSteps = lazy(() => import('./pages/StartSteps'));
+const EverydayScreens = lazy(() => import('./pages/EverydayScreens'));
+const ShortVideoTours = lazy(() => import('./pages/ShortVideoTours'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
@@ -324,6 +327,9 @@ function App() {
               <Route path="instructions" element={<Instructions />} />
               <Route path="getting-started" element={<Instructions />} />
               <Route path="help" element={<Help />} />
+              <Route path="start-steps" element={<StartSteps />} />
+              <Route path="everyday-screens" element={<EverydayScreens />} />
+              <Route path="short-video-tours" element={<ShortVideoTours />} />
               <Route path="contact" element={<Contact />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />

@@ -149,7 +149,7 @@ export default function AddVehicle() {
     const vin = (form.vin || '').trim();
     if (!vin) {
       alert(
-        'Enter a VIN first for decode. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
+        'Enter a vehicle ID first to look up details. For non-VIN assets, you can still track with Year/Make/Model and a vehicle ID.'
       );
       return;
     }
@@ -204,7 +204,7 @@ export default function AddVehicle() {
       const error = e as Error;
       alert(
         error?.message ||
-          'VIN lookup could not return vehicle details. Review the VIN and continue by filling any missing fields manually.'
+          'Vehicle lookup could not return details. Review the vehicle ID and continue by filling any missing fields manually.'
       );
     }
   };
@@ -293,9 +293,9 @@ export default function AddVehicle() {
             Add Vehicle
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
-            Enter a vehicle ID (VIN/HIN/Serial). VIN decode is available for
-            compatible vehicles, and you can complete details manually for all
-            vehicle types.
+            Enter a vehicle ID (VIN/HIN/Serial). We can look up details for some
+            vehicles, and you can fill everything in by hand for any vehicle
+            type.
           </p>
         </div>
         <Link
@@ -474,9 +474,9 @@ export default function AddVehicle() {
                 />
                 {field === 'vin' && (
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                    A vehicle ID is required to save. VIN decode can fill year,
-                    make, model, specs, and recall data for compatible VIN
-                    assets, and you can edit missing fields before saving.
+                    A vehicle ID is required to save. Vehicle lookup can fill
+                    year, make, model, specs, and recall data for compatible
+                    vehicles, and you can edit missing fields before saving.
                   </p>
                 )}
                 {field === 'licensePlate' && plateValidationError && (

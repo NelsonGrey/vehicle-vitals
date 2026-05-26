@@ -34,19 +34,19 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'Go to Garage and select Add Vehicle.',
       'Choose the vehicle type (for example car, truck, motorcycle, RV, boat, trailer, or other).',
-      'Enter the VIN and run decode for faster setup.',
-      'If VIN lookup misses details, fill the remaining Year/Make/Model fields manually before saving.',
+      'Enter the vehicle ID and use lookup for faster setup.',
+      'If the lookup misses details, fill the remaining Year/Make/Model fields by hand before saving.',
       'Add mileage and save.',
       'The vehicle appears in Garage and is available to Records, Upcoming, and Timeline features.',
     ],
   },
   {
-    question: 'How does VIN Decode help me?',
+    question: 'How does vehicle lookup help me?',
     answers: [
-      'VIN decode can auto-populate vehicle details (for example make/model/year and additional profile data where available).',
-      'For boats, trailers, and other non-VIN assets, skip decode and enter details manually with your vehicle ID.',
-      'After decoding, review fields for accuracy and save.',
-      'If decode is unavailable or incomplete, keep the VIN entered and complete the missing details manually before saving.',
+      'Vehicle lookup can auto-fill details like make, model, year, and other information when it is available.',
+      'For boats, trailers, and other non-VIN assets, skip lookup and enter details manually with your vehicle ID.',
+      'After lookup, review the fields for accuracy and save.',
+      'If lookup is not available or only partly works, keep the vehicle ID entered and finish the missing details by hand.',
     ],
   },
   {
@@ -76,8 +76,8 @@ export const websiteFaq: FaqItem[] = [
   {
     question: 'What is "Upcoming Maintenance" on vehicle cards?',
     answers: [
-      'It shows near-term service items calculated from known schedules and mileage.',
-      'Urgency indicators help prioritize what needs action first.',
+      'It shows service items that may be coming due soon based on known schedules and mileage.',
+      'The labels help you see what needs attention first.',
       'Use View all to open the full Upcoming Tasks page.',
     ],
   },
@@ -112,8 +112,8 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'Open Upcoming from navigation.',
       'Review tasks sorted by urgency.',
-      'By default, the list focuses on work estimated to be due inside your saved reminder window. Use Show all recommendations if you want the broader queue.',
-      'For each task, save reminder state and choose action: Send Email Now, Complete, Snooze, Dismiss, or Reopen where supported.',
+      'By default, the list focuses on work estimated to be due inside your saved reminder window. Use Show all recommendations if you want the full list.',
+      'For each task, save reminder state and choose an action such as Send Email Now, Complete, Snooze, Dismiss, or Reopen where available.',
     ],
   },
   {
@@ -158,8 +158,8 @@ export const websiteFaq: FaqItem[] = [
   {
     question: 'What is the Subscription/Plans page for?',
     answers: [
-      'Plans and Billing explains available tiers and limits.',
-      'Use it to evaluate upgrades and current entitlement behavior.',
+      'Plans and billing explains the available options and limits.',
+      'Use it to compare plans and see what is included right now.',
     ],
   },
   {
@@ -171,13 +171,6 @@ export const websiteFaq: FaqItem[] = [
     ],
   },
   {
-    question: "Why can't I access some app routes in production web?",
-    answers: [
-      'Production web may operate in marketing-focused mode depending on environment policy.',
-      'If app routes are restricted, use permitted marketing/help/contact flows for that environment.',
-    ],
-  },
-  {
     question: 'How do I contact support from the website?',
     answers: [
       'Open Contact from footer or support links in help pages.',
@@ -186,11 +179,11 @@ export const websiteFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'How do I use Help and Getting Started pages?',
+    question: 'When should I use Help or Getting Started?',
     answers: [
-      'Use Getting Started for onboarding sequence and first-run actions.',
-      'Use Help for common troubleshooting and task-based guidance.',
-      'Video walkthrough lanes are included where media is available.',
+      'Use Getting Started when you are new and want the simple setup steps.',
+      'Use Help when something is confusing or not working as expected.',
+      'Short videos are included where media is available.',
     ],
   },
   {
@@ -198,21 +191,6 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'If a demo clip is missing or cannot load, the page falls back to poster preview automatically.',
       'This is expected behavior and prevents page breakage.',
-    ],
-  },
-  {
-    question: 'Is there a demonstration data loader in all environments?',
-    answers: [
-      'No.',
-      'Environment-specific controls may be shown only in designated demonstration contexts.',
-      'If you do not see demo seed controls, that is expected in non-demo environments.',
-    ],
-  },
-  {
-    question: 'Is VIN data enrichment automatic?',
-    answers: [
-      'Yes, where applicable the system can perform VIN insight synchronization automatically and continue retries when recoverable failures occur.',
-      'You should not need a manual backfill action for normal use.',
     ],
   },
 ];
@@ -255,7 +233,7 @@ export const iosFaq: FaqItem[] = [
     answers: [
       'From Garage, tap Add Vehicle.',
       'Select the vehicle type (car, truck, motorcycle, RV, boat, trailer, or other).',
-      'Enter a vehicle ID (VIN/HIN/Serial), then decode if it is a VIN, or fill fields manually.',
+      'Enter a vehicle ID (VIN/HIN/Serial), then use lookup if it is a VIN, or fill fields manually.',
       'Provide mileage and save.',
       'If plan limits are reached, app guidance routes to Premium or Contact flows.',
     ],
@@ -269,7 +247,7 @@ export const iosFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'What happens if VIN decode fails on iOS?',
+    question: 'What happens if lookup fails on iOS?',
     answers: [
       'The app shows an error and you can retry.',
       'You can still enter vehicle details manually and save using your vehicle ID.',
@@ -346,14 +324,14 @@ export const iosFaq: FaqItem[] = [
     question: 'How do I find mechanics on iOS?',
     answers: [
       'Open Mechanics from app routes.',
-      'Search using available location and mechanic options.',
+      'Search using your location and mechanic options.',
     ],
   },
   {
     question: 'What is the Premium screen for on iOS?',
     answers: [
-      'Premium explains plan benefits and entitlement paths.',
-      'If your current plan limits vehicle count, app guidance may route you here.',
+      'Premium explains plan benefits and what each option includes.',
+      'If your current plan limits vehicle count, the app may point you here.',
     ],
   },
   {
@@ -362,41 +340,6 @@ export const iosFaq: FaqItem[] = [
       "Open a vehicle's Maintenance list.",
       'Use the export menu and select CSV, PDF, or Excel based on plan availability.',
       'If a premium format is restricted, upgrade paths are shown.',
-    ],
-  },
-  {
-    question: 'What is Offline Settings on iOS?',
-    answers: [
-      'Offline settings control local behavior for disconnected usage patterns.',
-      'Adjust according to your reliability and storage preferences.',
-    ],
-  },
-  {
-    question: 'What is Analytics screen on iOS?',
-    answers: [
-      'Analytics shows ownership and maintenance insights derived from your stored data.',
-      'Use it to monitor trends and costs.',
-    ],
-  },
-  {
-    question: 'Why does iOS route me away from auth pages after login?',
-    answers: [
-      'Router guards redirect authenticated users into /app routes and block auth pages when already signed in.',
-      'This is expected behavior.',
-    ],
-  },
-  {
-    question: 'Why am I redirected to login when opening app routes?',
-    answers: [
-      'If the current session is unauthenticated, route guards redirect protected /app paths to login.',
-      'Sign in and retry.',
-    ],
-  },
-  {
-    question: 'Is there parity between web and iOS features?',
-    answers: [
-      'Core vehicle, records, upcoming, timeline, auth, profile, and mechanic workflows are available across both platforms.',
-      'Some environment-dependent or admin-focused functions may vary by deployment mode.',
     ],
   },
   {
@@ -429,7 +372,7 @@ export const troubleshootingFaq: FaqItem[] = [
     answers: [
       'Verify network connectivity.',
       'Refresh Garage/Home.',
-      'Confirm VIN format and required fields.',
+      'Confirm vehicle ID and required fields.',
       'If still missing, log out/in and re-check.',
     ],
   },
@@ -454,14 +397,6 @@ export const troubleshootingFaq: FaqItem[] = [
       'Retry upload from the same record item.',
       'Check file size/type constraints and network stability.',
       'If necessary, split large files and upload separately.',
-    ],
-  },
-  {
-    question: 'Demo videos are not playing. What should I do?',
-    answers: [
-      'Reload the page/app view.',
-      'Check environment connectivity.',
-      'If playback still fails, poster fallback is expected and core app functionality is unaffected.',
     ],
   },
 ];

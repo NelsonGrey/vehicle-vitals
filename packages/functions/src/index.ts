@@ -145,7 +145,7 @@ interface SupportUserSummary {
   vehicleLimit: number;
 }
 
-type UserTier = 'free' | 'pro' | 'premium';
+type UserTier = 'free' | 'pro' | 'premium' | 'enterprise';
 
 type OrgRole =
   | 'org_owner'
@@ -159,6 +159,34 @@ interface EffectiveEntitlements {
   tier: UserTier;
   vehicleLimit: number;
   features: Record<string, boolean>;
+}
+
+interface InvoiceLineItemInput {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+interface InvoiceDraftInput {
+  orgId?: string;
+  customerName?: string;
+  issueDate?: string;
+  dueDate?: string;
+  currency?: string;
+  amountDue?: number;
+  notes?: string;
+  lineItems?: InvoiceLineItemInput[];
+}
+
+interface PayableDraftInput {
+  orgId?: string;
+  vendorName?: string;
+  billDate?: string;
+  dueDate?: string;
+  currency?: string;
+  amountDue?: number;
+  category?: string;
+  notes?: string;
 }
 
 interface IdempotencyReservation {
@@ -186,6 +214,8 @@ const ROLE_RANK: Record<OrgRole, number> = {
 
 const tierRank = (tier: UserTier): number => {
   switch (tier) {
+    case 'enterprise':
+      return 4;
     case 'premium':
       return 3;
     case 'pro':
@@ -197,7 +227,7 @@ const tierRank = (tier: UserTier): number => {
 
 const normalizeTier = (tier: unknown): UserTier => {
   const value = (tier || 'free').toString();
-  if (value === 'premium' || value === 'pro') {
+  if (value === 'enterprise' || value === 'premium' || value === 'pro') {
     return value;
   }
 
@@ -206,6 +236,8 @@ const normalizeTier = (tier: unknown): UserTier => {
 
 const getVehicleLimitForTier = (tier: UserTier): number => {
   switch (tier) {
+    case 'enterprise':
+      return 999999;
     case 'premium':
       return 25;
     case 'pro':
@@ -221,13 +253,25 @@ const getFeatureSetForTier = (tier: UserTier): Record<string, boolean> => ({
   pdf_export: tier !== 'free',
   excel_export: tier !== 'free',
   ai_analysis: tier !== 'free',
-  ad_free: tier === 'premium',
+  ad_free: tier === 'premium' || tier === 'enterprise',
   priority_support: tier !== 'free',
-  phone_support: tier === 'premium',
-  api_access: tier === 'premium',
+  phone_support: tier === 'premium' || tier === 'enterprise',
+  api_access: tier === 'premium' || tier === 'enterprise',
 });
 
 const getDefaultOrgId = (uid: string): string => `personal_${uid}`;
+
+const normalizeMoneyAmount = (value: unknown): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Amount values must be numeric and non-negative'
+    );
+  }
+
+  return Math.round(parsed * 100) / 100;
+};
 
 const toOrgRole = (value: unknown): OrgRole => {
   const role = (value || 'read_only').toString() as OrgRole;
@@ -535,7 +579,14 @@ const buildSupportUserSummary = async (
     vehicleCount,
     premiumActive: entitlement.active === true,
     premiumVerified: entitlement.verified === true,
-    vehicleLimit: tier === 'premium' ? 25 : tier === 'pro' ? 10 : 2,
+    vehicleLimit:
+      tier === 'enterprise'
+        ? 999999
+        : tier === 'premium'
+          ? 25
+          : tier === 'pro'
+            ? 10
+            : 2,
   };
 };
 
@@ -2860,6 +2911,217 @@ export const setOrganizationMemberRoleCallable = onCall(async request => {
       targetUid,
       role: newRole,
     };
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const createInvoiceDraftCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const payload = (request.data || {}) as InvoiceDraftInput;
+  const orgId = (payload.orgId || '').toString().trim();
+  const customerName = (payload.customerName || '').toString().trim();
+  const dueDate = (payload.dueDate || '').toString().trim();
+  const issueDate = (payload.issueDate || '').toString().trim();
+  const currency = (payload.currency || 'USD').toString().trim().toUpperCase();
+  const notes = (payload.notes || '').toString().trim();
+  const lineItems = Array.isArray(payload.lineItems)
+    ? payload.lineItems
+        .map(item => ({
+          description: (item?.description || '').toString().trim(),
+          quantity: normalizeMoneyAmount(item?.quantity ?? 0),
+          unitPrice: normalizeMoneyAmount(item?.unitPrice ?? 0),
+        }))
+        .filter(item => item.description)
+    : [];
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!orgId || !customerName || !dueDate) {
+    throw new HttpsError(
+      'invalid-argument',
+      'orgId, customerName, and dueDate are required'
+    );
+  }
+
+  await requireOrgRole(actorUid, orgId, [
+    'org_owner',
+    'org_admin',
+    'billing_admin',
+  ]);
+
+  const amountDue =
+    payload.amountDue != null
+      ? normalizeMoneyAmount(payload.amountDue)
+      : Math.round(
+          lineItems.reduce(
+            (sum, item) => sum + item.quantity * item.unitPrice,
+            0
+          ) * 100
+        ) / 100;
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'createInvoiceDraft',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const invoiceRef = admin
+      .firestore()
+      .collection(`orgs/${orgId}/financeInvoices`)
+      .doc();
+
+    await invoiceRef.set({
+      orgId,
+      customerName,
+      issueDate: issueDate || new Date().toISOString().slice(0, 10),
+      dueDate,
+      currency,
+      amountDue,
+      amountPaid: 0,
+      status: 'draft',
+      notes,
+      lineItems,
+      createdByUid: actorUid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: 'finance.create_invoice_draft',
+      targetType: 'invoice',
+      targetId: invoiceRef.id,
+      details: {
+        customerName,
+        dueDate,
+        currency,
+        amountDue,
+      },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      invoiceId: invoiceRef.id,
+      status: 'draft',
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const createPayableDraftCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const payload = (request.data || {}) as PayableDraftInput;
+  const orgId = (payload.orgId || '').toString().trim();
+  const vendorName = (payload.vendorName || '').toString().trim();
+  const dueDate = (payload.dueDate || '').toString().trim();
+  const billDate = (payload.billDate || '').toString().trim();
+  const currency = (payload.currency || 'USD').toString().trim().toUpperCase();
+  const category = (payload.category || '').toString().trim();
+  const notes = (payload.notes || '').toString().trim();
+  const amountDue = normalizeMoneyAmount(payload.amountDue ?? 0);
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!orgId || !vendorName || !dueDate) {
+    throw new HttpsError(
+      'invalid-argument',
+      'orgId, vendorName, and dueDate are required'
+    );
+  }
+
+  await requireOrgRole(actorUid, orgId, [
+    'org_owner',
+    'org_admin',
+    'billing_admin',
+  ]);
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'createPayableDraft',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const payableRef = admin
+      .firestore()
+      .collection(`orgs/${orgId}/financePayables`)
+      .doc();
+
+    await payableRef.set({
+      orgId,
+      vendorName,
+      billDate: billDate || new Date().toISOString().slice(0, 10),
+      dueDate,
+      currency,
+      amountDue,
+      amountPaid: 0,
+      status: 'draft',
+      category,
+      notes,
+      createdByUid: actorUid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: 'finance.create_payable_draft',
+      targetType: 'payable',
+      targetId: payableRef.id,
+      details: {
+        vendorName,
+        dueDate,
+        currency,
+        amountDue,
+      },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      payableId: payableRef.id,
+      status: 'draft',
+    };
+
     await completeIdempotencyKey(
       reservation,
       result as unknown as Record<string, unknown>

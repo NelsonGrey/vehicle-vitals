@@ -35,7 +35,7 @@ This document tracks the implementation of the Vehicle Vitals monetization strat
   - UAT coverage for subscription plans and admin support console route behavior
 - Recent updates (May 14):
   - Adjusted tier vehicle limits to protect profitability: Free (3→2), Premium (50→25)
-  - Added Enterprise tier option for 25+ vehicles with sales contact flow
+  - Added Enterprise tier as a first-class plan for 25+ vehicles with sales contact flow
   - Moved inline body ad from top to bottom to improve visual ad separation
 - Remaining critical path for launch readiness:
   - Stripe checkout + webhook end-to-end
@@ -87,7 +87,7 @@ const isAiAnalysisEnabled = useFeatureFlag('ai_analysis', userTier, {
 
 **Flags to Implement**:
 
-- `vehicle_limit` (Free: 2, Pro: 10, Premium: 25, Enterprise: custom)
+- `vehicle_limit` (Free: 2, Pro: 10, Premium: 25, Enterprise: contract)
 - `calendar_sync` (Free: false, Pro: true, Premium: true)
 - `ai_analysis` (Free: false, Pro: true, Premium: true)
 - `ad_free` (Free: false, Pro: false, Premium: true)
@@ -104,7 +104,7 @@ const isAiAnalysisEnabled = useFeatureFlag('ai_analysis', userTier, {
 ```javascript
 // users/{userId}/subscription
 {
-  tier: 'free' | 'pro' | 'premium',
+  tier: 'free' | 'pro' | 'premium' | 'enterprise',
   status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'expired',
   currentPeriodStart: timestamp,
   currentPeriodEnd: timestamp,

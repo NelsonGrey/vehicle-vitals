@@ -206,28 +206,29 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 
 ## 2. Subscription Pricing & Tiers
 
-### 2.1 Three-Tier Pricing Model
+### 2.1 Four-Tier Pricing Model
 
-| Feature                     | **Free (Ads)**  | **Pro ($2.99/mo)**                  | **Premium ($6.99/mo)**         |
-| --------------------------- | --------------- | ----------------------------------- | ------------------------------ |
-| **Vehicles Tracked**        | 3               | 10                                  | Unlimited                      |
-| **Maintenance Reminders**   | Basic (mileage) | Advanced (time + mileage)           | Advanced + AI predictions      |
-| **PDF Receipt Upload**      | 10/month        | 100/month                           | Unlimited                      |
-| **Export Reports**          | CSV only        | PDF + CSV + Excel                   | PDF + CSV + Excel + cloud sync |
-| **Ads Shown**               | 3-5/page        | 1-2/page                            | 0 ads (ad-free)                |
-| **Calendar Sync**           | ❌              | ✅ Google/Outlook                   | ✅ All platforms               |
-| **Provider Directory**      | Organic only    | Includes 2 sponsored listings/month | All providers + filters        |
-| **AI Attachment Analysis**  | ❌              | ✅ 5/month                          | ✅ Unlimited                   |
-| **Maintenance Planning**    | ❌              | ✅ 12-month forecasts               | ✅ 36-month forecasts + alerts |
-| **Multi-Vehicle Dashboard** | ❌              | ✅                                  | ✅ Customizable thresholds     |
-| **API/Integration Access**  | ❌              | ❌                                  | ✅ Zapier, IFTTT               |
-| **Priority Support**        | Community       | Email (24-48h)                      | Email (4-8h) + phone           |
+| Feature                      | **Free (Ads)**                        | **Pro ($2.99/mo)**                  | **Premium ($6.99/mo)**         | **Enterprise (Custom)**                       |
+| ---------------------------- | ------------------------------------- | ----------------------------------- | ------------------------------ | --------------------------------------------- |
+| **Vehicles Tracked**         | 2                                     | 10                                  | 25                             | 25+ (contract)                                |
+| **Core Maintenance Logging** | ✅ Includes Who did it + Receipt type | ✅                                  | ✅                             | ✅                                            |
+| **Maintenance Reminders**    | Basic (mileage)                       | Advanced (time + mileage)           | Advanced + AI predictions      | Org policies + advanced automation            |
+| **PDF Receipt Upload**       | 10/month                              | 100/month                           | Unlimited                      | Unlimited + policy controls                   |
+| **Export Reports**           | CSV only                              | PDF + CSV + Excel                   | PDF + CSV + Excel + cloud sync | Accounting-grade exports + scheduled delivery |
+| **Ads Shown**                | 3-5/page                              | 1-2/page                            | 0 ads (ad-free)                | 0 ads                                         |
+| **Calendar Sync**            | ❌                                    | ✅ Google/Outlook                   | ✅ All platforms               | ✅ Org-wide                                   |
+| **Provider Directory**       | Organic only                          | Includes 2 sponsored listings/month | All providers + filters        | Contracted network and vendor controls        |
+| **AI Attachment Analysis**   | ❌                                    | ✅ 5/month                          | ✅ Unlimited                   | ✅ Unlimited + workflow automation            |
+| **Maintenance Planning**     | ❌                                    | ✅ 12-month forecasts               | ✅ 36-month forecasts + alerts | ✅ Fleet/portfolio planning                   |
+| **Multi-Vehicle Dashboard**  | ❌                                    | ✅                                  | ✅ Customizable thresholds     | ✅ Cross-account / fleet views                |
+| **API/Integration Access**   | ❌                                    | ❌                                  | ✅ Zapier, IFTTT               | ✅ Accounting/ERP integrations                |
+| **Priority Support**         | Community                             | Email (24-48h)                      | Email (4-8h) + phone           | Dedicated success + SLA                       |
 
 ### 2.2 Pricing Rationale
 
 #### Free Tier
 
-- **Vehicle Limit**: 3 vehicles
+- **Vehicle Limit**: 2 vehicles
   - Triggers upgrade funnel: most multi-vehicle owners (Persona 2) have 3+ vehicles
   - Separates power users naturally
 - **Ad Revenue**: $0.30-0.50/user/month expected
@@ -261,8 +262,8 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 #### Premium Tier ($6.99/month)
 
 - **Target Users**: Fleet managers, small business owners, power enthusiasts
-- **Vehicle Limit**: Unlimited
-  - Critical for Persona 2 (fleet managers with 5-10+ vehicles)
+- **Vehicle Limit**: 25 vehicles
+  - Covers advanced households and small fleet operators while reserving larger-scale operations for Enterprise
 
 - **Premium Features Added**:
   - No ads (complete ad-free experience)
@@ -280,6 +281,16 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 - **Conversion Target**: 1.5% of free users to Premium
   - Represents 3-5 vehicles per household + small business use cases
   - Conservative estimate (industry: 0.5-1%)
+
+#### Enterprise (Custom contract)
+
+- **Target Users**: Business fleets, service networks, and operations teams with cross-account workflows
+- **Vehicle Limit**: 25+ vehicles (contract-defined)
+- **Enterprise Features Added**:
+  - Dedicated account management and SLA-backed support
+  - Accounting/ERP integration workflows
+  - Organization-level controls for roles, retention, and compliance requests
+  - Contracted network controls and enterprise reporting
 
 ### 2.3 Revenue Projections (Year 1)
 
@@ -478,14 +489,16 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 
 - Free: 1GB ($0 cost; subsidize 20MB actual use)
 - Pro: 20GB ($0 incremental; users use avg 3GB)
-- Premium: Unlimited (cost: ~$2-3/user/month; premium pricing justifies)
+- Premium: 100GB (cost: ~$2-3/user/month; premium pricing justifies)
+- Enterprise: Contract storage policy (custom limits and archival controls)
 - **Margin**: Premium tier absorbs cost
 
 #### Alternative: Overage Fees
 
 - Free users: 1GB free; $0.99 per additional GB
 - Pro users: 20GB free; $0.49 per additional GB
-- Premium users: Unlimited (included)
+- Premium users: 100GB included, then contract upgrade path
+- Enterprise users: Contract-defined storage and overage model
 - **Revenue**: 10% of free users hit overage = 10K × $0.99 × 2 GB avg = **$20K/month**
 
 #### Strategy 3: Archive Tier
@@ -526,7 +539,7 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 **Deliverables:**
 
 - Three core ad placements (dashboard, sidebar, maintenance history)
-- Free tier with 3-vehicle limit
+- Free tier with 2-vehicle limit
 - Feature flags for Pro/Premium tiers (not yet live)
 - Stripe/RevenueCat integration (dev environment)
 
@@ -629,7 +642,7 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 
 **If Ad Revenue Underperforms:**
 
-- Increase Pro/Premium conversion targets (reduce free tier vehicles from 3 → 2)
+- Increase Pro/Premium conversion targets (maintain free tier at 2 and optimize upgrade prompts)
 - Launch B2B fleet tier ($50-100/month per business)
 - Pursue enterprise partnerships (insurance, dealerships)
 

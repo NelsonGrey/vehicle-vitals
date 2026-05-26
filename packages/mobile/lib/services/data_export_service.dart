@@ -67,6 +67,8 @@ class DataExportService {
         'Year',
         'Title',
         'Notes',
+        'Performed By',
+        'Receipt Coverage',
         'Cost',
         'Date',
         'Created At',
@@ -82,6 +84,8 @@ class DataExportService {
         vehicle?['year'] ?? '',
         entry['title'] ?? '',
         entry['notes'] ?? '',
+        entry['performedBy'] ?? '',
+        entry['coverage'] ?? '',
         entry['cost'] ?? 0,
         _isoDate(entry['date']),
         _isoDate(entry['createdAt']),
@@ -118,6 +122,8 @@ class DataExportService {
       TextCellValue('Year'),
       TextCellValue('Title'),
       TextCellValue('Notes'),
+      TextCellValue('Performed By'),
+      TextCellValue('Receipt Coverage'),
       TextCellValue('Cost'),
       TextCellValue('Date'),
       TextCellValue('Created At'),
@@ -132,6 +138,8 @@ class DataExportService {
         TextCellValue((vehicle?['year'] ?? '').toString()),
         TextCellValue((entry['title'] ?? '').toString()),
         TextCellValue((entry['notes'] ?? '').toString()),
+        TextCellValue((entry['performedBy'] ?? '').toString()),
+        TextCellValue((entry['coverage'] ?? '').toString()),
         TextCellValue((entry['cost'] ?? 0).toString()),
         TextCellValue(_isoDate(entry['date'])),
         TextCellValue(_isoDate(entry['createdAt'])),
@@ -183,12 +191,21 @@ class DataExportService {
             pw.TableHelper.fromTextArray(
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               cellAlignment: pw.Alignment.centerLeft,
-              headers: ['Date', 'Title', 'Cost', 'Notes'],
+              headers: [
+                'Date',
+                'Title',
+                'Performed By',
+                'Receipt Coverage',
+                'Cost',
+                'Notes',
+              ],
               data: maintenanceData
                   .map(
                     (entry) => [
                       _isoDate(entry['date']),
                       (entry['title'] ?? '').toString(),
+                      (entry['performedBy'] ?? '').toString(),
+                      (entry['coverage'] ?? '').toString(),
                       '\$${((entry['cost'] ?? 0) as num).toStringAsFixed(2)}',
                       (entry['notes'] ?? '').toString(),
                     ],
@@ -244,12 +261,21 @@ class DataExportService {
               pw.TableHelper.fromTextArray(
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 cellAlignment: pw.Alignment.centerLeft,
-                headers: ['Date', 'Title', 'Cost', 'Notes'],
+                headers: [
+                  'Date',
+                  'Title',
+                  'Performed By',
+                  'Receipt Coverage',
+                  'Cost',
+                  'Notes',
+                ],
                 data: maintenanceData
                     .map(
                       (entry) => [
                         _isoDate(entry['date']),
                         (entry['title'] ?? '').toString(),
+                        (entry['performedBy'] ?? '').toString(),
+                        (entry['coverage'] ?? '').toString(),
                         '\$${((entry['cost'] ?? 0) as num).toStringAsFixed(2)}',
                         (entry['notes'] ?? '').toString(),
                       ],

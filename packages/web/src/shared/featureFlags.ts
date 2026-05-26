@@ -7,7 +7,7 @@
  * const hasQuota = useFeatureFlag('ai_analysis', userTier, { quota: 5 });
  */
 
-export type UserTier = 'free' | 'pro' | 'premium';
+export type UserTier = 'free' | 'pro' | 'premium' | 'enterprise';
 
 export interface FeatureFlagConfig {
   name: string;
@@ -26,28 +26,28 @@ export const FEATURE_FLAGS: Record<string, FeatureFlagConfig> = {
   // Vehicle management
   vehicle_limit: {
     name: 'vehicle_limit',
-    enabledFor: ['free', 'pro', 'premium'],
+    enabledFor: ['free', 'pro', 'premium', 'enterprise'],
     description: 'Maximum number of vehicles user can track',
   },
 
   // Reminder features
   advanced_reminders: {
     name: 'advanced_reminders',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: 'Time-based + AI predictive reminders (vs. mileage-only)',
   },
 
   // Calendar integration
   calendar_sync: {
     name: 'calendar_sync',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: 'Sync maintenance events to Google Calendar, Outlook, etc.',
   },
 
   // AI-powered features
   ai_analysis: {
     name: 'ai_analysis',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     quota: {
       limit: 5, // Pro: 5/month; Premium: unlimited (handled separately)
       resetPeriod: 'monthly',
@@ -57,85 +57,85 @@ export const FEATURE_FLAGS: Record<string, FeatureFlagConfig> = {
 
   ai_predictions: {
     name: 'ai_predictions',
-    enabledFor: ['premium'],
+    enabledFor: ['premium', 'enterprise'],
     description: 'AI-powered predictive maintenance recommendations',
   },
 
   // Exports and data
   pdf_export: {
     name: 'pdf_export',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: 'Export maintenance records as PDF',
   },
 
   excel_export: {
     name: 'excel_export',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: 'Export maintenance records as Excel',
   },
 
   cloud_sync: {
     name: 'cloud_sync',
-    enabledFor: ['premium'],
+    enabledFor: ['premium', 'enterprise'],
     description: 'Cloud backup and cross-device sync for exports',
   },
 
   // Maintenance planning
   maintenance_planning_12mo: {
     name: 'maintenance_planning_12mo',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: '12-month maintenance forecast',
   },
 
   maintenance_planning_36mo: {
     name: 'maintenance_planning_36mo',
-    enabledFor: ['premium'],
+    enabledFor: ['premium', 'enterprise'],
     description: '36-month maintenance forecast with alerts',
   },
 
   // Ads
   ad_free: {
     name: 'ad_free',
-    enabledFor: ['premium'],
+    enabledFor: ['premium', 'enterprise'],
     description: 'Completely ad-free experience',
   },
 
   reduced_ads: {
     name: 'reduced_ads',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: 'Reduced ad density (1-2 placements vs 3-5)',
   },
 
   // Support
   priority_support: {
     name: 'priority_support',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: 'Priority email support (vs community only)',
   },
 
   phone_support: {
     name: 'phone_support',
-    enabledFor: ['premium'],
+    enabledFor: ['premium', 'enterprise'],
     description: 'Phone + email support',
   },
 
   // Multi-vehicle
   multi_vehicle_dashboard: {
     name: 'multi_vehicle_dashboard',
-    enabledFor: ['pro', 'premium'],
+    enabledFor: ['pro', 'premium', 'enterprise'],
     description: 'Single dashboard view of all vehicles',
   },
 
   // API access
   api_access: {
     name: 'api_access',
-    enabledFor: ['premium'],
+    enabledFor: ['premium', 'enterprise'],
     description: 'REST API for custom integrations',
   },
 
   zapier_integration: {
     name: 'zapier_integration',
-    enabledFor: ['premium'],
+    enabledFor: ['premium', 'enterprise'],
     description: 'Zapier and IFTTT automation integrations',
   },
 };
@@ -151,6 +151,8 @@ export function getVehicleLimit(tier: UserTier): number {
       return 10;
     case 'premium':
       return 25; // Medium fleet support; 25+ vehicles requires Enterprise
+    case 'enterprise':
+      return 999999; // Enterprise uses contract-defined limits
     default:
       return 2;
   }
@@ -188,7 +190,7 @@ export function getQuotaLimit(
 
   // Premium users get unlimited quota for certain features
   if (
-    tier === 'premium' &&
+    (tier === 'premium' || tier === 'enterprise') &&
     ['ai_analysis', 'receipt_uploads'].includes(featureName)
   ) {
     return 999999; // Effectively unlimited
@@ -202,6 +204,8 @@ export function getQuotaLimit(
  */
 export function getTierRank(tier: UserTier): number {
   switch (tier) {
+    case 'enterprise':
+      return 4;
     case 'premium':
       return 3;
     case 'pro':
@@ -259,6 +263,7 @@ export function compareFeatures(
     free: isFeatureEnabled(featureName, 'free'),
     pro: isFeatureEnabled(featureName, 'pro'),
     premium: isFeatureEnabled(featureName, 'premium'),
+    enterprise: isFeatureEnabled(featureName, 'enterprise'),
   };
 }
 
@@ -273,6 +278,8 @@ export function getTierDisplayName(tier: UserTier): string {
       return 'Pro';
     case 'premium':
       return 'Premium';
+    case 'enterprise':
+      return 'Enterprise';
     default:
       return 'Unknown';
   }
@@ -315,6 +322,14 @@ export const TIER_PRICING: Record<UserTier, TierPricing> = {
     annualDisplayPrice: '$69.99/year',
     annualSavings: 'Save $14 vs monthly',
   },
+  enterprise: {
+    tier: 'enterprise',
+    monthlyPrice: 0,
+    annualPrice: 0,
+    monthlyDisplayPrice: 'Custom pricing',
+    annualDisplayPrice: 'Annual contract',
+    annualSavings: 'Volume and SLA-based pricing',
+  },
 };
 
 /**
@@ -328,5 +343,5 @@ export function getTierPricing(tier: UserTier): TierPricing {
  * Validation: Check if tier is valid
  */
 export function isValidTier(tier: any): tier is UserTier {
-  return ['free', 'pro', 'premium'].includes(tier);
+  return ['free', 'pro', 'premium', 'enterprise'].includes(tier);
 }

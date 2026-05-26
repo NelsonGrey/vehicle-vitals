@@ -14,6 +14,8 @@ const {
   transferVehicleCallable,
   getOrganizationMembersCallable,
   setOrganizationMemberRoleCallable,
+  createInvoiceDraftCallable,
+  createPayableDraftCallable,
   applyRetentionPolicyCallable,
   requestUserDataExportCallable,
   requestUserDataDeletionCallable,
@@ -1207,6 +1209,40 @@ test('getEffectiveEntitlementsCallable returns premium tier when premium entitle
   assert.equal(entitlements.entitlements.features.ad_free, true);
 });
 
+const runFirestoreIntegration =
+  process.env.FIRESTORE_EMULATOR_HOST ||
+  process.env.ALLOW_LIVE_FIRESTORE_TESTS === 'true';
+
+(runFirestoreIntegration ? test : test.skip)(
+  'getEffectiveEntitlementsCallable elevates to enterprise for org enterprise tier',
+  async () => {
+    const uid = `enterprise-org-tier-${Date.now()}`;
+    const context = await bootstrapEnterpriseContextCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+    });
+
+    const admin = require('firebase-admin');
+    await admin.firestore().doc(`orgs/${context.orgId}`).set(
+      {
+        planTier: 'enterprise',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const entitlements = await getEffectiveEntitlementsCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+      data: { orgId: context.orgId },
+    });
+
+    assert.equal(entitlements.success, true);
+    assert.equal(entitlements.entitlements.tier, 'enterprise');
+    assert.equal(entitlements.entitlements.vehicleLimit, 999999);
+    assert.equal(entitlements.entitlements.features.ad_free, true);
+    assert.equal(entitlements.entitlements.features.api_access, true);
+  }
+);
+
 test('organization membership and role management callables work for org owner', async () => {
   const ownerUid = `org-owner-${Date.now()}`;
   const targetUid = `${ownerUid}-member`;
@@ -1267,6 +1303,173 @@ test('organization membership and role management callables work for org owner',
   assert.equal(roleUpdate.success, true);
   assert.equal(roleUpdate.role, 'org_admin');
 });
+
+const runFinanceCallableTests =
+  typeof createInvoiceDraftCallable?.run === 'function' &&
+  typeof createPayableDraftCallable?.run === 'function';
+
+const runFinanceFirestoreIntegration =
+  runFinanceCallableTests && runFirestoreIntegration;
+
+(runFinanceCallableTests ? test : test.skip)(
+  'createInvoiceDraftCallable rejects without auth context',
+  async () => {
+    await assert.rejects(
+      () =>
+        createInvoiceDraftCallable.run({
+          data: {
+            orgId: 'org_test',
+            customerName: 'Fleet Ops',
+            dueDate: '2026-07-01',
+          },
+        }),
+      error => {
+        assert.equal(error.code, 'unauthenticated');
+        return true;
+      }
+    );
+  }
+);
+
+(runFinanceCallableTests ? test : test.skip)(
+  'createPayableDraftCallable rejects invalid payload without required fields',
+  async () => {
+    await assert.rejects(
+      () =>
+        createPayableDraftCallable.run({
+          auth: { uid: `finance-test-${Date.now()}` },
+          data: {
+            orgId: '',
+            vendorName: '',
+            dueDate: '',
+          },
+        }),
+      error => {
+        assert.equal(error.code, 'invalid-argument');
+        return true;
+      }
+    );
+  }
+);
+
+(runFinanceFirestoreIntegration ? test : test.skip)(
+  'createInvoiceDraftCallable creates draft invoice and audit event',
+  async () => {
+    const uid = `finance-invoice-${Date.now()}`;
+    const context = await bootstrapEnterpriseContextCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+    });
+    const admin = require('firebase-admin');
+
+    const result = await createInvoiceDraftCallable.run({
+      auth: { uid },
+      data: {
+        orgId: context.orgId,
+        customerName: 'Acme Fleet Services',
+        dueDate: '2026-08-01',
+        issueDate: '2026-07-15',
+        currency: 'usd',
+        notes: 'Quarterly maintenance services',
+        lineItems: [
+          { description: 'Service labor', quantity: 2, unitPrice: 100 },
+          { description: 'Parts', quantity: 1, unitPrice: 49.99 },
+        ],
+        idempotencyKey: `invoice-${Date.now()}`,
+      },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.orgId, context.orgId);
+    assert.equal(result.status, 'draft');
+    assert.ok(result.invoiceId);
+
+    const invoiceSnap = await admin
+      .firestore()
+      .doc(`orgs/${context.orgId}/financeInvoices/${result.invoiceId}`)
+      .get();
+
+    assert.equal(invoiceSnap.exists, true);
+    const invoice = invoiceSnap.data();
+    assert.equal(invoice.customerName, 'Acme Fleet Services');
+    assert.equal(invoice.currency, 'USD');
+    assert.equal(invoice.status, 'draft');
+    assert.equal(invoice.createdByUid, uid);
+    assert.equal(invoice.amountDue, 249.99);
+    assert.equal(Array.isArray(invoice.lineItems), true);
+    assert.equal(invoice.lineItems.length, 2);
+
+    const auditSnap = await admin
+      .firestore()
+      .collection(`orgs/${context.orgId}/audit`)
+      .where('action', '==', 'finance.create_invoice_draft')
+      .where('targetId', '==', result.invoiceId)
+      .get();
+
+    assert.equal(auditSnap.empty, false);
+    const auditEntry = auditSnap.docs[0].data();
+    assert.equal(auditEntry.targetType, 'invoice');
+    assert.equal(auditEntry.actorUid, uid);
+    assert.equal(auditEntry.details.customerName, 'Acme Fleet Services');
+  }
+);
+
+(runFinanceFirestoreIntegration ? test : test.skip)(
+  'createPayableDraftCallable creates draft payable and audit event',
+  async () => {
+    const uid = `finance-payable-${Date.now()}`;
+    const context = await bootstrapEnterpriseContextCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+    });
+    const admin = require('firebase-admin');
+
+    const result = await createPayableDraftCallable.run({
+      auth: { uid },
+      data: {
+        orgId: context.orgId,
+        vendorName: 'Northwind Repair Co',
+        dueDate: '2026-08-10',
+        billDate: '2026-07-20',
+        currency: 'usd',
+        category: 'operations',
+        notes: 'Shop tooling invoice',
+        amountDue: 120.456,
+        idempotencyKey: `payable-${Date.now()}`,
+      },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.orgId, context.orgId);
+    assert.equal(result.status, 'draft');
+    assert.ok(result.payableId);
+
+    const payableSnap = await admin
+      .firestore()
+      .doc(`orgs/${context.orgId}/financePayables/${result.payableId}`)
+      .get();
+
+    assert.equal(payableSnap.exists, true);
+    const payable = payableSnap.data();
+    assert.equal(payable.vendorName, 'Northwind Repair Co');
+    assert.equal(payable.currency, 'USD');
+    assert.equal(payable.status, 'draft');
+    assert.equal(payable.createdByUid, uid);
+    assert.equal(payable.category, 'operations');
+    assert.equal(payable.amountDue, 120.46);
+
+    const auditSnap = await admin
+      .firestore()
+      .collection(`orgs/${context.orgId}/audit`)
+      .where('action', '==', 'finance.create_payable_draft')
+      .where('targetId', '==', result.payableId)
+      .get();
+
+    assert.equal(auditSnap.empty, false);
+    const auditEntry = auditSnap.docs[0].data();
+    assert.equal(auditEntry.targetType, 'payable');
+    assert.equal(auditEntry.actorUid, uid);
+    assert.equal(auditEntry.details.vendorName, 'Northwind Repair Co');
+  }
+);
 
 test('transferVehicleCallable moves vehicle document and related subcollections', async () => {
   const senderUid = `transfer-sender-${Date.now()}`;

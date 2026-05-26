@@ -27,7 +27,41 @@
  * @property {string} mileage
  * @property {number} [cost]
  * @property {string} provider
+ * @property {'self'|'mechanic'|'business'} [performedBy]
+ * @property {'parts_only'|'parts_and_labor'} [coverage]
  * @property {string} notes
+ */
+
+/** @typedef {Object} InvoiceLineItem
+ * @property {string} description
+ * @property {number} quantity
+ * @property {number} unitPrice
+ */
+
+/** @typedef {Object} InvoiceDraft
+ * @property {string} orgId
+ * @property {string} customerName
+ * @property {string} issueDate
+ * @property {string} dueDate
+ * @property {string} currency
+ * @property {number} [amountDue]
+ * @property {number} [amountPaid]
+ * @property {'draft'|'sent'|'partial'|'paid'|'void'} [status]
+ * @property {string} [notes]
+ * @property {InvoiceLineItem[]} [lineItems]
+ */
+
+/** @typedef {Object} PayableDraft
+ * @property {string} orgId
+ * @property {string} vendorName
+ * @property {string} billDate
+ * @property {string} dueDate
+ * @property {string} currency
+ * @property {number} [amountDue]
+ * @property {number} [amountPaid]
+ * @property {'draft'|'approved'|'scheduled'|'paid'|'void'} [status]
+ * @property {string} [category]
+ * @property {string} [notes]
  */
 
 // Main exports for @vehicle-vitals/shared package
@@ -70,6 +104,38 @@ export const defaultMaintenanceRecord = {
   mileage: '',
   cost: undefined,
   provider: '',
+  performedBy: 'mechanic',
+  coverage: 'parts_and_labor',
+  notes: '',
+};
+
+// Default accounts receivable invoice draft structure
+/** @type {InvoiceDraft} */
+export const defaultInvoiceDraft = {
+  orgId: '',
+  customerName: '',
+  issueDate: '',
+  dueDate: '',
+  currency: 'USD',
+  amountDue: undefined,
+  amountPaid: 0,
+  status: 'draft',
+  notes: '',
+  lineItems: [],
+};
+
+// Default accounts payable bill draft structure
+/** @type {PayableDraft} */
+export const defaultPayableDraft = {
+  orgId: '',
+  vendorName: '',
+  billDate: '',
+  dueDate: '',
+  currency: 'USD',
+  amountDue: undefined,
+  amountPaid: 0,
+  status: 'draft',
+  category: '',
   notes: '',
 };
 

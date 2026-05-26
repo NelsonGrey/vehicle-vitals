@@ -17,11 +17,11 @@ export default function Instructions() {
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-4">
-          Getting Started Workflow
+          Simple setup steps
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-          Start with account access first. The garage, records, timeline, and
-          planning pages are secured and open after you sign in.
+          Start with account access first. Your garage, service records,
+          timeline, and reminders open after you sign in.
         </p>
         <ol className="list-decimal pl-5 space-y-3 text-slate-700 dark:text-slate-300">
           <li>
@@ -45,12 +45,12 @@ export default function Instructions() {
             to reach your garage and add your first vehicle.
           </li>
           <li>
-            Enter the VIN, use VIN decode for faster setup, and fill any missing
-            Year, Make, and Model details manually if needed.
+            Enter the vehicle ID, use the lookup for faster setup, and fill any
+            missing Year, Make, and Model details by hand if needed.
           </li>
           <li>
-            Log maintenance entries with date, mileage, title, notes, and cost
-            to build a complete service record.
+            Save service entries with date, mileage, notes, and cost to build a
+            clear service record.
           </li>
           <li>
             Review Timeline and Upcoming tasks to plan future service and avoid
@@ -68,12 +68,12 @@ export default function Instructions() {
           Getting Started Video
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Watch a guided walkthrough of first-time setup and core ownership
-          flows.
+          Watch a short walkthrough of first-time setup and the main things you
+          will do in the app.
         </p>
         <MarketingVideoPanel
-          title="Getting Started Walkthrough"
-          description="From account creation to logging your first maintenance entry in under a minute."
+          title="Simple setup walkthrough"
+          description="From account creation to saving your first service entry."
           poster="/images/features/add-vehicle.png"
           videoPath="/videos/feature-demos/getting-started-help.mp4"
           fallbackHref="/auth/signup"
@@ -86,9 +86,9 @@ export default function Instructions() {
           Mobile Apps
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">
-          Our iOS and Android apps sync with your account so you can scan a VIN,
-          update mileage, and add notes on the go. Public App Store and Google
-          Play listings are not available yet.
+          Our iOS and Android apps sync with your account so you can scan a
+          vehicle ID, update mileage, and add notes on the go. Public App Store
+          and Google Play listings are not available yet.
         </p>
         <p className="text-slate-600 dark:text-slate-400">
           Mobile access is currently limited to controlled distribution and

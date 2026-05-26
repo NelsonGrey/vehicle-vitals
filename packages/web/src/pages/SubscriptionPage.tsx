@@ -41,7 +41,10 @@ function formatVehicleLimit(tier: UserTier): string {
   if (tier === 'pro') {
     return 'Up to 10 vehicles';
   }
-  return 'Up to 25 vehicles';
+  if (tier === 'premium') {
+    return 'Up to 25 vehicles';
+  }
+  return '25+ vehicles (contract)';
 }
 
 export default function SubscriptionPage() {
@@ -70,7 +73,7 @@ export default function SubscriptionPage() {
     );
   }
 
-  const tiers: UserTier[] = ['free', 'pro', 'premium'];
+  const tiers: UserTier[] = ['free', 'pro', 'premium', 'enterprise'];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-5 py-6">
@@ -126,7 +129,7 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+      <div className="mt-5 grid gap-4 lg:grid-cols-4">
         {tiers.map(planTier => {
           const pricing = getTierPricing(planTier);
           const isCurrent = tier === planTier;
@@ -136,7 +139,9 @@ export default function SubscriptionPage() {
               ? 'Switch to Free'
               : planTier === 'pro'
                 ? 'Choose Pro'
-                : 'Choose Premium';
+                : planTier === 'premium'
+                  ? 'Choose Premium'
+                  : 'Contact Sales';
 
           return (
             <article
@@ -155,15 +160,19 @@ export default function SubscriptionPage() {
               </p>
 
               <p className="mt-4 text-2xl font-bold text-slate-900 dark:text-slate-100">
-                {billingPeriod === 'monthly'
+                {planTier === 'enterprise'
                   ? pricing.monthlyDisplayPrice
-                  : pricing.annualDisplayPrice}
+                  : billingPeriod === 'monthly'
+                    ? pricing.monthlyDisplayPrice
+                    : pricing.annualDisplayPrice}
               </p>
-              {billingPeriod === 'annual' && pricing.annualSavings && (
-                <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                  {pricing.annualSavings}
-                </p>
-              )}
+              {planTier !== 'enterprise' &&
+                billingPeriod === 'annual' &&
+                pricing.annualSavings && (
+                  <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                    {pricing.annualSavings}
+                  </p>
+                )}
 
               <button
                 type="button"
@@ -175,6 +184,12 @@ export default function SubscriptionPage() {
 
                   if (planTier === 'free') {
                     navigate('/app/profile');
+                    return;
+                  }
+
+                  if (planTier === 'enterprise') {
+                    window.location.href =
+                      'mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet.';
                     return;
                   }
 
@@ -198,29 +213,6 @@ export default function SubscriptionPage() {
             </article>
           );
         })}
-      </div>
-
-      <div className="mt-5 rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-50/50 p-5 dark:border-purple-800 dark:from-purple-950/40 dark:to-purple-900/30">
-        <h2 className="text-xl font-semibold text-purple-900 dark:text-purple-200">
-          Enterprise (25+ vehicles)
-        </h2>
-        <p className="mt-2 text-sm text-purple-800/90 dark:text-purple-100/90">
-          For larger fleets and commercial operations. Custom plans, priority
-          support, and dedicated account management available.
-        </p>
-        <p className="mt-3 text-sm font-semibold text-purple-900 dark:text-purple-200">
-          Custom pricing
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            window.location.href =
-              'mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet.';
-          }}
-          className="mt-4 w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800"
-        >
-          Contact Sales
-        </button>
       </div>
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
@@ -262,6 +254,9 @@ export default function SubscriptionPage() {
                       </td>
                       <td className="border-b border-slate-100 px-3 py-2 text-center dark:border-slate-800">
                         {availability.premium ? 'Included' : 'No'}
+                      </td>
+                      <td className="border-b border-slate-100 px-3 py-2 text-center dark:border-slate-800">
+                        {availability.enterprise ? 'Included' : 'No'}
                       </td>
                     </tr>
                   );

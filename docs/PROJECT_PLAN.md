@@ -1,37 +1,37 @@
 # Vehicle Vitals - Master Project Plan
 
-Last updated: April 13, 2026
-Planning horizon: 8 weeks
+Last updated: May 23, 2026
+Planning horizon: 8 weeks (rebaseline)
 Primary source status: docs/REQUIREMENTS.md
 Execution detail for R1: docs/R1_COMPLETION_CHECKLIST.md
 
 ## Plan Goal
 
-Deliver production-capable parity by closing all R1 gates, then complete R2 parity and reliability work in a controlled sequence.
+Deliver production-capable parity by closing all R1 gates, then complete R2 parity and reliability work while establishing the Business Operations Foundation (account management + AR/AP readiness).
 
 ## Milestone Schedule
 
-| Window   | Milestone                      | Outcome                                                            |
-| -------- | ------------------------------ | ------------------------------------------------------------------ |
-| Week 1-2 | R1 Gate 1 and Gate 2           | Reminder reliability evidence + mobile runtime parity evidence     |
-| Week 3   | R1 Gate 3                      | Export parity signoff package complete                             |
-| Week 4-5 | R2 Calendar and Timeline       | Reliable calendar UX + improved mobile timeline parity             |
-| Week 6   | R2 API enrichment              | Manuals/warranty/maintenance-plan surfaced with stable UX          |
-| Week 7   | R3 Forecasting pass            | Forecasting improvements defined and first release slice delivered |
-| Week 8   | Stabilization and release prep | Regression pass, documentation sync, release recommendation        |
+| Window   | Milestone                           | Outcome                                                        |
+| -------- | ----------------------------------- | -------------------------------------------------------------- |
+| Week 1-2 | R1 Gate 1 and Gate 2                | Reminder reliability evidence + mobile runtime parity evidence |
+| Week 3   | R1 Gate 3                           | Export parity signoff package complete                         |
+| Week 4-5 | R2 Calendar and Timeline            | Reliable calendar UX + improved mobile timeline parity         |
+| Week 6   | R2 API enrichment                   | Manuals/warranty/maintenance-plan surfaced with stable UX      |
+| Week 7   | R2.5 Business Operations Foundation | Account-management baseline + AR/AP contract definition        |
+| Week 8   | Stabilization and release prep      | Regression pass, documentation sync, release recommendation    |
 
 ## Calendarized Schedule (2026)
 
-| Week   | Date Range      | Primary Focus                                       |
-| ------ | --------------- | --------------------------------------------------- |
-| Week 1 | Apr 13 - Apr 17 | R1 gate setup, owner assignment, preflight checks   |
-| Week 2 | Apr 20 - Apr 24 | Execute Gate 1 and Gate 2 evidence runs             |
-| Week 3 | Apr 27 - May 1  | Execute Gate 3 parity signoff and R1 closure review |
-| Week 4 | May 4 - May 8   | R2 calendar reliability and UX hardening            |
-| Week 5 | May 11 - May 15 | R2 timeline parity completion                       |
-| Week 6 | May 18 - May 22 | R2 API enrichment client integration                |
-| Week 7 | May 25 - May 29 | R3 forecasting first release slice                  |
-| Week 8 | Jun 1 - Jun 5   | Stabilization, regression, release recommendation   |
+| Week   | Date Range      | Primary Focus                                                   |
+| ------ | --------------- | --------------------------------------------------------------- |
+| Week 1 | Apr 13 - Apr 17 | R1 gate setup, owner assignment, preflight checks               |
+| Week 2 | Apr 20 - Apr 24 | Execute Gate 1 and Gate 2 evidence runs                         |
+| Week 3 | Apr 27 - May 1  | Execute Gate 3 parity signoff and R1 closure review             |
+| Week 4 | May 4 - May 8   | R2 calendar reliability and UX hardening                        |
+| Week 5 | May 11 - May 15 | R2 timeline parity completion                                   |
+| Week 6 | May 18 - May 22 | R2 API enrichment client integration                            |
+| Week 7 | May 25 - May 29 | R2.5 business foundation (account management + AR/AP contracts) |
+| Week 8 | Jun 1 - Jun 5   | Stabilization, regression, release recommendation               |
 
 ## Workstreams
 
@@ -92,6 +92,23 @@ Dependencies:
 Exit:
 
 - Approved R3 release slice and R4 implementation plan
+
+### WS4: Business Operations Foundation (R2.5)
+
+Scope:
+
+- Account management domain baseline (organization profile + role boundaries)
+- AR/AP data contracts and lifecycle definitions
+- Initial implementation scaffolding for invoice and payable entities
+
+Dependencies:
+
+- R1 completion (or explicit risk acceptance)
+- Entitlement and org-role stability across web/mobile/backend
+
+Exit:
+
+- Approved technical design and first implementation slice merged
 
 ## Team Ownership Model
 
@@ -170,3 +187,7 @@ If any R1 gate slips, R2 start should be treated as at-risk.
 3. Execute mobile parity validation and publish evidence.
 4. Execute export parity signoff and publish parity report.
 5. Hold R1 completion review and issue go/no-go recommendation for R2.
+6. Finalize backend Enterprise entitlement integration reliability with emulator-backed or enabled-project execution evidence.
+7. Kick off R2.5 business foundation implementation for account management and AR/AP contracts.
+8. Connect AR/AP callable scaffolds into first web admin flow for draft invoice/payable creation.
+9. Add emulator-backed AR/AP integration evidence and publish results in release artifacts.

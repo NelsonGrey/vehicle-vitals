@@ -351,8 +351,8 @@ export default function Home() {
               No vehicles yet
             </h3>
             <p className="text-slate-600 dark:text-slate-400 mb-3">
-              Get started by adding your first vehicle. You can use VIN decode
-              to speed things up.
+              Get started by adding your first vehicle. We can look up details
+              for some vehicles to make setup quicker.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link

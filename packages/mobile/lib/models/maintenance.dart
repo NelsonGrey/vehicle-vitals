@@ -3,6 +3,8 @@ class Maintenance {
   final String title;
   final String notes;
   final double cost;
+  final String performedBy;
+  final String coverage;
   final DateTime date;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -12,6 +14,8 @@ class Maintenance {
     required this.title,
     this.notes = '',
     this.cost = 0.0,
+    this.performedBy = 'mechanic',
+    this.coverage = 'parts_and_labor',
     required this.date,
     required this.createdAt,
     required this.updatedAt,
@@ -23,6 +27,8 @@ class Maintenance {
       title: map['title'] ?? '',
       notes: map['notes'] ?? '',
       cost: (map['cost'] ?? 0.0).toDouble(),
+      performedBy: (map['performedBy'] ?? 'mechanic').toString(),
+      coverage: (map['coverage'] ?? 'parts_and_labor').toString(),
       date: map['date'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
               map['date'].millisecondsSinceEpoch,
@@ -46,6 +52,8 @@ class Maintenance {
       'title': title,
       'notes': notes,
       'cost': cost,
+      'performedBy': performedBy,
+      'coverage': coverage,
       'date': date,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -57,6 +65,8 @@ class Maintenance {
     String? title,
     String? notes,
     double? cost,
+    String? performedBy,
+    String? coverage,
     DateTime? date,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -66,6 +76,8 @@ class Maintenance {
       title: title ?? this.title,
       notes: notes ?? this.notes,
       cost: cost ?? this.cost,
+      performedBy: performedBy ?? this.performedBy,
+      coverage: coverage ?? this.coverage,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

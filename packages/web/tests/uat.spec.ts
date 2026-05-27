@@ -285,41 +285,37 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       await page.goto(`${BASE_URL}/app`);
 
-      const appNavMetrics = await page.evaluate(() => {
-        const navRow = document.querySelector('header nav > div:nth-child(2)');
-        const appLinks = Array.from(
-          navRow?.querySelectorAll('div:first-child a') ?? []
-        ).map(link => link.textContent?.trim() || '');
+      const header = page.locator('header').first();
 
-        return {
-          hasLinks: appLinks.length > 0,
-          firstLink: appLinks[0] || null,
-          hasProductOverview: appLinks.includes('Product Overview'),
-          hasHelpHowTo: appLinks.includes('Help & How-To'),
-          hasGettingStarted: appLinks.includes('Getting Started'),
-          hasGarage: appLinks.includes('Garage'),
-        };
-      });
+      await expect(
+        header.getByRole('button', { name: /Sign Out/i })
+      ).toBeVisible({ timeout: 15000 });
+      await expect(header.getByRole('link', { name: /^Garage$/i })).toBeVisible();
 
-      test.skip(
-        !appNavMetrics.hasLinks,
-        'Authenticated header links are unavailable in this deployment target.'
-      );
+      const hasLegacyContextLinks =
+        (await header
+          .getByRole('link', { name: /Product Overview/i })
+          .isVisible()
+          .catch(() => false)) ||
+        (await header
+          .getByRole('link', { name: /Help & How-To/i })
+          .isVisible()
+          .catch(() => false));
 
       test.skip(
-        appNavMetrics.firstLink === 'Home',
-        'Hosted environment still uses legacy authenticated nav ordering.'
-      );
-
-      test.skip(
-        appNavMetrics.hasProductOverview || appNavMetrics.hasHelpHowTo,
+        hasLegacyContextLinks,
         'Deployment target is still on legacy authenticated navigation labels.'
       );
 
-      expect(appNavMetrics.hasProductOverview).toBe(false);
-      expect(appNavMetrics.hasHelpHowTo).toBe(false);
-      expect(appNavMetrics.hasGettingStarted).toBe(true);
-      expect(appNavMetrics.hasGarage).toBe(true);
+      await expect(
+        header.getByRole('link', { name: /Getting Started/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Product Overview/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Help & How-To/i })
+      ).toHaveCount(0);
     });
 
     test('TC-UI-006: Shell uses centered 1280px layout and standalone ad break', async ({

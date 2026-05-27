@@ -1,22 +1,35 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SubscriptionPage from '../src/pages/SubscriptionPage';
 
 const mockNavigate = vi.fn();
+const mockChangeSubscriptionTier = vi.fn();
+const mockCreateSubscriptionCheckoutSession = vi.fn();
+const mockTrackPaymentInitiated = vi.fn();
+let mockSubscription = null;
+let mockTier = 'free';
+let mockIsLoading = false;
 
 vi.mock('../src/shared/useMonetization', () => ({
   useSubscription: () => ({
-    subscription: null,
-    tier: 'free',
-    isLoading: false,
+    subscription: mockSubscription,
+    tier: mockTier,
+    isLoading: mockIsLoading,
     error: null,
   }),
 }));
 
+vi.mock('../src/shared/entitlementsService', () => ({
+  changeSubscriptionTier: (...args) => mockChangeSubscriptionTier(...args),
+  createSubscriptionCheckoutSession: (...args) =>
+    mockCreateSubscriptionCheckoutSession(...args),
+}));
+
 vi.mock('../src/shared/adAnalytics', () => ({
-  trackPaymentInitiated: vi.fn(),
+  trackPaymentInitiated: (...args) => mockTrackPaymentInitiated(...args),
   trackSubscriptionPageView: vi.fn(),
 }));
 
@@ -32,6 +45,25 @@ describe('SubscriptionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('alert', vi.fn());
+    mockSubscription = null;
+    mockTier = 'free';
+    mockIsLoading = false;
+    mockChangeSubscriptionTier.mockResolvedValue({
+      orgId: 'org-test',
+      tier: 'pro',
+      vehicleLimit: 10,
+      features: {},
+    });
+    mockCreateSubscriptionCheckoutSession.mockResolvedValue({
+      mode: 'activated',
+      tier: 'pro',
+      entitlements: {
+        orgId: 'org-test',
+        tier: 'pro',
+        vehicleLimit: 10,
+        features: {},
+      },
+    });
   });
 
   it('renders four plan cards including enterprise and contact sales CTA', () => {
@@ -64,5 +96,98 @@ describe('SubscriptionPage', () => {
 
     expect(screen.getByText(/feature comparison/i)).toBeInTheDocument();
     expect(screen.getAllByText('Enterprise').length).toBeGreaterThan(1);
+  });
+
+  it('calls tier change callable when selecting pro', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <SubscriptionPage />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getAllByRole('button', { name: /choose pro/i })[0]);
+
+    expect(mockTrackPaymentInitiated).toHaveBeenCalledWith(
+      'pro',
+      'monthly',
+      'subscription_page'
+    );
+    expect(mockCreateSubscriptionCheckoutSession).toHaveBeenCalledWith(
+      'pro',
+      'monthly'
+    );
+  });
+
+  it('shows a success banner when checkout query indicates success', () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/app/subscription?checkout=success']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <SubscriptionPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText(
+        /checkout completed\. your subscription is being finalized\./i
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows a cancellation banner when checkout query indicates cancelled', () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/app/subscription?checkout=cancelled']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <SubscriptionPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText(/checkout was cancelled\. no plan change was applied\./i)
+    ).toBeInTheDocument();
+  });
+
+  it('shows a specific recovery message for past due subscriptions', () => {
+    mockSubscription = {
+      tier: 'pro',
+      status: 'past_due',
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      renewalDate: null,
+      autoRenew: true,
+      trialEndDate: null,
+      paymentMethod: 'stripe',
+      lastPaymentError: 'stripe_invoice_payment_failed',
+      updatedAt: {
+        toDate: () => new Date('2026-05-27T00:00:00Z'),
+      },
+    };
+    mockTier = 'pro';
+
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <SubscriptionPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText(/payment issue • update your card to restore billing/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/billing action needed/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /contact support/i })
+    ).toHaveAttribute('href', '/contact');
+    expect(
+      screen.getByRole('link', { name: /email support/i })
+    ).toHaveAttribute('href', 'mailto:support@vehicle-vitals.com');
   });
 });

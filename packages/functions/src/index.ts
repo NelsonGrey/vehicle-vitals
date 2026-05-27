@@ -1,5 +1,5 @@
 /* eslint-disable quotes, object-curly-spacing, arrow-parens, operator-linebreak, indent, max-len, quote-props */
-import { createHash } from 'crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import * as admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { setGlobalOptions } from 'firebase-functions';
@@ -8,7 +8,10 @@ import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
-import { verifyBillingPurchase } from './billing.provider';
+import {
+  createStripeCheckoutSession,
+  verifyBillingPurchase,
+} from './billing.provider';
 import {
   buildAppleCalendarEvent,
   buildGoogleCalendarEvent,
@@ -58,7 +61,7 @@ interface MaintenanceEntry {
 
 interface LocalServiceProvider {
   id: string;
-  type: 'repair_shop' | 'dealership';
+  type: 'repair_shop' | 'dealership' | 'body_shop' | 'car_wash' | 'detailer';
   name: string;
   distanceMiles: number;
   address: string;
@@ -161,6 +164,18 @@ interface EffectiveEntitlements {
   features: Record<string, boolean>;
 }
 
+interface ApiAccessKeyMetadata {
+  keyId: string;
+  label: string;
+  keyPrefix: string;
+  active: boolean;
+  createdAt: unknown;
+  updatedAt: unknown;
+  lastUsedAt: unknown;
+  revokedAt: unknown;
+  keyHash?: string;
+}
+
 interface InvoiceLineItemInput {
   description: string;
   quantity: number;
@@ -249,14 +264,22 @@ const getVehicleLimitForTier = (tier: UserTier): number => {
 
 const getFeatureSetForTier = (tier: UserTier): Record<string, boolean> => ({
   vehicle_limit: true,
+  advanced_reminders: tier !== 'free',
   calendar_sync: tier !== 'free',
   pdf_export: tier !== 'free',
   excel_export: tier !== 'free',
   ai_analysis: tier !== 'free',
+  ai_predictions: tier === 'premium' || tier === 'enterprise',
+  cloud_sync: tier === 'premium' || tier === 'enterprise',
+  maintenance_planning_12mo: tier !== 'free',
+  maintenance_planning_36mo: tier === 'premium' || tier === 'enterprise',
   ad_free: tier === 'premium' || tier === 'enterprise',
+  reduced_ads: tier !== 'free',
   priority_support: tier !== 'free',
   phone_support: tier === 'premium' || tier === 'enterprise',
+  multi_vehicle_dashboard: tier !== 'free',
   api_access: tier === 'premium' || tier === 'enterprise',
+  zapier_integration: tier === 'premium' || tier === 'enterprise',
 });
 
 const getDefaultOrgId = (uid: string): string => `personal_${uid}`;
@@ -399,6 +422,410 @@ async function resolveEffectiveEntitlements(
     vehicleLimit: getVehicleLimitForTier(effectiveTier),
     features: getFeatureSetForTier(effectiveTier),
   };
+}
+
+const hashApiAccessKey = (rawKey: string): string => {
+  return createHash('sha256').update(rawKey).digest('hex');
+};
+
+const resolveFunctionBaseUrl = (): string => {
+  const explicit = (process.env.API_WEBHOOK_BASE_URL || '').trim();
+  if (explicit) {
+    return explicit.replace(/\/$/, '');
+  }
+
+  const projectId = (
+    process.env.GCLOUD_PROJECT ||
+    process.env.FIREBASE_PROJECT ||
+    admin.app().options.projectId ||
+    ''
+  )
+    .toString()
+    .trim();
+  if (!projectId) {
+    return '';
+  }
+
+  return `https://us-central1-${projectId}.cloudfunctions.net`;
+};
+
+const getRequestBodyBuffer = (request: {
+  rawBody?: unknown;
+  body?: unknown;
+}): Buffer => {
+  const rawBody = request.rawBody;
+  if (Buffer.isBuffer(rawBody)) {
+    return rawBody;
+  }
+
+  if (typeof request.body === 'string') {
+    return Buffer.from(request.body, 'utf8');
+  }
+
+  return Buffer.from(JSON.stringify(request.body || {}), 'utf8');
+};
+
+const isWebhookSignatureValid = (
+  request: {
+    headers: Record<string, unknown>;
+    rawBody?: unknown;
+    body?: unknown;
+  },
+  secret: string
+): boolean => {
+  const rawSignature = (
+    request.headers['x-vv-signature'] ||
+    request.headers['x-zapier-signature'] ||
+    ''
+  )
+    .toString()
+    .trim();
+  if (!rawSignature) {
+    return false;
+  }
+
+  const normalizedSignature = rawSignature.startsWith('sha256=')
+    ? rawSignature.slice(7)
+    : rawSignature;
+  if (!/^[a-f0-9]{64}$/i.test(normalizedSignature)) {
+    return false;
+  }
+
+  const expectedSignature = createHmac('sha256', secret)
+    .update(getRequestBodyBuffer(request))
+    .digest('hex');
+
+  const providedBuffer = Buffer.from(normalizedSignature.toLowerCase(), 'hex');
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, providedBuffer);
+};
+
+const parseStripeSignatureHeader = (
+  signatureHeaderRaw: string
+): { timestamp: string; v1: string } | null => {
+  const signatureHeader = (signatureHeaderRaw || '').toString().trim();
+  if (!signatureHeader) {
+    return null;
+  }
+
+  const segments = signatureHeader.split(',');
+  let timestamp = '';
+  let v1 = '';
+
+  for (const segment of segments) {
+    const [key, value] = segment.split('=');
+    if (key === 't' && value) {
+      timestamp = value.trim();
+    }
+    if (key === 'v1' && value) {
+      v1 = value.trim();
+    }
+  }
+
+  if (!timestamp || !v1) {
+    return null;
+  }
+
+  return { timestamp, v1 };
+};
+
+const isStripeWebhookSignatureValid = (
+  request: {
+    headers: Record<string, unknown>;
+    rawBody?: unknown;
+    body?: unknown;
+  },
+  secret: string
+): boolean => {
+  const parsed = parseStripeSignatureHeader(
+    (request.headers['stripe-signature'] || '').toString()
+  );
+  if (!parsed) {
+    return false;
+  }
+
+  const toleranceSeconds = 5 * 60;
+  const timestampNumber = Number(parsed.timestamp);
+  if (!Number.isFinite(timestampNumber)) {
+    return false;
+  }
+
+  if (
+    Math.abs(Math.floor(Date.now() / 1000) - timestampNumber) > toleranceSeconds
+  ) {
+    return false;
+  }
+
+  const payloadBuffer = getRequestBodyBuffer(request);
+  const signedPayload = `${parsed.timestamp}.${payloadBuffer.toString('utf8')}`;
+  const expectedSignature = createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('hex');
+
+  if (!/^[a-f0-9]{64}$/i.test(parsed.v1)) {
+    return false;
+  }
+
+  const provided = Buffer.from(parsed.v1.toLowerCase(), 'hex');
+  const expected = Buffer.from(expectedSignature, 'hex');
+
+  if (provided.length !== expected.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expected, provided);
+};
+
+const getStripePriceLookup = (): Record<string, UserTier> => {
+  const mapping: Record<string, UserTier> = {};
+  const candidates: Array<{ envName: string; tier: UserTier }> = [
+    { envName: 'STRIPE_PRICE_ID_PRO_MONTHLY', tier: 'pro' },
+    { envName: 'STRIPE_PRICE_ID_PRO_ANNUAL', tier: 'pro' },
+    { envName: 'STRIPE_PRICE_ID_PREMIUM_MONTHLY', tier: 'premium' },
+    { envName: 'STRIPE_PRICE_ID_PREMIUM_ANNUAL', tier: 'premium' },
+  ];
+
+  for (const candidate of candidates) {
+    const value = (process.env[candidate.envName] || '').toString().trim();
+    if (value) {
+      mapping[value] = candidate.tier;
+    }
+  }
+
+  return mapping;
+};
+
+const getPriceIdFromStripeObject = (objectData: any): string => {
+  const primaryPriceId =
+    objectData?.display_items?.[0]?.price?.id ||
+    objectData?.line_items?.data?.[0]?.price?.id ||
+    objectData?.items?.data?.[0]?.price?.id ||
+    objectData?.plan?.id ||
+    objectData?.price?.id;
+
+  return (primaryPriceId || '').toString().trim();
+};
+
+const resolveSubscriptionTierFromStripeObject = (
+  objectData: any
+): UserTier | null => {
+  const metadataTier = (
+    objectData?.metadata?.targetTier ||
+    objectData?.metadata?.tier ||
+    ''
+  )
+    .toString()
+    .trim()
+    .toLowerCase();
+
+  if (metadataTier === 'pro' || metadataTier === 'premium') {
+    return metadataTier as UserTier;
+  }
+
+  const priceId = getPriceIdFromStripeObject(objectData);
+  if (!priceId) {
+    return null;
+  }
+
+  const priceLookup = getStripePriceLookup();
+  return priceLookup[priceId] || null;
+};
+
+const resolveBillingPeriodFromStripeObject = (
+  objectData: any
+): 'monthly' | 'annual' => {
+  const metadataPeriod = (objectData?.metadata?.billingPeriod || '')
+    .toString()
+    .trim()
+    .toLowerCase();
+  if (metadataPeriod === 'annual') {
+    return 'annual';
+  }
+
+  const interval =
+    objectData?.items?.data?.[0]?.price?.recurring?.interval ||
+    objectData?.line_items?.data?.[0]?.price?.recurring?.interval ||
+    objectData?.plan?.interval ||
+    objectData?.price?.recurring?.interval;
+
+  return interval === 'year' ? 'annual' : 'monthly';
+};
+
+const resolveSubscriptionStatusFromStripeObject = (
+  objectData: any
+): 'active' | 'trialing' | 'past_due' | 'canceled' | 'expired' => {
+  const status = (objectData?.status || '').toString().trim().toLowerCase();
+
+  if (status === 'trialing') {
+    return 'trialing';
+  }
+  if (status === 'past_due' || status === 'unpaid' || status === 'incomplete') {
+    return 'past_due';
+  }
+  if (
+    status === 'canceled' ||
+    status === 'cancelled' ||
+    status === 'incomplete_expired'
+  ) {
+    return 'canceled';
+  }
+
+  return 'active';
+};
+
+const resolveUidFromStripeObject = async (objectData: any): Promise<string> => {
+  const metadataUid = (objectData?.metadata?.uid || '').toString().trim();
+  if (metadataUid) {
+    return metadataUid;
+  }
+
+  const customerId = (objectData?.customer || '').toString().trim();
+  if (!customerId) {
+    return '';
+  }
+
+  const customerLookup = await admin
+    .firestore()
+    .doc(`stripeCustomerLookup/${customerId}`)
+    .get();
+
+  return (customerLookup.data()?.uid || '').toString().trim();
+};
+
+const toTimestampFromUnixSeconds = (value: unknown): Timestamp | null => {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return null;
+  }
+
+  return Timestamp.fromDate(new Date(numeric * 1000));
+};
+
+async function applySubscriptionTierState(params: {
+  uid: string;
+  targetTier: Exclude<UserTier, 'enterprise'>;
+  billingPeriod: 'monthly' | 'annual';
+  status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'expired';
+  paymentMethod?: 'stripe' | 'app_store' | 'play_store' | null;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  lastPaymentError?: string | null;
+  verificationState?: string;
+}): Promise<{
+  previousTier: UserTier;
+  orgId: string;
+  entitlements: EffectiveEntitlements;
+}> {
+  const db = admin.firestore();
+  const subscriptionRef = db.doc(`users/${params.uid}/subscription/current`);
+  const premiumEntitlementRef = db.doc(
+    `users/${params.uid}/entitlements/premium`
+  );
+  const now = Timestamp.now();
+
+  const renewalDate =
+    params.targetTier === 'free'
+      ? null
+      : Timestamp.fromDate(
+          new Date(
+            Date.now() +
+              (params.billingPeriod === 'annual'
+                ? 365 * 24 * 60 * 60 * 1000
+                : 30 * 24 * 60 * 60 * 1000)
+          )
+        );
+
+  let previousTier: UserTier = 'free';
+
+  await db.runTransaction(async tx => {
+    const currentSubscriptionSnap = await tx.get(subscriptionRef);
+    previousTier = normalizeTier(currentSubscriptionSnap.data()?.tier);
+
+    tx.set(
+      subscriptionRef,
+      {
+        tier: params.targetTier,
+        status: params.status || 'active',
+        currentPeriodStart: now,
+        currentPeriodEnd: renewalDate,
+        renewalDate,
+        autoRenew: params.targetTier !== 'free',
+        paymentMethod:
+          params.paymentMethod === undefined
+            ? params.targetTier === 'free'
+              ? null
+              : 'stripe'
+            : params.paymentMethod,
+        stripeCustomerId: (params.stripeCustomerId || '').toString() || null,
+        stripeSubscriptionId:
+          (params.stripeSubscriptionId || '').toString() || null,
+        lastPaymentError:
+          params.lastPaymentError === undefined
+            ? null
+            : params.lastPaymentError,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    if (params.targetTier === 'premium') {
+      tx.set(
+        premiumEntitlementRef,
+        {
+          active: true,
+          verified: false,
+          verificationState: (
+            params.verificationState || 'simulated_checkout'
+          ).toString(),
+          verificationProvider: 'subscription_settlement',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    if (previousTier === 'premium' && params.targetTier !== 'premium') {
+      tx.set(
+        premiumEntitlementRef,
+        {
+          active: false,
+          verified: false,
+          verificationState: 'revoked_by_downgrade',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+  });
+
+  const orgId = await ensurePersonalOrganization(params.uid);
+  const entitlements = await resolveEffectiveEntitlements(params.uid, orgId);
+
+  return {
+    previousTier,
+    orgId,
+    entitlements,
+  };
+}
+
+async function requireFeatureEntitlement(
+  uid: string,
+  featureName: string
+): Promise<EffectiveEntitlements> {
+  const entitlements = await resolveEffectiveEntitlements(uid);
+  if (!entitlements.features?.[featureName]) {
+    throw new HttpsError(
+      'permission-denied',
+      `${featureName} is not enabled for the current plan`
+    );
+  }
+
+  return entitlements;
 }
 
 async function requireOrgRole(
@@ -1496,7 +1923,13 @@ function buildLocalServiceProviders(
   radiusMiles: number,
   maxResults: number,
   vehicleMake?: string,
-  providerTypeFilter: 'all' | 'repair_shop' | 'dealership' = 'all'
+  providerTypeFilter:
+    | 'all'
+    | 'repair_shop'
+    | 'dealership'
+    | 'body_shop'
+    | 'car_wash'
+    | 'detailer' = 'all'
 ): LocalServiceProvider[] {
   const normalizedLocation = normalizeLocationText(locationQuery);
   const focusMake = (vehicleMake || '').trim();
@@ -1556,6 +1989,39 @@ function buildLocalServiceProviders(
       rating: 4.0 + (index % 3) * 0.3,
       specialties: template.specialties,
     })),
+    {
+      id: 'body-1',
+      type: 'body_shop',
+      name: 'Precision Collision Center',
+      distanceMiles: Math.max(1, Math.min(radiusMiles, 3.5)),
+      address: `520 Body Shop Way, ${normalizedLocation}`,
+      phone: '+1-555-0310',
+      website: 'https://example.com/body/1',
+      rating: 4.4,
+      specialties: ['Collision Repair', 'Paint Matching'],
+    },
+    {
+      id: 'wash-1',
+      type: 'car_wash',
+      name: 'Sparkle Tunnel Wash',
+      distanceMiles: Math.max(1, Math.min(radiusMiles, 2.2)),
+      address: `250 Clean Car Ln, ${normalizedLocation}`,
+      phone: '+1-555-0410',
+      website: 'https://example.com/wash/1',
+      rating: 4.3,
+      specialties: ['Exterior Wash', 'Monthly Plans'],
+    },
+    {
+      id: 'detail-1',
+      type: 'detailer',
+      name: 'Showroom Detail Studio',
+      distanceMiles: Math.max(1, Math.min(radiusMiles, 4.1)),
+      address: `680 Detailer Dr, ${normalizedLocation}`,
+      phone: '+1-555-0510',
+      website: 'https://example.com/detail/1',
+      rating: 4.7,
+      specialties: ['Interior Detailing', 'Ceramic Coating'],
+    },
   ];
 
   const filteredProviders =
@@ -1743,7 +2209,13 @@ export const getLocalServiceProvidersCallable = onCall(async request => {
       radiusMiles?: number;
       maxResults?: number;
       vehicleMake?: string;
-      providerType?: 'all' | 'repair_shop' | 'dealership';
+      providerType?:
+        | 'all'
+        | 'repair_shop'
+        | 'dealership'
+        | 'body_shop'
+        | 'car_wash'
+        | 'detailer';
     }) ?? {};
 
   const normalizedLocation = normalizeLocationText(
@@ -1762,9 +2234,22 @@ export const getLocalServiceProvidersCallable = onCall(async request => {
   const safeMaxResults = Number.isFinite(Number(maxResults))
     ? Math.max(1, Math.min(25, Number(maxResults)))
     : 8;
-  const allowedProviderTypes = new Set(['all', 'repair_shop', 'dealership']);
+  const allowedProviderTypes = new Set([
+    'all',
+    'repair_shop',
+    'dealership',
+    'body_shop',
+    'car_wash',
+    'detailer',
+  ]);
   const safeProviderType = allowedProviderTypes.has(providerType || '')
-    ? (providerType as 'all' | 'repair_shop' | 'dealership')
+    ? (providerType as
+        | 'all'
+        | 'repair_shop'
+        | 'dealership'
+        | 'body_shop'
+        | 'car_wash'
+        | 'detailer')
     : 'all';
 
   const providers = buildLocalServiceProviders(
@@ -2777,6 +3262,525 @@ export const getEffectiveEntitlementsCallable = onCall(async request => {
   };
 });
 
+export const changeSubscriptionTierCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const requestedTierRaw = (request.data?.targetTier || '').toString().trim();
+  if (!requestedTierRaw) {
+    throw new HttpsError('invalid-argument', 'targetTier is required');
+  }
+
+  const requestedTier = normalizeTier(requestedTierRaw);
+  if (requestedTierRaw !== requestedTier && requestedTierRaw !== 'free') {
+    throw new HttpsError('invalid-argument', 'Unsupported targetTier');
+  }
+
+  if (requestedTier === 'enterprise') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Enterprise requires a sales-managed contract'
+    );
+  }
+
+  const billingPeriod =
+    (request.data?.billingPeriod || '').toString().toLowerCase() === 'annual'
+      ? 'annual'
+      : 'monthly';
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'changeSubscriptionTier',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const { previousTier, orgId, entitlements } =
+      await applySubscriptionTierState({
+        uid,
+        targetTier: requestedTier,
+        billingPeriod,
+        status: 'active',
+        paymentMethod: requestedTier === 'free' ? null : 'stripe',
+        verificationState: 'simulated_checkout',
+      });
+
+    await writeAuditEvent({
+      orgId,
+      actorUid: uid,
+      action: 'billing.change_subscription_tier',
+      targetType: 'subscription',
+      targetId: uid,
+      details: {
+        previousTier,
+        requestedTier,
+        billingPeriod,
+      },
+    });
+
+    const result = {
+      success: true,
+      tier: requestedTier,
+      entitlements,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const createSubscriptionCheckoutSessionCallable = onCall(
+  async request => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Missing auth context');
+    }
+
+    const requestedTierRaw = (request.data?.targetTier || '').toString().trim();
+    const requestedTier = normalizeTier(requestedTierRaw);
+    if (requestedTier !== 'pro' && requestedTier !== 'premium') {
+      throw new HttpsError(
+        'invalid-argument',
+        'Only pro and premium can be purchased through checkout'
+      );
+    }
+
+    const billingPeriod =
+      (request.data?.billingPeriod || '').toString().toLowerCase() === 'annual'
+        ? 'annual'
+        : 'monthly';
+    const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+    const reservation = await reserveIdempotencyKey({
+      uid,
+      operation: 'createSubscriptionCheckoutSession',
+      idempotencyKey,
+    });
+    if (reservation.isReplay) {
+      return reservation.result;
+    }
+
+    try {
+      const checkoutTemplate = (process.env.STRIPE_CHECKOUT_URL_TEMPLATE || '')
+        .toString()
+        .trim();
+      const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '')
+        .toString()
+        .trim();
+      const configuredAppBaseUrl = (process.env.APP_BASE_URL || '')
+        .toString()
+        .trim()
+        .replace(/\/$/, '');
+
+      const successUrl =
+        (process.env.STRIPE_CHECKOUT_SUCCESS_URL || '').toString().trim() ||
+        (configuredAppBaseUrl
+          ? `${configuredAppBaseUrl}/app/subscription?checkout=success&session_id={CHECKOUT_SESSION_ID}`
+          : '');
+      const cancelUrl =
+        (process.env.STRIPE_CHECKOUT_CANCEL_URL || '').toString().trim() ||
+        (configuredAppBaseUrl
+          ? `${configuredAppBaseUrl}/app/subscription?checkout=cancelled`
+          : '');
+
+      if (stripeSecretKey) {
+        if (!successUrl || !cancelUrl) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Stripe checkout URLs are not configured'
+          );
+        }
+
+        const customerEmail = (request.auth?.token?.email || '')
+          .toString()
+          .trim();
+
+        const stripeSession = await createStripeCheckoutSession({
+          uid,
+          tier: requestedTier,
+          billingPeriod,
+          successUrl,
+          cancelUrl,
+          customerEmail,
+        });
+
+        await admin
+          .firestore()
+          .doc(`users/${uid}/billingSessions/${stripeSession.sessionId}`)
+          .set({
+            sessionId: stripeSession.sessionId,
+            uid,
+            targetTier: requestedTier,
+            billingPeriod,
+            status: 'pending',
+            provider: 'stripe',
+            stripeCustomerId: stripeSession.customerId || null,
+            stripeSubscriptionId: stripeSession.subscriptionId || null,
+            checkoutUrl: stripeSession.checkoutUrl,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+        if (stripeSession.customerId) {
+          await admin
+            .firestore()
+            .doc(`stripeCustomerLookup/${stripeSession.customerId}`)
+            .set(
+              {
+                uid,
+                stripeCustomerId: stripeSession.customerId,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+        }
+
+        const orgId = await ensurePersonalOrganization(uid);
+        await writeAuditEvent({
+          orgId,
+          actorUid: uid,
+          action: 'billing.create_checkout_session',
+          targetType: 'checkout_session',
+          targetId: stripeSession.sessionId,
+          details: {
+            requestedTier,
+            billingPeriod,
+            provider: 'stripe',
+          },
+        });
+
+        const stripeResult = {
+          success: true,
+          mode: 'redirect',
+          checkoutUrl: stripeSession.checkoutUrl,
+          checkoutSessionId: stripeSession.sessionId,
+        };
+
+        await completeIdempotencyKey(
+          reservation,
+          stripeResult as unknown as Record<string, unknown>
+        );
+
+        return stripeResult;
+      }
+
+      if (!checkoutTemplate) {
+        const applied = await applySubscriptionTierState({
+          uid,
+          targetTier: requestedTier,
+          billingPeriod,
+          status: 'active',
+          paymentMethod: 'stripe',
+          verificationState: 'simulated_checkout_fallback',
+        });
+
+        const fallbackResult = {
+          success: true,
+          mode: 'activated',
+          entitlements: applied.entitlements,
+          tier: requestedTier,
+        };
+
+        await writeAuditEvent({
+          orgId: applied.orgId,
+          actorUid: uid,
+          action: 'billing.checkout_fallback_activation',
+          targetType: 'subscription',
+          targetId: uid,
+          details: {
+            requestedTier,
+            billingPeriod,
+          },
+        });
+
+        await completeIdempotencyKey(
+          reservation,
+          fallbackResult as unknown as Record<string, unknown>
+        );
+
+        return fallbackResult;
+      }
+
+      const sessionId = `cs_sim_${randomBytes(12).toString('hex')}`;
+      const checkoutUrl = checkoutTemplate
+        .replace('{CHECKOUT_SESSION_ID}', encodeURIComponent(sessionId))
+        .replace('{UID}', encodeURIComponent(uid))
+        .replace('{TIER}', encodeURIComponent(requestedTier))
+        .replace('{BILLING_PERIOD}', encodeURIComponent(billingPeriod));
+
+      await admin
+        .firestore()
+        .doc(`users/${uid}/billingSessions/${sessionId}`)
+        .set({
+          sessionId,
+          uid,
+          targetTier: requestedTier,
+          billingPeriod,
+          status: 'pending',
+          provider: 'stripe',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      const orgId = await ensurePersonalOrganization(uid);
+      await writeAuditEvent({
+        orgId,
+        actorUid: uid,
+        action: 'billing.create_checkout_session',
+        targetType: 'checkout_session',
+        targetId: sessionId,
+        details: {
+          requestedTier,
+          billingPeriod,
+        },
+      });
+
+      const result = {
+        success: true,
+        mode: 'redirect',
+        checkoutUrl,
+        checkoutSessionId: sessionId,
+      };
+
+      await completeIdempotencyKey(
+        reservation,
+        result as unknown as Record<string, unknown>
+      );
+
+      return result;
+    } catch (error) {
+      await markIdempotencyFailed(
+        reservation,
+        error instanceof Error ? error.message : 'unknown_error'
+      );
+      throw error;
+    }
+  }
+);
+
+export const createApiAccessKeyCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const entitlements = await requireFeatureEntitlement(uid, 'api_access');
+  const keyLabel = (request.data?.label || 'Default key').toString().trim();
+  const label = keyLabel ? keyLabel.slice(0, 80) : 'Default key';
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'createApiAccessKey',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const db = admin.firestore();
+    const keyId = `key_${randomBytes(8).toString('hex')}`;
+    const rawKey = `vvk_${randomBytes(24).toString('hex')}`;
+    const keyPrefix = rawKey.slice(0, 12);
+    const keyHash = hashApiAccessKey(rawKey);
+
+    await db.doc(`users/${uid}/apiAccessKeys/${keyId}`).set({
+      keyId,
+      label,
+      keyPrefix,
+      keyHash,
+      active: true,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastUsedAt: null,
+      revokedAt: null,
+    });
+
+    await db.doc(`apiKeyLookup/${keyHash}`).set({
+      uid,
+      keyId,
+      active: true,
+      keyPrefix,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokedAt: null,
+    });
+
+    await writeAuditEvent({
+      orgId: entitlements.orgId,
+      actorUid: uid,
+      action: 'integration.create_api_access_key',
+      targetType: 'api_access_key',
+      targetId: keyId,
+      details: {
+        keyPrefix,
+        label,
+      },
+    });
+
+    const result = {
+      success: true,
+      key: {
+        keyId,
+        label,
+        keyPrefix,
+      },
+      rawKey,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const listApiAccessKeysCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  await requireFeatureEntitlement(uid, 'api_access');
+
+  const snapshot = await admin
+    .firestore()
+    .collection(`users/${uid}/apiAccessKeys`)
+    .orderBy('createdAt', 'desc')
+    .limit(25)
+    .get();
+
+  const keys = snapshot.docs.map(doc => {
+    const data = doc.data() as ApiAccessKeyMetadata;
+    return {
+      keyId: (data.keyId || doc.id).toString(),
+      label: (data.label || '').toString(),
+      keyPrefix: (data.keyPrefix || '').toString(),
+      active: data.active === true,
+      createdAt: data.createdAt || null,
+      updatedAt: data.updatedAt || null,
+      lastUsedAt: data.lastUsedAt || null,
+      revokedAt: data.revokedAt || null,
+    };
+  });
+
+  return {
+    success: true,
+    keys,
+  };
+});
+
+export const revokeApiAccessKeyCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const entitlements = await requireFeatureEntitlement(uid, 'api_access');
+  const keyId = (request.data?.keyId || '').toString().trim();
+  if (!keyId) {
+    throw new HttpsError('invalid-argument', 'keyId is required');
+  }
+
+  const keyRef = admin.firestore().doc(`users/${uid}/apiAccessKeys/${keyId}`);
+  const keySnap = await keyRef.get();
+  if (!keySnap.exists) {
+    throw new HttpsError('not-found', 'API access key not found');
+  }
+
+  await keyRef.set(
+    {
+      active: false,
+      revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  const keyData = keySnap.data() as ApiAccessKeyMetadata & {
+    keyHash?: string;
+  };
+  const keyHash = (keyData?.keyHash || '').toString();
+  if (keyHash) {
+    await admin.firestore().doc(`apiKeyLookup/${keyHash}`).set(
+      {
+        active: false,
+        revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+
+  await writeAuditEvent({
+    orgId: entitlements.orgId,
+    actorUid: uid,
+    action: 'integration.revoke_api_access_key',
+    targetType: 'api_access_key',
+    targetId: keyId,
+  });
+
+  return {
+    success: true,
+    keyId,
+    revoked: true,
+  };
+});
+
+export const getZapierWebhookConfigCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  await requireFeatureEntitlement(uid, 'zapier_integration');
+  await requireFeatureEntitlement(uid, 'api_access');
+
+  const baseUrl = resolveFunctionBaseUrl();
+  if (!baseUrl) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Webhook base URL is not configured'
+    );
+  }
+
+  const webhookSecretConfigured =
+    (process.env.ZAPIER_WEBHOOK_SECRET || '').trim().length > 0;
+
+  return {
+    success: true,
+    webhookUrl: `${baseUrl}/zapierMaintenanceWebhook`,
+    instructions:
+      'Send POST JSON with vin and title. Include your API key as x-api-key header. If signature is required, include x-vv-signature as sha256=<hmac_sha256_raw_body>.',
+    requiresSignature: webhookSecretConfigured,
+  };
+});
+
 export const transferVehicleCallable = onCall(async request => {
   const actorUid = request.auth?.uid;
   if (!actorUid) {
@@ -2879,6 +3883,439 @@ export const transferVehicleCallable = onCall(async request => {
     throw error;
   }
 });
+
+export const zapierMaintenanceWebhook = onRequest(
+  { cors: true },
+  async (request, response) => {
+    try {
+      if (!enforceRateLimit(request, response, 'zapierMaintenanceWebhook')) {
+        return;
+      }
+
+      if (request.method !== 'POST') {
+        response
+          .status(405)
+          .json({ success: false, error: 'Method not allowed' });
+        return;
+      }
+
+      const apiKeyHeader =
+        (request.headers['x-api-key'] || '').toString().trim() ||
+        (request.headers.authorization || '')
+          .toString()
+          .replace(/^Bearer\s+/i, '')
+          .trim();
+
+      if (!apiKeyHeader) {
+        response.status(401).json({ success: false, error: 'Missing API key' });
+        return;
+      }
+
+      const webhookSecret = (process.env.ZAPIER_WEBHOOK_SECRET || '').trim();
+      if (webhookSecret && !isWebhookSignatureValid(request, webhookSecret)) {
+        response
+          .status(401)
+          .json({ success: false, error: 'Invalid webhook signature' });
+        return;
+      }
+
+      const keyHash = hashApiAccessKey(apiKeyHeader);
+      const lookupSnap = await admin
+        .firestore()
+        .doc(`apiKeyLookup/${keyHash}`)
+        .get();
+
+      if (!lookupSnap.exists) {
+        response.status(401).json({ success: false, error: 'Invalid API key' });
+        return;
+      }
+
+      const lookupData = lookupSnap.data() || {};
+      if (lookupData.active !== true) {
+        response.status(401).json({ success: false, error: 'Invalid API key' });
+        return;
+      }
+
+      const uid = (lookupData.uid || '').toString().trim();
+      const keyId = (lookupData.keyId || '').toString().trim();
+      if (!uid) {
+        response
+          .status(401)
+          .json({ success: false, error: 'Invalid API key owner' });
+        return;
+      }
+
+      const keyDocRef = admin
+        .firestore()
+        .doc(`users/${uid}/apiAccessKeys/${keyId}`);
+      const keyDoc = await keyDocRef.get();
+      const keyData = keyDoc.data() || {};
+      if (
+        !keyDoc.exists ||
+        keyData.active !== true ||
+        keyData.keyHash !== keyHash
+      ) {
+        response.status(401).json({ success: false, error: 'Invalid API key' });
+        return;
+      }
+
+      const entitlements = await resolveEffectiveEntitlements(uid);
+      if (
+        !entitlements.features?.api_access ||
+        !entitlements.features?.zapier_integration
+      ) {
+        response.status(403).json({
+          success: false,
+          error: 'Plan does not allow webhook integrations',
+        });
+        return;
+      }
+
+      const vin = ((request.body?.vin || '') as string)
+        .toString()
+        .trim()
+        .toUpperCase();
+      const title = ((request.body?.title || '') as string).toString().trim();
+      const description = ((request.body?.description || '') as string)
+        .toString()
+        .trim();
+      const serviceType = ((request.body?.serviceType || '') as string)
+        .toString()
+        .trim();
+      const frequency = (
+        (request.body?.frequency || 'Webhook trigger') as string
+      )
+        .toString()
+        .trim();
+      const interval = Math.max(1, Number(request.body?.interval || 1));
+      const nextDueMileage = Number(request.body?.nextDueMileage || 0);
+      const milesUntilDue = Number(request.body?.milesUntilDue || 0);
+
+      if (!vin || !title) {
+        response.status(400).json({
+          success: false,
+          error: 'vin and title are required',
+        });
+        return;
+      }
+
+      const vehicleRef = admin.firestore().doc(`users/${uid}/vehicles/${vin}`);
+      const vehicleSnap = await vehicleRef.get();
+      if (!vehicleSnap.exists) {
+        response.status(404).json({
+          success: false,
+          error: 'Vehicle not found for API key owner',
+        });
+        return;
+      }
+
+      const reminderRef = await admin
+        .firestore()
+        .collection(`users/${uid}/vehicles/${vin}/reminders`)
+        .add({
+          title,
+          description,
+          serviceType: serviceType || null,
+          frequency,
+          interval,
+          nextDueMileage: Number.isFinite(nextDueMileage) ? nextDueMileage : 0,
+          milesUntilDue: Number.isFinite(milesUntilDue) ? milesUntilDue : 0,
+          status: 'active',
+          source: 'zapier_webhook',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      await keyDocRef.set(
+        {
+          lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      await lookupSnap.ref.set(
+        {
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      response.status(200).json({
+        success: true,
+        uid,
+        vin,
+        reminderId: reminderRef.id,
+      });
+    } catch (error) {
+      logger.error('Zapier webhook processing failed', error);
+      response
+        .status(500)
+        .json({ success: false, error: 'Failed to process webhook' });
+    }
+  }
+);
+
+export const stripeSubscriptionWebhook = onRequest(
+  { cors: true },
+  async (request, response) => {
+    try {
+      if (!enforceRateLimit(request, response, 'stripeSubscriptionWebhook')) {
+        return;
+      }
+
+      if (request.method !== 'POST') {
+        response
+          .status(405)
+          .json({ success: false, error: 'Method not allowed' });
+        return;
+      }
+
+      const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+      if (
+        webhookSecret &&
+        !isStripeWebhookSignatureValid(request, webhookSecret)
+      ) {
+        response
+          .status(401)
+          .json({ success: false, error: 'Invalid signature' });
+        return;
+      }
+
+      const event =
+        request.body && typeof request.body === 'object'
+          ? request.body
+          : JSON.parse(getRequestBodyBuffer(request).toString('utf8') || '{}');
+
+      const eventId = (event?.id || '').toString().trim();
+      const eventType = (event?.type || '').toString().trim();
+      const eventObject = event?.data?.object || {};
+
+      if (!eventId || !eventType) {
+        response
+          .status(400)
+          .json({ success: false, error: 'Invalid event payload' });
+        return;
+      }
+
+      const eventRef = admin.firestore().doc(`billingWebhookEvents/${eventId}`);
+      const eventSnap = await eventRef.get();
+      if (eventSnap.exists) {
+        response
+          .status(200)
+          .json({ success: true, deduplicated: true, eventId });
+        return;
+      }
+
+      const uid = await resolveUidFromStripeObject(eventObject);
+      if (!uid) {
+        response.status(400).json({
+          success: false,
+          error: 'Missing user mapping for Stripe event',
+        });
+        return;
+      }
+
+      const stripeCustomerId = (eventObject?.customer || '').toString().trim();
+      const stripeSubscriptionId = (
+        eventObject?.subscription ||
+        eventObject?.id ||
+        ''
+      )
+        .toString()
+        .trim();
+
+      if (stripeCustomerId) {
+        await admin
+          .firestore()
+          .doc(`stripeCustomerLookup/${stripeCustomerId}`)
+          .set(
+            {
+              uid,
+              stripeCustomerId,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+      }
+
+      let reconciliationResult: Record<string, unknown> = {
+        eventType,
+        uid,
+        handled: false,
+      };
+
+      if (
+        eventType === 'checkout.session.completed' ||
+        eventType === 'customer.subscription.updated' ||
+        eventType === 'invoice.payment_succeeded'
+      ) {
+        const tier = resolveSubscriptionTierFromStripeObject(eventObject);
+        if (tier === 'pro' || tier === 'premium') {
+          const billingPeriod =
+            resolveBillingPeriodFromStripeObject(eventObject);
+          const subscriptionStatus =
+            resolveSubscriptionStatusFromStripeObject(eventObject);
+          const applied = await applySubscriptionTierState({
+            uid,
+            targetTier: tier,
+            billingPeriod,
+            status: subscriptionStatus,
+            paymentMethod: 'stripe',
+            stripeCustomerId,
+            stripeSubscriptionId,
+            lastPaymentError: null,
+            verificationState: 'webhook_verified',
+          });
+
+          reconciliationResult = {
+            eventType,
+            uid,
+            handled: true,
+            tier,
+            billingPeriod,
+            status: subscriptionStatus,
+            orgId: applied.orgId,
+          };
+        }
+      }
+
+      if (eventType === 'invoice.payment_failed') {
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              status: 'past_due',
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              lastPaymentError: 'stripe_invoice_payment_failed',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'past_due',
+        };
+      }
+
+      if (eventType === 'customer.subscription.deleted') {
+        const periodEnd =
+          toTimestampFromUnixSeconds(eventObject?.current_period_end) ||
+          Timestamp.now();
+
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              tier: 'free',
+              status: 'canceled',
+              autoRenew: false,
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              currentPeriodEnd: periodEnd,
+              renewalDate: periodEnd,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        await admin.firestore().doc(`users/${uid}/entitlements/premium`).set(
+          {
+            active: false,
+            verified: false,
+            verificationState: 'revoked_by_webhook_cancellation',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'canceled',
+        };
+      }
+
+      if (eventType === 'charge.dispute.created') {
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              status: 'past_due',
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              lastPaymentError: 'stripe_charge_dispute',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'past_due',
+          reason: 'dispute_created',
+        };
+      }
+
+      if (eventType === 'charge.refunded') {
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              status: 'past_due',
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              lastPaymentError: 'stripe_charge_refunded',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'past_due',
+          reason: 'charge_refunded',
+        };
+      }
+
+      await eventRef.set({
+        eventId,
+        eventType,
+        uid,
+        reconciliationResult,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      response.status(200).json({
+        success: true,
+        eventId,
+        ...reconciliationResult,
+      });
+    } catch (error) {
+      logger.error('Stripe webhook processing failed', error);
+      response
+        .status(500)
+        .json({ success: false, error: 'Failed to process billing webhook' });
+    }
+  }
+);
 
 export const getOrganizationMembersCallable = onCall(async request => {
   const uid = request.auth?.uid;

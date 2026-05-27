@@ -42,7 +42,9 @@ describe('entitlementsService', () => {
       },
     });
 
-    const { bootstrapEnterpriseContext } = await import('../entitlementsService');
+    const { bootstrapEnterpriseContext } = await import(
+      '../entitlementsService'
+    );
     const result = await bootstrapEnterpriseContext();
 
     expect(mockHttpsCallable).toHaveBeenCalledTimes(1);
@@ -87,7 +89,9 @@ describe('entitlementsService', () => {
       },
     });
 
-    const { bootstrapEnterpriseContext } = await import('../entitlementsService');
+    const { bootstrapEnterpriseContext } = await import(
+      '../entitlementsService'
+    );
 
     await expect(bootstrapEnterpriseContext()).rejects.toThrow(
       'Failed to bootstrap enterprise context'
@@ -106,5 +110,68 @@ describe('entitlementsService', () => {
     await expect(getEffectiveEntitlements()).rejects.toThrow(
       'Failed to resolve effective entitlements'
     );
+  });
+
+  it('changes subscription tier and returns updated entitlements', async () => {
+    const expectedEntitlements = {
+      orgId: 'personal_user-3',
+      tier: 'pro',
+      vehicleLimit: 10,
+      features: {
+        calendar_sync: true,
+      },
+    };
+
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        success: true,
+        entitlements: expectedEntitlements,
+      },
+    });
+
+    const { changeSubscriptionTier } = await import('../entitlementsService');
+    const result = await changeSubscriptionTier('pro', 'annual');
+
+    expect(mockHttpsCallable).toHaveBeenCalledTimes(1);
+    expect(mockHttpsCallable.mock.calls[0][1]).toBe(
+      'changeSubscriptionTierCallable'
+    );
+    expect(mockCallable).toHaveBeenCalledWith({
+      targetTier: 'pro',
+      billingPeriod: 'annual',
+    });
+    expect(result).toEqual(expectedEntitlements);
+  });
+
+  it('creates checkout session payload for paid plan', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        success: true,
+        mode: 'redirect',
+        checkoutUrl: 'https://checkout.example/session/cs_test',
+        checkoutSessionId: 'cs_test',
+      },
+    });
+
+    const { createSubscriptionCheckoutSession } = await import(
+      '../entitlementsService'
+    );
+    const result = await createSubscriptionCheckoutSession('premium', 'annual');
+
+    expect(mockHttpsCallable).toHaveBeenCalledTimes(1);
+    expect(mockHttpsCallable.mock.calls[0][1]).toBe(
+      'createSubscriptionCheckoutSessionCallable'
+    );
+    expect(mockCallable).toHaveBeenCalledWith({
+      targetTier: 'premium',
+      billingPeriod: 'annual',
+    });
+    expect(result).toEqual({
+      mode: 'redirect',
+      checkoutUrl: 'https://checkout.example/session/cs_test',
+      checkoutSessionId: 'cs_test',
+      tier: '',
+      entitlements: undefined,
+    });
   });
 });

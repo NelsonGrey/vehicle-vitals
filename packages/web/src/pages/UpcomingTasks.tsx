@@ -12,6 +12,7 @@ import {
   reopenReminder,
   snoozeReminder,
 } from '../shared/firestoreService';
+import { useFeatureFlag } from '../shared/useMonetization';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { sendReminderDeliveryEmail } from '../utils/reminderDeliveryService';
 
@@ -93,6 +94,10 @@ function getCalendarSuccessMessage(target: 'google' | 'apple' | 'ics') {
 
 export default function UpcomingTasks() {
   const location = useLocation();
+  const hasAdvancedReminders = useFeatureFlag('advanced_reminders');
+  const hasPlanning12mo = useFeatureFlag('maintenance_planning_12mo');
+  const hasPlanning36mo = useFeatureFlag('maintenance_planning_36mo');
+  const hasAiPredictions = useFeatureFlag('ai_predictions');
   const [upcomingItems, setUpcomingItems] = useState<UpcomingItem[]>([]);
   const [savedReminders, setSavedReminders] = useState<ReminderItem[]>([]);
   const [savedReminderKeys, setSavedReminderKeys] = useState<Set<string>>(
@@ -140,7 +145,19 @@ export default function UpcomingTasks() {
     return parsed.toLocaleDateString();
   };
 
-  const leadMilesThreshold = preferredLeadDays * preferredDailyMiles;
+  const effectiveLeadDays = hasAdvancedReminders ? preferredLeadDays : 14;
+  const effectiveDailyMiles = hasAdvancedReminders ? preferredDailyMiles : 35;
+  const leadMilesThreshold = effectiveLeadDays * effectiveDailyMiles;
+  const planningHorizonMonths = hasPlanning36mo ? 36 : hasPlanning12mo ? 12 : 3;
+  const planningHorizonMiles = effectiveDailyMiles * 30 * planningHorizonMonths;
+
+  const estimateDueDateLabel = (milesUntilDue: number) => {
+    const safeDailyMiles = Math.max(1, effectiveDailyMiles);
+    const dayEstimate = Math.max(1, Math.ceil(milesUntilDue / safeDailyMiles));
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + dayEstimate);
+    return dueDate.toLocaleDateString();
+  };
 
   useEffect(() => {
     const loadUpcomingTasks = async () => {
@@ -589,6 +606,10 @@ export default function UpcomingTasks() {
           return false;
         }
 
+        if (item.milesUntilDue > planningHorizonMiles) {
+          return false;
+        }
+
         return (
           showAllRecommendations || item.milesUntilDue <= leadMilesThreshold
         );
@@ -601,7 +622,18 @@ export default function UpcomingTasks() {
       return false;
     }
 
-    return item.milesUntilDue > leadMilesThreshold;
+    return (
+      item.milesUntilDue > leadMilesThreshold &&
+      item.milesUntilDue <= planningHorizonMiles
+    );
+  }).length;
+
+  const recommendationsBeyondPlanWindow = upcomingItems.filter(item => {
+    if (selectedVin && item.vehicle.vin.toUpperCase() !== selectedVin) {
+      return false;
+    }
+
+    return item.milesUntilDue > planningHorizonMiles;
   }).length;
 
   const getUrgencyColor = (milesUntilDue: number) => {
@@ -673,21 +705,36 @@ export default function UpcomingTasks() {
             time and average daily driving. You can still reveal everything and
             save a reminder early when you want more manual control.
           </p>
+          {!hasAdvancedReminders && (
+            <div className="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
+              Advanced reminder timing controls are available on Pro and Premium
+              plans.
+              <div className="mt-2">
+                <Link to="/app/subscription" className="font-medium underline">
+                  Upgrade for advanced reminder controls
+                </Link>
+              </div>
+            </div>
+          )}
           <div className="mb-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
             Alerts: <strong>{alertsEnabled ? 'Enabled' : 'Disabled'}</strong>
             <br />
-            Lead time: <strong>{preferredLeadDays} days</strong>
+            Lead time: <strong>{effectiveLeadDays} days</strong>
             <br />
-            Average driving: <strong>{preferredDailyMiles} miles/day</strong>
+            Average driving: <strong>{effectiveDailyMiles} miles/day</strong>
             <br />
             Current reminder window:{' '}
             <strong>{leadMilesThreshold.toLocaleString()} miles</strong>
+            <br />
+            Planning horizon:{' '}
+            <strong>{planningHorizonMonths}-month forecast</strong>
           </div>
           <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-3 text-sm text-teal-900 dark:border-teal-900/40 dark:bg-teal-950/30 dark:text-teal-100">
             <div>
-              Tasks due within about <strong>{preferredLeadDays} days</strong>{' '}
-              at <strong>{preferredDailyMiles} miles/day</strong> appear by
-              default.
+              Tasks due within about <strong>{effectiveLeadDays} days</strong>{' '}
+              at <strong>{effectiveDailyMiles} miles/day</strong> appear by
+              default, and recommendations are capped to your{' '}
+              <strong>{planningHorizonMonths}-month</strong> plan horizon.
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <button
@@ -877,6 +924,14 @@ export default function UpcomingTasks() {
                 {recommendationsOutsideWindow}
               </p>
             </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
+              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Beyond plan horizon
+              </p>
+              <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                {recommendationsBeyondPlanWindow}
+              </p>
+            </div>
           </div>
 
           {visibleUpcomingItems.length === 0 ? (
@@ -926,6 +981,12 @@ export default function UpcomingTasks() {
                     driving pace. Save reminders whenever you want a manual
                     follow-up point, even if the task is still far out.
                   </p>
+                  {!hasAiPredictions && (
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                      AI predicted maintenance due-date insights are available
+                      on Premium and Enterprise plans.
+                    </p>
+                  )}
                 </div>
                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
                   <label
@@ -1003,6 +1064,12 @@ export default function UpcomingTasks() {
                             {item.milesUntilDue.toLocaleString()}
                           </div>
                         </div>
+                        {hasAiPredictions && (
+                          <p className="mt-2 mb-0 text-sm text-indigo-800 dark:text-indigo-200">
+                            Predicted due date:{' '}
+                            {estimateDueDateLabel(item.milesUntilDue)}
+                          </p>
+                        )}
                         {item.milesUntilDue > leadMilesThreshold ? (
                           <p className="mt-3 mb-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                             Outside your current reminder window. You can still

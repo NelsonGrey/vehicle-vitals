@@ -3,6 +3,7 @@
  * Provides convenient hooks for using feature flags, subscriptions, and ads in components
  */
 
+import { doc, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,6 +24,7 @@ import {
   isFeatureEnabled,
   type UserTier,
 } from './featureFlags';
+import { db } from './firebaseConfig';
 import {
   watchSubscription,
   type SubscriptionData,
@@ -89,6 +91,48 @@ export function useEffectiveEntitlements(): {
   const [entitlements, setEntitlements] =
     useState<EffectiveEntitlements | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshSignal, setRefreshSignal] = useState(0);
+
+  useEffect(() => {
+    if (!user || !db) {
+      return;
+    }
+
+    const subscriptionRef = doc(
+      db,
+      'users',
+      user.uid,
+      'subscription',
+      'current'
+    );
+    const premiumEntitlementRef = doc(
+      db,
+      'users',
+      user.uid,
+      'entitlements',
+      'premium'
+    );
+
+    const triggerRefresh = () => {
+      setRefreshSignal(current => current + 1);
+    };
+
+    const unsubscribeSubscription = onSnapshot(
+      subscriptionRef,
+      triggerRefresh,
+      triggerRefresh
+    );
+    const unsubscribePremium = onSnapshot(
+      premiumEntitlementRef,
+      triggerRefresh,
+      triggerRefresh
+    );
+
+    return () => {
+      unsubscribeSubscription();
+      unsubscribePremium();
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -124,7 +168,7 @@ export function useEffectiveEntitlements(): {
     return () => {
       isActive = false;
     };
-  }, [user]);
+  }, [user, refreshSignal]);
 
   return { entitlements, isLoading };
 }

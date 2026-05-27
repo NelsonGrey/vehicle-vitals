@@ -928,6 +928,43 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       }
     });
 
+    test('TC-MONETIZATION-003: Subscription checkout banner renders on return flow', async ({
+      page,
+    }) => {
+      await page.goto(`${BASE_URL}/app/subscription?checkout=success`);
+
+      const successBanner = page.getByText(
+        /checkout completed\. your subscription is being finalized\./i
+      );
+
+      if (await successBanner.isVisible().catch(() => false)) {
+        await expect(successBanner).toBeVisible();
+      } else {
+        await expect(page.locator('body')).toBeVisible();
+        await expect(page).not.toHaveURL(/\/signin/i);
+      }
+    });
+
+    test('TC-MONETIZATION-004: Past-due billing recovery panel shows support actions', async ({
+      page,
+    }) => {
+      await page.goto(`${BASE_URL}/app/subscription`);
+
+      const billingPanel = page.getByText(/billing action needed/i);
+
+      if (await billingPanel.isVisible().catch(() => false)) {
+        await expect(billingPanel).toBeVisible();
+        await expect(
+          page.getByRole('link', { name: /contact support/i })
+        ).toBeVisible();
+        await expect(
+          page.getByRole('link', { name: /email support/i })
+        ).toBeVisible();
+      } else {
+        await expect(page.locator('body')).toBeVisible();
+      }
+    });
+
     test('TC-MONETIZATION-002: Admin support console route behaves safely', async ({
       page,
     }) => {

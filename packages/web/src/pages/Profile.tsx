@@ -6,6 +6,13 @@ import {
   updateVehicle,
 } from '../shared/firestoreService';
 import { requestNotificationPermission } from '../shared/notificationService';
+import { useFeatureFlag } from '../shared/useMonetization';
+import {
+  createApiAccessKey,
+  getZapierWebhookConfig,
+  listApiAccessKeys,
+  revokeApiAccessKey,
+} from '../utils/apiAccessService';
 import { getLocalServiceProviders } from '../utils/localServiceProviders';
 
 // Declare Firebase global
@@ -45,7 +52,7 @@ interface HomeAddress {
 
 interface LocalServiceProvider {
   id: string;
-  type: 'repair_shop' | 'dealership';
+  type: 'repair_shop' | 'dealership' | 'body_shop' | 'car_wash' | 'detailer';
   name: string;
   distanceMiles: number;
   address: string;
@@ -59,7 +66,23 @@ interface VehicleSummary {
   make?: string;
 }
 
-type ProviderTypeFilter = 'all' | 'repair_shop' | 'dealership';
+interface UserApiAccessKey {
+  keyId: string;
+  label: string;
+  keyPrefix: string;
+  active: boolean;
+  createdAt?: unknown;
+  lastUsedAt?: unknown;
+  revokedAt?: unknown;
+}
+
+type ProviderTypeFilter =
+  | 'all'
+  | 'repair_shop'
+  | 'dealership'
+  | 'body_shop'
+  | 'car_wash'
+  | 'detailer';
 const UNDO_WINDOW_MS = 30_000;
 
 interface ProviderLookupSnapshot {
@@ -114,6 +137,8 @@ const createFirebaseAuthService = async () => {
 
 export default function Profile() {
   const { user, signOut, linkWithGoogle, linkWithApple } = useAuth();
+  const hasApiAccess = useFeatureFlag('api_access');
+  const hasZapierIntegration = useFeatureFlag('zapier_integration');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -160,6 +185,14 @@ export default function Profile() {
   >('unsupported');
   const [fcmToken, setFcmToken] = useState('');
   const [pushSaving, setPushSaving] = useState(false);
+  const [apiAccessKeys, setApiAccessKeys] = useState<UserApiAccessKey[]>([]);
+  const [apiAccessLoading, setApiAccessLoading] = useState(false);
+  const [apiAccessBusy, setApiAccessBusy] = useState(false);
+  const [apiKeyLabel, setApiKeyLabel] = useState('');
+  const [createdApiKeySecret, setCreatedApiKeySecret] = useState('');
+  const [zapierWebhookUrl, setZapierWebhookUrl] = useState('');
+  const [zapierInstructions, setZapierInstructions] = useState('');
+  const [zapierRequiresSignature, setZapierRequiresSignature] = useState(false);
 
   useEffect(() => {
     createFirebaseAuthService().then(setAuthService);
@@ -199,7 +232,10 @@ export default function Profile() {
         if (
           providerType === 'all' ||
           providerType === 'repair_shop' ||
-          providerType === 'dealership'
+          providerType === 'dealership' ||
+          providerType === 'body_shop' ||
+          providerType === 'car_wash' ||
+          providerType === 'detailer'
         ) {
           setPreferredProviderType(providerType as ProviderTypeFilter);
         }
@@ -272,6 +308,68 @@ export default function Profile() {
       setLastRecoverySnapshot(null);
     }
   }, [undoNow, lastRecoverySnapshot]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadApiAccessState = async () => {
+      if (!user || !hasApiAccess) {
+        setApiAccessKeys([]);
+        setCreatedApiKeySecret('');
+        setZapierWebhookUrl('');
+        setZapierInstructions('');
+        setZapierRequiresSignature(false);
+        return;
+      }
+
+      setApiAccessLoading(true);
+      try {
+        const [keys, webhookConfig] = await Promise.all([
+          listApiAccessKeys(),
+          hasZapierIntegration
+            ? getZapierWebhookConfig().catch(() => ({
+                webhookUrl: '',
+                instructions: '',
+                requiresSignature: false,
+              }))
+            : Promise.resolve({
+                webhookUrl: '',
+                instructions: '',
+                requiresSignature: false,
+              }),
+        ]);
+
+        if (!isActive) {
+          return;
+        }
+
+        setApiAccessKeys(Array.isArray(keys) ? keys : []);
+        setZapierWebhookUrl((webhookConfig.webhookUrl || '').toString());
+        setZapierInstructions((webhookConfig.instructions || '').toString());
+        setZapierRequiresSignature(Boolean(webhookConfig.requiresSignature));
+      } catch (integrationError) {
+        if (!isActive) {
+          return;
+        }
+
+        setError(
+          integrationError instanceof Error
+            ? integrationError.message
+            : 'Failed to load API access configuration'
+        );
+      } finally {
+        if (isActive) {
+          setApiAccessLoading(false);
+        }
+      }
+    };
+
+    void loadApiAccessState();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user, hasApiAccess, hasZapierIntegration]);
 
   if (!user || !authService) return null;
 
@@ -713,13 +811,92 @@ export default function Profile() {
       ? 'all types'
       : preferredProviderType === 'repair_shop'
         ? 'repair shops'
-        : 'dealerships';
+        : preferredProviderType === 'dealership'
+          ? 'dealerships'
+          : preferredProviderType === 'body_shop'
+            ? 'body shops'
+            : preferredProviderType === 'car_wash'
+              ? 'car washes'
+              : 'detailers';
 
   const garageContextLabel = preferredProviderUseVehicleMake
     ? preferredVehicleMake
       ? `Matching dealerships for ${preferredVehicleMake}`
       : 'Vehicle make matching is enabled (select a make to target dealers)'
     : 'Vehicle make matching is disabled';
+
+  const formatTimestamp = (value: unknown): string => {
+    if (!value) {
+      return '\u2014';
+    }
+
+    if (typeof value === 'string') {
+      const parsed = Date.parse(value);
+      return Number.isFinite(parsed)
+        ? new Date(parsed).toLocaleString()
+        : value;
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      const record = value as Record<string, unknown>;
+      const seconds =
+        typeof record.seconds === 'number'
+          ? record.seconds
+          : typeof record._seconds === 'number'
+            ? record._seconds
+            : null;
+
+      if (seconds !== null) {
+        return new Date(seconds * 1000).toLocaleString();
+      }
+    }
+
+    return '\u2014';
+  };
+
+  const handleCreateApiKey = async () => {
+    setApiAccessBusy(true);
+    setError('');
+    setStatus('');
+    try {
+      const result = await createApiAccessKey(apiKeyLabel);
+      const keys = await listApiAccessKeys();
+      setApiAccessKeys(Array.isArray(keys) ? keys : []);
+      setApiKeyLabel('');
+      setCreatedApiKeySecret((result.rawKey || '').toString());
+      setStatus(
+        'API key created. Copy it now, this is the only time it is shown.'
+      );
+    } catch (integrationError) {
+      setError(
+        integrationError instanceof Error
+          ? integrationError.message
+          : 'Failed to create API key'
+      );
+    } finally {
+      setApiAccessBusy(false);
+    }
+  };
+
+  const handleRevokeApiKey = async (keyId: string) => {
+    setApiAccessBusy(true);
+    setError('');
+    setStatus('');
+    try {
+      await revokeApiAccessKey(keyId);
+      const keys = await listApiAccessKeys();
+      setApiAccessKeys(Array.isArray(keys) ? keys : []);
+      setStatus('API key revoked. Requests using that key will now fail.');
+    } catch (integrationError) {
+      setError(
+        integrationError instanceof Error
+          ? integrationError.message
+          : 'Failed to revoke API key'
+      );
+    } finally {
+      setApiAccessBusy(false);
+    }
+  };
 
   const undoSecondsRemaining = lastRecoverySnapshot
     ? Math.max(
@@ -881,6 +1058,151 @@ export default function Profile() {
         </div>
 
         <div className="lg:col-span-8 space-y-6">
+          {hasApiAccess && (
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-5">
+              <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
+                API &amp; Automation
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">
+                Manage API access keys for integrations and automation tools.
+              </p>
+
+              {createdApiKeySecret && (
+                <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-0 mb-1">
+                    New API key (shown once)
+                  </p>
+                  <code className="text-sm break-all text-amber-900 dark:text-amber-200">
+                    {createdApiKeySecret}
+                  </code>
+                </div>
+              )}
+
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+                <label
+                  htmlFor="apiKeyLabel"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >
+                  Key label
+                </label>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <input
+                    id="apiKeyLabel"
+                    type="text"
+                    value={apiKeyLabel}
+                    onChange={event => setApiKeyLabel(event.target.value)}
+                    placeholder="Zapier production"
+                    className="min-w-[220px] flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleCreateApiKey()}
+                    disabled={apiAccessBusy || apiAccessLoading}
+                    className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                  >
+                    {apiAccessBusy ? 'Working…' : 'Create API Key'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0 mb-0">
+                  Active and historical keys
+                </h3>
+                {apiAccessLoading ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
+                    Loading keys...
+                  </p>
+                ) : apiAccessKeys.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
+                    No API keys created yet.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {apiAccessKeys.map(key => (
+                      <div
+                        key={key.keyId}
+                        className="rounded-md border border-slate-200 dark:border-slate-700 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                              {key.label || 'Untitled key'} ({key.keyPrefix}...)
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+                              Created: {formatTimestamp(key.createdAt)}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+                              Last used: {formatTimestamp(key.lastUsedAt)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span
+                              className={`inline-block text-xs px-2 py-1 rounded ${
+                                key.active
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                  : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                              }`}
+                            >
+                              {key.active ? 'Active' : 'Revoked'}
+                            </span>
+                            {key.active && (
+                              <div className="mt-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleRevokeApiKey(key.keyId)
+                                  }
+                                  disabled={apiAccessBusy}
+                                  className="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-xs font-medium py-1.5 px-3 rounded-md transition-colors duration-200 disabled:opacity-60"
+                                >
+                                  Revoke
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {hasZapierIntegration && (
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0 mb-0">
+                    Zapier webhook endpoint
+                  </h3>
+                  {zapierWebhookUrl ? (
+                    <div className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
+                        Webhook URL
+                      </p>
+                      <code className="text-sm break-all text-slate-900 dark:text-slate-100">
+                        {zapierWebhookUrl}
+                      </code>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 mb-0">
+                        {zapierInstructions ||
+                          'Use POST and send your API key in the x-api-key header.'}
+                      </p>
+                      {zapierRequiresSignature && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 mb-0">
+                          This environment requires request signing via
+                          x-vv-signature.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
+                      Webhook configuration will appear once it is available for
+                      your environment.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-6">
             <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
               Maintenance Alert Preferences
@@ -1125,6 +1447,9 @@ export default function Profile() {
                       <option value="all">All mechanics</option>
                       <option value="repair_shop">Repair shops only</option>
                       <option value="dealership">Dealerships only</option>
+                      <option value="body_shop">Body shops only</option>
+                      <option value="car_wash">Car washes only</option>
+                      <option value="detailer">Detailers only</option>
                     </select>
                   </div>
 
@@ -1245,9 +1570,11 @@ export default function Profile() {
                             {provider.name}
                           </div>
                           <div className="text-sm text-slate-600 dark:text-slate-400">
-                            {provider.type === 'dealership'
-                              ? 'Dealership'
-                              : 'Repair Shop'}{' '}
+                            {(provider.type === 'dealership' && 'Dealership') ||
+                              (provider.type === 'body_shop' && 'Body Shop') ||
+                              (provider.type === 'car_wash' && 'Car Wash') ||
+                              (provider.type === 'detailer' && 'Detailer') ||
+                              'Repair Shop'}{' '}
                             • {provider.distanceMiles} miles away
                           </div>
                         </div>

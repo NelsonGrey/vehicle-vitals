@@ -42,4 +42,19 @@ describe('Help page', () => {
 
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
+
+  it('shows standard support guidance with plan comparison link for non-priority tiers', () => {
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <Help />
+      </MemoryRouter>
+    );
+
+    expect(screen.getAllByText(/Standard support/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole('link', { name: /Compare support plans/i })[0]
+    ).toHaveAttribute('href', '/app/subscription');
+  });
 });

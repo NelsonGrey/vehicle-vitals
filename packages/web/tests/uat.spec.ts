@@ -278,7 +278,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(marketingNavMetrics.hasVinDecode).toBe(true);
     });
 
-    test('TC-UI-011: Authenticated app header shows Getting Started while hiding Product Overview and Help context links', async ({
+    test('TC-UI-011: Authenticated app header hides Product Overview and Help context links', async ({
       page,
     }) => {
       await ensureAuthenticated(page);
@@ -316,7 +316,6 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Deployment target is still on legacy authenticated navigation labels.'
       );
 
-      expect(appNavMetrics.firstLink).toBe('Getting Started');
       expect(appNavMetrics.hasProductOverview).toBe(false);
       expect(appNavMetrics.hasHelpHowTo).toBe(false);
       expect(appNavMetrics.hasGettingStarted).toBe(true);

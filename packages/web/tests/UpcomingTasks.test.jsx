@@ -23,6 +23,8 @@ import {
 import { createMaintenanceCalendarEvent } from '../src/utils/calendarService';
 import { sendReminderDeliveryEmail } from '../src/utils/reminderDeliveryService';
 
+const mockUseFeatureFlag = vi.fn(() => true);
+
 vi.mock('../src/shared/firestoreService', () => ({
   getVehicle: vi.fn(),
   getVehicles: vi.fn(),
@@ -45,6 +47,10 @@ vi.mock('../src/utils/calendarService', () => ({
 
 vi.mock('../src/utils/reminderDeliveryService', () => ({
   sendReminderDeliveryEmail: vi.fn(),
+}));
+
+vi.mock('../src/shared/useMonetization', () => ({
+  useFeatureFlag: (...args) => mockUseFeatureFlag(...args),
 }));
 
 const VEHICLE = {
@@ -83,6 +89,7 @@ describe('UpcomingTasks reminder actions', () => {
   beforeEach(() => {
     vi.spyOn(window, 'alert').mockImplementation(() => {});
     vi.spyOn(window, 'open').mockImplementation(() => null);
+    mockUseFeatureFlag.mockImplementation(() => true);
     getVehicle.mockResolvedValue(null);
     getVehicles.mockResolvedValue([VEHICLE]);
     getReminders.mockResolvedValue([ACTIVE_REMINDER]);
@@ -319,5 +326,42 @@ describe('UpcomingTasks reminder actions', () => {
     expect(
       screen.getByRole('link', { name: /show all vehicles/i })
     ).toHaveAttribute('href', '/app/upcoming');
+  });
+
+  it('shows predicted due date when ai predictions feature is enabled', async () => {
+    getReminders.mockResolvedValue([]);
+    getUpcomingMaintenance.mockReturnValue([
+      {
+        id: 'oil_change',
+        description: 'Oil and filter change',
+        frequency: 'Every 5,000 miles',
+        interval: 5000,
+        nextDueMileage: 35000,
+        milesUntilDue: 400,
+      },
+    ]);
+
+    renderUpcomingTasks();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Predicted due date:/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows upgrade guidance when advanced reminders feature is disabled', async () => {
+    mockUseFeatureFlag.mockImplementation(featureName => {
+      if (featureName === 'advanced_reminders') {
+        return false;
+      }
+      return true;
+    });
+
+    renderUpcomingTasks();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Advanced reminder timing controls are available/i)
+      ).toBeInTheDocument();
+    });
   });
 });

@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   trackPaymentInitiated,
   trackSubscriptionPageView,
 } from '../shared/adAnalytics';
+import {
+  changeSubscriptionTier,
+  createSubscriptionCheckoutSession,
+} from '../shared/entitlementsService';
 import {
   compareFeatures,
   FEATURE_FLAGS,
@@ -49,10 +53,12 @@ function formatVehicleLimit(tier: UserTier): string {
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { subscription, tier, isLoading } = useSubscription();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
     'monthly'
   );
+  const [isSubmittingTierChange, setIsSubmittingTierChange] = useState(false);
 
   useEffect(() => {
     trackSubscriptionPageView('direct_navigation', tier);
@@ -62,6 +68,13 @@ export default function SubscriptionPage() {
     () => (subscription ? getSubscriptionSummary(subscription) : null),
     [subscription]
   );
+  const isPastDue = subscription?.status === 'past_due';
+
+  const checkoutStatus = useMemo(() => {
+    const searchParams = new URLSearchParams(location.search || '');
+    const status = (searchParams.get('checkout') || '').toLowerCase();
+    return status === 'success' || status === 'cancelled' ? status : '';
+  }, [location.search]);
 
   if (isLoading) {
     return (
@@ -87,6 +100,17 @@ export default function SubscriptionPage() {
           power-user capability.
         </p>
 
+        {checkoutStatus === 'success' && (
+          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200">
+            Checkout completed. Your subscription is being finalized.
+          </div>
+        )}
+        {checkoutStatus === 'cancelled' && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-200">
+            Checkout was cancelled. No plan change was applied.
+          </div>
+        )}
+
         {summary && (
           <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/30">
             <p className="text-sm font-semibold text-teal-800 dark:text-teal-200">
@@ -100,6 +124,38 @@ export default function SubscriptionPage() {
                 Trial active. Billing begins automatically after trial ends.
               </p>
             )}
+          </div>
+        )}
+
+        {isPastDue && (
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-950/20">
+            <p className="text-sm font-semibold text-rose-800 dark:text-rose-200">
+              Billing action needed
+            </p>
+            <p className="mt-1 text-sm text-rose-900/90 dark:text-rose-100/90">
+              {subscription?.lastPaymentError ===
+              'stripe_invoice_payment_failed'
+                ? 'Your card was declined. Update your payment details or contact support if the issue continues.'
+                : subscription?.lastPaymentError === 'stripe_charge_disputed'
+                  ? 'A dispute is open on this payment. Contact support to review the next steps.'
+                  : subscription?.lastPaymentError === 'stripe_charge_refunded'
+                    ? 'This charge was refunded. Contact support to restore access.'
+                    : 'Please review your billing details and contact support if you need help restoring access.'}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link
+                to="/contact"
+                className="inline-flex rounded-md bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800"
+              >
+                Contact support
+              </Link>
+              <a
+                href="mailto:support@vehicle-vitals.com"
+                className="inline-flex rounded-md border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-100 dark:border-rose-700 dark:text-rose-200 dark:hover:bg-rose-950/40"
+              >
+                Email support
+              </a>
+            </div>
           </div>
         )}
 
@@ -176,14 +232,25 @@ export default function SubscriptionPage() {
 
               <button
                 type="button"
-                disabled={isCurrent}
-                onClick={() => {
+                disabled={isCurrent || isSubmittingTierChange}
+                onClick={async () => {
                   if (isCurrent) {
                     return;
                   }
 
                   if (planTier === 'free') {
-                    navigate('/app/profile');
+                    setIsSubmittingTierChange(true);
+                    try {
+                      await changeSubscriptionTier('free', billingPeriod);
+                      window.alert('Your plan has been changed to Free.');
+                      navigate('/app/profile');
+                    } catch (error) {
+                      window.alert(
+                        `Unable to change plan: ${error instanceof Error ? error.message : String(error)}`
+                      );
+                    } finally {
+                      setIsSubmittingTierChange(false);
+                    }
                     return;
                   }
 
@@ -193,17 +260,47 @@ export default function SubscriptionPage() {
                     return;
                   }
 
-                  trackPaymentInitiated(
-                    planTier,
-                    billingPeriod,
-                    'subscription_page'
-                  );
-                  window.alert(
-                    'Payment integration comes next. This action has been tracked for checkout wiring.'
-                  );
+                  setIsSubmittingTierChange(true);
+                  try {
+                    trackPaymentInitiated(
+                      planTier,
+                      billingPeriod,
+                      'subscription_page'
+                    );
+
+                    const checkoutResult =
+                      await createSubscriptionCheckoutSession(
+                        planTier,
+                        billingPeriod
+                      );
+
+                    if (
+                      checkoutResult.mode === 'redirect' &&
+                      checkoutResult.checkoutUrl
+                    ) {
+                      window.location.href = checkoutResult.checkoutUrl;
+                      return;
+                    }
+
+                    if (checkoutResult.mode === 'activated') {
+                      window.alert(
+                        `${getTierDisplayName(planTier)} is now active on your account.`
+                      );
+                    } else {
+                      window.alert(
+                        'Checkout session created, but no redirect URL was returned.'
+                      );
+                    }
+                  } catch (error) {
+                    window.alert(
+                      `Unable to change plan: ${error instanceof Error ? error.message : String(error)}`
+                    );
+                  } finally {
+                    setIsSubmittingTierChange(false);
+                  }
                 }}
                 className={`mt-4 w-full rounded-md px-4 py-2 text-sm font-semibold ${
-                  isCurrent
+                  isCurrent || isSubmittingTierChange
                     ? 'cursor-not-allowed bg-slate-300 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
                     : 'bg-teal-700 text-white hover:bg-teal-800'
                 }`}

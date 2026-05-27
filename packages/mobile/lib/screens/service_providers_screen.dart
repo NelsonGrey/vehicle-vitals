@@ -70,7 +70,12 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
         }
 
         final type = (prefs['preferredProviderType'] ?? 'all').toString();
-        if (type == 'all' || type == 'repair_shop' || type == 'dealership') {
+        if (type == 'all' ||
+            type == 'repair_shop' ||
+            type == 'dealership' ||
+            type == 'body_shop' ||
+            type == 'car_wash' ||
+            type == 'detailer') {
           _preferredProviderType = type;
         }
 
@@ -275,7 +280,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                           items: const [
                             DropdownMenuItem(
                               value: 'all',
-                              child: Text('All mechanics'),
+                              child: Text('All providers'),
                             ),
                             DropdownMenuItem(
                               value: 'repair_shop',
@@ -284,6 +289,18 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                             DropdownMenuItem(
                               value: 'dealership',
                               child: Text('Dealerships'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'body_shop',
+                              child: Text('Body shops'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'car_wash',
+                              child: Text('Car washes'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'detailer',
+                              child: Text('Detailers'),
                             ),
                           ],
                           onChanged: _searching
@@ -317,8 +334,11 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                 ..._providers.map((provider) {
                   final name = (provider['name'] ?? 'Unnamed mechanic')
                       .toString();
-                  final providerType = (provider['providerType'] ?? 'mechanic')
-                      .toString();
+                  final providerType =
+                      (provider['type'] ??
+                              provider['providerType'] ??
+                              'provider')
+                          .toString();
                   final distanceMiles = (provider['distanceMiles'] as num?)
                       ?.toStringAsFixed(1);
 

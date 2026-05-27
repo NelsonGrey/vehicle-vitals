@@ -1,7 +1,30 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 26, 2026 (marketing link cleanup and navigation hardening)
+Last updated: May 27, 2026 (billing recovery and checkout UX)
 Primary production project: `vehicle-vitals-prod`
+
+## Development Progress Update (May 27, 2026 - Billing Recovery and Checkout UX)
+
+Status: Stripe subscription settlement now has clearer post-checkout and recovery handling in the web app.
+
+Progress evaluation completed:
+
+- Subscription checkout now returns users to `/app/subscription` with explicit `checkout=success` and `checkout=cancelled` banners.
+- Past-due subscription states now surface Stripe-specific recovery text and a dedicated support panel with links to `/contact` and support email.
+- Stripe webhook handling continues to record payment-failure, dispute, and refund outcomes into subscription state for downstream UI recovery.
+
+Automation updates delivered:
+
+- Unit tests updated in `packages/web/src/shared/__tests__/subscriptionService.test.ts` and `packages/web/tests/SubscriptionPage.test.jsx`.
+- UAT coverage updated in `packages/web/tests/uat.spec.ts` to validate checkout feedback banners on the subscription page.
+
+Validation snapshot:
+
+- Focused web test slice: PASS (`12/12`) via `npm --prefix packages/web run test -- tests/SubscriptionPage.test.jsx src/shared/__tests__/subscriptionService.test.ts`.
+
+## Beta Readiness
+
+The current beta-test access matrix is documented in [docs/BETA_ACCESS_MATRIX.md](docs/BETA_ACCESS_MATRIX.md). It defines the required Free, Pro, Premium, Enterprise, and Super-Admin identities plus the capability proofs each one must satisfy before beta handoff.
 
 ## Development Progress Update (May 26, 2026 - Marketing Link Cleanup)
 

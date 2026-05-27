@@ -38,6 +38,17 @@ const STUB_PROVIDERS = [
     website: 'https://mainsteetauto.example.com',
   },
   {
+    id: 'detail-1',
+    type: 'detailer',
+    name: 'Showroom Detail Studio',
+    address: '88 Detail Way, Springfield, IL 62701',
+    distanceMiles: 3.3,
+    rating: 4.8,
+    phone: '555-900-0010',
+    specialties: ['ceramic coating'],
+    website: 'https://detail.example.com',
+  },
+  {
     id: 'dealer-1',
     type: 'dealership',
     name: 'Elite Toyota',
@@ -72,10 +83,10 @@ describe('ServiceProviders', () => {
   it('renders page heading and key form controls', async () => {
     render(<ServiceProviders />);
 
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Service Providers'));
     expect(screen.getByText('Search Preferences')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /find nearby mechanics/i })
+      screen.getByRole('button', { name: /find nearby providers/i })
     ).toBeInTheDocument();
   });
 
@@ -110,10 +121,10 @@ describe('ServiceProviders', () => {
 
   it('shows validation error when required address fields are absent', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Service Providers'));
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby mechanics/i })
+      screen.getByRole('button', { name: /find nearby providers/i })
     );
 
     await waitFor(() =>
@@ -124,7 +135,7 @@ describe('ServiceProviders', () => {
 
   it('calls getLocalServiceProviders with form values and renders results', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Service Providers'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '99 Oak Blvd' },
@@ -137,7 +148,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby mechanics/i })
+      screen.getByRole('button', { name: /find nearby providers/i })
     );
 
     await waitFor(() =>
@@ -149,12 +160,13 @@ describe('ServiceProviders', () => {
       )
     );
     expect(await screen.findByText('Main Street Auto')).toBeInTheDocument();
+    expect(screen.getByText('Showroom Detail Studio')).toBeInTheDocument();
     expect(screen.getByText('Elite Toyota')).toBeInTheDocument();
   });
 
   it('persists preferences via updateVehicle after a successful lookup', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Service Providers'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '1 Maple Dr' },
@@ -167,7 +179,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby mechanics/i })
+      screen.getByRole('button', { name: /find nearby providers/i })
     );
 
     await waitFor(() =>
@@ -185,7 +197,7 @@ describe('ServiceProviders', () => {
     getLocalServiceProviders.mockRejectedValue(new Error('Network timeout'));
 
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Service Providers'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '5 Pine Ave' },
@@ -198,7 +210,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby mechanics/i })
+      screen.getByRole('button', { name: /find nearby providers/i })
     );
 
     await waitFor(() => screen.getByText(/network timeout/i));
@@ -227,7 +239,7 @@ describe('ServiceProviders', () => {
 
   it('shows success status after providers load', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Service Providers'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '7 Birch Ln' },
@@ -240,9 +252,41 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby mechanics/i })
+      screen.getByRole('button', { name: /find nearby providers/i })
     );
 
-    await waitFor(() => screen.getByText(/nearby mechanics updated/i));
+    await waitFor(() => screen.getByText(/nearby providers updated/i));
+  });
+
+  it('auto-loads nearby providers when a valid saved address exists', async () => {
+    getVehicle.mockResolvedValue({
+      preferredProviderRadiusMiles: 30,
+      preferredProviderType: 'all',
+      homeAddress: {
+        street1: '100 Market St',
+        city: 'Springfield',
+        stateProvince: 'IL',
+        postalCode: '62701',
+        country: 'US',
+      },
+    });
+
+    render(<ServiceProviders />);
+
+    await waitFor(() =>
+      expect(getLocalServiceProviders).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locationQuery: expect.stringContaining('Springfield'),
+          radiusMiles: 30,
+          providerType: 'all',
+        })
+      )
+    );
+
+    expect(
+      await screen.findByText(
+        /loaded nearby providers from your saved preferences/i
+      )
+    ).toBeInTheDocument();
   });
 });

@@ -6,6 +6,7 @@ import {
   websiteFaq,
   type FaqItem,
 } from '../data/helpFaq';
+import { useFeatureFlag } from '../shared/useMonetization';
 // Header and footer provided by Layout
 
 const helpTopics = [
@@ -173,6 +174,8 @@ function FaqList({ items }: { items: FaqItem[] }) {
 }
 
 export default function Help() {
+  const hasPrioritySupport = useFeatureFlag('priority_support');
+  const hasPhoneSupport = useFeatureFlag('phone_support');
   const [faqQuery, setFaqQuery] = useState('');
   const location = useLocation();
   const filteredWebsiteFaq = useMemo(
@@ -470,6 +473,50 @@ export default function Help() {
           If you still need help, contact support and include your browser or
           app version plus a short description of what happened.
         </p>
+        <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+          {hasPhoneSupport ? (
+            <>
+              <p className="m-0 font-semibold text-slate-900 dark:text-slate-100">
+                Premium support enabled
+              </p>
+              <p className="m-0 mt-1">
+                You have priority email handling and phone support access for
+                escalations.
+              </p>
+              <p className="m-0 mt-1">
+                Priority line:{' '}
+                <a className="underline" href="tel:+18005551234">
+                  +1 (800) 555-1234
+                </a>
+              </p>
+            </>
+          ) : hasPrioritySupport ? (
+            <>
+              <p className="m-0 font-semibold text-slate-900 dark:text-slate-100">
+                Priority support enabled
+              </p>
+              <p className="m-0 mt-1">
+                Your account includes priority email support handling.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="m-0 font-semibold text-slate-900 dark:text-slate-100">
+                Standard support
+              </p>
+              <p className="m-0 mt-1">
+                Email support is available for all users. Upgrade for priority
+                response and phone escalation options.
+              </p>
+              <Link
+                to="/app/subscription"
+                className="inline-flex mt-2 text-sm font-medium underline text-teal-700 dark:text-teal-300"
+              >
+                Compare support plans
+              </Link>
+            </>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
           <Link
             to="/contact"

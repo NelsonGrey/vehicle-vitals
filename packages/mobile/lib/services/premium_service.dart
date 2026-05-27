@@ -58,8 +58,8 @@ class PremiumService extends ChangeNotifier {
   Future<void> _initialize() async {
     await _loadPremiumStatus();
     await _initializeInAppPurchase();
-    await _refreshEntitlementsFromBackend();
-    await _refreshPremiumStatusFromBackend();
+    // Backend entitlement calls are triggered from syncForAuthUser once
+    // AuthService resolves the current signed-in user.
   }
 
   Future<void> refreshEntitlementsForCurrentUser() async {

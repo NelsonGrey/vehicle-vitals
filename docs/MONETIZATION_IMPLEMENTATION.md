@@ -11,9 +11,9 @@
 
 This document tracks the implementation of the Vehicle Vitals monetization strategy in phases. See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for complete strategy.
 
-**Phase 1 Objective**: Build foundational infrastructure for ad system, subscription tiers, and feature gating
+**Phase 1 Objective**: Build foundational infrastructure for ad system, subscription tiers, feature gating, and checkout/reconciliation plumbing
 **Target Completion**: Month 3  
-**Success Criteria**: Ad placements rendering, tier system tracking, feature flags functional, and upgrade prompts integrated in key user actions (no payment processing yet)
+**Success Criteria**: Ad placements rendering, tier system tracking, feature flags functional, upgrade prompts integrated in key user actions, and Stripe checkout/webhook plumbing validated for web
 
 ## Current Progress Snapshot (May 14, 2026)
 
@@ -32,13 +32,14 @@ This document tracks the implementation of the Vehicle Vitals monetization strat
 - Added/updated automated coverage:
   - Unit tests for feature flags and ad placement tier rules (298/298 passing)
   - Integration tests for enterprise callables (org bootstrap, entitlements, role changes, retention, compliance requests)
-  - UAT coverage for subscription plans and admin support console route behavior
+  - UAT coverage for subscription surfaces and admin support console route behavior
 - Recent updates (May 14):
   - Adjusted tier vehicle limits to protect profitability: Free (3→2), Premium (50→25)
-  - Added Enterprise tier as a first-class plan for 25+ vehicles with sales contact flow
+  - Added Enterprise tier as a first-class subscription option for 25+ vehicles with sales contact flow
   - Moved inline body ad from top to bottom to improve visual ad separation
 - Remaining critical path for launch readiness:
-  - Stripe checkout + webhook end-to-end
+  - Stripe production validation and webhook monitoring
+  - Mobile IAP/RevenueCat setup for the native purchase surface
   - Firestore rules hardening for full org-scope domain entities (beyond current org/compliance/audit paths)
   - Mobile parity for gated actions
   - Production workflow validation for enterprise admin operations
@@ -246,7 +247,7 @@ VITE_AD_CLICK_TRACKING=true
   - In-app purchase setup
 
 - [x] **Upgrade Triggers** (conditional UI):
-  - "Add 4th Vehicle" → Pro upgrade prompt
+  - "Add 3rd Vehicle" → Pro upgrade prompt
   - Calendar sync button → "Pro feature" modal
   - AI analysis/retry actions → Pro upgrade prompt
   - CSV/PDF export actions → Pro upgrade prompt
@@ -477,13 +478,13 @@ ADSENSE_SLOT_SIDEBAR
 
 ## Timeline & Ownership
 
-| Week | Focus                              | Owner                 | Status      |
-| ---- | ---------------------------------- | --------------------- | ----------- |
-| 1-2  | Feature flags + subscription state | Engineering           | COMPLETE    |
-| 2-3  | Ad placements + analytics          | Engineering           | COMPLETE    |
-| 3-4  | Upgrade UI + testing               | Engineering + Product | IN PROGRESS |
-| 4    | Stripe test + IAP setup            | Engineering           | TODO        |
-| 4    | Documentation + final QA           | Engineering           | IN PROGRESS |
+| Week | Focus                                  | Owner                 | Status      |
+| ---- | -------------------------------------- | --------------------- | ----------- |
+| 1-2  | Feature flags + subscription state     | Engineering           | COMPLETE    |
+| 2-3  | Ad placements + analytics              | Engineering           | COMPLETE    |
+| 3-4  | Upgrade UI + testing                   | Engineering + Product | IN PROGRESS |
+| 4    | Stripe checkout validation + IAP setup | Engineering           | IN PROGRESS |
+| 4    | Documentation + final QA               | Engineering           | IN PROGRESS |
 
 ---
 

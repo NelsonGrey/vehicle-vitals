@@ -26,6 +26,7 @@ import 'screens/maintenance_detail_screen.dart';
 import 'screens/maintenance_list_screen.dart';
 import 'screens/marketing_welcome_screen.dart';
 import 'screens/offline_settings_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/premium_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/records_screen.dart';
@@ -41,6 +42,7 @@ import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
 import 'services/offline_service.dart';
+import 'services/onboarding_service.dart';
 import 'services/premium_service.dart';
 import 'theme/app_theme.dart';
 
@@ -62,7 +64,8 @@ void main() async {
     );
     final activeOptions = Firebase.app().options;
     debugPrint(
-      'Firebase initialized: project=${activeOptions.projectId}, appId=${activeOptions.appId}',
+      'Firebase initialized: env=${DefaultFirebaseOptions.currentEnvironmentLabel}, '
+      'project=${activeOptions.projectId}, appId=${activeOptions.appId}',
     );
 
     // Wire Flutter and Dart error handlers to Crashlytics.
@@ -93,7 +96,7 @@ void main() async {
 String _resolveInitialRoute() {
   final routeName = PlatformDispatcher.instance.defaultRouteName.trim();
   if (routeName.isEmpty || routeName == '/') {
-    return '/marketing';
+    return '/welcome';
   }
 
   return routeName;
@@ -119,17 +122,25 @@ class VehicleVitalsApp extends StatelessWidget {
             return service;
           },
         ),
+        ChangeNotifierProxyProvider<AuthService, OnboardingService>(
+          create: (context) => OnboardingService(),
+          update: (context, authService, onboardingService) {
+            final service = onboardingService ?? OnboardingService();
+            unawaited(service.syncForAuthUser(authService.currentUser?.uid));
+            return service;
+          },
+        ),
         ChangeNotifierProvider(create: (context) => OfflineService()),
         ChangeNotifierProvider(create: (context) => AnalyticsService()),
       ],
-      child: Consumer<AuthService>(
-        builder: (context, authService, child) {
+      child: Consumer2<AuthService, OnboardingService>(
+        builder: (context, authService, onboardingService, child) {
           return MaterialApp.router(
             title: 'Garage',
             theme: AppTheme.lightTheme(),
             darkTheme: AppTheme.darkTheme(),
             themeMode: ThemeMode.system,
-            routerConfig: _createRouter(authService),
+            routerConfig: _createRouter(authService, onboardingService),
             builder: (context, child) {
               return Column(
                 children: [
@@ -147,27 +158,58 @@ class VehicleVitalsApp extends StatelessWidget {
     );
   }
 
-  GoRouter _createRouter(AuthService authService) {
+  GoRouter _createRouter(
+    AuthService authService,
+    OnboardingService onboardingService,
+  ) {
     return GoRouter(
       initialLocation: _resolveInitialRoute(),
       redirect: (context, state) {
         final isLoggedIn = authService.currentUser != null;
         final isLoading = authService.isLoading;
+        final onboardingLoading = onboardingService.isLoading;
+        final onboardingCompleted = onboardingService.isCompleted;
         final location = state.matchedLocation;
 
         final isAuthRoute = location.startsWith('/auth/');
-        final isMarketingRoute = location == '/marketing';
+        final isWelcomeRoute =
+            location == '/welcome' || location == '/marketing';
         final isAppRoute = location == '/app' || location.startsWith('/app/');
+        final isOnboardingRoute = location == '/app/onboarding';
+        final isAllowedSetupRoute =
+            isOnboardingRoute ||
+            location.startsWith('/app/add-vehicle') ||
+            location == '/app/reminder-preferences' ||
+            location == '/app/premium' ||
+            location == '/app/contact';
 
         if (isLoading) return null; // Don't redirect while loading
 
-        // Unauthenticated users may only access marketing or auth routes.
+        // Unauthenticated users may only access welcome or auth routes.
         if (!isLoggedIn && isAppRoute) {
           return '/auth/login';
         }
 
+        if (!isLoggedIn) {
+          return null;
+        }
+
+        if (onboardingLoading) {
+          return null;
+        }
+
+        final needsOnboarding = !onboardingCompleted;
+
         // Authenticated users are routed into the secure app namespace.
-        if (isLoggedIn && (isAuthRoute || isMarketingRoute)) {
+        if (isAuthRoute || isWelcomeRoute) {
+          return needsOnboarding ? '/app/onboarding' : '/app';
+        }
+
+        if (needsOnboarding && isAppRoute && !isAllowedSetupRoute) {
+          return '/app/onboarding';
+        }
+
+        if (!needsOnboarding && isOnboardingRoute) {
           return '/app';
         }
 
@@ -175,8 +217,12 @@ class VehicleVitalsApp extends StatelessWidget {
       },
       routes: [
         GoRoute(
+          path: '/welcome',
+          builder: (context, state) => const WelcomeScreen(),
+        ),
+        GoRoute(
           path: '/marketing',
-          builder: (context, state) => const MarketingWelcomeScreen(),
+          builder: (context, state) => const WelcomeScreen(),
         ),
         GoRoute(
           path: '/auth/login',
@@ -189,6 +235,10 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/auth/forgot-password',
           builder: (context, state) => const ForgotPasswordScreen(),
+        ),
+        GoRoute(
+          path: '/app/onboarding',
+          builder: (context, state) => const OnboardingScreen(),
         ),
         GoRoute(path: '/app', builder: (context, state) => const HomeScreen()),
         GoRoute(
@@ -287,7 +337,7 @@ class VehicleVitalsApp extends StatelessWidget {
           builder: (context, state) => const TimelineDashboardScreen(),
         ),
         // Legacy routes for backward compatibility.
-        GoRoute(path: '/', redirect: (context, state) => '/marketing'),
+        GoRoute(path: '/', redirect: (context, state) => '/welcome'),
         GoRoute(path: '/login', redirect: (context, state) => '/auth/login'),
         GoRoute(path: '/signup', redirect: (context, state) => '/auth/signup'),
         GoRoute(

@@ -2,7 +2,7 @@
 // ignore_for_file: type=lint, lines_longer_than_80_chars, avoid_classes_with_only_static_members
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show defaultTargetPlatform, kIsWeb, kReleaseMode, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -15,10 +15,13 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  static String get currentEnvironmentLabel => _activeEnvironment.name;
+
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       return web;
     }
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
@@ -33,6 +36,31 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static _FirebaseEnvironment get _activeEnvironment {
+    const envOverride = String.fromEnvironment(
+      'VV_FIREBASE_ENV',
+      defaultValue: '',
+    );
+    final normalizedOverride = envOverride.trim().toLowerCase();
+
+    if (normalizedOverride == 'production' || normalizedOverride == 'prod') {
+      return _FirebaseEnvironment.production;
+    }
+    if (normalizedOverride == 'staging' || normalizedOverride == 'stage') {
+      return _FirebaseEnvironment.staging;
+    }
+    if (normalizedOverride == 'development' || normalizedOverride == 'dev') {
+      return _FirebaseEnvironment.development;
+    }
+
+    // Safe default policy:
+    // - Debug/profile local runs use development backend.
+    // - Release builds default to production unless explicitly overridden.
+    return kReleaseMode
+        ? _FirebaseEnvironment.production
+        : _FirebaseEnvironment.development;
+  }
+
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDE99EAoGniEwCLfu4llmv_NsSjbwr-ZRE',
     appId: '1:489413148337:web:9b4e97350073a22968ac90',
@@ -42,7 +70,29 @@ class DefaultFirebaseOptions {
     measurementId: 'G-32PCGDSNT9',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
+  static FirebaseOptions get android {
+    switch (_activeEnvironment) {
+      case _FirebaseEnvironment.production:
+        return androidProduction;
+      case _FirebaseEnvironment.staging:
+        return androidStaging;
+      case _FirebaseEnvironment.development:
+        return androidDevelopment;
+    }
+  }
+
+  static FirebaseOptions get ios {
+    switch (_activeEnvironment) {
+      case _FirebaseEnvironment.production:
+        return iosProduction;
+      case _FirebaseEnvironment.staging:
+        return iosStaging;
+      case _FirebaseEnvironment.development:
+        return iosDevelopment;
+    }
+  }
+
+  static const FirebaseOptions androidDevelopment = FirebaseOptions(
     apiKey: 'AIzaSyAFYAlutFG6V_h2CpzYbeq4QGjVpV4S52M',
     appId: '1:919227980868:android:afb6329906f754c6b5f011',
     messagingSenderId: '919227980868',
@@ -50,7 +100,45 @@ class DefaultFirebaseOptions {
     storageBucket: 'vehicle-vitals-dev.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
+  static const FirebaseOptions androidStaging = FirebaseOptions(
+    apiKey: 'AIzaSyDwoqDr6cUxzUu2NIfL2UDScC3gAQwuJo4',
+    appId: '1:364854499099:android:7697f629b4f1d7e347a5be',
+    messagingSenderId: '364854499099',
+    projectId: 'vehicle-vitals-staging',
+    storageBucket: 'vehicle-vitals-staging.firebasestorage.app',
+  );
+
+  static const FirebaseOptions androidProduction = FirebaseOptions(
+    apiKey: 'AIzaSyB4yx8ABAc5XeU7fbFiz19BOcu9GCkQBvk',
+    appId: '1:489413148337:android:0ed732a4b8cd462068ac90',
+    messagingSenderId: '489413148337',
+    projectId: 'vehicle-vitals-prod',
+    storageBucket: 'vehicle-vitals-prod.firebasestorage.app',
+  );
+
+  static const FirebaseOptions iosDevelopment = FirebaseOptions(
+    apiKey: 'AIzaSyBbq4U14kQIQP_6hHcatdZG9CbCFVwD_P0',
+    appId: '1:919227980868:ios:6aa6e20c5110778ab5f011',
+    messagingSenderId: '919227980868',
+    projectId: 'vehicle-vitals-dev',
+    storageBucket: 'vehicle-vitals-dev.firebasestorage.app',
+    iosBundleId: 'com.nelsongrey.vehiclevitals.app.ios',
+    iosClientId:
+        '919227980868-aj9r7328ah5j2fd1tq5tc8ogj5p2007r.apps.googleusercontent.com',
+  );
+
+  static const FirebaseOptions iosStaging = FirebaseOptions(
+    apiKey: 'AIzaSyBMoFjS5DK_vVKQ3-xzWL3YOCWmpZZlY1U',
+    appId: '1:364854499099:ios:23e8551a7ba7195447a5be',
+    messagingSenderId: '364854499099',
+    projectId: 'vehicle-vitals-staging',
+    storageBucket: 'vehicle-vitals-staging.firebasestorage.app',
+    iosBundleId: 'com.nelsongrey.vehiclevitals.app.ios',
+    iosClientId:
+        '364854499099-84hplu6fd9rpqqc29crhti5hl6a6c38a.apps.googleusercontent.com',
+  );
+
+  static const FirebaseOptions iosProduction = FirebaseOptions(
     apiKey: 'AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU',
     appId: '1:489413148337:ios:b55d0b37718e299368ac90',
     messagingSenderId: '489413148337',
@@ -61,3 +149,5 @@ class DefaultFirebaseOptions {
         '489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com',
   );
 }
+
+enum _FirebaseEnvironment { development, staging, production }

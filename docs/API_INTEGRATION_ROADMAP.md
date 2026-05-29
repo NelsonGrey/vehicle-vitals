@@ -2,7 +2,7 @@
 
 **Version**: 1.0  
 **Last Updated**: March 10, 2026  
-**Status**: Draft for implementation
+**Status**: Living reference; partially implemented and actively maintained
 
 ---
 
@@ -18,6 +18,8 @@ Define a single backend API surface for both web and mobile so we can deliver:
 
 This roadmap assumes Firebase Functions as the API gateway layer.
 
+As of May 2026, the API surface already includes VIN decode, calendar sync, owner manuals, warranty summaries, maintenance planning, premium verification, subscription checkout, Zapier webhook handling, and enterprise support callables.
+
 ---
 
 ## Current Capability Snapshot (Code-Verified)
@@ -29,7 +31,7 @@ This roadmap assumes Firebase Functions as the API gateway layer.
 | VIN decode mobile usage            | Partial, implemented | Callable integration in `packages/mobile/lib/screens/add_vehicle_screen.dart`                                                                                                                                                                                              |
 | Reminder scheduler                 | Partial              | `checkMaintenanceReminders` in `packages/functions/src/index.ts`                                                                                                                                                                                                           |
 | Reminder actions (snooze/complete) | Partial, implemented | Firestore persistence in `packages/shared/src/firestoreServiceFactory.js`                                                                                                                                                                                                  |
-| Email reminder delivery            | Partial              | Function exists, provider integration TODO in `packages/functions/src/index.ts`                                                                                                                                                                                            |
+| Email reminder delivery            | Partial              | Function exists with provider integration in `packages/functions/src/email.provider.ts` and reminder delivery reconciliation in `packages/functions/src/index.ts`                                                                                                          |
 | Calendar sync                      | Partial, implemented | `createCalendarEvent` (HTTP) + `createCalendarEventCallable` (callable) support `google`, `apple`, `ics`; clients use callable-first with auth-aware HTTP fallback in `packages/mobile/lib/services/calendar_service.dart` and `packages/web/src/utils/calendarService.js` |
 | Owner manual APIs                  | Partial, implemented | `getOwnerManuals` now returns OEM portal links via `packages/functions/src/manuals.provider.ts` when feature/provider are enabled                                                                                                                                          |
 | Warranty APIs                      | Partial, implemented | `getWarrantySummary` now returns heuristic coverage via `packages/functions/src/warranty.provider.ts` when feature/provider are enabled                                                                                                                                    |

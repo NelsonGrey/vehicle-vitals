@@ -1,7 +1,35 @@
 # Vehicle Vitals - Deployment Status
 
-Last updated: May 27, 2026 (billing recovery and checkout UX)
+Last updated: May 29, 2026 (cross-platform identity recovery and account consolidation)
 Primary production project: `vehicle-vitals-prod`
+
+## Development Progress Update (May 29, 2026 - Cross-Platform Identity Recovery)
+
+Status: cross-platform identity hardening is now paired with a user-facing web recovery flow for existing split accounts.
+
+Progress evaluation completed:
+
+- Backend callable `consolidateAccountDataCallable` now supports retry-safe batch migration of vehicles, subscription tier state, and premium entitlements from a secondary UID into the signed-in primary UID.
+- Web auth now exposes `consolidateAccountData` through `AuthContext`, keeping the recovery path inside existing authenticated Profile flows.
+- Profile now includes an `Account Consolidation` section with source-UID entry, destructive-action confirmation, and success reporting for migrated and skipped vehicles.
+- Mobile account screens now expose sync-identity diagnostics so users can verify environment, Firebase project, and auth UID before attempting recovery.
+
+Automation updates delivered:
+
+- Focused web unit coverage updated in `packages/web/tests/Profile.push.test.jsx` to validate:
+  - self-consolidation is blocked client-side
+  - successful consolidation renders migration results
+- Web UAT updated in `packages/web/tests/uat.spec.ts` to validate the Profile recovery surface and the safe self-consolidation validation path.
+- End-user documentation updated in `docs/USER_FAQ_WEBSITE_IOS.md` with split-account troubleshooting and website consolidation instructions.
+
+Validation snapshot:
+
+- Functions compile: PASS via `npm --prefix packages/functions run build`
+- Web production build: PASS via `npm --prefix packages/web run build`
+- Focused web unit tests: PASS (`7/7`) via `npm --prefix packages/web run test -- tests/Profile.push.test.jsx`
+- Full web unit suite: PASS (`358/358`) via `npm --prefix packages/web run test:unit`
+- Flutter analyzer: PASS via `flutter analyze` in `packages/mobile`
+- Full Chromium UAT: PASS/SKIP-GATED (`8 passed`, `20 skipped`) via `npm --prefix packages/web run test:uat:chromium`; auth-dependent cases, including the Profile recovery checks, were skipped because auth UI is unavailable in the current deployment target
 
 ## Development Progress Update (May 27, 2026 - Billing Recovery and Checkout UX)
 
@@ -302,10 +330,10 @@ Status: Configured with partial product integration
 
 ## R1 Gate Execution Status
 
-As of May 7, 2026 (updated):
+As of May 27, 2026 (updated with latest available gate evidence):
 
 - Gate 1 (Reminder delivery reliability): ✅ COMPLETE (automated checks pass and authenticated manual-send validation returns HTTP 200 on dev endpoint).
-- Gate 2 (Mobile runtime parity): build/analyze PASS on latest smoke run (`artifacts/smoke/r1-mobile-build-20260507T214730Z.log`); acceptance currently BLOCKED on runtime launch prerequisites (physical device requires Developer Mode/trust; simulator launch not yet completed in current execution window). Blocker-marked evidence captured in `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` and `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log`.
+- Gate 2 (Mobile runtime parity): Gate 2 status is Build PASS; runtime acceptance BLOCKED pending iOS Developer Mode/trust and successful release-like runtime session with backend-traffic evidence. Latest build evidence: `artifacts/smoke/r1-mobile-build-20260507T214730Z.log`. Blocker-marked evidence captured in `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` and `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log`.
 - Gate 3 (Export parity): ✅ AUTOMATED COMPLETE — CSV parity PASS, PDF structural parity PASS, signoff recorded in `artifacts/smoke/r1-export-parity-report-20260507T174923Z.md`. Manual visual rendering QA is optional/recommended.
 
 Primary evidence index: `docs/R1_COMPLETION_CHECKLIST.md`.

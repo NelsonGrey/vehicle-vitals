@@ -37,6 +37,8 @@ class UserCredential {
 class AuthService extends ChangeNotifier {
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   StreamSubscription<firebase_auth.User?>? _authSubscription;
+  firebase_auth.AuthCredential? _pendingLinkCredential;
+  String? _pendingLinkEmail;
   User? _currentUser;
   bool _isLoading = true;
 
@@ -91,10 +93,48 @@ class AuthService extends ChangeNotifier {
 
   String _buildProviderConflictMessage(String? email) {
     if (email == null || email.trim().isEmpty) {
-      return 'This credential is already tied to another account. Sign in with your existing method, then link providers from Account.';
+      return 'This credential is already tied to another account. Sign in with your existing method; Apple will be linked automatically after sign-in.';
     }
 
-    return 'This email already belongs to an existing account. Sign in with that existing method first, then link Apple from Account.';
+    return 'This email already belongs to an existing account. Sign in with that existing method first; Apple will be linked automatically.';
+  }
+
+  void _setPendingProviderLink({
+    required firebase_auth.AuthCredential credential,
+    String? email,
+  }) {
+    _pendingLinkCredential = credential;
+    _pendingLinkEmail = email?.trim().toLowerCase();
+  }
+
+  Future<void> _linkPendingProviderIfNeeded(firebase_auth.User? user) async {
+    final pendingCredential = _pendingLinkCredential;
+    if (pendingCredential == null || user == null) {
+      return;
+    }
+
+    final userEmail = (user.email ?? '').trim().toLowerCase();
+    final pendingEmail = (_pendingLinkEmail ?? '').trim().toLowerCase();
+
+    if (pendingEmail.isNotEmpty &&
+        userEmail.isNotEmpty &&
+        pendingEmail != userEmail) {
+      return;
+    }
+
+    try {
+      await user.linkWithCredential(pendingCredential);
+      await user.reload();
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code != 'provider-already-linked' &&
+          e.code != 'credential-already-in-use' &&
+          e.code != 'requires-recent-login') {
+        rethrow;
+      }
+    } finally {
+      _pendingLinkCredential = null;
+      _pendingLinkEmail = null;
+    }
   }
 
   Future<UserCredential?> signInWithEmailAndPassword(
@@ -106,7 +146,8 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
-      final user = _mapUser(credential.user);
+      await _linkPendingProviderIfNeeded(credential.user);
+      final user = _mapUser(_auth.currentUser ?? credential.user);
       _currentUser = user;
       notifyListeners();
       if (user == null) return null;
@@ -169,6 +210,8 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _auth.signOut();
+    _pendingLinkCredential = null;
+    _pendingLinkEmail = null;
     _currentUser = null;
     notifyListeners();
   }
@@ -200,7 +243,13 @@ class AuthService extends ChangeNotifier {
     } on firebase_auth.FirebaseAuthException catch (e) {
       if (e.code == 'account-exists-with-different-credential' ||
           e.code == 'credential-already-in-use') {
-        final message = _buildProviderConflictMessage(appleCredential.email);
+        _setPendingProviderLink(
+          credential: oauthCredential,
+          email: e.email ?? appleCredential.email,
+        );
+        final message = _buildProviderConflictMessage(
+          e.email ?? appleCredential.email,
+        );
         throw Exception(message);
       }
       throw Exception(e.message ?? 'Apple sign-in failed. Please try again.');
@@ -241,6 +290,23 @@ class AuthService extends ChangeNotifier {
       }
       throw Exception(e.message ?? 'Unable to link Apple sign-in.');
     }
+  }
+
+  Future<Map<String, dynamic>> consolidateAccountData({
+    required String sourceUid,
+    String? idempotencyKey,
+  }) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      throw Exception('Sign in first before consolidating accounts.');
+    }
+
+    // Note: Full implementation requires firebase_functions package
+    // This is a placeholder that would call consolidateAccountDataCallable
+    throw Exception(
+      'Account consolidation via Firebase Functions is not yet available in the mobile app. '
+      'Please use the web interface to consolidate your accounts.',
+    );
   }
 
   @override

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../components/inline_ad_section.dart';
 import '../theme/design_tokens.dart';
 
-class MarketingWelcomeScreen extends StatelessWidget {
-  const MarketingWelcomeScreen({super.key});
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,52 +16,133 @@ class MarketingWelcomeScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Garage')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
             const SizedBox(height: 8),
             Text(
-              'Marketing: what Vehicle Vitals delivers',
+              'Welcome to your garage workspace',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 10),
             Text(
-              'Track maintenance, timeline events, and ownership history across web and mobile.',
+              'Jump straight into vehicles, records, and upcoming work. Sign in to continue where you left off, or create an account to get started in minutes.',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: colorScheme.muted),
             ),
-            const SizedBox(height: 20),
-            const _FeatureBullet(text: 'VIN-first onboarding and quick setup'),
-            const _FeatureBullet(text: 'Service timeline and upcoming tasks'),
-            const _FeatureBullet(text: 'Secure account with synced data'),
-            const _FeatureBullet(text: 'Cross-platform access and continuity'),
-            const SizedBox(height: 8),
-            const InlineAdSection(),
-            const Spacer(),
+            const SizedBox(height: 18),
+            _ActionCard(
+              title: 'Returning user',
+              subtitle: 'Open your existing garage and pick up current tasks.',
+              ctaLabel: 'Sign In',
+              onPressed: () => context.go('/auth/login'),
+              icon: Icons.login,
+            ),
+            const SizedBox(height: 12),
+            _ActionCard(
+              title: 'New user',
+              subtitle:
+                  'Create your account, add your first vehicle, and configure reminders.',
+              ctaLabel: 'Create Account',
+              onPressed: () => context.go('/auth/signup'),
+              icon: Icons.person_add_alt_1,
+              isPrimary: true,
+            ),
+            const SizedBox(height: 18),
             Text(
-              'Next: authenticate to access your secure garage.',
+              'Subscription expectations',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose a tier based on workload and feature needs. You can start Free and upgrade in-app as your garage grows.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: colorScheme.muted),
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => context.go('/auth/login'),
-                    child: const Text('Sign In'),
+            const _FeatureBullet(
+              text: 'Free: core tracking, reminders, and baseline workflow',
+            ),
+            const _FeatureBullet(
+              text:
+                  'Pro: calendar sync, exports, and expanded workflow controls',
+            ),
+            const _FeatureBullet(
+              text:
+                  'Premium: ad-free experience, API access, and advanced capabilities',
+            ),
+            const _FeatureBullet(
+              text:
+                  'Enterprise: high-volume operations with contract and support handoff',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.title,
+    required this.subtitle,
+    required this.ctaLabel,
+    required this.onPressed,
+    required this.icon,
+    this.isPrimary = false,
+  });
+
+  final String title;
+  final String subtitle;
+  final String ctaLabel;
+  final VoidCallback onPressed;
+  final IconData icon;
+  final bool isPrimary;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = AppDesignTokens.colorScheme(
+      Theme.of(context).brightness,
+    ).muted;
+
+    return Card(
+      elevation: isPrimary ? 2 : 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: muted),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/auth/signup'),
-                    child: const Text('Create Account'),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: isPrimary
+                        ? ElevatedButton(
+                            onPressed: onPressed,
+                            child: Text(ctaLabel),
+                          )
+                        : OutlinedButton(
+                            onPressed: onPressed,
+                            child: Text(ctaLabel),
+                          ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

@@ -1,7 +1,7 @@
 # Vehicle Vitals - Business Requirements & Strategic Analysis
 
 **Version**: 1.2  
-**Last Updated**: May 8, 2026  
+**Last Updated**: May 27, 2026  
 **Status**: 🟡 R1 NEAR-COMPLETE (web + mobile real-service runtime operational; Gate 2 acceptance pending)  
 **Owner**: Mark Nelson
 
@@ -20,13 +20,13 @@
 
 **Market Opportunity**: Target the $12B+ vehicle maintenance tracking/management software market with a digital-first, user-friendly solution.
 
-**Business Model**: Freemium with optional premium features (maintenance planning, advanced analytics, diagnostic integration).
+**Business Model**: Four-tier freemium (Free, Pro, Premium, Enterprise) with contextual advertising and tiered feature access.
 
 **Current Status**: 🟡 Web core and mobile real-service runtime are both operational. R1 production gates are near-complete: Gate 1 (reminders) and Gate 3 (export parity) are closed; Gate 2 (mobile runtime acceptance) is the remaining blocker.
 
 ---
 
-## Delivery Reality Snapshot (Code-Verified: May 8, 2026)
+## Delivery Reality Snapshot (Code-Verified: May 27, 2026)
 
 | Business-Critical Capability                             | Current Delivery State | Code Evidence                                                                                                                                     |
 | -------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -423,19 +423,19 @@ Implication for business planning:
 
 ### Revenue Model: Freemium + Advertising + Tiered Features
 
-Vehicle Vitals adopts a **three-tier freemium model** with **contextual advertising** to generate sustainable revenue while maintaining user accessibility.
+Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertising** to generate sustainable revenue while maintaining user accessibility.
 
 #### Subscription Tiers
 
-| Feature                    | **Free (Ad-Supported)** | **Pro ($2.99/mo)**        | **Premium ($6.99/mo)**    |
-| -------------------------- | ----------------------- | ------------------------- | ------------------------- |
-| **Vehicles Tracked**       | 3                       | 10                        | Unlimited                 |
-| **Maintenance Reminders**  | Basic (mileage)         | Advanced (time + mileage) | Advanced + AI             |
-| **PDF Receipt Upload**     | 10/month                | 100/month                 | Unlimited                 |
-| **Export Reports**         | CSV only                | PDF + CSV + Excel         | PDF + CSV + Excel + cloud |
-| **Ads Shown**              | 3-5/page                | 1-2/page                  | 0 ads (ad-free)           |
-| **Calendar Sync**          | ❌                      | ✅ Google/Outlook         | ✅ All platforms          |
-| **AI Attachment Analysis** | ❌                      | ✅ 5/month                | ✅ Unlimited              |
+| Feature                    | **Free (Ad-Supported)** | **Pro ($2.99/mo)**        | **Premium ($6.99/mo)**    | **Enterprise (Custom)**              |
+| -------------------------- | ----------------------- | ------------------------- | ------------------------- | ------------------------------------ |
+| **Vehicles Tracked**       | 2                       | 10                        | 25                        | 25+ (contract)                       |
+| **Maintenance Reminders**  | Basic (mileage)         | Advanced (time + mileage) | Advanced + AI             | Org policies + automation            |
+| **PDF Receipt Upload**     | 10/month                | 100/month                 | Unlimited                 | Unlimited + policy controls          |
+| **Export Reports**         | CSV only                | PDF + CSV + Excel         | PDF + CSV + Excel + cloud | Accounting-grade exports + scheduled |
+| **Ads Shown**              | 3-5/page                | 1-2/page                  | 0 ads (ad-free)           | 0 ads                                |
+| **Calendar Sync**          | ❌                      | ✅ Google/Outlook         | ✅ All platforms          | ✅ Org-wide                          |
+| **AI Attachment Analysis** | ❌                      | ✅ 5/month                | ✅ Unlimited              | ✅ Unlimited + workflow automation   |
 | **Priority Support**       | Community               | Email (24-48h)            | Email (4-8h) + phone      |
 | **API/Integrations**       | ❌                      | ❌                        | ✅ Zapier, IFTTT          |
 

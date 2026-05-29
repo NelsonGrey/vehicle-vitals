@@ -92,12 +92,12 @@ export default function SubscriptionPage() {
     <div className="mx-auto w-full max-w-7xl px-5 py-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-          Plans and billing
+          Subscriptions and billing
         </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Choose the plan that matches your garage. Free supports core tracking,
-          Pro unlocks advanced workflows, and Premium removes ads with full
-          power-user capability.
+          Choose the subscription tier that matches your garage. Free supports
+          core tracking, Pro unlocks advanced workflows, and Premium removes ads
+          with full power-user capability.
         </p>
 
         {checkoutStatus === 'success' && (
@@ -107,14 +107,14 @@ export default function SubscriptionPage() {
         )}
         {checkoutStatus === 'cancelled' && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-200">
-            Checkout was cancelled. No plan change was applied.
+            Checkout was cancelled. No subscription change was applied.
           </div>
         )}
 
         {summary && (
           <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/30">
             <p className="text-sm font-semibold text-teal-800 dark:text-teal-200">
-              Current plan: {getTierDisplayName(summary.tier)}
+              Current subscription: {getTierDisplayName(summary.tier)}
             </p>
             <p className="mt-1 text-sm text-teal-900/90 dark:text-teal-100/90">
               {summary.displayStatus}
@@ -190,7 +190,7 @@ export default function SubscriptionPage() {
           const pricing = getTierPricing(planTier);
           const isCurrent = tier === planTier;
           const ctaText = isCurrent
-            ? 'Current plan'
+            ? 'Current subscription'
             : planTier === 'free'
               ? 'Switch to Free'
               : planTier === 'pro'
@@ -242,11 +242,13 @@ export default function SubscriptionPage() {
                     setIsSubmittingTierChange(true);
                     try {
                       await changeSubscriptionTier('free', billingPeriod);
-                      window.alert('Your plan has been changed to Free.');
+                      window.alert(
+                        'Your subscription has been changed to Free.'
+                      );
                       navigate('/app/profile');
                     } catch (error) {
                       window.alert(
-                        `Unable to change plan: ${error instanceof Error ? error.message : String(error)}`
+                        `Unable to change subscription: ${error instanceof Error ? error.message : String(error)}`
                       );
                     } finally {
                       setIsSubmittingTierChange(false);
@@ -293,7 +295,7 @@ export default function SubscriptionPage() {
                     }
                   } catch (error) {
                     window.alert(
-                      `Unable to change plan: ${error instanceof Error ? error.message : String(error)}`
+                      `Unable to change subscription: ${error instanceof Error ? error.message : String(error)}`
                     );
                   } finally {
                     setIsSubmittingTierChange(false);

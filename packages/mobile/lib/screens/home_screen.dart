@@ -81,8 +81,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final isPremiumLike = tier == 'premium' || tier == 'enterprise';
     final message = isPremiumLike
-        ? 'Your current plan has reached the vehicle limit. Contact support for Enterprise expansion.'
-        : 'Vehicle limit reached for your current plan. Upgrade to add more vehicles.';
+        ? 'Your current subscription has reached the vehicle limit. Contact support for Enterprise expansion.'
+        : 'Vehicle limit reached for your current subscription. Upgrade to add more vehicles.';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: colorScheme.secondary),

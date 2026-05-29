@@ -1,6 +1,6 @@
 # Vehicle Vitals - Master Project Plan
 
-Last updated: May 27, 2026
+Last updated: May 28, 2026
 Planning horizon: 8 weeks (rebaseline v2)
 Primary source status: docs/REQUIREMENTS.md
 Execution detail for R1: docs/R1_COMPLETION_CHECKLIST.md
@@ -8,6 +8,44 @@ Execution detail for R1: docs/R1_COMPLETION_CHECKLIST.md
 ## Plan Goal
 
 Deliver production-capable parity by closing all R1 gates, then complete R2 parity and reliability work while establishing the Business Operations Foundation (account management + AR/AP readiness).
+
+## Master Subscription Production Matrix
+
+This matrix is the master project-plan view for subscription go-live readiness. It rolls business and technical requirements into one production decision surface and should stay synchronized with `docs/REQUIREMENTS.md`, `docs/R1_COMPLETION_CHECKLIST.md`, and `docs/PRODUCTION_RELEASE_BRIEF.md`.
+
+| Area                                       | Requirement                                                                                                               | Type                   | Current state                                                                                                                        | Production / go-live exit                                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Packaging and pricing                      | Free, Pro, Premium, and Enterprise subscription tiers stay consistent across product, billing copy, and entitlement logic | Business               | Implemented in feature flags and subscription UI; terminology and parity docs now aligned around subscriptions                       | One approved tier catalog and pricing source is published across web, mobile, backend, and support docs             |
+| Value proposition by tier                  | Each subscription tier has a defined customer promise, limits, and differentiators                                        | Business               | Mostly implemented; Free/Pro/Premium contracts exist, Enterprise remains web/backend-led                                             | Tier messaging and feature comparison are accepted for web and mobile release surfaces                              |
+| Checkout and billing                       | Users can start, upgrade, downgrade, and recover subscriptions through production billing rails                           | Business + Technical   | Partial; Stripe checkout session creation and webhook reconciliation exist, but production validation is still open                  | Live checkout, webhook monitoring, cancellation, downgrade, and failed-payment recovery are proven with evidence    |
+| Mobile purchase path                       | Native mobile purchase flow reconciles to backend entitlements                                                            | Business + Technical   | Planned; RevenueCat mobile IAP abstraction is not yet integrated                                                                     | RevenueCat purchase, restore, and entitlement reconciliation pass on release builds                                 |
+| Subscription state authority               | Firestore/backend remains the source of truth for subscription state, trial state, and entitlement resolution             | Technical              | Partial; subscription state exists in user documents and server-authoritative entitlements are in place, with hardening still needed | State transitions are deterministic, audited, and validated across web, mobile, and functions                       |
+| Quotas and enforcement                     | Vehicle limits, upload limits, API access, and AI usage are enforced by tier, not just by client messaging                | Business + Technical   | Partial; web/mobile feature gates exist, backend quota enforcement is still incomplete                                               | Backend and rules enforce tier limits with release-tested downgrade and overage behavior                            |
+| Web subscription UX                        | Web subscription surfaces accurately present tiers, billing state, and recovery actions                                   | Technical              | Implemented with hardening in progress; subscription page, recovery UX, and comparison table exist                                   | Web regression, UAT, and billing-state edge cases pass without terminology drift                                    |
+| Mobile subscription UX                     | Mobile subscription surface matches release scope and presents subscription state clearly                                 | Technical              | Partial; mobile catalog exists, but release-mode acceptance and parity are still open                                                | Release-like iOS/Android validation confirms tier visibility, purchase states, and support/contact paths            |
+| Tier parity across platforms               | Web and mobile expose the same intended subscription contract for each tier                                               | Technical              | Partial; Free is mostly aligned, Pro/Premium/Enterprise still have parity gaps                                                       | Subscription parity matrix reaches approved release baseline or any gap is explicitly deferred with risk acceptance |
+| Reminder, export, and calendar value gates | Paid subscription features materially work in the flows customers buy them for                                            | Business + Technical   | Partial; reminder lifecycle is strong, export parity is validated, calendar/provider validation is still open                        | Paid feature flows work end-to-end in production-like environments with linked evidence                             |
+| Ads and premium suppression                | Free/Pro ad delivery and Premium ad suppression work as sold                                                              | Business + Technical   | Planned/partial; ad and premium components are wired, release validation is still pending                                            | Ad network integration and Premium no-ads behavior are validated in release builds                                  |
+| Trial, grace period, and churn controls    | Trial conversion, payment-failure grace, renewal reminders, and win-back automations support retention                    | Business               | Planned/partial; grace-period UX exists, automation remains unfinished                                                               | Trial lifecycle and retention automations are live, measurable, and support-approved                                |
+| Support and operations readiness           | Support, sales, and go-live operators can diagnose and handle subscription issues                                         | Business + Technical   | Partial; support/contact surfaces exist and Enterprise handoff is defined                                                            | Runbooks, escalation paths, and billing/support evidence are published and usable during launch                     |
+| Release evidence and decisioning           | Subscription launch status can be defended in the production go/no-go review                                              | Technical + Governance | Partial; R1 evidence exists, Gate 2 is still blocking the release-capable claim                                                      | R1 Gate 2 closes, monetization evidence is linked, and the release brief records a go-live decision                 |
+
+### Current Go-Live Readout
+
+| Category            | Requirement summary                                                                   | Current state | Blocking go-live now                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Business readiness  | Tier packaging, support handoff, and retention design are defined at a planning level | Yellow        | Billing operations, trial/grace automation, and launch-ready support runbooks are incomplete                               |
+| Technical readiness | Subscription UI, entitlement primitives, and core monetization wiring exist           | Yellow        | Stripe production validation, RevenueCat integration, backend quota enforcement, and mobile release validation remain open |
+| Release governance  | Core R1 evidence is mostly in place                                                   | Yellow        | R1 Gate 2 mobile runtime acceptance is still the immediate blocker to a production-capable release claim                   |
+
+### Subscription Go-Live Priority Sequence
+
+1. Close R1 Gate 2 and publish final mobile runtime/backend evidence.
+2. Complete Stripe production validation for checkout, webhooks, and failed-payment recovery.
+3. Integrate RevenueCat and verify entitlement reconciliation on mobile release builds.
+4. Harden backend quota enforcement and validate downgrade/over-limit behavior.
+5. Finish calendar/provider validation, ad-behavior validation, and support/runbook readiness.
+6. Record final subscription go-live recommendation in `docs/PRODUCTION_RELEASE_BRIEF.md`.
 
 ## Milestone Schedule
 

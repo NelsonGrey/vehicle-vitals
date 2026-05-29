@@ -9,7 +9,7 @@ export default function SiteFooter() {
             to="/subscription"
             className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
-            Plans
+            Subscriptions
           </Link>
           <span>•</span>
           <Link

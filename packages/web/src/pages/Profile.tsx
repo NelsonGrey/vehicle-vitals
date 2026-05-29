@@ -136,7 +136,13 @@ const createFirebaseAuthService = async () => {
 };
 
 export default function Profile() {
-  const { user, signOut, linkWithGoogle, linkWithApple } = useAuth();
+  const {
+    user,
+    signOut,
+    linkWithGoogle,
+    linkWithApple,
+    consolidateAccountData,
+  } = useAuth();
   const hasApiAccess = useFeatureFlag('api_access');
   const hasZapierIntegration = useFeatureFlag('zapier_integration');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -193,6 +199,65 @@ export default function Profile() {
   const [zapierWebhookUrl, setZapierWebhookUrl] = useState('');
   const [zapierInstructions, setZapierInstructions] = useState('');
   const [zapierRequiresSignature, setZapierRequiresSignature] = useState(false);
+
+  const [consolidationSourceUid, setConsolidationSourceUid] = useState('');
+  const [consolidationBusy, setConsolidationBusy] = useState(false);
+  const [consolidationResult, setConsolidationResult] = useState<{
+    vehiclesMigrated: number;
+    vehicleSkipped: number;
+    migratedVins: string[];
+  } | null>(null);
+
+  const handleConsolidateAccount = async () => {
+    if (!consolidationSourceUid.trim()) {
+      setError('Please enter the source account UID');
+      return;
+    }
+
+    if (consolidationSourceUid.trim() === user.uid) {
+      setError('Cannot consolidate an account with itself');
+      return;
+    }
+
+    const sure = window.confirm(
+      `This will merge all vehicles and data from account ${consolidationSourceUid} into your current account. This action cannot be undone. Continue?`
+    );
+    if (!sure) return;
+
+    setError('');
+    setStatus('');
+    setConsolidationBusy(true);
+    setConsolidationResult(null);
+
+    try {
+      const result = await consolidateAccountData(
+        consolidationSourceUid.trim()
+      );
+      if (result.success) {
+        setStatus(
+          `Successfully migrated ${result.vehiclesMigrated} vehicle(s) from the source account.${
+            result.vehicleSkipped
+              ? ` ${result.vehicleSkipped} vehicle(s) were skipped (already exist).`
+              : ''
+          }`
+        );
+        setConsolidationResult({
+          vehiclesMigrated: result.vehiclesMigrated,
+          vehicleSkipped: result.vehicleSkipped,
+          migratedVins: result.migratedVins,
+        });
+        setConsolidationSourceUid('');
+      } else {
+        setError(result.message || 'Account consolidation failed');
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to consolidate accounts';
+      setError(errorMessage);
+    } finally {
+      setConsolidationBusy(false);
+    }
+  };
 
   useEffect(() => {
     createFirebaseAuthService().then(setAuthService);
@@ -929,6 +994,72 @@ export default function Profile() {
         </div>
       </div>
 
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-6">
+        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
+          Account Consolidation
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
+          If you have a split account (same email across web and mobile but
+          different accounts), use this tool to merge vehicles and data from
+          your secondary account into this primary account.
+        </p>
+        <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
+          <p className="text-sm text-amber-900 dark:text-amber-200 m-0">
+            <strong>How to find your secondary account UID:</strong> Sign in to
+            the other account on web or mobile, then look for the User ID in
+            Account settings.
+          </p>
+        </div>
+        <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-4">
+          <div>
+            <label
+              htmlFor="consolidationSourceUid"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+            >
+              Source Account UID
+            </label>
+            <input
+              id="consolidationSourceUid"
+              type="text"
+              value={consolidationSourceUid}
+              onChange={e => setConsolidationSourceUid(e.target.value)}
+              placeholder="Paste the UID from your secondary account"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+            />
+          </div>
+          {consolidationResult && (
+            <div className="rounded-lg border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30 px-4 py-3">
+              <p className="text-sm text-green-900 dark:text-green-200 m-0 mb-2">
+                <strong>Consolidation successful!</strong>
+              </p>
+              <ul className="text-sm text-green-800 dark:text-green-300 m-0 pl-5">
+                <li>
+                  Migrated vehicles: {consolidationResult.vehiclesMigrated}
+                </li>
+                {consolidationResult.vehicleSkipped > 0 && (
+                  <li>
+                    Skipped vehicles: {consolidationResult.vehicleSkipped}{' '}
+                    (already in your account)
+                  </li>
+                )}
+                {consolidationResult.migratedVins.length > 0 && (
+                  <li>
+                    Vehicle IDs: {consolidationResult.migratedVins.join(', ')}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => void handleConsolidateAccount()}
+            disabled={consolidationBusy || !consolidationSourceUid.trim()}
+            className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+          >
+            {consolidationBusy ? 'Consolidating…' : 'Consolidate Accounts'}
+          </button>
+        </div>
+      </div>
       {status && (
         <div
           className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6"

@@ -1,6 +1,6 @@
 # Vehicle Vitals User FAQ (Website and iOS)
 
-Last updated: May 19, 2026
+Last updated: May 29, 2026
 Audience: End users (not developers)
 
 This FAQ explains how to perform common actions in Vehicle Vitals on both the website and iOS app.
@@ -119,16 +119,16 @@ Yes.
 Profile supports location fields and provider search preferences.
 These settings are used by nearby provider lookup and recommendation behavior.
 
-### 19) What is the Subscription/Plans page for?
+### 19) What is the Subscriptions page for?
 
-Plans and Billing explains available tiers and limits.
+Subscriptions and Billing explains available tiers and limits.
 Use it to evaluate upgrades and current entitlement behavior.
 
 ### 20) How do I export maintenance history on the website?
 
 Open a vehicle in Edit Vehicle.
 Use export actions for CSV or PDF where your current tier allows access.
-If a format is locked, upgrade prompts can appear to explain required plan level.
+If a format is locked, upgrade prompts can appear to explain the required subscription tier.
 
 ### 21) Why can’t I access some app routes in production web?
 
@@ -163,6 +163,18 @@ If you do not see demo seed controls, that is expected in non-demo environments.
 Yes, where applicable the system can perform VIN insight synchronization automatically and continue retries when recoverable failures occur.
 You should not need a manual backfill action for normal use.
 
+### 27) Why do my vehicles appear on the website but not in the iOS app, or vice versa?
+
+Vehicles sync only when both apps are using the same Vehicle Vitals environment and the same account UID.
+Using the same email with different sign-in methods can create separate accounts behind the scenes.
+If that happens, open Profile on the website and use Account Consolidation to merge the secondary account into your current one.
+
+### 28) How do I use Account Consolidation on the website?
+
+Open Profile and find the Account Consolidation section.
+Sign in to the secondary account on the other device or platform, copy its User ID, then paste that value into Source Account UID on the primary account.
+Confirm the prompt to migrate vehicles and related account data into the account you are currently using.
+
 ## iOS App FAQ
 
 ### 1) How do I start using the iOS app?
@@ -194,7 +206,7 @@ Return to Login and sign in with your updated password.
 From Garage, tap Add Vehicle.
 Enter VIN and decode, or fill fields manually.
 Provide mileage and save.
-If plan limits are reached, app guidance routes to Premium or Contact flows.
+If subscription limits are reached, app guidance routes to Premium or Contact flows.
 
 ### 6) Can I scan a VIN on iOS?
 
@@ -257,20 +269,26 @@ If disabled at OS level, enable them in iOS Settings.
 Open Profile/Account screen from app menu.
 Use Sign Out action when needed.
 
-### 17) How do I find service providers on iOS?
+### 17) How do I confirm the iOS app is using the same account identity as the website?
+
+Open Profile on iOS and review the Data Sync Identity section.
+It shows the current environment, Firebase project, and Auth UID used by the app.
+For cross-platform vehicle sync, those values must line up with the account you use on the website.
+
+### 18) How do I find service providers on iOS?
 
 Open Service Providers from app routes.
 Search using available location and provider options.
 
 ### 18) What is the Premium screen for on iOS?
 
-Premium explains plan benefits and entitlement paths.
-If your current plan limits vehicle count, app guidance may route you here.
+Premium explains subscription benefits and entitlement paths.
+If your current subscription limits vehicle count, app guidance may route you here.
 
 ### 19) How do I export maintenance data on iOS?
 
 Open a vehicle's Maintenance list.
-Use the export menu and select CSV, PDF, or Excel based on plan availability.
+Use the export menu and select CSV, PDF, or Excel based on subscription availability.
 If a premium format is restricted, upgrade paths are shown.
 
 ### 20) What is Offline Settings on iOS?
@@ -362,7 +380,7 @@ If playback still fails, poster fallback is expected and core app functionality 
 - `/app/timeline` timeline dashboard
 - `/app/profile` profile
 - `/app/providers` service providers
-- `/app/subscription` plans and billing
+- `/app/subscription` subscriptions and billing
 - `/help` help
 - `/getting-started` onboarding instructions
 

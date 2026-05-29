@@ -1,9 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_bottom_nav.dart';
+import '../firebase_options.dart';
 import '../services/auth_service.dart';
+import '../services/onboarding_service.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -112,10 +115,33 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _rerunSetup() async {
+    setState(() => _busy = true);
+
+    try {
+      await context.read<OnboardingService>().resetForCurrentUser();
+      if (mounted) {
+        context.go('/app/onboarding');
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to restart setup: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = context.watch<AuthService>();
+    final onboardingService = context.watch<OnboardingService>();
     final user = authService.currentUser;
+    final firebaseOptions = Firebase.app().options;
     final providerLabels =
         user?.providerIds.map(_formatProvider).toSet().toList() ??
         const <String>[];
@@ -170,6 +196,29 @@ class _AccountScreenState extends State<AccountScreen> {
                             icon: const Icon(Icons.link),
                             label: const Text('Link Apple Sign-In'),
                           ),
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Data Sync Identity',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Environment: ${DefaultFirebaseOptions.currentEnvironmentLabel}',
+                        ),
+                        const SizedBox(height: 4),
+                        Text('Firebase Project: ${firebaseOptions.projectId}'),
+                        const SizedBox(height: 4),
+                        Text('Auth UID: ${user.uid}'),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Vehicles sync across web and iOS only when both apps use the same Firebase project and this same Auth UID.',
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
                       ] else ...[
                         const Text('Not signed in'),
                       ],
@@ -293,6 +342,36 @@ class _AccountScreenState extends State<AccountScreen> {
                                 ),
                               )
                             : const Text('Send Reset Email'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Setup',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        onboardingService.isCompleted
+                            ? 'Initial setup is complete. You can run setup again any time.'
+                            : 'Initial setup is still available. Continue setup to tune reminders and subscription options.',
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _busy ? null : _rerunSetup,
+                        icon: const Icon(Icons.restart_alt),
+                        label: const Text('Re-run Setup'),
                       ),
                     ],
                   ),

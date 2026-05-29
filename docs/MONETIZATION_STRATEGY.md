@@ -224,6 +224,15 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 | **API/Integration Access**   | ❌                                    | ❌                                  | ✅ Zapier, IFTTT               | ✅ Accounting/ERP integrations                |
 | **Priority Support**         | Community                             | Email (24-48h)                      | Email (4-8h) + phone           | Dedicated success + SLA                       |
 
+### 2.1.1 Cross-Platform Parity Snapshot
+
+| Subscription Tier | Web status                                                 | Mobile status                          | Parity verdict | Notes                                                                                                                 |
+| ----------------- | ---------------------------------------------------------- | -------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Free              | Core baseline available                                    | Core baseline available                | Mostly aligned | Core vehicle, reminder, and export workflows exist on both clients; mobile runtime validation is still pending.       |
+| Pro               | Full subscription contract defined in web feature flags    | Partial subset in mobile feature flags | Not identical  | Mobile covers calendar sync, export, AI analysis, and priority support, but not the full web Pro matrix.              |
+| Premium           | Full premium contract defined in web feature flags         | Partial subset in mobile feature flags | Not identical  | Web includes cloud sync, AI predictions, 36-month planning, and Zapier/IFTTT automation that iOS does not yet expose. |
+| Enterprise        | Contract and support workflows defined in web/backend docs | Sales/contact surface only in mobile   | Not identical  | Web/backend carry org controls and enterprise entitlements; iOS is mainly a handoff surface.                          |
+
 ### 2.2 Pricing Rationale
 
 #### Free Tier

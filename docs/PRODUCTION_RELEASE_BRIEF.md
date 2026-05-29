@@ -1,6 +1,6 @@
 # Vehicle Vitals - Production Release Brief
 
-Last updated: May 27, 2026
+Last updated: May 28, 2026
 Release decision window: R1 closure review target Jun 5, 2026
 
 ## Decision Summary
@@ -11,6 +11,23 @@ Reason:
 
 - R1 Gate 2 status is Build PASS with simulator runtime session established, but manual acceptance remains FAIL and backend success-path validation is still incomplete.
 - R1 Gate 1 and Gate 3 are complete with linked evidence.
+
+## Subscription Go-Live Readout
+
+Source of truth: `docs/PROJECT_PLAN.md` master subscription production matrix.
+
+| Category            | Current state | Release meaning                                                                                                                                                                   |
+| ------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Business readiness  | Yellow        | Subscription packaging exists, but billing operations, trial/grace automation, and launch-ready support runbooks are not yet complete.                                            |
+| Technical readiness | Yellow        | Subscription UI and entitlement primitives exist, but Stripe production validation, RevenueCat integration, backend quota enforcement, and mobile release validation remain open. |
+| Release governance  | Yellow        | Core R1 evidence is mostly present, but Gate 2 is still the blocking condition for a production-capable subscription go-live claim.                                               |
+
+Immediate subscription go-live blockers:
+
+1. Close R1 Gate 2 mobile runtime acceptance with explicit backend success evidence.
+2. Complete Stripe production validation for checkout, webhooks, and payment-failure recovery.
+3. Integrate RevenueCat mobile purchase flow and entitlement reconciliation.
+4. Harden backend quota enforcement and validate downgrade and over-limit behavior.
 
 ## Gate Status
 

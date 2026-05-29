@@ -139,7 +139,7 @@ flutter run -d ios      # iOS is ready!
 
 See setup guide:
 
-- `mobile/iOS-Firebase-Setup.md` for iOS instructions
+- `docs/IOS_FIREBASE_SETUP.md` for iOS instructions
 
 ## Firebase & credentials
 

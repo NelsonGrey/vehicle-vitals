@@ -66,7 +66,7 @@ describe('SubscriptionPage', () => {
     });
   });
 
-  it('renders four plan cards including enterprise and contact sales CTA', () => {
+  it('renders four subscription cards including enterprise and contact sales CTA', () => {
     render(
       <MemoryRouter
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
@@ -76,7 +76,7 @@ describe('SubscriptionPage', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /plans and billing/i })
+      screen.getByRole('heading', { name: /subscriptions and billing/i })
     ).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Free' })).toBeInTheDocument();
@@ -150,7 +150,9 @@ describe('SubscriptionPage', () => {
     );
 
     expect(
-      screen.getByText(/checkout was cancelled\. no plan change was applied\./i)
+      screen.getByText(
+        /checkout was cancelled\. no subscription change was applied\./i
+      )
     ).toBeInTheDocument();
   });
 

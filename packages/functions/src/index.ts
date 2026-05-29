@@ -821,7 +821,7 @@ async function requireFeatureEntitlement(
   if (!entitlements.features?.[featureName]) {
     throw new HttpsError(
       'permission-denied',
-      `${featureName} is not enabled for the current plan`
+      `${featureName} is not enabled for the current subscription`
     );
   }
 
@@ -3867,6 +3867,218 @@ export const transferVehicleCallable = onCall(async request => {
       vin,
       recipientUid: targetUser.uid,
       recipientEmail: targetUser.email,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const consolidateAccountDataCallable = onCall(async request => {
+  const primaryUid = request.auth?.uid;
+  if (!primaryUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const sourceUid = (request.data?.sourceUid || '').toString().trim();
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!sourceUid) {
+    throw new HttpsError('invalid-argument', 'sourceUid is required');
+  }
+
+  if (sourceUid === primaryUid) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Cannot consolidate account into itself'
+    );
+  }
+
+  const reservation = await reserveIdempotencyKey({
+    uid: primaryUid,
+    operation: 'consolidateAccountData',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const db = admin.firestore();
+
+    // Verify source account exists
+    try {
+      await admin.auth().getUser(sourceUid);
+    } catch (error) {
+      throw new HttpsError(
+        'not-found',
+        `Source account uid ${sourceUid} not found`
+      );
+    }
+
+    // Get all vehicles from source account
+    const sourceVehiclesSnap = await db
+      .collection(`users/${sourceUid}/vehicles`)
+      .get();
+
+    const vehiclesToMigrate = sourceVehiclesSnap.docs
+      .filter(doc => doc.id !== '__preferences__')
+      .map(doc => doc.id);
+
+    if (vehiclesToMigrate.length === 0) {
+      return {
+        success: true,
+        sourceUid,
+        primaryUid,
+        vehiclesMigrated: 0,
+        message: 'No vehicles to migrate from source account',
+      };
+    }
+
+    // Ensure primary account organization exists
+    await ensurePersonalOrganization(
+      primaryUid,
+      (request.auth?.token?.email || '').toString()
+    );
+
+    // Migrate each vehicle
+    let vehiclesMigrated = 0;
+    let vehicleSkipped = 0;
+    const migratedVins: string[] = [];
+
+    for (const vin of vehiclesToMigrate) {
+      try {
+        const sourceVehicleRef = db.doc(`users/${sourceUid}/vehicles/${vin}`);
+        const targetVehicleRef = db.doc(`users/${primaryUid}/vehicles/${vin}`);
+
+        const [sourceVehicleSnap, targetVehicleSnap] = await Promise.all([
+          sourceVehicleRef.get(),
+          targetVehicleRef.get(),
+        ]);
+
+        if (!sourceVehicleSnap.exists) {
+          vehicleSkipped += 1;
+          continue;
+        }
+
+        // Skip if vehicle already exists in target
+        if (targetVehicleSnap.exists) {
+          vehicleSkipped += 1;
+          continue;
+        }
+
+        const sourceVehicleData = sourceVehicleSnap.data() || {};
+        const batch = db.batch();
+
+        await queueVehicleTransferOperations({
+          batch,
+          sourceVehicleRef,
+          targetVehicleRef,
+          sourceVehicleData,
+          actorUid: sourceUid,
+          recipientUid: primaryUid,
+        });
+
+        await batch.commit();
+        vehiclesMigrated += 1;
+        migratedVins.push(vin);
+      } catch (vinError) {
+        logger.warn('Failed to migrate vehicle during consolidation', {
+          sourceUid,
+          primaryUid,
+          vin,
+          error: vinError,
+        });
+        vehicleSkipped += 1;
+      }
+    }
+
+    // Migrate subscription tier if source has a higher tier
+    const sourceSubscriptionSnap = await db
+      .doc(`users/${sourceUid}/subscription/current`)
+      .get();
+    const primarySubscriptionSnap = await db
+      .doc(`users/${primaryUid}/subscription/current`)
+      .get();
+
+    const sourceTier = normalizeTier(sourceSubscriptionSnap.data()?.tier);
+    const primaryTier = normalizeTier(primarySubscriptionSnap.data()?.tier);
+
+    if (tierRank(sourceTier) > tierRank(primaryTier)) {
+      const sourceSubData = sourceSubscriptionSnap.data() || {};
+      await db.doc(`users/${primaryUid}/subscription/current`).set(
+        {
+          tier: sourceTier,
+          status: sourceSubData.status || 'active',
+          autoRenew: sourceSubData.autoRenew !== false,
+          migratedFrom: sourceUid,
+          migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    // Migrate premium entitlements if source is premium
+    const sourcePremiumSnap = await db
+      .doc(`users/${sourceUid}/entitlements/premium`)
+      .get();
+    const primaryPremiumSnap = await db
+      .doc(`users/${primaryUid}/entitlements/premium`)
+      .get();
+
+    const sourcePremiumActive = sourcePremiumSnap.data()?.active === true;
+    const primaryPremiumActive = primaryPremiumSnap.data()?.active === true;
+
+    if (sourcePremiumActive && !primaryPremiumActive) {
+      const sourcePremiumData = sourcePremiumSnap.data() || {};
+      await db.doc(`users/${primaryUid}/entitlements/premium`).set(
+        {
+          active: true,
+          verified: sourcePremiumData.verified || false,
+          verificationState: sourcePremiumData.verificationState || 'migrated',
+          migratedFrom: sourceUid,
+          migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    const orgId = await getPrimaryOrgIdForUser(primaryUid);
+    await writeAuditEvent({
+      orgId,
+      actorUid: primaryUid,
+      action: 'account.consolidate_data',
+      targetType: 'user_account',
+      targetId: sourceUid,
+      details: {
+        vehiclesMigrated,
+        vehicleSkipped,
+        migratedVins,
+        sourceTierMigrated: sourceTier !== primaryTier ? sourceTier : null,
+        premiumMigrated: sourcePremiumActive && !primaryPremiumActive,
+      },
+    });
+
+    const result = {
+      success: true,
+      sourceUid,
+      primaryUid,
+      vehiclesMigrated,
+      vehicleSkipped,
+      migratedVins,
+      message: `Successfully migrated ${vehiclesMigrated} vehicle(s) from source account`,
     };
 
     await completeIdempotencyKey(

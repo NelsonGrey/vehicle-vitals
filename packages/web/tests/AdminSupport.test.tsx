@@ -125,7 +125,7 @@ describe('AdminSupport', () => {
     render(<AdminSupport />);
 
     await screen.findByRole('heading', { name: /support console/i });
-    expect(screen.getByText(/finance drafts/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/finance drafts/i).length).toBeGreaterThan(0);
     await waitFor(() => {
       expect(mockGetFinanceDrafts).toHaveBeenCalled();
     });

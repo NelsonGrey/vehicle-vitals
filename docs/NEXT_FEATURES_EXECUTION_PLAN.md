@@ -1,6 +1,6 @@
 # Next Features Execution Plan
 
-Last updated: May 23, 2026
+Last updated: May 28, 2026
 
 This plan converts current status into concrete completion work.
 
@@ -8,10 +8,11 @@ Execution checklist:
 
 - docs/R1_COMPLETION_CHECKLIST.md
 - docs/PROJECT_PLAN.md
+- Keep go-live sequencing aligned with the master subscription production matrix in `docs/PROJECT_PLAN.md`.
 
 ## Current Completion Snapshot
 
-Progress evaluation (May 23, 2026 cycle):
+Progress evaluation (May 27, 2026 cycle):
 
 - Web monetization unit coverage validated: 17 tests passed (feature flags, subscription, maintenance, edit vehicle).
 - Mobile monetization unit/widget coverage validated: 10 tests passed and `flutter analyze` clean.
@@ -27,18 +28,18 @@ Completed in code:
 - Service provider callable and web UI integration
 - Premium verification and entitlement callables with mobile premium service wiring
 - Maintenance records now support self-service, mechanic, and business-maintained entries with receipt type metadata (`parts_only` / `parts_and_labor`) across shared/web/mobile/export paths
-- Monetization tier model aligned to four plans (Free, Pro, Premium, Enterprise) across web feature flags, subscription UI, and backend entitlement resolution
-- Mobile subscription screen now includes four-tier plan catalog, enterprise contact-sales path, and feature-comparison matrix for parity with web monetization messaging
-- Automated monetization coverage now includes web unit tests, mobile unit/widget tests, and UAT assertions for Enterprise plan visibility and comparison-table presence
+- Monetization tier model aligned to four subscription tiers (Free, Pro, Premium, Enterprise) across web feature flags, subscription UI, and backend entitlement resolution
+- Mobile subscription screen now includes a four-tier subscription catalog, enterprise contact-sales path, and feature-comparison matrix for parity with web monetization messaging
+- Automated monetization coverage now includes web unit tests, mobile unit/widget tests, and UAT assertions for Enterprise subscription visibility and comparison-table presence
 - AR/AP foundation now includes shared invoice/payable draft contracts and backend callable scaffolds (`createInvoiceDraftCallable`, `createPayableDraftCallable`) with org-role and idempotency handling
 
 Not yet complete for production claim:
 
-- End-to-end reminder delivery reliability evidence
-- Mobile release-mode parity validation evidence
-- Cross-platform export parity signoff
+- Mobile release-mode parity validation evidence (Gate 2 status: Build PASS; runtime acceptance BLOCKED pending iOS Developer Mode/trust and successful release-like runtime session with backend-traffic evidence)
 - Calendar provider-account reliability signoff
 - Stripe checkout and billing workflow production hardening (web + backend)
+- RevenueCat mobile IAP integration and entitlement-transition validation
+- Tier quota enforcement hardening for release-level confidence
 
 ---
 
@@ -164,7 +165,7 @@ Exit criteria:
 
 ---
 
-## Immediate Next Action Plan (As of May 23, 2026)
+## Immediate Next Action Plan (As of May 27, 2026)
 
 1. Close remaining R1 evidence collection and update `docs/R1_COMPLETION_CHECKLIST.md` with linked artifacts.
 2. Finalize backend Enterprise entitlement integration reliability by running callable/integration tests against Firestore emulator or an enabled test project.

@@ -15,7 +15,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Plans and Billing')),
+      appBar: AppBar(title: const Text('Subscriptions and Billing')),
       body: Consumer<PremiumService>(
         builder: (context, premiumService, child) {
           if (premiumService.isPremium) {
@@ -123,7 +123,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           Icon(Icons.star, size: 56, color: Theme.of(context).primaryColor),
           const SizedBox(height: 12),
           const Text(
-            'Choose the plan that fits your garage',
+            'Choose the subscription tier that fits your garage',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -144,7 +144,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Payment is processed through in-app purchase for Premium. Enterprise plans are handled through direct sales support.',
+            'Payment is processed through in-app purchase for Premium. Enterprise subscriptions are handled through direct sales support.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
@@ -373,7 +373,7 @@ class PremiumPlanCatalog extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Plan options',
+          'Subscription options',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
@@ -394,7 +394,7 @@ class PremiumPlanCatalog extends StatelessWidget {
     VoidCallback? onPressed;
 
     if (isCurrent) {
-      buttonLabel = 'Current Plan';
+      buttonLabel = 'Current Subscription';
       onPressed = null;
     } else if (isEnterprise) {
       buttonLabel = 'Contact Sales';

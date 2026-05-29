@@ -156,10 +156,10 @@ export const websiteFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'What is the Subscription/Plans page for?',
+    question: 'What is the Subscriptions page for?',
     answers: [
-      'Plans and billing explains the available options and limits.',
-      'Use it to compare plans and see what is included right now.',
+      'Subscriptions and billing explains the available options and limits.',
+      'Use it to compare subscription tiers and see what is included right now.',
     ],
   },
   {
@@ -167,7 +167,7 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'Open a vehicle in Edit Vehicle.',
       'Use export actions for CSV or PDF where your current tier allows access.',
-      'If a format is locked, upgrade prompts can appear to explain required plan level.',
+      'If a format is locked, upgrade prompts can appear to explain the required subscription tier.',
     ],
   },
   {
@@ -235,7 +235,7 @@ export const iosFaq: FaqItem[] = [
       'Select the vehicle type (car, truck, motorcycle, RV, boat, trailer, or other).',
       'Enter a vehicle ID (VIN/HIN/Serial), then use lookup if it is a VIN, or fill fields manually.',
       'Provide mileage and save.',
-      'If plan limits are reached, app guidance routes to Premium or Contact flows.',
+      'If subscription limits are reached, app guidance routes to Premium or Contact flows.',
     ],
   },
   {
@@ -330,15 +330,15 @@ export const iosFaq: FaqItem[] = [
   {
     question: 'What is the Premium screen for on iOS?',
     answers: [
-      'Premium explains plan benefits and what each option includes.',
-      'If your current plan limits vehicle count, the app may point you here.',
+      'Premium explains subscription benefits and what each option includes.',
+      'If your current subscription limits vehicle count, the app may point you here.',
     ],
   },
   {
     question: 'How do I export maintenance data on iOS?',
     answers: [
       "Open a vehicle's Maintenance list.",
-      'Use the export menu and select CSV, PDF, or Excel based on plan availability.',
+      'Use the export menu and select CSV, PDF, or Excel based on subscription availability.',
       'If a premium format is restricted, upgrade paths are shown.',
     ],
   },

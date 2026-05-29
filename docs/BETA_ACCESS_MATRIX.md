@@ -12,7 +12,7 @@ This document is the working checklist for beta-testers and QA. It turns the tie
 
 | Identity           | Classification    | Required proof                                                                                               |
 | ------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------ |
-| Free tester        | Monetization tier | Free plan loads, 2-vehicle limit applies, upgrade prompts appear for gated features                          |
+| Free tester        | Monetization tier | Free subscription loads, 2-vehicle limit applies, upgrade prompts appear for gated features                  |
 | Pro tester         | Monetization tier | Pro-only features are enabled, 10-vehicle limit applies, calendar/reminder/export flows are available        |
 | Premium tester     | Monetization tier | Premium-only features are enabled, 25-vehicle limit applies, ad-free and cloud-sync features are available   |
 | Enterprise tester  | Monetization tier | Enterprise card and contract messaging render, enterprise entitlements resolve, org-level support flows work |
@@ -22,7 +22,7 @@ This document is the working checklist for beta-testers and QA. It turns the tie
 
 ### Free
 
-- Verify the subscription page shows the Free plan as the active baseline.
+- Verify the subscription page shows the Free subscription as the active baseline.
 - Verify the vehicle limit is 2.
 - Verify gated features such as advanced reminders, calendar sync, AI analysis, export, and premium support are blocked.
 
@@ -49,11 +49,20 @@ This document is the working checklist for beta-testers and QA. It turns the tie
 - Verify `/app/admin` is accessible only when support access resolves `isSuperAdmin: true`.
 - Verify organization controls, member management, retention controls, and finance draft workflows are visible.
 
+## Subscription Tier Parity Matrix
+
+| Subscription Tier | Web proof points                                                                                                                           | Mobile proof points                                                                                          | Gap to watch                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Free              | Baseline vehicle tracking, reminders, and export flows                                                                                     | Baseline vehicle tracking, reminders, and export flows                                                       | Mobile runtime acceptance remains open.                                      |
+| Pro               | Advanced reminders, calendar sync, AI analysis, PDF/Excel export, reduced ads, and multi-vehicle dashboard are defined in the web contract | Calendar sync, PDF/Excel export, AI analysis, and priority support are exposed in the mobile feature service | Mobile does not yet mirror the full web Pro matrix.                          |
+| Premium           | Ad-free, cloud sync, predictive maintenance, automation, phone support, and API access are defined in the web contract                     | Ad-free, phone support, and API access are exposed in the mobile feature service                             | Mobile is missing cloud sync, predictive maintenance, and automation parity. |
+| Enterprise        | Org-level controls, contract messaging, accounting/ERP integrations, and support handoff are defined in the backend/web path               | Direct sales and contact-hand-off messaging are exposed in the mobile surface                                | Enterprise workflows remain web/backend-led.                                 |
+
 ## Automated Coverage
 
 - `packages/web/src/shared/__tests__/featureFlags.test.ts` covers the core tier rules.
 - `packages/web/src/shared/__tests__/tierMatrix.test.ts` locks the full capability matrix.
-- `packages/web/tests/SubscriptionPage.test.jsx` covers the plan card surface.
+- `packages/web/tests/SubscriptionPage.test.jsx` covers the subscription card surface.
 - `packages/web/tests/uat.spec.ts` covers the hosted subscription/admin smoke paths.
 - `packages/web/tests/AdminSupport.test.tsx` covers the super-admin support console.
 

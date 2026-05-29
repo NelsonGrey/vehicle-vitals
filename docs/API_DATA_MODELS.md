@@ -2,7 +2,7 @@
 
 **Version**: 1.0  
 **Last Updated**: February 16, 2026  
-**Status**: ⚠️ PARTIALLY PRODUCTION READY  
+**Status**: ⚠️ PARTIALLY PRODUCTION READY (enterprise and monetization extensions still evolving)  
 **Owner**: Mark Nelson
 
 ---
@@ -29,6 +29,8 @@ Vehicle Vitals uses a **Firebase-First Architecture** where:
 - **External APIs** (NHTSA VPIC) are called exclusively from Firebase Functions
 
 **No custom REST/GraphQL API server** - all API functionality is provided by Firebase services.
+
+Current implementation also includes enterprise org membership and entitlement callables, premium verification, Stripe checkout/session reconciliation, and compliance request workflows in Firebase Functions.
 
 ---
 

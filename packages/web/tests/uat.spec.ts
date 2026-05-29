@@ -290,7 +290,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await expect(
         header.getByRole('button', { name: /Sign Out/i })
       ).toBeVisible({ timeout: 15000 });
-      await expect(header.getByRole('link', { name: /^Garage$/i })).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Garage$/i })
+      ).toBeVisible();
 
       const hasLegacyContextLinks =
         (await header
@@ -866,6 +868,41 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       // Verify page loads
       await expect(page.locator('body')).toBeVisible();
     });
+
+    test('TC-PROFILE-002: Profile page exposes safe account consolidation recovery guidance', async ({
+      page,
+    }) => {
+      await page.goto(`${BASE_URL}/app/profile`);
+
+      await expect(
+        page.getByRole('heading', { name: /account consolidation/i })
+      ).toBeVisible();
+      await expect(page.getByLabel(/source account uid/i)).toBeVisible();
+
+      const currentUid = await page.evaluate(() => {
+        const cards = Array.from(document.querySelectorAll('div'));
+        for (const card of cards) {
+          const paragraphs = Array.from(card.querySelectorAll('p'));
+          const label = paragraphs[0]?.textContent?.trim();
+          if (label === 'User ID') {
+            return paragraphs[1]?.textContent?.trim() || '';
+          }
+        }
+        return '';
+      });
+
+      test.skip(
+        !currentUid,
+        'Current user UID is not visible on the profile page.'
+      );
+
+      await page.getByLabel(/source account uid/i).fill(currentUid);
+      await page.getByRole('button', { name: /consolidate accounts/i }).click();
+
+      await expect(
+        page.getByText(/cannot consolidate an account with itself/i)
+      ).toBeVisible();
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -883,7 +920,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await ensureAuthenticated(page);
     });
 
-    test('TC-MONETIZATION-001: Subscription plans page loads with tier options', async ({
+    test('TC-MONETIZATION-001: Subscription page loads with tier options', async ({
       page,
     }) => {
       await page.goto(`${BASE_URL}/app/subscription`);
@@ -891,7 +928,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       // In environments where app routes are intentionally gated (for example,
       // production marketing-only mode), fallback redirects are acceptable.
       const plansHeading = page.getByRole('heading', {
-        name: /plans and billing/i,
+        name: /subscriptions and billing/i,
       });
 
       if (await plansHeading.isVisible().catch(() => false)) {

@@ -18,7 +18,9 @@ describe('SiteFooter', () => {
     expect(
       within(footer).queryByRole('link', { name: /Getting Started/i })
     ).not.toBeInTheDocument();
-    expect(within(footer).getByRole('link', { name: /Plans/i })).toBeVisible();
+    expect(
+      within(footer).getByRole('link', { name: /Subscriptions/i })
+    ).toBeVisible();
     expect(within(footer).getByRole('link', { name: /Help/i })).toBeVisible();
   });
 });

@@ -1,4 +1,5 @@
 import {
+  AuthCredential,
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
   GoogleAuthProvider,
@@ -12,7 +13,18 @@ import {
   User,
   UserCredential,
 } from 'firebase/auth';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  consolidateAccountData,
+  ConsolidationResult,
+} from '../utils/accountConsolidationService';
 import { getSupportAccessContext } from '../utils/supportAdminService';
 import { auth } from './firebaseConfig';
 
@@ -34,6 +46,10 @@ interface AuthContextType {
   linkWithGoogle: () => Promise<UserCredential>;
   linkWithApple: () => Promise<UserCredential>;
   resetPassword: (email: string) => Promise<void>;
+  consolidateAccountData: (
+    sourceUid: string,
+    idempotencyKey?: string
+  ) => Promise<ConsolidationResult>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -65,6 +81,9 @@ const AuthContext = createContext<AuthContextType>({
   resetPassword: async () => {
     throw new Error('Firebase not initialized');
   },
+  consolidateAccountData: async () => {
+    throw new Error('Firebase not initialized');
+  },
 });
 
 interface AuthProviderProps {
@@ -74,6 +93,8 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const pendingLinkCredentialRef = useRef<AuthCredential | null>(null);
+  const pendingLinkEmailRef = useRef<string>('');
   const [supportAccess, setSupportAccess] =
     useState<SupportAccessContext | null>(null);
   const [supportAccessLoading, setSupportAccessLoading] = useState(true);
@@ -165,6 +186,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
       );
     };
 
+    const linkPendingProviderIfNeeded = async (signedInUser: User | null) => {
+      const pendingCredential = pendingLinkCredentialRef.current;
+      if (!pendingCredential || !signedInUser) {
+        return;
+      }
+
+      const pendingEmail = pendingLinkEmailRef.current.trim().toLowerCase();
+      const signedInEmail = (signedInUser.email || '').trim().toLowerCase();
+      if (pendingEmail && signedInEmail && pendingEmail !== signedInEmail) {
+        return;
+      }
+
+      try {
+        await signedInUser.linkWithCredential(pendingCredential);
+      } catch (error) {
+        const firebaseError = error as { code?: string };
+        if (
+          firebaseError.code !== 'auth/provider-already-linked' &&
+          firebaseError.code !== 'auth/credential-already-in-use' &&
+          firebaseError.code !== 'auth/requires-recent-login'
+        ) {
+          throw error;
+        }
+      } finally {
+        pendingLinkCredentialRef.current = null;
+        pendingLinkEmailRef.current = '';
+      }
+    };
+
     const signInWithProvider = async (
       provider: GoogleAuthProvider | OAuthProvider
     ) => {
@@ -175,11 +225,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
           code?: string;
           customData?: { email?: string };
         };
+
         if (
           firebaseError.code === 'auth/account-exists-with-different-credential'
         ) {
+          const credential =
+            GoogleAuthProvider.credentialFromError(error) ||
+            OAuthProvider.credentialFromError(error);
+          if (credential) {
+            pendingLinkCredentialRef.current = credential;
+            pendingLinkEmailRef.current = (
+              firebaseError.customData?.email || ''
+            )
+              .trim()
+              .toLowerCase();
+          }
           await buildProviderConflictError(firebaseError.customData?.email);
         }
+
         throw error;
       }
     };
@@ -198,16 +261,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       loading,
       supportAccess,
       supportAccessLoading,
-      signIn: (email: string, password: string) =>
-        signInWithEmailAndPassword(auth, email, password),
+      signIn: async (email: string, password: string) => {
+        const credential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        await linkPendingProviderIfNeeded(credential.user);
+        return credential;
+      },
       signUp: (email: string, password: string) =>
         createUserWithEmailAndPassword(auth, email, password),
-      signOut: () => signOut(auth),
+      signOut: async () => {
+        pendingLinkCredentialRef.current = null;
+        pendingLinkEmailRef.current = '';
+        await signOut(auth);
+      },
       signInWithGoogle: () => signInWithProvider(googleProvider),
       signInWithApple: () => signInWithProvider(appleProvider),
       linkWithGoogle: () => linkCurrentUserWithProvider(googleProvider),
       linkWithApple: () => linkCurrentUserWithProvider(appleProvider),
       resetPassword: (email: string) => sendPasswordResetEmail(auth, email),
+      consolidateAccountData: (sourceUid: string, idempotencyKey?: string) =>
+        consolidateAccountData({ sourceUid, idempotencyKey }),
     };
   }, [user, loading, supportAccess, supportAccessLoading]);
 

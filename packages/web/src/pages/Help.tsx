@@ -26,9 +26,9 @@ const helpTopics = [
       'Save services with date, mileage, notes, and cost. Use Timeline and Upcoming to stay ahead of work that is coming up.',
   },
   {
-    title: 'Plans and billing',
+    title: 'Subscriptions and billing',
     details:
-      'Open Plans to compare options and manage billing from your profile and billing screens.',
+      'Open Subscriptions to compare options and manage billing from your profile and billing screens.',
   },
   {
     title: 'Mobile sync and notifications',
@@ -116,12 +116,14 @@ const glossaryTerms = [
     meaning: 'Hide a reminder for now. You can bring it back later if needed.',
   },
   {
-    term: 'Plans and billing',
-    meaning: 'Where you compare plan options and manage your billing details.',
+    term: 'Subscriptions and billing',
+    meaning:
+      'Where you compare subscription tiers and manage your billing details.',
   },
   {
     term: 'Premium',
-    meaning: 'Paid plan options that include extra features and higher limits.',
+    meaning:
+      'Paid subscription tiers that include extra features and higher limits.',
   },
 ];
 

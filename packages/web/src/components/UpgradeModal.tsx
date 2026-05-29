@@ -33,7 +33,7 @@ export default function UpgradeModal({
     if (trigger === 'vehicle_limit_add_vehicle') {
       return {
         eyebrow: 'Vehicle limit reached',
-        summary: `Your ${getTierDisplayName(currentTier)} plan supports up to ${getVehicleLimit(currentTier)} vehicle${getVehicleLimit(currentTier) === 1 ? '' : 's'}. ${getTierDisplayName(targetTier)} raises that limit to ${getVehicleLimit(targetTier)}.`,
+        summary: `Your ${getTierDisplayName(currentTier)} subscription supports up to ${getVehicleLimit(currentTier)} vehicle${getVehicleLimit(currentTier) === 1 ? '' : 's'}. ${getTierDisplayName(targetTier)} raises that limit to ${getVehicleLimit(targetTier)}.`,
         bullets: [
           `Keep your current garage without deleting an existing vehicle.`,
           `Track up to ${getVehicleLimit(targetTier)} vehicles on ${getTierDisplayName(targetTier)}.`,
@@ -80,11 +80,11 @@ export default function UpgradeModal({
 
     return {
       eyebrow: 'Upgrade recommended',
-      summary: `This action needs the ${getTierDisplayName(targetTier)} plan. Upgrade to remove this block and keep the workflow moving.`,
+      summary: `This action needs the ${getTierDisplayName(targetTier)} subscription. Upgrade to remove this block and keep the workflow moving.`,
       bullets: [
         `Move from ${getTierDisplayName(currentTier)} to ${getTierDisplayName(targetTier)} for this workflow.`,
         'Keep your current progress and continue in the same app flow.',
-        'Review full plan details before confirming payment.',
+        'Review full subscription details before confirming payment.',
       ],
     };
   }, [currentTier, targetTier, trigger]);
@@ -144,7 +144,7 @@ export default function UpgradeModal({
             {pricing.annualDisplayPrice}
           </p>
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            Current plan: {getTierDisplayName(currentTier)}
+            Current subscription: {getTierDisplayName(currentTier)}
           </p>
           {pricing.annualSavings && (
             <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">

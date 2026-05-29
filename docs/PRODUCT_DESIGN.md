@@ -61,35 +61,35 @@ Legend:
 
 ## 💳 Subscription Tiers & Feature Gating
 
-**Strategy**: Freemium model with three tiers designed to provide value at every level while creating natural upgrade paths for power users.
+**Strategy**: Freemium model with Free, Pro, Premium, and Enterprise tiers designed to provide value at every level while creating natural upgrade paths for power users and contracted fleets.
 
 ### Tier Comparison Matrix
 
-| Feature                     | **Free (Ad-Supported)** | **Pro ($2.99/mo)**             | **Premium ($6.99/mo)**       |
-| --------------------------- | ----------------------- | ------------------------------ | ---------------------------- |
-| **Vehicles**                | 3                       | 10                             | Unlimited                    |
-| **Maintenance Reminders**   | Basic (mileage)         | Advanced (time + mileage + AI) | Advanced + predictive        |
-| **Receipt Uploads**         | 10/month                | 100/month                      | Unlimited                    |
-| **Export Formats**          | CSV                     | PDF, CSV, Excel                | PDF, CSV, Excel + cloud sync |
-| **Ads Displayed**           | 3-5/page                | 1-2/page (reduced)             | None (ad-free)               |
-| **Calendar Sync**           | ❌                      | ✅ Google/Outlook              | ✅ All platforms             |
-| **AI Analysis**             | ❌                      | ✅ 5 analyses/month            | ✅ Unlimited                 |
-| **Maintenance Planning**    | ❌                      | ✅ 12-month forecasts          | ✅ 36-month forecasts        |
-| **Multi-Vehicle Dashboard** | ❌                      | ✅                             | ✅ Customizable alerts       |
-| **API Access**              | ❌                      | ❌                             | ✅ Zapier, IFTTT             |
-| **Priority Support**        | Community forums        | Email (24-48h)                 | Email (4-8h) + Phone         |
+| Feature                     | **Free (Ad-Supported)** | **Pro ($2.99/mo)**             | **Premium ($6.99/mo)**       | **Enterprise (Custom)**              |
+| --------------------------- | ----------------------- | ------------------------------ | ---------------------------- | ------------------------------------ |
+| **Vehicles**                | 2                       | 10                             | 25                           | 25+ (contract)                       |
+| **Maintenance Reminders**   | Basic (mileage)         | Advanced (time + mileage + AI) | Advanced + predictive        | Org policies + automation            |
+| **Receipt Uploads**         | 10/month                | 100/month                      | Unlimited                    | Unlimited + policy controls          |
+| **Export Formats**          | CSV                     | PDF, CSV, Excel                | PDF, CSV, Excel + cloud sync | Accounting-grade exports + scheduled |
+| **Ads Displayed**           | 3-5/page                | 1-2/page (reduced)             | None (ad-free)               | None                                 |
+| **Calendar Sync**           | ❌                      | ✅ Google/Outlook              | ✅ All platforms             | ✅ Org-wide                          |
+| **AI Analysis**             | ❌                      | ✅ 5 analyses/month            | ✅ Unlimited                 | ✅ Unlimited + workflow automation   |
+| **Maintenance Planning**    | ❌                      | ✅ 12-month forecasts          | ✅ 36-month forecasts        | ✅ Fleet/portfolio planning          |
+| **Multi-Vehicle Dashboard** | ❌                      | ✅                             | ✅ Customizable alerts       | ✅ Cross-account / fleet views       |
+| **API Access**              | ❌                      | ❌                             | ✅ Zapier, IFTTT             | ✅ Accounting/ERP integrations       |
+| **Priority Support**        | Community forums        | Email (24-48h)                 | Email (4-8h) + Phone         | Dedicated success + SLA              |
 
 ### Upgrade Trigger Points (UX Design)
 
 **Free → Pro Trigger**:
 
-- User attempts to add 4th vehicle → "Add more vehicles with Pro"
+- User attempts to add 3rd vehicle → "Add more vehicles with Pro"
 - User attempts to enable calendar sync → "Calendar sync is a Pro feature"
 - User attempts to upload 11th receipt → "Unlimited uploads with Pro"
 
 **Pro → Premium Trigger**:
 
-- Power user (10+ vehicles) views Pro limit → "Manage unlimited vehicles with Premium"
+- Power user (10+ vehicles) views Pro limit → "Manage more vehicles with Premium"
 - User attempts unlimited AI analysis → "Unlimited AI with Premium"
 - User attempts API access → "Integrations available with Premium"
 
@@ -120,6 +120,12 @@ Legend:
 - Fully ad-free experience
 - Maximum UX polish
 - Optional: "Sponsored content" section (educational, non-intrusive)
+
+**Enterprise Tier**:
+
+- Contracted, sales-led deployment
+- Org-wide controls and support handoff
+- No consumer ad placements
 
 See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for detailed ad placement specifications and CPM targets.
 
@@ -357,7 +363,7 @@ Home Screen
 
 ### Feature 1: Multi-Vehicle Management
 
-**Status**: 🟡 Partial (web implemented, mobile currently mock-backed)
+**Status**: 🟡 Partial (web implemented, mobile runtime active; release validation pending)
 
 **Hierarchical Organization**:
 

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vehicle_vitals_flutter/screens/premium_screen.dart';
 
 void main() {
-  testWidgets('renders all four plan tiers and base labels', (
+  testWidgets('renders all four subscription tiers and base labels', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -22,7 +22,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Plan options'), findsOneWidget);
+    expect(find.text('Subscription options'), findsOneWidget);
     expect(find.text('Free'), findsOneWidget);
     expect(find.text('Pro'), findsOneWidget);
     expect(find.text('Premium'), findsOneWidget);

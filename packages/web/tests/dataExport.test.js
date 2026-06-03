@@ -186,10 +186,11 @@ describe('dataExport', () => {
 
       exportMaintenanceAsCSV(maintenanceEntries, vehicle);
 
+      const expectedDate = new Date().toISOString().split('T')[0];
       const linkElement = document.createElement.mock.results[0].value;
       expect(linkElement.setAttribute).toHaveBeenCalledWith(
         'download',
-        'maintenance_TESTVIN123_2025-10-20.csv'
+        `maintenance_TESTVIN123_${expectedDate}.csv`
       );
     });
 
@@ -288,8 +289,9 @@ describe('dataExport', () => {
           },
         });
 
+        const expectedDate = new Date().toISOString().split('T')[0];
         expect(mockJsPDF.save).toHaveBeenCalledWith(
-          'maintenance_1HGBH41JXMN109186_2025-10-20.pdf'
+          `maintenance_1HGBH41JXMN109186_${expectedDate}.pdf`
         );
       });
 
@@ -391,8 +393,9 @@ describe('dataExport', () => {
           })
         );
 
+        const expectedDate = new Date().toISOString().split('T')[0];
         expect(mockJsPDF.save).toHaveBeenCalledWith(
-          'complete_vehicle_report_2025-10-20.pdf'
+          `complete_vehicle_report_${expectedDate}.pdf`
         );
       });
 

@@ -102,14 +102,14 @@ describe('dataExport', () => {
 
       const expectedCsvData = [
         {
-          Date: '1/9/2024',
+          Date: new Date('2024-01-10').toLocaleDateString(),
           Title: 'Oil Change',
           Cost: '45.50',
           Mileage: 15000,
           Notes: 'Regular maintenance',
         },
         {
-          Date: '1/4/2024',
+          Date: new Date('2024-01-05').toLocaleDateString(),
           Title: 'Tire Rotation',
           Cost: '25.00',
           Mileage: 14500,
@@ -147,7 +147,7 @@ describe('dataExport', () => {
 
       const expectedCsvData = [
         {
-          Date: '1/9/2024',
+          Date: new Date('2024-01-10').toLocaleDateString(),
           Title: 'Brake Check',
           Cost: '0.00',
           Mileage: '',
@@ -260,14 +260,14 @@ describe('dataExport', () => {
           head: [['Date', 'Title', 'Cost', 'Mileage', 'Notes']],
           body: [
             [
-              '1/9/2024',
+              new Date('2024-01-10').toLocaleDateString(),
               'Oil Change',
               '$45.50',
               '15000',
               'Regular maintenance',
             ],
             [
-              '1/4/2024',
+              new Date('2024-01-05').toLocaleDateString(),
               'Tire Rotation',
               '$25.00',
               '14500',
@@ -317,7 +317,15 @@ describe('dataExport', () => {
 
         expect(mockJsPDF.autoTable).toHaveBeenCalledWith(
           expect.objectContaining({
-            body: [['1/9/2024', 'Brake Check', '$0.00', '', 'No issues found']],
+            body: [
+              [
+                new Date('2024-01-10').toLocaleDateString(),
+                'Brake Check',
+                '$0.00',
+                '',
+                'No issues found',
+              ],
+            ],
           })
         );
       });
@@ -389,7 +397,14 @@ describe('dataExport', () => {
         expect(mockJsPDF.autoTable).toHaveBeenCalledWith(
           expect.objectContaining({
             head: [['Date', 'Service', 'Cost', 'Mileage']],
-            body: [['1/9/2024', 'Oil Change', '$45.50', '15000']],
+            body: [
+              [
+                new Date('2024-01-10').toLocaleDateString(),
+                'Oil Change',
+                '$45.50',
+                '15000',
+              ],
+            ],
           })
         );
 

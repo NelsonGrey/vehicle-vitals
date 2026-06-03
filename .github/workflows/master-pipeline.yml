@@ -495,6 +495,62 @@ jobs:
           export PATH="$HOME/flutter/bin:$PATH"
           flutter pub get
 
+      - name: Align iOS Firebase Environment
+        id: ios_firebase_guard
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+        run: |
+          set -e
+          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
+
+          case "$TARGET_ENV" in
+            development)
+              EXPECTED_PROJECT_ID="vehicle-vitals-dev"
+              ;;
+            staging)
+              EXPECTED_PROJECT_ID="vehicle-vitals-staging"
+              ;;
+            production)
+              EXPECTED_PROJECT_ID="vehicle-vitals-prod"
+              ;;
+            *)
+              echo "::error::Unsupported target environment for iOS Firebase config: $TARGET_ENV"
+              exit 1
+              ;;
+          esac
+
+          SOURCE_PLIST="config/$TARGET_ENV/ios/GoogleService-Info.plist"
+          TARGET_PLIST="ios/Runner/GoogleService-Info.plist"
+
+          if [ ! -f "$SOURCE_PLIST" ]; then
+            echo "::error::Missing Firebase iOS config for environment '$TARGET_ENV' at $SOURCE_PLIST"
+            exit 1
+          fi
+
+          cp "$SOURCE_PLIST" "$TARGET_PLIST"
+
+          ACTUAL_PROJECT_ID=$(/usr/libexec/PlistBuddy -c "Print :PROJECT_ID" "$TARGET_PLIST" 2>/dev/null || true)
+
+          if [ -z "$ACTUAL_PROJECT_ID" ]; then
+            echo "::error::Unable to read PROJECT_ID from $TARGET_PLIST"
+            exit 1
+          fi
+
+          if [ "$ACTUAL_PROJECT_ID" != "$EXPECTED_PROJECT_ID" ]; then
+            echo "::error::Firebase iOS config mismatch: env=$TARGET_ENV expected PROJECT_ID=$EXPECTED_PROJECT_ID but found PROJECT_ID=$ACTUAL_PROJECT_ID"
+            exit 1
+          fi
+
+          echo "iOS Firebase config validated for $TARGET_ENV ($ACTUAL_PROJECT_ID)"
+          echo "environment=$TARGET_ENV" >> "$GITHUB_OUTPUT"
+          echo "project_id=$ACTUAL_PROJECT_ID" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### iOS Firebase Guard"
+            echo "- Environment: $TARGET_ENV"
+            echo "- PROJECT_ID: $ACTUAL_PROJECT_ID"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Install CocoaPods
         run: |
           cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
@@ -514,11 +570,13 @@ jobs:
           fi
 
       - name: Build iOS (No Codesign)
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
         run: |
           cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
           export PATH="$HOME/flutter/bin:$PATH"
           set +e
-          flutter build ios --release --no-codesign 2>&1 | tee /tmp/flutter-ios-build.log
+          flutter build ios --release --no-codesign --dart-define=VV_FIREBASE_ENV="$TARGET_ENV" 2>&1 | tee /tmp/flutter-ios-build.log
           BUILD_EXIT=${PIPESTATUS[0]}
 
           if [ $BUILD_EXIT -ne 0 ]; then
@@ -532,7 +590,7 @@ jobs:
             rm -rf .dart_tool/flutter_build
             chmod -R u+rwX .dart_tool || true
             xattr -cr .dart_tool || true
-            flutter build ios --release --no-codesign 2>&1 | tee /tmp/flutter-ios-build-retry.log
+            flutter build ios --release --no-codesign --dart-define=VV_FIREBASE_ENV="$TARGET_ENV" 2>&1 | tee /tmp/flutter-ios-build-retry.log
             BUILD_EXIT=${PIPESTATUS[0]}
           fi
 

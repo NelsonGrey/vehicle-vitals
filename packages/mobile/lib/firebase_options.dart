@@ -2,7 +2,7 @@
 // ignore_for_file: type=lint, lines_longer_than_80_chars, avoid_classes_with_only_static_members
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, kReleaseMode, TargetPlatform;
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -54,11 +54,9 @@ class DefaultFirebaseOptions {
     }
 
     // Safe default policy:
-    // - Debug/profile local runs use development backend.
-    // - Release builds default to production unless explicitly overridden.
-    return kReleaseMode
-        ? _FirebaseEnvironment.production
-        : _FirebaseEnvironment.development;
+    // - Always default to production when no explicit VV_FIREBASE_ENV is set.
+    // - Use VV_FIREBASE_ENV=development|staging only for intentional non-prod runs.
+    return _FirebaseEnvironment.production;
   }
 
   static const FirebaseOptions web = FirebaseOptions(

@@ -32,7 +32,8 @@
     "demo-data:load": "npm --workspace=functions run seed:demo-data --",
     "demo-data:purge": "npm --workspace=functions run purge:demo-data --",
     "backfill:personal-orgs": "node scripts/backfill-personal-org-memberships.js",
-    "backfill:personal-orgs:apply": "node scripts/backfill-personal-org-memberships.js --apply"
+    "backfill:personal-orgs:apply": "node scripts/backfill-personal-org-memberships.js --apply",
+    "start": "node scripts/apphosting-server.js"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",

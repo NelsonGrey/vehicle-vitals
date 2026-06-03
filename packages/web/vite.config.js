@@ -6,12 +6,14 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
+    alias: [
+      { find: /^@vehicle-vitals\/shared$/, replacement: path.resolve(__dirname, '../shared/src/index.js') },
+      { find: /^@vehicle-vitals\/shared\/types$/, replacement: path.resolve(__dirname, '../shared/src/types.js') },
       // allow imports like 'shared/...'
-      shared: path.resolve(__dirname, '../shared/src'),
+      { find: 'shared', replacement: path.resolve(__dirname, '../shared/src') },
       // ensure firebase imports from shared files resolve to root node_modules
-      firebase: path.resolve(__dirname, '../../node_modules/firebase'),
-    },
+      { find: 'firebase', replacement: path.resolve(__dirname, '../../node_modules/firebase') },
+    ],
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   build: {

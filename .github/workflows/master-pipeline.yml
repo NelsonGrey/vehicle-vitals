@@ -928,7 +928,7 @@ jobs:
 
           exit $BUILD_EXIT
 
-      - name: Deploy Hosting Only
+      - name: Trigger App Hosting Rollout
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
@@ -944,15 +944,15 @@ jobs:
           case "$TARGET_ENV" in
             production)
               PROJECT_ID="$FIREBASE_PROJECT_PROD"
-              CONFIG_FILE="firebase.prod.json"
+              GIT_BRANCH="main"
               ;;
             staging)
               PROJECT_ID="$FIREBASE_PROJECT_STAGING"
-              CONFIG_FILE="firebase.staging.json"
+              GIT_BRANCH="staging"
               ;;
             *)
               PROJECT_ID="$FIREBASE_PROJECT_DEV"
-              CONFIG_FILE="firebase.dev.json"
+              GIT_BRANCH="develop"
               ;;
           esac
 
@@ -961,15 +961,10 @@ jobs:
             exit 1
           fi
 
-          # Keep environment-specific hosting settings, but deploy hosting only.
-          cp "$CONFIG_FILE" firebase.json
-
-          firebase deploy \
+          firebase apphosting:rollouts:create vehicle-vitals \
             --project="$PROJECT_ID" \
-            --token="$FIREBASE_TOKEN" \
-            --only hosting \
-            --message="Hosting deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
-            --non-interactive
+            --git-branch="$GIT_BRANCH" \
+            --force
 
   deploy-firebase:
     name: Deploy Firebase

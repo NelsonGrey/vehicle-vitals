@@ -4,6 +4,11 @@
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "@vehicle-vitals/shared": ["../shared/src/index.js"],
+      "@vehicle-vitals/shared/*": ["../shared/src/*"]
+    },
     "skipLibCheck": true,
     "allowJs": true,
 

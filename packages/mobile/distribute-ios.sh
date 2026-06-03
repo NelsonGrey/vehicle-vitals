@@ -17,6 +17,29 @@ cd "$(dirname "$0")"
 
 # Determine environment (default to development for manual builds)
 ENVIRONMENT=${ENVIRONMENT:-development}
+ENVIRONMENT=$(echo "$ENVIRONMENT" | tr '[:upper:]' '[:lower:]')
+
+case "$ENVIRONMENT" in
+    prod)
+        ENVIRONMENT="production"
+        ;;
+    stage)
+        ENVIRONMENT="staging"
+        ;;
+    dev)
+        ENVIRONMENT="development"
+        ;;
+esac
+
+case "$ENVIRONMENT" in
+    development|staging|production)
+        ;;
+    *)
+        echo "❌ Invalid ENVIRONMENT: $ENVIRONMENT"
+        echo "Supported values: development, staging, production"
+        exit 1
+        ;;
+esac
 
 echo "🌍 Building for environment: $ENVIRONMENT"
 
@@ -30,6 +53,39 @@ else
     echo "Please download it from Firebase Console and place it in config/$ENVIRONMENT/ios/"
     exit 1
 fi
+
+case "$ENVIRONMENT" in
+    development)
+        EXPECTED_FIREBASE_PROJECT_ID="vehicle-vitals-dev"
+        ;;
+    staging)
+        EXPECTED_FIREBASE_PROJECT_ID="vehicle-vitals-staging"
+        ;;
+    production)
+        EXPECTED_FIREBASE_PROJECT_ID="vehicle-vitals-prod"
+        ;;
+esac
+
+ACTUAL_FIREBASE_PROJECT_ID=$(/usr/libexec/PlistBuddy -c "Print :PROJECT_ID" "ios/Runner/GoogleService-Info.plist" 2>/dev/null || true)
+
+if [ -z "$ACTUAL_FIREBASE_PROJECT_ID" ]; then
+    echo "❌ Could not read PROJECT_ID from ios/Runner/GoogleService-Info.plist"
+    exit 1
+fi
+
+if [ "$ACTUAL_FIREBASE_PROJECT_ID" != "$EXPECTED_FIREBASE_PROJECT_ID" ]; then
+    echo "❌ Firebase iOS config mismatch detected"
+    echo "Expected PROJECT_ID: $EXPECTED_FIREBASE_PROJECT_ID"
+    echo "Actual PROJECT_ID:   $ACTUAL_FIREBASE_PROJECT_ID"
+    echo "Fix config/$ENVIRONMENT/ios/GoogleService-Info.plist before distribution."
+    exit 1
+fi
+
+echo "✅ Firebase PROJECT_ID validated: $ACTUAL_FIREBASE_PROJECT_ID"
+
+# Ensure Fastlane/Flutter Dart defines use the same Firebase environment as plist copy.
+export FIREBASE_ENV="$ENVIRONMENT"
+echo "✅ FIREBASE_ENV exported as $FIREBASE_ENV"
 
 # Inject production AdMob App ID into Info.plist if provided
 if [ -n "$ADMOB_IOS_APP_ID" ]; then

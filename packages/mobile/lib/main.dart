@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -144,6 +145,7 @@ class VehicleVitalsApp extends StatelessWidget {
             builder: (context, child) {
               return Column(
                 children: [
+                  if (kDebugMode) const _DebugFirebaseEnvBanner(),
                   const SafeArea(
                     bottom: false,
                     child: AdBanner(margin: EdgeInsets.zero),
@@ -407,6 +409,35 @@ class VehicleVitalsApp extends StatelessWidget {
           redirect: (context, state) => '/app/timeline',
         ),
       ],
+    );
+  }
+}
+
+class _DebugFirebaseEnvBanner extends StatelessWidget {
+  const _DebugFirebaseEnvBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final options = Firebase.app().options;
+    final env = DefaultFirebaseOptions.currentEnvironmentLabel;
+    final projectId = options.projectId;
+
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        width: double.infinity,
+        color: Colors.amber.shade700,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          'DEBUG Firebase env=$env | project=$projectId',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }

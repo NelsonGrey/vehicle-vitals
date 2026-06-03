@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "start": "npm run preview --workspace=@vehicle-vitals/web -- --host 0.0.0.0 --port ${PORT:-8080}",
     "build:production": "npm run build --workspace=@vehicle-vitals/web",
     "build:staging": "npm run build:staging --workspace=@vehicle-vitals/web",
     "build:development": "npm run build:development --workspace=@vehicle-vitals/web",

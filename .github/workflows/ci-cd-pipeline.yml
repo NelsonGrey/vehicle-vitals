@@ -250,7 +250,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets[format('FIREBASE_SERVICE_ACCOUNT_{0}', needs.determine-environment.outputs.environment)] }}
+          firebaseServiceAccount: ${{ needs.determine-environment.outputs.environment == 'production' && secrets.FIREBASE_SERVICE_ACCOUNT_PRODUCTION || needs.determine-environment.outputs.environment == 'staging' && secrets.FIREBASE_SERVICE_ACCOUNT_STAGING || secrets.FIREBASE_SERVICE_ACCOUNT_DEVELOPMENT }}
           channelId: ${{ needs.determine-environment.outputs.environment == 'production' && 'live' || 'preview' }}
           projectId: ${{ needs.determine-environment.outputs.environment == 'production' && 'vehicle-vitals-prod' || needs.determine-environment.outputs.environment == 'staging' && 'vehicle-vitals-staging' || 'vehicle-vitals-dev' }}
           entryPoint: ./

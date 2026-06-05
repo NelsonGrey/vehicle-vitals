@@ -37,6 +37,21 @@ const developmentFirebaseFallback = {
   measurementId: 'G-FQJQ74S5W4',
 };
 
+const productionFirebaseFallback = {
+  apiKey: 'AIzaSyDE99EAoGniEwCLfu4llmv_NsSjbwr-ZRE',
+  authDomain: 'vehicle-vitals-prod.firebaseapp.com',
+  projectId: 'vehicle-vitals-prod',
+  storageBucket: 'vehicle-vitals-prod.appspot.com',
+  messagingSenderId: '489413148337',
+  appId: '1:489413148337:web:9b4e97350073a22968ac90',
+  measurementId: 'G-32PCGDSNT9',
+};
+
+const firebaseFallbacksByEnvironment = {
+  development: developmentFirebaseFallback,
+  production: productionFirebaseFallback,
+};
+
 const isPlaceholderValue = value => {
   const normalized = String(value || '').trim();
   if (!normalized) {
@@ -107,14 +122,19 @@ const applyTestFirebaseFallback = () => {
 };
 
 const applyDevelopmentFirebaseFallback = () => {
-  if (resolveEnvironmentName() !== 'development' && !isTestRuntime()) {
+  if (isTestRuntime()) {
+    Object.assign(firebaseConfig, developmentFirebaseFallback);
+    return;
+  }
+
+  const environment = resolveEnvironmentName();
+  const fallback = firebaseFallbacksByEnvironment[environment];
+  if (!fallback) {
     return;
   }
 
   const recoveredFields = [];
-  for (const [name, fallbackValue] of Object.entries(
-    developmentFirebaseFallback
-  )) {
+  for (const [name, fallbackValue] of Object.entries(fallback)) {
     if (isPlaceholderValue(firebaseConfig[name])) {
       firebaseConfig[name] = fallbackValue;
       recoveredFields.push(name);
@@ -123,7 +143,7 @@ const applyDevelopmentFirebaseFallback = () => {
 
   if (recoveredFields.length > 0) {
     console.warn(
-      `[firebaseConfig] Applied development fallback for: ${recoveredFields.join(', ')}`
+      `[firebaseConfig] Applied ${environment} fallback for: ${recoveredFields.join(', ')}`
     );
   }
 };

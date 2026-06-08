@@ -6,6 +6,20 @@ import {
   hasLegacyFirebaseModules,
 } from '../shared/firebaseLegacy';
 
+const generateIdempotencyKey = () => {
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+
+  if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(bytes);
+    return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+  }
+
+  return `idem_${Date.now()}`;
+};
+
 const createFirebaseService = async () => {
   try {
     if (functions) {
@@ -115,7 +129,6 @@ export async function setOrganizationMemberRole({
   orgId,
   targetUid,
   role,
-  idempotencyKey,
 }) {
   const firebaseService = await createFirebaseService();
 
@@ -132,7 +145,7 @@ export async function setOrganizationMemberRole({
     orgId,
     targetUid,
     role,
-    idempotencyKey,
+    idempotencyKey: generateIdempotencyKey(),
   });
 
   if (!result.data?.success) {
@@ -149,7 +162,6 @@ export async function setOrganizationMemberRole({
 export async function applyRetentionPolicy({
   orgId,
   retentionDays,
-  idempotencyKey,
 }) {
   const firebaseService = await createFirebaseService();
 
@@ -165,7 +177,7 @@ export async function applyRetentionPolicy({
   const result = await callable({
     orgId,
     retentionDays,
-    idempotencyKey,
+    idempotencyKey: generateIdempotencyKey(),
   });
 
   if (!result.data?.success) {
@@ -268,7 +280,6 @@ export async function createInvoiceDraft({
   notes,
   amountDue,
   lineItems,
-  idempotencyKey,
 }) {
   const firebaseService = await createFirebaseService();
 
@@ -290,7 +301,7 @@ export async function createInvoiceDraft({
     notes,
     amountDue,
     lineItems,
-    idempotencyKey,
+    idempotencyKey: generateIdempotencyKey(),
   });
 
   if (!result.data?.success) {
@@ -313,7 +324,6 @@ export async function createPayableDraft({
   category,
   notes,
   amountDue,
-  idempotencyKey,
 }) {
   const firebaseService = await createFirebaseService();
 
@@ -335,7 +345,7 @@ export async function createPayableDraft({
     category,
     notes,
     amountDue,
-    idempotencyKey,
+    idempotencyKey: generateIdempotencyKey(),
   });
 
   if (!result.data?.success) {

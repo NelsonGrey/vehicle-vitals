@@ -53,7 +53,7 @@ async function main() {
     JSON.stringify(
       {
         ok: true,
-        uid,
+        uidRedacted: `${String(uid).slice(0, 4)}...`,
         purgedCollection: `users/${uid}/vehicles`,
       },
       null,

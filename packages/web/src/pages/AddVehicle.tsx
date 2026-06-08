@@ -47,18 +47,9 @@ const sanitizeImageUrl = (value: unknown): string => {
     return '';
   }
 
-  // Only allow well-known safe image URL schemes.
-  if (raw.startsWith('data:image/')) {
-    return raw;
-  }
-
   try {
     const parsed = new URL(raw);
-    if (
-      parsed.protocol === 'https:' ||
-      parsed.protocol === 'http:' ||
-      parsed.protocol === 'blob:'
-    ) {
+    if (parsed.protocol === 'https:' || parsed.protocol === 'blob:') {
       return raw;
     }
   } catch {

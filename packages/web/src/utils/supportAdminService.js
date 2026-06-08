@@ -27,8 +27,8 @@ const createFirebaseService = async () => {
     }
 
     throw new Error('Firebase Functions not available');
-  } catch (error) {
-    console.warn('Support admin service unavailable:', error);
+    } catch {
+      console.warn('Support admin service unavailable');
     return {
       functions: null,
       httpsCallable: () => () => Promise.resolve({ data: { success: false } }),

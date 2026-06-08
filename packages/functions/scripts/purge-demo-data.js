@@ -54,7 +54,7 @@ async function main() {
       {
         ok: true,
         uidRedacted: `${String(uid).slice(0, 4)}...`,
-        purgedCollection: `users/${uid}/vehicles`,
+        purgedCollection: 'users/[redacted]/vehicles',
       },
       null,
       2

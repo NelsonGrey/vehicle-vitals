@@ -120,6 +120,14 @@ function buildWebhookSignature(payload, secret) {
   return `sha256=${createHmac('sha256', secret).update(payloadText).digest('hex')}`;
 }
 
+function isGooglePlayApiUrl(url) {
+  try {
+    return new URL(String(url)).hostname === 'androidpublisher.googleapis.com';
+  } catch {
+    return false;
+  }
+}
+
 function buildStripeSignature(
   payload,
   secret,
@@ -994,8 +1002,7 @@ test('verifyPremiumPurchase returns verified entitlement in strict mode with val
 
   const originalFetchForPlay = global.fetch;
   global.fetch = async url => {
-    const urlValue = String(url);
-    if (urlValue.includes('androidpublisher.googleapis.com')) {
+    if (isGooglePlayApiUrl(url)) {
       return {
         ok: true,
         async json() {
@@ -1039,8 +1046,7 @@ test('verifyPremiumPurchase treats google_play source alias as Play Store', asyn
 
   const originalFetchForPlay = global.fetch;
   global.fetch = async url => {
-    const urlValue = String(url);
-    if (urlValue.includes('androidpublisher.googleapis.com')) {
+    if (isGooglePlayApiUrl(url)) {
       return {
         ok: true,
         async json() {
@@ -1083,8 +1089,7 @@ test('verifyPremiumPurchase rejects in strict mode when Play verification fails'
 
   const originalFetchForPlay = global.fetch;
   global.fetch = async url => {
-    const urlValue = String(url);
-    if (urlValue.includes('androidpublisher.googleapis.com')) {
+    if (isGooglePlayApiUrl(url)) {
       return {
         ok: true,
         async json() {

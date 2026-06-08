@@ -1,5 +1,11 @@
 /* eslint-disable quotes, object-curly-spacing, arrow-parens, operator-linebreak, indent, max-len, quote-props */
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  scryptSync,
+  timingSafeEqual,
+} from 'crypto';
 import * as admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { setGlobalOptions } from 'firebase-functions';
@@ -425,7 +431,15 @@ async function resolveEffectiveEntitlements(
 }
 
 const hashApiAccessKey = (rawKey: string): string => {
-  return createHash('sha256').update(rawKey).digest('hex');
+  const salt =
+    (
+      process.env.API_KEY_HASH_SALT ||
+      process.env.GCLOUD_PROJECT ||
+      'vehicle-vitals'
+    )
+      .toString()
+      .trim() || 'vehicle-vitals';
+  return scryptSync(rawKey, salt, 64).toString('hex');
 };
 
 const resolveFunctionBaseUrl = (): string => {

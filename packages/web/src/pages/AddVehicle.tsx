@@ -41,6 +41,33 @@ const VEHICLE_STATUS_OPTIONS = [
   { value: 'stored', label: 'In Storage' },
 ];
 
+const sanitizeImageUrl = (value: unknown): string => {
+  const raw = (value || '').toString().trim();
+  if (!raw) {
+    return '';
+  }
+
+  // Only allow well-known safe image URL schemes.
+  if (raw.startsWith('data:image/')) {
+    return raw;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    if (
+      parsed.protocol === 'https:' ||
+      parsed.protocol === 'http:' ||
+      parsed.protocol === 'blob:'
+    ) {
+      return raw;
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
+};
+
 export default function AddVehicle() {
   const [form, setForm] = useState({ ...defaultVehicle });
   const [plateValidationError, setPlateValidationError] = useState<string>();
@@ -550,10 +577,10 @@ export default function AddVehicle() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                 Vehicle Photo
               </label>
-              {(form as any).photoUrl ? (
+              {sanitizeImageUrl((form as any).photoUrl) ? (
                 <div className="mb-2 rounded-md border border-slate-200 dark:border-slate-700 p-2">
                   <img
-                    src={(form as any).photoUrl}
+                    src={sanitizeImageUrl((form as any).photoUrl)}
                     alt="Vehicle preview"
                     className="h-28 w-full object-cover rounded"
                   />

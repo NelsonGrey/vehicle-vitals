@@ -108,9 +108,18 @@ export async function requireAuthenticatedUser(
     return "auth-not-required";
   }
 
-  const authHeader = (request.headers.authorization || "").toString();
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  if (!match) {
+  const authHeader = (request.headers.authorization || "").toString().trim();
+  const bearerPrefix = "bearer ";
+  if (authHeader.toLowerCase().indexOf(bearerPrefix) !== 0) {
+    response.status(401).json({
+      success: false,
+      error: "Missing Bearer token",
+    });
+    return null;
+  }
+
+  const token = authHeader.slice(bearerPrefix.length).trim();
+  if (!token) {
     response.status(401).json({
       success: false,
       error: "Missing Bearer token",
@@ -119,7 +128,7 @@ export async function requireAuthenticatedUser(
   }
 
   try {
-    const decoded = await admin.auth().verifyIdToken(match[1]);
+    const decoded = await admin.auth().verifyIdToken(token);
     return decoded.uid;
   } catch (error) {
     logger.warn("Auth token verification failed", {error});

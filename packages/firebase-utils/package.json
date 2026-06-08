@@ -33,7 +33,7 @@
     "eslint": "^8.0.0",
     "prettier": "^3.8.3",
     "typescript": "^5.6.3",
-    "vitest": "^3.1.4"
+    "vitest": "^3.2.6"
   },
   "peerDependencies": {
     "firebase": "^12.3.0"

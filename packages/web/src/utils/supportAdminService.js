@@ -263,7 +263,11 @@ export async function getFinanceDrafts(orgId, limitCount = 5) {
     ),
   ]
     .sort((left, right) => right.createdAtValue - left.createdAtValue)
-    .map(({ createdAtValue, ...draft }) => draft);
+    .map(draft => {
+      const nextDraft = { ...draft };
+      delete nextDraft.createdAtValue;
+      return nextDraft;
+    });
 
   return {
     orgId: normalizedOrgId,

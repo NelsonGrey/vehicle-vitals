@@ -32,6 +32,7 @@
     "firebase:test-ios": "./tools/test-ios-firebase.sh",
     "firebase:test-android": "./tools/test-android-firebase.sh",
     "firebase:test-mobile": "./tools/test-mobile-firebase.sh",
+    "security:audit": "./scripts/security-posture-audit.sh",
     "demo-data:load": "npm --workspace=functions run seed:demo-data --",
     "demo-data:purge": "npm --workspace=functions run purge:demo-data --",
     "backfill:personal-orgs": "node scripts/backfill-personal-org-memberships.js",
@@ -41,6 +42,7 @@
     "videos:generate:interactive:vin": "node scripts/generate-interactive-vin-demo.js"
   },
   "devDependencies": {
+    "@firebase/app-compat": "^0.5.13",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",

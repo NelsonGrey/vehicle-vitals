@@ -49,7 +49,17 @@ async function main() {
   await db.recursiveDelete(vehiclesRef);
   await metaRef.delete().catch(() => undefined);
 
-  console.log('Demo data purge completed successfully.');
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        uidRedacted: `${String(uid).slice(0, 4)}...`,
+        purgedCollection: 'users/[redacted]/vehicles',
+      },
+      null,
+      2
+    )
+  );
 }
 
 main().catch(err => {

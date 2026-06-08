@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "firebase": "^12.3.0",
-    "zod": "^3.25.3"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

@@ -34,7 +34,7 @@
     "@vehicle-vitals/shared": "file:../shared",
     "firebase": "^12.3.0",
     "jspdf": "^3.0.3",
-    "jspdf-autotable": "^5.0.2",
+    "jspdf-autotable": "^5.0.8",
     "papaparse": "^5.5.3",
     "prop-types": "^15.8.1",
     "react": "^18.0.0",

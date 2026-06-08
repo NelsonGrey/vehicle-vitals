@@ -35,17 +35,11 @@ on:
       - develop
       - staging
       - main
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
   pull_request:
     branches:
       - develop
       - staging
       - main
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
 
 permissions:
   contents: read

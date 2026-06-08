@@ -55,8 +55,19 @@ const ORG_ROLES = [
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
+function secureRandomHex(byteLength: number): string {
+  const cryptoApi = globalThis.crypto;
+  if (!cryptoApi || typeof cryptoApi.getRandomValues !== 'function') {
+    throw new Error('Secure random generator unavailable in this runtime');
+  }
+
+  const bytes = new Uint8Array(byteLength);
+  cryptoApi.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 function createIdempotencyKey(prefix: string): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}_${Date.now()}_${secureRandomHex(8)}`;
 }
 
 export default function AdminSupport() {

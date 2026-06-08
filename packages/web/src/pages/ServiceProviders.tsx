@@ -189,7 +189,7 @@ export default function ServiceProviders() {
             : 25;
 
         const resolvedVehicleMake =
-          vehicleMakePreference || uniqueMakes[0] || preferredVehicleMake;
+          vehicleMakePreference || uniqueMakes[0] || '';
 
         setLoading(true);
         const result = await getLocalServiceProviders({

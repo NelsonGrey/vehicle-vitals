@@ -35,6 +35,17 @@ const createFirebaseService = async () => {
   }
 };
 
+function secureRandomHex(byteLength: number): string {
+  const cryptoApi = globalThis.crypto;
+  if (!cryptoApi || typeof cryptoApi.getRandomValues !== 'function') {
+    throw new Error('Secure random generator unavailable in this runtime');
+  }
+
+  const bytes = new Uint8Array(byteLength);
+  cryptoApi.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export async function transferVehicle(params: {
   vin: string;
   recipientEmail: string;
@@ -56,7 +67,7 @@ export async function transferVehicle(params: {
     recipientEmail: params.recipientEmail,
     idempotencyKey:
       params.idempotencyKey ||
-      `transfer-${params.vin}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      `transfer-${params.vin}-${Date.now()}-${secureRandomHex(8)}`,
   });
 
   if (!result.data?.success) {

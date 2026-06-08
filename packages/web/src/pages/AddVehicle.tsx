@@ -41,24 +41,6 @@ const VEHICLE_STATUS_OPTIONS = [
   { value: 'stored', label: 'In Storage' },
 ];
 
-const sanitizeImageUrl = (value: unknown): string => {
-  const raw = (value || '').toString().trim();
-  if (!raw) {
-    return '';
-  }
-
-  try {
-    const parsed = new URL(raw);
-    if (parsed.protocol === 'https:' || parsed.protocol === 'blob:') {
-      return raw;
-    }
-  } catch {
-    return '';
-  }
-
-  return '';
-};
-
 export default function AddVehicle() {
   const [form, setForm] = useState({ ...defaultVehicle });
   const [plateValidationError, setPlateValidationError] = useState<string>();
@@ -568,13 +550,11 @@ export default function AddVehicle() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                 Vehicle Photo
               </label>
-              {sanitizeImageUrl((form as any).photoUrl) ? (
+              {(form as any).photoUrl ? (
                 <div className="mb-2 rounded-md border border-slate-200 dark:border-slate-700 p-2">
-                  <img
-                    src={sanitizeImageUrl((form as any).photoUrl)}
-                    alt="Vehicle preview"
-                    className="h-28 w-full object-cover rounded"
-                  />
+                  <p className="m-0 text-sm text-slate-700 dark:text-slate-300">
+                    Photo attached and will be saved with this vehicle.
+                  </p>
                   {(form as any).photoSource === 'wikimedia' && (
                     <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
                       Source: Wikimedia

@@ -31,6 +31,7 @@ gh secret set VITE_SHOW_COMING_SOON_PRODUCTION --body 'true'
 
 ```bash
 gh secret set VITE_ANALYTICS_ID_PRODUCTION --body 'G-32PCGDSNT9'
+gh secret set VITE_GTM_ID_PRODUCTION --body 'G-32PCGDSNT9'  # Supports GTM-XXXXXXX or G-XXXXXXXXXX
 gh secret set VITE_SENTRY_DSN_PRODUCTION --body ''  # Set to actual Sentry DSN if using
 ```
 

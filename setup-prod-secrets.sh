@@ -67,6 +67,7 @@ echo -e "${YELLOW}📋 Setting up Analytics & Monitoring...${NC}"
 
 # Analytics & Monitoring (placeholders - you'll need to set actual values)
 set_secret "VITE_ANALYTICS_ID_PRODUCTION" "G-32PCGDSNT9" "Google Analytics ID"
+set_secret "VITE_GTM_ID_PRODUCTION" "G-32PCGDSNT9" "Google tag ID (supports GTM-XXXXXXX or G-XXXXXXXXXX)"
 set_secret "VITE_SENTRY_DSN_PRODUCTION" "" "Sentry DSN for error reporting (leave empty if not using)"
 
 echo -e "${YELLOW}📋 Setting up Ad Configuration...${NC}"

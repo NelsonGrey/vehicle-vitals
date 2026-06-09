@@ -1,0 +1,15 @@
+# Firebase App Hosting configuration for vehicle-vitals backend.
+# Ensure these env vars are available at build time so Vite can inline values.
+
+env:
+  - variable: VITE_GTM_ID
+    secret: VITE_GTM_ID
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_FIREBASE_MEASUREMENT_ID
+    secret: VITE_FIREBASE_MEASUREMENT_ID
+    availability:
+      - BUILD
+      - RUNTIME

@@ -11,6 +11,7 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
 import 'components/ad_banner.dart';
+import 'components/error_boundary.dart';
 import 'firebase_options.dart';
 import 'screens/account_screen.dart';
 import 'screens/add_vehicle_screen.dart';
@@ -136,24 +137,26 @@ class VehicleVitalsApp extends StatelessWidget {
       ],
       child: Consumer2<AuthService, OnboardingService>(
         builder: (context, authService, onboardingService, child) {
-          return MaterialApp.router(
-            title: 'Garage',
-            theme: AppTheme.lightTheme(),
-            darkTheme: AppTheme.darkTheme(),
-            themeMode: ThemeMode.system,
-            routerConfig: _createRouter(authService, onboardingService),
-            builder: (context, child) {
-              return Column(
-                children: [
-                  if (kDebugMode) const _DebugFirebaseEnvBanner(),
-                  const SafeArea(
-                    bottom: false,
-                    child: AdBanner(margin: EdgeInsets.zero),
-                  ),
-                  Expanded(child: child ?? const SizedBox.shrink()),
-                ],
-              );
-            },
+          return ErrorWidgetWrapper(
+            child: MaterialApp.router(
+              title: 'Garage',
+              theme: AppTheme.lightTheme(),
+              darkTheme: AppTheme.darkTheme(),
+              themeMode: ThemeMode.system,
+              routerConfig: _createRouter(authService, onboardingService),
+              builder: (context, child) {
+                return Column(
+                  children: [
+                    if (kDebugMode) const _DebugFirebaseEnvBanner(),
+                    const SafeArea(
+                      bottom: false,
+                      child: AdBanner(margin: EdgeInsets.zero),
+                    ),
+                    Expanded(child: child ?? const SizedBox.shrink()),
+                  ],
+                );
+              },
+            ),
           );
         },
       ),

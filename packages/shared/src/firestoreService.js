@@ -1,15 +1,15 @@
-import { db, auth } from './firebaseConfig';
 import {
-  collection,
-  doc,
-  setDoc,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  serverTimestamp,
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    serverTimestamp,
+    setDoc,
+    updateDoc
 } from 'firebase/firestore';
+import { auth, db } from './firebaseConfig';
 
 // Helper to build base path for user's vehicles
 function vehiclesCollectionRef(userId) {
@@ -24,12 +24,27 @@ export async function addOrUpdateVehicle(vehicle) {
   return vehicle;
 }
 
-export async function getVehicles() {
+export async function getVehicles(options = {}) {
   const userId = auth.currentUser?.uid;
   if (!userId) return [];
-  const ref = vehiclesCollectionRef(userId);
-  const snap = await getDocs(ref);
-  return snap.docs.map((d) => d.data());
+  const { pageSize = 50, startAfter: startAfterDoc } = options;
+  
+  let q = vehiclesCollectionRef(userId);
+  
+  if (pageSize) {
+    q = query(q, orderBy('updatedAt', 'desc'), limit(pageSize));
+  }
+  
+  if (startAfterDoc) {
+    q = query(q, startAfter(startAfterDoc));
+  }
+  
+  const snap = await getDocs(q);
+  return {
+    data: snap.docs.map((d) => d.data()),
+    lastDoc: snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null,
+    hasMore: snap.docs.length === pageSize,
+  };
 }
 
 export async function getVehicle(vin) {
@@ -48,12 +63,27 @@ export async function addMaintenanceEntry(vin, entry) {
   return { id: docRef.id, ...entry };
 }
 
-export async function getMaintenanceEntries(vin) {
+export async function getMaintenanceEntries(vin, options = {}) {
   const userId = auth.currentUser?.uid;
   if (!userId) return [];
-  const collRef = collection(db, `users/${userId}/vehicles/${vin}/maintenance`);
+  const { pageSize = 50, startAfter: startAfterDoc } = options;
+  
+  let collRef = collection(db, `users/${userId}/vehicles/${vin}/maintenance`);
+  
+  if (pageSize) {
+    collRef = query(collRef, orderBy('date', 'desc'), limit(pageSize));
+  }
+  
+  if (startAfterDoc) {
+    collRef = query(collRef, startAfter(startAfterDoc));
+  }
+  
   const snap = await getDocs(collRef);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return {
+    data: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+    lastDoc: snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null,
+    hasMore: snap.docs.length === pageSize,
+  };
 }
 
 export async function getMaintenanceEntry(vin, entryId) {

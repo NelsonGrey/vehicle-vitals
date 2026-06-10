@@ -3,21 +3,45 @@ import {
   isSupported as analyticsIsSupported,
   getAnalytics,
   logEvent,
+  Analytics,
 } from 'firebase/analytics';
-import { getApps, initializeApp } from 'firebase/app';
-import { connectAuthEmulator, getAuth } from 'firebase/auth';
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
-import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
+import { getApps, initializeApp, FirebaseApp } from 'firebase/app';
+import { connectAuthEmulator, getAuth, Auth } from 'firebase/auth';
+import {
+  connectFirestoreEmulator,
+  getFirestore,
+  Firestore,
+} from 'firebase/firestore';
+import {
+  connectFunctionsEmulator,
+  getFunctions,
+  Functions,
+} from 'firebase/functions';
 import {
   fetchAndActivate,
   getBoolean,
   getNumber,
   getRemoteConfig,
   getString,
+  RemoteConfig,
 } from 'firebase/remote-config';
-import { connectStorageEmulator, getStorage } from 'firebase/storage';
+import {
+  connectStorageEmulator,
+  getStorage,
+  FirebaseStorage,
+} from 'firebase/storage';
 
-export const firebaseConfig = {
+export interface FirebaseConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId: string;
+}
+
+export const firebaseConfig: FirebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -27,7 +51,7 @@ export const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const developmentFirebaseFallback = {
+const developmentFirebaseFallback: FirebaseConfig = {
   apiKey: 'AIzaSyAmyyfYTgNAurV-yZxrxwiwGD8_B8QInHs',
   authDomain: 'vehicle-vitals-dev.firebaseapp.com',
   projectId: 'vehicle-vitals-dev',
@@ -37,7 +61,7 @@ const developmentFirebaseFallback = {
   measurementId: 'G-FQJQ74S5W4',
 };
 
-const productionFirebaseFallback = {
+const productionFirebaseFallback: FirebaseConfig = {
   apiKey: 'AIzaSyDE99EAoGniEwCLfu4llmv_NsSjbwr-ZRE',
   authDomain: 'vehicle-vitals-prod.firebaseapp.com',
   projectId: 'vehicle-vitals-prod',
@@ -47,12 +71,12 @@ const productionFirebaseFallback = {
   measurementId: 'G-32PCGDSNT9',
 };
 
-const firebaseFallbacksByEnvironment = {
+const firebaseFallbacksByEnvironment: Record<string, FirebaseConfig> = {
   development: developmentFirebaseFallback,
   production: productionFirebaseFallback,
 };
 
-const isPlaceholderValue = value => {
+const isPlaceholderValue = (value: unknown): boolean => {
   const normalized = String(value || '').trim();
   if (!normalized) {
     return true;
@@ -67,12 +91,12 @@ const isPlaceholderValue = value => {
   );
 };
 
-const validateFirebaseClientConfig = () => {
+const validateFirebaseClientConfig = (): void => {
   if (resolveEnvironmentName() === 'test') {
     return;
   }
 
-  const requiredFields = [
+  const requiredFields: Array<[string, unknown]> = [
     ['apiKey', firebaseConfig.apiKey],
     ['authDomain', firebaseConfig.authDomain],
     ['projectId', firebaseConfig.projectId],
@@ -103,17 +127,17 @@ const validateFirebaseClientConfig = () => {
   throw new Error(message);
 };
 
-const resolveEnvironmentName = () => {
+const resolveEnvironmentName = (): string => {
   const raw =
     import.meta.env.VITE_ENVIRONMENT || import.meta.env.MODE || 'development';
   return String(raw).trim().toLowerCase();
 };
 
-const isTestRuntime = () => {
+const isTestRuntime = (): boolean => {
   return import.meta.env.MODE === 'test' || Boolean(import.meta.env.VITEST);
 };
 
-const applyTestFirebaseFallback = () => {
+const applyTestFirebaseFallback = (): void => {
   if (!isTestRuntime()) {
     return;
   }
@@ -121,7 +145,7 @@ const applyTestFirebaseFallback = () => {
   Object.assign(firebaseConfig, developmentFirebaseFallback);
 };
 
-const applyDevelopmentFirebaseFallback = () => {
+const applyDevelopmentFirebaseFallback = (): void => {
   if (isTestRuntime()) {
     Object.assign(firebaseConfig, developmentFirebaseFallback);
     return;
@@ -133,10 +157,10 @@ const applyDevelopmentFirebaseFallback = () => {
     return;
   }
 
-  const recoveredFields = [];
+  const recoveredFields: string[] = [];
   for (const [name, fallbackValue] of Object.entries(fallback)) {
-    if (isPlaceholderValue(firebaseConfig[name])) {
-      firebaseConfig[name] = fallbackValue;
+    if (isPlaceholderValue(firebaseConfig[name as keyof FirebaseConfig])) {
+      firebaseConfig[name as keyof FirebaseConfig] = fallbackValue;
       recoveredFields.push(name);
     }
   }
@@ -148,20 +172,20 @@ const applyDevelopmentFirebaseFallback = () => {
   }
 };
 
-const expectedProjectIdsByEnvironment = {
+const expectedProjectIdsByEnvironment: Record<string, string[]> = {
   development: ['vehicle-vitals-dev'],
   staging: ['vehicle-vitals-staging'],
   production: ['vehicle-vitals-prod'],
 };
 
-const canonicalHostedOriginsByHostname = {
+const canonicalHostedOriginsByHostname: Record<string, string> = {
   'vehicle-vitals-dev.firebaseapp.com': 'https://vehicle-vitals-dev.web.app',
   'vehicle-vitals-staging.firebaseapp.com':
     'https://vehicle-vitals-staging.web.app',
   'vehicle-vitals-prod.firebaseapp.com': 'https://vehicle-vitals-prod.web.app',
 };
 
-const redirectToCanonicalHostedOrigin = () => {
+const redirectToCanonicalHostedOrigin = (): void => {
   if (isTestRuntime()) {
     return;
   }
@@ -188,7 +212,7 @@ const redirectToCanonicalHostedOrigin = () => {
   );
 };
 
-const validateEnvironmentProjectAlignment = () => {
+const validateEnvironmentProjectAlignment = (): void => {
   if (isTestRuntime()) {
     return;
   }
@@ -221,17 +245,17 @@ validateEnvironmentProjectAlignment();
 validateFirebaseClientConfig();
 redirectToCanonicalHostedOrigin();
 
-const app =
+const app: FirebaseApp =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
-const db = getFirestore(app);
-const functions = getFunctions(app);
-const storage = getStorage(app);
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const functions: Functions = getFunctions(app);
+const storage: FirebaseStorage = getStorage(app);
 
 // ─── Firebase Analytics ─────────────────────────────────────────────────────
 // Only initialize Analytics when the environment supports it (i.e. not in
 // SSR, Web Workers, or browsers that block it). measurementId must be set.
-let analytics = null;
+let analytics: Analytics | null = null;
 let _analyticsReady = false;
 
 if (firebaseConfig.measurementId) {
@@ -251,10 +275,13 @@ if (firebaseConfig.measurementId) {
  * Log a Firebase Analytics event. Safe to call unconditionally; no-ops when
  * Analytics is not supported or has not yet initialised.
  *
- * @param {string} eventName  Standard or custom GA4 event name
- * @param {object} [params]   Optional key/value event parameters
+ * @param eventName  Standard or custom GA4 event name
+ * @param params   Optional key/value event parameters
  */
-export function trackEvent(eventName, params = {}) {
+export function trackEvent(
+  eventName: string,
+  params: Record<string, unknown> = {}
+): void {
   if (_analyticsReady && analytics) {
     try {
       logEvent(analytics, eventName, params);
@@ -266,7 +293,7 @@ export function trackEvent(eventName, params = {}) {
 
 // ─── Remote Config ──────────────────────────────────────────────────────────
 // Provides feature flags and runtime-adjustable settings without a redeploy.
-const remoteConfig = getRemoteConfig(app);
+const remoteConfig: RemoteConfig = getRemoteConfig(app);
 
 // Minimum fetch interval: 1 hour in production, 0 in development for fast iteration.
 remoteConfig.settings.minimumFetchIntervalMillis =
@@ -296,9 +323,9 @@ fetchAndActivate(remoteConfig).catch(() => {
  * Remote Config helpers — always return a value (cache, defaults, or fetched).
  */
 export const remoteConfigFlag = {
-  bool: key => getBoolean(remoteConfig, key),
-  str: key => getString(remoteConfig, key),
-  num: key => getNumber(remoteConfig, key),
+  bool: (key: string): boolean => getBoolean(remoteConfig, key),
+  str: (key: string): string => getString(remoteConfig, key),
+  num: (key: string): number => getNumber(remoteConfig, key),
 };
 
 // Emulators are explicit opt-in to avoid accidentally bypassing environment backends.
@@ -317,7 +344,7 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
 export { analytics, app, auth, db, functions, remoteConfig, storage };
 
 // Legacy exports for compatibility
-export const getFirebaseConfig = () => firebaseConfig;
-export const getFirebaseAuth = () => auth;
-export const getFirebaseApp = () => app;
-export const getFirebaseFunctions = () => functions;
+export const getFirebaseConfig = (): FirebaseConfig => firebaseConfig;
+export const getFirebaseAuth = (): Auth => auth;
+export const getFirebaseApp = (): FirebaseApp => app;
+export const getFirebaseFunctions = (): Functions => functions;

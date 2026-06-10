@@ -1,21 +1,22 @@
 import { auth, db } from './firebaseConfig';
+import type { Auth, Firestore } from 'firebase/auth';
 import {
   getLegacyFirebase,
   getOrInitializeLegacyFirebaseApp,
 } from './firebaseLegacy';
 
 // Initialize Firestore service with dynamic imports to avoid build-time resolution
-let service = null;
+let service: any = null;
 
-const initializeFirestoreService = async () => {
+const initializeFirestoreService = async (): Promise<any> => {
   if (service) return service;
 
   try {
     const { createFirestoreService } = await import('@vehicle-vitals/shared');
 
-    let dbInstance = db;
-    let authInstance = auth;
-    let helpers = await import('firebase/firestore');
+    let dbInstance: Firestore = db;
+    let authInstance: Auth = auth;
+    let helpers: any = await import('firebase/firestore');
 
     // Fallback for legacy global Firebase bootstraps.
     if (!dbInstance || !authInstance) {
@@ -38,7 +39,7 @@ const initializeFirestoreService = async () => {
 
     return service;
   } catch (error) {
-    console.warn('Firebase Firestore not available:', error.message);
+    console.warn('Firebase Firestore not available:', (error as Error).message);
     // Return mock service
     return {
       addOrUpdateVehicle: () => Promise.reject('Firestore not available'),
@@ -67,8 +68,8 @@ const servicePromise = initializeFirestoreService();
 
 // Export async functions that wait for service initialization
 const createAsyncMethod =
-  methodName =>
-  async (...args) => {
+  (methodName: string) =>
+  async (...args: unknown[]) => {
     const svc = await servicePromise;
     return svc[methodName](...args);
   };

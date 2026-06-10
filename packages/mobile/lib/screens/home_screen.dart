@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -42,12 +43,18 @@ class _HomeScreenState extends State<HomeScreen> {
     if (imageUrl.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          imageUrl,
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
           width: width,
           height: 52,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
+          placeholder: (context, url) => Container(
+            width: width,
+            height: 52,
+            color: Colors.grey.shade200,
+            child: const Icon(Icons.directions_car, size: 20),
+          ),
+          errorWidget: (context, url, error) => Container(
             width: width,
             height: 52,
             color: Colors.grey.shade200,

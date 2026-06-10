@@ -7,17 +7,17 @@ import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
 import {
-  isDemonstrationEnvironment,
-  showDemoSeedControls,
+    isDemonstrationEnvironment,
+    showDemoSeedControls,
 } from '../shared/environment';
 import {
-  deleteVehicle,
-  getVehicles,
-  updateVehicle,
+    deleteVehicle,
+    getVehicles,
+    updateVehicle,
 } from '../shared/firestoreService';
 import {
-  buildPersistedVinInsights,
-  getVehicleInsights,
+    buildPersistedVinInsights,
+    getVehicleInsights,
 } from '../utils/vehicleService';
 
 interface Vehicle {
@@ -470,10 +470,12 @@ export default function Home() {
                               <div className="flex items-center gap-3">
                                 <div className="h-12 w-16 rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex-shrink-0">
                                   {v.photoUrl ? (
-                                    <img
+                                    <CachedImage
                                       src={v.photoUrl}
                                       alt={`${yearText} ${makeText} ${modelText}`}
                                       className="h-full w-full object-cover"
+                                      width={64}
+                                      height={48}
                                     />
                                   ) : (
                                     <div className="h-full w-full flex items-center justify-center text-slate-400 text-lg">
@@ -578,10 +580,12 @@ export default function Home() {
                         <div className="flex items-start gap-3">
                           <div className="h-20 w-28 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex-shrink-0">
                             {selectedVehicle.photoUrl ? (
-                              <img
+                              <CachedImage
                                 src={selectedVehicle.photoUrl}
                                 alt={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
                                 className="h-full w-full object-cover"
+                                width={112}
+                                height={80}
                               />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-slate-400 text-2xl">

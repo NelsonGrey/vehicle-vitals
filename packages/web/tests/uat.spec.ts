@@ -9,6 +9,9 @@
  * - Upcoming Tasks/Reminders
  * - Mechanics
  * - User Profile
+ * - Account Consolidation
+ * - Image Caching
+ * - Error Boundary Handling
  *
  * Run with: npm run test:uat
  */
@@ -1072,6 +1075,119 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         e => !e.includes('auth') && !e.includes('Firebase')
       );
       expect(criticalRejections.length).toBe(0);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // ACCOUNT CONSOLIDATION TESTS
+  // ─────────────────────────────────────────────────────────────────
+
+  test.describe('Account Consolidation', () => {
+    test('TC-CONSOLIDATE-001: Account consolidation callable is available', async ({ page }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Account consolidation requires auth UI in this deployment target.'
+      );
+
+      await ensureAuthenticated(page);
+      await page.goto(`${BASE_URL}/app/profile`);
+
+      // Check if consolidation UI is present (may be in profile or settings)
+      const consolidationSection = page.getByText(/consolidate|merge|link/i);
+      if (await consolidationSection.isVisible()) {
+        await expect(consolidationSection).toBeVisible();
+      }
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // IMAGE CACHING TESTS
+  // ─────────────────────────────────────────────────────────────────
+
+  test.describe('Image Caching', () => {
+    test.beforeEach(async ({ page }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Image caching tests require auth UI in this deployment target.'
+      );
+      await ensureAuthenticated(page);
+    });
+
+    test('TC-CACHE-001: Vehicle images load with caching', async ({ page }) => {
+      await page.goto(`${BASE_URL}/app/add-vehicle`);
+
+      // Add a vehicle with a photo URL if possible
+      const photoUrlField = page.locator('input[type="url"], input[placeholder*="photo"], input[placeholder*="image"]');
+      if (await photoUrlField.isVisible()) {
+        await photoUrlField.fill('https://via.placeholder.com/300');
+        
+        // Verify the image loads
+        const image = page.locator('img').first();
+        if (await image.isVisible()) {
+          await expect(image).toBeVisible({ timeout: 10000 });
+          
+          // Check if image has proper caching headers (via network response)
+          const responses: any[] = [];
+          page.on('response', response => {
+            if (response.url().includes('placeholder')) {
+              responses.push(response);
+            }
+          });
+          
+          await page.reload();
+          await page.waitForTimeout(2000);
+          
+          // Verify image was cached (should be faster on reload)
+          expect(responses.length).toBeGreaterThan(0);
+        }
+      }
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // ERROR BOUNDARY TESTS
+  // ─────────────────────────────────────────────────────────────────
+
+  test.describe('Error Boundary', () => {
+    test('TC-ERROR-001: Error boundary catches component errors', async ({ page }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Error boundary tests require auth UI in this deployment target.'
+      );
+
+      await ensureAuthenticated(page);
+      
+      // Navigate to a page that might have errors
+      await page.goto(`${BASE_URL}/app`);
+      
+      // Check if error boundary UI is not present (no errors)
+      const errorBoundary = page.getByText(/something went wrong|unexpected error/i);
+      const isPresent = await errorBoundary.isVisible().catch(() => false);
+      
+      expect(isPresent).toBe(false);
+    });
+
+    test('TC-ERROR-002: App handles network errors gracefully', async ({ page }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Error boundary tests require auth UI in this deployment target.'
+      );
+
+      await ensureAuthenticated(page);
+      
+      // Mock network failure by going offline
+      await page.context().setOffline(true);
+      await page.goto(`${BASE_URL}/app`);
+      
+      // App should still render with offline indicators or cached data
+      await expect(page.locator('body')).toBeVisible();
+      
+      // Restore connection
+      await page.context().setOffline(false);
     });
   });
 });

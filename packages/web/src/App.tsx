@@ -1,13 +1,13 @@
 // File: web/src/App.tsx
 import { lazy, Suspense, useEffect } from 'react';
 import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
+    BrowserRouter,
+    Navigate,
+    Outlet,
+    Route,
+    Routes,
+    useLocation,
+    useNavigate,
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
 import Layout from './components/Layout';
@@ -17,13 +17,13 @@ import AdminSupport from './pages/AdminSupport';
 import { AuthProvider, useAuth } from './shared/AuthContext';
 import { DEFAULT_APP_REDIRECT } from './shared/authRedirect';
 import {
-  appEnvironment,
-  isDevelopmentEnvironment,
-  isMarketingOnlyEnvironment,
+    appEnvironment,
+    isDevelopmentEnvironment,
+    isMarketingOnlyEnvironment,
 } from './shared/environment';
 import {
-  buildReminderNotificationPath,
-  subscribeToForegroundMessages,
+    buildReminderNotificationPath,
+    subscribeToForegroundMessages,
 } from './shared/notificationService';
 import { analytics, logger } from './utils/logger';
 
@@ -463,7 +463,22 @@ function App() {
     </BrowserRouter>
   );
 
-  return appContent;
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        logger.error('Application error', {
+          category: 'error',
+          data: {
+            error: error.message,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+          },
+        });
+      }}
+    >
+      {appContent}
+    </ErrorBoundary>
+  );
 }
 
 export default App;

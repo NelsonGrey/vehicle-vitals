@@ -13,7 +13,7 @@ if (import.meta?.env?.DEV && typeof window !== 'undefined') {
       const { auth } = firebaseConfigModule;
       const { signInAnonymously, onAuthStateChanged } = firebaseAuthModule;
 
-      onAuthStateChanged(auth, user => {
+      onAuthStateChanged(auth, (user: any) => {
         if (!user) {
           // Attempt anonymous sign-in; ignore errors in case provider is disabled
           signInAnonymously(auth).catch(() => {});
@@ -21,7 +21,7 @@ if (import.meta?.env?.DEV && typeof window !== 'undefined') {
       });
     } catch (error) {
       // Silently ignore if Firebase is not available
-      console.debug('Firebase dev auth not available:', error.message);
+      console.debug('Firebase dev auth not available:', (error as Error).message);
     }
   }, 100);
 }

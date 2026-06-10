@@ -4,17 +4,28 @@ import {
   getDownloadURL,
   ref,
   uploadBytesResumable,
+  UploadTask,
+  StorageReference,
 } from 'firebase/storage';
 import { auth, storage } from './firebaseConfig';
+import type { Auth, FirebaseStorage } from 'firebase/auth';
 
-const getCurrentUserIdOrThrow = async () => {
+export interface UploadResult {
+  url: string;
+  path: string;
+  size: number;
+  type: string;
+  name: string;
+}
+
+const getCurrentUserIdOrThrow = async (): Promise<string> => {
   const current = auth.currentUser;
   if (current?.uid) {
     return current.uid;
   }
 
   return new Promise((resolve, reject) => {
-    const unsub = onAuthStateChanged(auth, user => {
+    const unsub = onAuthStateChanged(auth, (user: any) => {
       unsub();
       if (user?.uid) {
         resolve(user.uid);
@@ -26,10 +37,13 @@ const getCurrentUserIdOrThrow = async () => {
 };
 
 // Upload file to Firebase Storage
-export const uploadFile = async (file, path) => {
+export const uploadFile = async (
+  file: File,
+  path: string
+): Promise<UploadResult> => {
   try {
-    const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const storageRef: StorageReference = ref(storage, path);
+    const uploadTask: UploadTask = uploadBytesResumable(storageRef, file);
 
     return new Promise((resolve, reject) => {
       uploadTask.on(
@@ -66,9 +80,9 @@ export const uploadFile = async (file, path) => {
 };
 
 // Delete file from Firebase Storage
-export const deleteFile = async path => {
+export const deleteFile = async (path: string): Promise<void> => {
   try {
-    const storageRef = ref(storage, path);
+    const storageRef: StorageReference = ref(storage, path);
     await deleteObject(storageRef);
   } catch (error) {
     console.error('Error deleting file:', error);
@@ -78,10 +92,10 @@ export const deleteFile = async path => {
 
 // Generate storage path for maintenance attachments
 export const generateMaintenanceAttachmentPath = async (
-  vin,
-  maintenanceId,
-  fileName
-) => {
+  vin: string,
+  maintenanceId: string,
+  fileName: string
+): Promise<string> => {
   const userId = await getCurrentUserIdOrThrow();
   const timestamp = Date.now();
   const extension = fileName.split('.').pop();
@@ -90,17 +104,20 @@ export const generateMaintenanceAttachmentPath = async (
 
 // Generate storage path for vehicle record attachments
 export const generateVehicleRecordAttachmentPath = async (
-  vin,
-  recordId,
-  fileName
-) => {
+  vin: string,
+  recordId: string,
+  fileName: string
+): Promise<string> => {
   const userId = await getCurrentUserIdOrThrow();
   const timestamp = Date.now();
   const extension = fileName.includes('.') ? fileName.split('.').pop() : 'bin';
   return `users/${userId}/vehicles/${vin}/records/${recordId}/${timestamp}.${extension}`;
 };
 
-export const generateVehiclePhotoPath = async (vin, fileName) => {
+export const generateVehiclePhotoPath = async (
+  vin: string,
+  fileName: string
+): Promise<string> => {
   const userId = await getCurrentUserIdOrThrow();
   const timestamp = Date.now();
   const extension = fileName.includes('.') ? fileName.split('.').pop() : 'jpg';

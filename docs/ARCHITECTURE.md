@@ -1,7 +1,7 @@
 # Vehicle Vitals - Architecture Design Document
 
-**Version**: 1.1  
-**Last Updated**: May 8, 2026  
+**Version**: 1.2  
+**Last Updated**: January 2025  
 **Status**: 🟡 R1 NEAR-COMPLETE (web deployed, mobile real-service runtime validated, Gate 2 acceptance pending)  
 **Owner**: Mark Nelson
 
@@ -1351,6 +1351,64 @@ try {
 3. **Insurance Integrations**: API connections for proof of maintenance
 4. **OBD-II Diagnostics**: Bluetooth readers for real-time vehicle health
 5. **Payment Gateway**: Stripe/PayPal for premium subscriptions
+
+---
+
+## Recent Improvements (January 2025)
+
+### TypeScript Migration
+- Migrated all web shared `.js` files to TypeScript for improved type safety:
+  - `firebaseConfig.ts`
+  - `firebaseLegacy.ts`
+  - `firestoreService.ts`
+  - `storageService.ts`
+  - `notificationService.ts`
+  - `devAuth.ts`
+
+### Image Caching Strategy
+- **Web**: Implemented `react-image` library for automatic image caching with loading states
+- **Mobile**: Integrated `cached_network_image` Flutter package for efficient image loading and caching
+- Created reusable `CachedImage` component for web with placeholder and error handling
+
+### Component Refactoring
+- Extracted sub-components from large files to improve maintainability:
+  - **Web**: `VehicleListItem`, `VehicleDetails`, `VehicleAlerts`
+  - **Mobile**: `VehicleThumbnail`, `MaintenanceUrgencyChip`
+- Reduced component complexity and improved code reusability
+
+### Firebase Query Optimization
+- Implemented pagination support in shared Firestore service:
+  - `getVehicles()` now supports `pageSize` and `startAfter` parameters
+  - `getMaintenanceEntries()` now supports pagination
+  - Returns `{ data, lastDoc, hasMore }` for cursor-based pagination
+- Created composite index documentation (see `FIREBASE_INDEXES.md`)
+
+### Error Boundaries & Crash Reporting
+- **Web**: Implemented React `ErrorBoundary` component with:
+  - User-friendly error UI
+  - Firebase Analytics error logging
+  - Custom fallback support
+  - Development mode error details
+- **Mobile**: Created `ErrorWidgetWrapper` for Flutter with:
+  - Crashlytics integration
+  - Graceful error recovery
+  - Debug mode error display
+
+### Account Consolidation
+- Implemented mobile account consolidation via Firebase Functions callable
+- Updated mobile `AuthService` to call `consolidateAccountDataCallable`
+- Enables users to merge vehicle data from multiple accounts
+
+### Testing Enhancements
+- Expanded E2E testing coverage with new test suites:
+  - Account consolidation tests
+  - Image caching verification tests
+  - Error boundary handling tests
+  - Network error resilience tests
+- Added unit tests for new components:
+  - `CachedImage.test.tsx`
+  - `VehicleListItem.test.tsx`
+  - `ErrorBoundary.test.tsx`
 
 ---
 

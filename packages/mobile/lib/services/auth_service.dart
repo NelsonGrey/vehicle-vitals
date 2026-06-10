@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
@@ -301,12 +302,27 @@ class AuthService extends ChangeNotifier {
       throw Exception('Sign in first before consolidating accounts.');
     }
 
-    // Note: Full implementation requires firebase_functions package
-    // This is a placeholder that would call consolidateAccountDataCallable
-    throw Exception(
-      'Account consolidation via Firebase Functions is not yet available in the mobile app. '
-      'Please use the web interface to consolidate your accounts.',
-    );
+    try {
+      final functions = FirebaseFunctions.instance;
+      final callable = functions.httpsCallable('consolidateAccountDataCallable');
+      
+      final result = await callable({
+        'sourceUid': sourceUid,
+        'idempotencyKey': idempotencyKey,
+      });
+
+      return result.data as Map<String, dynamic>;
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('Firebase Functions error: ${e.code} - ${e.message}');
+      throw Exception(
+        'Failed to consolidate accounts: ${e.message ?? "Unknown error"}',
+      );
+    } catch (e) {
+      debugPrint('Account consolidation error: $e');
+      throw Exception(
+        'Failed to consolidate accounts: ${e.toString()}',
+      );
+    }
   }
 
   @override

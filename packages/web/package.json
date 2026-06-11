@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@vehicle-vitals/shared": "file:../shared",
-    "firebase": "^12.3.0",
+    "firebase": "^12.14.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "papaparse": "^5.5.3",
@@ -46,6 +46,7 @@
     "@firebase/app-compat": "^0.5.6",
     "@firebase/rules-unit-testing": "^5.0.1",
     "@playwright/test": "^1.40.0",
+    "@tailwindcss/postcss": "^4.3.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -63,6 +64,6 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^5.6.3",
     "vite": "^8.0.16",
-    "vitest": "^3.2.6"
+    "vitest": "^4.1.8"
   }
 }

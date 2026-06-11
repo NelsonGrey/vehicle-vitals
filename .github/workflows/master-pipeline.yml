@@ -233,7 +233,8 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          npm ci --legacy-peer-deps || npm ci --force
 
       - name: Run Web Unit Tests
         run: |
@@ -256,10 +257,12 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.38.4'
 
       - name: Install Mobile Dependencies
         run: |
           cd packages/mobile
+          rm -f pubspec.lock
           flutter pub get
 
       - name: Run Mobile Unit Tests

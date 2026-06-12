@@ -1,4 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { trackEvent } from '../shared/firebaseConfig';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -24,20 +25,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
-    // Log to Firebase Crashlytics if available
-    if (typeof window !== 'undefined' && (window as any).firebase) {
-      try {
-        const { getAnalytics, logEvent } = await import('firebase/analytics');
-        const analytics = getAnalytics();
-        logEvent(analytics, 'error_boundary_caught', {
-          error_message: error.message,
-          error_stack: error.stack,
-          component_stack: errorInfo.componentStack,
-        });
-      } catch (e) {
-        console.warn('Failed to log error to Firebase:', e);
-      }
-    }
+    trackEvent('error_boundary_caught', {
+      error_message: error.message,
+      error_stack: error.stack ?? '',
+      component_stack: errorInfo.componentStack ?? '',
+    });
 
     // Call custom error handler if provided
     if (this.props.onError) {
@@ -118,3 +110,5 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return this.props.children;
   }
 }
+
+export default ErrorBoundary;

@@ -1,6 +1,6 @@
 # Phase 1 Implementation Status
 
-**Last Updated**: May 27, 2026  
+**Last Updated**: June 11, 2026  
 **Status**: 🟢 CORE INFRASTRUCTURE COMPLETE; RELEASE HARDENING IN PROGRESS
 
 ---
@@ -229,9 +229,11 @@ function EditVehicleScreen() {
 **Unit Tests (Monetization)**:
 
 - [x] `featureFlags.test.ts` - Feature gate logic
-- [ ] `subscriptionService.test.ts` - Subscription state management
-- [ ] `adAnalytics.test.ts` - Event tracking
-- [ ] `quotaService.test.ts` - Quota calculations
+- [x] `subscriptionService.test.ts` - Subscription state management
+- [x] `adAnalytics.test.ts` - Event tracking
+- [x] `quotaService.test.ts` - Quota calculations
+- [x] `firestoreServiceFactory.pagination.test.ts` - Firestore cursor pagination
+- [x] `CachedImage.test.tsx`, `VehicleListItem.test.tsx`, `ErrorBoundary.test.tsx` - Garage UX hardening
 - [x] `adPlacements.test.ts` - Ad rendering logic
 
 **Integration / Acceptance Tests**:

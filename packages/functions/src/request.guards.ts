@@ -9,6 +9,22 @@ interface RateState {
 
 const rateStateByKey = new Map<string, RateState>();
 
+function normalizeIpCandidate(value: unknown): string {
+  return String(value || "")
+    .trim()
+    .replace(/^\[(.*)\]$/, "$1")
+    .replace(/:\d+$/, "");
+}
+
+function isTrustedProxyAddress(ip: string): boolean {
+  return /^(::1|127\.0\.0\.1|::ffff:127\.0\.0\.1)$/.test(ip) ||
+    /^10\./.test(ip) ||
+    /^192\.168\./.test(ip) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip) ||
+    /^fc00:/i.test(ip) ||
+    /^fd/i.test(ip);
+}
+
 /**
  * Parse a boolean environment variable.
  * @param {string} name Environment variable name
@@ -38,11 +54,15 @@ function numberFromEnv(name: string, defaultValue: number): number {
  * @return {string} Client IP string
  */
 function getClientIp(request: Request): string {
+  const directIp = normalizeIpCandidate(request.ip || "unknown");
   const forwarded = (request.headers["x-forwarded-for"] || "").toString();
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
+  if (forwarded && isTrustedProxyAddress(directIp)) {
+    const firstForwarded = normalizeIpCandidate(forwarded.split(",")[0]);
+    if (firstForwarded) {
+      return firstForwarded;
+    }
   }
-  return (request.ip || "unknown").toString();
+  return directIp || "unknown";
 }
 
 /**

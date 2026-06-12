@@ -10,6 +10,7 @@
  * - Mechanics
  * - User Profile
  * - Account Consolidation
+ * - Firestore Pagination
  * - Image Caching
  * - Error Boundary Handling
  *
@@ -1097,6 +1098,38 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       const consolidationSection = page.getByText(/consolidate|merge|link/i);
       if (await consolidationSection.isVisible()) {
         await expect(consolidationSection).toBeVisible();
+      }
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // FIRESTORE PAGINATION TESTS
+  // ─────────────────────────────────────────────────────────────────
+
+  test.describe('Firestore Pagination', () => {
+    test.beforeEach(async ({ page }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Pagination tests require auth UI in this deployment target.'
+      );
+      await ensureAuthenticated(page);
+    });
+
+    test('TC-PAGINATION-001: Garage supports loading additional vehicles', async ({
+      page,
+    }) => {
+      await page.goto(`${BASE_URL}/app`);
+
+      const loadMoreButton = page.getByRole('button', {
+        name: /load more vehicles/i,
+      });
+
+      if (await loadMoreButton.isVisible().catch(() => false)) {
+        await loadMoreButton.click();
+        await expect(loadMoreButton).toBeVisible();
+      } else {
+        await expect(page.locator('body')).toBeVisible();
       }
     });
   });

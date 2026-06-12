@@ -1,5 +1,21 @@
 # IMMEDIATE TESTING INSTRUCTIONS
 
+## Local Quick Validation (June 11, 2026 update)
+
+Run these after Firebase-backed garage improvements (pagination, cached images, error boundaries):
+
+1. `cd packages/shared && npx vitest run tests/firestoreServiceFactory.pagination.test.ts`
+2. `cd packages/web`
+3. `npm run test -- tests/CachedImage.test.tsx tests/VehicleListItem.test.tsx tests/ErrorBoundary.test.tsx tests/Home.test.jsx`
+4. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-PAGINATION-001|TC-CACHE-001|TC-ERROR-001|TC-ERROR-002"`
+
+Coverage objective for this update:
+
+- Firestore pagination returns `{ data, lastDoc, hasMore }` when `pageSize` is provided and remains backward compatible without options.
+- Garage page renders `VehicleListItem` thumbnails through `CachedImage` and can load additional vehicle pages.
+- Web `ErrorBoundary` reports caught UI failures to Firebase Analytics.
+- Mobile Crashlytics receives global widget/runtime errors through `ErrorWidget.builder`.
+
 ## Local Quick Validation (May 26, 2026 update)
 
 Run these before triggering GitHub Actions to validate navigation, auth-aware header visibility, shell/ad layout behavior, and dedicated marketing preview routes.

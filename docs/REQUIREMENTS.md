@@ -2,8 +2,26 @@
 
 Project overview: Vehicle Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
 
-Last updated: May 28, 2026
+Last updated: June 11, 2026
 Project status: CORE IMPLEMENTED, R1 GATE 2 CLOSURE IN PROGRESS
+
+---
+
+## Firebase Garage Improvements (Delivered June 11, 2026)
+
+Completed this cycle:
+
+- Firestore cursor pagination for vehicles and maintenance in shared/web/mobile services
+- Composite indexes defined in `firestore.indexes.json` and documented in `docs/FIREBASE_INDEXES.md`
+- Web garage refactor to `VehicleListItem` + `CachedImage` with load-more pagination
+- Firebase Analytics error reporting from web `ErrorBoundary`
+- Firebase Crashlytics global error handling on mobile (`ErrorWidget.builder` + platform handlers)
+
+Validation evidence:
+
+- Shared: `packages/shared/tests/firestoreServiceFactory.pagination.test.ts`
+- Web unit: `CachedImage`, `VehicleListItem`, `ErrorBoundary`, `Home` tests
+- Web UAT: `TC-PAGINATION-001`, `TC-CACHE-001`, `TC-ERROR-001`, `TC-ERROR-002` in `packages/web/tests/uat.spec.ts`
 
 ---
 

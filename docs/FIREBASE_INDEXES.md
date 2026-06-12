@@ -42,6 +42,14 @@ query(collection(db, `users/${userId}/vehicles/${vin}/maintenance`),
 );
 ```
 
+## Source of Truth
+
+Composite index definitions are checked into `firestore.indexes.json` at the repository root. Deploy from the monorepo root:
+
+```bash
+firebase deploy --only firestore:indexes
+```
+
 ## Deployment
 
 To deploy these indexes to your Firebase project, run:
@@ -71,20 +79,31 @@ The following single field indexes are automatically created by Firestore and do
 The shared firestore service now supports pagination:
 
 ```javascript
-// First page
+// First page (paginated response)
 const result = await getVehicles({ pageSize: 50 });
 console.log(result.data); // Array of vehicles
 console.log(result.lastDoc); // Last document snapshot for next page
 console.log(result.hasMore); // Boolean indicating if more pages exist
 
+// Legacy callers can still omit options and receive a plain array.
+const allVehicles = await getVehicles();
+
 // Next page
 if (result.hasMore) {
-  const nextPage = await getVehicles({ 
-    pageSize: 50, 
-    startAfter: result.lastDoc 
+  const nextPage = await getVehicles({
+    pageSize: 50,
+    startAfter: result.lastDoc,
   });
 }
 ```
+
+### Web Garage Integration
+
+`packages/web/src/pages/Home.tsx` loads the first page on mount and exposes a **Load more vehicles** control when Firestore reports additional pages.
+
+### Mobile Integration
+
+`packages/mobile/lib/services/firestore_service.dart` exposes `getVehiclesPaginated()` and `getMaintenanceEntriesPaginated()` for the same cursor-based Firestore queries.
 
 ## Performance Considerations
 

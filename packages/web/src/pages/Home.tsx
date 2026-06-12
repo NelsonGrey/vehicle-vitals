@@ -4,6 +4,8 @@ import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
+import { CachedImage } from '../components/CachedImage';
+import { VehicleListItem } from '../components/VehicleListItem';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
 import {
@@ -83,7 +85,11 @@ export default function Home() {
   const { user } = useAuth();
   const showBobDemoSeedControls =
     showDemoSeedControls && isDemonstrationEnvironment;
+  const VEHICLE_PAGE_SIZE = 50;
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehiclesLastDoc, setVehiclesLastDoc] = useState<unknown>(null);
+  const [hasMoreVehicles, setHasMoreVehicles] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isBackfillingInsights, setIsBackfillingInsights] = useState(false);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
   const [isSeedingDemo, setIsSeedingDemo] = useState(false);
@@ -93,10 +99,67 @@ export default function Home() {
     Record<string, VehicleAlert>
   >({});
 
+  const applyVehiclePage = useCallback(
+    (
+      result:
+        | Vehicle[]
+        | { data: Vehicle[]; lastDoc: unknown; hasMore: boolean },
+      append = false
+    ) => {
+      if (Array.isArray(result)) {
+        setVehicles(result);
+        setVehiclesLastDoc(null);
+        setHasMoreVehicles(false);
+        return;
+      }
+
+      setVehicles(current =>
+        append ? [...current, ...result.data] : result.data
+      );
+      setVehiclesLastDoc(result.lastDoc);
+      setHasMoreVehicles(result.hasMore);
+    },
+    []
+  );
+
   const refreshVehicles = useCallback(async () => {
-    const list = await getVehicles();
-    setVehicles(list);
-  }, []);
+    const result = await getVehicles({ pageSize: VEHICLE_PAGE_SIZE });
+    applyVehiclePage(result as Vehicle[] | {
+      data: Vehicle[];
+      lastDoc: unknown;
+      hasMore: boolean;
+    });
+  }, [VEHICLE_PAGE_SIZE, applyVehiclePage]);
+
+  const loadMoreVehicles = useCallback(async () => {
+    if (!hasMoreVehicles || !vehiclesLastDoc || isLoadingMore) {
+      return;
+    }
+
+    setIsLoadingMore(true);
+    try {
+      const result = await getVehicles({
+        pageSize: VEHICLE_PAGE_SIZE,
+        startAfter: vehiclesLastDoc,
+      });
+      applyVehiclePage(
+        result as Vehicle[] | {
+          data: Vehicle[];
+          lastDoc: unknown;
+          hasMore: boolean;
+        },
+        true
+      );
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [
+    VEHICLE_PAGE_SIZE,
+    applyVehiclePage,
+    hasMoreVehicles,
+    isLoadingMore,
+    vehiclesLastDoc,
+  ]);
 
   const normalizedSearch = searchTerm.toLowerCase();
   const filteredVehicles = vehicles.filter(v => {
@@ -457,80 +520,15 @@ export default function Home() {
                             );
                           }
                           return (
-                            <button
+                            <VehicleListItem
                               key={vinText}
-                              type="button"
-                              onClick={() => setSelectedVin(vinText)}
-                              className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                                isSelected
-                                  ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
-                                  : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="h-12 w-16 rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex-shrink-0">
-                                  {v.photoUrl ? (
-                                    <CachedImage
-                                      src={v.photoUrl}
-                                      alt={`${yearText} ${makeText} ${modelText}`}
-                                      className="h-full w-full object-cover"
-                                      width={64}
-                                      height={48}
-                                    />
-                                  ) : (
-                                    <div className="h-full w-full flex items-center justify-center text-slate-400 text-lg">
-                                      🚗
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
-                                    {yearText} {makeText} {modelText}
-                                  </div>
-                                  <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                                    {vinText}
-                                    {v.mileage ? ` • ${v.mileage} mi` : ''}
-                                  </div>
-                                </div>
-                              </div>
-                              {getVehicleStatus(v) === 'stored' && (
-                                <div className="mt-1 text-xs">
-                                  <span className="inline-block rounded-full bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 px-2 py-0.5">
-                                    Stored
-                                  </span>
-                                </div>
-                              )}
-                              {Number(v.recallsCount || 0) > 0 && (
-                                <div className="mt-1.5 text-xs">
-                                  <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5">
-                                    {v.recallsCount} recall
-                                    {Number(v.recallsCount) === 1 ? '' : 's'}
-                                  </span>
-                                </div>
-                              )}
-                              {portfolioProgress.required > 0 && (
-                                <div className="mt-1 text-xs">
-                                  <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5">
-                                    Records: {portfolioProgress.complete}/
-                                    {portfolioProgress.required}
-                                  </span>
-                                </div>
-                              )}
-                              {vehicleAlerts[v.vin]?.level === 'urgent' && (
-                                <div className="mt-1 text-xs">
-                                  <span className="inline-block rounded-full bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 px-2 py-0.5">
-                                    ⚠ Maintenance due!
-                                  </span>
-                                </div>
-                              )}
-                              {vehicleAlerts[v.vin]?.level === 'soon' && (
-                                <div className="mt-1 text-xs">
-                                  <span className="inline-block rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-2 py-0.5">
-                                    Service due soon
-                                  </span>
-                                </div>
-                              )}
-                            </button>
+                              vehicle={v}
+                              isSelected={isSelected}
+                              onSelect={setSelectedVin}
+                              alertLevel={vehicleAlerts[v.vin]?.level ?? null}
+                              portfolioComplete={portfolioProgress.complete}
+                              portfolioRequired={portfolioProgress.required}
+                            />
                           );
                         })();
                       })}
@@ -548,6 +546,16 @@ export default function Home() {
                   <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
                     No vehicles match this search.
                   </div>
+                )}
+                {hasMoreVehicles && !normalizedSearch && (
+                  <button
+                    type="button"
+                    onClick={loadMoreVehicles}
+                    disabled={isLoadingMore}
+                    className="w-full mt-3 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-60"
+                  >
+                    {isLoadingMore ? 'Loading more vehicles…' : 'Load more vehicles'}
+                  </button>
                 )}
               </div>
             </div>

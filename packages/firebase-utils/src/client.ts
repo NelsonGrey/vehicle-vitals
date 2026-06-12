@@ -221,8 +221,6 @@ export class FirestoreCrudHelpers {
     options?: { merge?: boolean }
   ): Promise<void> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
-
     const updateData = {
       ...data,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -303,7 +301,6 @@ export class FirestoreCrudHelpers {
     userId: string
   ): Promise<Array<{ id: string; data: any }>> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
     const batch = db.batch();
     const results = [];
 
@@ -336,7 +333,6 @@ export class FirestoreCrudHelpers {
     updates: Array<{ id: string; data: any }>
   ): Promise<void> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
     const batch = db.batch();
 
     for (const update of updates) {

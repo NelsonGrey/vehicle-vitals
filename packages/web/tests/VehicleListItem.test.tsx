@@ -1,7 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { VehicleListItem } from '../src/components/VehicleListItem';
 
 describe('VehicleListItem Component', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   const mockVehicle = {
     vin: '1HGCM82633A123456',
     make: 'Honda',
@@ -17,18 +23,19 @@ describe('VehicleListItem Component', () => {
       <VehicleListItem
         vehicle={mockVehicle}
         isSelected={false}
-        onSelect={jest.fn()}
+        onSelect={vi.fn()}
         alertLevel={null}
       />
     );
 
     expect(screen.getByText('2020 Honda Civic')).toBeInTheDocument();
-    expect(screen.getByText('1HGCM82633A123456')).toBeInTheDocument();
-    expect(screen.getByText('50,000 mi')).toBeInTheDocument();
+    expect(screen.getByText(/1HGCM82633A123456/)).toBeInTheDocument();
+    expect(screen.getByText(/50000 mi/)).toBeInTheDocument();
   });
 
-  it('calls onSelect when clicked', () => {
-    const handleSelect = jest.fn();
+  it('calls onSelect when clicked', async () => {
+    const user = userEvent.setup();
+    const handleSelect = vi.fn();
     render(
       <VehicleListItem
         vehicle={mockVehicle}
@@ -38,8 +45,7 @@ describe('VehicleListItem Component', () => {
       />
     );
 
-    const button = screen.getByRole('button');
-    button.click();
+    await user.click(screen.getByTestId('vehicle-list-item-1HGCM82633A123456'));
     expect(handleSelect).toHaveBeenCalledWith('1HGCM82633A123456');
   });
 
@@ -48,13 +54,14 @@ describe('VehicleListItem Component', () => {
       <VehicleListItem
         vehicle={mockVehicle}
         isSelected={true}
-        onSelect={jest.fn()}
+        onSelect={vi.fn()}
         alertLevel={null}
       />
     );
 
-    const button = screen.getByRole('button');
-    expect(button).toHaveClass('border-slate-500');
+    expect(
+      screen.getByTestId('vehicle-list-item-1HGCM82633A123456')
+    ).toHaveClass('border-slate-500');
   });
 
   it('shows urgent alert', () => {
@@ -62,7 +69,7 @@ describe('VehicleListItem Component', () => {
       <VehicleListItem
         vehicle={mockVehicle}
         isSelected={false}
-        onSelect={jest.fn()}
+        onSelect={vi.fn()}
         alertLevel="urgent"
       />
     );
@@ -75,7 +82,7 @@ describe('VehicleListItem Component', () => {
       <VehicleListItem
         vehicle={mockVehicle}
         isSelected={false}
-        onSelect={jest.fn()}
+        onSelect={vi.fn()}
         alertLevel="soon"
       />
     );
@@ -89,7 +96,7 @@ describe('VehicleListItem Component', () => {
       <VehicleListItem
         vehicle={storedVehicle}
         isSelected={false}
-        onSelect={jest.fn()}
+        onSelect={vi.fn()}
         alertLevel={null}
       />
     );

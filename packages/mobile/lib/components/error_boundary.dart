@@ -1,6 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
+/// Wraps the app tree and reports uncaught async errors to Firebase Crashlytics.
+class ErrorWidgetWrapper extends StatelessWidget {
+  final Widget child;
+
+  const ErrorWidgetWrapper({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return child;
+  }
+}
+
+/// Optional route-level error boundary for recoverable widget failures.
 class ErrorBoundary extends StatefulWidget {
   final Widget child;
   final Widget Function(Object error, StackTrace? stackTrace)? errorBuilder;
@@ -26,11 +40,20 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
           _defaultErrorBuilder(context, _error!, _stackTrace);
     }
 
-    return ErrorWidget.builder(
-      error: FlutterErrorDetails(
-        exception: _error ?? Exception('Unknown error'),
-        stack: _stackTrace,
-      ),
+    return widget.child;
+  }
+
+  void reportError(Object error, StackTrace stackTrace) {
+    setState(() {
+      _error = error;
+      _stackTrace = stackTrace;
+    });
+
+    FirebaseCrashlytics.instance.recordError(
+      error,
+      stackTrace,
+      fatal: false,
+      information: ['Error caught by ErrorBoundary'],
     );
   }
 
@@ -95,83 +118,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
                   });
                 },
                 child: const Text('Try Again'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _handleError(Object error, StackTrace stackTrace) {
-    setState(() {
-      _error = error;
-      _stackTrace = stackTrace;
-    });
-
-    // Log to Firebase Crashlytics
-    FirebaseCrashlytics.instance.recordError(
-      error,
-      stackTrace,
-      fatal: false,
-      information: ['Error caught by ErrorBoundary'],
-    );
-  }
-}
-
-class ErrorWidgetWrapper extends StatelessWidget {
-  final Widget child;
-
-  const ErrorWidgetWrapper({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ErrorBoundary(
-      child: child,
-      errorBuilder: (error, stackTrace) {
-        return _defaultErrorBuilder(context, error, stackTrace);
-      },
-    );
-  }
-
-  static Widget _defaultErrorBuilder(
-    BuildContext context,
-    Object error,
-    StackTrace? stackTrace,
-  ) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Error'),
-        backgroundColor: Colors.red.shade700,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Something went wrong',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please restart the app.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),

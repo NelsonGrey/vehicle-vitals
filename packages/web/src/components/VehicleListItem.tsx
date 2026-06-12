@@ -8,6 +8,7 @@ interface Vehicle {
   vehicleStatus?: 'active' | 'stored';
   photoUrl?: string;
   mileage?: string;
+  recallsCount?: number;
 }
 
 interface VehicleListItemProps {
@@ -15,6 +16,8 @@ interface VehicleListItemProps {
   isSelected: boolean;
   onSelect: (vin: string) => void;
   alertLevel: 'urgent' | 'soon' | null;
+  portfolioComplete?: number;
+  portfolioRequired?: number;
 }
 
 export const VehicleListItem: React.FC<VehicleListItemProps> = ({
@@ -22,6 +25,8 @@ export const VehicleListItem: React.FC<VehicleListItemProps> = ({
   isSelected,
   onSelect,
   alertLevel,
+  portfolioComplete = 0,
+  portfolioRequired = 0,
 }) => {
   const vinText = vehicle.vin || '';
   const yearText = vehicle.year || '';
@@ -36,6 +41,7 @@ export const VehicleListItem: React.FC<VehicleListItemProps> = ({
   return (
     <button
       type="button"
+      data-testid={`vehicle-list-item-${vinText}`}
       onClick={() => onSelect(vinText)}
       className={`w-full text-left rounded-lg border p-3 transition-colors ${
         isSelected
@@ -69,11 +75,24 @@ export const VehicleListItem: React.FC<VehicleListItemProps> = ({
           </div>
         </div>
       </div>
+      <div className="mt-1 flex flex-wrap gap-1">
       {isStored && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200 mt-2">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
           Stored
         </span>
       )}
+      {Number(vehicle.recallsCount || 0) > 0 && (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+          {vehicle.recallsCount} recall
+          {Number(vehicle.recallsCount) === 1 ? '' : 's'}
+        </span>
+      )}
+      {portfolioRequired > 0 && (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">
+          Records: {portfolioComplete}/{portfolioRequired}
+        </span>
+      )}
+      </div>
       {alertLevel === 'urgent' && (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mt-2">
           ⚠ Maintenance due!

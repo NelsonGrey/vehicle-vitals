@@ -863,8 +863,9 @@ When adding new features:
 ✅ **DO**:
 
 - Use `const` constructors wherever possible
-- Implement pagination for long lists
-- Cache images locally
+- Use Firestore cursor pagination via `getVehicles({ pageSize })` / `getVehiclesPaginated()` (see `docs/FIREBASE_INDEXES.md`)
+- Render vehicle thumbnails with `CachedImage` (web) or `VehicleThumbnail` (mobile)
+- Let recoverable UI failures flow through `ErrorBoundary` (web Analytics) and Crashlytics (mobile)
 - Use `Hero` animations for transitions
 
 ❌ **DON'T**:

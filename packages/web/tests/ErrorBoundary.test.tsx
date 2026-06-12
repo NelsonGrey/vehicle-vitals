@@ -1,7 +1,28 @@
-import { render, screen } from '@testing-library/react';
-import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import ErrorBoundary from '../src/components/ErrorBoundary';
+
+vi.mock('../src/shared/firebaseConfig', () => ({
+  trackEvent: vi.fn(),
+}));
+
+const ErrorComponent = () => {
+  throw new Error('Test error');
+};
 
 describe('ErrorBoundary Component', () => {
+  const consoleErrorSpy = vi
+    .spyOn(console, 'error')
+    .mockImplementation(() => {});
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
   it('renders children when there is no error', () => {
     render(
       <ErrorBoundary>
@@ -13,45 +34,13 @@ describe('ErrorBoundary Component', () => {
   });
 
   it('renders error fallback when an error is thrown', () => {
-    const ThrowError = () => {
-      throw new Error('Test error');
-    };
-
     render(
       <ErrorBoundary>
-        <ThrowError />
+        <ErrorComponent />
       </ErrorBoundary>
     );
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
   });
 
-  it('renders custom fallback when provided', () => {
-    const ThrowError = () => {
-      throw new Error('Test error');
-    };
-
-    render(
-      <ErrorBoundary fallback={<div>Custom Error</div>}>
-        <ThrowError />
-      </ErrorBoundary>
-    );
-
-    expect(screen.getByText('Custom Error')).toBeInTheDocument();
-  });
-
-  it('calls onError callback when error occurs', () => {
-    const onError = jest.fn();
-    const ThrowError = () => {
-      throw new Error('Test error');
-    };
-
-    render(
-      <ErrorBoundary onError={onError}>
-        <ThrowError />
-      </ErrorBoundary>
-    );
-
-    expect(onError).toHaveBeenCalled();
-  });
 });

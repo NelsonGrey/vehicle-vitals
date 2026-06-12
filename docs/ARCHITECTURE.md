@@ -1,7 +1,7 @@
 # Vehicle Vitals - Architecture Design Document
 
 **Version**: 1.2  
-**Last Updated**: January 2025  
+**Last Updated**: June 11, 2026  
 **Status**: 🟡 R1 NEAR-COMPLETE (web deployed, mobile real-service runtime validated, Gate 2 acceptance pending)  
 **Owner**: Mark Nelson
 
@@ -1354,7 +1354,7 @@ try {
 
 ---
 
-## Recent Improvements (January 2025)
+## Recent Improvements (June 2026)
 
 ### TypeScript Migration
 - Migrated all web shared `.js` files to TypeScript for improved type safety:
@@ -1384,15 +1384,8 @@ try {
 - Created composite index documentation (see `FIREBASE_INDEXES.md`)
 
 ### Error Boundaries & Crash Reporting
-- **Web**: Implemented React `ErrorBoundary` component with:
-  - User-friendly error UI
-  - Firebase Analytics error logging
-  - Custom fallback support
-  - Development mode error details
-- **Mobile**: Created `ErrorWidgetWrapper` for Flutter with:
-  - Crashlytics integration
-  - Graceful error recovery
-  - Debug mode error display
+- **Web**: React `ErrorBoundary` logs recoverable UI failures through Firebase Analytics via `trackEvent('error_boundary_caught', …)` in `packages/web/src/shared/firebaseConfig.ts`.
+- **Mobile**: Global `ErrorWidget.builder` and `FlutterError.onError` handlers report build/runtime failures to Firebase Crashlytics; optional route-level `ErrorBoundary` supports local recovery.
 
 ### Account Consolidation
 - Implemented mobile account consolidation via Firebase Functions callable

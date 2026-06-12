@@ -178,6 +178,28 @@ class FirestoreService {
     return snapshot.docs.map((doc) => Vehicle.fromMap(doc.data())).toList();
   }
 
+  Future<PaginatedVehicles> getVehiclesPaginated({
+    int pageSize = 50,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+  }) async {
+    Query<Map<String, dynamic>> query = _vehiclesCollection
+        .orderBy('updatedAt', descending: true)
+        .limit(pageSize);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final snapshot = await query.get();
+    return PaginatedVehicles(
+      data: snapshot.docs
+          .map((doc) => Vehicle.fromMap(doc.data()))
+          .toList(),
+      lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      hasMore: snapshot.docs.length == pageSize,
+    );
+  }
+
   // Add or update a vehicle
   Future<void> addOrUpdateVehicle(Vehicle vehicle) async {
     final docRef = _vehiclesCollection.doc(vehicle.vin);
@@ -224,6 +246,29 @@ class FirestoreService {
     return snapshot.docs
         .map((doc) => Maintenance.fromMap(doc.data(), doc.id))
         .toList();
+  }
+
+  Future<PaginatedMaintenance> getMaintenanceEntriesPaginated(
+    String vin, {
+    int pageSize = 50,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+  }) async {
+    Query<Map<String, dynamic>> query = _maintenanceCollection(vin)
+        .orderBy('date', descending: true)
+        .limit(pageSize);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final snapshot = await query.get();
+    return PaginatedMaintenance(
+      data: snapshot.docs
+          .map((doc) => Maintenance.fromMap(doc.data(), doc.id))
+          .toList(),
+      lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      hasMore: snapshot.docs.length == pageSize,
+    );
   }
 
   // Add maintenance entry
@@ -331,4 +376,28 @@ class FirestoreService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
+}
+
+class PaginatedVehicles {
+  final List<Vehicle> data;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+  final bool hasMore;
+
+  const PaginatedVehicles({
+    required this.data,
+    required this.lastDoc,
+    required this.hasMore,
+  });
+}
+
+class PaginatedMaintenance {
+  final List<Maintenance> data;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+  final bool hasMore;
+
+  const PaginatedMaintenance({
+    required this.data,
+    required this.lastDoc,
+    required this.hasMore,
+  });
 }

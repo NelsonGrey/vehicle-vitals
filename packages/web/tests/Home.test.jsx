@@ -44,7 +44,11 @@ function renderHome() {
 describe('Home – smart maintenance alert badges', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getVehicles.mockResolvedValue([TOYOTA]);
+    getVehicles.mockResolvedValue({
+      data: [TOYOTA],
+      lastDoc: null,
+      hasMore: false,
+    });
     getUpcomingMaintenance.mockReturnValue([]);
   });
 
@@ -201,17 +205,21 @@ describe('Home – smart maintenance alert badges', () => {
   });
 
   it('renders active and storage sections with status summary', async () => {
-    getVehicles.mockResolvedValue([
-      { ...TOYOTA, vin: 'VIN001', vehicleStatus: 'active' },
-      {
-        ...TOYOTA,
-        vin: 'VIN002',
-        make: 'Ford',
-        model: 'Bronco',
-        year: '2021',
-        vehicleStatus: 'stored',
-      },
-    ]);
+    getVehicles.mockResolvedValue({
+      data: [
+        { ...TOYOTA, vin: 'VIN001', vehicleStatus: 'active' },
+        {
+          ...TOYOTA,
+          vin: 'VIN002',
+          make: 'Ford',
+          model: 'Bronco',
+          year: '2021',
+          vehicleStatus: 'stored',
+        },
+      ],
+      lastDoc: null,
+      hasMore: false,
+    });
 
     renderHome();
 

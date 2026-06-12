@@ -11,8 +11,6 @@ export default defineConfig({
       shared: path.resolve(__dirname, '../shared/src'),
       // resolve workspace package imports
       '@vehicle-vitals/shared': path.resolve(__dirname, '../shared/src'),
-      // ensure firebase imports resolve to web package node_modules
-      firebase: path.resolve(__dirname, 'node_modules/firebase'),
     },
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },

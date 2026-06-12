@@ -154,11 +154,12 @@ export class FirestoreCrudHelpers {
 
   private static async getDb() {
     if (!this.db) {
-      const admin = await import('firebase-admin');
-      if (!admin.apps.length) {
-        admin.initializeApp();
+      const adminModule =
+        (await import('firebase-admin')) as unknown as typeof import('firebase-admin');
+      if (!adminModule.apps.length) {
+        adminModule.initializeApp();
       }
-      this.db = admin.firestore();
+      this.db = adminModule.firestore();
     }
     return this.db;
   }
@@ -173,13 +174,14 @@ export class FirestoreCrudHelpers {
     options?: { id?: string; merge?: boolean }
   ): Promise<{ id: string; data: any }> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
+    const adminModule =
+      (await import('firebase-admin')) as unknown as typeof import('firebase-admin');
 
     const documentData = {
       ...data,
       createdBy: userId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: adminModule.firestore.FieldValue.serverTimestamp(),
+      updatedAt: adminModule.firestore.FieldValue.serverTimestamp(),
     };
 
     let docRef: any;

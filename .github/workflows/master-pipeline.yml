@@ -933,44 +933,6 @@ jobs:
 
           exit $BUILD_EXIT
 
-      - name: Trigger App Hosting Rollout
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
-          FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING }}
-          FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD }}
-          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
-        run: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "❌ FIREBASE_TOKEN is not set"
-            exit 1
-          fi
-
-          case "$TARGET_ENV" in
-            production)
-              PROJECT_ID="$FIREBASE_PROJECT_PROD"
-              GIT_BRANCH="main"
-              ;;
-            staging)
-              PROJECT_ID="$FIREBASE_PROJECT_STAGING"
-              GIT_BRANCH="staging"
-              ;;
-            *)
-              PROJECT_ID="$FIREBASE_PROJECT_DEV"
-              GIT_BRANCH="develop"
-              ;;
-          esac
-
-          if [ -z "$PROJECT_ID" ]; then
-            echo "❌ Firebase project id is not configured for environment: $TARGET_ENV"
-            exit 1
-          fi
-
-          firebase apphosting:rollouts:create vehicle-vitals \
-            --project="$PROJECT_ID" \
-            --git-branch="$GIT_BRANCH" \
-            --force
-
   deploy-firebase:
     name: Deploy Firebase
     needs: [load-config, build-web]
@@ -1000,7 +962,7 @@ jobs:
           chmod +x scripts/ci-guard-no-data-migration.sh
           ./scripts/ci-guard-no-data-migration.sh
 
-      - name: Deploy Firestore and Functions Only
+      - name: Deploy Hosting, Firestore and Functions
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
@@ -1040,8 +1002,8 @@ jobs:
           firebase deploy \
             --project="$PROJECT_ID" \
             --token="$FIREBASE_TOKEN" \
-            --only firestore,functions \
-            --message="Firestore/Functions deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+            --only firestore,functions,hosting \
+            --message="Hosting/Firestore/Functions deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
             --force \
             --non-interactive 2>&1 | tee /tmp/firebase-deploy.log
           DEPLOY_EXIT=${PIPESTATUS[0]}

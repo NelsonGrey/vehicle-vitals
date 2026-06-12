@@ -10,6 +10,7 @@ import {
     useNavigate,
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';

@@ -36,6 +36,19 @@ const VEHICLE_TYPE_OPTIONS = [
   'Other',
 ].sort((a, b) => a.localeCompare(b));
 
+const VEHICLE_SUBTYPE_OPTIONS: Record<string, string[]> = {
+  RVs: ['Camping / Travel Trailer', 'Fifth Wheel', 'Motorhome', 'Other RV'].sort(
+    (a, b) => a.localeCompare(b)
+  ),
+  Trailers: [
+    'Boat Trailer',
+    'Camping / Travel Trailer',
+    'Horse Trailer',
+    'Utility Trailer',
+    'Other Trailer',
+  ].sort((a, b) => a.localeCompare(b)),
+};
+
 const AUTOMOBILE_MAKES = [
   'Acura',
   'Audi',
@@ -129,6 +142,7 @@ export default function AddVehicle() {
     () => [...models].sort((a, b) => a.localeCompare(b)),
     [models]
   );
+  const subtypeOptions = VEHICLE_SUBTYPE_OPTIONS[form.vehicleType] || [];
   const detectedIdentifierType = detectVehicleIdentifierType(
     form.vin || '',
     (form as any).vehicleType
@@ -159,9 +173,12 @@ export default function AddVehicle() {
         vehicleType: value,
         make: value !== prev.vehicleType ? '' : prev.make,
         model: value !== prev.vehicleType ? '' : prev.model,
+        vehicleSubtype: value !== prev.vehicleType ? '' : (prev as any).vehicleSubtype,
       }));
       setMakeQuery('');
       setModelQuery('');
+    } else if (name === 'vehicleSubtype') {
+      setForm(prev => ({ ...prev, vehicleSubtype: value }));
     } else if (name === 'make') {
       setForm(prev => ({ ...prev, [name]: value, model: '' }));
       setMakeQuery(value);
@@ -470,6 +487,35 @@ export default function AddVehicle() {
                 ))}
               </select>
             </div>
+
+            {subtypeOptions.length > 0 ? (
+              <div>
+                <label
+                  htmlFor="vehicleSubtype"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
+                >
+                  Vehicle Subtype
+                </label>
+                <select
+                  id="vehicleSubtype"
+                  name="vehicleSubtype"
+                  value={(form as any).vehicleSubtype || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                >
+                  <option value="">Select Subtype</option>
+                  {subtypeOptions.map(type => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                  Motorhome is a subtype of RV. Camping and travel trailers are
+                  tracked separately so maintenance estimates stay specific.
+                </p>
+              </div>
+            ) : null}
 
             <div>
               <label

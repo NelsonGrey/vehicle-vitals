@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { CachedImage } from '../components/CachedImage';
+import VehicleHealthPanel from '../components/VehicleHealthPanel';
 import { VehicleListItem } from '../components/VehicleListItem';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
@@ -14,9 +15,11 @@ import {
 } from '../shared/environment';
 import {
     deleteVehicle,
+    getMaintenanceEntries,
     getVehicles,
     updateVehicle,
 } from '../shared/firestoreService';
+import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
 import {
     buildPersistedVinInsights,
     getVehicleInsights,
@@ -51,6 +54,16 @@ interface UpcomingItem {
   nextDueMileage: number;
 }
 
+interface MaintenanceEntry {
+  id?: string;
+  title?: string;
+  serviceType?: string;
+  description?: string;
+  date?: string;
+  mileage?: string;
+  notes?: string;
+}
+
 type AlertLevel = 'urgent' | 'soon' | null;
 
 interface VehicleAlert {
@@ -83,6 +96,9 @@ function getPortfolioRequiredProgress(vehicle: Vehicle) {
 
 export default function Home() {
   const { user } = useAuth();
+  const { tier } = useSubscription();
+  const hasPlanning12mo = useFeatureFlag('maintenance_planning_12mo');
+  const hasPlanning36mo = useFeatureFlag('maintenance_planning_36mo');
   const showBobDemoSeedControls =
     showDemoSeedControls && isDemonstrationEnvironment;
   const VEHICLE_PAGE_SIZE = 50;
@@ -98,6 +114,10 @@ export default function Home() {
   const [vehicleAlerts, setVehicleAlerts] = useState<
     Record<string, VehicleAlert>
   >({});
+  const [maintenanceEntriesByVin, setMaintenanceEntriesByVin] = useState<
+    Record<string, MaintenanceEntry[]>
+  >({});
+  const [loadingHealthVin, setLoadingHealthVin] = useState<string | null>(null);
 
   const applyVehiclePage = useCallback(
     (
@@ -231,6 +251,46 @@ export default function Home() {
       setSelectedVin(filteredVehicles[0]?.vin || null);
     }
   }, [filteredVehicles, selectedVin, vehicles.length]);
+
+  useEffect(() => {
+    if (!selectedVin || maintenanceEntriesByVin[selectedVin]) {
+      return;
+    }
+
+    let isActive = true;
+    setLoadingHealthVin(selectedVin);
+
+    void getMaintenanceEntries(selectedVin)
+      .then(entries => {
+        if (!isActive) {
+          return;
+        }
+
+        setMaintenanceEntriesByVin(current => ({
+          ...current,
+          [selectedVin]: Array.isArray(entries) ? entries : [],
+        }));
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setMaintenanceEntriesByVin(current => ({
+          ...current,
+          [selectedVin]: [],
+        }));
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoadingHealthVin(current => (current === selectedVin ? null : current));
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [maintenanceEntriesByVin, selectedVin]);
 
   const backfillVinInsights = useCallback(
     async (automatic = false) => {
@@ -581,6 +641,11 @@ export default function Home() {
 
                   const portfolioProgress =
                     getPortfolioRequiredProgress(selectedVehicle);
+                  const healthEntries =
+                    maintenanceEntriesByVin[selectedVehicle.vin] ?? [];
+                  const isLoadingHealth =
+                    loadingHealthVin === selectedVehicle.vin &&
+                    !maintenanceEntriesByVin[selectedVehicle.vin];
 
                   return (
                     <>
@@ -661,6 +726,15 @@ export default function Home() {
                           </span>
                         )}
                       </div>
+
+                      <VehicleHealthPanel
+                        vehicle={selectedVehicle}
+                        maintenanceEntries={healthEntries}
+                        tier={tier}
+                        hasPlanning12mo={hasPlanning12mo}
+                        hasPlanning36mo={hasPlanning36mo}
+                        loading={isLoadingHealth}
+                      />
 
                       {/* Upcoming Maintenance */}
                       {vehicleAlerts[selectedVehicle.vin] && (

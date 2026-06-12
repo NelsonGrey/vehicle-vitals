@@ -101,7 +101,7 @@ describe('AddVehicle page', () => {
       screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /decode vin/i })
+      screen.getByRole('button', { name: /vin lookup/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /add vehicle/i })
@@ -156,7 +156,7 @@ describe('AddVehicle page', () => {
       screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
       '1HGCM82633A004352'
     );
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     await waitFor(() => {
       expect(mockDecodeVin).toHaveBeenCalledWith('1HGCM82633A004352');
@@ -188,7 +188,7 @@ describe('AddVehicle page', () => {
 
   it('shows decode alert if VIN is blank', async () => {
     renderPage();
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
     expect(global.alert).toHaveBeenCalled();
     const alertMessage = global.alert.mock.calls[0]?.[0] || '';
     expect(alertMessage).toMatch(/non-VIN assets/i);
@@ -202,7 +202,7 @@ describe('AddVehicle page', () => {
       screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
       '1HGCM82633A004353'
     );
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     expect(global.alert).toHaveBeenCalledWith(
       'VIN decode requires a valid 17-character VIN with a correct check digit.'
@@ -215,13 +215,13 @@ describe('AddVehicle page', () => {
 
     await userEvent.selectOptions(
       screen.getByLabelText(/vehicle type/i),
-      'Boat'
+      'Boats'
     );
     await userEvent.type(
       screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
       'ABC12345A595'
     );
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     expect(global.alert).toHaveBeenCalledWith(
       'Decode currently supports VIN only. Detected HIN. You can still save this vehicle ID and complete details manually.'

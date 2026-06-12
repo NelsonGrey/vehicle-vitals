@@ -163,3 +163,8 @@ export {
   getUpcomingMaintenance,
   manufacturerSchedules,
 } from './maintenanceSchedules.js';
+export {
+  computeVehicleHealthSnapshot,
+  inferHealthComponentIds,
+  VEHICLE_HEALTH_COMPONENTS,
+} from './vehicleHealth.js';

@@ -1,7 +1,7 @@
 // -----------------------------
 // File: web/pages/AddVehicle.tsx
 import { defaultVehicle } from '@vehicle-vitals/shared';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UpgradeModal from '../components/UpgradeModal';
 import useVehicleOptions from '../hooks/useVehicleOptions';
@@ -24,17 +24,45 @@ import {
 } from '../utils/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
-  'Car',
-  'Truck',
-  'Motorcycle',
-  'Recreational Vehicle (RV)',
-  'Boat',
-  'Van',
-  'SUV',
-  'Trailer',
-  'ATV/UTV',
+  'ATVs / UTVs',
+  'Automobiles',
+  'Boats',
+  'Motorcycles',
+  'RVs',
+  'SUVs',
+  'Trailers',
+  'Trucks',
+  'Vans',
   'Other',
-];
+].sort((a, b) => a.localeCompare(b));
+
+const AUTOMOBILE_MAKES = [
+  'Acura',
+  'Audi',
+  'BMW',
+  'Buick',
+  'Cadillac',
+  'Chevrolet',
+  'Chrysler',
+  'Dodge',
+  'Ford',
+  'GMC',
+  'Honda',
+  'Hyundai',
+  'Infiniti',
+  'Jeep',
+  'Kia',
+  'Lexus',
+  'Lincoln',
+  'Mazda',
+  'Mercedes-Benz',
+  'Nissan',
+  'Subaru',
+  'Tesla',
+  'Toyota',
+  'Volkswagen',
+  'Volvo',
+].sort((a, b) => a.localeCompare(b));
 
 const VEHICLE_STATUS_OPTIONS = [
   { value: 'active', label: 'In Garage' },
@@ -60,9 +88,14 @@ const sanitizeImageUrl = (value: unknown): string => {
 };
 
 export default function AddVehicle() {
-  const [form, setForm] = useState({ ...defaultVehicle });
+  const [form, setForm] = useState({
+    ...defaultVehicle,
+    vehicleType: 'Automobiles',
+  });
   const [plateValidationError, setPlateValidationError] = useState<string>();
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [makeQuery, setMakeQuery] = useState('');
+  const [modelQuery, setModelQuery] = useState('');
   const [insights, setInsights] = useState<{
     recallsCount: number;
     recallsSource: string;
@@ -84,6 +117,18 @@ export default function AddVehicle() {
     useUpgradePrompt();
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form.year, make: form.make });
+  const sortedYears = useMemo(
+    () => [...years].sort((a, b) => a.localeCompare(b)),
+    [years]
+  );
+  const sortedMakes = useMemo(() => {
+    const source = form.vehicleType === 'Automobiles' ? AUTOMOBILE_MAKES : makes;
+    return [...source].sort((a, b) => a.localeCompare(b));
+  }, [form.vehicleType, makes]);
+  const sortedModels = useMemo(
+    () => [...models].sort((a, b) => a.localeCompare(b)),
+    [models]
+  );
   const detectedIdentifierType = detectVehicleIdentifierType(
     form.vin || '',
     (form as any).vehicleType
@@ -108,9 +153,33 @@ export default function AddVehicle() {
       const validation = validateLicensePlate(normalized);
       setPlateValidationError(validation.error);
       setForm(prev => ({ ...prev, [name]: normalized }));
+    } else if (name === 'vehicleType') {
+      setForm(prev => ({
+        ...prev,
+        vehicleType: value,
+        make: value !== prev.vehicleType ? '' : prev.make,
+        model: value !== prev.vehicleType ? '' : prev.model,
+      }));
+      setMakeQuery('');
+      setModelQuery('');
+    } else if (name === 'make') {
+      setForm(prev => ({ ...prev, [name]: value, model: '' }));
+      setMakeQuery(value);
+      setModelQuery('');
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const resetForm = () => {
+    setForm({
+      ...defaultVehicle,
+      vehicleType: 'Automobiles',
+    });
+    setMakeQuery('');
+    setModelQuery('');
+    setPlateValidationError(undefined);
+    setInsights(null);
   };
 
   const handleSubmit = async () => {
@@ -232,6 +301,12 @@ export default function AddVehicle() {
         year: year || prev.year,
         vehicleType: vehicleType || prev.vehicleType,
       }));
+      if (make) {
+        setMakeQuery(make);
+      }
+      if (model) {
+        setModelQuery(model);
+      }
       setInsights({
         recallsCount: Number(recallsCount || 0),
         recallsSource: (recallsSource || 'NHTSA').toString(),
@@ -365,8 +440,37 @@ export default function AddVehicle() {
           <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4">
             Vehicle Setup
           </h3>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="mb-4 text-sm font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
+          >
+            Reset / Clear
+          </button>
 
           <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="vehicleType"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
+              >
+                Vehicle Type
+              </label>
+              <select
+                id="vehicleType"
+                name="vehicleType"
+                value={form.vehicleType || 'Automobiles'}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                {VEHICLE_TYPE_OPTIONS.map(type => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label
                 htmlFor="year"
@@ -382,7 +486,7 @@ export default function AddVehicle() {
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               >
                 <option value="">Select Year</option>
-                {years.map((y: string) => (
+                {sortedYears.map((y: string) => (
                   <option key={y} value={y}>
                     {y}
                   </option>
@@ -392,51 +496,139 @@ export default function AddVehicle() {
 
             <div>
               <label
+                htmlFor="vin"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
+              >
+                Vehicle ID (VIN/HIN/Serial)
+              </label>
+              <input
+                id="vin"
+                type="text"
+                name="vin"
+                value={form.vin}
+                onChange={handleChange}
+                placeholder="VIN, HIN, or serial number"
+                className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-600"
+              />
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                A vehicle ID is required to save. Vehicle lookup can fill year,
+                make, model, specs, and recall data for compatible vehicles, and
+                you can edit missing fields before saving.
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Identifier type detected: {detectedIdentifierLabel}. Lookup
+                currently supports VIN only.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleDecodeVin}
+                className="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+              >
+                VIN Lookup
+              </button>
+              <p className="m-0 text-xs text-slate-500 dark:text-slate-400">
+                Optional lookup. You can continue manually if you prefer.
+              </p>
+            </div>
+
+            <div>
+              <label
                 htmlFor="make"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
               >
                 Make
               </label>
-              <select
+              <input
                 id="make"
                 name="make"
                 value={form.make}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={loadingMakes}
-              >
-                <option value="">
-                  {loadingMakes ? 'Loading makes…' : 'Select Make'}
-                </option>
-                {makes.map((m: string) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
+                onChange={event => {
+                  setMakeQuery(event.target.value);
+                  handleChange(event);
+                }}
+                list="make-options"
+                placeholder={
+                  form.vehicleType === 'Automobiles'
+                    ? 'Automobile Manufacturers'
+                    : 'Type to search makes'
+                }
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
+              <datalist id="make-options">
+                {sortedMakes.map((m: string) => (
+                  <option key={m} value={m} />
                 ))}
-              </select>
+              </datalist>
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+                  Type to search and pick from the alphabetical list.
+                </p>
+                {makeQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMakeQuery('');
+                      setForm(prev => ({ ...prev, make: '' }));
+                    }}
+                    className="text-xs font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             <div>
               <label
-                htmlFor="vehicleType"
+                htmlFor="model"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
               >
-                Vehicle Type
+                Model
               </label>
-              <select
-                id="vehicleType"
-                name="vehicleType"
-                value={form.vehicleType || ''}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
-              >
-                <option value="">Select Vehicle Type</option>
-                {VEHICLE_TYPE_OPTIONS.map(type => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
+              <input
+                id="model"
+                name="model"
+                value={form.model}
+                onChange={event => {
+                  setModelQuery(event.target.value);
+                  handleChange(event);
+                }}
+                list="model-options"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={!form.year || !form.make || loadingModels}
+                placeholder={
+                  loadingModels
+                    ? 'Loading models…'
+                    : !form.year || !form.make
+                      ? 'Select year & make first'
+                      : 'Type to search models'
+                }
+              />
+              <datalist id="model-options">
+                {sortedModels.map((m: string) => (
+                  <option key={m} value={m} />
                 ))}
-              </select>
+              </datalist>
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+                  Models are sorted alphabetically.
+                </p>
+                {modelQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModelQuery('');
+                      setForm(prev => ({ ...prev, model: '' }));
+                    }}
+                    className="text-xs font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             <div>
@@ -467,85 +659,48 @@ export default function AddVehicle() {
 
             <div>
               <label
-                htmlFor="model"
+                htmlFor="licensePlate"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
               >
-                Model
+                License Plate
               </label>
-              <select
-                id="model"
-                name="model"
-                value={form.model}
+              <input
+                id="licensePlate"
+                type="text"
+                name="licensePlate"
+                value={form.licensePlate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={!form.year || !form.make || loadingModels}
-              >
-                <option value="">
-                  {loadingModels
-                    ? 'Loading models…'
-                    : !form.year || !form.make
-                      ? 'Select year & make first'
-                      : 'Select Model'}
-                </option>
-                {models.map((m: string) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+                placeholder="Plate number (optional)"
+                className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 ${
+                  plateValidationError
+                    ? 'border-red-300 dark:border-red-600'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}
+              />
+              {plateValidationError && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                  {plateValidationError}
+                </p>
+              )}
             </div>
 
-            {(['vin', 'licensePlate', 'mileage'] as const).map(field => (
-              <div key={field}>
-                <label
-                  htmlFor={field}
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
-                >
-                  {field === 'licensePlate'
-                    ? 'License Plate'
-                    : field === 'vin'
-                      ? 'Vehicle ID (VIN/HIN/Serial)'
-                      : field.charAt(0).toUpperCase() + field.slice(1)}
-                </label>
-                <input
-                  id={field}
-                  type="text"
-                  name={field}
-                  value={form[field]}
-                  onChange={handleChange}
-                  placeholder={
-                    field === 'vin'
-                      ? 'VIN, HIN, or serial number'
-                      : field === 'licensePlate'
-                        ? 'Plate number (optional)'
-                        : 'Current mileage'
-                  }
-                  className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 ${
-                    field === 'licensePlate' && plateValidationError
-                      ? 'border-red-300 dark:border-red-600'
-                      : 'border-slate-300 dark:border-slate-600'
-                  }`}
-                />
-                {field === 'vin' && (
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                    A vehicle ID is required to save. Vehicle lookup can fill
-                    year, make, model, specs, and recall data for compatible
-                    vehicles, and you can edit missing fields before saving.
-                  </p>
-                )}
-                {field === 'vin' && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
-                    Identifier type detected: {detectedIdentifierLabel}. Decode
-                    currently supports VIN only.
-                  </p>
-                )}
-                {field === 'licensePlate' && plateValidationError && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                    {plateValidationError}
-                  </p>
-                )}
-              </div>
-            ))}
+            <div>
+              <label
+                htmlFor="mileage"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1"
+              >
+                Mileage
+              </label>
+              <input
+                id="mileage"
+                type="text"
+                name="mileage"
+                value={form.mileage}
+                onChange={handleChange}
+                placeholder="Current mileage"
+                className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-600"
+              />
+            </div>
 
             <div>
               <label
@@ -581,13 +736,13 @@ export default function AddVehicle() {
                 </div>
               ) : null}
               <div className="flex flex-col gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  disabled={photoBusy}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
-                />
+              <input
+                type="file"
+                accept="image/*,.heic,.heif"
+                onChange={handlePhotoUpload}
+                disabled={photoBusy}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
                 <button
                   type="button"
                   onClick={handleAutoPhotoLookup}
@@ -605,20 +760,13 @@ export default function AddVehicle() {
 
             <div className="flex flex-col gap-2 pt-2">
               <button
-                type="button"
-                onClick={handleDecodeVin}
-                className="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-              >
-                Decode VIN (VIN only)
-              </button>
-              <button
                 onClick={handleSubmit}
                 className="w-full bg-slate-700 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
               >
                 Add Vehicle
               </button>
               <p className="m-0 text-xs text-slate-500 dark:text-slate-400">
-                Decode is optional. A vehicle ID remains the primary identifier.
+                Lookup is optional. A vehicle ID remains the primary identifier.
               </p>
             </div>
           </div>
@@ -631,7 +779,7 @@ export default function AddVehicle() {
 
           {!insights ? (
             <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
-              Decode a VIN to preview the vehicle profile, recall count, and
+              Lookup a VIN to preview the vehicle profile, recall count, and
               spec fields that will be saved with this vehicle. If lookup is
               incomplete, update the form manually and continue.
             </div>

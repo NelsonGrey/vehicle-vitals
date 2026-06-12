@@ -1,5 +1,5 @@
 // Firebase Client SDK Utilities
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
 import {

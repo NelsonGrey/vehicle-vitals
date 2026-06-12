@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './components.css';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles.css';
 
 declare global {

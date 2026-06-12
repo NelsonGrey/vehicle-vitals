@@ -58,6 +58,9 @@ describe('SiteHeader', () => {
 
     expect(vinDecodeLink).toBeVisible();
     expect(
+      within(header).getByRole('link', { name: /Subscriptions/i })
+    ).toBeVisible();
+    expect(
       within(header).getByRole('link', { name: /Maintenance/i })
     ).toBeVisible();
     expect(

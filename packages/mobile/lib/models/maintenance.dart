@@ -2,6 +2,7 @@ class Maintenance {
   final String id;
   final String title;
   final String notes;
+  final String mileage;
   final double cost;
   final String performedBy;
   final String coverage;
@@ -13,6 +14,7 @@ class Maintenance {
     required this.id,
     required this.title,
     this.notes = '',
+    this.mileage = '',
     this.cost = 0.0,
     this.performedBy = 'mechanic',
     this.coverage = 'parts_and_labor',
@@ -26,6 +28,7 @@ class Maintenance {
       id: docId,
       title: map['title'] ?? '',
       notes: map['notes'] ?? '',
+      mileage: (map['mileage'] ?? '').toString(),
       cost: (map['cost'] ?? 0.0).toDouble(),
       performedBy: (map['performedBy'] ?? 'mechanic').toString(),
       coverage: (map['coverage'] ?? 'parts_and_labor').toString(),
@@ -51,6 +54,7 @@ class Maintenance {
     return {
       'title': title,
       'notes': notes,
+      'mileage': mileage,
       'cost': cost,
       'performedBy': performedBy,
       'coverage': coverage,
@@ -64,6 +68,7 @@ class Maintenance {
     String? id,
     String? title,
     String? notes,
+    String? mileage,
     double? cost,
     String? performedBy,
     String? coverage,
@@ -75,6 +80,7 @@ class Maintenance {
       id: id ?? this.id,
       title: title ?? this.title,
       notes: notes ?? this.notes,
+      mileage: mileage ?? this.mileage,
       cost: cost ?? this.cost,
       performedBy: performedBy ?? this.performedBy,
       coverage: coverage ?? this.coverage,

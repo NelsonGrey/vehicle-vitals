@@ -83,6 +83,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 </>
               ) : (
                 <>
+                  <Link to="/subscription" className={linkClass}>
+                    Subscriptions
+                  </Link>
                   <Link to="/vin-decode-demo" className={linkClass}>
                     VIN Decode
                   </Link>

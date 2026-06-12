@@ -1,5 +1,9 @@
 // Firebase Client SDK Utilities
-import admin from 'firebase-admin';
+import {
+  getApps as getAdminApps,
+  initializeApp as initializeAdminApp,
+} from 'firebase-admin/app';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
@@ -153,10 +157,10 @@ export class FirestoreCrudHelpers {
 
   private static async getDb() {
     if (!this.db) {
-      if (!admin.apps.length) {
-        admin.initializeApp();
+      if (!getAdminApps().length) {
+        initializeAdminApp();
       }
-      this.db = admin.firestore();
+      this.db = getFirestore();
     }
     return this.db;
   }
@@ -174,8 +178,8 @@ export class FirestoreCrudHelpers {
     const documentData = {
       ...data,
       createdBy: userId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     let docRef: any;
@@ -223,7 +227,7 @@ export class FirestoreCrudHelpers {
     const db = await this.getDb();
     const updateData = {
       ...data,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     if (options?.merge) {
@@ -308,8 +312,8 @@ export class FirestoreCrudHelpers {
       const documentData = {
         ...doc.data,
         createdBy: userId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       };
 
       let docRef: any;
@@ -338,7 +342,7 @@ export class FirestoreCrudHelpers {
     for (const update of updates) {
       const updateData = {
         ...update.data,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       };
 
       const docRef = db.collection(collection).doc(update.id);

@@ -16,8 +16,14 @@ const mockJsPDF = {
   lastAutoTable: { finalY: 100 },
 };
 
+const mockJsPdfConstructor = vi.hoisted(() =>
+  vi.fn(function () {
+    return mockJsPDF;
+  })
+);
+
 vi.mock('jspdf', () => ({
-  default: vi.fn().mockImplementation(() => mockJsPDF),
+  default: mockJsPdfConstructor,
 }));
 
 vi.mock('jspdf-autotable', () => ({}));
@@ -64,12 +70,17 @@ const mockDate = new Date('2025-10-20T00:00:00.000Z');
 const OriginalDate = global.Date;
 const originalToLocaleDateString = Date.prototype.toLocaleDateString;
 beforeEach(() => {
-  global.Date = vi.fn((...args) => {
-    if (args.length === 0) {
-      return new OriginalDate(mockDate);
+  class MockDate extends OriginalDate {
+    constructor(...args) {
+      if (args.length === 0) {
+        super(mockDate);
+        return;
+      }
+      super(...args);
     }
-    return new OriginalDate(...args);
-  });
+  }
+
+  global.Date = MockDate;
   global.Date.now = vi.fn(() => mockDate.getTime());
   global.Date.prototype.toISOString = OriginalDate.prototype.toISOString;
 

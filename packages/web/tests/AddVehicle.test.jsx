@@ -108,6 +108,37 @@ describe('AddVehicle page', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows subtype options for RVs and trailers', async () => {
+    renderPage();
+
+    expect(
+      screen.queryByLabelText(/vehicle subtype/i)
+    ).not.toBeInTheDocument();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'RVs'
+    );
+    expect(screen.getByLabelText(/vehicle subtype/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: /motorhome/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: /camping \/ travel trailer/i })
+    ).toBeInTheDocument();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'Trailers'
+    );
+    expect(
+      screen.getByRole('option', { name: /boat trailer/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: /utility trailer/i })
+    ).toBeInTheDocument();
+  });
+
   it('shows validation alert when saving without VIN', async () => {
     renderPage();
 
@@ -183,6 +214,33 @@ describe('AddVehicle page', () => {
       expect(payload.vin).toBe('1HGCM82633A004352');
       expect(global.alert).toHaveBeenCalledWith('Vehicle added successfully');
       expect(mockNavigate).toHaveBeenCalledWith('/app');
+    });
+  });
+
+  it('persists RV subtype selection when saving', async () => {
+    mockAddOrUpdateVehicle.mockResolvedValue(undefined);
+
+    renderPage();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'RVs'
+    );
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle subtype/i),
+      'Motorhome'
+    );
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      'RV1234567'
+    );
+    await userEvent.click(screen.getByRole('button', { name: /add vehicle/i }));
+
+    await waitFor(() => {
+      expect(mockAddOrUpdateVehicle).toHaveBeenCalled();
+      expect(mockAddOrUpdateVehicle.mock.calls[0][0].vehicleSubtype).toBe(
+        'Motorhome'
+      );
     });
   });
 

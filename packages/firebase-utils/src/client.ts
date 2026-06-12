@@ -3,7 +3,10 @@ import {
   getApps as getAdminApps,
   initializeApp as initializeAdminApp,
 } from 'firebase-admin/app';
-import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import {
+  FieldValue as AdminFieldValue,
+  getFirestore as getAdminFirestore,
+} from 'firebase-admin/firestore';
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
@@ -160,7 +163,7 @@ export class FirestoreCrudHelpers {
       if (!getAdminApps().length) {
         initializeAdminApp();
       }
-      this.db = getFirestore();
+      this.db = getAdminFirestore();
     }
     return this.db;
   }
@@ -178,8 +181,8 @@ export class FirestoreCrudHelpers {
     const documentData = {
       ...data,
       createdBy: userId,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: AdminFieldValue.serverTimestamp(),
+      updatedAt: AdminFieldValue.serverTimestamp(),
     };
 
     let docRef: any;
@@ -227,7 +230,7 @@ export class FirestoreCrudHelpers {
     const db = await this.getDb();
     const updateData = {
       ...data,
-      updatedAt: FieldValue.serverTimestamp(),
+      updatedAt: AdminFieldValue.serverTimestamp(),
     };
 
     if (options?.merge) {
@@ -312,8 +315,8 @@ export class FirestoreCrudHelpers {
       const documentData = {
         ...doc.data,
         createdBy: userId,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: AdminFieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
       };
 
       let docRef: any;
@@ -342,7 +345,7 @@ export class FirestoreCrudHelpers {
     for (const update of updates) {
       const updateData = {
         ...update.data,
-        updatedAt: FieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
       };
 
       const docRef = db.collection(collection).doc(update.id);

@@ -934,11 +934,21 @@ jobs:
 
           exit $BUILD_EXIT
 
+      - name: Upload Web Build Artifact
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-dist-${{ needs.load-config.outputs.target_environment }}
+          path: packages/web/dist
+          if-no-files-found: error
+
   deploy-firebase:
     name: Deploy Firebase
     needs: [load-config, build-web]
     if: |
+      always() &&
       needs.load-config.outputs.firebase_enabled == 'true' &&
+      needs.build-web.result == 'success' &&
       (needs.load-config.outputs.trigger_context == 'build_and_deploy' ||
        needs.load-config.outputs.trigger_context == 'deploy_only')
     runs-on: ubuntu-latest
@@ -957,6 +967,12 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
+
+      - name: Download Web Build Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: web-dist-${{ needs.load-config.outputs.target_environment }}
+          path: packages/web/dist
 
       - name: Enforce No Data Migration Policy
         run: |

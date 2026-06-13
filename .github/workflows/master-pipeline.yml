@@ -662,6 +662,7 @@ jobs:
     name: Build Web App
     needs: [load-config, quality-gate]
     if: |
+      always() &&
       needs.load-config.outputs.web_enabled == 'true' &&
       (((needs.load-config.outputs.trigger_context == 'build_all' ||
          needs.load-config.outputs.trigger_context == 'build_and_deploy') &&

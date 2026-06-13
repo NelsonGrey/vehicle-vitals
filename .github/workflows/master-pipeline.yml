@@ -986,6 +986,7 @@ jobs:
           FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING }}
           FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD }}
           TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+          TRIGGER_CONTEXT: ${{ needs.load-config.outputs.trigger_context }}
           FUNCTIONS_DISCOVERY_TIMEOUT: "60000"
         run: |
           if [ -z "$FIREBASE_TOKEN" ]; then
@@ -1015,12 +1016,18 @@ jobs:
 
           cp "$CONFIG_FILE" firebase.json
 
+          DEPLOY_TARGETS="firestore,functions,hosting"
+          if [ "$TARGET_ENV" = "production" ] && [ "$TRIGGER_CONTEXT" = "deploy_only" ]; then
+            echo "[info] Production deploy_only run detected; deploying firestore+hosting only"
+            DEPLOY_TARGETS="firestore,hosting"
+          fi
+
           set +e
           firebase deploy \
             --project="$PROJECT_ID" \
             --token="$FIREBASE_TOKEN" \
-            --only firestore,functions,hosting \
-            --message="Hosting/Firestore/Functions deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+            --only "$DEPLOY_TARGETS" \
+            --message="Firebase deploy (${DEPLOY_TARGETS}) from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
             --force \
             --non-interactive 2>&1 | tee /tmp/firebase-deploy.log
           DEPLOY_EXIT=${PIPESTATUS[0]}

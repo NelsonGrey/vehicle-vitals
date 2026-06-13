@@ -30,6 +30,7 @@ import {
   getStorage,
   FirebaseStorage,
 } from 'firebase/storage';
+import { resolveAppEnvironment } from './environment';
 
 export interface FirebaseConfig {
   apiKey: string;
@@ -128,9 +129,15 @@ const validateFirebaseClientConfig = (): void => {
 };
 
 const resolveEnvironmentName = (): string => {
-  const raw =
-    import.meta.env.VITE_ENVIRONMENT || import.meta.env.MODE || 'development';
-  return String(raw).trim().toLowerCase();
+  const hostname =
+    typeof window !== 'undefined' ? window.location.hostname : '';
+
+  return resolveAppEnvironment({
+    explicitEnvironment: import.meta.env.VITE_ENVIRONMENT,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    hostname,
+    mode: import.meta.env.MODE,
+  });
 };
 
 const isTestRuntime = (): boolean => {

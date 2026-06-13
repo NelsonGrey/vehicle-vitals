@@ -213,9 +213,10 @@ function App() {
     logger.info('App initialized', {
       category: 'app',
       data: {
-        environment: import.meta.env.MODE,
+        environment,
+        buildMode: import.meta.env.MODE,
         showComingSoon,
-        appEnvironment: environment,
+        marketingOnlyMode,
       },
     });
 
@@ -226,7 +227,7 @@ function App() {
     return () => {
       logger.info('App unmounting', { category: 'app' });
     };
-  }, [showComingSoon, environment]);
+  }, [showComingSoon, environment, marketingOnlyMode]);
 
   // Show Coming Soon page if flag is enabled
   if (showComingSoon) {

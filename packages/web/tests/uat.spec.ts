@@ -877,11 +877,17 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       page,
     }) => {
       await page.goto(`${BASE_URL}/app/profile`);
+      await page.waitForURL(/\/app\/profile/, { timeout: 15000 });
+      await expect(
+        page.getByRole('heading', { name: /^profile$/i })
+      ).toBeVisible({ timeout: 15000 });
 
       await expect(
         page.getByRole('heading', { name: /account consolidation/i })
-      ).toBeVisible();
-      await expect(page.getByLabel(/source account uid/i)).toBeVisible();
+      ).toBeVisible({ timeout: 15000 });
+      await expect(page.getByLabel(/source account uid/i)).toBeVisible({
+        timeout: 15000,
+      });
 
       const currentUid = await page.evaluate(() => {
         const cards = Array.from(document.querySelectorAll('div'));

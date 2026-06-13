@@ -1025,6 +1025,18 @@ jobs:
             --non-interactive 2>&1 | tee /tmp/firebase-deploy.log
           DEPLOY_EXIT=${PIPESTATUS[0]}
 
+          if [ $DEPLOY_EXIT -ne 0 ] && [ "$TARGET_ENV" = "production" ] && grep -q "failed to modify the IAM policy" /tmp/firebase-deploy.log; then
+            echo "[warn] Production functions deploy blocked by project IAM; retrying hosting+firestore deploy"
+            firebase deploy \
+              --project="$PROJECT_ID" \
+              --token="$FIREBASE_TOKEN" \
+              --only firestore,hosting \
+              --message="Hosting/Firestore fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+              --force \
+              --non-interactive
+            DEPLOY_EXIT=$?
+          fi
+
           if [ $DEPLOY_EXIT -ne 0 ] && [ "$TARGET_ENV" = "staging" ] && grep -q "Can't find the storage bucket region" /tmp/firebase-deploy.log; then
             echo "[warn] Staging hit storage bucket region issue; retrying firestore-only deploy"
             firebase deploy \

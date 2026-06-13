@@ -201,8 +201,10 @@ function AuthOnlyRoute() {
 
 function App() {
   // Check if we should show the coming soon page
-  const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
   const environment = appEnvironment;
+  const showComingSoon =
+    import.meta.env.VITE_SHOW_COMING_SOON === 'true' &&
+    environment !== 'production';
   const marketingOnlyMode = isMarketingOnlyEnvironment;
 
   // Track app initialization

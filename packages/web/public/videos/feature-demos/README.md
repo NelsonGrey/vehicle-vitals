@@ -41,5 +41,11 @@ Interactive generation:
   `VV_INTERACTIVE_ONLY=vin-decode-demo,help-center-overview npm run videos:generate:interactive`
 - For neural narration, set `VV_TTS_PROVIDER=openai` and `OPENAI_API_KEY`.
 - Optional OpenAI voice settings: `VV_OPENAI_TTS_MODEL` (default `gpt-4o-mini-tts`) and `VV_OPENAI_TTS_VOICE` (default `alloy`).
+- Optional OpenAI style and reliability settings:
+  `VV_OPENAI_TTS_INSTRUCTIONS`, `VV_OPENAI_TTS_TIMEOUT_MS`, and `VV_OPENAI_TTS_MAX_RETRIES`.
+- OpenAI speech outputs are cached in `output/openai-tts-cache/` by model, voice, instructions, and narration text.
+- Disable the cache for a run with `VV_OPENAI_TTS_DISABLE_CACHE=1`.
+- Validate the OpenAI TTS path without regenerating videos:
+  `npm run openai:tts:validate`
 - Without OpenAI settings, narration falls back to macOS `say`.
 - If the environment access gate is enabled, provide `VV_MARKETING_GATE_PASSWORD` before running the script.

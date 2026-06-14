@@ -5,6 +5,11 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { chromium } = require('playwright');
+const {
+  DEFAULT_MODEL,
+  DEFAULT_VOICE,
+  synthesizeSpeech,
+} = require('./lib/openai-audio');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT_DIR = path.join(
@@ -27,8 +32,8 @@ const DEMO_EMAIL = process.env.VV_DEMO_EMAIL || 'demo.user@vehiclevitals.dev';
 const DEMO_PASSWORD = process.env.VV_DEMO_PASSWORD || 'DemoPassword123!';
 const GATE_PASSWORD = process.env.VV_MARKETING_GATE_PASSWORD || '';
 
-const OPENAI_MODEL = process.env.VV_OPENAI_TTS_MODEL || 'gpt-4o-mini-tts';
-const OPENAI_VOICE = process.env.VV_OPENAI_TTS_VOICE || 'alloy';
+const OPENAI_MODEL = process.env.VV_OPENAI_TTS_MODEL || DEFAULT_MODEL;
+const OPENAI_VOICE = process.env.VV_OPENAI_TTS_VOICE || DEFAULT_VOICE;
 const SAY_VOICE = process.env.VV_NARRATION_VOICE || 'Samantha';
 const SAY_RATE = process.env.VV_NARRATION_RATE || '170';
 
@@ -403,7 +408,7 @@ function normalizeVideo(sourcePath, baseName) {
   return outPath;
 }
 
-function generateNarration(plan) {
+async function generateNarration(plan) {
   const provider = (process.env.VV_TTS_PROVIDER || '').toLowerCase();
   const shouldUseOpenAI =
     provider === 'openai' || (!provider && process.env.OPENAI_API_KEY);
@@ -413,34 +418,17 @@ function generateNarration(plan) {
       throw new Error('VV_TTS_PROVIDER=openai requires OPENAI_API_KEY.');
     }
 
-    assertTool('curl');
-
     const outPath = path.join(
       TMP_DIR,
       `${sanitizeBase(plan.output)}.narration.mp3`
     );
-    const payload = JSON.stringify({
+    await synthesizeSpeech({
+      apiKey: process.env.OPENAI_API_KEY,
       model: OPENAI_MODEL,
       voice: OPENAI_VOICE,
       input: plan.narration,
-      format: 'mp3',
+      outputPath: outPath,
     });
-
-    run('curl', [
-      '--fail-with-body',
-      '--silent',
-      '--show-error',
-      'https://api.openai.com/v1/audio/speech',
-      '-H',
-      `Authorization: Bearer ${process.env.OPENAI_API_KEY}`,
-      '-H',
-      'Content-Type: application/json',
-      '-d',
-      payload,
-      '--output',
-      outPath,
-    ]);
-
     return outPath;
   }
 
@@ -535,7 +523,7 @@ async function generatePlan(plan) {
   const normalized = normalizeVideo(rawRecorded, plan.output);
 
   console.log(`[video] Narrating: ${plan.output}`);
-  const narration = generateNarration(plan);
+  const narration = await generateNarration(plan);
 
   console.log(`[video] Muxing output: ${plan.output}`);
   const padded = padVideoIfNeeded(normalized, narration, plan.output);

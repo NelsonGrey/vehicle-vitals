@@ -19,7 +19,7 @@ const mediaByFeature: Record<
     videoPath: string;
   }
 > = {
-  'VIN Decode': {
+  'VIN Lookup': {
     hero: '/images/features/add-vehicle.png',
     gallery: [
       '/images/features/garage-vehicles.png',

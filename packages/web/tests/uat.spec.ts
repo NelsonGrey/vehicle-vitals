@@ -260,7 +260,8 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           hasProductOverview: marketingLinks.includes('Product Overview'),
           hasHelpHowTo: marketingLinks.includes('Help & How-To'),
           hasGettingStarted: marketingLinks.includes('Getting Started'),
-          hasVinDecode: marketingLinks.includes('VIN Decode'),
+          hasVinLookup: marketingLinks.includes('VIN Lookup'),
+          hasSubscriptions: marketingLinks.includes('Subscriptions'),
         };
       });
 
@@ -275,11 +276,12 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Deployment target is still on legacy marketing navigation labels.'
       );
 
-      expect(marketingNavMetrics.firstLink).toBe('VIN Decode');
+      expect(marketingNavMetrics.firstLink).toBe('VIN Lookup');
       expect(marketingNavMetrics.hasProductOverview).toBe(false);
       expect(marketingNavMetrics.hasHelpHowTo).toBe(false);
       expect(marketingNavMetrics.hasGettingStarted).toBe(false);
-      expect(marketingNavMetrics.hasVinDecode).toBe(true);
+      expect(marketingNavMetrics.hasVinLookup).toBe(true);
+      expect(marketingNavMetrics.hasSubscriptions).toBe(false);
     });
 
     test('TC-UI-011: Authenticated app header hides Product Overview and Help context links', async ({
@@ -692,7 +694,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         ).toBeVisible();
       } else {
         await expect(
-          header.getByRole('link', { name: /VIN Decode/i })
+          header.getByRole('link', { name: /VIN Lookup/i })
         ).toBeVisible();
         await expect(
           header.getByRole('link', { name: /Product Overview/i })
@@ -702,6 +704,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         ).toHaveCount(0);
         await expect(
           header.getByRole('link', { name: /Getting Started/i })
+        ).toHaveCount(0);
+        await expect(
+          header.getByRole('link', { name: /Subscriptions/i })
         ).toHaveCount(0);
       }
 
@@ -770,7 +775,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         0
       );
       await expect(
-        header.getByRole('link', { name: /VIN Decode/i })
+        header.getByRole('link', { name: /VIN Lookup/i })
       ).toHaveCount(0);
       await expect(
         header.getByRole('button', { name: /Sign Out/i })

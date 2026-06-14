@@ -267,7 +267,7 @@ function App() {
                 path="vin-decode-demo"
                 element={
                   <FeatureDemo
-                    title="VIN Decode"
+                    title="VIN Lookup"
                     subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
                     marketingBullets={[
                       'Enter a VIN and preview decoded year, make, and model.',

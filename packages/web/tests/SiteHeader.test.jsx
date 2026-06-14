@@ -52,20 +52,20 @@ describe('SiteHeader', () => {
     renderHeader();
 
     const header = screen.getByRole('banner');
-    const vinDecodeLink = within(header).getByRole('link', {
-      name: /VIN Decode/i,
+    const vinLookupLink = within(header).getByRole('link', {
+      name: /VIN Lookup/i,
     });
 
-    expect(vinDecodeLink).toBeVisible();
-    expect(
-      within(header).getByRole('link', { name: /Subscriptions/i })
-    ).toBeVisible();
+    expect(vinLookupLink).toBeVisible();
     expect(
       within(header).getByRole('link', { name: /Maintenance/i })
     ).toBeVisible();
     expect(
       within(header).getByRole('link', { name: /Cross Platform/i })
     ).toBeVisible();
+    expect(
+      within(header).queryByRole('link', { name: /Subscriptions/i })
+    ).not.toBeInTheDocument();
 
     expect(
       within(header).queryByRole('link', { name: /^Garage$/i })
@@ -106,7 +106,7 @@ describe('SiteHeader', () => {
       within(header).queryByRole('link', { name: /^Home$/i })
     ).not.toBeInTheDocument();
     expect(
-      within(header).queryByRole('link', { name: /VIN Decode/i })
+      within(header).queryByRole('link', { name: /VIN Lookup/i })
     ).not.toBeInTheDocument();
     expect(
       within(header).queryByRole('link', { name: /Product Overview/i })

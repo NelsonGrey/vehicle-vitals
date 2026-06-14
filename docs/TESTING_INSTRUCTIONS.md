@@ -75,3 +75,17 @@ Share the output from the Fastlane + Flutter build steps for debugging.
 ---
 
 Current status: Ready for validation.
+
+## OpenAI TTS Validation (June 14, 2026 update)
+
+Run these after changes to the marketing demo narration pipeline:
+
+1. `npm run test:scripts`
+2. `OPENAI_API_KEY=... npm run openai:tts:validate`
+3. `VV_TTS_PROVIDER=openai VV_INTERACTIVE_ONLY=vin-decode-demo npm run videos:generate:interactive`
+
+Coverage objective for this update:
+
+- Shared OpenAI TTS helper validates config, cache keys, and common error mapping.
+- OpenAI speech generation succeeds without running the full demo batch.
+- Interactive demo generation can reuse cached narration and still produce the expected MP4 artifact.

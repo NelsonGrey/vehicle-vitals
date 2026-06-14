@@ -5,6 +5,11 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { chromium } = require('playwright');
+const {
+  DEFAULT_MODEL,
+  DEFAULT_VOICE,
+  synthesizeSpeech,
+} = require('./lib/openai-audio');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT_PATH = path.join(
@@ -28,8 +33,8 @@ const DEMO_EMAIL = process.env.VV_DEMO_EMAIL || 'demo.user@vehiclevitals.dev';
 const DEMO_PASSWORD = process.env.VV_DEMO_PASSWORD || 'DemoPassword123!';
 const GATE_PASSWORD = process.env.VV_MARKETING_GATE_PASSWORD || '';
 
-const OPENAI_MODEL = process.env.VV_OPENAI_TTS_MODEL || 'gpt-4o-mini-tts';
-const OPENAI_VOICE = process.env.VV_OPENAI_TTS_VOICE || 'alloy';
+const OPENAI_MODEL = process.env.VV_OPENAI_TTS_MODEL || DEFAULT_MODEL;
+const OPENAI_VOICE = process.env.VV_OPENAI_TTS_VOICE || DEFAULT_VOICE;
 const SAY_VOICE = process.env.VV_NARRATION_VOICE || 'Samantha';
 const SAY_RATE = process.env.VV_NARRATION_RATE || '170';
 
@@ -216,7 +221,7 @@ function normalizeVideo(sourcePath) {
   return outputPath;
 }
 
-function generateNarration() {
+async function generateNarration() {
   const provider = (process.env.VV_TTS_PROVIDER || '').toLowerCase();
   const shouldUseOpenAI =
     provider === 'openai' || (!provider && process.env.OPENAI_API_KEY);
@@ -226,31 +231,14 @@ function generateNarration() {
       throw new Error('VV_TTS_PROVIDER=openai requires OPENAI_API_KEY.');
     }
 
-    assertTool('curl');
-
     const outPath = path.join(TMP_DIR, 'narration.mp3');
-    const payload = JSON.stringify({
+    await synthesizeSpeech({
+      apiKey: process.env.OPENAI_API_KEY,
       model: OPENAI_MODEL,
       voice: OPENAI_VOICE,
       input: narrationText,
-      format: 'mp3',
+      outputPath: outPath,
     });
-
-    run('curl', [
-      '--fail-with-body',
-      '--silent',
-      '--show-error',
-      'https://api.openai.com/v1/audio/speech',
-      '-H',
-      `Authorization: Bearer ${process.env.OPENAI_API_KEY}`,
-      '-H',
-      'Content-Type: application/json',
-      '-d',
-      payload,
-      '--output',
-      outPath,
-    ]);
-
     return outPath;
   }
 
@@ -335,7 +323,7 @@ async function main() {
   const normalizedVideo = normalizeVideo(rawRecording);
 
   console.log('[video] Generating narration track...');
-  const narrationAudio = generateNarration();
+  const narrationAudio = await generateNarration();
 
   console.log('[video] Matching durations and muxing final output...');
   const paddedVideo = padVideoIfNeeded(normalizedVideo, narrationAudio);

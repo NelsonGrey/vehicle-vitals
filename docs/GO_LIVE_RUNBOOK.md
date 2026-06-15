@@ -89,7 +89,7 @@ subscription launch may proceed until every P0 item is closed.
 | P0-05 | Closed locally         | Household/org garage writes are not allowed by rules     | Firestore rules allow active org members under `orgs/{orgId}/vehicles`; Storage rules allow active org members under `orgs/{orgId}/vehicles`; `firebase.json` deploys Storage rules; emulator startup passes                       | Rules and release-flow smoke support org-scoped vehicles, or household storage mode is disabled before release.                                                      |
 | P0-06 | Open                   | R1 Gate 2 is still incomplete                            | Latest build and launch evidence is PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`, `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`); acceptance/backend artifacts remain PARTIAL/BLOCKED (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`, `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) | Gate 2 acceptance and backend evidence are PASS with artifacts under `artifacts/smoke/`.                                                                             |
 | P0-07 | Closed                 | Open high-severity CodeQL alert                          | CodeQL run for `ce6d530` succeeded and GitHub code scanning reports 0 open alerts                                                                                                                                                  | Alert is fixed and closed by CodeQL, dismissed with documented false-positive rationale, or accepted by risk owner before launch.                                     |
-| P0-08 | Open                   | Dependabot PR queue is unstable                          | 20 open Dependabot PRs against `develop`; current status-check rollups are not clear                                                                                                                                               | Queue is merged, closed, or explicitly deferred with no critical security updates pending.                                                                           |
+| P0-08 | Mitigated locally      | Dependabot PR queue is unstable                          | 20 open Dependabot PRs against `develop`; current status-check rollups are not clear; Dependabot config now groups related updates and limits each ecosystem to 3 open PRs                                                          | Queue is merged, closed, or explicitly deferred with no critical security updates pending.                                                                           |
 | P0-09 | Open                   | Branch promotion path is stale/diverged                  | `develop` is 145 commits ahead of `staging`; `staging` is 3 commits ahead of `develop`; `staging` is 599 commits ahead of `main`; readiness report is NO-GO                                                                        | Release branch policy is re-established and readiness report returns GO.                                                                                             |
 | P0-10 | Closed locally         | Active deployment docs reference obsolete workflow names | `docs/DEPLOY.md` and `docs/PROD_SETUP_GUIDE.md` now reference `master-pipeline.yml`; pipeline deploy targets include Firestore, Storage, Functions, and Hosting                                                                    | Docs name `master-pipeline.yml`, correct workflow inputs, and correct deploy targets.                                                                                |
 | P0-11 | Open                   | Subscription launch is not production-proven             | Existing docs mark Stripe production validation, RevenueCat, backend quotas, ad behavior, trial/grace automation incomplete                                                                                                       | Paid launch evidence proves checkout, webhooks, entitlement reconciliation, quota enforcement, failed-payment recovery, refunds/cancellations, and support handling. |
@@ -346,6 +346,16 @@ Exit criteria:
 ## Phase 6: Branch and CI Gate
 
 Owner: Release manager
+
+Current Dependabot disposition:
+
+- Open repository security alerts are 0; no current Dependabot PR is required
+  to close a known critical/high security alert.
+- Existing Dependabot PRs are deferred for go-live unless they meet all of:
+  current with `develop`, clean CodeQL, clean master pipeline excluding
+  runner-queue-only iOS delays, and no major-version migration risk.
+- Dependabot is configured to group related updates and cap each ecosystem at 3
+  open PRs to prevent another 20+ PR queue during release freeze.
 
 Checklist:
 

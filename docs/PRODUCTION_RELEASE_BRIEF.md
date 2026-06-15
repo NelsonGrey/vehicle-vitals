@@ -9,7 +9,7 @@ Current recommendation: NO-GO for production-capable release claim.
 
 Reason:
 
-- R1 Gate 2 status is Build PASS with current release-like iOS build evidence, but manual acceptance and backend success-path validation are still incomplete.
+- R1 Gate 2 status is Build/launch PASS with current release-like iOS evidence, but manual acceptance and backend success-path validation are still incomplete.
 - R1 Gate 1 and Gate 3 are complete with linked evidence.
 - June 15 local go-live stabilization cleared web type-check, web lint, web
   tests, production web build, shared tests, Functions build/lint/tests, mobile
@@ -38,7 +38,7 @@ Immediate subscription go-live blockers:
 | Gate                                      | Status                                           | Evidence                                                                                                                                                                                                                                         | Release impact |
 | ----------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
 | Gate 1 - Reminder delivery reliability    | Complete                                         | artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log                                                                                                                                                                                     | No blocker     |
-| Gate 2 - Mobile runtime parity validation | Build PASS; acceptance/backend BLOCKED | artifacts/smoke/r1-mobile-build-20260615T154819Z.log, artifacts/smoke/r1-mobile-attached-run-sim-20260527T225748Z.log, artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log, artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log | Blocking       |
+| Gate 2 - Mobile runtime parity validation | Build/launch PASS; acceptance/backend BLOCKED | artifacts/smoke/r1-mobile-build-20260615T154819Z.log, artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log, artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log, artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log | Blocking       |
 | Gate 3 - Export parity signoff            | Complete (automated)                             | artifacts/smoke/r1-export-parity-report-20260507T174923Z.md                                                                                                                                                                                      | No blocker     |
 
 ## Blocking Items
@@ -54,7 +54,8 @@ Latest execution update (June 15, 2026):
 - `./scripts/smoke-r1-mobile-runtime.sh` was re-run and produced new PASS evidence at `artifacts/smoke/r1-mobile-build-20260615T154819Z.log`.
 - Step 1 (`flutter analyze`) passed with no issues.
 - Step 2 (`flutter build ios --release --no-codesign`) completed successfully and built `build/ios/iphoneos/Runner.app` (68.4 MB).
-- HADES is visible to Flutter as a connected iOS device, but this pass did not execute a signed app launch or full manual acceptance flow.
+- A release-mode HADES run built, installed, and launched the app, reaching the attached Flutter session; evidence: `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`.
+- This pass did not execute the full manual acceptance flow.
 - June 1 acceptance/backend artifacts remain the latest explicit non-build Gate 2 evidence:
   - `artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log` is PARTIAL/BLOCKED pending manual end-to-end signoff.
   - `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log` is BLOCKED pending explicit auth, Firestore, and Functions proof.
@@ -93,6 +94,7 @@ Mark each item complete during the closure meeting.
 
 - [x] Gate 1 evidence linked (`artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log`)
 - [x] Gate 2 build evidence linked (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`)
+- [x] Gate 2 release-mode HADES launch evidence linked (`artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`)
 - [ ] Gate 2 acceptance evidence updated to PASS with end-to-end runtime observations
 - [ ] Gate 2 backend-traffic evidence updated to PASS with backend proof
 - [x] Gate 3 evidence linked (`artifacts/smoke/r1-export-parity-report-20260507T174923Z.md`)
@@ -114,11 +116,10 @@ Mark each item complete during the closure meeting.
 
 ## Immediate Execution Sequence
 
-1. Run Gate 2 acceptance flow end-to-end on the latest release-like build.
-2. Resolve iOS device signing/trust prerequisites if a physical-device launch still requires them.
-3. Capture backend traffic evidence and update artifact logs.
-4. Update gate dashboard and publish R1 closure decision.
-5. Begin monetization hardening slice (Stripe + RevenueCat + quota enforcement).
+1. Run Gate 2 acceptance flow end-to-end on the latest HADES release-mode launch path.
+2. Capture backend traffic evidence and update artifact logs.
+3. Update gate dashboard and publish R1 closure decision.
+4. Begin monetization hardening slice (Stripe + RevenueCat + quota enforcement).
 
 ## Source of Truth
 

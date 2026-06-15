@@ -51,9 +51,10 @@ fi
 # Build PR message content.
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 BODY_FILE="artifacts/release/staging-to-production-pr-body-${TS}.md"
+PRODUCTION_BRANCH="${PRODUCTION_BRANCH:-main}"
 
 STAGING_SHA="$(git rev-parse origin/staging)"
-PROD_SHA="$(git rev-parse origin/production 2>/dev/null || echo unknown)"
+PROD_SHA="$(git rev-parse "origin/${PRODUCTION_BRANCH}" 2>/dev/null || echo unknown)"
 
 {
   echo "## Summary"
@@ -68,18 +69,18 @@ PROD_SHA="$(git rev-parse origin/production 2>/dev/null || echo unknown)"
   echo "## Branch State"
   echo
   echo "- staging: ${STAGING_SHA}"
-  echo "- production: ${PROD_SHA}"
+  echo "- ${PRODUCTION_BRANCH}: ${PROD_SHA}"
   echo
-  echo "## Included Commits (production..staging)"
+  echo "## Included Commits (${PRODUCTION_BRANCH}..staging)"
   echo
   echo '```text'
-  git log --oneline origin/production..origin/staging | head -n 80 || true
+  git log --oneline "origin/${PRODUCTION_BRANCH}..origin/staging" | head -n 80 || true
   echo '```'
   echo
-  echo "## Changed Files (production...staging)"
+  echo "## Changed Files (${PRODUCTION_BRANCH}...staging)"
   echo
   echo '```text'
-  git diff --name-only origin/production...origin/staging | head -n 200 || true
+  git diff --name-only "origin/${PRODUCTION_BRANCH}...origin/staging" | head -n 200 || true
   echo '```'
   echo
   echo "## Notes"
@@ -92,9 +93,9 @@ echo "Prepared PR body: $BODY_FILE"
 
 author_open_pr() {
   gh pr create \
-    --base production \
+    --base "$PRODUCTION_BRANCH" \
     --head staging \
-    --title "Promote staging to production (${TS})" \
+    --title "Promote staging to ${PRODUCTION_BRANCH} (${TS})" \
     --body-file "$BODY_FILE"
 }
 

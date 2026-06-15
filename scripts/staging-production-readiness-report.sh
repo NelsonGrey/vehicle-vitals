@@ -20,11 +20,12 @@ fi
 mkdir -p artifacts/release
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="artifacts/release/staging-to-production-readiness-${TS}.md"
+PRODUCTION_BRANCH="${PRODUCTION_BRANCH:-main}"
 
 # Ensure fresh refs.
-git fetch origin develop staging production >/dev/null 2>&1 || true
+git fetch origin develop staging "$PRODUCTION_BRANCH" >/dev/null 2>&1 || true
 
-AHEAD_BEHIND="$(git rev-list --left-right --count origin/production...origin/staging 2>/dev/null || echo '0 0')"
+AHEAD_BEHIND="$(git rev-list --left-right --count "origin/${PRODUCTION_BRANCH}...origin/staging" 2>/dev/null || echo '0 0')"
 PROD_AHEAD="$(echo "$AHEAD_BEHIND" | awk '{print $1}')"
 STAGING_AHEAD="$(echo "$AHEAD_BEHIND" | awk '{print $2}')"
 
@@ -91,8 +92,9 @@ Generated (UTC): $(date -u)
 
 ## Branch Divergence
 
-- production ahead of staging: ${PROD_AHEAD}
-- staging ahead of production: ${STAGING_AHEAD}
+- production branch: ${PRODUCTION_BRANCH}
+- ${PRODUCTION_BRANCH} ahead of staging: ${PROD_AHEAD}
+- staging ahead of ${PRODUCTION_BRANCH}: ${STAGING_AHEAD}
 - staging ahead of develop: ${STAGING_AHEAD_OF_DEV}
 - develop ahead of staging: ${DEV_AHEAD_OF_STAGING}
 
@@ -125,10 +127,28 @@ fi
   git log --oneline origin/staging..origin/develop | head -n 30 || true
   echo '```'
   echo
+  echo "## Commit Delta (${PRODUCTION_BRANCH}..staging)"
+  echo
+  echo '```text'
+  git log --oneline "origin/${PRODUCTION_BRANCH}..origin/staging" | head -n 30 || true
+  echo '```'
+  echo
+  echo "## Commit Delta (staging..${PRODUCTION_BRANCH})"
+  echo
+  echo '```text'
+  git log --oneline "origin/staging..origin/${PRODUCTION_BRANCH}" | head -n 30 || true
+  echo '```'
+  echo
   echo "## Changed Files Summary (develop...staging)"
   echo
   echo '```text'
   git diff --name-only origin/develop...origin/staging | head -n 120 || true
+  echo '```'
+  echo
+  echo "## Changed Files Summary (${PRODUCTION_BRANCH}...staging)"
+  echo
+  echo '```text'
+  git diff --name-only "origin/${PRODUCTION_BRANCH}...origin/staging" | head -n 120 || true
   echo '```'
   echo
   echo "## Production Secret Name Presence"

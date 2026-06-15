@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
   GoogleAuthProvider,
+  linkWithCredential,
   linkWithPopup,
   OAuthProvider,
   onAuthStateChanged,
@@ -199,7 +200,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       try {
-        await signedInUser.linkWithCredential(pendingCredential);
+        await linkWithCredential(signedInUser, pendingCredential);
       } catch (error) {
         const firebaseError = error as { code?: string };
         if (

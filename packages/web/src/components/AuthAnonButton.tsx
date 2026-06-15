@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 
+type FirebaseAuthBridge = {
+  auth: { currentUser?: unknown };
+  onAuthStateChanged: (
+    auth: unknown,
+    callback: (user: unknown) => void
+  ) => () => void;
+  signInAnonymously: (auth: unknown) => Promise<unknown>;
+};
+
 // Create async Firebase service that hides imports from Vite
-const createFirebaseAuth = async () => {
+const createFirebaseAuth = async (): Promise<FirebaseAuthBridge> => {
   try {
     const [{ onAuthStateChanged, signInAnonymously }, { getFirebaseAuth }] =
       await Promise.all([
@@ -17,7 +26,7 @@ const createFirebaseAuth = async () => {
     return {
       auth: { currentUser: null },
       onAuthStateChanged: () => () => {},
-      signInAnonymously: async () => {},
+      signInAnonymously: async () => undefined,
     };
   }
 };
@@ -26,14 +35,9 @@ export default function AuthAnonButton() {
   const [authed, setAuthed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [firebaseAuth, setFirebaseAuth] = useState<{
-    auth: { currentUser?: unknown };
-    onAuthStateChanged: (
-      auth: unknown,
-      callback: (user: unknown) => void
-    ) => () => void;
-    signInAnonymously: (auth: unknown) => Promise<void>;
-  } | null>(null);
+  const [firebaseAuth, setFirebaseAuth] = useState<FirebaseAuthBridge | null>(
+    null
+  );
 
   useEffect(() => {
     createFirebaseAuth().then(service => {

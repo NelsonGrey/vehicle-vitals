@@ -13,6 +13,13 @@ export interface EffectiveEntitlements {
   features: Record<string, boolean>;
 }
 
+export interface EnterpriseContextResponse {
+  orgId: string;
+  orgType?: string;
+  garageStorageMode?: string;
+  entitlements: EffectiveEntitlements;
+}
+
 export type BillingPeriod = 'monthly' | 'annual';
 
 export interface CheckoutSessionResponse {
@@ -45,10 +52,7 @@ const createFirebaseService = async () => {
   throw new Error('Firebase Functions not available');
 };
 
-export async function bootstrapEnterpriseContext(): Promise<{
-  orgId: string;
-  entitlements: EffectiveEntitlements;
-}> {
+export async function bootstrapEnterpriseContext(): Promise<EnterpriseContextResponse> {
   const firebaseService = await createFirebaseService();
   const callable = firebaseService.httpsCallable(
     firebaseService.functions,
@@ -62,7 +66,63 @@ export async function bootstrapEnterpriseContext(): Promise<{
 
   return {
     orgId: (result.data.orgId || '').toString(),
+    orgType: (result.data.orgType || '').toString() || undefined,
+    garageStorageMode:
+      (result.data.garageStorageMode || '').toString() || undefined,
     entitlements: result.data.entitlements as EffectiveEntitlements,
+  };
+}
+
+export async function promotePersonalGarageToHousehold(
+  householdName: string,
+  garageStorageMode: 'dual_write' | 'org_scoped' | 'user_scoped' = 'dual_write'
+): Promise<EnterpriseContextResponse> {
+  const firebaseService = await createFirebaseService();
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'promotePersonalGarageToHouseholdCallable'
+  );
+
+  const result = await callable({
+    householdName,
+    garageStorageMode,
+  });
+
+  if (!result.data?.success) {
+    throw new Error('Failed to promote garage to household');
+  }
+
+  return {
+    orgId: (result.data.orgId || '').toString(),
+    orgType: (result.data.orgType || '').toString() || undefined,
+    garageStorageMode:
+      (result.data.garageStorageMode || '').toString() || undefined,
+    entitlements: result.data.entitlements as EffectiveEntitlements,
+  };
+}
+
+export async function setGarageStorageMode(
+  garageStorageMode: 'dual_write' | 'org_scoped' | 'user_scoped',
+  orgId?: string
+): Promise<{ orgId: string; garageStorageMode: string }> {
+  const firebaseService = await createFirebaseService();
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'setGarageStorageModeCallable'
+  );
+
+  const result = await callable({
+    orgId: orgId || '',
+    garageStorageMode,
+  });
+
+  if (!result.data?.success) {
+    throw new Error('Failed to update garage storage mode');
+  }
+
+  return {
+    orgId: (result.data.orgId || '').toString(),
+    garageStorageMode: (result.data.garageStorageMode || '').toString(),
   };
 }
 

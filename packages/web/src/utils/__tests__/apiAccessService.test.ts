@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockCallable = vi.fn();
-const mockHttpsCallable = vi.fn(() => mockCallable);
+const mockHttpsCallable = vi.fn((...args: unknown[]) => {
+  void args;
+  return mockCallable;
+});
 
 vi.mock('../../shared/firebaseConfig', () => ({
   functions: { __testFunctions: true },

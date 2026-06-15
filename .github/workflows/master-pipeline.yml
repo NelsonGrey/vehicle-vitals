@@ -979,7 +979,7 @@ jobs:
           chmod +x scripts/ci-guard-no-data-migration.sh
           ./scripts/ci-guard-no-data-migration.sh
 
-      - name: Deploy Hosting, Firestore and Functions
+      - name: Deploy Hosting, Firestore, Storage and Functions
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
@@ -1016,10 +1016,10 @@ jobs:
 
           cp "$CONFIG_FILE" firebase.json
 
-          DEPLOY_TARGETS="firestore,functions,hosting"
+          DEPLOY_TARGETS="firestore,storage,functions,hosting"
           if [ "$TARGET_ENV" = "production" ] && [ "$TRIGGER_CONTEXT" = "deploy_only" ]; then
-            echo "[info] Production deploy_only run detected; deploying firestore+hosting only"
-            DEPLOY_TARGETS="firestore,hosting"
+            echo "[info] Production deploy_only run detected; deploying firestore+storage+hosting only"
+            DEPLOY_TARGETS="firestore,storage,hosting"
           fi
 
           set +e
@@ -1033,12 +1033,12 @@ jobs:
           DEPLOY_EXIT=${PIPESTATUS[0]}
 
           if [ $DEPLOY_EXIT -ne 0 ] && [ "$TARGET_ENV" = "production" ] && grep -q "failed to modify the IAM policy" /tmp/firebase-deploy.log; then
-            echo "[warn] Production functions deploy blocked by project IAM; retrying hosting+firestore deploy"
+            echo "[warn] Production functions deploy blocked by project IAM; retrying hosting+firestore+storage deploy"
             firebase deploy \
               --project="$PROJECT_ID" \
               --token="$FIREBASE_TOKEN" \
-              --only firestore,hosting \
-              --message="Hosting/Firestore fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+              --only firestore,storage,hosting \
+              --message="Hosting/Firestore/Storage fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
               --force \
               --non-interactive
             DEPLOY_EXIT=$?

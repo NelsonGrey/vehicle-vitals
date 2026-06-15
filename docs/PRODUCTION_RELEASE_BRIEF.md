@@ -1,7 +1,7 @@
 # Vehicle Vitals - Production Release Brief
 
-Last updated: May 28, 2026
-Release decision window: R1 closure review target Jun 5, 2026
+Last updated: June 15, 2026
+Release decision window: next go/no-go review after R1 Gate 2 and release-candidate CI evidence
 
 ## Decision Summary
 
@@ -11,6 +11,10 @@ Reason:
 
 - R1 Gate 2 status is Build PASS with simulator runtime session established, but manual acceptance remains FAIL and backend success-path validation is still incomplete.
 - R1 Gate 1 and Gate 3 are complete with linked evidence.
+- June 15 local go-live stabilization cleared web type-check, web lint, web
+  tests, production web build, shared tests, Functions build/lint/tests, mobile
+  tests/analyzer, script tests, and Firebase Firestore/Storage rules startup.
+- Remaining launch blockers are tracked in `docs/GO_LIVE_RUNBOOK.md`.
 
 ## Subscription Go-Live Readout
 
@@ -42,6 +46,8 @@ Immediate subscription go-live blockers:
 1. Complete Gate 2 manual/runtime acceptance on iOS with real backend traffic evidence.
 2. Resolve Gate 2 acceptance and backend FAIL outcomes by completing end-to-end checklist validation and capturing explicit backend success-path evidence.
 3. Record R1 go/no-go outcome after Gate 2 evidence is updated.
+4. Commit and push the June 15 stabilization slice, then confirm CI and CodeQL
+   close the local fixes.
 
 Latest execution update (May 27, 2026):
 
@@ -124,6 +130,7 @@ Mark each item complete during the closure meeting.
 
 ## Source of Truth
 
+- docs/GO_LIVE_RUNBOOK.md
 - docs/R1_COMPLETION_CHECKLIST.md
 - docs/REQUIREMENTS.md
 - docs/RELEASE_SCOPE_MATRIX.md

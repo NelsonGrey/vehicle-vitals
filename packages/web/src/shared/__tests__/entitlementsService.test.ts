@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockCallable = vi.fn();
-const mockHttpsCallable = vi.fn(() => mockCallable);
+const mockHttpsCallable = vi.fn((...args: unknown[]) => {
+  void args;
+  return mockCallable;
+});
 
 vi.mock('../firebaseConfig', () => ({
   functions: { __testFunctions: true },
@@ -25,6 +28,8 @@ describe('entitlementsService', () => {
   it('returns enterprise bootstrap payload', async () => {
     const expected = {
       orgId: 'personal_user-1',
+      orgType: 'personal',
+      garageStorageMode: 'user_scoped',
       entitlements: {
         orgId: 'personal_user-1',
         tier: 'free',
@@ -52,6 +57,74 @@ describe('entitlementsService', () => {
       'bootstrapEnterpriseContextCallable'
     );
     expect(result).toEqual(expected);
+  });
+
+  it('promotes a personal garage to household mode', async () => {
+    const expected = {
+      orgId: 'personal_user-1',
+      orgType: 'household',
+      garageStorageMode: 'dual_write',
+      entitlements: {
+        orgId: 'personal_user-1',
+        tier: 'premium',
+        vehicleLimit: 25,
+        features: {
+          cloud_sync: true,
+        },
+      },
+    };
+
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        success: true,
+        ...expected,
+      },
+    });
+
+    const { promotePersonalGarageToHousehold } = await import(
+      '../entitlementsService'
+    );
+    const result = await promotePersonalGarageToHousehold(
+      'Nelson Household',
+      'dual_write'
+    );
+
+    expect(mockHttpsCallable.mock.calls[0][1]).toBe(
+      'promotePersonalGarageToHouseholdCallable'
+    );
+    expect(mockCallable).toHaveBeenCalledWith({
+      householdName: 'Nelson Household',
+      garageStorageMode: 'dual_write',
+    });
+    expect(result).toEqual(expected);
+  });
+
+  it('updates garage storage mode', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        success: true,
+        orgId: 'personal_user-1',
+        garageStorageMode: 'org_scoped',
+      },
+    });
+
+    const { setGarageStorageMode } = await import('../entitlementsService');
+    const result = await setGarageStorageMode(
+      'org_scoped',
+      'personal_user-1'
+    );
+
+    expect(mockHttpsCallable.mock.calls[0][1]).toBe(
+      'setGarageStorageModeCallable'
+    );
+    expect(mockCallable).toHaveBeenCalledWith({
+      orgId: 'personal_user-1',
+      garageStorageMode: 'org_scoped',
+    });
+    expect(result).toEqual({
+      orgId: 'personal_user-1',
+      garageStorageMode: 'org_scoped',
+    });
   });
 
   it('returns effective entitlements', async () => {

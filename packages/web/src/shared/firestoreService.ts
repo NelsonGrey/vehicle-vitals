@@ -1,5 +1,6 @@
 import { auth, db } from './firebaseConfig';
-import type { Auth, Firestore } from 'firebase/auth';
+import type { Auth } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
 import {
   getLegacyFirebase,
   getOrInitializeLegacyFirebaseApp,
@@ -42,6 +43,13 @@ const initializeFirestoreService = async (): Promise<any> => {
     console.warn('Firebase Firestore not available:', (error as Error).message);
     // Return mock service
     return {
+      resolveGarageContext: () =>
+        Promise.resolve({
+          userId: null,
+          orgId: null,
+          orgType: null,
+          garageStorageMode: 'user_scoped',
+        }),
       addOrUpdateVehicle: () => Promise.reject('Firestore not available'),
       getVehicles: () => Promise.resolve([]),
       getVehicle: () => Promise.resolve(null),
@@ -76,6 +84,7 @@ const createAsyncMethod =
 
 // Export async methods that wait for service initialization
 export const addOrUpdateVehicle = createAsyncMethod('addOrUpdateVehicle');
+export const resolveGarageContext = createAsyncMethod('resolveGarageContext');
 export const getVehicles = createAsyncMethod('getVehicles');
 export const getVehicle = createAsyncMethod('getVehicle');
 export const updateVehicle = createAsyncMethod('updateVehicle');

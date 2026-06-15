@@ -232,9 +232,7 @@ function App() {
   // Show Coming Soon page if flag is enabled
   if (showComingSoon) {
     return (
-      <BrowserRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
+      <BrowserRouter>
         <Suspense fallback={<LoadingSpinner />}>
           <ComingSoon />
         </Suspense>
@@ -243,9 +241,7 @@ function App() {
   }
 
   const appContent = (
-    <BrowserRouter
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-    >
+    <BrowserRouter>
       <AuthProvider>
         <AppAnalytics />
         <AppNotificationBridge />

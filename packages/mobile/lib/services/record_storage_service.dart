@@ -3,12 +3,16 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'garage_scope.dart';
 
 class RecordStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   String get _userId {
     final user = _auth.currentUser;
@@ -16,6 +20,32 @@ class RecordStorageService {
       throw Exception('Not authenticated');
     }
     return user.uid;
+  }
+
+  Future<GarageContext> _resolveGarageContext() async {
+    final memberships = await _db
+        .collection('users')
+        .doc(_userId)
+        .collection('orgMemberships')
+        .where('status', isEqualTo: 'active')
+        .limit(1)
+        .get();
+
+    if (memberships.docs.isEmpty) {
+      return GarageContext(userId: _userId);
+    }
+
+    final orgId = memberships.docs.first.id;
+    final orgSnapshot = await _db.collection('orgs').doc(orgId).get();
+    final orgData = orgSnapshot.data() ?? <String, dynamic>{};
+
+    return GarageContext(
+      userId: _userId,
+      orgId: orgId,
+      orgType: orgData['type']?.toString(),
+      garageStorageMode:
+          orgData['garageStorageMode']?.toString() ?? 'user_scoped',
+    );
   }
 
   Future<Map<String, dynamic>> uploadVehicleRecordFile(
@@ -26,8 +56,9 @@ class RecordStorageService {
     final extension = file.extension?.trim().isNotEmpty == true
         ? file.extension!
         : 'bin';
+    final context = await _resolveGarageContext();
     final path =
-        'users/$_userId/vehicles/$vin/records/$recordId/${DateTime.now().millisecondsSinceEpoch}.$extension';
+        '${buildVehicleStorageBasePath(context, vin)}/records/$recordId/${DateTime.now().millisecondsSinceEpoch}.$extension';
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
       customMetadata: {
@@ -67,8 +98,9 @@ class RecordStorageService {
     final extension = file.extension?.trim().isNotEmpty == true
         ? file.extension!
         : 'jpg';
+    final context = await _resolveGarageContext();
     final path =
-        'users/$_userId/vehicles/$vin/photo/${DateTime.now().millisecondsSinceEpoch}.$extension';
+        '${buildVehicleStorageBasePath(context, vin)}/photo/${DateTime.now().millisecondsSinceEpoch}.$extension';
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
       customMetadata: {

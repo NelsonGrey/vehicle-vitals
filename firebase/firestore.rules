@@ -20,7 +20,9 @@ service cloud.firestore {
     }
 
     function isOrgMember(orgId) {
-      return isSignedIn() && exists(orgMemberDoc(orgId));
+      return isSignedIn()
+        && exists(orgMemberDoc(orgId))
+        && get(orgMemberDoc(orgId)).data.status == 'active';
     }
 
     function isOrgAdmin(orgId) {
@@ -69,6 +71,14 @@ service cloud.firestore {
       match /members/{memberId} {
         allow read: if isOrgMember(orgId);
         allow write: if false; // Managed via Cloud Functions
+      }
+
+      match /vehicles/{vehicleId} {
+        allow read, write: if isOrgMember(orgId);
+
+        match /{vehicleDocument=**} {
+          allow read, write: if isOrgMember(orgId);
+        }
       }
 
       match /audit/{auditId} {

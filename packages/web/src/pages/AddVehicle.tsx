@@ -128,8 +128,10 @@ export default function AddVehicle() {
   const vehicleLimit = useVehicleLimit();
   const { shouldShowModal, targetTier, openUpgradeModal, closeUpgradeModal } =
     useUpgradePrompt();
-  const { years, makes, models, loadingMakes, loadingModels } =
-    useVehicleOptions({ year: form.year, make: form.make });
+  const { years, makes, models, loadingModels } = useVehicleOptions({
+    year: form.year,
+    make: form.make,
+  });
   const sortedYears = useMemo(
     () => [...years].sort((a, b) => a.localeCompare(b)),
     [years]

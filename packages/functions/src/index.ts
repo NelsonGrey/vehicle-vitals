@@ -163,6 +163,8 @@ type OrgRole =
   | 'billing_admin'
   | 'read_only';
 
+type GarageStorageMode = 'user_scoped' | 'dual_write' | 'org_scoped';
+
 interface EffectiveEntitlements {
   orgId: string;
   tier: UserTier;
@@ -307,6 +309,21 @@ const toOrgRole = (value: unknown): OrgRole => {
   return ROLE_RANK[role] ? role : 'read_only';
 };
 
+const normalizeGarageStorageMode = (
+  value: unknown
+): GarageStorageMode => {
+  const mode = (value || 'user_scoped').toString() as GarageStorageMode;
+  if (
+    mode === 'dual_write' ||
+    mode === 'org_scoped' ||
+    mode === 'user_scoped'
+  ) {
+    return mode;
+  }
+
+  return 'user_scoped';
+};
+
 async function writeAuditEvent(params: {
   orgId: string;
   actorUid: string;
@@ -348,6 +365,7 @@ async function ensurePersonalOrganization(
       orgId,
       name: `Personal Garage (${uid.slice(0, 6)})`,
       type: 'personal',
+      garageStorageMode: 'user_scoped',
       planTier: 'free',
       createdByUid: uid,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -3239,6 +3257,8 @@ export const bootstrapEnterpriseContextCallable = onCall(async request => {
     (request.auth?.token?.email || '').toString()
   );
   const entitlements = await resolveEffectiveEntitlements(uid, orgId);
+  const orgSnap = await admin.firestore().doc(`orgs/${orgId}`).get();
+  const orgData = orgSnap.data() || {};
 
   await writeAuditEvent({
     orgId,
@@ -3251,6 +3271,8 @@ export const bootstrapEnterpriseContextCallable = onCall(async request => {
   return {
     success: true,
     orgId,
+    orgType: (orgData.type || 'personal').toString(),
+    garageStorageMode: normalizeGarageStorageMode(orgData.garageStorageMode),
     entitlements,
   };
 });
@@ -3274,6 +3296,172 @@ export const getEffectiveEntitlementsCallable = onCall(async request => {
     success: true,
     entitlements,
   };
+});
+
+export const promotePersonalGarageToHouseholdCallable = onCall(
+  async request => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Missing auth context');
+    }
+
+    const orgId = await ensurePersonalOrganization(
+      uid,
+      (request.auth?.token?.email || '').toString()
+    );
+    await requireOrgRole(uid, orgId, ['org_owner']);
+
+    const householdName = (request.data?.householdName || '').toString().trim();
+    const requestedMode = normalizeGarageStorageMode(
+      request.data?.garageStorageMode || 'dual_write'
+    );
+    const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+    const reservation = await reserveIdempotencyKey({
+      uid,
+      operation: 'promotePersonalGarageToHousehold',
+      idempotencyKey,
+    });
+    if (reservation.isReplay) {
+      return reservation.result;
+    }
+
+    try {
+      const orgRef = admin.firestore().doc(`orgs/${orgId}`);
+      const orgSnap = await orgRef.get();
+      if (!orgSnap.exists) {
+        throw new HttpsError('not-found', 'Organization not found');
+      }
+
+      const orgData = orgSnap.data() || {};
+      const nextName =
+        householdName ||
+        (orgData.name || '').toString().trim() ||
+        'Household Garage';
+
+      await orgRef.set(
+        {
+          name: nextName,
+          type: 'household',
+          garageStorageMode: requestedMode,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      await writeAuditEvent({
+        orgId,
+        actorUid: uid,
+        action: 'organization.promote_to_household',
+        targetType: 'organization',
+        targetId: orgId,
+        details: {
+          previousType: (orgData.type || 'personal').toString(),
+          garageStorageMode: requestedMode,
+          householdName: nextName,
+        },
+      });
+
+      const entitlements = await resolveEffectiveEntitlements(uid, orgId);
+      const result = {
+        success: true,
+        orgId,
+        orgType: 'household',
+        garageStorageMode: requestedMode,
+        name: nextName,
+        entitlements,
+      };
+
+      await completeIdempotencyKey(
+        reservation,
+        result as unknown as Record<string, unknown>
+      );
+
+      return result;
+    } catch (error) {
+      await markIdempotencyFailed(
+        reservation,
+        error instanceof Error ? error.message : 'unknown_error'
+      );
+      throw error;
+    }
+  }
+);
+
+export const setGarageStorageModeCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const requestedOrgId = (request.data?.orgId || '').toString().trim();
+  const orgId = requestedOrgId || (await getPrimaryOrgIdForUser(uid));
+  const garageStorageMode = normalizeGarageStorageMode(
+    request.data?.garageStorageMode
+  );
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  await requireOrgRole(uid, orgId, ['org_owner']);
+
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'setGarageStorageMode',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const orgRef = admin.firestore().doc(`orgs/${orgId}`);
+    const orgSnap = await orgRef.get();
+    if (!orgSnap.exists) {
+      throw new HttpsError('not-found', 'Organization not found');
+    }
+
+    const previousMode = normalizeGarageStorageMode(
+      orgSnap.data()?.garageStorageMode
+    );
+
+    await orgRef.set(
+      {
+        garageStorageMode,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await writeAuditEvent({
+      orgId,
+      actorUid: uid,
+      action: 'organization.set_garage_storage_mode',
+      targetType: 'organization',
+      targetId: orgId,
+      details: {
+        previousMode,
+        garageStorageMode,
+      },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      garageStorageMode,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
 });
 
 export const changeSubscriptionTierCallable = onCall(async request => {

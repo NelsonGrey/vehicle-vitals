@@ -159,6 +159,37 @@ export async function setOrganizationMemberRole({
   };
 }
 
+export async function setGarageStorageMode({
+  orgId,
+  garageStorageMode,
+}) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'setGarageStorageModeCallable'
+  );
+
+  const result = await callable({
+    orgId,
+    garageStorageMode,
+    idempotencyKey: generateIdempotencyKey(),
+  });
+
+  if (!result.data?.success) {
+    throw new Error(result.data?.error || 'Failed to update garage storage mode');
+  }
+
+  return {
+    orgId: (result.data.orgId || '').toString(),
+    garageStorageMode: (result.data.garageStorageMode || '').toString(),
+  };
+}
+
 export async function applyRetentionPolicy({
   orgId,
   retentionDays,

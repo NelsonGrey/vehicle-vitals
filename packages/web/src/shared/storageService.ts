@@ -8,7 +8,7 @@ import {
   StorageReference,
 } from 'firebase/storage';
 import { auth, storage } from './firebaseConfig';
-import type { Auth, FirebaseStorage } from 'firebase/auth';
+import { resolveGarageContext } from './firestoreService';
 
 export interface UploadResult {
   url: string;
@@ -17,6 +17,31 @@ export interface UploadResult {
   type: string;
   name: string;
 }
+
+export interface GarageStorageContext {
+  userId: string;
+  orgId?: string | null;
+  garageStorageMode?: string | null;
+}
+
+export const buildVehicleStorageBasePath = (
+  context: GarageStorageContext,
+  vin: string
+): string => {
+  const normalizedVin = String(vin || '').trim();
+  const isPreferencesVehicle = normalizedVin.toLowerCase() === 'preferences';
+  const useOrgScope =
+    !isPreferencesVehicle &&
+    Boolean(context.orgId) &&
+    (context.garageStorageMode === 'org_scoped' ||
+      context.garageStorageMode === 'dual_write');
+
+  if (useOrgScope) {
+    return `orgs/${context.orgId}/vehicles/${normalizedVin}`;
+  }
+
+  return `users/${context.userId}/vehicles/${normalizedVin}`;
+};
 
 const getCurrentUserIdOrThrow = async (): Promise<string> => {
   const current = auth.currentUser;
@@ -34,6 +59,20 @@ const getCurrentUserIdOrThrow = async (): Promise<string> => {
       }
     });
   });
+};
+
+const getVehicleStorageBasePathOrThrow = async (vin: string): Promise<string> => {
+  const userId = await getCurrentUserIdOrThrow();
+  const garageContext = await resolveGarageContext().catch(() => null);
+
+  return buildVehicleStorageBasePath(
+    {
+      userId,
+      orgId: garageContext?.orgId ?? null,
+      garageStorageMode: garageContext?.garageStorageMode ?? 'user_scoped',
+    },
+    vin
+  );
 };
 
 // Upload file to Firebase Storage
@@ -96,10 +135,10 @@ export const generateMaintenanceAttachmentPath = async (
   maintenanceId: string,
   fileName: string
 ): Promise<string> => {
-  const userId = await getCurrentUserIdOrThrow();
+  const basePath = await getVehicleStorageBasePathOrThrow(vin);
   const timestamp = Date.now();
   const extension = fileName.split('.').pop();
-  return `users/${userId}/vehicles/${vin}/maintenance/${maintenanceId}/${timestamp}.${extension}`;
+  return `${basePath}/maintenance/${maintenanceId}/${timestamp}.${extension}`;
 };
 
 // Generate storage path for vehicle record attachments
@@ -108,18 +147,18 @@ export const generateVehicleRecordAttachmentPath = async (
   recordId: string,
   fileName: string
 ): Promise<string> => {
-  const userId = await getCurrentUserIdOrThrow();
+  const basePath = await getVehicleStorageBasePathOrThrow(vin);
   const timestamp = Date.now();
   const extension = fileName.includes('.') ? fileName.split('.').pop() : 'bin';
-  return `users/${userId}/vehicles/${vin}/records/${recordId}/${timestamp}.${extension}`;
+  return `${basePath}/records/${recordId}/${timestamp}.${extension}`;
 };
 
 export const generateVehiclePhotoPath = async (
   vin: string,
   fileName: string
 ): Promise<string> => {
-  const userId = await getCurrentUserIdOrThrow();
+  const basePath = await getVehicleStorageBasePathOrThrow(vin);
   const timestamp = Date.now();
   const extension = fileName.includes('.') ? fileName.split('.').pop() : 'jpg';
-  return `users/${userId}/vehicles/${vin}/photo/${timestamp}.${extension}`;
+  return `${basePath}/photo/${timestamp}.${extension}`;
 };

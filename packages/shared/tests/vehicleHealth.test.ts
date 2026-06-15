@@ -20,6 +20,14 @@ describe('inferHealthComponentIds', () => {
       })
     ).toEqual(expect.arrayContaining(['tire_replacement', 'tire_rotation']));
   });
+
+  it('matches tire replacement without an unbounded bidirectional regex', () => {
+    expect(
+      inferHealthComponentIds({
+        title: 'Tires mounted after alignment',
+      })
+    ).toContain('tire_replacement');
+  });
 });
 
 describe('computeVehicleHealthSnapshot', () => {

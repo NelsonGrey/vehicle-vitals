@@ -5,7 +5,6 @@ import {
   Messaging,
 } from 'firebase/messaging';
 import { app } from './firebaseConfig';
-import type { FirebaseApp } from 'firebase/app';
 import type { MessagePayload } from 'firebase/messaging';
 
 // Notification service for Firebase Cloud Messaging

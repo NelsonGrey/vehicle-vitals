@@ -55,21 +55,6 @@ const ORG_ROLES = [
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
-function secureRandomHex(byteLength: number): string {
-  const cryptoApi = globalThis.crypto;
-  if (!cryptoApi || typeof cryptoApi.getRandomValues !== 'function') {
-    throw new Error('Secure random generator unavailable in this runtime');
-  }
-
-  const bytes = new Uint8Array(byteLength);
-  cryptoApi.getRandomValues(bytes);
-  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
-function createIdempotencyKey(prefix: string): string {
-  return `${prefix}_${Date.now()}_${secureRandomHex(8)}`;
-}
-
 export default function AdminSupport() {
   const { user, supportAccess } = useAuth();
   const [query, setQuery] = useState('');
@@ -222,7 +207,6 @@ export default function AdminSupport() {
       const response = await applyRetentionPolicy({
         orgId,
         retentionDays,
-        idempotencyKey: createIdempotencyKey('retention'),
       });
 
       setStatus(
@@ -251,7 +235,6 @@ export default function AdminSupport() {
         orgId,
         targetUid,
         role,
-        idempotencyKey: createIdempotencyKey('member_role'),
       });
 
       const refreshed = await getOrganizationMembers(orgId);
@@ -300,7 +283,6 @@ export default function AdminSupport() {
         notes: invoiceNotes.trim(),
         amountDue: Number(invoiceAmountDue || 0),
         lineItems: [],
-        idempotencyKey: createIdempotencyKey('invoice'),
       });
 
       setFinanceStatus(
@@ -339,7 +321,6 @@ export default function AdminSupport() {
         category: payableCategory.trim(),
         notes: payableNotes.trim(),
         amountDue: Number(payableAmountDue || 0),
-        idempotencyKey: createIdempotencyKey('payable'),
       });
 
       setFinanceStatus(

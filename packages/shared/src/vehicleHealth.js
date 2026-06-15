@@ -78,6 +78,10 @@ function normalizeText(...values) {
     .join(' ');
 }
 
+function hasAnyToken(text, tokens) {
+  return tokens.some(token => text.includes(token));
+}
+
 export function inferHealthComponentIds(entry) {
   const text = normalizeText(
     entry?.serviceType,
@@ -94,11 +98,15 @@ export function inferHealthComponentIds(entry) {
   if (/tire rotation|rotate tires|rotate tire|rotated tires|rotated tire/.test(text)) {
     ids.push('tire_rotation');
   }
-  if (
-    /(replace|replacement|install|mounted).*(tire|tires)|(tire|tires).*(replace|replacement|install)/.test(
-      text
-    )
-  ) {
+  const hasTireTerm = hasAnyToken(text, ['tire', 'tires']);
+  const hasTireReplacementAction = hasAnyToken(text, [
+    'replace',
+    'replacement',
+    'install',
+    'installed',
+    'mounted',
+  ]);
+  if (hasTireTerm && hasTireReplacementAction) {
     ids.push('tire_replacement');
   }
   if (/brake|brake pad|rotor|caliper/.test(text)) {

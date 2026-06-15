@@ -273,11 +273,49 @@ Checklist:
   - [ ] Entitlement reconciliation
   - [ ] App Store review compliance
 
+Run:
+
+```bash
+STRIPE_CHECKOUT_RESULT=PASS \
+STRIPE_WEBHOOK_RESULT=PASS \
+STRIPE_PORTAL_RESULT=PASS \
+STRIPE_FAILURE_RESULT=PASS \
+STRIPE_REFUND_CANCEL_RESULT=PASS \
+ENTITLEMENT_RECONCILIATION_RESULT=PASS \
+QUOTA_ENFORCEMENT_RESULT=PASS \
+REVENUECAT_OR_IOS_DEFERRAL_RESULT=PASS \
+AD_SUPPRESSION_RESULT=PASS \
+SUPPORT_VISIBILITY_RESULT=PASS \
+STRIPE_MODE=live \
+TESTER="<tester>" \
+REVIEWER="<reviewer>" \
+STRIPE_CHECKOUT_REF="<checkout-session-link-or-artifact>" \
+STRIPE_WEBHOOK_REF="<webhook-event-or-log-link>" \
+STRIPE_PORTAL_REF="<customer-portal-link-or-artifact>" \
+STRIPE_FAILURE_REF="<failed-payment-recovery-link-or-artifact>" \
+STRIPE_REFUND_CANCEL_REF="<refund-cancel-downgrade-link-or-artifact>" \
+REVENUECAT_REF="<revenuecat-evidence-or-ios-paid-feature-deferral>" \
+ENTITLEMENT_REF="<backend-entitlement-evidence>" \
+QUOTA_REF="<quota-enforcement-evidence>" \
+AD_SUPPRESSION_REF="<premium-ad-suppression-evidence>" \
+SUPPORT_REF="<support-billing-visibility-evidence>" \
+./scripts/smoke-monetization-readiness-capture.sh
+```
+
 Exit criteria:
 
 - [ ] Launch copy matches release evidence.
 - [ ] Paid-tier behavior is production-proven or disabled.
 - [ ] Support has a billing escalation path.
+
+Evidence:
+
+- `artifacts/smoke/monetization-readiness-*.log`
+- Stripe Checkout, webhook, Customer Portal, failed-payment, refund,
+  cancellation, and downgrade proof.
+- RevenueCat/IAP proof or explicit native paid-feature deferral.
+- Backend entitlement, quota, Premium ad-suppression, and support visibility
+  proof.
 
 ## Phase 5: R1 Mobile Runtime Gate
 

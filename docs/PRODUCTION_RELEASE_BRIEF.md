@@ -33,6 +33,13 @@ Immediate subscription go-live blockers:
 3. Integrate RevenueCat mobile purchase flow and entitlement reconciliation.
 4. Harden backend quota enforcement and validate downgrade and over-limit behavior.
 
+Execution aid: Phase 4 now has an auditable monetization evidence capture path
+via `./scripts/smoke-monetization-readiness-capture.sh`. The script records
+Stripe Checkout, signed webhook processing, Customer Portal, payment-failure,
+refund/cancel/downgrade, entitlement, quota, RevenueCat/IAP or native paid
+feature deferral, ad suppression, and support visibility proof in
+`artifacts/smoke/monetization-readiness-*.log`.
+
 ## Gate Status
 
 | Gate                                      | Status                                           | Evidence                                                                                                                                                                                                                                         | Release impact |

@@ -9,7 +9,7 @@ Current recommendation: NO-GO for production-capable release claim.
 
 Reason:
 
-- R1 Gate 2 status is Build PASS with simulator runtime session established, but manual acceptance remains FAIL and backend success-path validation is still incomplete.
+- R1 Gate 2 status is Build PASS with current release-like iOS build evidence, but manual acceptance and backend success-path validation are still incomplete.
 - R1 Gate 1 and Gate 3 are complete with linked evidence.
 - June 15 local go-live stabilization cleared web type-check, web lint, web
   tests, production web build, shared tests, Functions build/lint/tests, mobile
@@ -38,7 +38,7 @@ Immediate subscription go-live blockers:
 | Gate                                      | Status                                           | Evidence                                                                                                                                                                                                                                         | Release impact |
 | ----------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
 | Gate 1 - Reminder delivery reliability    | Complete                                         | artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log                                                                                                                                                                                     | No blocker     |
-| Gate 2 - Mobile runtime parity validation | Build PASS; runtime acceptance FAIL (latest run) | artifacts/smoke/r1-mobile-build-20260527T221621Z.log, artifacts/smoke/r1-mobile-attached-run-sim-20260527T225748Z.log, artifacts/smoke/r1-mobile-acceptance-20260527T225954Z.log, artifacts/smoke/r1-mobile-backend-traffic-20260527T225954Z.log | Blocking       |
+| Gate 2 - Mobile runtime parity validation | Build PASS; acceptance/backend BLOCKED | artifacts/smoke/r1-mobile-build-20260615T154819Z.log, artifacts/smoke/r1-mobile-attached-run-sim-20260527T225748Z.log, artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log, artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log | Blocking       |
 | Gate 3 - Export parity signoff            | Complete (automated)                             | artifacts/smoke/r1-export-parity-report-20260507T174923Z.md                                                                                                                                                                                      | No blocker     |
 
 ## Blocking Items
@@ -46,27 +46,19 @@ Immediate subscription go-live blockers:
 1. Complete Gate 2 manual/runtime acceptance on iOS with real backend traffic evidence.
 2. Resolve Gate 2 acceptance and backend FAIL outcomes by completing end-to-end checklist validation and capturing explicit backend success-path evidence.
 3. Record R1 go/no-go outcome after Gate 2 evidence is updated.
-4. Commit and push the June 15 stabilization slice, then confirm CI and CodeQL
-   close the local fixes.
+4. Confirm the queued GitHub iOS CI job completes successfully for the June 15
+   stabilization branch.
 
-Latest execution update (May 27, 2026):
+Latest execution update (June 15, 2026):
 
-- `./scripts/smoke-r1-mobile-runtime.sh` was re-run and produced new evidence at `artifacts/smoke/r1-mobile-build-20260527T221621Z.log`.
-- Step 1 (`flutter analyze`) passed.
-- Step 2 entered `flutter build ios --release --no-codesign` and reached `Running Xcode build...` but did not complete within the execution window.
-- Physical-device runtime launch was attempted directly on HADES and failed with Developer Mode/trust prerequisite message; attached-run evidence:
-  - `artifacts/smoke/r1-mobile-attached-run-udid-20260527T222306Z.log`
-- Premium startup auth-gating fix was applied in mobile service initialization, then simulator runtime was re-executed.
-- Latest simulator runtime launch on iPhone 17 Pro (`F11E33C8-5AD4-401E-9735-6046522CC4D7`) completed Xcode build, synced app, and exposed VM service with no prior entitlement/auth callable errors observed in this run; attached-run evidence:
-  - `artifacts/smoke/r1-mobile-attached-run-sim-20260527T225748Z.log`
-- Automated validation refresh (May 27, 2026):
-  - Mobile unit tests: PASS (`flutter test`, 11/11)
-  - Web unit tests: PASS (`npm run test:unit`, 356/356)
-  - Web UAT (Chromium): PASS with 8 executed + 19 intentionally skipped by current scenario gating (`npm run test:uat:chromium`)
-- Session still ended with `Lost connection to device`, and acceptance checklist/backend success-path verification remain incomplete.
-- Acceptance and backend-traffic artifacts were refreshed and remain explicit FAIL for this latest simulator attempt:
-  - `artifacts/smoke/r1-mobile-acceptance-20260527T225954Z.log`
-  - `artifacts/smoke/r1-mobile-backend-traffic-20260527T225954Z.log`
+- `./scripts/smoke-r1-mobile-runtime.sh` was re-run and produced new PASS evidence at `artifacts/smoke/r1-mobile-build-20260615T154819Z.log`.
+- Step 1 (`flutter analyze`) passed with no issues.
+- Step 2 (`flutter build ios --release --no-codesign`) completed successfully and built `build/ios/iphoneos/Runner.app` (68.4 MB).
+- HADES is visible to Flutter as a connected iOS device, but this pass did not execute a signed app launch or full manual acceptance flow.
+- June 1 acceptance/backend artifacts remain the latest explicit non-build Gate 2 evidence:
+  - `artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log` is PARTIAL/BLOCKED pending manual end-to-end signoff.
+  - `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log` is BLOCKED pending explicit auth, Firestore, and Functions proof.
+- GitHub CodeQL is now clear on `develop` with 0 open code-scanning alerts. The latest observed master pipeline on `develop` is still queued on the `Build iOS App` job.
 - Gate 2 remains blocking until acceptance checklist completion and explicit backend success evidence pass.
 
 ## Interim Accountability (Until Dedicated Leads Are Assigned)
@@ -100,17 +92,17 @@ Mark each item complete during the closure meeting.
 ### Gate Evidence
 
 - [x] Gate 1 evidence linked (`artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log`)
-- [x] Gate 2 build evidence linked (`artifacts/smoke/r1-mobile-build-20260527T221621Z.log`)
-- [x] Gate 2 acceptance evidence updated from BLOCKED to PASS/FAIL with runtime observations (`artifacts/smoke/r1-mobile-acceptance-20260527T225954Z.log`)
-- [x] Gate 2 backend-traffic evidence updated from BLOCKED to PASS/FAIL with backend proof (`artifacts/smoke/r1-mobile-backend-traffic-20260527T225954Z.log`)
+- [x] Gate 2 build evidence linked (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`)
+- [ ] Gate 2 acceptance evidence updated to PASS with end-to-end runtime observations
+- [ ] Gate 2 backend-traffic evidence updated to PASS with backend proof
 - [x] Gate 3 evidence linked (`artifacts/smoke/r1-export-parity-report-20260507T174923Z.md`)
 
 ### Cross-Document Synchronization
 
-- [ ] `docs/R1_COMPLETION_CHECKLIST.md` dashboard updated to decision-aligned status
-- [ ] `docs/REQUIREMENTS.md` R1 gate status paragraph updated to decision-aligned status
-- [ ] `docs/RELEASE_SCOPE_MATRIX.md` execution order and Must-scope status updated if Gate 2 closes
-- [ ] `docs/NEXT_FEATURES_EXECUTION_PLAN.md` remaining production list updated after Gate 2 decision
+- [x] `docs/R1_COMPLETION_CHECKLIST.md` dashboard updated to decision-aligned status
+- [x] `docs/REQUIREMENTS.md` R1 gate status paragraph updated to decision-aligned status
+- [x] `docs/RELEASE_SCOPE_MATRIX.md` execution order and Must-scope status updated
+- [x] `docs/NEXT_FEATURES_EXECUTION_PLAN.md` remaining production list updated
 - [ ] `docs/PROJECT_PLAN.md` R1 closure checkpoint recorded with final GO/NO-GO outcome
 
 ### Decision and Accountability
@@ -122,8 +114,8 @@ Mark each item complete during the closure meeting.
 
 ## Immediate Execution Sequence
 
-1. Resolve iOS device prerequisites (Developer Mode/trust).
-2. Run Gate 2 acceptance flow end-to-end on release-like build.
+1. Run Gate 2 acceptance flow end-to-end on the latest release-like build.
+2. Resolve iOS device signing/trust prerequisites if a physical-device launch still requires them.
 3. Capture backend traffic evidence and update artifact logs.
 4. Update gate dashboard and publish R1 closure decision.
 5. Begin monetization hardening slice (Stripe + RevenueCat + quota enforcement).

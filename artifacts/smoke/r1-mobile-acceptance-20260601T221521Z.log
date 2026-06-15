@@ -1,0 +1,22 @@
+R1 Mobile Acceptance Log
+Generated: 2026-06-01T22:15:21Z
+
+Checklist:
+[ ] Auth sign-in or sign-up (manual device interaction pending)
+[ ] Add vehicle (manual device interaction pending)
+[ ] Maintenance CRUD (manual device interaction pending)
+[ ] Reminder actions (manual device interaction pending)
+[ ] Export flow (manual device interaction pending)
+
+Execution Notes (2026-06-01):
+- Web unit tests passed locally: 358/358.
+- Mobile unit tests passed locally: 11/11.
+- Web UAT against https://vehicle-vitals-dev.web.app passed with 26 executed and 58 skipped (0 failures).
+- Physical device HADES release launch reached "Xcode build done" and "Installing and launching" using both VV_FIREBASE_ENV=production and VV_FIREBASE_ENV=development runs.
+- Latest terminal notification for the release run reported exit code 0 and "Application finished."
+
+Result Summary:
+- Status: PARTIAL / BLOCKED FOR MANUAL SIGNOFF
+- Tester: Copilot execution + Mark Nelson manual validation pending
+- Device/Simulator: HADES (UDID 00008020-00060DAE0C69002E)
+- Notes: Automation and release install succeeded, but full end-to-end manual acceptance checklist has not yet been completed on-device.

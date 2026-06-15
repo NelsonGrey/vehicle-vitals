@@ -292,7 +292,22 @@ Run:
 
 ```bash
 ./scripts/smoke-r1-mobile-runtime.sh
-./scripts/smoke-r1-mobile-acceptance-template.sh
+AUTH_RESULT=PASS \
+VEHICLE_CRUD_RESULT=PASS \
+MAINTENANCE_CRUD_RESULT=PASS \
+REMINDER_ACTIONS_RESULT=PASS \
+EXPORT_RESULT=PASS \
+FIRESTORE_WRITES_OBSERVED=YES \
+FUNCTIONS_INVOCATIONS_OBSERVED=YES \
+AUTH_EVENTS_OBSERVED=YES \
+FIREBASE_PROJECT=vehicle-vitals-dev \
+TESTER="<tester>" \
+REVIEWER="<reviewer>" \
+SCREENSHOT_EVIDENCE="<paths-or-links>" \
+FIRESTORE_EVIDENCE_REF="<console-paths-or-export>" \
+FUNCTIONS_LOG_REF="<log-query-or-link>" \
+AUTH_EVENT_REF="<auth-console-or-log-link>" \
+./scripts/smoke-r1-mobile-acceptance-capture.sh
 ```
 
 Acceptance checklist:
@@ -311,6 +326,10 @@ Evidence:
 - `artifacts/smoke/r1-mobile-build-<timestamp>.log`
 - `artifacts/smoke/r1-mobile-acceptance-<timestamp>.log`
 - `artifacts/smoke/r1-mobile-backend-traffic-<timestamp>.log`
+
+Use `./scripts/smoke-r1-mobile-acceptance-template.sh` only as a pre-run
+scaffold. Use `./scripts/smoke-r1-mobile-acceptance-capture.sh` for the final
+PASS/BLOCKED evidence packet after real device and backend observations.
 
 Current evidence:
 

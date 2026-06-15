@@ -35,7 +35,7 @@ Completed in code:
 
 Not yet complete for production claim:
 
-- Mobile release-mode parity validation evidence (Gate 2 status: Build PASS; runtime acceptance BLOCKED pending iOS Developer Mode/trust and successful release-like runtime session with backend-traffic evidence)
+- Mobile release-mode parity validation evidence (Gate 2 status: Build PASS with latest release-like iOS build; acceptance/backend evidence BLOCKED pending end-to-end checklist and backend-traffic proof)
 - Calendar provider-account reliability signoff
 - Stripe checkout and billing workflow production hardening (web + backend)
 - RevenueCat mobile IAP integration and entitlement-transition validation

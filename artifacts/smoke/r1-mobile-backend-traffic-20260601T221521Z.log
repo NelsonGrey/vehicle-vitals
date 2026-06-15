@@ -1,0 +1,17 @@
+R1 Mobile Backend Traffic Log
+Generated: 2026-06-01T22:15:21Z
+
+Capture points:
+- Firestore writes observed: Not verified in this pass (manual console/log review pending)
+- Functions invocations observed: Not verified in this pass (manual console/log review pending)
+- Auth events observed: Not verified in this pass (manual console/log review pending)
+
+Execution Notes (2026-06-01):
+- Firebase CLI active project check confirms vehicle-vitals-dev as default/development alias.
+- HADES release installation completed via ios-restart-local.sh with exit code 0 on latest run.
+- This run did not include a manual authenticated workflow execution (sign-in -> vehicle CRUD -> maintenance -> export) while observing backend traces.
+
+Result Summary:
+- Status: BLOCKED (backend success-path evidence incomplete)
+- Reviewer: Copilot execution + Mark Nelson manual verification pending
+- Notes: Gate 2 backend-traffic PASS requires explicit proof of auth events, Firestore writes, and Function calls during end-to-end device flow.

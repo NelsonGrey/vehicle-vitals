@@ -67,7 +67,7 @@ Run date: June 15, 2026
 | Mobile analyze       | `cd packages/mobile && flutter analyze`                                                           | Pass                                                           | Local blocker cleared.                                                                          |
 | Script tests         | `npm run test:scripts`                                                                            | Pass, 4 tests                                                  | Good baseline.                                                                                  |
 | Firebase rules       | `firebase emulators:exec --only firestore,storage --project vehicle-vitals-dev 'echo rules-ok'`   | Pass                                                           | Firestore and Storage rules load successfully; path behavior still needs release-flow smoke.     |
-| R1 mobile build      | `./scripts/smoke-r1-mobile-runtime.sh`                                                            | Pass; built `build/ios/iphoneos/Runner.app`                    | Release-like iOS build path is current; acceptance/backend proof still blocks Gate 2.            |
+| R1 mobile build/launch | `./scripts/smoke-r1-mobile-runtime.sh`; HADES release run                                        | Pass; built `build/ios/iphoneos/Runner.app` and launched on HADES | Release-like iOS build and launch path is current; acceptance/backend proof still blocks Gate 2. |
 | CodeQL               | GitHub code scanning alerts                                                                        | 0 open alerts                                                  | Prior high-severity CodeQL blocker is closed on `develop`.                                      |
 | GitHub CI            | Latest `develop` master pipeline                                                                  | Queued on `Build iOS App` at review time                       | All completed jobs passed/skipped as expected, but full CI success is not yet available.         |
 | GitHub PR queue      | `gh pr list --state open --limit 100 --json statusCheckRollup`                                    | 20 open Dependabot PRs with non-clear check rollups             | Queue still needs merge, close, or explicit deferral.                                           |
@@ -87,7 +87,7 @@ subscription launch may proceed until every P0 item is closed.
 | P0-03 | Closed locally         | Web lint fails                                           | `npm --workspace=@vehicle-vitals/web run lint` now exits 0; React hook/compiler rules are warnings for this cut                                                                                                                   | Command passes locally and in CI, or warning baseline is approved for the release.                                                                                   |
 | P0-04 | Closed locally         | Mobile analyze fails                                     | `cd packages/mobile && flutter analyze` now passes                                                                                                                                                                                | Command passes locally and in CI.                                                                                                                                    |
 | P0-05 | Closed locally         | Household/org garage writes are not allowed by rules     | Firestore rules allow active org members under `orgs/{orgId}/vehicles`; Storage rules allow active org members under `orgs/{orgId}/vehicles`; `firebase.json` deploys Storage rules; emulator startup passes                       | Rules and release-flow smoke support org-scoped vehicles, or household storage mode is disabled before release.                                                      |
-| P0-06 | Open                   | R1 Gate 2 is still incomplete                            | Latest build evidence is PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`); acceptance/backend artifacts remain PARTIAL/BLOCKED (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`, `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) | Gate 2 acceptance and backend evidence are PASS with artifacts under `artifacts/smoke/`.                                                                             |
+| P0-06 | Open                   | R1 Gate 2 is still incomplete                            | Latest build and launch evidence is PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`, `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`); acceptance/backend artifacts remain PARTIAL/BLOCKED (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`, `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) | Gate 2 acceptance and backend evidence are PASS with artifacts under `artifacts/smoke/`.                                                                             |
 | P0-07 | Closed                 | Open high-severity CodeQL alert                          | CodeQL run for `ce6d530` succeeded and GitHub code scanning reports 0 open alerts                                                                                                                                                  | Alert is fixed and closed by CodeQL, dismissed with documented false-positive rationale, or accepted by risk owner before launch.                                     |
 | P0-08 | Open                   | Dependabot PR queue is unstable                          | 20 open Dependabot PRs against `develop`; current status-check rollups are not clear                                                                                                                                               | Queue is merged, closed, or explicitly deferred with no critical security updates pending.                                                                           |
 | P0-09 | Open                   | Branch promotion path is stale/diverged                  | `develop` is 145 commits ahead of `staging`; `staging` is 3 commits ahead of `develop`; `staging` is 599 commits ahead of `main`; readiness report is NO-GO                                                                        | Release branch policy is re-established and readiness report returns GO.                                                                                             |
@@ -283,9 +283,10 @@ Exit criteria:
 
 Owner: Mobile lead
 
-Current status: Not complete. Release-like iOS build is PASS as of
-`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`; manual acceptance and
-backend success-path proof are still open.
+Current status: Not complete. Release-like iOS build and HADES launch are PASS
+as of `artifacts/smoke/r1-mobile-build-20260615T154819Z.log` and
+`artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`; manual
+acceptance and backend success-path proof are still open.
 
 Run:
 
@@ -314,6 +315,7 @@ Evidence:
 Current evidence:
 
 - `artifacts/smoke/r1-mobile-build-20260615T154819Z.log` - PASS
+- `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log` - PASS through HADES install/launch
 - `artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log` - PARTIAL/BLOCKED
 - `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log` - BLOCKED
 

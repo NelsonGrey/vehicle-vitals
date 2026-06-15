@@ -8,8 +8,8 @@ interface CachedImageProps {
   width?: number | string;
   height?: number | string;
   style?: React.CSSProperties;
-  loader?: React.ReactNode;
-  unloader?: React.ReactNode;
+  loader?: React.ReactElement;
+  unloader?: React.ReactElement;
 }
 
 export const CachedImage: React.FC<CachedImageProps> = ({

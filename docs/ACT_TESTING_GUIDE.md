@@ -37,7 +37,7 @@ cp .act-secrets/test-secrets .act-secrets/real-secrets
 ./scripts/test-act.sh
 
 # Or test specific workflows directly
-act -W .github/workflows/ci-cd-pipeline.yml --job quality-check --container-architecture linux/amd64
+act -W .github/workflows/master-pipeline.yml --job quality-gate --container-architecture linux/amd64
 ```
 
 ## 🛠️ Common Commands
@@ -45,8 +45,8 @@ act -W .github/workflows/ci-cd-pipeline.yml --job quality-check --container-arch
 ### Test Quality Checks
 
 ```bash
-act -W .github/workflows/ci-cd-pipeline.yml \
-  --job quality-check \
+act -W .github/workflows/master-pipeline.yml \
+  --job quality-gate \
   --secret-file .act-secrets/test-secrets \
   --container-architecture linux/amd64
 ```
@@ -54,13 +54,13 @@ act -W .github/workflows/ci-cd-pipeline.yml \
 ### Test Web Build & Deploy (Dry Run)
 
 ```bash
-act -W .github/workflows/ci-cd-pipeline.yml \
-  --job build-packages \
+act -W .github/workflows/master-pipeline.yml \
+  --job build-web \
   --secret-file .act-secrets/test-secrets \
   --container-architecture linux/amd64
 
-act -W .github/workflows/ci-cd-pipeline.yml \
-  --job deploy-web \
+act -W .github/workflows/master-pipeline.yml \
+  --job deploy-firebase \
   --secret-file .act-secrets/test-secrets \
   --container-architecture linux/amd64
 ```
@@ -102,11 +102,11 @@ EOF
 
 ```bash
 # Use absolute paths
-act -W /full/path/to/.github/workflows/ci-cd-pipeline.yml
+act -W /full/path/to/.github/workflows/master-pipeline.yml
 
 # Or run from project root
 cd /path/to/vehicle-vitals
-act -W .github/workflows/ci-cd-pipeline.yml
+act -W .github/workflows/master-pipeline.yml
 ```
 
 ### Job Selection
@@ -116,7 +116,7 @@ act -W .github/workflows/ci-cd-pipeline.yml
 act --list
 
 # Test specific job
-act -W .github/workflows/ci-cd-pipeline.yml --job quality-check
+act -W .github/workflows/master-pipeline.yml --job quality-gate
 ```
 
 ## 📊 Workflow Testing Strategy
@@ -125,20 +125,20 @@ act -W .github/workflows/ci-cd-pipeline.yml --job quality-check
 
 ```bash
 # Test quality checks first
-act -W .github/workflows/ci-cd-pipeline.yml --job quality-check
+act -W .github/workflows/master-pipeline.yml --job quality-gate
 
 # Test build jobs
-act -W .github/workflows/ci-cd-pipeline.yml --job build-packages
+act -W .github/workflows/master-pipeline.yml --job build-web
 
 # Test deployment jobs (with dry-run)
-act -W .github/workflows/ci-cd-pipeline.yml --job deploy-web
+act -W .github/workflows/master-pipeline.yml --job deploy-firebase
 ```
 
 ### Phase 2: Full Pipeline Testing
 
 ```bash
 # Test complete workflow
-act -W .github/workflows/ci-cd-pipeline.yml --secret-file .act-secrets/test-secrets
+act -W .github/workflows/master-pipeline.yml --secret-file .act-secrets/test-secrets
 ```
 
 ### Phase 3: Event Simulation
@@ -180,7 +180,7 @@ act --env ENVIRONMENT=development \
 
 ```bash
 # Always test locally first
-./scripts/test-cicd-local.sh development true ci-cd-pipeline
+./scripts/test-cicd-local.sh development true master-pipeline
 
 # Use act for workflow logic testing
 ./scripts/test-act.sh

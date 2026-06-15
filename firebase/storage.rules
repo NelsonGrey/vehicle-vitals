@@ -2,9 +2,24 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function orgMemberDoc(orgId) {
+      return /databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid);
+    }
+
+    function isActiveOrgMember(orgId) {
+      return request.auth != null
+        && firestore.exists(orgMemberDoc(orgId))
+        && firestore.get(orgMemberDoc(orgId)).data.status == 'active';
+    }
+
     // App attachments live under users/{uid}/... and are private to the owner.
     match /users/{userId}/{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Household/shared-garage attachments are private to active org members.
+    match /orgs/{orgId}/vehicles/{allPaths=**} {
+      allow read, write: if isActiveOrgMember(orgId);
     }
 
     // Optional public assets path.

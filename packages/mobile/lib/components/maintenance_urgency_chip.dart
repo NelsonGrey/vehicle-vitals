@@ -18,14 +18,13 @@ class MaintenanceUrgencyChip extends StatelessWidget {
       vehicle.mileage,
       vehicle.mileage + 10000,
     );
-    if (items.isEmpty) return null;
-    
+    if (items.isEmpty) return const SizedBox.shrink();
+
     final miles = items.first['milesUntilDue'] as int;
-    if (miles > 5000) return null;
-    
+    if (miles > 5000) return const SizedBox.shrink();
+
     final isUrgent = miles <= 1000;
-    final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       margin: const EdgeInsets.only(top: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

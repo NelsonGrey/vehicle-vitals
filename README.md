@@ -45,6 +45,7 @@ Comprehensive project documentation is available in the [`docs/`](/docs) folder:
 **Technical & Deployment**:
 
 - **[REQUIREMENTS.md](/docs/REQUIREMENTS.md)** - Complete project requirements, feature status, and implementation roadmap
+- **[GO_LIVE_RUNBOOK.md](/docs/GO_LIVE_RUNBOOK.md)** - Executable go-live readiness checklist, blocker list, validation gates, launch steps, and rollback plan
 - **[DEPLOY.md](/docs/DEPLOY.md)** - Detailed deployment guide for all environments (dev/staging/prod)
 - **[ENVIRONMENT_SETUP.md](/docs/ENVIRONMENT_SETUP.md)** - Environment configuration and GitHub secrets setup
 - **[DEPLOYMENT_STATUS.md](/docs/DEPLOYMENT_STATUS.md)** - Current deployment status and environment details
@@ -157,7 +158,8 @@ See setup guide:
 ### Configuration Files:
 
 - **Mobile**: Run `flutterfire configure` in the `mobile/` directory
-- **Firestore Rules**: `firebase/firestore.rules` (deploy with `firebase deploy --only firestore:rules`)
+- **Firestore Rules**: `firebase/firestore.rules` (deploy with `firebase deploy --only firestore`)
+- **Storage Rules**: `firebase/storage.rules` (deploy with `firebase deploy --only storage`)
 
 ### Data Convention:
 
@@ -274,7 +276,7 @@ npm run build:demonstration
 
 # Deploy using Firebase CLI
 firebase use staging     # or development
-firebase deploy --only hosting
+firebase deploy --only firestore,storage,functions,hosting
 ```
 
 ### Coming Soon Page Control

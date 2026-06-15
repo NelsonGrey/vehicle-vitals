@@ -99,7 +99,9 @@ gh secret list | grep PRODUCTION
 Once all secrets are set, trigger a production deployment:
 
 ```bash
-gh workflow run ci-cd-pipeline.yml -f environment=PRODUCTION
+gh workflow run master-pipeline.yml \
+  -f action=build_and_deploy \
+  -f environment=production
 ```
 
 ## Expected Result

@@ -34,10 +34,6 @@ export const VehicleListItem: React.FC<VehicleListItemProps> = ({
   const modelText = vehicle.model || '';
   const isStored = vehicle.vehicleStatus === 'stored';
 
-  const getVehicleStatus = (v: Vehicle): 'active' | 'stored' => {
-    return v.vehicleStatus === 'stored' ? 'stored' : 'active';
-  };
-
   return (
     <button
       type="button"

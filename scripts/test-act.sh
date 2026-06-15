@@ -113,10 +113,10 @@ test_workflow() {
     act_cmd="$act_cmd --artifact-server-path /tmp/act-artifacts"  # Use temp directory
 
     # Use lightweight image for Node.js jobs
-    if [[ "$workflow" == "ci-cd-pipeline" && "$job" == "quality-check" ]]; then
+    if [[ "$workflow" == "master-pipeline" && "$job" == "quality-gate" ]]; then
         act_cmd="$act_cmd --container-options=\"--memory=1g --cpus=1\""
         act_cmd="$act_cmd -P ubuntu-latest=node:18-slim"
-    elif [[ "$workflow" == "ci-cd-pipeline" && "$job" =~ ^(build-packages|deploy-web)$ ]]; then
+    elif [[ "$workflow" == "master-pipeline" && "$job" =~ ^(build-web|deploy-firebase)$ ]]; then
         act_cmd="$act_cmd --container-options=\"--memory=2g --cpus=2\""
         act_cmd="$act_cmd -P ubuntu-latest=node:18-slim"
     elif [[ "$workflow" =~ ^(ios-distribution)$ ]]; then
@@ -217,7 +217,9 @@ EOF
     cat > .github/workflows/test-events/workflow_dispatch.json << EOF
 {
   "inputs": {
+    "action": "build_and_deploy",
     "environment": "development",
+    "verbose": "false",
     "build_type": "debug",
     "release_notes": "Test build from act"
   }
@@ -231,9 +233,9 @@ EOF
 main_menu() {
     echo ""
     echo -e "${BLUE}Choose workflow to test:${NC}"
-    echo "1. 🚀 CI/CD Pipeline - Quality Check"
-    echo "2. 🚀 CI/CD Pipeline - Build Packages"
-    echo "3. 🚀 CI/CD Pipeline - Deploy Web"
+    echo "1. 🚀 Master Pipeline - Quality Gate"
+    echo "2. 🚀 Master Pipeline - Build Web"
+    echo "3. 🚀 Master Pipeline - Deploy Firebase"
     echo "4. 🍎 iOS Distribution"
     echo "5. 🔐 Test Secrets"
     echo "6. 🐳 Setup Docker Images (one-time)"
@@ -246,13 +248,13 @@ main_menu() {
 
     case $choice in
         1)
-            test_workflow "ci-cd-pipeline" "quality-check" "push"
+            test_workflow "master-pipeline" "quality-gate" "push"
             ;;
         2)
-            test_workflow "ci-cd-pipeline" "build-packages" "workflow_dispatch"
+            test_workflow "master-pipeline" "build-web" "workflow_dispatch"
             ;;
         3)
-            test_workflow "ci-cd-pipeline" "deploy-web" "workflow_dispatch"
+            test_workflow "master-pipeline" "deploy-firebase" "workflow_dispatch"
             ;;
         4)
             test_workflow "ios-distribution" "distribute-ios" "push"

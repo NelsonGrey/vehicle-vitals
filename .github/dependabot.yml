@@ -22,6 +22,10 @@ updates:
       root-npm:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     labels:
       - "dependencies"
       - "security"
@@ -31,6 +35,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "indirect"
     groups:
       web-npm:
         patterns:
@@ -44,6 +50,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "indirect"
     groups:
       functions-npm:
         patterns:
@@ -57,6 +65,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "indirect"
     groups:
       shared-npm:
         patterns:
@@ -70,6 +80,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "indirect"
     groups:
       api-server-npm:
         patterns:
@@ -87,6 +99,10 @@ updates:
       mobile-pub:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     labels:
       - "dependencies"
       - "security"

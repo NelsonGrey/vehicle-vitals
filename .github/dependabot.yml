@@ -4,7 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
@@ -13,7 +17,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      root-npm:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
@@ -22,7 +30,11 @@ updates:
     directory: "/packages/web"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      web-npm:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
@@ -31,7 +43,11 @@ updates:
     directory: "/packages/functions"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      functions-npm:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
@@ -40,7 +56,11 @@ updates:
     directory: "/packages/shared"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      shared-npm:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
@@ -49,7 +69,11 @@ updates:
     directory: "/packages/api-server"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      api-server-npm:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
@@ -58,7 +82,11 @@ updates:
     directory: "/packages/mobile"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      mobile-pub:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"

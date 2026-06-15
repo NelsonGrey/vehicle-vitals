@@ -76,6 +76,7 @@ Latest execution update (June 15, 2026):
 2. RevenueCat mobile IAP integration and entitlement-transition validation.
 3. Tier quota enforcement hardening in backend/rules.
 4. Calendar provider-account reliability signoff.
+5. Deferred Dependabot queue cleanup after Gate 2 closure; current security alerts are 0 and Dependabot grouping/open-PR caps are in place for release freeze.
 
 ## Exit Criteria for Go Recommendation
 

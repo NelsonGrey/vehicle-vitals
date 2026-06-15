@@ -38,6 +38,12 @@ This matrix is the master project-plan view for subscription go-live readiness. 
 | Technical readiness | Subscription UI, entitlement primitives, and core monetization wiring exist           | Yellow        | Stripe production validation, RevenueCat integration, backend quota enforcement, and mobile release validation remain open |
 | Release governance  | Core R1 evidence is mostly in place                                                   | Yellow        | R1 Gate 2 mobile runtime acceptance is still the immediate blocker to a production-capable release claim                   |
 
+Current monetization evidence path: `./scripts/smoke-monetization-readiness-capture.sh`
+produces `artifacts/smoke/monetization-readiness-*.log` and only marks
+subscription go-live PASS when Stripe Billing, entitlement reconciliation,
+backend quotas, RevenueCat/IAP or native paid-feature deferral, Premium ad
+suppression, and support visibility evidence are all explicitly present.
+
 ### Subscription Go-Live Priority Sequence
 
 1. Close R1 Gate 2 and publish final mobile runtime/backend evidence.

@@ -122,7 +122,26 @@ Status: In progress
 # From repository root
 ./scripts/smoke-r1-mobile-runtime.sh
 
-# Generate acceptance and backend-traffic evidence templates
+# Capture acceptance and backend-traffic evidence after the device run.
+# This emits PASS only when every required field is PASS/YES.
+AUTH_RESULT=PASS \
+VEHICLE_CRUD_RESULT=PASS \
+MAINTENANCE_CRUD_RESULT=PASS \
+REMINDER_ACTIONS_RESULT=PASS \
+EXPORT_RESULT=PASS \
+FIRESTORE_WRITES_OBSERVED=YES \
+FUNCTIONS_INVOCATIONS_OBSERVED=YES \
+AUTH_EVENTS_OBSERVED=YES \
+FIREBASE_PROJECT=vehicle-vitals-dev \
+TESTER="<tester>" \
+REVIEWER="<reviewer>" \
+SCREENSHOT_EVIDENCE="<paths-or-links>" \
+FIRESTORE_EVIDENCE_REF="<console-paths-or-export>" \
+FUNCTIONS_LOG_REF="<log-query-or-link>" \
+AUTH_EVENT_REF="<auth-console-or-log-link>" \
+./scripts/smoke-r1-mobile-acceptance-capture.sh
+
+# Optional fallback scaffold when the run has not happened yet
 ./scripts/smoke-r1-mobile-acceptance-template.sh
 ```
 
@@ -171,13 +190,14 @@ Status: In progress
 ### Acceptance Helper Generated
 
 - `artifacts/smoke/r1-gate2-mobile-acceptance-checklist-2026-05-06T15-51-24-135Z.md` - Comprehensive 7-phase acceptance test (auth, vehicle CRUD, maintenance CRUD, reminders, exports, backend verification, performance)
+- `scripts/smoke-r1-mobile-acceptance-capture.sh` - PASS/BLOCKED evidence capture for the manual device run and backend observations
 
 ### Remaining to Close Gate
 
 1. ✅ Release build evidence available (latest complete build evidence: `r1-mobile-build-20260615T154819Z.log`)
 2. ✅ Release-mode HADES launch evidence available (`r1-mobile-attached-run-udid-20260615T155826Z.log`)
-3. Re-run Gate 2 acceptance flow and replace the latest PARTIAL/BLOCKED artifact (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`) with PASS evidence
-4. Capture backend evidence and replace the latest BLOCKED artifact (`artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) with PASS evidence
+3. Re-run Gate 2 acceptance flow and use `scripts/smoke-r1-mobile-acceptance-capture.sh` to replace the latest PARTIAL/BLOCKED artifact (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`) with PASS evidence
+4. Capture backend evidence with the same script and replace the latest BLOCKED artifact (`artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) with PASS evidence
 5. Final sign-off when acceptance phases pass
 
 ### Done Criteria

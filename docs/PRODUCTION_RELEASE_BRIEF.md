@@ -117,7 +117,7 @@ Mark each item complete during the closure meeting.
 ## Immediate Execution Sequence
 
 1. Run Gate 2 acceptance flow end-to-end on the latest HADES release-mode launch path.
-2. Capture backend traffic evidence and update artifact logs.
+2. Capture acceptance/backend observations with `./scripts/smoke-r1-mobile-acceptance-capture.sh` and update artifact logs.
 3. Update gate dashboard and publish R1 closure decision.
 4. Begin monetization hardening slice (Stripe + RevenueCat + quota enforcement).
 

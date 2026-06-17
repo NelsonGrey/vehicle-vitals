@@ -73,9 +73,9 @@ Run date: June 17, 2026
 | Firebase rules       | `firebase emulators:exec --only firestore,storage --project vehicle-vitals-dev 'echo rules-ok'`   | Pass                                                           | Firestore and Storage rules load successfully; path behavior still needs release-flow smoke.     |
 | R1 mobile build/launch | `./scripts/smoke-r1-mobile-runtime.sh`; HADES release run                                        | Pass; built `build/ios/iphoneos/Runner.app` and launched on HADES | Release-like iOS build and launch path is current; acceptance/backend proof still blocks Gate 2. |
 | CodeQL               | `gh api "repos/mnelson3/vehicle-vitals/code-scanning/alerts?state=open"`                         | 0 open alerts (25 total, all closed/dismissed)                 | CodeQL blocker remains closed on `develop`.                                                      |
-| GitHub CI            | Run `27699314636` for commit `28ab5a1`                                                            | Queued 15:12 UTC June 17; monitor at GitHub Actions                         | Must complete green before merging PR #103 to staging.                                 |
-| GitHub PR queue      | `gh pr list --state open`                                                                         | 0 Dependabot PRs open; PR #103 (develop→staging) open and awaiting CI      | Merge PR #103 after CI passes to advance P0-09.                                        |
-| Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop`                               | staging ahead 3, develop ahead 160                             | Staging is not a current release candidate.                                                     |
+| GitHub CI            | Run `27699695742` for commit `22cf9b9`                                                            | Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅ (June 17); Build iOS App queued (macOS runner) | iOS build must complete before merging PR #103 to staging.                             |
+| GitHub PR queue      | `gh pr list --state open`                                                                         | 0 Dependabot PRs open; PR #103 (develop→staging) open, CI Quality Gate green | Merge PR #103 after iOS build completes to advance P0-09.                              |
+| Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop`                               | staging ahead 3, develop ahead 163                             | Staging is not a current release candidate.                                                     |
 | Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging`                                  | main ahead 18, staging ahead 599                               | Production promotion path is not clean.                                                         |
 | Branch protection    | `npm run security:audit` (branch protection snapshot)                                             | `develop` and `main` lack required status checks and signed commits; `staging` is fully protected | Governance gap: `develop` and `main` protection needs decision before release freeze.  |
 | Security features    | `npm run security:audit` (repository security features)                                           | Dependabot security updates enabled; secret scanning enabled; push protection enabled | Good posture. No open Dependabot security alerts (1 dismissed as tolerable_risk).      |
@@ -487,8 +487,8 @@ gh pr list --state open --limit 30 \
   - PR #101 and #102 merged June 17 at 15:03 UTC. Dependabot queue is now 0 open PRs.
 - [ ] Re-establish branch promotion policy:
   - [x] `develop` to `staging`: PR #103 opened June 17 — https://github.com/mnelson3/vehicle-vitals/pull/103
-    - Requires CI to pass on `develop` (pushed at commit `28ab5a1`)
-    - Merge once CI is green and the staging rehearsal plan is confirmed
+    - CI run `27699695742` (commit `22cf9b9`): Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅; Build iOS App queued (macOS runner)
+    - Merge once iOS build completes and the staging rehearsal plan is confirmed
   - [ ] `staging` to `main`: use `scripts/open-staging-to-production-pr.sh --create-pr` after staging rehearsal passes
 - [ ] Generate readiness report:
 
@@ -513,9 +513,23 @@ Exit criteria:
 
 Owner: Release manager
 
+Prerequisite: PR #103 (develop→staging) merged and staging CI green.
+
 Checklist:
 
-- [ ] Deploy release candidate to staging through the active pipeline:
+- [ ] Verify PR #103 is merged and the staging branch CI completed successfully:
+
+```bash
+gh run list --branch staging --limit 5
+```
+
+- [ ] If PR #103 is not yet merged, merge it first:
+
+```bash
+gh pr merge 103 --squash
+```
+
+- [ ] If staging CI did not run automatically after merge, trigger manually:
 
 ```bash
 gh workflow run master-pipeline.yml \
@@ -523,47 +537,59 @@ gh workflow run master-pipeline.yml \
   -f environment=staging
 ```
 
-- [ ] Confirm the workflow completed successfully:
+- [ ] Confirm workflow completed successfully and all jobs passed:
 
 ```bash
-gh run list --workflow "Master CI/CD Pipeline" --branch staging --limit 5
+gh run list --branch staging --limit 3
+gh run view <run-id> --json jobs
 ```
 
-- [ ] Confirm deploy targets included Hosting, Firestore, Storage, and Functions.
-- [ ] Run UAT against staging:
+- [ ] Confirm deploy targets included Hosting, Firestore, Storage, Functions, and Firestore indexes.
+  - Note: the pipeline's `deploy_only` action skips Functions for production. Use
+    `build_and_deploy` to ensure Functions are deployed.
+- [ ] Verify staging URL is live and accessible: https://vehicle-vitals-staging.web.app
+- [ ] Run automated UAT against staging:
 
 ```bash
-./scripts/run-uat-tests.sh staging
+BASE_URL=https://vehicle-vitals-staging.web.app ./scripts/run-uat-tests.sh staging
 ```
 
-- [ ] Smoke test manually:
-  - [ ] Landing page and auth
-  - [ ] Sign up/sign in/sign out
-  - [ ] Vehicle CRUD
-  - [ ] Maintenance CRUD
-  - [ ] Upcoming reminders
-  - [ ] Record export
-  - [ ] Attachment upload/download
-  - [ ] Calendar/provider flow if in launch scope
-  - [ ] Subscription/billing flow if in launch scope
-  - [ ] Contact/support page
-  - [ ] Privacy and Terms pages
-- [ ] Check Functions logs for errors.
-- [ ] Check browser console for production errors.
-- [ ] Check analytics/error reporting events.
+- [ ] Manual smoke test (staging environment):
+  - [ ] Landing page loads, no console errors
+  - [ ] Sign up with a new email → confirm Firebase Auth creates user
+  - [ ] Sign in / sign out cycle
+  - [ ] Add vehicle (VIN decode working, data saves)
+  - [ ] Edit vehicle (status: active/stored)
+  - [ ] Maintenance create, edit, delete
+  - [ ] Upcoming reminders visible
+  - [ ] Record export: CSV and PDF download correctly
+  - [ ] Attachment upload → file visible in Storage
+  - [ ] Contact/support page navigates correctly
+  - [ ] Privacy and Terms pages load
+  - [ ] No 404s on navigation
+- [ ] Check Firebase Functions logs for errors:
+  - Go to Firebase Console → Functions → Logs → select `vehicle-vitals-staging`
+- [ ] Check browser DevTools console for unhandled errors.
+- [ ] Check Firestore for actual data writes (confirm real user records exist after smoke).
+- [ ] Verify security headers:
+
+```bash
+curl -I https://vehicle-vitals-staging.web.app | grep -E "content-security|x-frame|x-xss"
+```
 
 Exit criteria:
 
-- [ ] Staging smoke passes.
-- [ ] No untriaged high-severity runtime errors.
-- [ ] Product owner signs launch scope.
+- [ ] Staging smoke passes all manual steps.
+- [ ] UAT passes or failures are explicitly accepted.
+- [ ] No untriaged high-severity runtime errors in Functions or browser.
+- [ ] Product owner signs launch scope decision.
 
 Evidence:
 
-- Staging workflow URL.
+- Link to staging CI run.
 - UAT output.
-- Manual smoke notes.
-- Screenshots for launch-critical flows.
+- Manual smoke sign-off notes with timestamps.
+- Screenshots for at least: sign-in, vehicle add, record export.
 
 ## Phase 8: Production Release
 
@@ -577,11 +603,19 @@ Pre-release checklist:
 - [ ] Support owner is available.
 - [ ] Monitoring owner is available.
 - [ ] Marketing/public launch time is confirmed.
-- [ ] `VITE_SHOW_COMING_SOON_PRODUCTION` is set intentionally:
-  - [ ] `true` for coming-soon/prelaunch
-  - [ ] `false` for public app launch
-- [ ] Production secrets are present and current.
-- [ ] No active incident or provider outage blocks launch.
+- [ ] `VITE_SHOW_COMING_SOON_PRODUCTION` GitHub secret is set intentionally:
+  - [ ] `true` for coming-soon/prelaunch (safe to deploy at any time)
+  - [ ] `false` for public app launch (removes the gate; confirms live)
+  - Verify current value: GitHub repo → Settings → Secrets and variables → Actions → `VITE_SHOW_COMING_SOON_PRODUCTION`
+  - The CI pipeline reads this secret and bakes it into the web build; a redeployment is required after any change.
+- [ ] Production secrets are present and current. Verify:
+
+```bash
+gh secret list --repo mnelson3/vehicle-vitals 2>/dev/null | grep -E "PROD|FIREBASE|STRIPE|APPLE"
+```
+
+- [ ] Firebase production project is `vehicle-vitals-prod` (confirmed in `.cicd/projects/vehicle-vitals.yml`).
+- [ ] No active incident or provider outage blocks launch (check Firebase Status, Stripe Status).
 
 Deploy:
 
@@ -692,23 +726,23 @@ Decision:
 
 Required signoffs:
 
-| Area                 | Owner | Decision | Notes |
-| -------------------- | ----- | -------- | ----- |
-| Engineering          |       |          |       |
-| Product              |       |          |       |
-| Security/privacy     |       |          |       |
-| Mobile/iOS           |       |          |       |
-| Billing/monetization |       |          |       |
-| Support/operations   |       |          |       |
-| Marketing/comms      |       |          |       |
+| Area                 | Owner         | Decision | Notes |
+| -------------------- | ------------- | -------- | ----- |
+| Engineering          | Mark Nelson   |          | Phase 2 local gate PASS June 17; CI confirmation pending |
+| Product              | Mark Nelson   |          | Launch scope decision required (see Phase 4 options) |
+| Security/privacy     | Mark Nelson   |          | CodeQL 0, Dependabot security 0; privacy policy signoff needed |
+| Mobile/iOS           | Mark Nelson   |          | Gate 2 acceptance still open — build PASS, runtime PARTIAL |
+| Billing/monetization | Mark Nelson   |          | Stripe/RevenueCat not proven; defer or prove before launch |
+| Support/operations   | Mark Nelson   |          | Support runbook and escalation path not published |
+| Marketing/comms      | Mark Nelson   |          | Copy alignment with launch scope required |
 
-Open conditions, if any:
+Open conditions (pre-filled for review):
 
-1.
-2.
-3.
+1. R1 Gate 2 acceptance evidence: close before any iOS launch claim.
+2. Launch scope decision: web-only free tier, web+iOS, or coming-soon — determines what P0-11 (subscriptions) blocks.
+3. Paid tier disposition: Stripe+RevenueCat proven OR launch copy explicitly defers paid tiers.
 
-Final decision rationale:
+Final decision rationale: (complete at go/no-go meeting)
 
 ## Documentation Sync Checklist
 
@@ -735,6 +769,10 @@ As of June 17, 2026 (updated after Phase 2 and P0-08 closure).
 - ✅ Phase 3 partial: CodeQL 0, Dependabot security 0, secrets posture confirmed
 - ✅ Mobile test fix: InkSparkle shader mismatch resolved in `premium_plan_catalog_test.dart`
 - ✅ Branch promotion PR opened: PR #103 (develop→staging)
+- ✅ CI run `27699695742` (commit `22cf9b9`): Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅; iOS queued
+- ✅ Phase 7 staging rehearsal checklist expanded with concrete commands and smoke steps
+- ✅ Phase 8 production release checklist updated with coming-soon secret guidance
+- ✅ Go/No-Go Record pre-filled with current known state across all 7 signoff areas
 
 **Remaining — requires your action:**
 
@@ -764,10 +802,11 @@ As of June 17, 2026 (updated after Phase 2 and P0-08 closure).
    - Update `docs/R1_COMPLETION_CHECKLIST.md`, `docs/PRODUCTION_RELEASE_BRIEF.md`,
      and this runbook when Gate 2 is PASS.
 
-2. **Merge develop→staging PR #103** once CI is green on `develop` (push `28ab5a1`
-   triggered a new CI run; confirm `Build iOS App` job completes):
+2. **Merge develop→staging PR #103** — CI run `27699695742` (commit `22cf9b9`) is green on
+   Quality Gate, Build Web App, and Deploy Firebase. Confirm iOS build completes, then merge:
    ```bash
-   gh run list --workflow "master-pipeline.yml" --branch develop --limit 3
+   gh run view 27699695742 --json jobs   # confirm iOS build result
+   gh pr merge 103 --squash              # merge when iOS is done or confirmed non-blocking
    ```
 
 3. **Apply branch protection** to `develop` and `main` (P1 gap):

@@ -299,19 +299,38 @@ Evidence:
 
 Owner: Product/release manager
 
+### Fastest-path launch options (pick one)
+
+**Option A — Defer paid subscriptions, launch free-tier + ads (recommended for speed):**
+This is the fastest path to launch. Paid subscription UI exists but can be presented
+as "coming soon." Ad placements are already wired. Avoids blocking on Stripe validation
+and RevenueCat integration. Steps: update public copy to remove paid-tier claims,
+set `VITE_SHOW_COMING_SOON_PRODUCTION=false`, deploy.
+
+**Option B — Coming-soon page only:**
+Set `VITE_SHOW_COMING_SOON_PRODUCTION=true` and deploy. Collect email signups while
+finishing Gate 2 and Stripe validation. Fastest time to "something live."
+
+**Option C — Full paid launch:**
+Requires completing all Stripe validation, RevenueCat integration, and quota enforcement
+items below. Estimated additional 3–6 weeks before evidence can be captured.
+
 Checklist:
 
-- [ ] Freeze launch scope as one of:
-  - [ ] Web-only public launch
-  - [ ] Web plus iOS public launch
-  - [ ] Private beta only
-  - [ ] Coming-soon page only
+- [ ] **Decision**: Freeze launch scope as one of:
+  - [ ] Web-only public launch (free tier + ads, paid deferred)
+  - [ ] Web plus iOS public launch (requires Gate 2 ✅)
+  - [ ] Private beta / TestFlight only
+  - [ ] Coming-soon page only (fastest to deploy)
 - [ ] Reconcile public copy with the frozen scope.
+  - Remove all Android claims from marketing copy.
+  - If iOS launch: ensure Gate 2 acceptance evidence is linked.
+  - If paid deferred: remove paid-tier checkout CTAs from public copy or replace with waitlist.
 - [ ] Confirm the app does not claim Android availability.
 - [ ] Confirm iOS launch claims are backed by Gate 2 acceptance evidence.
 - [ ] Confirm paid-tier launch mode:
-  - [ ] Paid subscriptions enabled
-  - [ ] Paid subscriptions disabled/deferred
+  - [ ] Paid subscriptions enabled (requires full Stripe + RevenueCat proof below)
+  - [ ] Paid subscriptions disabled/deferred (Option A above — recommended)
 - [ ] If paid subscriptions are enabled, validate:
   - [ ] Stripe live checkout
   - [ ] Stripe webhook signature verification

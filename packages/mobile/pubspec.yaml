@@ -57,7 +57,7 @@ dependencies:
   cached_network_image: ^3.4.1
 
   # File system access
-  path_provider: ^2.1.4
+  path_provider: ^2.1.6
   file_picker: ^10.1.9
 
   # AdMob integration

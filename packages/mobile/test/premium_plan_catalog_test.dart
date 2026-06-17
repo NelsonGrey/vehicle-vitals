@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vehicle_vitals_flutter/screens/premium_screen.dart';
 
+// Use Material 2 theme in all tests to avoid InkSparkle shader asset version
+// mismatch that occurs when the test runtime's compiled shader format version
+// does not match the Flutter framework expectation.
+final _testTheme = ThemeData(useMaterial3: false);
+
 void main() {
   testWidgets('renders all four subscription tiers and base labels', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: _testTheme,
         home: Scaffold(
           body: SingleChildScrollView(
             child: PremiumPlanCatalog(
@@ -37,6 +43,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: _testTheme,
         home: Scaffold(
           body: SingleChildScrollView(
             child: PremiumPlanCatalog(

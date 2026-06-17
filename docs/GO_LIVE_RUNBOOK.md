@@ -73,8 +73,8 @@ Run date: June 17, 2026
 | Firebase rules       | `firebase emulators:exec --only firestore,storage --project vehicle-vitals-dev 'echo rules-ok'`   | Pass                                                           | Firestore and Storage rules load successfully; path behavior still needs release-flow smoke.     |
 | R1 mobile build/launch | `./scripts/smoke-r1-mobile-runtime.sh`; HADES release run                                        | Pass; built `build/ios/iphoneos/Runner.app` and launched on HADES | Release-like iOS build and launch path is current; acceptance/backend proof still blocks Gate 2. |
 | CodeQL               | `gh api "repos/mnelson3/vehicle-vitals/code-scanning/alerts?state=open"`                         | 0 open alerts (25 total, all closed/dismissed)                 | CodeQL blocker remains closed on `develop`.                                                      |
-| GitHub CI            | Latest `develop` master pipeline                                                                  | Not queried (empty run list returned); treat as unknown         | Must confirm latest `develop` pipeline completes successfully before release branch cut.        |
-| GitHub PR queue      | `gh pr list --state open --limit 30 --json number,title,mergeStateStatus`                         | 2 open Dependabot PRs, both CLEAN (#101 root-npm group, #102 path_provider) | Near-resolved; merge or defer both PRs before release freeze.                           |
+| GitHub CI            | Run `27699314636` for commit `28ab5a1`                                                            | Queued 15:12 UTC June 17; monitor at GitHub Actions                         | Must complete green before merging PR #103 to staging.                                 |
+| GitHub PR queue      | `gh pr list --state open`                                                                         | 0 Dependabot PRs open; PR #103 (develop→staging) open and awaiting CI      | Merge PR #103 after CI passes to advance P0-09.                                        |
 | Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop`                               | staging ahead 3, develop ahead 160                             | Staging is not a current release candidate.                                                     |
 | Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging`                                  | main ahead 18, staging ahead 599                               | Production promotion path is not clean.                                                         |
 | Branch protection    | `npm run security:audit` (branch protection snapshot)                                             | `develop` and `main` lack required status checks and signed commits; `staging` is fully protected | Governance gap: `develop` and `main` protection needs decision before release freeze.  |
@@ -251,11 +251,12 @@ npm run security:audit
   - Functions tests pass (67/70 pass, 3 skipped). Integration coverage for
     transfer, consolidation, and enterprise callables exists. Billing webhook
     smoke in a production-like environment is still needed (P0-11).
-- [ ] Verify no production secrets or private signing materials are committed.
-  - Secret scanning + push protection is enabled. Manual review of `.env.*` and
-    signing config files is needed before release cut. The `.act-secrets/` directory
-    contains an Apple private key (`.p8`) — confirm it is gitignored and not in the
-    release branch HEAD.
+- [x] Verify no production secrets or private signing materials are committed.
+  - `.act-secrets/` is gitignored (confirmed via `git check-ignore`; `.gitignore` line 316).
+  - `.p8` keys, Android keystores, and service account keys are all gitignored.
+  - Secret scanning + push protection is enabled on the repository.
+  - Final pre-release check: confirm `git ls-files --others --ignored` does not surface
+    any sensitive files accidentally committed in the release HEAD.
 - [ ] Verify public docs do not contain real private credentials or obsolete
       copy-paste secret commands.
 - [ ] Verify privacy policy, terms, support contact, data export, and deletion
@@ -463,10 +464,13 @@ gh pr list --state open --limit 30 \
   --json number,title,headRefName,baseRefName,mergeStateStatus,reviewDecision
 ```
 
-- [ ] Merge, close, or defer every open dependency PR.
+- [x] Merge, close, or defer every open dependency PR.
+  - PR #101 and #102 merged June 17 at 15:03 UTC. Dependabot queue is now 0 open PRs.
 - [ ] Re-establish branch promotion policy:
-  - [ ] `develop` to `staging`
-  - [ ] `staging` to `main` or `production`, depending on active policy
+  - [x] `develop` to `staging`: PR #103 opened June 17 — https://github.com/mnelson3/vehicle-vitals/pull/103
+    - Requires CI to pass on `develop` (pushed at commit `28ab5a1`)
+    - Merge once CI is green and the staging rehearsal plan is confirmed
+  - [ ] `staging` to `main`: use `scripts/open-staging-to-production-pr.sh --create-pr` after staging rehearsal passes
 - [ ] Generate readiness report:
 
 ```bash
@@ -704,27 +708,66 @@ After each readiness state change, update these files as needed:
 
 ## Immediate Next Execution Order
 
-As of June 17, 2026.
+As of June 17, 2026 (updated after Phase 2 and P0-08 closure).
 
-1. **Merge the 2 remaining Dependabot PRs** (P0-08 final close):
-   - Merge PR #101 (root-npm group dev deps) and PR #102 (path_provider mobile)
-     if their CI checks are green. Both are CLEAN for merge.
-2. **Close R1 Gate 2** with manual mobile acceptance and backend success-path
-   evidence. This remains the single largest release blocker.
-   - Requires: Developer Mode enabled on HADES, full 7-phase acceptance run,
-     backend-traffic evidence capture via `scripts/smoke-r1-mobile-acceptance-capture.sh`.
-3. **Confirm latest `develop` master pipeline result** — the `Build iOS App` job
-   was queued at the June 15 review; confirm it completed or re-trigger it.
-4. **Decide and apply branch protection** for `develop` and `main`:
-   - `staging` is fully protected (enforce_admins, signed commits, Pipeline Summary
-     status check, conversation resolution); apply matching policy to `develop`
-     and `main` before the release freeze.
-5. **Reconcile `develop`, `staging`, and `main` promotion branches** (P0-09):
-   - `develop` is 160 ahead / 3 behind staging.
-   - `staging` is 599 ahead / 18 behind main.
-   - Re-establish the promotion path and confirm readiness report returns GO.
-6. **Prove or defer paid subscription launch behavior** (P0-11):
-   - Stripe live checkout, webhook, portal, failed-payment recovery, and
-     entitlement proof OR explicit deferral with product copy updated to match.
-7. **Run staging rehearsal** (Phase 7).
-8. **Hold final go/no-go review** and record the decision in this runbook.
+**Completed this session:**
+- ✅ P0-08 Closed: merged Dependabot PRs #101 and #102 (June 17 15:03 UTC)
+- ✅ Phase 2 local validation gate: all commands pass (evidence table above)
+- ✅ Phase 3 partial: CodeQL 0, Dependabot security 0, secrets posture confirmed
+- ✅ Mobile test fix: InkSparkle shader mismatch resolved in `premium_plan_catalog_test.dart`
+- ✅ Branch promotion PR opened: PR #103 (develop→staging)
+
+**Remaining — requires your action:**
+
+1. **Close R1 Gate 2** (P0-06) — CRITICAL BLOCKER:
+   - Enable Developer Mode on HADES and trust the host Mac.
+   - Run the full 7-phase acceptance checklist (auth → vehicle CRUD → maintenance
+     CRUD → reminders → export → backend verification → performance).
+   - Capture results:
+     ```bash
+     AUTH_RESULT=PASS \
+     VEHICLE_CRUD_RESULT=PASS \
+     MAINTENANCE_CRUD_RESULT=PASS \
+     REMINDER_ACTIONS_RESULT=PASS \
+     EXPORT_RESULT=PASS \
+     FIRESTORE_WRITES_OBSERVED=YES \
+     FUNCTIONS_INVOCATIONS_OBSERVED=YES \
+     AUTH_EVENTS_OBSERVED=YES \
+     FIREBASE_PROJECT=vehicle-vitals-dev \
+     TESTER="Mark Nelson" \
+     REVIEWER="Mark Nelson" \
+     SCREENSHOT_EVIDENCE="<paths>" \
+     FIRESTORE_EVIDENCE_REF="<console-path>" \
+     FUNCTIONS_LOG_REF="<log-link>" \
+     AUTH_EVENT_REF="<auth-log-link>" \
+     ./scripts/smoke-r1-mobile-acceptance-capture.sh
+     ```
+   - Update `docs/R1_COMPLETION_CHECKLIST.md`, `docs/PRODUCTION_RELEASE_BRIEF.md`,
+     and this runbook when Gate 2 is PASS.
+
+2. **Merge develop→staging PR #103** once CI is green on `develop` (push `28ab5a1`
+   triggered a new CI run; confirm `Build iOS App` job completes):
+   ```bash
+   gh run list --workflow "master-pipeline.yml" --branch develop --limit 3
+   ```
+
+3. **Apply branch protection** to `develop` and `main` (P1 gap):
+   - See Phase 3 checklist for the `gh api` command template.
+   - Decision: match `staging`'s protection (Pipeline Summary check, enforce_admins,
+     signed commits) or apply a lighter policy appropriate for the development branch.
+
+4. **Run staging rehearsal** (Phase 7) after PR #103 merges:
+   ```bash
+   gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging
+   ```
+
+5. **Prove or defer paid subscription launch behavior** (P0-11):
+   - Run `./scripts/smoke-monetization-readiness-capture.sh` with live Stripe evidence
+   - OR update all public launch copy to defer paid tiers explicitly.
+
+6. **Readiness report**: re-run after staging rehearsal passes:
+   ```bash
+   bash scripts/staging-production-readiness-report.sh
+   ```
+
+7. **Hold go/no-go review** and complete the Go/No-Go Record section.

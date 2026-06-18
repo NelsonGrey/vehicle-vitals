@@ -10,6 +10,7 @@ import {
     useNavigate,
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
+import CookieConsentBanner from './components/CookieConsentBanner';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -26,7 +27,11 @@ import {
     buildReminderNotificationPath,
     subscribeToForegroundMessages,
 } from './shared/notificationService';
+import { replayStoredConsent } from './shared/consent';
 import { analytics, logger } from './utils/logger';
+
+// Replay any previously stored consent decision into GTM on every page load.
+replayStoredConsent();
 
 // Component to handle logging and analytics
 function AppAnalytics() {
@@ -245,6 +250,7 @@ function App() {
       <AuthProvider>
         <AppAnalytics />
         <AppNotificationBridge />
+        <CookieConsentBanner />
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Marketing (anonymous) pages */}

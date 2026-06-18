@@ -736,6 +736,7 @@ jobs:
           VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING: ${{ secrets['VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING'] }}
           VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT }}
           VITE_GTM_ID_PRODUCTION: ${{ secrets.VITE_GTM_ID_PRODUCTION }}
+          VITE_ADSENSE_SLOT_PRODUCTION: ${{ secrets.VITE_ADSENSE_SLOT_PRODUCTION }}
         run: |
           case "$TARGET_ENV" in
             production)
@@ -751,6 +752,8 @@ jobs:
               VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_PRODUCTION"
               VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_PRODUCTION"
               GTM_ID="$VITE_GTM_ID_PRODUCTION"
+              ADSENSE_CLIENT="ca-pub-5198775482699756"
+              ADSENSE_SLOT="${VITE_ADSENSE_SLOT_PRODUCTION:-}"
               ;;
             staging)
               API_KEY="$VITE_FIREBASE_API_KEY_STAGING"
@@ -802,6 +805,8 @@ jobs:
                 VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_DEVELOPMENT"
               fi
               GTM_ID=""
+              ADSENSE_CLIENT=""
+              ADSENSE_SLOT=""
               ;;
             *)
               API_KEY="$VITE_FIREBASE_API_KEY_DEVELOPMENT"
@@ -826,6 +831,8 @@ jobs:
                 APP_ID="${APP_ID:-$VITE_FIREBASE_APP_ID}"
                 MEASUREMENT_ID="${MEASUREMENT_ID:-$VITE_FIREBASE_MEASUREMENT_ID}"
               GTM_ID=""
+              ADSENSE_CLIENT=""
+              ADSENSE_SLOT=""
               ;;
           esac
 
@@ -893,6 +900,8 @@ jobs:
             printf 'VITE_FIREBASE_MEASUREMENT_ID=%s\n' "$MEASUREMENT_ID"
             printf 'VITE_ENVIRONMENT=%s\n' "$EFFECTIVE_VITE_ENVIRONMENT"
             printf 'VITE_GTM_ID=%s\n' "${GTM_ID:-}"
+            printf 'VITE_ADSENSE_CLIENT=%s\n' "${ADSENSE_CLIENT:-}"
+            printf 'VITE_ADSENSE_SLOT=%s\n' "${ADSENSE_SLOT:-}"
             printf 'VITE_SHOW_COMING_SOON=%s\n' "$SHOW_COMING_SOON"
             printf 'VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=%s\n' "$ENABLE_HOSTED_DEMO_PDF_UPLOADS"
             if [ -n "${ACCESS_PASSWORD_VAR_NAME:-}" ] && [ -n "${ACCESS_PASSWORD_VALUE:-}" ]; then

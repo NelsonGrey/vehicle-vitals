@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.nelsongrey.vehiclevitals.app.android"
+    namespace = "com.vehiclevitals.app.android"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -22,7 +22,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.nelsongrey.vehiclevitals.app.android"
+        applicationId = "com.vehiclevitals.app.android"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

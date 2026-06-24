@@ -10,7 +10,7 @@ Android Firebase artifacts exist in the repository, but Android development and 
 
 - **API Key**: `AIzaSyB4yx8ABAc5XeU7fbFiz19BOcu9GCkQBvk`
 - **App ID**: `1:489413148337:android:0ed732a4b8cd462068ac90`
-- **Package Name**: `com.nelsongrey.vehiclevitals.app.android`
+- **Package Name**: `com.vehiclevitals.app.android`
 - **Client ID**: `489413148337-bkukvjc1ht5k8vlroj2qkq1qmuf20d2p.apps.googleusercontent.com`
 
 ### 📁 **Files Updated:**
@@ -42,7 +42,7 @@ Android Firebase artifacts exist in the repository, but Android development and 
 
 4. **Configure Android Project (when ready):**
    - The google-services.json is placed in `mobile/android/app/`
-   - Ensure the package name matches: `com.nelsongrey.vehiclevitals.app.android`
+   - Ensure the package name matches: `com.vehiclevitals.app.android`
    - The Flutter project will automatically include Firebase dependencies
 
 ### 🔧 **Firebase Services Available:**
@@ -67,7 +67,7 @@ static const FirebaseOptions android = FirebaseOptions(
 
 ### ⚠️ **Important Notes:**
 
-1. **Package Name**: Must match `com.nelsongrey.vehiclevitals.app.android`
+1. **Package Name**: Must match `com.vehiclevitals.app.android`
 2. **Android Platform Files**: Need to run `flutter create --platforms=android .` to generate Android platform files
 3. **Build Configuration**: google-services.json will be automatically processed by Flutter
 

@@ -120,7 +120,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '919227980868',
     projectId: 'vehicle-vitals-dev',
     storageBucket: 'vehicle-vitals-dev.firebasestorage.app',
-    iosBundleId: 'com.nelsongrey.vehiclevitals.app.ios',
+    iosBundleId: 'com.vehiclevitals.app.ios',
     iosClientId:
         '919227980868-aj9r7328ah5j2fd1tq5tc8ogj5p2007r.apps.googleusercontent.com',
   );
@@ -131,7 +131,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '364854499099',
     projectId: 'vehicle-vitals-staging',
     storageBucket: 'vehicle-vitals-staging.firebasestorage.app',
-    iosBundleId: 'com.nelsongrey.vehiclevitals.app.ios',
+    iosBundleId: 'com.vehiclevitals.app.ios',
     iosClientId:
         '364854499099-84hplu6fd9rpqqc29crhti5hl6a6c38a.apps.googleusercontent.com',
   );
@@ -142,7 +142,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '489413148337',
     projectId: 'vehicle-vitals-prod',
     storageBucket: 'vehicle-vitals-prod.firebasestorage.app',
-    iosBundleId: 'com.nelsongrey.vehiclevitals.app.ios',
+    iosBundleId: 'com.vehiclevitals.app.ios',
     iosClientId:
         '489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com',
   );

@@ -73,7 +73,7 @@ CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN_HERE@github.com/mnelson3/vehicle-vi
 3. **Create Appfile**
    ```ruby
    # Appfile - App-specific configuration
-   app_identifier("com.nelsongrey.vehiclevitals.app.ios")
+   app_identifier("com.vehiclevitals.app.ios")
    apple_id(ENV["FASTLANE_APPLE_ID"])
    team_id(ENV["FASTLANE_TEAM_ID"])
    itc_team_id(ENV["FASTLANE_ITC_TEAM_ID"])

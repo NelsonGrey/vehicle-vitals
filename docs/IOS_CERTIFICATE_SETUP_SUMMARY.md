@@ -13,7 +13,7 @@
 ### 2. Fastlane Configuration Updated
 
 - **Matchfile**: Configured for Vehicle Vitals certificates repository
-- **Appfile**: Updated with correct app identifier (`com.nelsongrey.vehiclevitals.app.ios`)
+- **Appfile**: Updated with correct app identifier (`com.vehiclevitals.app.ios`)
 - **Fastfile**: Added certificate management lanes:
   - `sync_signing` - Sync certificates from repo
   - `certificates_development` - Generate dev certificates
@@ -107,7 +107,7 @@ vehicle-vitals-certificates/
 - **Storage**: Git-based certificate storage
 - **Encryption**: Password-protected certificates
 - **Branch**: `main` (matches main repo)
-- **App ID**: `com.nelsongrey.vehiclevitals.app.ios`
+- **App ID**: `com.vehiclevitals.app.ios`
 
 ### CI/CD Integration
 

@@ -8,7 +8,7 @@ The iOS Firebase configuration has been set up with the following components:
 
 - **API Key**: `AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU`
 - **App ID**: `1:489413148337:ios:b55d0b37718e299368ac90`
-- **Bundle ID**: `com.nelsongrey.vehiclevitals.app.ios`
+- **Bundle ID**: `com.vehiclevitals.app.ios`
 - **Client ID**: `489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com`
 
 ### 📁 **Files Updated:**
@@ -37,7 +37,7 @@ The iOS Firebase configuration has been set up with the following components:
 4. **Configure Xcode Project (when ready):**
    - Open `mobile/ios/Runner.xcworkspace` in Xcode
    - Verify the GoogleService-Info.plist is in the Runner target
-   - Set the Bundle Identifier to `com.nelsongrey.vehiclevitals.app.ios`
+   - Set the Bundle Identifier to `com.vehiclevitals.app.ios`
 
 ### 🔧 **Firebase Services Enabled:**
 
@@ -57,7 +57,7 @@ static const FirebaseOptions ios = FirebaseOptions(
   messagingSenderId: '489413148337',
   projectId: 'vehicle-vitals-prod',
   storageBucket: 'vehicle-vitals-prod.firebasestorage.app',
-  iosBundleId: 'com.nelsongrey.vehiclevitals.app.ios',
+  iosBundleId: 'com.vehiclevitals.app.ios',
   iosClientId: '489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com',
 );
 ```

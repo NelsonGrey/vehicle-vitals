@@ -236,9 +236,9 @@ platform :ios do
     certificates_appstore
 
     # Set environment variables for manual code signing in Flutter build
-    ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore']
-    ENV['CODE_SIGN_IDENTITY'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name']
-    ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
+    ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.vehiclevitals.app.ios_appstore']
+    ENV['CODE_SIGN_IDENTITY'] = ENV['sigh_com.vehiclevitals.app.ios_appstore_certificate-name']
+    ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.vehiclevitals.app.ios_appstore_team-id']
 
     # Install CocoaPods dependencies first
     # Ensure a clean slate for CocoaPods to avoid linker issues (absl/gRPC)
@@ -286,7 +286,7 @@ platform :ios do
 
     UI.message("Firebase iOS config validated for #{firebase_env} (#{actual_project_id})")
     
-    app_id = "com.nelsongrey.vehiclevitals.app.ios"
+    app_id = "com.vehiclevitals.app.ios"
     profile_name = ENV["sigh_#{app_id}_appstore_profile-name"]
     team_id = ENV["sigh_#{app_id}_appstore_team-id"] || ENV["FASTLANE_TEAM_ID"]
     cert_name = ENV["sigh_#{app_id}_appstore_certificate-name"] || "Apple Distribution"

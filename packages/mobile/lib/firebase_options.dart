@@ -92,7 +92,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions androidDevelopment = FirebaseOptions(
     apiKey: 'AIzaSyAFYAlutFG6V_h2CpzYbeq4QGjVpV4S52M',
-    appId: '1:919227980868:android:afb6329906f754c6b5f011',
+    appId: '1:919227980868:android:c7209afb1d7d44c8b5f011',
     messagingSenderId: '919227980868',
     projectId: 'vehicle-vitals-dev',
     storageBucket: 'vehicle-vitals-dev.firebasestorage.app',
@@ -100,7 +100,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions androidStaging = FirebaseOptions(
     apiKey: 'AIzaSyDwoqDr6cUxzUu2NIfL2UDScC3gAQwuJo4',
-    appId: '1:364854499099:android:7697f629b4f1d7e347a5be',
+    appId: '1:364854499099:android:a9c39de6ac625e9e47a5be',
     messagingSenderId: '364854499099',
     projectId: 'vehicle-vitals-staging',
     storageBucket: 'vehicle-vitals-staging.firebasestorage.app',
@@ -108,7 +108,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions androidProduction = FirebaseOptions(
     apiKey: 'AIzaSyB4yx8ABAc5XeU7fbFiz19BOcu9GCkQBvk',
-    appId: '1:489413148337:android:0ed732a4b8cd462068ac90',
+    appId: '1:489413148337:android:8094cbabf7e1c2b268ac90',
     messagingSenderId: '489413148337',
     projectId: 'vehicle-vitals-prod',
     storageBucket: 'vehicle-vitals-prod.firebasestorage.app',
@@ -116,7 +116,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions iosDevelopment = FirebaseOptions(
     apiKey: 'AIzaSyBbq4U14kQIQP_6hHcatdZG9CbCFVwD_P0',
-    appId: '1:919227980868:ios:6aa6e20c5110778ab5f011',
+    appId: '1:919227980868:ios:d110209f1aaa55fbb5f011',
     messagingSenderId: '919227980868',
     projectId: 'vehicle-vitals-dev',
     storageBucket: 'vehicle-vitals-dev.firebasestorage.app',
@@ -127,7 +127,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions iosStaging = FirebaseOptions(
     apiKey: 'AIzaSyBMoFjS5DK_vVKQ3-xzWL3YOCWmpZZlY1U',
-    appId: '1:364854499099:ios:23e8551a7ba7195447a5be',
+    appId: '1:364854499099:ios:9f16363dd2fd758147a5be',
     messagingSenderId: '364854499099',
     projectId: 'vehicle-vitals-staging',
     storageBucket: 'vehicle-vitals-staging.firebasestorage.app',
@@ -138,7 +138,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions iosProduction = FirebaseOptions(
     apiKey: 'AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU',
-    appId: '1:489413148337:ios:b55d0b37718e299368ac90',
+    appId: '1:489413148337:ios:18a80444dbf4852768ac90',
     messagingSenderId: '489413148337',
     projectId: 'vehicle-vitals-prod',
     storageBucket: 'vehicle-vitals-prod.firebasestorage.app',

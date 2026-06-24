@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:364854499099:android:7697f629b4f1d7e347a5be",
+        "mobilesdk_app_id": "1:364854499099:android:a9c39de6ac625e9e47a5be",
         "android_client_info": {
-          "package_name": "com.nelsongrey.vehiclevitals.app.android"
+          "package_name": "com.vehiclevitals.app.android"
         }
       },
       "oauth_client": [

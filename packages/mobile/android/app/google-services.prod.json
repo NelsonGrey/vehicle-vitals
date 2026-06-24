@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:489413148337:android:0ed732a4b8cd462068ac90",
+        "mobilesdk_app_id": "1:489413148337:android:8094cbabf7e1c2b268ac90",
         "android_client_info": {
-          "package_name": "com.nelsongrey.vehiclevitals.app.android"
+          "package_name": "com.vehiclevitals.app.android"
         }
       },
       "oauth_client": [
@@ -31,10 +31,10 @@
               "client_type": 3
             },
             {
-              "client_id": "489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com",
+              "client_id": "489413148337-7ej72fc7l3o1pe078h28hhmeo62it77d.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.nelsongrey.vehiclevitals.app.ios"
+                "bundle_id": "com.vehiclevitals.app.ios"
               }
             }
           ]

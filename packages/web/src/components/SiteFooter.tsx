@@ -7,13 +7,12 @@ export default function SiteFooter() {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           {/* Brand */}
-          <Link to="/" className="inline-flex no-underline text-current shrink-0">
+          <Link to="/" aria-label="Go to home" className="inline-flex no-underline text-current shrink-0">
             <StackedVLogo size={28} showText color="currentColor" accent="#334155" wordmarkColor="#64748b" />
           </Link>
 
           {/* Main nav */}
           <nav className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
-            <Link to="/getting-started" className="hover:text-slate-900 dark:hover:text-white transition-colors">Getting Started</Link>
             <Link to="/help" className="hover:text-slate-900 dark:hover:text-white transition-colors">Help</Link>
             <Link to="/subscription" className="hover:text-slate-900 dark:hover:text-white transition-colors">Subscriptions</Link>
           </nav>

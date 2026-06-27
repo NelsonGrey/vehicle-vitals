@@ -23,4 +23,31 @@ describe('SiteFooter', () => {
     ).toBeVisible();
     expect(within(footer).getByRole('link', { name: /Help/i })).toBeVisible();
   });
+
+  it('renders brand, nav, legal, and copyright sections', () => {
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <SiteFooter />
+      </MemoryRouter>
+    );
+
+    const footer = screen.getByRole('contentinfo');
+
+    // Brand link to home
+    expect(within(footer).getByRole('link', { name: /go to home/i })).toBeInTheDocument();
+
+    // Main nav
+    expect(within(footer).getByRole('link', { name: /Help/i })).toBeVisible();
+    expect(within(footer).getByRole('link', { name: /Subscriptions/i })).toBeVisible();
+
+    // Legal nav
+    expect(within(footer).getByRole('link', { name: /Terms/i })).toBeVisible();
+    expect(within(footer).getByRole('link', { name: /Privacy/i })).toBeVisible();
+    expect(within(footer).getByRole('link', { name: /Contact/i })).toBeVisible();
+
+    // Copyright
+    expect(within(footer).getByText(/Vehicle Vitals/)).toBeInTheDocument();
+  });
 });

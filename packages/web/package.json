@@ -32,18 +32,18 @@
   },
   "dependencies": {
     "@vehicle-vitals/shared": "file:../shared",
-    "firebase": "^12.14.0",
+    "firebase": "^12.15.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "papaparse": "^5.5.3",
+    "papaparse": "^5.5.4",
     "prop-types": "^15.8.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-image": "^4.1.0",
-    "react-router-dom": "^7.17.0"
+    "react-router-dom": "^7.18.0"
   },
   "devDependencies": {
-    "@firebase/app-compat": "^0.5.6",
+    "@firebase/app-compat": "^0.5.14",
     "@firebase/rules-unit-testing": "^5.0.1",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4.3.1",

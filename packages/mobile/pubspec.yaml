@@ -34,14 +34,14 @@ dependencies:
 
   # Firebase dependencies
   firebase_core: ^4.1.1
-  firebase_auth: ^6.5.2
-  firebase_analytics: ^12.4.2
-  firebase_crashlytics: ^5.2.3
-  firebase_remote_config: ^6.5.2
-  cloud_firestore: ^6.5.0
-  cloud_functions: ^6.3.2
-  firebase_messaging: ^16.3.0
-  firebase_storage: ^13.4.2
+  firebase_auth: ^6.5.3
+  firebase_analytics: ^12.4.3
+  firebase_crashlytics: ^5.2.4
+  firebase_remote_config: ^6.5.3
+  cloud_firestore: ^6.6.0
+  cloud_functions: ^6.3.3
+  firebase_messaging: ^16.4.0
+  firebase_storage: ^13.4.3
 
   # Navigation
   go_router: ^17.3.0

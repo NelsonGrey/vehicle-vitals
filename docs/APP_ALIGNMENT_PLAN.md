@@ -64,11 +64,13 @@ The marketing site establishes the vision — persona-driven messaging, dark-and
 
 This should be a lightweight card or guided banner in the Home page when `vehicles.length === 0`, not a blocking modal.
 
-### 2. Document Portfolio surfacing (High priority)
+### 2. Document Portfolio discoverability (High priority)
 
-**Gap**: The Records/Portfolio page is a key marketed feature ("Proof when you need it") but it is not reachable from the main navigation. Users must find it by drilling into a vehicle detail. The header nav shows: Garage, Profile, Timeline, Upcoming, Mechanics — Records is absent.
+**Gap**: The Records/Portfolio page (`/app/records/:vin`) is a key marketed feature ("Proof when you need it") but it is hard to find. It requires navigating into a specific vehicle's detail view first, and there is no visual cue on the Garage page that it exists.
 
-**Change**: Add "Records" as a top-level navigation item in the authenticated `SiteHeader`. Route to `/app/records` (or a vehicle-selector-first flow if no vehicle is pre-selected). The feature is already implemented; it just needs navigation exposure.
+A top-level nav link is not the right fix — the route requires a VIN, so linking from the header would need to arbitrarily pick a vehicle or add a vehicle-selector step that adds friction.
+
+**Change**: Surface Records directly on each vehicle card in the Garage (`Home.tsx`). Add a "Records" button or badge to the vehicle card that shows the document portfolio completion state (e.g., "3 of 8 documents ready" or a colored status dot). Clicking it navigates to `/app/records/:vin` for that vehicle. This puts the entry point exactly where users are already looking at their vehicles, which is the correct context for a per-vehicle feature.
 
 ### 3. Planning horizon indicator in Upcoming Tasks (Medium priority)
 
@@ -200,7 +202,7 @@ Both web app and iOS app should surface `support@vehicle-vitals.com` consistentl
 | Priority | Platform | Change |
 |---|---|---|
 | 1 | Web | Post-signup in-app onboarding flow (3 steps) |
-| 2 | Web | Records in top-level authenticated nav |
+| 2 | Web | Records badge/button on vehicle card in Garage (shows portfolio completion) |
 | 3 | iOS | Document portfolio parity with web |
 | 4 | iOS | 3-step onboarding alignment |
 | 5 | iOS | Premium screen tier taglines |

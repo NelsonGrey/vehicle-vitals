@@ -1,15 +1,26 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import SiteFooter from '../src/components/SiteFooter';
 
+vi.mock('../src/shared/AuthContext', () => ({
+  useAuth: vi.fn(),
+}));
+
+import { useAuth } from '../src/shared/AuthContext';
+
+function renderFooter() {
+  return render(
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <SiteFooter />
+    </MemoryRouter>
+  );
+}
+
 describe('SiteFooter', () => {
-  it('renders product, support, and social sections on marketing (default)', () => {
-    render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <SiteFooter />
-      </MemoryRouter>
-    );
+  it('renders product, persona, support, and social sections when signed out', () => {
+    useAuth.mockReturnValue({ user: null });
+    renderFooter();
 
     const footer = screen.getByRole('contentinfo');
 
@@ -20,7 +31,7 @@ describe('SiteFooter', () => {
     expect(within(footer).getByRole('link', { name: /Product Tour/i })).toHaveAttribute('href', '/short-video-tours');
     expect(within(footer).getByRole('link', { name: /Screens/i })).toHaveAttribute('href', '/everyday-screens');
 
-    // Persona nav present by default
+    // Persona nav present when signed out
     expect(within(footer).getByRole('navigation', { name: /Personas/i })).toBeVisible();
 
     // Support nav always present; Contact renamed Support
@@ -39,12 +50,9 @@ describe('SiteFooter', () => {
     expect(within(footer).getByText(/Vehicle Vitals/)).toBeInTheDocument();
   });
 
-  it('shows app nav and hides persona nav when variant="app"', () => {
-    render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <SiteFooter variant="app" />
-      </MemoryRouter>
-    );
+  it('shows app nav and hides persona nav when signed in', () => {
+    useAuth.mockReturnValue({ user: { uid: 'test-user' } });
+    renderFooter();
 
     const footer = screen.getByRole('contentinfo');
 
@@ -56,23 +64,20 @@ describe('SiteFooter', () => {
     expect(within(footer).queryByRole('navigation', { name: /Personas/i })).not.toBeInTheDocument();
     expect(within(footer).getByRole('navigation', { name: /App/i })).toBeVisible();
 
-    // App nav links present
+    // App nav links present with correct routes
     expect(within(footer).getByRole('link', { name: /^Garage$/i })).toHaveAttribute('href', '/app');
     expect(within(footer).getByRole('link', { name: /^Profile$/i })).toHaveAttribute('href', '/app/profile');
     expect(within(footer).getByRole('link', { name: /^Timeline$/i })).toHaveAttribute('href', '/app/timeline');
     expect(within(footer).getByRole('link', { name: /^Upcoming$/i })).toHaveAttribute('href', '/app/upcoming');
     expect(within(footer).getByRole('link', { name: /^Mechanics$/i })).toHaveAttribute('href', '/app/providers');
 
-    // Getting Started must not appear (authenticated nav item, not a footer link)
+    // Getting Started must not appear (header-only nav item)
     expect(within(footer).queryByRole('link', { name: /Getting Started/i })).not.toBeInTheDocument();
   });
 
   it('renders brand link and does not include email contact links', () => {
-    render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <SiteFooter />
-      </MemoryRouter>
-    );
+    useAuth.mockReturnValue({ user: null });
+    renderFooter();
 
     const footer = screen.getByRole('contentinfo');
 

@@ -1,13 +1,13 @@
 // File: web/src/App.tsx
 import { lazy, Suspense, useEffect } from 'react';
 import {
-    BrowserRouter,
-    Navigate,
-    Outlet,
-    Route,
-    Routes,
-    useLocation,
-    useNavigate,
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
 import CookieConsentBanner from './components/CookieConsentBanner';
@@ -19,13 +19,13 @@ import AdminSupport from './pages/AdminSupport';
 import { AuthProvider, useAuth } from './shared/AuthContext';
 import { DEFAULT_APP_REDIRECT } from './shared/authRedirect';
 import {
-    appEnvironment,
-    isDevelopmentEnvironment,
-    isMarketingOnlyEnvironment,
+  appEnvironment,
+  isDevelopmentEnvironment,
+  isMarketingOnlyEnvironment,
 } from './shared/environment';
 import {
-    buildReminderNotificationPath,
-    subscribeToForegroundMessages,
+  buildReminderNotificationPath,
+  subscribeToForegroundMessages,
 } from './shared/notificationService';
 import { replayStoredConsent } from './shared/consent';
 import { analytics, logger } from './utils/logger';
@@ -155,6 +155,7 @@ const ShortVideoTours = lazy(() => import('./pages/ShortVideoTours'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const PersonaPage = lazy(() => import('./pages/PersonaPage'));
 const ComingSoon = lazy(() => import('./pages/ComingSoon'));
 
 // Protected pages - lazy loaded
@@ -337,6 +338,7 @@ function App() {
               <Route path="contact" element={<Contact />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />
+              <Route path="personas/:personaId" element={<PersonaPage />} />
 
               {/* Legacy auth URLs */}
               <Route

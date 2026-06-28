@@ -21,6 +21,7 @@ import {
   isInTrial,
 } from '../shared/subscriptionService';
 import { useSubscription } from '../shared/useMonetization';
+import { personaPages } from '../data/personas';
 
 const featureOrder = [
   'vehicle_limit',
@@ -42,48 +43,53 @@ const planPositioning: Record<
   UserTier,
   {
     audience: string;
+    capacity: string;
     promise: string;
     highlights: string[];
   }
 > = {
   free: {
-    audience: 'Best for first vehicle setup',
+    audience: 'Learn and document',
+    capacity: 'Capacity: up to 2 vehicles',
     promise:
-      'Get organized with core maintenance records before deciding how much garage management you need.',
+      'Build the habit with core maintenance records, basic reminders, and enough structure to understand ownership.',
     highlights: [
-      'Track up to 2 vehicles',
-      'Save service history and costs',
-      'Use the free tier with contextual ads',
+      'Save service history, costs, receipts, and notes',
+      'Use basic reminders to prevent record gaps',
+      'Good fit for first owners, new drivers, and simple personal tracking',
     ],
   },
   pro: {
-    audience: 'Recommended for households',
+    audience: 'Plan and coordinate',
+    capacity: 'Capacity: up to 10 vehicles',
     promise:
-      'Coordinate a multi-car garage with better reminders, planning, calendar sync, and exportable records.',
+      'Turn maintenance into a coordinated plan with better reminders, calendar sync, exports, and household-ready workflows.',
     highlights: [
-      'Track up to 10 vehicles',
-      'Advanced reminders and 12-month planning',
-      'PDF and Excel exports for records',
+      'Advanced reminders and 12-month maintenance planning',
+      'Calendar sync plus PDF and Excel exports',
+      'Good fit for households and active DIY maintainers',
     ],
   },
   premium: {
-    audience: 'Best for power users',
+    audience: 'Forecast and automate',
+    capacity: 'Capacity: up to 25 vehicles',
     promise:
-      'Use deeper forecasts, AI-powered help, cloud sync, API access, and an ad-free workspace.',
+      'Add deeper forecasts, AI-powered help, integrations, cloud sync, and an ad-free workspace for complex garages.',
     highlights: [
-      'Track up to 25 vehicles',
       '36-month forecasts and AI predictions',
-      'Ad-free experience with advanced integrations',
+      'Cloud sync, API access, and automation options',
+      'Good fit for power users, serious DIY tracking, and light operations',
     ],
   },
   enterprise: {
-    audience: 'Best for teams and fleets',
+    audience: 'Govern and integrate',
+    capacity: 'Capacity: contract-defined',
     promise:
-      'Move beyond personal ownership into contract limits, policy controls, integrations, and dedicated support.',
+      'Move beyond individual workflows into org controls, integration planning, policy support, and dedicated service.',
     highlights: [
-      '25+ vehicles by contract',
-      'Org policies, vendor controls, and SLAs',
-      'Accounting, ERP, and scheduled reporting options',
+      'Custom capacity, roles, policies, and support model',
+      'Vendor, accounting, ERP, and reporting integration options',
+      'Good fit for teams that need governance and operational visibility',
     ],
   },
 };
@@ -100,6 +106,44 @@ function formatVehicleLimit(tier: UserTier): string {
   }
   return '25+ vehicles (contract)';
 }
+
+const pricingDimensions = [
+  {
+    label: 'Record depth',
+    free: 'Core history',
+    pro: 'Export-ready records',
+    premium: 'AI-assisted context',
+    enterprise: 'Operational reporting',
+  },
+  {
+    label: 'Planning',
+    free: 'Basic reminders',
+    pro: 'Advanced reminders and 12-month planning',
+    premium: '36-month forecasts and predictions',
+    enterprise: 'Policy-aligned planning',
+  },
+  {
+    label: 'Coordination',
+    free: 'Personal use',
+    pro: 'Household and DIY workflows',
+    premium: 'Power-user automation',
+    enterprise: 'Team controls and governance',
+  },
+  {
+    label: 'Support',
+    free: 'Self-service',
+    pro: 'Priority email support',
+    premium: 'Priority support plus ad-free workspace',
+    enterprise: 'Dedicated support and SLAs',
+  },
+  {
+    label: 'Capacity',
+    free: formatVehicleLimit('free'),
+    pro: formatVehicleLimit('pro'),
+    premium: formatVehicleLimit('premium'),
+    enterprise: formatVehicleLimit('enterprise'),
+  },
+];
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
@@ -149,31 +193,22 @@ export default function SubscriptionPage() {
         </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           {isBillingRoute
-            ? 'Choose the subscription tier that matches your garage. Free supports core tracking, Pro unlocks advanced workflows, and Premium removes ads with full power-user capability.'
-            : 'Start with one organized vehicle record, grow into household coordination, then unlock forecasting, exports, and team controls when the garage gets more complex.'}
+            ? 'Choose the subscription tier that matches the job your garage needs to do. Capacity matters, but each plan also adds stronger planning, coordination, automation, and support.'
+            : 'Free helps people learn and document. Pro helps them plan and coordinate. Premium adds forecasting and automation. Enterprise adds governance, integrations, and dedicated support.'}
         </p>
 
         {!isBillingRoute && (
-          <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
-            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-950 dark:border-sky-700 dark:bg-sky-950/30 dark:text-sky-100">
-              <p className="font-semibold">For owners</p>
-              <p className="mt-1">
-                Keep records, receipts, and upcoming service in one place.
-              </p>
-            </div>
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-100">
-              <p className="font-semibold">For households</p>
-              <p className="mt-1">
-                Use Pro to coordinate multiple vehicles and recurring work.
-              </p>
-            </div>
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-indigo-950 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-100">
-              <p className="font-semibold">For teams</p>
-              <p className="mt-1">
-                Move to Premium or Enterprise when reporting and controls
-                matter.
-              </p>
-            </div>
+          <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
+            {personaPages.map(persona => (
+              <Link
+                key={persona.id}
+                to={persona.path}
+                className={`rounded-xl border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${persona.accent}`}
+              >
+                <p className="font-semibold">{persona.label}</p>
+                <p className="mt-1">{persona.recommendedPlan}</p>
+              </Link>
+            ))}
           </div>
         )}
 
@@ -295,9 +330,6 @@ export default function SubscriptionPage() {
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 {getTierDisplayName(planTier)}
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                {formatVehicleLimit(planTier)}
-              </p>
               <p className="mt-2 text-sm font-semibold text-teal-700 dark:text-teal-300">
                 {positioning.audience}
               </p>
@@ -319,6 +351,10 @@ export default function SubscriptionPage() {
 
               <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
                 {positioning.promise}
+              </p>
+
+              <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {positioning.capacity}
               </p>
 
               <ul className="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-200">
@@ -440,20 +476,71 @@ export default function SubscriptionPage() {
           </h2>
           <div className="mt-3 grid gap-3 text-sm text-slate-600 dark:text-slate-300 md:grid-cols-3">
             <p>
-              Choose Free when you need one reliable place to start tracking a
-              car and its maintenance history.
+              Choose Free when you need one reliable place to learn the habit,
+              document service, and keep the basics visible.
             </p>
             <p>
-              Choose Pro when the garage has multiple vehicles, recurring
-              service, and records you need to export.
+              Choose Pro when planning and coordination become the value:
+              advanced reminders, calendar sync, exports, and shared ownership.
             </p>
             <p>
-              Choose Premium or Enterprise when forecasts, integrations,
-              low-administration reporting, and team controls create leverage.
+              Choose Premium or Enterprise when forecasts, automation,
+              integrations, governance, and support save more time than simple
+              tracking.
             </p>
           </div>
         </div>
       )}
+
+      <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          Value by tier
+        </h3>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          Vehicle capacity still affects cost, but the upgrade reason should be
+          the workflow value unlocked at each tier.
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="border-b border-slate-200 px-3 py-2 text-left font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                  Dimension
+                </th>
+                {tiers.map(planTier => (
+                  <th
+                    key={planTier}
+                    className="border-b border-slate-200 px-3 py-2 text-left font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                  >
+                    {getTierDisplayName(planTier)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pricingDimensions.map(row => (
+                <tr key={row.label}>
+                  <td className="border-b border-slate-100 px-3 py-2 font-medium text-slate-700 dark:border-slate-800 dark:text-slate-200">
+                    {row.label}
+                  </td>
+                  <td className="border-b border-slate-100 px-3 py-2 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                    {row.free}
+                  </td>
+                  <td className="border-b border-slate-100 px-3 py-2 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                    {row.pro}
+                  </td>
+                  <td className="border-b border-slate-100 px-3 py-2 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                    {row.premium}
+                  </td>
+                  <td className="border-b border-slate-100 px-3 py-2 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                    {row.enterprise}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">

@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { isDemonstrationEnvironment } from '../shared/environment';
+import { personaPages } from '../data/personas';
 import StackedVLogo from './StackedVLogo';
 
 interface SiteHeaderProps {
@@ -48,7 +49,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             </Link>
           </div>
 
-          <div className="ml-0 lg:ml-auto flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4 text-base w-full lg:w-auto">
+          <div className="ml-0 lg:ml-auto flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4 text-sm w-full lg:w-auto">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1">
               {isLoggedIn ? (
                 <>
@@ -83,12 +84,15 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 </>
               ) : (
                 <>
-                  <Link to="/#owners" className={linkClass}>
-                    For Owners
-                  </Link>
-                  <Link to="/#households" className={linkClass}>
-                    For Households
-                  </Link>
+                  {personaPages.map(persona => (
+                    <Link
+                      key={persona.id}
+                      to={persona.path}
+                      className={linkClass}
+                    >
+                      {persona.navLabel}
+                    </Link>
+                  ))}
                   <Link to="/subscription" className={linkClass}>
                     Pricing
                   </Link>

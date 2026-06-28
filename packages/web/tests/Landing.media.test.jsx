@@ -20,7 +20,7 @@ vi.mock('../src/components/InlineAdSection', () => ({
 }));
 
 describe('Landing media surfaces', () => {
-  it('links to dedicated preview pages instead of rendering heavy media sections inline', () => {
+  it('leads with persona paths, plan guidance, and dedicated proof pages', () => {
     render(
       <MemoryRouter
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
@@ -30,8 +30,30 @@ describe('Landing media surfaces', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /Explore product previews/i })
+      screen.getByRole('heading', {
+        name: /One garage for every vehicle record, reminder, and repair cost/i,
+      })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: /Choose the path that matches your garage/i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: /Plans built around growing vehicle responsibility/i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Product proof for the story/i })
+    ).toBeInTheDocument();
+
+    expect(screen.getByText(/Responsible owner/i)).toBeInTheDocument();
+    expect(screen.getByText(/Household garage/i)).toBeInTheDocument();
+    expect(screen.getByText(/DIY or new driver/i)).toBeInTheDocument();
+    expect(screen.getByText(/Light fleet/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pro is the best fit/i)).toBeInTheDocument();
+
     expect(screen.queryByText(/you are viewing:/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /Start in 3 simple steps/i })
@@ -43,6 +65,9 @@ describe('Landing media surfaces', () => {
       screen.queryByRole('heading', { name: /Short video tours/i })
     ).not.toBeInTheDocument();
 
+    expect(
+      screen.getByRole('link', { name: /Compare plans/i })
+    ).toHaveAttribute('href', '/subscription');
     expect(
       screen.getByRole('link', { name: /Open steps page/i })
     ).toHaveAttribute('href', '/start-steps');

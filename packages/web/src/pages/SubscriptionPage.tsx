@@ -38,6 +38,56 @@ const featureOrder = [
   'api_access',
 ];
 
+const planPositioning: Record<
+  UserTier,
+  {
+    audience: string;
+    promise: string;
+    highlights: string[];
+  }
+> = {
+  free: {
+    audience: 'Best for first vehicle setup',
+    promise:
+      'Get organized with core maintenance records before deciding how much garage management you need.',
+    highlights: [
+      'Track up to 2 vehicles',
+      'Save service history and costs',
+      'Use the free tier with contextual ads',
+    ],
+  },
+  pro: {
+    audience: 'Recommended for households',
+    promise:
+      'Coordinate a multi-car garage with better reminders, planning, calendar sync, and exportable records.',
+    highlights: [
+      'Track up to 10 vehicles',
+      'Advanced reminders and 12-month planning',
+      'PDF and Excel exports for records',
+    ],
+  },
+  premium: {
+    audience: 'Best for power users',
+    promise:
+      'Use deeper forecasts, AI-powered help, cloud sync, API access, and an ad-free workspace.',
+    highlights: [
+      'Track up to 25 vehicles',
+      '36-month forecasts and AI predictions',
+      'Ad-free experience with advanced integrations',
+    ],
+  },
+  enterprise: {
+    audience: 'Best for teams and fleets',
+    promise:
+      'Move beyond personal ownership into contract limits, policy controls, integrations, and dedicated support.',
+    highlights: [
+      '25+ vehicles by contract',
+      'Org policies, vendor controls, and SLAs',
+      'Accounting, ERP, and scheduled reporting options',
+    ],
+  },
+};
+
 function formatVehicleLimit(tier: UserTier): string {
   if (tier === 'free') {
     return 'Up to 2 vehicles';
@@ -69,6 +119,7 @@ export default function SubscriptionPage() {
     [subscription]
   );
   const isPastDue = subscription?.status === 'past_due';
+  const isBillingRoute = location.pathname.startsWith('/app');
 
   const checkoutStatus = useMemo(() => {
     const searchParams = new URLSearchParams(location.search || '');
@@ -92,13 +143,39 @@ export default function SubscriptionPage() {
     <div className="mx-auto w-full max-w-7xl px-5 py-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-          Subscriptions and billing
+          {isBillingRoute
+            ? 'Subscriptions and billing'
+            : 'Pricing for every kind of garage'}
         </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Choose the subscription tier that matches your garage. Free supports
-          core tracking, Pro unlocks advanced workflows, and Premium removes ads
-          with full power-user capability.
+          {isBillingRoute
+            ? 'Choose the subscription tier that matches your garage. Free supports core tracking, Pro unlocks advanced workflows, and Premium removes ads with full power-user capability.'
+            : 'Start with one organized vehicle record, grow into household coordination, then unlock forecasting, exports, and team controls when the garage gets more complex.'}
         </p>
+
+        {!isBillingRoute && (
+          <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-950 dark:border-sky-700 dark:bg-sky-950/30 dark:text-sky-100">
+              <p className="font-semibold">For owners</p>
+              <p className="mt-1">
+                Keep records, receipts, and upcoming service in one place.
+              </p>
+            </div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-100">
+              <p className="font-semibold">For households</p>
+              <p className="mt-1">
+                Use Pro to coordinate multiple vehicles and recurring work.
+              </p>
+            </div>
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-indigo-950 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-100">
+              <p className="font-semibold">For teams</p>
+              <p className="mt-1">
+                Move to Premium or Enterprise when reporting and controls
+                matter.
+              </p>
+            </div>
+          </div>
+        )}
 
         {checkoutStatus === 'success' && (
           <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200">
@@ -111,7 +188,7 @@ export default function SubscriptionPage() {
           </div>
         )}
 
-        {summary && (
+        {isBillingRoute && summary && (
           <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/30">
             <p className="text-sm font-semibold text-teal-800 dark:text-teal-200">
               Current subscription: {getTierDisplayName(summary.tier)}
@@ -127,7 +204,7 @@ export default function SubscriptionPage() {
           </div>
         )}
 
-        {isPastDue && (
+        {isBillingRoute && isPastDue && (
           <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-950/20">
             <p className="text-sm font-semibold text-rose-800 dark:text-rose-200">
               Billing action needed
@@ -188,15 +265,22 @@ export default function SubscriptionPage() {
       <div className="mt-5 grid gap-4 lg:grid-cols-4">
         {tiers.map(planTier => {
           const pricing = getTierPricing(planTier);
-          const isCurrent = tier === planTier;
+          const isCurrent = isBillingRoute && tier === planTier;
+          const positioning = planPositioning[planTier];
           const ctaText = isCurrent
             ? 'Current subscription'
             : planTier === 'free'
-              ? 'Switch to Free'
+              ? isBillingRoute
+                ? 'Switch to Free'
+                : 'Start Free'
               : planTier === 'pro'
-                ? 'Choose Pro'
+                ? isBillingRoute
+                  ? 'Choose Pro'
+                  : 'Start Pro'
                 : planTier === 'premium'
-                  ? 'Choose Premium'
+                  ? isBillingRoute
+                    ? 'Choose Premium'
+                    : 'Start Premium'
                   : 'Contact Sales';
 
           return (
@@ -214,6 +298,9 @@ export default function SubscriptionPage() {
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                 {formatVehicleLimit(planTier)}
               </p>
+              <p className="mt-2 text-sm font-semibold text-teal-700 dark:text-teal-300">
+                {positioning.audience}
+              </p>
 
               <p className="mt-4 text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {planTier === 'enterprise'
@@ -230,22 +317,86 @@ export default function SubscriptionPage() {
                   </p>
                 )}
 
-              <button
-                type="button"
-                disabled={isCurrent || isSubmittingTierChange}
-                onClick={async () => {
-                  if (isCurrent) {
-                    return;
-                  }
+              <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
+                {positioning.promise}
+              </p>
 
-                  if (planTier === 'free') {
+              <ul className="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                {positioning.highlights.map(highlight => (
+                  <li key={highlight} className="flex gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="mt-1 size-1.5 rounded-full bg-teal-600"
+                    />
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {isBillingRoute ? (
+                <button
+                  type="button"
+                  disabled={isCurrent || isSubmittingTierChange}
+                  onClick={async () => {
+                    if (isCurrent) {
+                      return;
+                    }
+
+                    if (planTier === 'free') {
+                      setIsSubmittingTierChange(true);
+                      try {
+                        await changeSubscriptionTier('free', billingPeriod);
+                        window.alert(
+                          'Your subscription has been changed to Free.'
+                        );
+                        navigate('/app/profile');
+                      } catch (error) {
+                        window.alert(
+                          `Unable to change subscription: ${error instanceof Error ? error.message : String(error)}`
+                        );
+                      } finally {
+                        setIsSubmittingTierChange(false);
+                      }
+                      return;
+                    }
+
+                    if (planTier === 'enterprise') {
+                      window.location.href =
+                        'mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet.';
+                      return;
+                    }
+
                     setIsSubmittingTierChange(true);
                     try {
-                      await changeSubscriptionTier('free', billingPeriod);
-                      window.alert(
-                        'Your subscription has been changed to Free.'
+                      trackPaymentInitiated(
+                        planTier,
+                        billingPeriod,
+                        'subscription_page'
                       );
-                      navigate('/app/profile');
+
+                      const checkoutResult =
+                        await createSubscriptionCheckoutSession(
+                          planTier,
+                          billingPeriod
+                        );
+
+                      if (
+                        checkoutResult.mode === 'redirect' &&
+                        checkoutResult.checkoutUrl
+                      ) {
+                        window.location.href = checkoutResult.checkoutUrl;
+                        return;
+                      }
+
+                      if (checkoutResult.mode === 'activated') {
+                        window.alert(
+                          `${getTierDisplayName(planTier)} is now active on your account.`
+                        );
+                      } else {
+                        window.alert(
+                          'Checkout session created, but no redirect URL was returned.'
+                        );
+                      }
                     } catch (error) {
                       window.alert(
                         `Unable to change subscription: ${error instanceof Error ? error.message : String(error)}`
@@ -253,66 +404,56 @@ export default function SubscriptionPage() {
                     } finally {
                       setIsSubmittingTierChange(false);
                     }
-                    return;
-                  }
-
-                  if (planTier === 'enterprise') {
-                    window.location.href =
-                      'mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet.';
-                    return;
-                  }
-
-                  setIsSubmittingTierChange(true);
-                  try {
-                    trackPaymentInitiated(
-                      planTier,
-                      billingPeriod,
-                      'subscription_page'
-                    );
-
-                    const checkoutResult =
-                      await createSubscriptionCheckoutSession(
-                        planTier,
-                        billingPeriod
-                      );
-
-                    if (
-                      checkoutResult.mode === 'redirect' &&
-                      checkoutResult.checkoutUrl
-                    ) {
-                      window.location.href = checkoutResult.checkoutUrl;
-                      return;
-                    }
-
-                    if (checkoutResult.mode === 'activated') {
-                      window.alert(
-                        `${getTierDisplayName(planTier)} is now active on your account.`
-                      );
-                    } else {
-                      window.alert(
-                        'Checkout session created, but no redirect URL was returned.'
-                      );
-                    }
-                  } catch (error) {
-                    window.alert(
-                      `Unable to change subscription: ${error instanceof Error ? error.message : String(error)}`
-                    );
-                  } finally {
-                    setIsSubmittingTierChange(false);
-                  }
-                }}
-                className={`mt-4 w-full rounded-md px-4 py-2 text-sm font-semibold ${
-                  isCurrent || isSubmittingTierChange
-                    ? 'cursor-not-allowed bg-slate-300 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
-                    : 'bg-teal-700 text-white hover:bg-teal-800'
-                }`}
-              >
-                {ctaText}
-              </button>
+                  }}
+                  className={`mt-4 w-full rounded-md px-4 py-2 text-sm font-semibold ${
+                    isCurrent || isSubmittingTierChange
+                      ? 'cursor-not-allowed bg-slate-300 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                      : 'bg-teal-700 text-white hover:bg-teal-800'
+                  }`}
+                >
+                  {ctaText}
+                </button>
+              ) : planTier === 'enterprise' ? (
+                <a
+                  href="mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet."
+                  className="mt-4 inline-flex w-full justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+                >
+                  {ctaText}
+                </a>
+              ) : (
+                <Link
+                  to="/auth/signup"
+                  className="mt-4 inline-flex w-full justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+                >
+                  {ctaText}
+                </Link>
+              )}
             </article>
           );
         })}
       </div>
+
+      {!isBillingRoute && (
+        <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            How to choose
+          </h2>
+          <div className="mt-3 grid gap-3 text-sm text-slate-600 dark:text-slate-300 md:grid-cols-3">
+            <p>
+              Choose Free when you need one reliable place to start tracking a
+              car and its maintenance history.
+            </p>
+            <p>
+              Choose Pro when the garage has multiple vehicles, recurring
+              service, and records you need to export.
+            </p>
+            <p>
+              Choose Premium or Enterprise when forecasts, integrations,
+              low-administration reporting, and team controls create leverage.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">

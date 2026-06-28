@@ -261,7 +261,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           hasHelpHowTo: marketingLinks.includes('Help & How-To'),
           hasGettingStarted: marketingLinks.includes('Getting Started'),
           hasVinLookup: marketingLinks.includes('VIN Lookup'),
-          hasSubscriptions: marketingLinks.includes('Subscriptions'),
+          hasOwners: marketingLinks.includes('For Owners'),
+          hasHouseholds: marketingLinks.includes('For Households'),
+          hasPricing: marketingLinks.includes('Pricing'),
+          hasProductTour: marketingLinks.includes('Product Tour'),
         };
       });
 
@@ -276,12 +279,15 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Deployment target is still on legacy marketing navigation labels.'
       );
 
-      expect(marketingNavMetrics.firstLink).toBe('VIN Lookup');
+      expect(marketingNavMetrics.firstLink).toBe('For Owners');
       expect(marketingNavMetrics.hasProductOverview).toBe(false);
       expect(marketingNavMetrics.hasHelpHowTo).toBe(false);
       expect(marketingNavMetrics.hasGettingStarted).toBe(false);
-      expect(marketingNavMetrics.hasVinLookup).toBe(true);
-      expect(marketingNavMetrics.hasSubscriptions).toBe(false);
+      expect(marketingNavMetrics.hasVinLookup).toBe(false);
+      expect(marketingNavMetrics.hasOwners).toBe(true);
+      expect(marketingNavMetrics.hasHouseholds).toBe(true);
+      expect(marketingNavMetrics.hasPricing).toBe(true);
+      expect(marketingNavMetrics.hasProductTour).toBe(true);
     });
 
     test('TC-UI-011: Authenticated app header hides Product Overview and Help context links', async ({
@@ -379,9 +385,21 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await page.goto(BASE_URL);
 
       const landingMediaMetrics = await page.evaluate(() => {
-        const hasPreviewHeading =
+        const hasPersonaHeading =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Explore product previews')
+            node.textContent?.includes(
+              'Choose the path that matches your garage'
+            )
+          ) !== undefined;
+        const hasPlanHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes(
+              'Plans built around growing vehicle responsibility'
+            )
+          ) !== undefined;
+        const hasProofHeading =
+          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
+            node.textContent?.includes('Product proof for the story')
           ) !== undefined;
         const hasStepsLink =
           Array.from(document.querySelectorAll('a')).find(link =>
@@ -405,7 +423,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           ) !== undefined;
 
         return {
-          hasPreviewHeading,
+          hasPersonaHeading,
+          hasPlanHeading,
+          hasProofHeading,
           hasStepsLink,
           hasScreensLink,
           hasVideosLink,
@@ -415,10 +435,12 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       });
 
       test.skip(
-        !landingMediaMetrics.hasPreviewHeading,
-        'Marketing preview hub is not exposed in this deployment target.'
+        !landingMediaMetrics.hasPersonaHeading,
+        'Persona-led marketing page is not exposed in this deployment target.'
       );
 
+      expect(landingMediaMetrics.hasPlanHeading).toBe(true);
+      expect(landingMediaMetrics.hasProofHeading).toBe(true);
       expect(landingMediaMetrics.hasStepsLink).toBe(true);
       expect(landingMediaMetrics.hasScreensLink).toBe(true);
       expect(landingMediaMetrics.hasVideosLink).toBe(true);

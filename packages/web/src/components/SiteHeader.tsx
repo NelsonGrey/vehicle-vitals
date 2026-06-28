@@ -83,17 +83,17 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 </>
               ) : (
                 <>
-                  <Link to="/vin-decode-demo" className={linkClass}>
-                    VIN Lookup
+                  <Link to="/#owners" className={linkClass}>
+                    For Owners
                   </Link>
-                  <Link to="/maintenance-planning-demo" className={linkClass}>
-                    Maintenance
+                  <Link to="/#households" className={linkClass}>
+                    For Households
                   </Link>
-                  <Link to="/cross-platform-access-demo" className={linkClass}>
-                    Cross Platform
+                  <Link to="/subscription" className={linkClass}>
+                    Pricing
                   </Link>
-                  <Link to="/ownership-history-demo" className={linkClass}>
-                    Ownership History
+                  <Link to="/short-video-tours" className={linkClass}>
+                    Product Tour
                   </Link>
                 </>
               )}

@@ -52,16 +52,19 @@ describe('SiteHeader', () => {
     renderHeader();
 
     const header = screen.getByRole('banner');
-    const vinLookupLink = within(header).getByRole('link', {
-      name: /VIN Lookup/i,
+    const ownersLink = within(header).getByRole('link', {
+      name: /For Owners/i,
     });
 
-    expect(vinLookupLink).toBeVisible();
+    expect(ownersLink).toBeVisible();
     expect(
-      within(header).getByRole('link', { name: /Maintenance/i })
+      within(header).getByRole('link', { name: /For Households/i })
     ).toBeVisible();
     expect(
-      within(header).getByRole('link', { name: /Cross Platform/i })
+      within(header).getByRole('link', { name: /Pricing/i })
+    ).toHaveAttribute('href', '/subscription');
+    expect(
+      within(header).getByRole('link', { name: /Product Tour/i })
     ).toBeVisible();
     expect(
       within(header).queryByRole('link', { name: /Subscriptions/i })
@@ -75,6 +78,12 @@ describe('SiteHeader', () => {
     ).not.toBeInTheDocument();
     expect(
       within(header).queryByRole('button', { name: /Sign Out/i })
+    ).not.toBeInTheDocument();
+    expect(
+      within(header).queryByRole('link', { name: /VIN Lookup/i })
+    ).not.toBeInTheDocument();
+    expect(
+      within(header).queryByRole('link', { name: /Cross Platform/i })
     ).not.toBeInTheDocument();
     expect(
       within(header).queryByRole('link', { name: /Product Overview/i })
@@ -107,6 +116,9 @@ describe('SiteHeader', () => {
     ).not.toBeInTheDocument();
     expect(
       within(header).queryByRole('link', { name: /VIN Lookup/i })
+    ).not.toBeInTheDocument();
+    expect(
+      within(header).queryByRole('link', { name: /Pricing/i })
     ).not.toBeInTheDocument();
     expect(
       within(header).queryByRole('link', { name: /Product Overview/i })

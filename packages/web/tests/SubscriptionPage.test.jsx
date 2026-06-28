@@ -66,9 +66,10 @@ describe('SubscriptionPage', () => {
     });
   });
 
-  it('renders four subscription cards including enterprise and contact sales CTA', () => {
+  it('renders public pricing cards with persona-oriented plan guidance', () => {
     render(
       <MemoryRouter
+        initialEntries={['/subscription']}
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <SubscriptionPage />
@@ -76,8 +77,13 @@ describe('SubscriptionPage', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /subscriptions and billing/i })
+      screen.getByRole('heading', {
+        name: /pricing for every kind of garage/i,
+      })
     ).toBeInTheDocument();
+    expect(screen.getByText(/^for owners$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^for households$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^for teams$/i)).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Free' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Pro' })).toBeInTheDocument();
@@ -89,10 +95,12 @@ describe('SubscriptionPage', () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole('button', { name: /contact sales/i })
+      screen.getByRole('link', { name: /contact sales/i })
     ).toBeInTheDocument();
+    expect(screen.getByText(/recommended for households/i)).toBeInTheDocument();
     expect(screen.getByText(/25\+ vehicles \(contract\)/i)).toBeInTheDocument();
     expect(screen.getAllByText(/contact sales/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/how to choose/i)).toBeInTheDocument();
 
     expect(screen.getByText(/feature comparison/i)).toBeInTheDocument();
     expect(screen.getAllByText('Enterprise').length).toBeGreaterThan(1);
@@ -103,11 +111,16 @@ describe('SubscriptionPage', () => {
 
     render(
       <MemoryRouter
+        initialEntries={['/app/subscription']}
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <SubscriptionPage />
       </MemoryRouter>
     );
+
+    expect(
+      screen.getByRole('heading', { name: /subscriptions and billing/i })
+    ).toBeInTheDocument();
 
     await user.click(screen.getAllByRole('button', { name: /choose pro/i })[0]);
 
@@ -175,6 +188,7 @@ describe('SubscriptionPage', () => {
 
     render(
       <MemoryRouter
+        initialEntries={['/app/subscription']}
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <SubscriptionPage />

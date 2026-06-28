@@ -81,9 +81,11 @@ describe('SubscriptionPage', () => {
         name: /pricing for every kind of garage/i,
       })
     ).toBeInTheDocument();
-    expect(screen.getByText(/^for owners$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^for households$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^for teams$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^responsible owner$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^household garage$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^new driver or new owner$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^diy maintainer$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^light fleet$/i)).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Free' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Pro' })).toBeInTheDocument();
@@ -97,10 +99,17 @@ describe('SubscriptionPage', () => {
     expect(
       screen.getByRole('link', { name: /contact sales/i })
     ).toBeInTheDocument();
-    expect(screen.getByText(/recommended for households/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/plan and coordinate/i).length).toBeGreaterThan(
+      0
+    );
+    expect(
+      screen.getAllByText(/forecast and automate/i).length
+    ).toBeGreaterThan(0);
     expect(screen.getByText(/25\+ vehicles \(contract\)/i)).toBeInTheDocument();
     expect(screen.getAllByText(/contact sales/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/how to choose/i)).toBeInTheDocument();
+    expect(screen.getByText(/value by tier/i)).toBeInTheDocument();
+    expect(screen.getByText(/workflow value unlocked/i)).toBeInTheDocument();
 
     expect(screen.getByText(/feature comparison/i)).toBeInTheDocument();
     expect(screen.getAllByText('Enterprise').length).toBeGreaterThan(1);

@@ -57,9 +57,19 @@ describe('SiteHeader', () => {
     });
 
     expect(ownersLink).toBeVisible();
+    expect(ownersLink).toHaveAttribute('href', '/personas/owners');
     expect(
       within(header).getByRole('link', { name: /For Households/i })
     ).toBeVisible();
+    expect(
+      within(header).getByRole('link', { name: /New Drivers/i })
+    ).toHaveAttribute('href', '/personas/new-drivers');
+    expect(
+      within(header).getByRole('link', { name: /^DIY$/i })
+    ).toHaveAttribute('href', '/personas/diy-maintainers');
+    expect(
+      within(header).getByRole('link', { name: /Light Fleets/i })
+    ).toHaveAttribute('href', '/personas/light-fleets');
     expect(
       within(header).getByRole('link', { name: /Pricing/i })
     ).toHaveAttribute('href', '/subscription');

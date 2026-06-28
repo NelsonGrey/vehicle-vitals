@@ -263,6 +263,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           hasVinLookup: marketingLinks.includes('VIN Lookup'),
           hasOwners: marketingLinks.includes('For Owners'),
           hasHouseholds: marketingLinks.includes('For Households'),
+          hasNewDrivers: marketingLinks.includes('New Drivers'),
+          hasDiy: marketingLinks.includes('DIY'),
+          hasLightFleets: marketingLinks.includes('Light Fleets'),
           hasPricing: marketingLinks.includes('Pricing'),
           hasProductTour: marketingLinks.includes('Product Tour'),
         };
@@ -286,6 +289,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(marketingNavMetrics.hasVinLookup).toBe(false);
       expect(marketingNavMetrics.hasOwners).toBe(true);
       expect(marketingNavMetrics.hasHouseholds).toBe(true);
+      expect(marketingNavMetrics.hasNewDrivers).toBe(true);
+      expect(marketingNavMetrics.hasDiy).toBe(true);
+      expect(marketingNavMetrics.hasLightFleets).toBe(true);
       expect(marketingNavMetrics.hasPricing).toBe(true);
       expect(marketingNavMetrics.hasProductTour).toBe(true);
     });
@@ -1117,7 +1123,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
   // ─────────────────────────────────────────────────────────────────
 
   test.describe('Account Consolidation', () => {
-    test('TC-CONSOLIDATE-001: Account consolidation callable is available', async ({ page }) => {
+    test('TC-CONSOLIDATE-001: Account consolidation callable is available', async ({
+      page,
+    }) => {
       const authUiAvailable = await isAuthUiAvailable(page);
       test.skip(
         !authUiAvailable,
@@ -1185,15 +1193,17 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await page.goto(`${BASE_URL}/app/add-vehicle`);
 
       // Add a vehicle with a photo URL if possible
-      const photoUrlField = page.locator('input[type="url"], input[placeholder*="photo"], input[placeholder*="image"]');
+      const photoUrlField = page.locator(
+        'input[type="url"], input[placeholder*="photo"], input[placeholder*="image"]'
+      );
       if (await photoUrlField.isVisible()) {
         await photoUrlField.fill('https://via.placeholder.com/300');
-        
+
         // Verify the image loads
         const image = page.locator('img').first();
         if (await image.isVisible()) {
           await expect(image).toBeVisible({ timeout: 10000 });
-          
+
           // Check if image has proper caching headers (via network response)
           const responses: any[] = [];
           page.on('response', response => {
@@ -1201,10 +1211,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
               responses.push(response);
             }
           });
-          
+
           await page.reload();
           await page.waitForTimeout(2000);
-          
+
           // Verify image was cached (should be faster on reload)
           expect(responses.length).toBeGreaterThan(0);
         }
@@ -1217,7 +1227,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
   // ─────────────────────────────────────────────────────────────────
 
   test.describe('Error Boundary', () => {
-    test('TC-ERROR-001: Error boundary catches component errors', async ({ page }) => {
+    test('TC-ERROR-001: Error boundary catches component errors', async ({
+      page,
+    }) => {
       const authUiAvailable = await isAuthUiAvailable(page);
       test.skip(
         !authUiAvailable,
@@ -1225,18 +1237,22 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       );
 
       await ensureAuthenticated(page);
-      
+
       // Navigate to a page that might have errors
       await page.goto(`${BASE_URL}/app`);
-      
+
       // Check if error boundary UI is not present (no errors)
-      const errorBoundary = page.getByText(/something went wrong|unexpected error/i);
+      const errorBoundary = page.getByText(
+        /something went wrong|unexpected error/i
+      );
       const isPresent = await errorBoundary.isVisible().catch(() => false);
-      
+
       expect(isPresent).toBe(false);
     });
 
-    test('TC-ERROR-002: App handles network errors gracefully', async ({ page }) => {
+    test('TC-ERROR-002: App handles network errors gracefully', async ({
+      page,
+    }) => {
       const authUiAvailable = await isAuthUiAvailable(page);
       test.skip(
         !authUiAvailable,

@@ -50,9 +50,11 @@ describe('Landing media surfaces', () => {
 
     expect(screen.getByText(/Responsible owner/i)).toBeInTheDocument();
     expect(screen.getByText(/Household garage/i)).toBeInTheDocument();
-    expect(screen.getByText(/DIY or new driver/i)).toBeInTheDocument();
+    expect(screen.getByText(/New driver or new owner/i)).toBeInTheDocument();
+    expect(screen.getByText(/DIY maintainer/i)).toBeInTheDocument();
     expect(screen.getByText(/Light fleet/i)).toBeInTheDocument();
     expect(screen.getByText(/Pro is the best fit/i)).toBeInTheDocument();
+    expect(screen.getByText(/Forecast and automate/i)).toBeInTheDocument();
 
     expect(screen.queryByText(/you are viewing:/i)).not.toBeInTheDocument();
     expect(
@@ -68,6 +70,9 @@ describe('Landing media surfaces', () => {
     expect(
       screen.getByRole('link', { name: /Compare plans/i })
     ).toHaveAttribute('href', '/subscription');
+    expect(
+      screen.getAllByRole('link', { name: /Read use case/i })[0]
+    ).toHaveAttribute('href', '/personas/owners');
     expect(
       screen.getByRole('link', { name: /Open steps page/i })
     ).toHaveAttribute('href', '/start-steps');

@@ -1,54 +1,76 @@
 # Vehicle Vitals - Product Design & Feature Specifications
 
-**Version**: 1.1  
-**Last Updated**: March 11, 2026  
-**Status**: 🟡 PARTIALLY SHIPPED (web and mobile core flows active; advanced workflows still partial)  
+**Version**: 1.2
+**Last Updated**: June 28, 2026
+**Status**: 🟡 CORE SHIPPED — web and iOS core flows active; app/marketing alignment in progress (see docs/APP_ALIGNMENT_PLAN.md)
 **Owner**: Mark Nelson
 
 ---
 
 ## Document Relationship
 
-This document describes product vision, UX direction, and phased roadmap.
+This document describes product vision, persona definitions, tier structure, UX direction, and phased roadmap.
 
 - Delivery truth for active releases is tracked in `docs/REQUIREMENTS.md`.
+- App and iOS changes needed to align with marketing direction are in `docs/APP_ALIGNMENT_PLAN.md`.
 - Planned and aspirational capabilities in this document are not implied as currently shipped.
 - When delivery status differs between documents, defer to `docs/REQUIREMENTS.md` for implementation state.
 
 ---
 
-## 🚗 Product Vision
+## Product Vision
 
-**Vision Statement**: "Every vehicle owner deserves complete visibility and control over their vehicle's health, maintenance history, and costs."
+**Tagline**: "One garage for every vehicle record, reminder, and repair cost."
 
-**Product Positioning**: Vehicle Vitals is a cross-platform vehicle management platform for digital maintenance records, maintenance reminders, and long-term vehicle cost visibility. It is targeted at responsible vehicle owners aged 25-65 who value reliability, cost control, and organized records.
+**Positioning**: Vehicle Vitals is a cross-platform vehicle management platform that lets owners track service history, plan upcoming maintenance, and build a credible ownership record — across personal cars, shared household vehicles, and light business fleets.
 
-**Core Value Proposition**:
+**Core value propositions**:
 
-- **Single source of truth**: All maintenance records in one place (vs. scattered across dealers, mechanic business cards, insurance documents)
-- **Smart alerts**: Know exactly when next maintenance is due (vs. guessing or reaching high mileage)
-- **Cost visibility**: Track maintenance spending and budgeting (vs. unexpected repair bills)
-- **Resale leverage**: Documented maintenance proves owner responsibility (critical for resale value)
-- **Cross-device sync**: Check vehicle status from web, iOS, or Android (unified experience)
+- **Proof when you need it**: Maintenance history for resale conversations, warranty claims, insurance discussions, and mechanic visits. A clean record makes every ownership moment more confident.
+- **Fewer missed service moments**: Visibility into upcoming work before it becomes urgent or expensive. Planning beats reacting.
+- **Plans that grow with the garage**: The same product works from a first car to a household fleet to a light business — tiered to match the level of coordination needed.
 
 ---
 
-## Implementation Reality Snapshot (Code-Verified: March 11, 2026)
+## Personas
+
+Vehicle Vitals serves five core personas. Each has a distinct pain point, outcome, and recommended tier path.
+
+| ID | Nav label | Title | Pain | Outcome | Tier path |
+|---|---|---|---|---|---|
+| `owners` | For Owners | Responsible owner | Records scattered; no clear service history | Keep one car reliable and documented | Free → Pro |
+| `households` | For Households | Household garage | Multiple vehicles, multiple drivers, no coordination | Coordinate every vehicle in the family | Pro |
+| `new-drivers` | New Drivers | New driver / new owner | Unfamiliar with maintenance; uncertain what to do next | Build confidence with plain-language guidance | Free → Pro |
+| `diy-maintainers` | DIY | DIY maintainer | No good way to document self-performed work | Document the work you do yourself, with receipts | Pro → Premium |
+| `light-fleets` | Light Fleets | Light fleet | Vehicle spreadsheets; no operating visibility | Replace spreadsheets with real fleet visibility | Premium → Enterprise |
+
+Persona detail pages live at `/personas/:id`. Each page shows the pain/outcome narrative, a 3-step workflow, a recommended plan path, and a link to the relevant feature demo.
+
+---
+
+---
+
+## Implementation Reality Snapshot (Code-Verified: June 28, 2026)
 
 This document contains both product vision and delivery claims. The matrix below reflects current implementation evidence in the repository.
 
-| Capability                             | Current Status        | Evidence                                                                                                                                                                                                                                                           |
-| -------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Multi-vehicle management               | 🟢 Implemented (core) | Web protected CRUD routes in `packages/web/src/App.tsx`; mobile CRUD service active in `packages/mobile/lib/services/firestore_service.dart`                                                                                                                       |
-| VIN decode / vehicle auto-populate     | 🟡 Partial            | Callable VIN decode and vehicle insights exist in `packages/functions/src/index.ts`; web add-vehicle flow consumes them in `packages/web/src/pages/AddVehicle.tsx`                                                                                                 |
-| Maintenance logging + timeline         | 🟡 Partial            | Web history/timeline in `packages/web/src/pages/EditVehicle.tsx` and `packages/web/src/pages/TimelineDashboard.tsx`; mobile timeline dashboard with vehicle/date filters and event metadata exists in `packages/mobile/lib/screens/timeline_dashboard_screen.dart` |
-| Smart alerts (dismiss/snooze/complete) | 🟡 Partial            | Reminder lifecycle actions are wired in web and mobile upcoming-task screens; persisted delivery outcome metadata is now recorded on web through `packages/web/src/pages/UpcomingTasks.tsx` and `packages/shared/src/firestoreServiceFactory.js`                   |
-| Reminder scheduling                    | 🟡 Partial            | Scheduled reminder check exists in `packages/functions/src/index.ts`; web now supports manual reminder send with status feedback, while fully automated cross-platform reliability still needs production validation                                               |
-| Notification pipeline (email/push)     | 🟡 Partial            | Web FCM scaffolding in `packages/web/src/shared/notificationService.js`; email sending is implemented through `packages/functions/src/email.provider.ts`; mobile initializes FCM in `packages/mobile/lib/services/notification_service.dart`                       |
-| Data export (PDF/CSV)                  | 🟡 Partial            | Web export implemented in `packages/web/src/utils/dataExport.js`; mobile CSV/PDF export exists in `packages/mobile/lib/services/data_export_service.dart`, but coverage is limited to maintenance-focused reports                                                  |
-| Service provider directory             | ⏸ Planned            | No implemented provider directory routes/screens in active web route map (`packages/web/src/App.tsx`)                                                                                                                                                              |
-| Fleet manager workflow/dashboard       | ⏸ Planned            | No fleet-role or fleet dashboard implementation in active web/mobile app routes                                                                                                                                                                                    |
-| Budget insights / forecasting          | 🟡 Partial            | Mobile analytics UI exists in `packages/mobile/lib/screens/analytics_screen.dart` and reads Firestore-backed data through `packages/mobile/lib/services/analytics_service.dart`                                                                                    |
+| Capability | Current Status | Evidence / Notes |
+| --- | --- | --- |
+| Multi-vehicle management | 🟢 Implemented | Web CRUD in `Home.tsx`, `AddVehicle.tsx`, `EditVehicle.tsx`; iOS in `firestore_service.dart`; active/stored status on both platforms |
+| VIN decode / auto-populate | 🟢 Implemented | Callable in `functions/src/index.ts`; web `AddVehicle.tsx` and iOS `ScanVinScreen` consume it |
+| Maintenance logging + timeline | 🟢 Implemented | Web: `EditVehicle.tsx`, `TimelineDashboard.tsx`; iOS: `MaintenanceListScreen`, `TimelineDashboardScreen` |
+| Document portfolio + AI analysis | 🟡 Partial (web only) | Web: full portfolio with file upload and analysis in `Records.tsx`; iOS: `RecordsScreen` exists but lacks analysis display and ownership insights — see APP_ALIGNMENT_PLAN.md |
+| Smart reminders (dismiss/snooze/complete) | 🟢 Implemented | Full lifecycle on web (`UpcomingTasks.tsx`) and iOS (`upcoming_tasks_screen.dart`); delivery outcome persisted |
+| Reminder scheduling and delivery | 🟡 Partial | Scheduled sweep in functions; web manual send works; production delivery reliability not yet validated |
+| Email + push notifications | 🟡 Partial | Email via `email.provider.ts`; web FCM in `notificationService.js`; iOS FCM in `notification_service.dart`; production reliability open |
+| Calendar integration | 🟢 Implemented | Callable in functions; web and iOS both create calendar events (Google/Apple/ICS); provider-account validation still needed |
+| Data export (PDF/CSV) | 🟡 Partial | Web: PDF + CSV in `dataExport.js`; iOS: `data_export_service.dart`; cross-platform output parity not formally validated |
+| Service provider directory | 🟡 Partial (web only) | Web: `ServiceProviders.tsx` with location, radius, and type filters; iOS parity still needed |
+| Four-tier subscriptions + entitlements | 🟢 Implemented | Web: `featureFlags.ts` + backend callable; iOS: `premium_service.dart` + subscription screen; production billing not yet validated |
+| Marketing site + persona pages | 🟢 Implemented | 5 persona pages, 4 feature demos, pricing, help, video tours, screen gallery — deployed |
+| App / marketing alignment | 🟡 In progress | See `docs/APP_ALIGNMENT_PLAN.md` — onboarding, Records nav, tier taglines, iOS portfolio parity are priority items |
+| Fleet manager workflows | ⏸ Planned | Enterprise org plumbing exists; fleet dashboard and role controls not yet built |
+| Budget forecasting depth | 🟡 Partial | Web: `CostAnalysisReportlet.tsx`; iOS: `analytics_screen.dart`; richer models and filters not yet built |
 
 Legend:
 
@@ -59,25 +81,33 @@ Legend:
 
 ---
 
-## 💳 Subscription Tiers & Feature Gating
+## Subscription Tiers & Feature Gating
 
-**Strategy**: Freemium model with Free, Pro, Premium, and Enterprise tiers designed to provide value at every level while creating natural upgrade paths for power users and contracted fleets.
+**Strategy**: Freemium model with four tiers. Each tier has a clear tagline that doubles as the positioning statement used in marketing copy and in-app upgrade prompts.
 
-### Tier Comparison Matrix
+### Tier Overview
 
-| Feature                     | **Free (Ad-Supported)** | **Pro ($2.99/mo)**             | **Premium ($6.99/mo)**       | **Enterprise (Custom)**              |
-| --------------------------- | ----------------------- | ------------------------------ | ---------------------------- | ------------------------------------ |
-| **Vehicles**                | 2                       | 10                             | 25                           | 25+ (contract)                       |
-| **Maintenance Reminders**   | Basic (mileage)         | Advanced (time + mileage + AI) | Advanced + predictive        | Org policies + automation            |
-| **Receipt Uploads**         | 10/month                | 100/month                      | Unlimited                    | Unlimited + policy controls          |
-| **Export Formats**          | CSV                     | PDF, CSV, Excel                | PDF, CSV, Excel + cloud sync | Accounting-grade exports + scheduled |
-| **Ads Displayed**           | 3-5/page                | 1-2/page (reduced)             | None (ad-free)               | None                                 |
-| **Calendar Sync**           | ❌                      | ✅ Google/Outlook              | ✅ All platforms             | ✅ Org-wide                          |
-| **AI Analysis**             | ❌                      | ✅ 5 analyses/month            | ✅ Unlimited                 | ✅ Unlimited + workflow automation   |
-| **Maintenance Planning**    | ❌                      | ✅ 12-month forecasts          | ✅ 36-month forecasts        | ✅ Fleet/portfolio planning          |
-| **Multi-Vehicle Dashboard** | ❌                      | ✅                             | ✅ Customizable alerts       | ✅ Cross-account / fleet views       |
-| **API Access**              | ❌                      | ❌                             | ✅ Zapier, IFTTT             | ✅ Accounting/ERP integrations       |
-| **Priority Support**        | Community forums        | Email (24-48h)                 | Email (4-8h) + Phone         | Dedicated success + SLA              |
+| Tier | Price | Vehicles | Tagline | Primary audience |
+|---|---|---|---|---|
+| **Free** | Free | 2 | Learn and document | First-time users, single-car owners exploring the product |
+| **Pro** | $2.99/month | 10 | Plan and coordinate | Households, active owners who want planning and calendar sync |
+| **Premium** | $6.99/month | 25 | Forecast and automate | DIY maintainers, power users who want AI, exports, and API access |
+| **Enterprise** | Custom | 25+ | Govern and integrate | Light fleets and business operators who need policy controls and integrations |
+
+### Feature Comparison
+
+| Feature | Free | Pro | Premium | Enterprise |
+|---|---|---|---|---|
+| **Vehicles** | 2 | 10 | 25 | 25+ (contract) |
+| **Maintenance reminders** | Basic (mileage) | Advanced (time + mileage) | Advanced + predictive AI | Org policies + automation |
+| **Planning horizon** | 3 months | 12 months | 36 months | Fleet / portfolio planning |
+| **Calendar sync** | — | Google / Apple / ICS | All platforms | Org-wide |
+| **Document portfolio & analysis** | Basic | Full | Full + cloud sync | Full + policy controls |
+| **Export formats** | CSV | PDF, CSV | PDF, CSV, Excel | Accounting-grade + scheduled |
+| **AI analysis** | — | Document analysis | Unlimited + predictions | Unlimited + workflow automation |
+| **API access** | — | — | Zapier / webhook | ERP integrations |
+| **Ads** | Yes | Reduced | None | None |
+| **Support** | Standard email | Email (48h) | Email (8h) | Dedicated success + SLA |
 
 ### Upgrade Trigger Points (UX Design)
 

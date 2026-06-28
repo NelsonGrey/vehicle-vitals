@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../shared/AuthContext';
 import { personaPages } from '../data/personas';
 import StackedVLogo from './StackedVLogo';
 
@@ -54,13 +55,8 @@ const SOCIAL_LINKS = [
   },
 ];
 
-type FooterVariant = 'marketing' | 'app';
-
-interface SiteFooterProps {
-  variant?: FooterVariant;
-}
-
-export default function SiteFooter({ variant = 'marketing' }: SiteFooterProps) {
+export default function SiteFooter() {
+  const { user } = useAuth();
   return (
     <footer className="shrink-0 border-t border-slate-700 bg-slate-950 text-white">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -94,7 +90,7 @@ export default function SiteFooter({ variant = 'marketing' }: SiteFooterProps) {
             ))}
           </nav>
 
-          {variant === 'marketing' ? (
+          {!user ? (
             <nav
               aria-label="Personas"
               className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"

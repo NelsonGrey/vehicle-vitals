@@ -39,10 +39,10 @@ describe('SiteFooter', () => {
     expect(within(footer).getByText(/Vehicle Vitals/)).toBeInTheDocument();
   });
 
-  it('hides persona nav when showPersonas={false}', () => {
+  it('shows app nav and hides persona nav when variant="app"', () => {
     render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <SiteFooter showPersonas={false} />
+        <SiteFooter variant="app" />
       </MemoryRouter>
     );
 
@@ -52,8 +52,16 @@ describe('SiteFooter', () => {
     expect(within(footer).getByRole('navigation', { name: /Product/i })).toBeVisible();
     expect(within(footer).getByRole('navigation', { name: /Support and legal/i })).toBeVisible();
 
-    // Persona nav absent
+    // Persona nav absent; app nav present
     expect(within(footer).queryByRole('navigation', { name: /Personas/i })).not.toBeInTheDocument();
+    expect(within(footer).getByRole('navigation', { name: /App/i })).toBeVisible();
+
+    // App nav links present
+    expect(within(footer).getByRole('link', { name: /^Garage$/i })).toHaveAttribute('href', '/app');
+    expect(within(footer).getByRole('link', { name: /^Profile$/i })).toHaveAttribute('href', '/app/profile');
+    expect(within(footer).getByRole('link', { name: /^Timeline$/i })).toHaveAttribute('href', '/app/timeline');
+    expect(within(footer).getByRole('link', { name: /^Upcoming$/i })).toHaveAttribute('href', '/app/upcoming');
+    expect(within(footer).getByRole('link', { name: /^Mechanics$/i })).toHaveAttribute('href', '/app/providers');
 
     // Getting Started must not appear (authenticated nav item, not a footer link)
     expect(within(footer).queryByRole('link', { name: /Getting Started/i })).not.toBeInTheDocument();

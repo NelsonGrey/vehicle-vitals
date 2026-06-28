@@ -49,7 +49,7 @@ export default function AuthLayout() {
         </div>
       </div>
 
-      <SiteFooter showPersonas={false} />
+      <SiteFooter />
     </div>
   );
 }

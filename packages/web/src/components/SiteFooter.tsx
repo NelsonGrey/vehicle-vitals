@@ -9,6 +9,14 @@ const productLinks = [
   { label: 'Screens', to: '/everyday-screens' },
 ];
 
+const appNavLinks = [
+  { label: 'Garage', to: '/app' },
+  { label: 'Profile', to: '/app/profile' },
+  { label: 'Timeline', to: '/app/timeline' },
+  { label: 'Upcoming', to: '/app/upcoming' },
+  { label: 'Mechanics', to: '/app/providers' },
+];
+
 const supportLinks = [
   { label: 'Help', to: '/help' },
   { label: 'Support', to: '/contact' },
@@ -46,11 +54,13 @@ const SOCIAL_LINKS = [
   },
 ];
 
+type FooterVariant = 'marketing' | 'app';
+
 interface SiteFooterProps {
-  showPersonas?: boolean;
+  variant?: FooterVariant;
 }
 
-export default function SiteFooter({ showPersonas = true }: SiteFooterProps) {
+export default function SiteFooter({ variant = 'marketing' }: SiteFooterProps) {
   return (
     <footer className="shrink-0 border-t border-slate-700 bg-slate-950 text-white">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -84,7 +94,7 @@ export default function SiteFooter({ showPersonas = true }: SiteFooterProps) {
             ))}
           </nav>
 
-          {showPersonas && (
+          {variant === 'marketing' ? (
             <nav
               aria-label="Personas"
               className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
@@ -96,6 +106,21 @@ export default function SiteFooter({ showPersonas = true }: SiteFooterProps) {
                   className="transition-colors hover:text-white"
                 >
                   {persona.navLabel}
+                </Link>
+              ))}
+            </nav>
+          ) : (
+            <nav
+              aria-label="App"
+              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
+            >
+              {appNavLinks.map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="transition-colors hover:text-white"
+                >
+                  {link.label}
                 </Link>
               ))}
             </nav>

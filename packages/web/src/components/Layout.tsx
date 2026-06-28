@@ -19,7 +19,7 @@ export default function Layout() {
           <InlineAdSection placement="maintenanceHistory" />
         </div>
       </div>
-      <SiteFooter showPersonas={false} />
+      <SiteFooter variant="app" />
     </div>
   );
 }

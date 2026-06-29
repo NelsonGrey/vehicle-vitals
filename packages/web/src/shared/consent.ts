@@ -8,16 +8,31 @@ interface ConsentState {
   ads: ConsentChoice;
 }
 
-function pushConsent(analytics: ConsentChoice, ads: ConsentChoice) {
-  window.dataLayer = window.dataLayer || [];
-  // GTM consent update — three-argument form per Consent Mode v2 spec.
-  (window.dataLayer as unknown[]).push('consent', 'update', {
+function pushConsent(analytics: ConsentChoice, ads: ConsentChoice): void {
+  const params = {
     analytics_storage: analytics,
     ad_storage: ads,
     ad_user_data: ads,
     ad_personalization: ads,
     functionality_storage: analytics,
-  });
+  };
+
+  // Prefer window.gtag() which is defined in index.html before GTM loads.
+  // It correctly pushes an Arguments object to dataLayer which GTM understands.
+  if (typeof window.gtag === 'function') {
+    window.gtag('consent', 'update', params);
+    return;
+  }
+
+  // Fallback: re-create the same Arguments-object push that gtag() uses internally,
+  // so GTM can process it correctly when it initialises later.
+  window.dataLayer = window.dataLayer || [];
+  // eslint-disable-next-line prefer-rest-params
+  (function () { (window.dataLayer as unknown[]).push(arguments); })(
+    'consent',
+    'update',
+    params
+  );
 }
 
 export function getConsentState(): ConsentState {

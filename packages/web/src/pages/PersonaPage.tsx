@@ -1,18 +1,35 @@
+import { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
+import PageSEO from '../components/PageSEO';
 import { getPersonaById, personaPages } from '../data/personas';
+import {
+  trackPersonaCtaClick,
+  trackPersonaPageView,
+  trackSignupStart,
+} from '../shared/marketingAnalytics';
+import { getPersonaSeoMeta } from '../shared/seoMeta';
 
 export default function PersonaPage() {
   const { personaId } = useParams();
   const persona = getPersonaById(personaId);
 
+  useEffect(() => {
+    if (persona) {
+      trackPersonaPageView(persona.id, persona.path, persona.title);
+    }
+  }, [persona]);
+
   if (!persona) {
     return <Navigate to="/" replace />;
   }
 
+  const meta = getPersonaSeoMeta(persona.id);
   const relatedPersonas = personaPages.filter(item => item.id !== persona.id);
 
   return (
     <div className="space-y-8">
+      <PageSEO meta={meta} />
+
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">
         <img
           src={persona.image}
@@ -35,12 +52,23 @@ export default function PersonaPage() {
               <Link
                 to="/auth/signup"
                 className="inline-flex w-full justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
+                onClick={() =>
+                  trackSignupStart('persona_hero', persona.id)
+                }
               >
                 Create your account
               </Link>
               <Link
                 to="/subscription"
                 className="inline-flex w-full justify-center rounded-xl border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20 sm:w-auto"
+                onClick={() =>
+                  trackPersonaCtaClick(
+                    persona.id,
+                    'Compare plans',
+                    '/subscription',
+                    'persona_hero'
+                  )
+                }
               >
                 Compare plans
               </Link>
@@ -132,6 +160,14 @@ export default function PersonaPage() {
           <Link
             to={persona.demoTo}
             className="inline-flex w-full justify-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-950 md:w-auto dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+            onClick={() =>
+              trackPersonaCtaClick(
+                persona.id,
+                persona.ctaLabel,
+                persona.demoTo,
+                'persona_demo_cta'
+              )
+            }
           >
             {persona.ctaLabel}
           </Link>

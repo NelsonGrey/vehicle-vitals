@@ -7,6 +7,10 @@ vi.mock('../src/shared/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock('../src/shared/marketingAnalytics', () => ({
+  trackFooterNavClick: vi.fn(),
+}));
+
 import { useAuth } from '../src/shared/AuthContext';
 
 function renderFooter() {

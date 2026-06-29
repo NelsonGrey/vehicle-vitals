@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import PageSEO from '../components/PageSEO';
 import {
   trackPaymentInitiated,
   trackSubscriptionPageView,
 } from '../shared/adAnalytics';
+import {
+  trackBeginCheckout,
+  trackPricingBillingToggle,
+  trackPricingPageView,
+  trackPricingPlanClick,
+} from '../shared/marketingAnalytics';
+import { ROUTE_SEO } from '../shared/seoMeta';
 import {
   changeSubscriptionTier,
   createSubscriptionCheckoutSession,
@@ -156,6 +164,7 @@ export default function SubscriptionPage() {
 
   useEffect(() => {
     trackSubscriptionPageView('direct_navigation', tier);
+    trackPricingPageView();
   }, [tier]);
 
   const summary = useMemo(
@@ -185,6 +194,7 @@ export default function SubscriptionPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-5 py-6">
+      <PageSEO meta={ROUTE_SEO['/subscription']} />
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
           {isBillingRoute
@@ -274,7 +284,7 @@ export default function SubscriptionPage() {
         <div className="mt-5 inline-flex rounded-lg border border-slate-300 p-1 dark:border-slate-600">
           <button
             type="button"
-            onClick={() => setBillingPeriod('monthly')}
+            onClick={() => { setBillingPeriod('monthly'); trackPricingBillingToggle('monthly'); }}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               billingPeriod === 'monthly'
                 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
@@ -285,7 +295,7 @@ export default function SubscriptionPage() {
           </button>
           <button
             type="button"
-            onClick={() => setBillingPeriod('annual')}
+            onClick={() => { setBillingPeriod('annual'); trackPricingBillingToggle('annual'); }}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               billingPeriod === 'annual'
                 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
@@ -397,11 +407,14 @@ export default function SubscriptionPage() {
                     }
 
                     if (planTier === 'enterprise') {
+                      trackPricingPlanClick(planTier, billingPeriod, 'Contact sales');
                       window.location.href =
                         'mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet.';
                       return;
                     }
 
+                    trackPricingPlanClick(planTier, billingPeriod, 'Upgrade');
+                    trackBeginCheckout(planTier, billingPeriod);
                     setIsSubmittingTierChange(true);
                     try {
                       trackPaymentInitiated(

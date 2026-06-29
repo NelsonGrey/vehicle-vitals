@@ -28,10 +28,14 @@ import {
   subscribeToForegroundMessages,
 } from './shared/notificationService';
 import { replayStoredConsent } from './shared/consent';
+import { captureUtmParams } from './shared/marketingAnalytics';
 import { analytics, logger } from './utils/logger';
 
 // Replay any previously stored consent decision into GTM on every page load.
 replayStoredConsent();
+
+// Capture UTM params from the landing URL before any navigation occurs.
+captureUtmParams();
 
 // Component to handle logging and analytics
 function AppAnalytics() {
@@ -59,7 +63,8 @@ function AppAnalytics() {
     }
   }, [user]);
 
-  // Track page views
+  // Track page views. Use a microtask delay so PageSEO's useEffect (which
+  // updates document.title) runs first, giving us the correct route title.
   useEffect(() => {
     const startTime = Date.now();
     logger.info(`Page view: ${location.pathname}`, {
@@ -67,14 +72,17 @@ function AppAnalytics() {
       data: { path: location.pathname, search: location.search },
     });
 
-    // Track page view in analytics
-    analytics.trackEvent('page_view', {
-      page_path: location.pathname,
-      page_title: document.title,
-    });
+    const id = setTimeout(() => {
+      analytics.trackEvent('page_view', {
+        page_path: location.pathname,
+        page_search: location.search,
+        page_title: document.title,
+      });
+    }, 0);
 
     // Track time spent on page when leaving
     return () => {
+      clearTimeout(id);
       const timeSpent = Date.now() - startTime;
       logger.info(`Page exit: ${location.pathname}`, {
         category: 'navigation',

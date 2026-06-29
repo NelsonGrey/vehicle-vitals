@@ -1,9 +1,13 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderAdBar from '../components/HeaderAdBar';
 import InlineAdSection from '../components/InlineAdSection';
+import PageSEO from '../components/PageSEO';
 import SiteFooter from '../components/SiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import { personaPages } from '../data/personas';
+import { trackMarketingPageView, trackSignupStart } from '../shared/marketingAnalytics';
+import { ROUTE_SEO } from '../shared/seoMeta';
 
 const proofPoints = [
   {
@@ -48,8 +52,15 @@ const planGuides = [
 ];
 
 export default function Landing() {
+  const meta = ROUTE_SEO['/'];
+
+  useEffect(() => {
+    trackMarketingPageView('/', meta.title);
+  }, [meta.title]);
+
   return (
     <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+      <PageSEO meta={meta} />
       <SiteHeader overlay={false} />
       <HeaderAdBar />
       <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900">
@@ -81,6 +92,7 @@ export default function Landing() {
                     <Link
                       to="/auth/signup"
                       className="inline-block w-full rounded-xl bg-white px-6 py-3 text-center font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
+                      onClick={() => trackSignupStart('landing_hero')}
                     >
                       Create your account
                     </Link>

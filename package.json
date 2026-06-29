@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "start": "node scripts/apphosting-server.js",
     "build:production": "./scripts/build-web-sanitized-env.sh production",
     "build:staging": "./scripts/build-web-sanitized-env.sh staging",
     "build:development": "./scripts/build-web-sanitized-env.sh development",
@@ -19,6 +20,8 @@
     "build:web": "./scripts/build-web-sanitized-env.sh production",
     "dev:web": "npm run dev --workspace=@vehicle-vitals/web",
     "test:web": "npm run test --workspace=@vehicle-vitals/web",
+    "test:unit:all": "./scripts/run-unit-tests.sh",
+    "test:uat:all": "./scripts/run-uat-tests.sh",
     "export:logo": "node scripts/export-logo.js",
     "dataconnect:codegen": "node scripts/dataconnect-codegen.js",
     "install:all": "npm install",
@@ -29,26 +32,39 @@
     "firebase:test-ios": "./tools/test-ios-firebase.sh",
     "firebase:test-android": "./tools/test-android-firebase.sh",
     "firebase:test-mobile": "./tools/test-mobile-firebase.sh",
+    "security:audit": "./scripts/security-posture-audit.sh",
     "demo-data:load": "npm --workspace=functions run seed:demo-data --",
     "demo-data:purge": "npm --workspace=functions run purge:demo-data --",
     "backfill:personal-orgs": "node scripts/backfill-personal-org-memberships.js",
     "backfill:personal-orgs:apply": "node scripts/backfill-personal-org-memberships.js --apply",
-    "start": "node scripts/apphosting-server.js"
+    "test:scripts": "node --test scripts/tests/*.cjs",
+    "openai:tts:validate": "node scripts/validate-openai-tts.js",
+    "videos:generate:narrated": "node scripts/generate-narrated-feature-demos.js",
+    "videos:generate:interactive": "node scripts/generate-interactive-feature-demos.js",
+    "videos:generate:interactive:vin": "node scripts/generate-interactive-vin-demo.js"
   },
   "devDependencies": {
+    "@firebase/app-compat": "^0.5.14",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.33.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "playwright": "^1.59.1",
-    "prettier": "^3.0.0",
-    "sharp": "^0.33.5",
-    "turbo": "^2.0.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "openai": "^6.44.0",
+    "playwright": "^1.61.0",
+    "prettier": "^3.8.3",
+    "sharp": "^0.35.2",
+    "turbo": "^2.9.16",
     "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.4",
+    "vite": "8.0.16",
+    "uuid": "11.1.1",
+    "minimatch": "9.0.7"
   }
 }

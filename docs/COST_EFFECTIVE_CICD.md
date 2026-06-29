@@ -32,7 +32,7 @@ _Note: Local testing with act CLI reduces unnecessary GitHub Actions runs and pr
 ./scripts/test-cicd-local.sh development
 
 # Interactive testing menu
-./scripts/test-act.sh development true ci-cd-pipeline
+./scripts/test-act.sh development true master-pipeline
 ```
 
 ### 2. Act CLI Testing (0 Actions minutes)
@@ -42,7 +42,7 @@ _Note: Local testing with act CLI reduces unnecessary GitHub Actions runs and pr
 ./scripts/test-act.sh
 
 # Test specific jobs
-act -W .github/workflows/ci-cd-pipeline.yml --job quality-check --container-architecture linux/amd64
+act -W .github/workflows/master-pipeline.yml --job quality-gate --container-architecture linux/amd64
 ```
 
 ### 3. GitHub Dry-Run Testing (Minimal Actions minutes)
@@ -148,13 +148,13 @@ git commit -m "feat: add new feature"
 
 ```bash
 # Test quality checks only
-act -W .github/workflows/ci-cd-pipeline.yml --job quality-check
+act -W .github/workflows/master-pipeline.yml --job quality-gate
 
 # Test build process
-act -W .github/workflows/ci-cd-pipeline.yml --job build-packages
+act -W .github/workflows/master-pipeline.yml --job build-web
 
 # Test deployment (dry-run)
-act -W .github/workflows/ci-cd-pipeline.yml --job deploy-web
+act -W .github/workflows/master-pipeline.yml --job deploy-firebase
 ```
 
 ## 🚀 Deployment Workflow

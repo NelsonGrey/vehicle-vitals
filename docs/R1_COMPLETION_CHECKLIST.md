@@ -1,24 +1,26 @@
 # R1 Completion Checklist
 
-Last updated: May 7, 2026
-Status: In progress
+Last updated: June 15, 2026
+Status: In progress (Gate 2 status: Build/launch PASS; manual acceptance and backend success-path proof still pending)
 
 Purpose: convert R1 production-readiness gates into execution-ready tasks with explicit evidence requirements.
 
-## Progress Snapshot (May 7, 2026 — updated, latest run 21:47Z)
+## Progress Snapshot (June 15, 2026)
 
-- Overall completion: 1/3 gates complete, 1/3 in active execution, 1/3 automated-complete (manual acceptance pending).
+- Overall completion: 2/3 gates complete, 1/3 in active execution.
 - Gate 1: ✅ Complete. Automated reliability checks are green (12/12 reminder tests) and authenticated deployed HTTP/manual-send validation is green (200 on dev endpoint).
-- Gate 2: Build/runtime smoke is green on latest run (`artifacts/smoke/r1-mobile-build-20260507T214730Z.log`: analyze pass + iOS release no-codesign pass). Acceptance is currently blocked on launch prerequisites: physical device requires Developer Mode/trust confirmation, and simulator launch has not yet produced a successful runtime session in this execution window.
+- Gate 2: Release-like iOS build evidence is current and PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`). HADES release-mode install/launch evidence is also current (`artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`), but acceptance remains incomplete because the full manual checklist and backend success-path validation have not been captured.
 - Gate 3: ✅ Automated complete. CSV parity PASS, PDF structural parity PASS, parity report signed off (automated validation pipeline). Manual visual QA recommended but not blocking.
+- Automated validation refresh (June 15, 2026): Mobile analyzer PASS via `./scripts/smoke-r1-mobile-runtime.sh`; mobile tests PASS (17/17), web unit tests PASS (378/378), and the production web build PASS from the go-live stabilization run.
 
 ### Immediate Next-Step Sequence
 
 1. Gate 2 manual acceptance run
-   - On device `HADES`, enable Developer Mode (Settings -> Privacy & Security) and trust host from Xcode/device prompt.
-   - Re-run `flutter run -d 00008020-00060DAE0C69002E` and execute 7-phase acceptance checklist.
-2. Gate 2 manual acceptance: convert blocker-marked evidence logs to PASS/FAIL with actual runtime/backend observations.
-3. Gate 3 optional: Visual PDF readability check recommended for highest-confidence sign-off.
+   - Use the latest successful HADES release launch evidence (`artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`) and execute the full 7-phase acceptance checklist end-to-end on the target iOS device.
+2. Gate 2 backend stabilization
+   - Capture explicit backend success-path evidence (auth + callable success and/or Firestore writes) during full acceptance flow, then refresh backend-traffic evidence to PASS.
+3. Gate 3 optional
+   - Complete visual PDF readability check for highest-confidence sign-off.
 
 ## How to Use This Checklist
 
@@ -28,7 +30,7 @@ Purpose: convert R1 production-readiness gates into execution-ready tasks with e
 
 ## Gate 1: Reminder Delivery Reliability
 
-Owner: Functions Lead (TBD)
+Owner: Mark Nelson (interim Functions Lead)
 Target date: May 9, 2026
 Status: Complete
 
@@ -94,8 +96,8 @@ ID_TOKEN="<cloud-invoker-identity-token>" \
 
 ## Gate 2: Mobile Runtime Parity Validation
 
-Owner: Mobile Lead (TBD)
-Target date: May 9, 2026
+Owner: Mark Nelson (interim Mobile Lead)
+Target date: Jun 5, 2026
 Status: In progress
 
 ### Preconditions
@@ -120,7 +122,26 @@ Status: In progress
 # From repository root
 ./scripts/smoke-r1-mobile-runtime.sh
 
-# Generate acceptance and backend-traffic evidence templates
+# Capture acceptance and backend-traffic evidence after the device run.
+# This emits PASS only when every required field is PASS/YES.
+AUTH_RESULT=PASS \
+VEHICLE_CRUD_RESULT=PASS \
+MAINTENANCE_CRUD_RESULT=PASS \
+REMINDER_ACTIONS_RESULT=PASS \
+EXPORT_RESULT=PASS \
+FIRESTORE_WRITES_OBSERVED=YES \
+FUNCTIONS_INVOCATIONS_OBSERVED=YES \
+AUTH_EVENTS_OBSERVED=YES \
+FIREBASE_PROJECT=vehicle-vitals-dev \
+TESTER="<tester>" \
+REVIEWER="<reviewer>" \
+SCREENSHOT_EVIDENCE="<paths-or-links>" \
+FIRESTORE_EVIDENCE_REF="<console-paths-or-export>" \
+FUNCTIONS_LOG_REF="<log-query-or-link>" \
+AUTH_EVENT_REF="<auth-console-or-log-link>" \
+./scripts/smoke-r1-mobile-acceptance-capture.sh
+
+# Optional fallback scaffold when the run has not happened yet
 ./scripts/smoke-r1-mobile-acceptance-template.sh
 ```
 
@@ -139,6 +160,7 @@ Status: In progress
 - `artifacts/smoke/r1-mobile-build-20260507T174144Z.log` (flutter analyze passed; iOS build failed due CocoaPods Firebase/CoreOnly version mismatch)
 - `artifacts/smoke/r1-mobile-build-20260507T175103Z.log` (flutter analyze + ios release build passed after `pod update Firebase/CoreOnly`)
 - `artifacts/smoke/r1-mobile-build-20260507T214730Z.log` (flutter analyze + ios release build passed after lockfile realignment and CocoaPods sync recovery)
+- `artifacts/smoke/r1-mobile-build-20260527T221621Z.log` (flutter analyze passed; iOS build entered `Running Xcode build...` but did not complete in the execution window)
 - `artifacts/smoke/r1-mobile-acceptance-20260413T194544Z.log` (acceptance checklist template scaffold generated)
 - `artifacts/smoke/r1-mobile-acceptance-20260506T154131Z.log` (acceptance checklist template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-acceptance-20260506T213424Z.log` (acceptance checklist template scaffold refreshed)
@@ -147,28 +169,40 @@ Status: In progress
 - `artifacts/smoke/r1-mobile-backend-traffic-20260506T213424Z.log` (backend traffic log template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log` (backend traffic log template scaffold refreshed)
 - `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` (acceptance checklist template scaffold refreshed)
+- `artifacts/smoke/r1-mobile-attached-run-udid-20260527T222306Z.log` (physical-device launch attempt on HADES; failed on Developer Mode/trust prerequisite)
+- `artifacts/smoke/r1-mobile-attached-run-sim-20260527T225748Z.log` (simulator runtime session established: Xcode build complete, app synced, VM service available; cleaner logs post auth-gating fix)
+- `artifacts/smoke/r1-mobile-acceptance-20260527T225954Z.log` (acceptance remains explicit FAIL; checklist not completed end-to-end)
+- `artifacts/smoke/r1-mobile-backend-traffic-20260527T225954Z.log` (backend remains explicit FAIL; success-path evidence not fully captured)
+- `artifacts/smoke/r1-mobile-build-20260601T221416Z.log` (flutter analyze + ios release build passed)
+- `artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log` (PARTIAL/BLOCKED; automation and release install succeeded, but manual end-to-end checklist was not completed)
+- `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log` (BLOCKED; backend success-path evidence not verified)
+- `artifacts/smoke/r1-mobile-build-20260615T154819Z.log` (flutter analyze + ios release build passed; built `build/ios/iphoneos/Runner.app`)
+- `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log` (HADES release-mode build, install, and launch reached Flutter attached session; stopped after evidence capture)
 - Runtime attempt note (2026-05-06): `flutter run -d ios` resolved stale UUID targeting but exited with Developer Mode requirement on device `HADES`.
 - `artifacts/smoke/r1-mobile-attached-run-udid-20260506T220717Z.log` (attached device launch attempt captured; blocked pending Developer Mode/trust flow)
 - Runtime attempt note (2026-05-07): simulator build attempts reached Xcode compile but did not complete a successful launch session in this execution window.
 - Runtime attempt note (2026-05-07): physical-device launch on `HADES` confirmed current blocker message: enable Developer Mode and trust host before development deploy.
+- Runtime attempt note (2026-05-27): direct physical-device launch on `HADES` again returned Developer Mode/trust prerequisite; see `artifacts/smoke/r1-mobile-attached-run-udid-20260527T222306Z.log`.
+- Runtime attempt note (2026-05-27): post-fix simulator launch on iPhone 17 Pro (`F11E33C8-5AD4-401E-9735-6046522CC4D7`) completed Xcode build and established runtime session with prior entitlement/auth startup errors no longer observed, but ended with `Lost connection to device`; see `artifacts/smoke/r1-mobile-attached-run-sim-20260527T225748Z.log`.
 - `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log` (updated with BLOCKED result summary and blocker evidence)
 - `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log` (updated with BLOCKED status pending runtime launch)
 
 ### Acceptance Helper Generated
 
 - `artifacts/smoke/r1-gate2-mobile-acceptance-checklist-2026-05-06T15-51-24-135Z.md` - Comprehensive 7-phase acceptance test (auth, vehicle CRUD, maintenance CRUD, reminders, exports, backend verification, performance)
+- `scripts/smoke-r1-mobile-acceptance-capture.sh` - PASS/BLOCKED evidence capture for the manual device run and backend observations
 
 ### Remaining to Close Gate
 
-1. ✅ Release build confirmed (latest: `r1-mobile-build-20260507T214730Z.log`)
-2. Resolve launch prerequisite on physical device `HADES` (Developer Mode + trust flow)
-3. Re-run Gate 2 acceptance flow and replace BLOCKED markers in `artifacts/smoke/r1-mobile-acceptance-20260507T175704Z.log`
-4. Capture backend evidence and replace BLOCKED markers in `artifacts/smoke/r1-mobile-backend-traffic-20260507T175704Z.log`
+1. ✅ Release build evidence available (latest complete build evidence: `r1-mobile-build-20260615T154819Z.log`)
+2. ✅ Release-mode HADES launch evidence available (`r1-mobile-attached-run-udid-20260615T155826Z.log`)
+3. Re-run Gate 2 acceptance flow and use `scripts/smoke-r1-mobile-acceptance-capture.sh` to replace the latest PARTIAL/BLOCKED artifact (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`) with PASS evidence
+4. Capture backend evidence with the same script and replace the latest BLOCKED artifact (`artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) with PASS evidence
 5. Final sign-off when acceptance phases pass
 
 ### Done Criteria
 
-- Release-like build succeeds (✅ confirmed in r1-mobile-build-20260506T153459Z.log).
+- Release-like build succeeds (✅ confirmed in `artifacts/smoke/r1-mobile-build-20260615T154819Z.log`).
 - All 6 CRUD operations (vehicle create/edit, maintenance create/edit/delete, list) complete without crashes.
 - Reminder notification displays and is actionable.
 - Export (CSV, PDF) generates successfully and is readable.
@@ -179,7 +213,7 @@ Status: In progress
 
 ## Gate 3: Export Parity Signoff (Web + Mobile)
 
-Owner: Web + Mobile QA Lead (TBD)
+Owner: Mark Nelson (interim Web + Mobile QA Lead)
 Target date: May 13, 2026
 Status: ✅ Automated complete (manual visual QA optional)
 
@@ -244,19 +278,19 @@ Use `./scripts/smoke-r1-export-parity-template.sh` to generate the parity report
 - ✅ CSV structure parity confirmed (automated validation passed)
 - ✅ PDF structural parity confirmed for core sections and required fields (automated)
 - [ ] PDF visual parity confirmed (manual QA review)
-- [ ] Signoff note completed in parity report (tester name, date, verdict, notes)
-- [ ] All evidence artifacts linked in this checklist
+- [x] Signoff note completed in parity report (tester name, date, verdict, notes)
+- [x] All evidence artifacts linked in this checklist
 
 ---
 
 ## Gate Status Dashboard
 
-| Gate                             | Owner                      | Target Date  | Status      | Evidence Linked |
-| -------------------------------- | -------------------------- | ------------ | ----------- | --------------- |
-| Reminder delivery reliability    | Functions Lead (TBD)       | May 9, 2026  | Complete    | Yes             |
-| Mobile runtime parity validation | Mobile Lead (TBD)          | May 9, 2026  | In progress | Yes             |
-| Export parity signoff            | Web + Mobile QA Lead (TBD) | May 13, 2026 | In progress | Yes             |
+| Gate                             | Owner                                      | Target Date  | Status      | Evidence Linked |
+| -------------------------------- | ------------------------------------------ | ------------ | ----------- | --------------- |
+| Reminder delivery reliability    | Mark Nelson (interim Functions Lead)       | May 9, 2026  | Complete    | Yes             |
+| Mobile runtime parity validation | Mark Nelson (interim Mobile Lead)          | Jun 5, 2026  | In progress | Yes             |
+| Export parity signoff            | Mark Nelson (interim Web + Mobile QA Lead) | May 13, 2026 | Complete    | Yes             |
 
 ## Completion Rule
 
-R1 is complete only when all three gates are marked Done with linked evidence artifacts.
+R1 is complete only when all three gates are marked Done with linked evidence artifacts. Gates 1 and 3 are complete; Gate 2 status is Build/launch PASS with current release-like iOS evidence, but acceptance/backend validation remains incomplete pending checklist completion and backend success-path proof.

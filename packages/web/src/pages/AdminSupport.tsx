@@ -3,6 +3,9 @@ import { useAuth } from '../shared/AuthContext';
 import { bootstrapEnterpriseContext } from '../shared/entitlementsService';
 import {
   applyRetentionPolicy,
+  createInvoiceDraft,
+  createPayableDraft,
+  getFinanceDrafts,
   getOrganizationMembers,
   searchSupportUsers,
   setOrganizationMemberRole,
@@ -31,6 +34,17 @@ interface OrganizationMember {
   status?: string;
 }
 
+interface FinanceDraft {
+  id: string;
+  kind: 'invoice' | 'payable';
+  counterparty: string;
+  amountDue: number;
+  currency: string;
+  dueDate: string;
+  status: string;
+  createdAt: string;
+}
+
 const ORG_ROLES = [
   'org_owner',
   'org_admin',
@@ -39,9 +53,7 @@ const ORG_ROLES = [
   'read_only',
 ];
 
-function createIdempotencyKey(prefix: string): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
+const TODAY = new Date().toISOString().slice(0, 10);
 
 export default function AdminSupport() {
   const { user, supportAccess } = useAuth();
@@ -55,6 +67,23 @@ export default function AdminSupport() {
   const [retentionDays, setRetentionDays] = useState(365);
   const [membersLoading, setMembersLoading] = useState(false);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const [financeLoading, setFinanceLoading] = useState(false);
+  const [financeError, setFinanceError] = useState('');
+  const [financeStatus, setFinanceStatus] = useState('');
+  const [financeDrafts, setFinanceDrafts] = useState<FinanceDraft[]>([]);
+  const [invoiceCustomerName, setInvoiceCustomerName] = useState('');
+  const [invoiceIssueDate, setInvoiceIssueDate] = useState(TODAY);
+  const [invoiceDueDate, setInvoiceDueDate] = useState('');
+  const [invoiceCurrency, setInvoiceCurrency] = useState('USD');
+  const [invoiceAmountDue, setInvoiceAmountDue] = useState('0');
+  const [invoiceNotes, setInvoiceNotes] = useState('');
+  const [payableVendorName, setPayableVendorName] = useState('');
+  const [payableBillDate, setPayableBillDate] = useState(TODAY);
+  const [payableDueDate, setPayableDueDate] = useState('');
+  const [payableCurrency, setPayableCurrency] = useState('USD');
+  const [payableAmountDue, setPayableAmountDue] = useState('0');
+  const [payableCategory, setPayableCategory] = useState('operations');
+  const [payableNotes, setPayableNotes] = useState('');
 
   const accessLabel = useMemo(() => {
     if (!supportAccess?.isSuperAdmin) {
@@ -118,6 +147,31 @@ export default function AdminSupport() {
     void loadMembers();
   }, [orgId, supportAccess]);
 
+  useEffect(() => {
+    if (!supportAccess?.isSuperAdmin || !orgId) {
+      setFinanceDrafts([]);
+      return;
+    }
+
+    const loadFinanceDrafts = async () => {
+      setFinanceLoading(true);
+      setFinanceError('');
+
+      try {
+        const response = await getFinanceDrafts(orgId, 4);
+        setFinanceDrafts(response.drafts as FinanceDraft[]);
+      } catch (err) {
+        setFinanceError(
+          err instanceof Error ? err.message : 'Unable to load finance drafts'
+        );
+      } finally {
+        setFinanceLoading(false);
+      }
+    };
+
+    void loadFinanceDrafts();
+  }, [orgId, supportAccess]);
+
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -153,7 +207,6 @@ export default function AdminSupport() {
       const response = await applyRetentionPolicy({
         orgId,
         retentionDays,
-        idempotencyKey: createIdempotencyKey('retention'),
       });
 
       setStatus(
@@ -182,7 +235,6 @@ export default function AdminSupport() {
         orgId,
         targetUid,
         role,
-        idempotencyKey: createIdempotencyKey('member_role'),
       });
 
       const refreshed = await getOrganizationMembers(orgId);
@@ -199,9 +251,94 @@ export default function AdminSupport() {
     }
   };
 
+  const refreshFinanceDrafts = async () => {
+    if (!supportAccess?.isSuperAdmin || !orgId) {
+      return;
+    }
+
+    const response = await getFinanceDrafts(orgId, 4);
+    setFinanceDrafts(response.drafts as FinanceDraft[]);
+  };
+
+  const handleCreateInvoiceDraft = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!supportAccess?.isSuperAdmin || !orgId) {
+      return;
+    }
+
+    setFinanceLoading(true);
+    setFinanceError('');
+    setFinanceStatus('');
+
+    try {
+      const response = await createInvoiceDraft({
+        orgId,
+        customerName: invoiceCustomerName.trim(),
+        dueDate: invoiceDueDate.trim(),
+        issueDate: invoiceIssueDate.trim(),
+        currency: invoiceCurrency.trim().toUpperCase(),
+        notes: invoiceNotes.trim(),
+        amountDue: Number(invoiceAmountDue || 0),
+        lineItems: [],
+      });
+
+      setFinanceStatus(
+        `Invoice draft ${response.invoiceId} created for ${invoiceCustomerName.trim() || 'customer'}.`
+      );
+      await refreshFinanceDrafts();
+    } catch (err) {
+      setFinanceError(
+        err instanceof Error ? err.message : 'Unable to create invoice draft'
+      );
+    } finally {
+      setFinanceLoading(false);
+    }
+  };
+
+  const handleCreatePayableDraft = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!supportAccess?.isSuperAdmin || !orgId) {
+      return;
+    }
+
+    setFinanceLoading(true);
+    setFinanceError('');
+    setFinanceStatus('');
+
+    try {
+      const response = await createPayableDraft({
+        orgId,
+        vendorName: payableVendorName.trim(),
+        dueDate: payableDueDate.trim(),
+        billDate: payableBillDate.trim(),
+        currency: payableCurrency.trim().toUpperCase(),
+        category: payableCategory.trim(),
+        notes: payableNotes.trim(),
+        amountDue: Number(payableAmountDue || 0),
+      });
+
+      setFinanceStatus(
+        `Payable draft ${response.payableId} created for ${payableVendorName.trim() || 'vendor'}.`
+      );
+      await refreshFinanceDrafts();
+    } catch (err) {
+      setFinanceError(
+        err instanceof Error ? err.message : 'Unable to create payable draft'
+      );
+    } finally {
+      setFinanceLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-[calc(100dvh-6rem)] bg-slate-50 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-5">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700 dark:text-teal-400">
             Super-administrator
@@ -345,6 +482,259 @@ export default function AdminSupport() {
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Finance Drafts
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Create invoice and payable drafts, then review the most recent
+                records for the active organization.
+              </p>
+            </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {financeDrafts.length} draft
+              {financeDrafts.length === 1 ? '' : 's'}
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <form
+              onSubmit={handleCreateInvoiceDraft}
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
+            >
+              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Create invoice draft
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300 sm:col-span-2">
+                  Customer name
+                  <input
+                    value={invoiceCustomerName}
+                    onChange={event =>
+                      setInvoiceCustomerName(event.target.value)
+                    }
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Invoice issue date
+                  <input
+                    type="date"
+                    value={invoiceIssueDate}
+                    onChange={event => setInvoiceIssueDate(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Invoice due date
+                  <input
+                    type="date"
+                    value={invoiceDueDate}
+                    onChange={event => setInvoiceDueDate(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Invoice currency
+                  <input
+                    value={invoiceCurrency}
+                    onChange={event => setInvoiceCurrency(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 uppercase dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Invoice amount due
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={invoiceAmountDue}
+                    onChange={event => setInvoiceAmountDue(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300 sm:col-span-2">
+                  Notes
+                  <textarea
+                    rows={3}
+                    value={invoiceNotes}
+                    onChange={event => setInvoiceNotes(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={
+                  financeLoading || !supportAccess?.isSuperAdmin || !orgId
+                }
+              >
+                Create invoice draft
+              </button>
+            </form>
+
+            <form
+              onSubmit={handleCreatePayableDraft}
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
+            >
+              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Create payable draft
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300 sm:col-span-2">
+                  Vendor name
+                  <input
+                    value={payableVendorName}
+                    onChange={event => setPayableVendorName(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Payable bill date
+                  <input
+                    type="date"
+                    value={payableBillDate}
+                    onChange={event => setPayableBillDate(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Payable due date
+                  <input
+                    type="date"
+                    value={payableDueDate}
+                    onChange={event => setPayableDueDate(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Payable currency
+                  <input
+                    value={payableCurrency}
+                    onChange={event => setPayableCurrency(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 uppercase dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Payable amount due
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={payableAmountDue}
+                    onChange={event => setPayableAmountDue(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
+                  Category
+                  <input
+                    value={payableCategory}
+                    onChange={event => setPayableCategory(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300 sm:col-span-2">
+                  Notes
+                  <textarea
+                    rows={3}
+                    value={payableNotes}
+                    onChange={event => setPayableNotes(event.target.value)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={
+                  financeLoading || !supportAccess?.isSuperAdmin || !orgId
+                }
+              >
+                Create payable draft
+              </button>
+            </form>
+          </div>
+
+          {financeError && (
+            <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+              {financeError}
+            </p>
+          )}
+
+          {financeStatus && (
+            <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+              {financeStatus}
+            </p>
+          )}
+
+          <div className="mt-6 overflow-x-auto">
+            <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-700">
+                    Type
+                  </th>
+                  <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-700">
+                    Counterparty
+                  </th>
+                  <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-700">
+                    Due date
+                  </th>
+                  <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-700">
+                    Amount
+                  </th>
+                  <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-700">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {financeDrafts.map(draft => (
+                  <tr key={draft.id} className="align-top">
+                    <td className="border-b border-slate-100 px-3 py-4 capitalize dark:border-slate-800">
+                      {draft.kind}
+                    </td>
+                    <td className="border-b border-slate-100 px-3 py-4 dark:border-slate-800">
+                      <div className="font-medium text-slate-900 dark:text-slate-100">
+                        {draft.counterparty || 'Unnamed'}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {draft.createdAt || 'Unknown created time'}
+                      </div>
+                    </td>
+                    <td className="border-b border-slate-100 px-3 py-4 dark:border-slate-800">
+                      {draft.dueDate || 'N/A'}
+                    </td>
+                    <td className="border-b border-slate-100 px-3 py-4 dark:border-slate-800">
+                      {new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: draft.currency || 'USD',
+                      }).format(Number(draft.amountDue || 0))}
+                    </td>
+                    <td className="border-b border-slate-100 px-3 py-4 dark:border-slate-800">
+                      {draft.status}
+                    </td>
+                  </tr>
+                ))}
+                {!financeLoading && financeDrafts.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                    >
+                      No finance drafts available.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <form
             onSubmit={handleSearch}
             className="flex flex-col gap-3 sm:flex-row"
@@ -385,7 +775,7 @@ export default function AdminSupport() {
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 {submittedQuery
-                  ? `Showing matches for \"${submittedQuery}\"`
+                  ? `Showing matches for "${submittedQuery}"`
                   : 'Showing the first accessible support page of users'}
               </p>
             </div>

@@ -2,12 +2,34 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
+import '../services/record_storage_service.dart';
+import '../services/vehicle_photo_service.dart';
+import '../services/vehicle_transfer_service.dart';
+
+const List<String> _vehicleTypeOptions = [
+  'Car',
+  'Truck',
+  'Motorcycle',
+  'Recreational Vehicle (RV)',
+  'Boat',
+  'Van',
+  'SUV',
+  'Trailer',
+  'ATV/UTV',
+  'Other',
+];
+
+const List<DropdownMenuItem<String>> _vehicleStatusOptions = [
+  DropdownMenuItem(value: 'active', child: Text('In Garage')),
+  DropdownMenuItem(value: 'stored', child: Text('In Storage')),
+];
 
 class EditVehicleScreen extends StatefulWidget {
   final String vin;
@@ -31,6 +53,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isDecoding = false;
+  bool _isPhotoBusy = false;
   Vehicle? _vehicle;
 
   int? _recallsCount;
@@ -42,9 +65,22 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   String? _transmissionStyle;
   String? _trim;
   String? _vehicleType;
+  String _vehicleStatus = 'active';
   List<Map<String, dynamic>> _recallsItems = const [];
   Map<String, dynamic> _vinProfile = const {};
   Map<String, dynamic> _vinInsights = const {};
+  String? _photoUrl;
+  String? _photoPath;
+  String? _photoSource;
+  String? _photoAttributionUrl;
+  String? _photoAttributionText;
+
+  final _recordStorageService = RecordStorageService();
+  final _vehiclePhotoService = VehiclePhotoService();
+  final _vehicleTransferService = VehicleTransferService();
+  final _transferEmailController = TextEditingController();
+
+  bool _looksLikeVin(String value) => value.trim().length == 17;
 
   @override
   void initState() {
@@ -59,6 +95,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     _modelController.dispose();
     _yearController.dispose();
     _mileageController.dispose();
+    _transferEmailController.dispose();
     super.dispose();
   }
 
@@ -83,6 +120,12 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
           _transmissionStyle = vehicle.transmissionStyle;
           _trim = vehicle.trim;
           _vehicleType = vehicle.vehicleType;
+          _vehicleStatus = vehicle.vehicleStatus;
+          _photoUrl = vehicle.photoUrl;
+          _photoPath = vehicle.photoPath;
+          _photoSource = vehicle.photoSource;
+          _photoAttributionUrl = vehicle.photoAttributionUrl;
+          _photoAttributionText = vehicle.photoAttributionText;
           _recallsItems = vehicle.recallsItems ?? const [];
           _vinProfile = vehicle.vinProfile ?? const {};
           _vinInsights = vehicle.vinInsights ?? const {};
@@ -107,11 +150,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
 
   Future<void> _decodeVinInsights() async {
     final vin = _vinController.text.trim().toUpperCase();
-    if (vin.length != 17) {
+    if (!_looksLikeVin(vin)) {
       final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('VIN must be 17 characters to decode.'),
+          content: const Text(
+            'VIN decode requires a 17-character VIN. Non-VIN assets can still be tracked manually.',
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -271,11 +316,41 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     setState(() => _isSaving = true);
 
     try {
+      var effectivePhotoUrl = _photoUrl;
+      var effectivePhotoPath = _photoPath;
+      var effectivePhotoSource = _photoSource;
+      var effectivePhotoAttributionUrl = _photoAttributionUrl;
+      var effectivePhotoAttributionText = _photoAttributionText;
+
+      if ((effectivePhotoUrl == null || effectivePhotoUrl.isEmpty) &&
+          _makeController.text.trim().isNotEmpty &&
+          _modelController.text.trim().isNotEmpty) {
+        final candidate = await _vehiclePhotoService.findVehiclePhotoFromWeb(
+          year: _yearController.text.trim(),
+          make: _makeController.text.trim(),
+          model: _modelController.text.trim(),
+          vehicleType: _vehicleType,
+        );
+
+        if (candidate != null && (candidate['url'] ?? '').isNotEmpty) {
+          effectivePhotoUrl = candidate['url'];
+          effectivePhotoPath = '';
+          effectivePhotoSource = candidate['source'];
+          effectivePhotoAttributionUrl = candidate['attributionUrl'];
+          effectivePhotoAttributionText = candidate['attributionText'];
+        }
+      }
+
       final updatedVehicle = _vehicle!.copyWith(
         make: _makeController.text.trim(),
         model: _modelController.text.trim(),
         year: int.parse(_yearController.text),
         mileage: int.parse(_mileageController.text),
+        photoUrl: effectivePhotoUrl,
+        photoPath: effectivePhotoPath,
+        photoSource: effectivePhotoSource,
+        photoAttributionUrl: effectivePhotoAttributionUrl,
+        photoAttributionText: effectivePhotoAttributionText,
         recallsCount: _recallsCount ?? 0,
         recallsSource: _recallsSource,
         engineType: _engineType,
@@ -285,6 +360,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         transmissionStyle: _transmissionStyle,
         trim: _trim,
         vehicleType: _vehicleType,
+        vehicleStatus: _vehicleStatus,
         recallsItems: _recallsItems,
         vinProfile: _vinProfile,
         vinInsights: _vinInsights,
@@ -315,6 +391,118 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    final vin = _vinController.text.trim().toUpperCase();
+    if (vin.isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Vehicle ID is required before uploading photo.'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isPhotoBusy = true);
+    try {
+      final selection = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (selection == null || selection.files.isEmpty) {
+        return;
+      }
+
+      final uploaded = await _recordStorageService.uploadVehiclePhoto(
+        vin,
+        selection.files.first,
+      );
+
+      setState(() {
+        _photoUrl = uploaded['url']?.toString();
+        _photoPath = uploaded['path']?.toString();
+        _photoSource = 'user_upload';
+        _photoAttributionUrl = null;
+        _photoAttributionText = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Photo upload failed: ${e.toString()}'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPhotoBusy = false);
+      }
+    }
+  }
+
+  Future<void> _findPhotoFromWeb() async {
+    if (_makeController.text.trim().isEmpty ||
+        _modelController.text.trim().isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Add make and model before searching for a web photo.',
+          ),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isPhotoBusy = true);
+    try {
+      final candidate = await _vehiclePhotoService.findVehiclePhotoFromWeb(
+        year: _yearController.text.trim(),
+        make: _makeController.text.trim(),
+        model: _modelController.text.trim(),
+        vehicleType: _vehicleType,
+      );
+
+      if (candidate == null || (candidate['url'] ?? '').isEmpty) {
+        if (!mounted) return;
+        final colorScheme = Theme.of(context).colorScheme;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'No web photo match found. Uploading your own image is recommended.',
+            ),
+            backgroundColor: colorScheme.secondary,
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        _photoUrl = candidate['url'];
+        _photoPath = '';
+        _photoSource = candidate['source'];
+        _photoAttributionUrl = candidate['attributionUrl'];
+        _photoAttributionText = candidate['attributionText'];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Web photo lookup failed: ${e.toString()}'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPhotoBusy = false);
       }
     }
   }
@@ -370,6 +558,74 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     }
   }
 
+  Future<void> _transferVehicle() async {
+    final recipientEmail = _transferEmailController.text.trim().toLowerCase();
+    if (recipientEmail.isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Enter the recipient email first.'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Transfer Vehicle'),
+        content: Text(
+          'Transfer this vehicle and its maintenance history to $recipientEmail?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Transfer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await _vehicleTransferService.transferVehicle(
+        vin: widget.vin,
+        recipientEmail: recipientEmail,
+      );
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Vehicle transferred to $recipientEmail.'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+      context.go('/app');
+    } catch (e) {
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Transfer failed: ${e.toString()}'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
   Widget _buildInsightLine(String label, String? value) {
     if (value == null || value.trim().isEmpty) {
       return const SizedBox.shrink();
@@ -419,7 +675,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                       TextFormField(
                         controller: _vinController,
                         decoration: const InputDecoration(
-                          labelText: 'VIN',
+                          labelText: 'Vehicle ID (VIN/HIN/Serial)',
                           border: OutlineInputBorder(),
                         ),
                         readOnly: true,
@@ -442,7 +698,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           label: Text(
                             _isDecoding
                                 ? 'Decoding VIN...'
-                                : 'Refresh VIN Insights',
+                                : 'Refresh VIN Insights (VIN only)',
                           ),
                         ),
                       ),
@@ -516,6 +772,37 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                         textCapitalization: TextCapitalization.words,
                       ),
                       const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _vehicleStatus,
+                        decoration: const InputDecoration(
+                          labelText: 'Location Status',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _vehicleStatusOptions,
+                        onChanged: (value) {
+                          setState(() => _vehicleStatus = value ?? 'active');
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _vehicleType,
+                        decoration: const InputDecoration(
+                          labelText: 'Vehicle Type',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _vehicleTypeOptions
+                            .map(
+                              (type) => DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() => _vehicleType = value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _yearController,
                         keyboardType: TextInputType.number,
@@ -556,6 +843,109 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Transfer Vehicle',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _transferEmailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              labelText: 'Recipient Email',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _isSaving ? null : _transferVehicle,
+                              icon: const Icon(Icons.send),
+                              label: const Text('Transfer Vehicle'),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Vehicle Photo',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 140,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: colorScheme.outline),
+                              color: colorScheme.surface,
+                            ),
+                            child: _photoUrl != null && _photoUrl!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      _photoUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Center(
+                                                child: Icon(
+                                                  Icons.directions_car,
+                                                  size: 42,
+                                                ),
+                                              ),
+                                    ),
+                                  )
+                                : const Center(
+                                    child: Icon(Icons.directions_car, size: 42),
+                                  ),
+                          ),
+                          if (_photoSource == 'wikimedia')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                'Source: Wikimedia (free public media)',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isPhotoBusy
+                                      ? null
+                                      : _pickAndUploadPhoto,
+                                  icon: const Icon(Icons.upload),
+                                  label: const Text('Upload Photo'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isPhotoBusy
+                                      ? null
+                                      : _findPhotoFromWeb,
+                                  icon: const Icon(Icons.image_search),
+                                  label: const Text('Find Free Web Photo'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),

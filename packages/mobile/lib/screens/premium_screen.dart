@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../services/premium_service.dart';
@@ -14,7 +15,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Premium Features')),
+      appBar: AppBar(title: const Text('Subscriptions and Billing')),
       body: Consumer<PremiumService>(
         builder: (context, premiumService, child) {
           if (premiumService.isPremium) {
@@ -29,7 +30,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Widget _buildPremiumActiveView(PremiumService premiumService) {
     final features = premiumService.getPremiumFeatures();
-    final tierLabel = premiumService.subscriptionTier.toUpperCase();
+    final tierLabel = _tierDisplayName(premiumService.subscriptionTier);
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -68,6 +69,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 24),
+          _buildPlanCatalog(premiumService),
           const SizedBox(height: 24),
           const Text(
             'Your Premium Benefits',
@@ -110,138 +113,159 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   Widget _buildPremiumPurchaseView(PremiumService premiumService) {
-    final tierLabel = premiumService.subscriptionTier.toUpperCase();
+    final tierLabel = _tierDisplayName(premiumService.subscriptionTier);
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: ListView(
         children: [
-          const SizedBox(height: 24),
-          Icon(Icons.star, size: 64, color: Theme.of(context).primaryColor),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          Icon(Icons.star, size: 56, color: Theme.of(context).primaryColor),
+          const SizedBox(height: 12),
           const Text(
-            'Upgrade to Premium',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            'Choose the subscription tier that fits your garage',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             'Current tier: $tierLabel • Vehicle limit: ${premiumService.vehicleLimit}',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: const TextStyle(fontSize: 15, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
-          Card(
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  const Text(
-                    'Premium Features',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFeatureItem(
-                    icon: Icons.block,
-                    title: 'Ad-Free Experience',
-                    description: 'Remove all banner and interstitial ads',
-                    isActive: premiumService.canAccessFeature('ad_free'),
-                  ),
-                  _buildFeatureItem(
-                    icon: Icons.analytics,
-                    title: 'Advanced Analytics',
-                    description: 'Detailed maintenance insights and trends',
-                    isActive: premiumService.canAccessFeature('ai_analysis'),
-                  ),
-                  _buildFeatureItem(
-                    icon: Icons.file_download,
-                    title: 'Unlimited Exports',
-                    description: 'Export data without any restrictions',
-                    isActive: premiumService.canAccessFeature('pdf_export'),
-                  ),
-                  _buildFeatureItem(
-                    icon: Icons.support_agent,
-                    title: 'Priority Support',
-                    description: 'Get faster responses to your questions',
-                    isActive: premiumService.canAccessFeature(
-                      'priority_support',
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  if (premiumService.premiumProduct != null) ...[
-                    Text(
-                      premiumService.premiumProduct!.price,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFF59E0B),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'One-time purchase',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: premiumService.isLoading
-                            ? null
-                            : () => _purchasePremium(premiumService),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF59E0B),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: premiumService.isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : const Text(
-                                'Upgrade to Premium',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                      ),
-                    ),
-                  ] else ...[
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Loading pricing...',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
+          const SizedBox(height: 20),
+          _buildPlanCatalog(premiumService),
           const SizedBox(height: 16),
+          _buildFeatureComparisonTable(),
+          const SizedBox(height: 12),
           TextButton(
             onPressed: () => _restorePurchases(premiumService),
             child: const Text('Restore Previous Purchase'),
           ),
-          const Spacer(),
+          const SizedBox(height: 8),
           const Text(
-            'Payment will be charged to your account upon confirmation. Subscription automatically renews unless cancelled.',
+            'Payment is processed through in-app purchase for Premium. Enterprise subscriptions are handled through direct sales support.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildPlanCatalog(PremiumService premiumService) {
+    return PremiumPlanCatalog(
+      currentTier: premiumService.subscriptionTier,
+      isLoading: premiumService.isLoading,
+      premiumPrice: premiumService.premiumProduct?.price,
+      onChoosePremium: () => _purchasePremium(premiumService),
+      onContactSales: () => context.push('/app/contact'),
+    );
+  }
+
+  Widget _buildFeatureComparisonTable() {
+    final List<Map<String, dynamic>> rows = <Map<String, dynamic>>[
+      {
+        'feature': 'Calendar Sync',
+        'free': false,
+        'pro': true,
+        'premium': true,
+        'enterprise': true,
+      },
+      {
+        'feature': 'PDF and Excel Export',
+        'free': false,
+        'pro': true,
+        'premium': true,
+        'enterprise': true,
+      },
+      {
+        'feature': 'AI Analysis',
+        'free': false,
+        'pro': true,
+        'premium': true,
+        'enterprise': true,
+      },
+      {
+        'feature': 'Ad-Free Experience',
+        'free': false,
+        'pro': false,
+        'premium': true,
+        'enterprise': true,
+      },
+      {
+        'feature': 'Priority Support',
+        'free': false,
+        'pro': true,
+        'premium': true,
+        'enterprise': true,
+      },
+      {
+        'feature': 'API Access',
+        'free': false,
+        'pro': false,
+        'premium': true,
+        'enterprise': true,
+      },
+    ];
+
+    DataCell availabilityCell(bool available) {
+      return DataCell(
+        Icon(
+          available ? Icons.check_circle : Icons.cancel,
+          color: available ? Colors.green : Colors.grey,
+          size: 18,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Feature comparison',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columns: const [
+              DataColumn(label: Text('Feature')),
+              DataColumn(label: Text('Free')),
+              DataColumn(label: Text('Pro')),
+              DataColumn(label: Text('Premium')),
+              DataColumn(label: Text('Enterprise')),
+            ],
+            rows: rows.map((row) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(row['feature'] as String)),
+                  availabilityCell(row['free'] as bool),
+                  availabilityCell(row['pro'] as bool),
+                  availabilityCell(row['premium'] as bool),
+                  availabilityCell(row['enterprise'] as bool),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _tierDisplayName(String tier) {
+    switch (tier) {
+      case 'pro':
+        return 'Pro';
+      case 'premium':
+        return 'Premium';
+      case 'enterprise':
+        return 'Enterprise';
+      case 'free':
+      default:
+        return 'Free';
+    }
   }
 
   Widget _buildFeatureItem({
@@ -316,6 +340,164 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
         );
       }
+    }
+  }
+}
+
+class PremiumPlanCatalog extends StatelessWidget {
+  const PremiumPlanCatalog({
+    super.key,
+    required this.currentTier,
+    required this.isLoading,
+    required this.premiumPrice,
+    required this.onChoosePremium,
+    required this.onContactSales,
+  });
+
+  final String currentTier;
+  final bool isLoading;
+  final String? premiumPrice;
+  final VoidCallback onChoosePremium;
+  final VoidCallback onContactSales;
+
+  static const List<String> _tierOrder = <String>[
+    'free',
+    'pro',
+    'premium',
+    'enterprise',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Subscription options',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        ..._tierOrder.map((tier) => _buildPlanCard(tier)),
+      ],
+    );
+  }
+
+  Widget _buildPlanCard(String tier) {
+    final bool isCurrent = currentTier == tier;
+    final bool isEnterprise = tier == 'enterprise';
+    final bool isPremiumTier = tier == 'premium';
+
+    final Color accentColor = isCurrent ? Colors.teal : Colors.blueGrey;
+    final String priceLabel = _tierPriceLabel(tier, premiumPrice);
+
+    String buttonLabel;
+    VoidCallback? onPressed;
+
+    if (isCurrent) {
+      buttonLabel = 'Current Subscription';
+      onPressed = null;
+    } else if (isEnterprise) {
+      buttonLabel = 'Contact Sales';
+      onPressed = onContactSales;
+    } else if (isPremiumTier) {
+      buttonLabel = 'Choose Premium';
+      onPressed = isLoading ? null : onChoosePremium;
+    } else {
+      buttonLabel = 'Included';
+      onPressed = null;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _tierDisplayName(tier),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                  ),
+                ),
+                Text(
+                  priceLabel,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _tierVehicleLimitLabel(tier),
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: onPressed,
+                child: isLoading && isPremiumTier
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(buttonLabel),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _tierDisplayName(String tier) {
+    switch (tier) {
+      case 'pro':
+        return 'Pro';
+      case 'premium':
+        return 'Premium';
+      case 'enterprise':
+        return 'Enterprise';
+      case 'free':
+      default:
+        return 'Free';
+    }
+  }
+
+  String _tierVehicleLimitLabel(String tier) {
+    switch (tier) {
+      case 'pro':
+        return 'Up to 10 vehicles';
+      case 'premium':
+        return 'Up to 25 vehicles';
+      case 'enterprise':
+        return '25+ vehicles (contract)';
+      case 'free':
+      default:
+        return 'Up to 2 vehicles';
+    }
+  }
+
+  String _tierPriceLabel(String tier, String? currentPremiumPrice) {
+    switch (tier) {
+      case 'pro':
+        return '\$5/mo';
+      case 'premium':
+        return currentPremiumPrice ?? '\$4.99';
+      case 'enterprise':
+        return 'Contact sales';
+      case 'free':
+      default:
+        return '\$0';
     }
   }
 }

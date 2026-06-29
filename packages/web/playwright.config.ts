@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const baseURL = process.env.BASE_URL || 'https://vehicle-vitals-dev.web.app';
+const shouldStartWebServer =
+  !process.env.BASE_URL || /localhost|127\.0\.0\.1/i.test(process.env.BASE_URL);
+
 export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.spec.ts',
@@ -14,17 +18,19 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: process.env.BASE_URL || 'https://vehicle-vitals-dev.web.app',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  webServer: {
-    command: 'npm run dev',
-    port: 5173,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: shouldStartWebServer
+    ? {
+        command: 'npm run dev',
+        port: 5173,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120000,
+      }
+    : undefined,
   projects: [
     {
       name: 'chromium',

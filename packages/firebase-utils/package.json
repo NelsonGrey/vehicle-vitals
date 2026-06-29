@@ -23,19 +23,22 @@
     "clean": "rm -rf node_modules dist"
   },
   "dependencies": {
-    "firebase": "^12.3.0",
-    "firebase-admin": "^13.5.0"
+    "firebase": "^12.15.0",
+    "firebase-admin": "^14.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.20.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^8.0.0",
-    "prettier": "^3.0.0",
+    "prettier": "^3.8.3",
     "typescript": "^5.6.3",
-    "vitest": "^3.1.4"
+    "vitest": "^4.1.9"
   },
   "peerDependencies": {
-    "firebase": "^12.3.0"
+    "firebase": "^12.15.0"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
   }
 }

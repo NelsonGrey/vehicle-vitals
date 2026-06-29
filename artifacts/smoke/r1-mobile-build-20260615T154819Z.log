@@ -1,0 +1,15 @@
+Evidence log: /Users/marknelson/Circus/Repositories/vehicle-vitals/artifacts/smoke/r1-mobile-build-20260615T154819Z.log
+Root dir: /Users/marknelson/Circus/Repositories/vehicle-vitals
+Mobile dir: /Users/marknelson/Circus/Repositories/vehicle-vitals/packages/mobile
+[Step 1/2] Running flutter analyze
+Analyzing mobile...
+No issues found! (ran in 71.5s)
+[Step 1/2] Completed
+[Step 2/2] Running flutter build ios --release --no-codesign
+Warning: Building for device with codesigning disabled. You will have to manually codesign before deploying to device.
+Building com.nelsongrey.vehiclevitals.app.ios for device (ios-release)...
+Running Xcode build...
+Xcode build done.                                           54.9s
+✓ Built build/ios/iphoneos/Runner.app (68.4MB)
+[Step 2/2] Completed
+PASS: R1 mobile runtime smoke run completed

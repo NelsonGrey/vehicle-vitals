@@ -4,8 +4,14 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  esbuild: {
+    jsx: 'automatic',
+  },
   resolve: {
+    dedupe: ['react', 'react-dom'],
     alias: {
+      react: path.resolve(__dirname, '../../node_modules/react'),
+      'react-dom': path.resolve(__dirname, '../../node_modules/react-dom'),
       '@vehicle-vitals/shared': path.resolve(
         __dirname,
         '../shared/src/index.js'

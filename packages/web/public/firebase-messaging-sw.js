@@ -13,15 +13,33 @@ importScripts('/__/firebase/init.js');
 
 const messaging = firebase.messaging();
 
+function sanitizeNotificationPath(value) {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  if (!candidate.startsWith('/')) {
+    return '/app/upcoming?source=push';
+  }
+
+  if (candidate.startsWith('//') || candidate.includes('\\')) {
+    return '/app/upcoming?source=push';
+  }
+
+  if (!candidate.startsWith('/app')) {
+    return '/app/upcoming?source=push';
+  }
+
+  return candidate;
+}
+
 // Handle background messages
 messaging.onBackgroundMessage(payload => {
   console.log('Received background message:', payload);
 
-  const notificationUrl =
+  const notificationUrl = sanitizeNotificationPath(
     payload.data?.path ||
     (payload.data?.vin
       ? `/app/upcoming?source=push&vin=${encodeURIComponent(payload.data.vin)}`
-      : '/app/upcoming?source=push');
+      : '/app/upcoming?source=push')
+  );
 
   const notificationTitle = payload.notification?.title || 'Vehicle Vitals';
   const notificationOptions = {
@@ -40,8 +58,7 @@ messaging.onBackgroundMessage(payload => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
 
-  const targetUrl =
-    event.notification?.data?.url || '/app/upcoming?source=push';
+  const targetUrl = sanitizeNotificationPath(event.notification?.data?.url);
 
   event.waitUntil(
     clients

@@ -13,7 +13,7 @@ This runbook defines the repeatable process for promoting changes from `staging`
 - Branch model:
   - `develop`: integration and active evolution.
   - `staging`: beta validation candidate.
-  - `production`: release branch.
+  - `main`: production release branch.
 - Data boundary:
   - Allowed: rules, indexes, functions, hosting/web assets, app code.
   - Prohibited: Firestore data import/export between environments.
@@ -32,7 +32,7 @@ This runbook defines the repeatable process for promoting changes from `staging`
 4. Confirm release notes/change log:
    - Capture key commits and changed files from `staging` relative to `develop`.
 5. Execute promotion:
-   - Merge/cherry-pick validated `staging` content into production branch according to release policy.
+   - Merge/cherry-pick validated `staging` content into `main` according to release policy.
 6. Post-deploy verification:
    - Confirm production workflow success.
    - Smoke test critical flows (auth, vehicle CRUD, reminders, attachments).
@@ -49,6 +49,7 @@ It creates a markdown report in `artifacts/release/` containing:
 
 - Branch ahead/behind counts
 - Commit deltas (`develop..staging` and `staging..develop`)
+- Commit deltas (`main..staging` and `staging..main`)
 - Changed file summary
 - Latest staging run summary and failed jobs (if any)
 - Required secret-name presence checks
@@ -71,7 +72,7 @@ The PR helper:
 - Re-runs readiness generation first
 - Blocks PR creation on `NO-GO`
 - Generates a PR body artifact in `artifacts/release/`
-- Targets `staging` -> `production`
+- Targets `staging` -> `main` by default. Set `PRODUCTION_BRANCH=<branch>` when the release policy intentionally uses a different production branch.
 
 ## Decision Rule
 

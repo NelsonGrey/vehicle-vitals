@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # Configuration
 ENVIRONMENT="${1:-development}"
 DRY_RUN="${2:-true}"
-WORKFLOW="${3:-ci-cd-pipeline}"
+WORKFLOW="${3:-master-pipeline}"
 
 echo -e "${BLUE}🚗 Vehicle Vitals - Local CI/CD Testing Script${NC}"
 echo -e "${BLUE}===============================================${NC}"
@@ -179,9 +179,9 @@ test_with_act() {
 
     # Run specific workflow
     case $WORKFLOW in
-        "ci-cd-pipeline")
-            echo "Testing ci-cd-pipeline.yml..."
-            act -j quality-check --secret-file .act-secrets/secrets --env ENVIRONMENT="$ENVIRONMENT" --env DRY_RUN="$DRY_RUN"
+        "master-pipeline")
+            echo "Testing master-pipeline.yml..."
+            act -W .github/workflows/master-pipeline.yml -j quality-gate --secret-file .act-secrets/secrets --env ENVIRONMENT="$ENVIRONMENT" --env DRY_RUN="$DRY_RUN"
             ;;
         "ios-distribution")
             echo "Testing ios-distribution.yml..."

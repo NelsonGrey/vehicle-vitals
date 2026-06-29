@@ -20,6 +20,44 @@ class EntitlementsService {
     return data;
   }
 
+  Future<Map<String, dynamic>> promotePersonalGarageToHousehold({
+    required String householdName,
+    String garageStorageMode = 'dual_write',
+  }) async {
+    final callable = _functions.httpsCallable(
+      'promotePersonalGarageToHouseholdCallable',
+    );
+    final response = await callable.call({
+      'householdName': householdName,
+      'garageStorageMode': garageStorageMode,
+    });
+    final data = Map<String, dynamic>.from(response.data as Map? ?? const {});
+
+    if (data['success'] != true) {
+      throw Exception('Failed to promote garage to household');
+    }
+
+    return data;
+  }
+
+  Future<Map<String, dynamic>> setGarageStorageMode({
+    String? orgId,
+    required String garageStorageMode,
+  }) async {
+    final callable = _functions.httpsCallable('setGarageStorageModeCallable');
+    final response = await callable.call({
+      'orgId': orgId ?? '',
+      'garageStorageMode': garageStorageMode,
+    });
+    final data = Map<String, dynamic>.from(response.data as Map? ?? const {});
+
+    if (data['success'] != true) {
+      throw Exception('Failed to update garage storage mode');
+    }
+
+    return data;
+  }
+
   Future<Map<String, dynamic>> getEffectiveEntitlements({String? orgId}) async {
     final callable = _functions.httpsCallable(
       'getEffectiveEntitlementsCallable',

@@ -30,6 +30,19 @@ export interface SubscriptionData {
   stripeSubscriptionId?: string;
 }
 
+function getPaymentIssueDisplay(sub: SubscriptionData): string {
+  switch (sub.lastPaymentError) {
+    case 'stripe_invoice_payment_failed':
+      return 'Payment Issue • Update your card to restore billing';
+    case 'stripe_charge_disputed':
+      return 'Payment Dispute • Review the dispute with support';
+    case 'stripe_charge_refunded':
+      return 'Payment Reversed • Contact support to restore access';
+    default:
+      return 'Payment Issue • Update required';
+  }
+}
+
 export const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   tier: 'free',
   status: 'active',
@@ -223,11 +236,12 @@ export function getSubscriptionStatusDisplay(sub: SubscriptionData): string {
   }
 
   switch (sub.status) {
-    case 'active':
+    case 'active': {
       const daysUntil = getDaysUntilRenewal(sub);
       return `Active • Renews in ${daysUntil} days`;
+    }
     case 'past_due':
-      return 'Payment Issue • Update required';
+      return getPaymentIssueDisplay(sub);
     case 'canceled':
       return 'Canceled';
     case 'expired':

@@ -76,7 +76,7 @@ Legacy Android and iOS distribution instructions below are retained as historica
 - [ ] Set up beta tester list (aim for 10-50 users)
 - [ ] Create beta testing feedback form
 - [ ] Prepare welcome email for beta testers
-- [ ] Set up crash reporting (Firebase Crashlytics)
+- [x] Set up crash reporting (Firebase Crashlytics) — wired in `packages/mobile/lib/main.dart` and `error_boundary.dart`
 - [ ] Configure analytics (Google Analytics)
 
 #### During Beta

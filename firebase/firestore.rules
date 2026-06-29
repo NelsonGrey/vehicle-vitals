@@ -6,6 +6,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function hasExactKeys(requiredKeys) {
+      return request.resource.data.keys().hasAll(requiredKeys)
+        && request.resource.data.keys().hasOnly(requiredKeys);
+    }
+
     function isSelf(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
@@ -15,7 +20,9 @@ service cloud.firestore {
     }
 
     function isOrgMember(orgId) {
-      return isSignedIn() && exists(orgMemberDoc(orgId));
+      return isSignedIn()
+        && exists(orgMemberDoc(orgId))
+        && get(orgMemberDoc(orgId)).data.status == 'active';
     }
 
     function isOrgAdmin(orgId) {
@@ -25,12 +32,29 @@ service cloud.firestore {
 
     // Allow public writes to launch signups and suggestions for Coming Soon page
     match /launch_signups/{document} {
-      allow create: if request.auth == null && request.resource.data.keys().hasAll(['email', 'timestamp', 'source']);
+      allow create: if request.auth == null
+        && hasExactKeys(['email', 'timestamp', 'source'])
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 320
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && request.resource.data.source is string
+        && request.resource.data.source.size() > 0
+        && request.resource.data.source.size() <= 64
+        && request.resource.data.timestamp is timestamp;
       allow read: if false; // No public reads for privacy
     }
 
     match /user_suggestions/{document} {
-      allow create: if request.auth == null && request.resource.data.keys().hasAll(['suggestion', 'timestamp', 'source']);
+      allow create: if request.auth == null
+        && hasExactKeys(['suggestion', 'timestamp', 'source'])
+        && request.resource.data.suggestion is string
+        && request.resource.data.suggestion.size() > 0
+        && request.resource.data.suggestion.size() <= 2000
+        && request.resource.data.source is string
+        && request.resource.data.source.size() > 0
+        && request.resource.data.source.size() <= 64
+        && request.resource.data.timestamp is timestamp;
       allow read: if false; // No public reads for privacy
     }
 
@@ -47,6 +71,14 @@ service cloud.firestore {
       match /members/{memberId} {
         allow read: if isOrgMember(orgId);
         allow write: if false; // Managed via Cloud Functions
+      }
+
+      match /vehicles/{vehicleId} {
+        allow read, write: if isOrgMember(orgId);
+
+        match /{vehicleDocument=**} {
+          allow read, write: if isOrgMember(orgId);
+        }
       }
 
       match /audit/{auditId} {

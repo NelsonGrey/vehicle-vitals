@@ -3,7 +3,6 @@
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import AdPlacement from '../components/AdPlacement';
 import UpgradeModal from '../components/UpgradeModal';
 import useVehicleOptions from '../hooks/useVehicleOptions';
 import { formatFileDisplay } from '../shared/fileUtils';
@@ -21,6 +20,7 @@ import {
 } from '../shared/licensePlateUtils';
 import {
   generateMaintenanceAttachmentPath,
+  generateVehiclePhotoPath,
   uploadFile,
 } from '../shared/storageService';
 import {
@@ -30,7 +30,31 @@ import {
 } from '../shared/useMonetization';
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
+import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { decodeVin } from '../utils/vehicleService';
+import { transferVehicle } from '../utils/vehicleTransferService';
+import {
+  detectVehicleIdentifierType,
+  getVinDecodeValidationError,
+} from '../utils/vinValidation';
+
+const VEHICLE_TYPE_OPTIONS = [
+  'Car',
+  'Truck',
+  'Motorcycle',
+  'Recreational Vehicle (RV)',
+  'Boat',
+  'Van',
+  'SUV',
+  'Trailer',
+  'ATV/UTV',
+  'Other',
+];
+
+const VEHICLE_STATUS_OPTIONS = [
+  { value: 'active', label: 'In Garage' },
+  { value: 'stored', label: 'In Storage' },
+];
 
 interface VinInsights {
   vin?: string;
@@ -68,6 +92,12 @@ interface Vehicle {
   make: string;
   model: string;
   year: string;
+  vehicleStatus?: 'active' | 'stored';
+  photoUrl?: string;
+  photoPath?: string;
+  photoSource?: string;
+  photoAttributionUrl?: string;
+  photoAttributionText?: string;
   licensePlate?: string;
   mileage: string;
   purchaseDate?: string;
@@ -91,6 +121,8 @@ interface MaintenanceEntry {
   notes: string;
   cost: string;
   date: string;
+  performedBy?: 'self' | 'mechanic' | 'business';
+  coverage?: 'parts_only' | 'parts_and_labor';
   attachments?: Array<{
     name: string;
     url: string;
@@ -108,6 +140,26 @@ interface MaintenanceEntry {
   }>;
 }
 
+function formatPerformedBy(value?: string) {
+  switch (value) {
+    case 'self':
+      return 'Self-service';
+    case 'business':
+      return 'Business-maintained';
+    default:
+      return 'Mechanic';
+  }
+}
+
+function formatCoverage(value?: string) {
+  switch (value) {
+    case 'parts_only':
+      return 'Parts only';
+    default:
+      return 'Parts and labor';
+  }
+}
+
 export default function EditVehicle() {
   const { vin } = useParams();
   const navigate = useNavigate();
@@ -116,15 +168,37 @@ export default function EditVehicle() {
     | { title?: string; cost?: string; date?: string; mileage?: string }
     | undefined;
   const [form, setForm] = useState<Vehicle | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [plateValidationError, setPlateValidationError] = useState<string>();
+  const [transferEmail, setTransferEmail] = useState('');
+  const [transferBusy, setTransferBusy] = useState(false);
   const { years, makes, models, loadingMakes, loadingModels } =
     useVehicleOptions({ year: form?.year, make: form?.make });
+  const detectedIdentifierType = detectVehicleIdentifierType(
+    form?.vin || '',
+    form?.vehicleType
+  );
+  const detectedIdentifierLabel =
+    detectedIdentifierType === 'vin'
+      ? 'VIN'
+      : detectedIdentifierType === 'hin'
+        ? 'HIN'
+        : detectedIdentifierType === 'serial'
+          ? 'Serial/Other'
+          : 'Not detected';
 
   useEffect(() => {
     const fetchVehicle = async () => {
       if (!vin) return;
       const v = await getVehicle(vin);
-      setForm(v);
+      setForm(
+        v
+          ? {
+              ...v,
+              vehicleStatus: v.vehicleStatus === 'stored' ? 'stored' : 'active',
+            }
+          : v
+      );
     };
     fetchVehicle();
   }, [vin]);
@@ -146,8 +220,30 @@ export default function EditVehicle() {
   };
 
   const handleUpdate = async () => {
+    if (!form) return;
     try {
-      await updateVehicle(vin, form);
+      let updates: Vehicle = { ...form };
+
+      if (!updates.photoUrl && updates.make && updates.model) {
+        const candidate = await findVehiclePhotoFromWeb({
+          year: updates.year,
+          make: updates.make,
+          model: updates.model,
+          vehicleType: updates.vehicleType,
+        });
+
+        if (candidate) {
+          updates = {
+            ...updates,
+            photoUrl: candidate.url,
+            photoSource: candidate.source,
+            photoAttributionUrl: candidate.attributionUrl,
+            photoAttributionText: candidate.attributionText,
+          };
+        }
+      }
+
+      await updateVehicle(vin, updates);
       alert('Vehicle updated successfully');
       navigate('/');
     } catch (err) {
@@ -155,13 +251,118 @@ export default function EditVehicle() {
     }
   };
 
+  const handleVehiclePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!form) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const trimmedVin = (form.vin || '').trim();
+    if (!trimmedVin) {
+      alert('Vehicle ID is required to upload a photo.');
+      event.target.value = '';
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      const path = await generateVehiclePhotoPath(trimmedVin, file.name);
+      const uploaded = await uploadFile(file, path);
+      setForm(prev =>
+        prev
+          ? {
+              ...prev,
+              photoUrl: uploaded.url,
+              photoPath: uploaded.path,
+              photoSource: 'user_upload',
+              photoAttributionUrl: '',
+              photoAttributionText: '',
+            }
+          : prev
+      );
+    } catch (error) {
+      alert(
+        'Photo upload failed: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setPhotoBusy(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleLookupVehiclePhoto = async () => {
+    if (!form) return;
+    if (!form.make || !form.model) {
+      alert(
+        'Provide at least make and model before searching for a web photo.'
+      );
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      const candidate = await findVehiclePhotoFromWeb({
+        year: form.year,
+        make: form.make,
+        model: form.model,
+        vehicleType: form.vehicleType,
+      });
+
+      if (!candidate) {
+        alert('No matching web photo found. You can upload your own photo.');
+        return;
+      }
+
+      setForm(prev =>
+        prev
+          ? {
+              ...prev,
+              photoUrl: candidate.url,
+              photoPath: '',
+              photoSource: candidate.source,
+              photoAttributionUrl: candidate.attributionUrl,
+              photoAttributionText: candidate.attributionText,
+            }
+          : prev
+      );
+    } catch (error) {
+      alert(
+        'Web photo lookup failed: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
   const handleDecodeVin = async () => {
     if (!form) return;
     const v = (form.vin || '').trim();
     if (!v) {
-      alert('Enter a VIN first');
+      alert(
+        'Enter a VIN first for decode. Non-VIN assets can be saved using the vehicle ID.'
+      );
       return;
     }
+
+    const identifierType = detectVehicleIdentifierType(v, form.vehicleType);
+    if (identifierType !== 'vin') {
+      const detectedTypeLabel =
+        identifierType === 'hin' ? 'HIN' : 'Serial/Other';
+      alert(
+        `Decode currently supports VIN only. Detected ${detectedTypeLabel}. You can still save this vehicle ID and edit details manually.`
+      );
+      return;
+    }
+
+    const vinValidationError = getVinDecodeValidationError(v);
+    if (vinValidationError) {
+      alert(vinValidationError);
+      return;
+    }
+
     try {
       const {
         make,
@@ -240,6 +441,40 @@ export default function EditVehicle() {
       alert(
         'Error deleting: ' + (err instanceof Error ? err.message : String(err))
       );
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (!form) return;
+
+    const recipientEmail = transferEmail.trim().toLowerCase();
+    if (!recipientEmail) {
+      alert('Enter the recipient email before transferring this vehicle.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Transfer ${form.year} ${form.make} ${form.model} to ${recipientEmail}? This will remove it from your garage.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setTransferBusy(true);
+    try {
+      await transferVehicle({
+        vin: form.vin,
+        recipientEmail,
+      });
+      alert(`Vehicle transferred to ${recipientEmail}.`);
+      navigate('/app');
+    } catch (error) {
+      alert(
+        'Transfer failed: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setTransferBusy(false);
     }
   };
 
@@ -369,13 +604,62 @@ export default function EditVehicle() {
               </select>
             </div>
 
+            <div>
+              <label
+                htmlFor="vehicleStatus"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Location Status
+              </label>
+              <select
+                id="vehicleStatus"
+                name="vehicleStatus"
+                value={form.vehicleStatus || 'active'}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                {VEHICLE_STATUS_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Stored vehicles remain tracked but display separately from your
+                active garage.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="vehicleType"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Vehicle Type
+              </label>
+              <select
+                id="vehicleType"
+                name="vehicleType"
+                value={form.vehicleType || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              >
+                <option value="">Select Vehicle Type</option>
+                {VEHICLE_TYPE_OPTIONS.map(type => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* VIN */}
             <div>
               <label
                 htmlFor="vin"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                VIN
+                Vehicle ID (VIN/HIN/Serial)
               </label>
               <input
                 id="vin"
@@ -383,11 +667,16 @@ export default function EditVehicle() {
                 name="vin"
                 value={form.vin || ''}
                 onChange={handleChange}
-                placeholder="Vehicle Identification Number"
+                placeholder="VIN, HIN, or serial number"
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               />
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Enter VIN and click Decode to prefill vehicle details
+                Enter VIN and click Decode to prefill compatible vehicle
+                details, or maintain this vehicle manually for non-VIN assets.
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Identifier type detected: {detectedIdentifierLabel}. Decode
+                currently supports VIN only.
               </p>
             </div>
 
@@ -456,6 +745,75 @@ export default function EditVehicle() {
               />
             </div>
 
+            <div>
+              <label
+                htmlFor="transferEmail"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Transfer Vehicle
+              </label>
+              <input
+                id="transferEmail"
+                type="email"
+                value={transferEmail}
+                onChange={event => setTransferEmail(event.target.value)}
+                placeholder="Recipient account email"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">
+                Transfer moves this vehicle and its maintenance/reminder history
+                to another existing user account.
+              </p>
+              <button
+                type="button"
+                onClick={handleTransfer}
+                disabled={transferBusy}
+                className="w-full px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-60"
+              >
+                {transferBusy ? 'Transferring...' : 'Transfer Vehicle'}
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Vehicle Photo
+              </label>
+              {form.photoUrl ? (
+                <div className="mb-2 rounded-md border border-slate-200 dark:border-slate-700 p-2">
+                  <img
+                    src={form.photoUrl}
+                    alt="Vehicle preview"
+                    className="h-28 w-full object-cover rounded"
+                  />
+                  {form.photoSource === 'wikimedia' && (
+                    <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Source: Wikimedia
+                    </p>
+                  )}
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleVehiclePhotoUpload}
+                  disabled={photoBusy}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  onClick={handleLookupVehiclePhoto}
+                  disabled={photoBusy}
+                  className="w-full px-3 py-2 bg-slate-500 hover:bg-slate-600 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-60"
+                >
+                  Find Free Web Photo (Beta)
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                Public web matches may not always reflect exact trim or color.
+              </p>
+            </div>
+
             {/* Buttons */}
             <div className="flex flex-col gap-2 pt-2">
               <button
@@ -463,7 +821,7 @@ export default function EditVehicle() {
                 onClick={handleDecodeVin}
                 className="w-full px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium rounded-md transition-colors"
               >
-                Decode VIN
+                Decode VIN (VIN only)
               </button>
               <button
                 onClick={handleUpdate}
@@ -636,6 +994,8 @@ function MaintenanceList({
     title: '',
     notes: '',
     cost: '',
+    performedBy: 'mechanic',
+    coverage: 'parts_and_labor',
     attachments: [] as Array<{
       name: string;
       url: string;
@@ -787,7 +1147,9 @@ function MaintenanceList({
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setForm(p => ({ ...p, [name]: value }));
@@ -1127,7 +1489,14 @@ function MaintenanceList({
       await addMaintenanceEntry(vin, entry);
       const list = await getMaintenanceEntries(vin);
       setEntries(list);
-      setForm({ title: '', notes: '', cost: '', attachments: [] });
+      setForm({
+        title: '',
+        notes: '',
+        cost: '',
+        performedBy: 'mechanic',
+        coverage: 'parts_and_labor',
+        attachments: [],
+      });
     } catch (err) {
       alert('Error: ' + (err instanceof Error ? err.message : String(err)));
     }
@@ -1339,8 +1708,6 @@ function MaintenanceList({
         </div>
       </div>
 
-      <AdPlacement placement="exportReport" className="mb-4" />
-
       <ul className="space-y-4 mb-6">
         {entries.map(e => (
           <li
@@ -1357,6 +1724,9 @@ function MaintenanceList({
             </div>
             <div className="text-sm text-charcoal-600 dark:text-cream-300 mb-1">
               ${e.cost}
+            </div>
+            <div className="text-xs text-charcoal-500 dark:text-cream-400">
+              {formatPerformedBy(e.performedBy)} • {formatCoverage(e.coverage)}
             </div>
             <div className="text-xs text-charcoal-500 dark:text-cream-400">
               {e.notes}
@@ -1416,6 +1786,49 @@ function MaintenanceList({
                 aria-label="Cost"
                 className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
               />
+            </div>
+          </div>
+          <div className="rounded-md border border-charcoal-200 dark:border-charcoal-600 bg-charcoal-50/70 dark:bg-charcoal-700/40 p-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="performedBy"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-cream-200"
+                >
+                  Who did it
+                </label>
+                <select
+                  id="performedBy"
+                  name="performedBy"
+                  value={form.performedBy}
+                  onChange={handleChange}
+                  aria-label="Who did it"
+                  className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+                >
+                  <option value="self">Self-service</option>
+                  <option value="mechanic">Mechanic</option>
+                  <option value="business">Business-maintained</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="coverage"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-cream-200"
+                >
+                  Receipt type
+                </label>
+                <select
+                  id="coverage"
+                  name="coverage"
+                  value={form.coverage}
+                  onChange={handleChange}
+                  aria-label="Receipt type"
+                  className="w-full px-3 py-2 border border-charcoal-300 dark:border-charcoal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-oxblood-500 focus:border-oxblood-500 dark:bg-charcoal-700 dark:text-cream-100"
+                >
+                  <option value="parts_only">Parts only</option>
+                  <option value="parts_and_labor">Parts and labor</option>
+                </select>
+              </div>
             </div>
           </div>
           <div>

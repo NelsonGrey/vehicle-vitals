@@ -125,7 +125,7 @@ BETA_FEEDBACK_EMAIL        → feedback@yourcompany.com
 ### Runner Labels Strategy
 
 ```yaml
-runs-on: [self-hosted, macos-latest, ios, your-project-name]
+runs-on: [self-hosted, macos-latest, ios, vehicle-vitals]
 ```
 
 ### Runner Setup Script

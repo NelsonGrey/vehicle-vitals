@@ -39,7 +39,7 @@ export function exportMaintenanceAsPDF(maintenanceEntries, vehicle) {
 
   // Add vehicle info
   doc.setFontSize(12);
-  doc.text(`VIN: ${vehicle.vin}`, 20, 35);
+  doc.text(`Vehicle ID: ${vehicle.vin}`, 20, 35);
   doc.text(
     `Vehicle: ${vehicle.make} ${vehicle.model} (${vehicle.year})`,
     20,

@@ -21,6 +21,35 @@ platform :ios do
     "https://mnelson3:#{pat}@github.com/#{repo_path}.git"
   end
 
+  def normalized_firebase_env
+    raw = ENV["FIREBASE_ENV"].to_s.strip.downcase
+    return "production" if raw.empty?
+
+    case raw
+    when "production", "prod"
+      "production"
+    when "staging", "stage"
+      "staging"
+    when "development", "dev"
+      "development"
+    else
+      UI.user_error!("Invalid FIREBASE_ENV='#{raw}'. Supported: development, staging, production")
+    end
+  end
+
+  def expected_firebase_project_id_for_env(firebase_env)
+    case firebase_env
+    when "development"
+      "vehicle-vitals-dev"
+    when "staging"
+      "vehicle-vitals-staging"
+    when "production"
+      "vehicle-vitals-prod"
+    else
+      UI.user_error!("No Firebase project mapping for env '#{firebase_env}'")
+    end
+  end
+
   desc "Sync code signing certificates for App Store"
   lane :certificates_appstore do
     # Set up API key authentication
@@ -195,6 +224,8 @@ platform :ios do
   lane :beta do
     release_notes = ENV["RELEASE_NOTES"] || "Automated build for TestFlight"
     feedback_email = ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com"
+    firebase_env = normalized_firebase_env
+    expected_project_id = expected_firebase_project_id_for_env(firebase_env)
 
     build_number = ENV["GITHUB_RUN_NUMBER"] || "1"
     increment_build_number(build_number: build_number)
@@ -205,9 +236,9 @@ platform :ios do
     certificates_appstore
 
     # Set environment variables for manual code signing in Flutter build
-    ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore']
-    ENV['CODE_SIGN_IDENTITY'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_certificate-name']
-    ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.nelsongrey.vehiclevitals.app.ios_appstore_team-id']
+    ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.vehiclevitals.app.ios_appstore']
+    ENV['CODE_SIGN_IDENTITY'] = ENV['sigh_com.vehiclevitals.app.ios_appstore_certificate-name']
+    ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.vehiclevitals.app.ios_appstore_team-id']
 
     # Install CocoaPods dependencies first
     # Ensure a clean slate for CocoaPods to avoid linker issues (absl/gRPC)
@@ -232,8 +263,30 @@ platform :ios do
 
     # Build using gym (build_app) for reliable artifact creation and signing
     # Force manual signing to avoid Xcode looking for development certs
+
+    begin
+      actual_project_id = sh(
+        '/usr/libexec/PlistBuddy -c "Print :PROJECT_ID" ../Runner/GoogleService-Info.plist',
+        log: false
+      ).to_s.strip
+    rescue
+      actual_project_id = ""
+    end
+
+    if actual_project_id.empty?
+      UI.user_error!("Unable to read PROJECT_ID from ../Runner/GoogleService-Info.plist")
+    end
+
+    if actual_project_id != expected_project_id
+      UI.user_error!(
+        "Firebase environment mismatch: FIREBASE_ENV=#{firebase_env} expects PROJECT_ID=#{expected_project_id}, " \
+        "but plist contains PROJECT_ID=#{actual_project_id}."
+      )
+    end
+
+    UI.message("Firebase iOS config validated for #{firebase_env} (#{actual_project_id})")
     
-    app_id = "com.nelsongrey.vehiclevitals.app.ios"
+    app_id = "com.vehiclevitals.app.ios"
     profile_name = ENV["sigh_#{app_id}_appstore_profile-name"]
     team_id = ENV["sigh_#{app_id}_appstore_team-id"] || ENV["FASTLANE_TEAM_ID"]
     cert_name = ENV["sigh_#{app_id}_appstore_certificate-name"] || "Apple Distribution"
@@ -250,16 +303,16 @@ platform :ios do
       team_id: team_id
     )
 
-    # Build DART_DEFINES for production AdMob unit IDs if provided as environment variables
+    # Build DART_DEFINES with an explicit Firebase environment and optional AdMob IDs.
     require 'base64'
-    dart_define_parts = []
+    dart_define_parts = [Base64.strict_encode64("VV_FIREBASE_ENV=#{firebase_env}")]
     { "ADMOB_BANNER_UNIT_ID" => ENV["ADMOB_BANNER_UNIT_ID"],
       "ADMOB_INTERSTITIAL_UNIT_ID" => ENV["ADMOB_INTERSTITIAL_UNIT_ID"],
       "ADMOB_REWARDED_UNIT_ID" => ENV["ADMOB_REWARDED_UNIT_ID"] }.each do |key, val|
       dart_define_parts << Base64.strict_encode64("#{key}=#{val}") unless val.to_s.empty?
     end
-    dart_defines_xcarg = dart_define_parts.empty? ? nil : "DART_DEFINES='#{dart_define_parts.join(',')}'"  
-    UI.message(dart_defines_xcarg ? "AdMob dart-defines injected" : "AdMob dart-defines not set; test unit IDs will be used")
+    dart_defines_xcarg = "DART_DEFINES='#{dart_define_parts.join(',')}'"
+    UI.message("DART_DEFINES injected with VV_FIREBASE_ENV=#{firebase_env}")
 
     build_app(
       scheme: "Runner",

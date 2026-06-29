@@ -1,5 +1,11 @@
 /* eslint-disable quotes, object-curly-spacing, arrow-parens, operator-linebreak, indent, max-len, quote-props */
-import { createHash } from 'crypto';
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  scryptSync,
+  timingSafeEqual,
+} from 'crypto';
 import * as admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { setGlobalOptions } from 'firebase-functions';
@@ -8,7 +14,10 @@ import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
-import { verifyBillingPurchase } from './billing.provider';
+import {
+  createStripeCheckoutSession,
+  verifyBillingPurchase,
+} from './billing.provider';
 import {
   buildAppleCalendarEvent,
   buildGoogleCalendarEvent,
@@ -58,7 +67,7 @@ interface MaintenanceEntry {
 
 interface LocalServiceProvider {
   id: string;
-  type: 'repair_shop' | 'dealership';
+  type: 'repair_shop' | 'dealership' | 'body_shop' | 'car_wash' | 'detailer';
   name: string;
   distanceMiles: number;
   address: string;
@@ -145,7 +154,7 @@ interface SupportUserSummary {
   vehicleLimit: number;
 }
 
-type UserTier = 'free' | 'pro' | 'premium';
+type UserTier = 'free' | 'pro' | 'premium' | 'enterprise';
 
 type OrgRole =
   | 'org_owner'
@@ -154,11 +163,53 @@ type OrgRole =
   | 'billing_admin'
   | 'read_only';
 
+type GarageStorageMode = 'user_scoped' | 'dual_write' | 'org_scoped';
+
 interface EffectiveEntitlements {
   orgId: string;
   tier: UserTier;
   vehicleLimit: number;
   features: Record<string, boolean>;
+}
+
+interface ApiAccessKeyMetadata {
+  keyId: string;
+  label: string;
+  keyPrefix: string;
+  active: boolean;
+  createdAt: unknown;
+  updatedAt: unknown;
+  lastUsedAt: unknown;
+  revokedAt: unknown;
+  keyHash?: string;
+}
+
+interface InvoiceLineItemInput {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+interface InvoiceDraftInput {
+  orgId?: string;
+  customerName?: string;
+  issueDate?: string;
+  dueDate?: string;
+  currency?: string;
+  amountDue?: number;
+  notes?: string;
+  lineItems?: InvoiceLineItemInput[];
+}
+
+interface PayableDraftInput {
+  orgId?: string;
+  vendorName?: string;
+  billDate?: string;
+  dueDate?: string;
+  currency?: string;
+  amountDue?: number;
+  category?: string;
+  notes?: string;
 }
 
 interface IdempotencyReservation {
@@ -186,6 +237,8 @@ const ROLE_RANK: Record<OrgRole, number> = {
 
 const tierRank = (tier: UserTier): number => {
   switch (tier) {
+    case 'enterprise':
+      return 4;
     case 'premium':
       return 3;
     case 'pro':
@@ -197,7 +250,7 @@ const tierRank = (tier: UserTier): number => {
 
 const normalizeTier = (tier: unknown): UserTier => {
   const value = (tier || 'free').toString();
-  if (value === 'premium' || value === 'pro') {
+  if (value === 'enterprise' || value === 'premium' || value === 'pro') {
     return value;
   }
 
@@ -206,6 +259,8 @@ const normalizeTier = (tier: unknown): UserTier => {
 
 const getVehicleLimitForTier = (tier: UserTier): number => {
   switch (tier) {
+    case 'enterprise':
+      return 999999;
     case 'premium':
       return 25;
     case 'pro':
@@ -217,21 +272,56 @@ const getVehicleLimitForTier = (tier: UserTier): number => {
 
 const getFeatureSetForTier = (tier: UserTier): Record<string, boolean> => ({
   vehicle_limit: true,
+  advanced_reminders: tier !== 'free',
   calendar_sync: tier !== 'free',
   pdf_export: tier !== 'free',
   excel_export: tier !== 'free',
   ai_analysis: tier !== 'free',
-  ad_free: tier === 'premium',
+  ai_predictions: tier === 'premium' || tier === 'enterprise',
+  cloud_sync: tier === 'premium' || tier === 'enterprise',
+  maintenance_planning_12mo: tier !== 'free',
+  maintenance_planning_36mo: tier === 'premium' || tier === 'enterprise',
+  ad_free: tier === 'premium' || tier === 'enterprise',
+  reduced_ads: tier !== 'free',
   priority_support: tier !== 'free',
-  phone_support: tier === 'premium',
-  api_access: tier === 'premium',
+  phone_support: tier === 'premium' || tier === 'enterprise',
+  multi_vehicle_dashboard: tier !== 'free',
+  api_access: tier === 'premium' || tier === 'enterprise',
+  zapier_integration: tier === 'premium' || tier === 'enterprise',
 });
 
 const getDefaultOrgId = (uid: string): string => `personal_${uid}`;
 
+const normalizeMoneyAmount = (value: unknown): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Amount values must be numeric and non-negative'
+    );
+  }
+
+  return Math.round(parsed * 100) / 100;
+};
+
 const toOrgRole = (value: unknown): OrgRole => {
   const role = (value || 'read_only').toString() as OrgRole;
   return ROLE_RANK[role] ? role : 'read_only';
+};
+
+const normalizeGarageStorageMode = (
+  value: unknown
+): GarageStorageMode => {
+  const mode = (value || 'user_scoped').toString() as GarageStorageMode;
+  if (
+    mode === 'dual_write' ||
+    mode === 'org_scoped' ||
+    mode === 'user_scoped'
+  ) {
+    return mode;
+  }
+
+  return 'user_scoped';
 };
 
 async function writeAuditEvent(params: {
@@ -275,6 +365,7 @@ async function ensurePersonalOrganization(
       orgId,
       name: `Personal Garage (${uid.slice(0, 6)})`,
       type: 'personal',
+      garageStorageMode: 'user_scoped',
       planTier: 'free',
       createdByUid: uid,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -355,6 +446,418 @@ async function resolveEffectiveEntitlements(
     vehicleLimit: getVehicleLimitForTier(effectiveTier),
     features: getFeatureSetForTier(effectiveTier),
   };
+}
+
+const hashApiAccessKey = (rawKey: string): string => {
+  const salt =
+    (
+      process.env.API_KEY_HASH_SALT ||
+      process.env.GCLOUD_PROJECT ||
+      'vehicle-vitals'
+    )
+      .toString()
+      .trim() || 'vehicle-vitals';
+  return scryptSync(rawKey, salt, 64).toString('hex');
+};
+
+const resolveFunctionBaseUrl = (): string => {
+  const explicit = (process.env.API_WEBHOOK_BASE_URL || '').trim();
+  if (explicit) {
+    return explicit.replace(/\/$/, '');
+  }
+
+  const projectId = (
+    process.env.GCLOUD_PROJECT ||
+    process.env.FIREBASE_PROJECT ||
+    admin.app().options.projectId ||
+    ''
+  )
+    .toString()
+    .trim();
+  if (!projectId) {
+    return '';
+  }
+
+  return `https://us-central1-${projectId}.cloudfunctions.net`;
+};
+
+const getRequestBodyBuffer = (request: {
+  rawBody?: unknown;
+  body?: unknown;
+}): Buffer => {
+  const rawBody = request.rawBody;
+  if (Buffer.isBuffer(rawBody)) {
+    return rawBody;
+  }
+
+  if (typeof request.body === 'string') {
+    return Buffer.from(request.body, 'utf8');
+  }
+
+  return Buffer.from(JSON.stringify(request.body || {}), 'utf8');
+};
+
+const isWebhookSignatureValid = (
+  request: {
+    headers: Record<string, unknown>;
+    rawBody?: unknown;
+    body?: unknown;
+  },
+  secret: string
+): boolean => {
+  const rawSignature = (
+    request.headers['x-vv-signature'] ||
+    request.headers['x-zapier-signature'] ||
+    ''
+  )
+    .toString()
+    .trim();
+  if (!rawSignature) {
+    return false;
+  }
+
+  const normalizedSignature = rawSignature.startsWith('sha256=')
+    ? rawSignature.slice(7)
+    : rawSignature;
+  if (!/^[a-f0-9]{64}$/i.test(normalizedSignature)) {
+    return false;
+  }
+
+  const expectedSignature = createHmac('sha256', secret)
+    .update(getRequestBodyBuffer(request))
+    .digest('hex');
+
+  const providedBuffer = Buffer.from(normalizedSignature.toLowerCase(), 'hex');
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, providedBuffer);
+};
+
+const parseStripeSignatureHeader = (
+  signatureHeaderRaw: string
+): { timestamp: string; v1: string } | null => {
+  const signatureHeader = (signatureHeaderRaw || '').toString().trim();
+  if (!signatureHeader) {
+    return null;
+  }
+
+  const segments = signatureHeader.split(',');
+  let timestamp = '';
+  let v1 = '';
+
+  for (const segment of segments) {
+    const [key, value] = segment.split('=');
+    if (key === 't' && value) {
+      timestamp = value.trim();
+    }
+    if (key === 'v1' && value) {
+      v1 = value.trim();
+    }
+  }
+
+  if (!timestamp || !v1) {
+    return null;
+  }
+
+  return { timestamp, v1 };
+};
+
+const isStripeWebhookSignatureValid = (
+  request: {
+    headers: Record<string, unknown>;
+    rawBody?: unknown;
+    body?: unknown;
+  },
+  secret: string
+): boolean => {
+  const parsed = parseStripeSignatureHeader(
+    (request.headers['stripe-signature'] || '').toString()
+  );
+  if (!parsed) {
+    return false;
+  }
+
+  const toleranceSeconds = 5 * 60;
+  const timestampNumber = Number(parsed.timestamp);
+  if (!Number.isFinite(timestampNumber)) {
+    return false;
+  }
+
+  if (
+    Math.abs(Math.floor(Date.now() / 1000) - timestampNumber) > toleranceSeconds
+  ) {
+    return false;
+  }
+
+  const payloadBuffer = getRequestBodyBuffer(request);
+  const signedPayload = `${parsed.timestamp}.${payloadBuffer.toString('utf8')}`;
+  const expectedSignature = createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('hex');
+
+  if (!/^[a-f0-9]{64}$/i.test(parsed.v1)) {
+    return false;
+  }
+
+  const provided = Buffer.from(parsed.v1.toLowerCase(), 'hex');
+  const expected = Buffer.from(expectedSignature, 'hex');
+
+  if (provided.length !== expected.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expected, provided);
+};
+
+const getStripePriceLookup = (): Record<string, UserTier> => {
+  const mapping: Record<string, UserTier> = {};
+  const candidates: Array<{ envName: string; tier: UserTier }> = [
+    { envName: 'STRIPE_PRICE_ID_PRO_MONTHLY', tier: 'pro' },
+    { envName: 'STRIPE_PRICE_ID_PRO_ANNUAL', tier: 'pro' },
+    { envName: 'STRIPE_PRICE_ID_PREMIUM_MONTHLY', tier: 'premium' },
+    { envName: 'STRIPE_PRICE_ID_PREMIUM_ANNUAL', tier: 'premium' },
+  ];
+
+  for (const candidate of candidates) {
+    const value = (process.env[candidate.envName] || '').toString().trim();
+    if (value) {
+      mapping[value] = candidate.tier;
+    }
+  }
+
+  return mapping;
+};
+
+const getPriceIdFromStripeObject = (objectData: any): string => {
+  const primaryPriceId =
+    objectData?.display_items?.[0]?.price?.id ||
+    objectData?.line_items?.data?.[0]?.price?.id ||
+    objectData?.items?.data?.[0]?.price?.id ||
+    objectData?.plan?.id ||
+    objectData?.price?.id;
+
+  return (primaryPriceId || '').toString().trim();
+};
+
+const resolveSubscriptionTierFromStripeObject = (
+  objectData: any
+): UserTier | null => {
+  const metadataTier = (
+    objectData?.metadata?.targetTier ||
+    objectData?.metadata?.tier ||
+    ''
+  )
+    .toString()
+    .trim()
+    .toLowerCase();
+
+  if (metadataTier === 'pro' || metadataTier === 'premium') {
+    return metadataTier as UserTier;
+  }
+
+  const priceId = getPriceIdFromStripeObject(objectData);
+  if (!priceId) {
+    return null;
+  }
+
+  const priceLookup = getStripePriceLookup();
+  return priceLookup[priceId] || null;
+};
+
+const resolveBillingPeriodFromStripeObject = (
+  objectData: any
+): 'monthly' | 'annual' => {
+  const metadataPeriod = (objectData?.metadata?.billingPeriod || '')
+    .toString()
+    .trim()
+    .toLowerCase();
+  if (metadataPeriod === 'annual') {
+    return 'annual';
+  }
+
+  const interval =
+    objectData?.items?.data?.[0]?.price?.recurring?.interval ||
+    objectData?.line_items?.data?.[0]?.price?.recurring?.interval ||
+    objectData?.plan?.interval ||
+    objectData?.price?.recurring?.interval;
+
+  return interval === 'year' ? 'annual' : 'monthly';
+};
+
+const resolveSubscriptionStatusFromStripeObject = (
+  objectData: any
+): 'active' | 'trialing' | 'past_due' | 'canceled' | 'expired' => {
+  const status = (objectData?.status || '').toString().trim().toLowerCase();
+
+  if (status === 'trialing') {
+    return 'trialing';
+  }
+  if (status === 'past_due' || status === 'unpaid' || status === 'incomplete') {
+    return 'past_due';
+  }
+  if (
+    status === 'canceled' ||
+    status === 'cancelled' ||
+    status === 'incomplete_expired'
+  ) {
+    return 'canceled';
+  }
+
+  return 'active';
+};
+
+const resolveUidFromStripeObject = async (objectData: any): Promise<string> => {
+  const metadataUid = (objectData?.metadata?.uid || '').toString().trim();
+  if (metadataUid) {
+    return metadataUid;
+  }
+
+  const customerId = (objectData?.customer || '').toString().trim();
+  if (!customerId) {
+    return '';
+  }
+
+  const customerLookup = await admin
+    .firestore()
+    .doc(`stripeCustomerLookup/${customerId}`)
+    .get();
+
+  return (customerLookup.data()?.uid || '').toString().trim();
+};
+
+const toTimestampFromUnixSeconds = (value: unknown): Timestamp | null => {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return null;
+  }
+
+  return Timestamp.fromDate(new Date(numeric * 1000));
+};
+
+async function applySubscriptionTierState(params: {
+  uid: string;
+  targetTier: Exclude<UserTier, 'enterprise'>;
+  billingPeriod: 'monthly' | 'annual';
+  status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'expired';
+  paymentMethod?: 'stripe' | 'app_store' | 'play_store' | null;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  lastPaymentError?: string | null;
+  verificationState?: string;
+}): Promise<{
+  previousTier: UserTier;
+  orgId: string;
+  entitlements: EffectiveEntitlements;
+}> {
+  const db = admin.firestore();
+  const subscriptionRef = db.doc(`users/${params.uid}/subscription/current`);
+  const premiumEntitlementRef = db.doc(
+    `users/${params.uid}/entitlements/premium`
+  );
+  const now = Timestamp.now();
+
+  const renewalDate =
+    params.targetTier === 'free'
+      ? null
+      : Timestamp.fromDate(
+          new Date(
+            Date.now() +
+              (params.billingPeriod === 'annual'
+                ? 365 * 24 * 60 * 60 * 1000
+                : 30 * 24 * 60 * 60 * 1000)
+          )
+        );
+
+  let previousTier: UserTier = 'free';
+
+  await db.runTransaction(async tx => {
+    const currentSubscriptionSnap = await tx.get(subscriptionRef);
+    previousTier = normalizeTier(currentSubscriptionSnap.data()?.tier);
+
+    tx.set(
+      subscriptionRef,
+      {
+        tier: params.targetTier,
+        status: params.status || 'active',
+        currentPeriodStart: now,
+        currentPeriodEnd: renewalDate,
+        renewalDate,
+        autoRenew: params.targetTier !== 'free',
+        paymentMethod:
+          params.paymentMethod === undefined
+            ? params.targetTier === 'free'
+              ? null
+              : 'stripe'
+            : params.paymentMethod,
+        stripeCustomerId: (params.stripeCustomerId || '').toString() || null,
+        stripeSubscriptionId:
+          (params.stripeSubscriptionId || '').toString() || null,
+        lastPaymentError:
+          params.lastPaymentError === undefined
+            ? null
+            : params.lastPaymentError,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    if (params.targetTier === 'premium') {
+      tx.set(
+        premiumEntitlementRef,
+        {
+          active: true,
+          verified: false,
+          verificationState: (
+            params.verificationState || 'simulated_checkout'
+          ).toString(),
+          verificationProvider: 'subscription_settlement',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    if (previousTier === 'premium' && params.targetTier !== 'premium') {
+      tx.set(
+        premiumEntitlementRef,
+        {
+          active: false,
+          verified: false,
+          verificationState: 'revoked_by_downgrade',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+  });
+
+  const orgId = await ensurePersonalOrganization(params.uid);
+  const entitlements = await resolveEffectiveEntitlements(params.uid, orgId);
+
+  return {
+    previousTier,
+    orgId,
+    entitlements,
+  };
+}
+
+async function requireFeatureEntitlement(
+  uid: string,
+  featureName: string
+): Promise<EffectiveEntitlements> {
+  const entitlements = await resolveEffectiveEntitlements(uid);
+  if (!entitlements.features?.[featureName]) {
+    throw new HttpsError(
+      'permission-denied',
+      `${featureName} is not enabled for the current subscription`
+    );
+  }
+
+  return entitlements;
 }
 
 async function requireOrgRole(
@@ -535,9 +1038,94 @@ const buildSupportUserSummary = async (
     vehicleCount,
     premiumActive: entitlement.active === true,
     premiumVerified: entitlement.verified === true,
-    vehicleLimit: tier === 'premium' ? 25 : tier === 'pro' ? 10 : 2,
+    vehicleLimit:
+      tier === 'enterprise'
+        ? 999999
+        : tier === 'premium'
+          ? 25
+          : tier === 'pro'
+            ? 10
+            : 2,
   };
 };
+
+const TRANSFERABLE_VEHICLE_SUBCOLLECTIONS = [
+  'maintenance',
+  'reminders',
+  'attachmentAnalyses',
+];
+
+async function resolveVehicleTransferTarget(params: {
+  recipientUid?: unknown;
+  recipientEmail?: unknown;
+}): Promise<{ uid: string; email: string }> {
+  const explicitUid = (params.recipientUid || '').toString().trim();
+  if (explicitUid) {
+    const userRecord = await admin.auth().getUser(explicitUid);
+    return {
+      uid: userRecord.uid,
+      email: (userRecord.email || '').toString(),
+    };
+  }
+
+  const recipientEmail = (params.recipientEmail || '').toString().trim();
+  if (!recipientEmail) {
+    throw new HttpsError(
+      'invalid-argument',
+      'recipientEmail or recipientUid is required'
+    );
+  }
+
+  try {
+    const userRecord = await admin.auth().getUserByEmail(recipientEmail);
+    return {
+      uid: userRecord.uid,
+      email: (userRecord.email || recipientEmail).toString(),
+    };
+  } catch (error) {
+    throw new HttpsError(
+      'not-found',
+      'Recipient account was not found for that email'
+    );
+  }
+}
+
+async function queueVehicleTransferOperations(params: {
+  batch: admin.firestore.WriteBatch;
+  sourceVehicleRef: admin.firestore.DocumentReference;
+  targetVehicleRef: admin.firestore.DocumentReference;
+  sourceVehicleData: Record<string, unknown>;
+  actorUid: string;
+  recipientUid: string;
+}) {
+  params.batch.set(
+    params.targetVehicleRef,
+    {
+      ...params.sourceVehicleData,
+      transferredFromUid: params.actorUid,
+      transferredToUid: params.recipientUid,
+      transferredAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  for (const subcollectionName of TRANSFERABLE_VEHICLE_SUBCOLLECTIONS) {
+    const sourceSubcollection =
+      params.sourceVehicleRef.collection(subcollectionName);
+    const sourceSnapshot = await sourceSubcollection.get();
+
+    sourceSnapshot.docs.forEach(docSnap => {
+      const targetDocRef = params.targetVehicleRef
+        .collection(subcollectionName)
+        .doc(docSnap.id);
+      params.batch.set(targetDocRef, docSnap.data(), { merge: true });
+      params.batch.delete(docSnap.ref);
+    });
+  }
+
+  params.batch.delete(params.sourceVehicleRef);
+}
 
 /**
  * Firestore CRUD helpers for Firebase Functions
@@ -1186,6 +1774,10 @@ async function decodeVinData(vinInput: string) {
     throw new Error('Valid 17-character VIN required');
   }
 
+  if (!hasValidVinChecksum(vin)) {
+    throw new Error('Valid VIN checksum required');
+  }
+
   logger.info(`Decoding VIN: ${vin.substring(0, 8)}...`);
 
   const nhtsaUrl =
@@ -1247,6 +1839,10 @@ async function lookupNhtsaRecalls(vinInput: string) {
     throw new Error('Valid 17-character VIN required');
   }
 
+  if (!hasValidVinChecksum(vin)) {
+    throw new Error('Valid VIN checksum required');
+  }
+
   const recallsUrl =
     'https://api.nhtsa.gov/recalls/recallsByVehicle?vin=' +
     encodeURIComponent(vin);
@@ -1280,6 +1876,61 @@ function hashToSeed(value: string): number {
   return hash;
 }
 
+const VIN_TRANSLITERATION: Record<string, number> = {
+  A: 1,
+  B: 2,
+  C: 3,
+  D: 4,
+  E: 5,
+  F: 6,
+  G: 7,
+  H: 8,
+  J: 1,
+  K: 2,
+  L: 3,
+  M: 4,
+  N: 5,
+  P: 7,
+  R: 9,
+  S: 2,
+  T: 3,
+  U: 4,
+  V: 5,
+  W: 6,
+  X: 7,
+  Y: 8,
+  Z: 9,
+};
+
+const VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+
+function hasValidVinChecksum(vinInput: string): boolean {
+  const vin = vinInput.trim().toUpperCase();
+
+  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+    return false;
+  }
+
+  let sum = 0;
+  for (let i = 0; i < vin.length; i += 1) {
+    const char = vin[i];
+    const parsedNumeric = Number(char);
+    const numericValue = Number.isFinite(parsedNumeric)
+      ? parsedNumeric
+      : VIN_TRANSLITERATION[char];
+
+    if (numericValue === undefined) {
+      return false;
+    }
+
+    sum += numericValue * VIN_WEIGHTS[i];
+  }
+
+  const remainder = sum % 11;
+  const expectedCheckDigit = remainder === 10 ? 'X' : String(remainder);
+  return vin[8] === expectedCheckDigit;
+}
+
 function deterministicShuffle<T>(items: T[], seed: number): T[] {
   const copy = [...items];
   let currentSeed = seed;
@@ -1304,7 +1955,13 @@ function buildLocalServiceProviders(
   radiusMiles: number,
   maxResults: number,
   vehicleMake?: string,
-  providerTypeFilter: 'all' | 'repair_shop' | 'dealership' = 'all'
+  providerTypeFilter:
+    | 'all'
+    | 'repair_shop'
+    | 'dealership'
+    | 'body_shop'
+    | 'car_wash'
+    | 'detailer' = 'all'
 ): LocalServiceProvider[] {
   const normalizedLocation = normalizeLocationText(locationQuery);
   const focusMake = (vehicleMake || '').trim();
@@ -1364,6 +2021,39 @@ function buildLocalServiceProviders(
       rating: 4.0 + (index % 3) * 0.3,
       specialties: template.specialties,
     })),
+    {
+      id: 'body-1',
+      type: 'body_shop',
+      name: 'Precision Collision Center',
+      distanceMiles: Math.max(1, Math.min(radiusMiles, 3.5)),
+      address: `520 Body Shop Way, ${normalizedLocation}`,
+      phone: '+1-555-0310',
+      website: 'https://example.com/body/1',
+      rating: 4.4,
+      specialties: ['Collision Repair', 'Paint Matching'],
+    },
+    {
+      id: 'wash-1',
+      type: 'car_wash',
+      name: 'Sparkle Tunnel Wash',
+      distanceMiles: Math.max(1, Math.min(radiusMiles, 2.2)),
+      address: `250 Clean Car Ln, ${normalizedLocation}`,
+      phone: '+1-555-0410',
+      website: 'https://example.com/wash/1',
+      rating: 4.3,
+      specialties: ['Exterior Wash', 'Monthly Plans'],
+    },
+    {
+      id: 'detail-1',
+      type: 'detailer',
+      name: 'Showroom Detail Studio',
+      distanceMiles: Math.max(1, Math.min(radiusMiles, 4.1)),
+      address: `680 Detailer Dr, ${normalizedLocation}`,
+      phone: '+1-555-0510',
+      website: 'https://example.com/detail/1',
+      rating: 4.7,
+      specialties: ['Interior Detailing', 'Ceramic Coating'],
+    },
   ];
 
   const filteredProviders =
@@ -1394,11 +2084,16 @@ export const decodeVIN = onRequest(
       }
 
       const { vin } = request.body;
-      if (!vin || typeof vin !== 'string') {
+      const normalizedVin = (vin || '').toString().trim().toUpperCase();
+      if (!normalizedVin || normalizedVin.length !== 17) {
         response.status(400).json({ error: 'Valid 17-character VIN required' });
         return;
       }
-      const vehicle = await decodeVinData(vin);
+      if (!hasValidVinChecksum(normalizedVin)) {
+        response.status(400).json({ error: 'Valid VIN checksum required' });
+        return;
+      }
+      const vehicle = await decodeVinData(normalizedVin);
 
       response.json({
         success: true,
@@ -1420,12 +2115,17 @@ export const decodeVINCallable = onCall(async request => {
   }
 
   const vin = (request.data?.vin || '').toString();
-  if (vin.length !== 17) {
+  const normalizedVin = vin.trim().toUpperCase();
+  if (normalizedVin.length !== 17) {
     throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
   }
 
+  if (!hasValidVinChecksum(normalizedVin)) {
+    throw new HttpsError('invalid-argument', 'Valid VIN checksum required');
+  }
+
   try {
-    const vehicle = await decodeVinData(vin);
+    const vehicle = await decodeVinData(normalizedVin);
     return {
       success: true,
       vehicle,
@@ -1446,8 +2146,12 @@ export const getVehicleInsightsCallable = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
   }
 
+  const normalizedVin = vin.trim().toUpperCase();
+  if (!hasValidVinChecksum(normalizedVin)) {
+    throw new HttpsError('invalid-argument', 'Valid VIN checksum required');
+  }
+
   try {
-    const normalizedVin = vin.trim().toUpperCase();
     const [vehicleResult, recallsResult] = await Promise.allSettled([
       decodeVinData(normalizedVin),
       lookupNhtsaRecalls(normalizedVin),
@@ -1537,7 +2241,13 @@ export const getLocalServiceProvidersCallable = onCall(async request => {
       radiusMiles?: number;
       maxResults?: number;
       vehicleMake?: string;
-      providerType?: 'all' | 'repair_shop' | 'dealership';
+      providerType?:
+        | 'all'
+        | 'repair_shop'
+        | 'dealership'
+        | 'body_shop'
+        | 'car_wash'
+        | 'detailer';
     }) ?? {};
 
   const normalizedLocation = normalizeLocationText(
@@ -1556,9 +2266,22 @@ export const getLocalServiceProvidersCallable = onCall(async request => {
   const safeMaxResults = Number.isFinite(Number(maxResults))
     ? Math.max(1, Math.min(25, Number(maxResults)))
     : 8;
-  const allowedProviderTypes = new Set(['all', 'repair_shop', 'dealership']);
+  const allowedProviderTypes = new Set([
+    'all',
+    'repair_shop',
+    'dealership',
+    'body_shop',
+    'car_wash',
+    'detailer',
+  ]);
   const safeProviderType = allowedProviderTypes.has(providerType || '')
-    ? (providerType as 'all' | 'repair_shop' | 'dealership')
+    ? (providerType as
+        | 'all'
+        | 'repair_shop'
+        | 'dealership'
+        | 'body_shop'
+        | 'car_wash'
+        | 'detailer')
     : 'all';
 
   const providers = buildLocalServiceProviders(
@@ -2272,11 +2995,8 @@ function buildCalendarEventResponse(input: unknown) {
   const vin = (vehicleVin || '').toString().trim().toUpperCase();
   const allowedTargets = new Set(['google', 'apple', 'ics']);
 
-  if (!vin || vin.length !== 17) {
-    throw new HttpsError(
-      'invalid-argument',
-      'Valid 17-character vehicleVin required'
-    );
+  if (!vin) {
+    throw new HttpsError('invalid-argument', 'vehicleVin is required');
   }
 
   if (!title || !startAt || !target || !allowedTargets.has(target)) {
@@ -2537,6 +3257,8 @@ export const bootstrapEnterpriseContextCallable = onCall(async request => {
     (request.auth?.token?.email || '').toString()
   );
   const entitlements = await resolveEffectiveEntitlements(uid, orgId);
+  const orgSnap = await admin.firestore().doc(`orgs/${orgId}`).get();
+  const orgData = orgSnap.data() || {};
 
   await writeAuditEvent({
     orgId,
@@ -2549,6 +3271,8 @@ export const bootstrapEnterpriseContextCallable = onCall(async request => {
   return {
     success: true,
     orgId,
+    orgType: (orgData.type || 'personal').toString(),
+    garageStorageMode: normalizeGarageStorageMode(orgData.garageStorageMode),
     entitlements,
   };
 });
@@ -2573,6 +3297,1439 @@ export const getEffectiveEntitlementsCallable = onCall(async request => {
     entitlements,
   };
 });
+
+export const promotePersonalGarageToHouseholdCallable = onCall(
+  async request => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Missing auth context');
+    }
+
+    const orgId = await ensurePersonalOrganization(
+      uid,
+      (request.auth?.token?.email || '').toString()
+    );
+    await requireOrgRole(uid, orgId, ['org_owner']);
+
+    const householdName = (request.data?.householdName || '').toString().trim();
+    const requestedMode = normalizeGarageStorageMode(
+      request.data?.garageStorageMode || 'dual_write'
+    );
+    const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+    const reservation = await reserveIdempotencyKey({
+      uid,
+      operation: 'promotePersonalGarageToHousehold',
+      idempotencyKey,
+    });
+    if (reservation.isReplay) {
+      return reservation.result;
+    }
+
+    try {
+      const orgRef = admin.firestore().doc(`orgs/${orgId}`);
+      const orgSnap = await orgRef.get();
+      if (!orgSnap.exists) {
+        throw new HttpsError('not-found', 'Organization not found');
+      }
+
+      const orgData = orgSnap.data() || {};
+      const nextName =
+        householdName ||
+        (orgData.name || '').toString().trim() ||
+        'Household Garage';
+
+      await orgRef.set(
+        {
+          name: nextName,
+          type: 'household',
+          garageStorageMode: requestedMode,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      await writeAuditEvent({
+        orgId,
+        actorUid: uid,
+        action: 'organization.promote_to_household',
+        targetType: 'organization',
+        targetId: orgId,
+        details: {
+          previousType: (orgData.type || 'personal').toString(),
+          garageStorageMode: requestedMode,
+          householdName: nextName,
+        },
+      });
+
+      const entitlements = await resolveEffectiveEntitlements(uid, orgId);
+      const result = {
+        success: true,
+        orgId,
+        orgType: 'household',
+        garageStorageMode: requestedMode,
+        name: nextName,
+        entitlements,
+      };
+
+      await completeIdempotencyKey(
+        reservation,
+        result as unknown as Record<string, unknown>
+      );
+
+      return result;
+    } catch (error) {
+      await markIdempotencyFailed(
+        reservation,
+        error instanceof Error ? error.message : 'unknown_error'
+      );
+      throw error;
+    }
+  }
+);
+
+export const setGarageStorageModeCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const requestedOrgId = (request.data?.orgId || '').toString().trim();
+  const orgId = requestedOrgId || (await getPrimaryOrgIdForUser(uid));
+  const garageStorageMode = normalizeGarageStorageMode(
+    request.data?.garageStorageMode
+  );
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  await requireOrgRole(uid, orgId, ['org_owner']);
+
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'setGarageStorageMode',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const orgRef = admin.firestore().doc(`orgs/${orgId}`);
+    const orgSnap = await orgRef.get();
+    if (!orgSnap.exists) {
+      throw new HttpsError('not-found', 'Organization not found');
+    }
+
+    const previousMode = normalizeGarageStorageMode(
+      orgSnap.data()?.garageStorageMode
+    );
+
+    await orgRef.set(
+      {
+        garageStorageMode,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await writeAuditEvent({
+      orgId,
+      actorUid: uid,
+      action: 'organization.set_garage_storage_mode',
+      targetType: 'organization',
+      targetId: orgId,
+      details: {
+        previousMode,
+        garageStorageMode,
+      },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      garageStorageMode,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const changeSubscriptionTierCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const requestedTierRaw = (request.data?.targetTier || '').toString().trim();
+  if (!requestedTierRaw) {
+    throw new HttpsError('invalid-argument', 'targetTier is required');
+  }
+
+  const requestedTier = normalizeTier(requestedTierRaw);
+  if (requestedTierRaw !== requestedTier && requestedTierRaw !== 'free') {
+    throw new HttpsError('invalid-argument', 'Unsupported targetTier');
+  }
+
+  if (requestedTier === 'enterprise') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Enterprise requires a sales-managed contract'
+    );
+  }
+
+  const billingPeriod =
+    (request.data?.billingPeriod || '').toString().toLowerCase() === 'annual'
+      ? 'annual'
+      : 'monthly';
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'changeSubscriptionTier',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const { previousTier, orgId, entitlements } =
+      await applySubscriptionTierState({
+        uid,
+        targetTier: requestedTier,
+        billingPeriod,
+        status: 'active',
+        paymentMethod: requestedTier === 'free' ? null : 'stripe',
+        verificationState: 'simulated_checkout',
+      });
+
+    await writeAuditEvent({
+      orgId,
+      actorUid: uid,
+      action: 'billing.change_subscription_tier',
+      targetType: 'subscription',
+      targetId: uid,
+      details: {
+        previousTier,
+        requestedTier,
+        billingPeriod,
+      },
+    });
+
+    const result = {
+      success: true,
+      tier: requestedTier,
+      entitlements,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const createSubscriptionCheckoutSessionCallable = onCall(
+  async request => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Missing auth context');
+    }
+
+    const requestedTierRaw = (request.data?.targetTier || '').toString().trim();
+    const requestedTier = normalizeTier(requestedTierRaw);
+    if (requestedTier !== 'pro' && requestedTier !== 'premium') {
+      throw new HttpsError(
+        'invalid-argument',
+        'Only pro and premium can be purchased through checkout'
+      );
+    }
+
+    const billingPeriod =
+      (request.data?.billingPeriod || '').toString().toLowerCase() === 'annual'
+        ? 'annual'
+        : 'monthly';
+    const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+    const reservation = await reserveIdempotencyKey({
+      uid,
+      operation: 'createSubscriptionCheckoutSession',
+      idempotencyKey,
+    });
+    if (reservation.isReplay) {
+      return reservation.result;
+    }
+
+    try {
+      const checkoutTemplate = (process.env.STRIPE_CHECKOUT_URL_TEMPLATE || '')
+        .toString()
+        .trim();
+      const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '')
+        .toString()
+        .trim();
+      const configuredAppBaseUrl = (process.env.APP_BASE_URL || '')
+        .toString()
+        .trim()
+        .replace(/\/$/, '');
+
+      const successUrl =
+        (process.env.STRIPE_CHECKOUT_SUCCESS_URL || '').toString().trim() ||
+        (configuredAppBaseUrl
+          ? `${configuredAppBaseUrl}/app/subscription?checkout=success&session_id={CHECKOUT_SESSION_ID}`
+          : '');
+      const cancelUrl =
+        (process.env.STRIPE_CHECKOUT_CANCEL_URL || '').toString().trim() ||
+        (configuredAppBaseUrl
+          ? `${configuredAppBaseUrl}/app/subscription?checkout=cancelled`
+          : '');
+
+      if (stripeSecretKey) {
+        if (!successUrl || !cancelUrl) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Stripe checkout URLs are not configured'
+          );
+        }
+
+        const customerEmail = (request.auth?.token?.email || '')
+          .toString()
+          .trim();
+
+        const stripeSession = await createStripeCheckoutSession({
+          uid,
+          tier: requestedTier,
+          billingPeriod,
+          successUrl,
+          cancelUrl,
+          customerEmail,
+        });
+
+        await admin
+          .firestore()
+          .doc(`users/${uid}/billingSessions/${stripeSession.sessionId}`)
+          .set({
+            sessionId: stripeSession.sessionId,
+            uid,
+            targetTier: requestedTier,
+            billingPeriod,
+            status: 'pending',
+            provider: 'stripe',
+            stripeCustomerId: stripeSession.customerId || null,
+            stripeSubscriptionId: stripeSession.subscriptionId || null,
+            checkoutUrl: stripeSession.checkoutUrl,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+        if (stripeSession.customerId) {
+          await admin
+            .firestore()
+            .doc(`stripeCustomerLookup/${stripeSession.customerId}`)
+            .set(
+              {
+                uid,
+                stripeCustomerId: stripeSession.customerId,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+        }
+
+        const orgId = await ensurePersonalOrganization(uid);
+        await writeAuditEvent({
+          orgId,
+          actorUid: uid,
+          action: 'billing.create_checkout_session',
+          targetType: 'checkout_session',
+          targetId: stripeSession.sessionId,
+          details: {
+            requestedTier,
+            billingPeriod,
+            provider: 'stripe',
+          },
+        });
+
+        const stripeResult = {
+          success: true,
+          mode: 'redirect',
+          checkoutUrl: stripeSession.checkoutUrl,
+          checkoutSessionId: stripeSession.sessionId,
+        };
+
+        await completeIdempotencyKey(
+          reservation,
+          stripeResult as unknown as Record<string, unknown>
+        );
+
+        return stripeResult;
+      }
+
+      if (!checkoutTemplate) {
+        const applied = await applySubscriptionTierState({
+          uid,
+          targetTier: requestedTier,
+          billingPeriod,
+          status: 'active',
+          paymentMethod: 'stripe',
+          verificationState: 'simulated_checkout_fallback',
+        });
+
+        const fallbackResult = {
+          success: true,
+          mode: 'activated',
+          entitlements: applied.entitlements,
+          tier: requestedTier,
+        };
+
+        await writeAuditEvent({
+          orgId: applied.orgId,
+          actorUid: uid,
+          action: 'billing.checkout_fallback_activation',
+          targetType: 'subscription',
+          targetId: uid,
+          details: {
+            requestedTier,
+            billingPeriod,
+          },
+        });
+
+        await completeIdempotencyKey(
+          reservation,
+          fallbackResult as unknown as Record<string, unknown>
+        );
+
+        return fallbackResult;
+      }
+
+      const sessionId = `cs_sim_${randomBytes(12).toString('hex')}`;
+      const checkoutUrl = checkoutTemplate
+        .replace('{CHECKOUT_SESSION_ID}', encodeURIComponent(sessionId))
+        .replace('{UID}', encodeURIComponent(uid))
+        .replace('{TIER}', encodeURIComponent(requestedTier))
+        .replace('{BILLING_PERIOD}', encodeURIComponent(billingPeriod));
+
+      await admin
+        .firestore()
+        .doc(`users/${uid}/billingSessions/${sessionId}`)
+        .set({
+          sessionId,
+          uid,
+          targetTier: requestedTier,
+          billingPeriod,
+          status: 'pending',
+          provider: 'stripe',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      const orgId = await ensurePersonalOrganization(uid);
+      await writeAuditEvent({
+        orgId,
+        actorUid: uid,
+        action: 'billing.create_checkout_session',
+        targetType: 'checkout_session',
+        targetId: sessionId,
+        details: {
+          requestedTier,
+          billingPeriod,
+        },
+      });
+
+      const result = {
+        success: true,
+        mode: 'redirect',
+        checkoutUrl,
+        checkoutSessionId: sessionId,
+      };
+
+      await completeIdempotencyKey(
+        reservation,
+        result as unknown as Record<string, unknown>
+      );
+
+      return result;
+    } catch (error) {
+      await markIdempotencyFailed(
+        reservation,
+        error instanceof Error ? error.message : 'unknown_error'
+      );
+      throw error;
+    }
+  }
+);
+
+export const createApiAccessKeyCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const entitlements = await requireFeatureEntitlement(uid, 'api_access');
+  const keyLabel = (request.data?.label || 'Default key').toString().trim();
+  const label = keyLabel ? keyLabel.slice(0, 80) : 'Default key';
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  const reservation = await reserveIdempotencyKey({
+    uid,
+    operation: 'createApiAccessKey',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const db = admin.firestore();
+    const keyId = `key_${randomBytes(8).toString('hex')}`;
+    const rawKey = `vvk_${randomBytes(24).toString('hex')}`;
+    const keyPrefix = rawKey.slice(0, 12);
+    const keyHash = hashApiAccessKey(rawKey);
+
+    await db.doc(`users/${uid}/apiAccessKeys/${keyId}`).set({
+      keyId,
+      label,
+      keyPrefix,
+      keyHash,
+      active: true,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastUsedAt: null,
+      revokedAt: null,
+    });
+
+    await db.doc(`apiKeyLookup/${keyHash}`).set({
+      uid,
+      keyId,
+      active: true,
+      keyPrefix,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokedAt: null,
+    });
+
+    await writeAuditEvent({
+      orgId: entitlements.orgId,
+      actorUid: uid,
+      action: 'integration.create_api_access_key',
+      targetType: 'api_access_key',
+      targetId: keyId,
+      details: {
+        keyPrefix,
+        label,
+      },
+    });
+
+    const result = {
+      success: true,
+      key: {
+        keyId,
+        label,
+        keyPrefix,
+      },
+      rawKey,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const listApiAccessKeysCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  await requireFeatureEntitlement(uid, 'api_access');
+
+  const snapshot = await admin
+    .firestore()
+    .collection(`users/${uid}/apiAccessKeys`)
+    .orderBy('createdAt', 'desc')
+    .limit(25)
+    .get();
+
+  const keys = snapshot.docs.map(doc => {
+    const data = doc.data() as ApiAccessKeyMetadata;
+    return {
+      keyId: (data.keyId || doc.id).toString(),
+      label: (data.label || '').toString(),
+      keyPrefix: (data.keyPrefix || '').toString(),
+      active: data.active === true,
+      createdAt: data.createdAt || null,
+      updatedAt: data.updatedAt || null,
+      lastUsedAt: data.lastUsedAt || null,
+      revokedAt: data.revokedAt || null,
+    };
+  });
+
+  return {
+    success: true,
+    keys,
+  };
+});
+
+export const revokeApiAccessKeyCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const entitlements = await requireFeatureEntitlement(uid, 'api_access');
+  const keyId = (request.data?.keyId || '').toString().trim();
+  if (!keyId) {
+    throw new HttpsError('invalid-argument', 'keyId is required');
+  }
+
+  const keyRef = admin.firestore().doc(`users/${uid}/apiAccessKeys/${keyId}`);
+  const keySnap = await keyRef.get();
+  if (!keySnap.exists) {
+    throw new HttpsError('not-found', 'API access key not found');
+  }
+
+  await keyRef.set(
+    {
+      active: false,
+      revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  const keyData = keySnap.data() as ApiAccessKeyMetadata & {
+    keyHash?: string;
+  };
+  const keyHash = (keyData?.keyHash || '').toString();
+  if (keyHash) {
+    await admin.firestore().doc(`apiKeyLookup/${keyHash}`).set(
+      {
+        active: false,
+        revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+
+  await writeAuditEvent({
+    orgId: entitlements.orgId,
+    actorUid: uid,
+    action: 'integration.revoke_api_access_key',
+    targetType: 'api_access_key',
+    targetId: keyId,
+  });
+
+  return {
+    success: true,
+    keyId,
+    revoked: true,
+  };
+});
+
+export const getZapierWebhookConfigCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  await requireFeatureEntitlement(uid, 'zapier_integration');
+  await requireFeatureEntitlement(uid, 'api_access');
+
+  const baseUrl = resolveFunctionBaseUrl();
+  if (!baseUrl) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Webhook base URL is not configured'
+    );
+  }
+
+  const webhookSecretConfigured =
+    (process.env.ZAPIER_WEBHOOK_SECRET || '').trim().length > 0;
+
+  return {
+    success: true,
+    webhookUrl: `${baseUrl}/zapierMaintenanceWebhook`,
+    instructions:
+      'Send POST JSON with vin and title. Include your API key as x-api-key header. If signature is required, include x-vv-signature as sha256=<hmac_sha256_raw_body>.',
+    requiresSignature: webhookSecretConfigured,
+  };
+});
+
+export const transferVehicleCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const vin = (request.data?.vin || '').toString().trim();
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!vin) {
+    throw new HttpsError('invalid-argument', 'vin is required');
+  }
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'transferVehicle',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const targetUser = await resolveVehicleTransferTarget({
+      recipientUid: request.data?.recipientUid,
+      recipientEmail: request.data?.recipientEmail,
+    });
+
+    if (targetUser.uid === actorUid) {
+      throw new HttpsError(
+        'invalid-argument',
+        'You cannot transfer a vehicle to your own account'
+      );
+    }
+
+    const db = admin.firestore();
+    const sourceVehicleRef = db.doc(`users/${actorUid}/vehicles/${vin}`);
+    const targetVehicleRef = db.doc(`users/${targetUser.uid}/vehicles/${vin}`);
+
+    const [sourceVehicleSnap, targetVehicleSnap] = await Promise.all([
+      sourceVehicleRef.get(),
+      targetVehicleRef.get(),
+      ensurePersonalOrganization(targetUser.uid, targetUser.email || undefined),
+    ]);
+
+    if (!sourceVehicleSnap.exists) {
+      throw new HttpsError('not-found', 'Vehicle was not found');
+    }
+
+    if (targetVehicleSnap.exists) {
+      throw new HttpsError(
+        'already-exists',
+        'Recipient already has a vehicle with that ID'
+      );
+    }
+
+    const sourceVehicleData = sourceVehicleSnap.data() || {};
+    const batch = db.batch();
+    await queueVehicleTransferOperations({
+      batch,
+      sourceVehicleRef,
+      targetVehicleRef,
+      sourceVehicleData,
+      actorUid,
+      recipientUid: targetUser.uid,
+    });
+    await batch.commit();
+
+    const orgId = await getPrimaryOrgIdForUser(actorUid);
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: 'vehicle.transfer',
+      targetType: 'vehicle',
+      targetId: vin,
+      details: {
+        recipientUid: targetUser.uid,
+        recipientEmail: targetUser.email,
+      },
+    });
+
+    const result = {
+      success: true,
+      vin,
+      recipientUid: targetUser.uid,
+      recipientEmail: targetUser.email,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const consolidateAccountDataCallable = onCall(async request => {
+  const primaryUid = request.auth?.uid;
+  if (!primaryUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const sourceUid = (request.data?.sourceUid || '').toString().trim();
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!sourceUid) {
+    throw new HttpsError('invalid-argument', 'sourceUid is required');
+  }
+
+  if (sourceUid === primaryUid) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Cannot consolidate account into itself'
+    );
+  }
+
+  const reservation = await reserveIdempotencyKey({
+    uid: primaryUid,
+    operation: 'consolidateAccountData',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const db = admin.firestore();
+
+    // Verify source account exists
+    try {
+      await admin.auth().getUser(sourceUid);
+    } catch (error) {
+      throw new HttpsError(
+        'not-found',
+        `Source account uid ${sourceUid} not found`
+      );
+    }
+
+    // Get all vehicles from source account
+    const sourceVehiclesSnap = await db
+      .collection(`users/${sourceUid}/vehicles`)
+      .get();
+
+    const vehiclesToMigrate = sourceVehiclesSnap.docs
+      .filter(doc => doc.id !== '__preferences__')
+      .map(doc => doc.id);
+
+    if (vehiclesToMigrate.length === 0) {
+      return {
+        success: true,
+        sourceUid,
+        primaryUid,
+        vehiclesMigrated: 0,
+        message: 'No vehicles to migrate from source account',
+      };
+    }
+
+    // Ensure primary account organization exists
+    await ensurePersonalOrganization(
+      primaryUid,
+      (request.auth?.token?.email || '').toString()
+    );
+
+    // Migrate each vehicle
+    let vehiclesMigrated = 0;
+    let vehicleSkipped = 0;
+    const migratedVins: string[] = [];
+
+    for (const vin of vehiclesToMigrate) {
+      try {
+        const sourceVehicleRef = db.doc(`users/${sourceUid}/vehicles/${vin}`);
+        const targetVehicleRef = db.doc(`users/${primaryUid}/vehicles/${vin}`);
+
+        const [sourceVehicleSnap, targetVehicleSnap] = await Promise.all([
+          sourceVehicleRef.get(),
+          targetVehicleRef.get(),
+        ]);
+
+        if (!sourceVehicleSnap.exists) {
+          vehicleSkipped += 1;
+          continue;
+        }
+
+        // Skip if vehicle already exists in target
+        if (targetVehicleSnap.exists) {
+          vehicleSkipped += 1;
+          continue;
+        }
+
+        const sourceVehicleData = sourceVehicleSnap.data() || {};
+        const batch = db.batch();
+
+        await queueVehicleTransferOperations({
+          batch,
+          sourceVehicleRef,
+          targetVehicleRef,
+          sourceVehicleData,
+          actorUid: sourceUid,
+          recipientUid: primaryUid,
+        });
+
+        await batch.commit();
+        vehiclesMigrated += 1;
+        migratedVins.push(vin);
+      } catch (vinError) {
+        logger.warn('Failed to migrate vehicle during consolidation', {
+          sourceUid,
+          primaryUid,
+          vin,
+          error: vinError,
+        });
+        vehicleSkipped += 1;
+      }
+    }
+
+    // Migrate subscription tier if source has a higher tier
+    const sourceSubscriptionSnap = await db
+      .doc(`users/${sourceUid}/subscription/current`)
+      .get();
+    const primarySubscriptionSnap = await db
+      .doc(`users/${primaryUid}/subscription/current`)
+      .get();
+
+    const sourceTier = normalizeTier(sourceSubscriptionSnap.data()?.tier);
+    const primaryTier = normalizeTier(primarySubscriptionSnap.data()?.tier);
+
+    if (tierRank(sourceTier) > tierRank(primaryTier)) {
+      const sourceSubData = sourceSubscriptionSnap.data() || {};
+      await db.doc(`users/${primaryUid}/subscription/current`).set(
+        {
+          tier: sourceTier,
+          status: sourceSubData.status || 'active',
+          autoRenew: sourceSubData.autoRenew !== false,
+          migratedFrom: sourceUid,
+          migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    // Migrate premium entitlements if source is premium
+    const sourcePremiumSnap = await db
+      .doc(`users/${sourceUid}/entitlements/premium`)
+      .get();
+    const primaryPremiumSnap = await db
+      .doc(`users/${primaryUid}/entitlements/premium`)
+      .get();
+
+    const sourcePremiumActive = sourcePremiumSnap.data()?.active === true;
+    const primaryPremiumActive = primaryPremiumSnap.data()?.active === true;
+
+    if (sourcePremiumActive && !primaryPremiumActive) {
+      const sourcePremiumData = sourcePremiumSnap.data() || {};
+      await db.doc(`users/${primaryUid}/entitlements/premium`).set(
+        {
+          active: true,
+          verified: sourcePremiumData.verified || false,
+          verificationState: sourcePremiumData.verificationState || 'migrated',
+          migratedFrom: sourceUid,
+          migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    const orgId = await getPrimaryOrgIdForUser(primaryUid);
+    await writeAuditEvent({
+      orgId,
+      actorUid: primaryUid,
+      action: 'account.consolidate_data',
+      targetType: 'user_account',
+      targetId: sourceUid,
+      details: {
+        vehiclesMigrated,
+        vehicleSkipped,
+        migratedVins,
+        sourceTierMigrated: sourceTier !== primaryTier ? sourceTier : null,
+        premiumMigrated: sourcePremiumActive && !primaryPremiumActive,
+      },
+    });
+
+    const result = {
+      success: true,
+      sourceUid,
+      primaryUid,
+      vehiclesMigrated,
+      vehicleSkipped,
+      migratedVins,
+      message: `Successfully migrated ${vehiclesMigrated} vehicle(s) from source account`,
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const zapierMaintenanceWebhook = onRequest(
+  { cors: true },
+  async (request, response) => {
+    try {
+      if (!enforceRateLimit(request, response, 'zapierMaintenanceWebhook')) {
+        return;
+      }
+
+      if (request.method !== 'POST') {
+        response
+          .status(405)
+          .json({ success: false, error: 'Method not allowed' });
+        return;
+      }
+
+      const apiKeyHeader =
+        (request.headers['x-api-key'] || '').toString().trim() ||
+        (request.headers.authorization || '')
+          .toString()
+          .replace(/^Bearer\s+/i, '')
+          .trim();
+
+      if (!apiKeyHeader) {
+        response.status(401).json({ success: false, error: 'Missing API key' });
+        return;
+      }
+
+      const webhookSecret = (process.env.ZAPIER_WEBHOOK_SECRET || '').trim();
+      if (webhookSecret && !isWebhookSignatureValid(request, webhookSecret)) {
+        response
+          .status(401)
+          .json({ success: false, error: 'Invalid webhook signature' });
+        return;
+      }
+
+      const keyHash = hashApiAccessKey(apiKeyHeader);
+      const lookupSnap = await admin
+        .firestore()
+        .doc(`apiKeyLookup/${keyHash}`)
+        .get();
+
+      if (!lookupSnap.exists) {
+        response.status(401).json({ success: false, error: 'Invalid API key' });
+        return;
+      }
+
+      const lookupData = lookupSnap.data() || {};
+      if (lookupData.active !== true) {
+        response.status(401).json({ success: false, error: 'Invalid API key' });
+        return;
+      }
+
+      const uid = (lookupData.uid || '').toString().trim();
+      const keyId = (lookupData.keyId || '').toString().trim();
+      if (!uid) {
+        response
+          .status(401)
+          .json({ success: false, error: 'Invalid API key owner' });
+        return;
+      }
+
+      const keyDocRef = admin
+        .firestore()
+        .doc(`users/${uid}/apiAccessKeys/${keyId}`);
+      const keyDoc = await keyDocRef.get();
+      const keyData = keyDoc.data() || {};
+      if (
+        !keyDoc.exists ||
+        keyData.active !== true ||
+        keyData.keyHash !== keyHash
+      ) {
+        response.status(401).json({ success: false, error: 'Invalid API key' });
+        return;
+      }
+
+      const entitlements = await resolveEffectiveEntitlements(uid);
+      if (
+        !entitlements.features?.api_access ||
+        !entitlements.features?.zapier_integration
+      ) {
+        response.status(403).json({
+          success: false,
+          error: 'Plan does not allow webhook integrations',
+        });
+        return;
+      }
+
+      const vin = ((request.body?.vin || '') as string)
+        .toString()
+        .trim()
+        .toUpperCase();
+      const title = ((request.body?.title || '') as string).toString().trim();
+      const description = ((request.body?.description || '') as string)
+        .toString()
+        .trim();
+      const serviceType = ((request.body?.serviceType || '') as string)
+        .toString()
+        .trim();
+      const frequency = (
+        (request.body?.frequency || 'Webhook trigger') as string
+      )
+        .toString()
+        .trim();
+      const interval = Math.max(1, Number(request.body?.interval || 1));
+      const nextDueMileage = Number(request.body?.nextDueMileage || 0);
+      const milesUntilDue = Number(request.body?.milesUntilDue || 0);
+
+      if (!vin || !title) {
+        response.status(400).json({
+          success: false,
+          error: 'vin and title are required',
+        });
+        return;
+      }
+
+      const vehicleRef = admin.firestore().doc(`users/${uid}/vehicles/${vin}`);
+      const vehicleSnap = await vehicleRef.get();
+      if (!vehicleSnap.exists) {
+        response.status(404).json({
+          success: false,
+          error: 'Vehicle not found for API key owner',
+        });
+        return;
+      }
+
+      const reminderRef = await admin
+        .firestore()
+        .collection(`users/${uid}/vehicles/${vin}/reminders`)
+        .add({
+          title,
+          description,
+          serviceType: serviceType || null,
+          frequency,
+          interval,
+          nextDueMileage: Number.isFinite(nextDueMileage) ? nextDueMileage : 0,
+          milesUntilDue: Number.isFinite(milesUntilDue) ? milesUntilDue : 0,
+          status: 'active',
+          source: 'zapier_webhook',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      await keyDocRef.set(
+        {
+          lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      await lookupSnap.ref.set(
+        {
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      response.status(200).json({
+        success: true,
+        uid,
+        vin,
+        reminderId: reminderRef.id,
+      });
+    } catch (error) {
+      logger.error('Zapier webhook processing failed', error);
+      response
+        .status(500)
+        .json({ success: false, error: 'Failed to process webhook' });
+    }
+  }
+);
+
+export const stripeSubscriptionWebhook = onRequest(
+  { cors: true },
+  async (request, response) => {
+    try {
+      if (!enforceRateLimit(request, response, 'stripeSubscriptionWebhook')) {
+        return;
+      }
+
+      if (request.method !== 'POST') {
+        response
+          .status(405)
+          .json({ success: false, error: 'Method not allowed' });
+        return;
+      }
+
+      const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+      if (
+        webhookSecret &&
+        !isStripeWebhookSignatureValid(request, webhookSecret)
+      ) {
+        response
+          .status(401)
+          .json({ success: false, error: 'Invalid signature' });
+        return;
+      }
+
+      const event =
+        request.body && typeof request.body === 'object'
+          ? request.body
+          : JSON.parse(getRequestBodyBuffer(request).toString('utf8') || '{}');
+
+      const eventId = (event?.id || '').toString().trim();
+      const eventType = (event?.type || '').toString().trim();
+      const eventObject = event?.data?.object || {};
+
+      if (!eventId || !eventType) {
+        response
+          .status(400)
+          .json({ success: false, error: 'Invalid event payload' });
+        return;
+      }
+
+      const eventRef = admin.firestore().doc(`billingWebhookEvents/${eventId}`);
+      const eventSnap = await eventRef.get();
+      if (eventSnap.exists) {
+        response
+          .status(200)
+          .json({ success: true, deduplicated: true, eventId });
+        return;
+      }
+
+      const uid = await resolveUidFromStripeObject(eventObject);
+      if (!uid) {
+        response.status(400).json({
+          success: false,
+          error: 'Missing user mapping for Stripe event',
+        });
+        return;
+      }
+
+      const stripeCustomerId = (eventObject?.customer || '').toString().trim();
+      const stripeSubscriptionId = (
+        eventObject?.subscription ||
+        eventObject?.id ||
+        ''
+      )
+        .toString()
+        .trim();
+
+      if (stripeCustomerId) {
+        await admin
+          .firestore()
+          .doc(`stripeCustomerLookup/${stripeCustomerId}`)
+          .set(
+            {
+              uid,
+              stripeCustomerId,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+      }
+
+      let reconciliationResult: Record<string, unknown> = {
+        eventType,
+        uid,
+        handled: false,
+      };
+
+      if (
+        eventType === 'checkout.session.completed' ||
+        eventType === 'customer.subscription.updated' ||
+        eventType === 'invoice.payment_succeeded'
+      ) {
+        const tier = resolveSubscriptionTierFromStripeObject(eventObject);
+        if (tier === 'pro' || tier === 'premium') {
+          const billingPeriod =
+            resolveBillingPeriodFromStripeObject(eventObject);
+          const subscriptionStatus =
+            resolveSubscriptionStatusFromStripeObject(eventObject);
+          const applied = await applySubscriptionTierState({
+            uid,
+            targetTier: tier,
+            billingPeriod,
+            status: subscriptionStatus,
+            paymentMethod: 'stripe',
+            stripeCustomerId,
+            stripeSubscriptionId,
+            lastPaymentError: null,
+            verificationState: 'webhook_verified',
+          });
+
+          reconciliationResult = {
+            eventType,
+            uid,
+            handled: true,
+            tier,
+            billingPeriod,
+            status: subscriptionStatus,
+            orgId: applied.orgId,
+          };
+        }
+      }
+
+      if (eventType === 'invoice.payment_failed') {
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              status: 'past_due',
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              lastPaymentError: 'stripe_invoice_payment_failed',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'past_due',
+        };
+      }
+
+      if (eventType === 'customer.subscription.deleted') {
+        const periodEnd =
+          toTimestampFromUnixSeconds(eventObject?.current_period_end) ||
+          Timestamp.now();
+
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              tier: 'free',
+              status: 'canceled',
+              autoRenew: false,
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              currentPeriodEnd: periodEnd,
+              renewalDate: periodEnd,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        await admin.firestore().doc(`users/${uid}/entitlements/premium`).set(
+          {
+            active: false,
+            verified: false,
+            verificationState: 'revoked_by_webhook_cancellation',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'canceled',
+        };
+      }
+
+      if (eventType === 'charge.dispute.created') {
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              status: 'past_due',
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              lastPaymentError: 'stripe_charge_dispute',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'past_due',
+          reason: 'dispute_created',
+        };
+      }
+
+      if (eventType === 'charge.refunded') {
+        await admin
+          .firestore()
+          .doc(`users/${uid}/subscription/current`)
+          .set(
+            {
+              status: 'past_due',
+              paymentMethod: 'stripe',
+              stripeCustomerId: stripeCustomerId || null,
+              stripeSubscriptionId: stripeSubscriptionId || null,
+              lastPaymentError: 'stripe_charge_refunded',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        reconciliationResult = {
+          eventType,
+          uid,
+          handled: true,
+          status: 'past_due',
+          reason: 'charge_refunded',
+        };
+      }
+
+      await eventRef.set({
+        eventId,
+        eventType,
+        uid,
+        reconciliationResult,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      response.status(200).json({
+        success: true,
+        eventId,
+        ...reconciliationResult,
+      });
+    } catch (error) {
+      logger.error('Stripe webhook processing failed', error);
+      response
+        .status(500)
+        .json({ success: false, error: 'Failed to process billing webhook' });
+    }
+  }
+);
 
 export const getOrganizationMembersCallable = onCall(async request => {
   const uid = request.auth?.uid;
@@ -2682,6 +4839,217 @@ export const setOrganizationMemberRoleCallable = onCall(async request => {
       targetUid,
       role: newRole,
     };
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const createInvoiceDraftCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const payload = (request.data || {}) as InvoiceDraftInput;
+  const orgId = (payload.orgId || '').toString().trim();
+  const customerName = (payload.customerName || '').toString().trim();
+  const dueDate = (payload.dueDate || '').toString().trim();
+  const issueDate = (payload.issueDate || '').toString().trim();
+  const currency = (payload.currency || 'USD').toString().trim().toUpperCase();
+  const notes = (payload.notes || '').toString().trim();
+  const lineItems = Array.isArray(payload.lineItems)
+    ? payload.lineItems
+        .map(item => ({
+          description: (item?.description || '').toString().trim(),
+          quantity: normalizeMoneyAmount(item?.quantity ?? 0),
+          unitPrice: normalizeMoneyAmount(item?.unitPrice ?? 0),
+        }))
+        .filter(item => item.description)
+    : [];
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!orgId || !customerName || !dueDate) {
+    throw new HttpsError(
+      'invalid-argument',
+      'orgId, customerName, and dueDate are required'
+    );
+  }
+
+  await requireOrgRole(actorUid, orgId, [
+    'org_owner',
+    'org_admin',
+    'billing_admin',
+  ]);
+
+  const amountDue =
+    payload.amountDue != null
+      ? normalizeMoneyAmount(payload.amountDue)
+      : Math.round(
+          lineItems.reduce(
+            (sum, item) => sum + item.quantity * item.unitPrice,
+            0
+          ) * 100
+        ) / 100;
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'createInvoiceDraft',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const invoiceRef = admin
+      .firestore()
+      .collection(`orgs/${orgId}/financeInvoices`)
+      .doc();
+
+    await invoiceRef.set({
+      orgId,
+      customerName,
+      issueDate: issueDate || new Date().toISOString().slice(0, 10),
+      dueDate,
+      currency,
+      amountDue,
+      amountPaid: 0,
+      status: 'draft',
+      notes,
+      lineItems,
+      createdByUid: actorUid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: 'finance.create_invoice_draft',
+      targetType: 'invoice',
+      targetId: invoiceRef.id,
+      details: {
+        customerName,
+        dueDate,
+        currency,
+        amountDue,
+      },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      invoiceId: invoiceRef.id,
+      status: 'draft',
+    };
+
+    await completeIdempotencyKey(
+      reservation,
+      result as unknown as Record<string, unknown>
+    );
+
+    return result;
+  } catch (error) {
+    await markIdempotencyFailed(
+      reservation,
+      error instanceof Error ? error.message : 'unknown_error'
+    );
+    throw error;
+  }
+});
+
+export const createPayableDraftCallable = onCall(async request => {
+  const actorUid = request.auth?.uid;
+  if (!actorUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const payload = (request.data || {}) as PayableDraftInput;
+  const orgId = (payload.orgId || '').toString().trim();
+  const vendorName = (payload.vendorName || '').toString().trim();
+  const dueDate = (payload.dueDate || '').toString().trim();
+  const billDate = (payload.billDate || '').toString().trim();
+  const currency = (payload.currency || 'USD').toString().trim().toUpperCase();
+  const category = (payload.category || '').toString().trim();
+  const notes = (payload.notes || '').toString().trim();
+  const amountDue = normalizeMoneyAmount(payload.amountDue ?? 0);
+  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+
+  if (!orgId || !vendorName || !dueDate) {
+    throw new HttpsError(
+      'invalid-argument',
+      'orgId, vendorName, and dueDate are required'
+    );
+  }
+
+  await requireOrgRole(actorUid, orgId, [
+    'org_owner',
+    'org_admin',
+    'billing_admin',
+  ]);
+
+  const reservation = await reserveIdempotencyKey({
+    uid: actorUid,
+    operation: 'createPayableDraft',
+    idempotencyKey,
+  });
+  if (reservation.isReplay) {
+    return reservation.result;
+  }
+
+  try {
+    const payableRef = admin
+      .firestore()
+      .collection(`orgs/${orgId}/financePayables`)
+      .doc();
+
+    await payableRef.set({
+      orgId,
+      vendorName,
+      billDate: billDate || new Date().toISOString().slice(0, 10),
+      dueDate,
+      currency,
+      amountDue,
+      amountPaid: 0,
+      status: 'draft',
+      category,
+      notes,
+      createdByUid: actorUid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await writeAuditEvent({
+      orgId,
+      actorUid,
+      action: 'finance.create_payable_draft',
+      targetType: 'payable',
+      targetId: payableRef.id,
+      details: {
+        vendorName,
+        dueDate,
+        currency,
+        amountDue,
+      },
+    });
+
+    const result = {
+      success: true,
+      orgId,
+      payableId: payableRef.id,
+      status: 'draft',
+    };
+
     await completeIdempotencyKey(
       reservation,
       result as unknown as Record<string, unknown>

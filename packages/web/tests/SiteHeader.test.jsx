@@ -23,6 +23,10 @@ vi.mock('../src/shared/environment', () => ({
   isDemonstrationEnvironment: false,
 }));
 
+vi.mock('../src/shared/marketingAnalytics', () => ({
+  trackHeaderNavClick: vi.fn(),
+}));
+
 vi.mock('../src/components/StackedVLogo', () => ({
   default: () => <div data-testid="stacked-logo">Vehicle Vitals</div>,
 }));

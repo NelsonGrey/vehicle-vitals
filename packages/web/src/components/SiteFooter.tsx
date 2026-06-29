@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { personaPages } from '../data/personas';
+import { trackFooterNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
 
 const productLinks = [
@@ -84,6 +85,7 @@ export default function SiteFooter() {
                 key={link.to}
                 to={link.to}
                 className="transition-colors hover:text-white"
+                onClick={() => trackFooterNavClick(link.label, link.to)}
               >
                 {link.label}
               </Link>
@@ -100,6 +102,7 @@ export default function SiteFooter() {
                   key={persona.id}
                   to={persona.path}
                   className="transition-colors hover:text-white"
+                  onClick={() => trackFooterNavClick(persona.navLabel, persona.path)}
                 >
                   {persona.navLabel}
                 </Link>
@@ -115,6 +118,7 @@ export default function SiteFooter() {
                   key={link.to}
                   to={link.to}
                   className="transition-colors hover:text-white"
+                  onClick={() => trackFooterNavClick(link.label, link.to)}
                 >
                   {link.label}
                 </Link>
@@ -131,6 +135,7 @@ export default function SiteFooter() {
                 key={link.to}
                 to={link.to}
                 className="transition-colors hover:text-white"
+                onClick={() => trackFooterNavClick(link.label, link.to)}
               >
                 {link.label}
               </Link>

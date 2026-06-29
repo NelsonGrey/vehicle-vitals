@@ -28,6 +28,7 @@ vi.mock('../src/shared/notificationService', () => ({
 // Profile only renders when useAuth returns a user.
 // Use a stable object reference for `user` so the [user] useEffect dependency
 // does not change on every render, preventing an infinite loadPreferences loop.
+const consolidateAccountData = vi.fn();
 const MOCK_USER = {
   uid: 'user-1',
   email: 'test@example.com',
@@ -39,6 +40,7 @@ vi.mock('../src/shared/AuthContext', () => ({
     signOut: vi.fn(),
     linkWithGoogle: vi.fn(),
     linkWithApple: vi.fn(),
+    consolidateAccountData,
   }),
 }));
 
@@ -81,6 +83,8 @@ describe('Profile – push notification opt-in', () => {
     getVehicles.mockResolvedValue([]);
     updateVehicle.mockResolvedValue(undefined);
     requestNotificationPermission.mockResolvedValue(null);
+    consolidateAccountData.mockReset();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -88,6 +92,7 @@ describe('Profile – push notification opt-in', () => {
     // it causes the test runner to hang in jsdom.
     vi.stubGlobal('firebase', undefined);
     delete window.Notification;
+    vi.restoreAllMocks();
     cleanup();
   });
 
@@ -164,5 +169,59 @@ describe('Profile – push notification opt-in', () => {
       'preferences',
       expect.objectContaining({ fcmToken: expect.any(String) })
     );
+  });
+
+  it('blocks account consolidation when the source UID matches the current user', async () => {
+    render(<Profile />);
+
+    await waitFor(() => screen.getByLabelText(/source account uid/i));
+
+    fireEvent.change(screen.getByLabelText(/source account uid/i), {
+      target: { value: MOCK_USER.uid },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /consolidate accounts/i })
+    );
+
+    await waitFor(() =>
+      screen.getByText(/cannot consolidate an account with itself/i)
+    );
+    expect(consolidateAccountData).not.toHaveBeenCalled();
+  });
+
+  it('shows consolidation results after a successful account merge', async () => {
+    consolidateAccountData.mockResolvedValue({
+      success: true,
+      sourceUid: 'source-user-2',
+      primaryUid: MOCK_USER.uid,
+      vehiclesMigrated: 2,
+      vehicleSkipped: 1,
+      migratedVins: ['VIN123', 'VIN456'],
+      message: 'Successfully migrated 2 vehicle(s) from source account',
+    });
+
+    render(<Profile />);
+
+    const sourceUidInput = await screen.findByLabelText(/source account uid/i);
+    fireEvent.change(sourceUidInput, {
+      target: { value: 'source-user-2' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /consolidate accounts/i })
+    );
+
+    await waitFor(() =>
+      expect(consolidateAccountData).toHaveBeenCalledWith('source-user-2')
+    );
+    await waitFor(() => screen.getByText(/consolidation successful!/i));
+    expect(
+      screen.getByText(
+        /successfully migrated 2 vehicle\(s\) from the source account/i
+      )
+    ).toBeTruthy();
+    expect(screen.getByText(/migrated vehicles: 2/i)).toBeTruthy();
+    expect(screen.getByText(/skipped vehicles: 1/i)).toBeTruthy();
+    expect(screen.getByText(/vehicle ids: VIN123, VIN456/i)).toBeTruthy();
+    expect(sourceUidInput.value).toBe('');
   });
 });

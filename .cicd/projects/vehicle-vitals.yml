@@ -12,7 +12,7 @@ targets:
         configuration: 'Release'
     signing:
       team_id: '${APPLE_TEAM_ID}'
-      bundle_id: 'com.nelsongrey.vehiclevitals.app.ios'
+      bundle_id: 'com.vehiclevitals.app.ios'
       profiles:
         development: true
         distribution: true

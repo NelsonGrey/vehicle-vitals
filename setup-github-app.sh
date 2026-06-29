@@ -56,7 +56,7 @@ echo "✅ Token is valid!"
 echo ""
 echo "📝 Configuring repositories..."
 
-REPOS=("modulo-squares" "vehicle-vitals" "wishlist-wizard")
+REPOS=("vehicle-vitals")
 
 for repo in "${REPOS[@]}"; do
     ENV_FILE="/Users/marknelson/Circus/Repositories/$repo/.env.runner"
@@ -97,7 +97,7 @@ echo "=============================="
 echo ""
 echo "✅ GitHub PAT stored securely"
 echo "✅ Automated token refresh configured"
-echo "✅ All repositories updated"
+echo "✅ Vehicle Vitals repository updated"
 echo ""
 echo "🚀 Your runners will now:"
 echo "• Generate new tokens automatically every hour"
@@ -109,7 +109,7 @@ echo ""
 echo "8. Install the app on your repositories:"
 echo "   • Go to the app settings"
 echo "   • Click 'Install App'"
-echo "   • Select the repositories: modulo-squares, vehicle-vitals, wishlist-wizard"
+echo "   • Select the repository: vehicle-vitals"
 echo "   • Note the Installation ID from the installation URL"
 echo ""
 
@@ -183,7 +183,7 @@ echo "✅ Installation token obtained successfully"
 RUNNER_TOKEN=$(curl -s -X POST \
     -H "Authorization: token $INSTALLATION_TOKEN" \
     -H "Accept: application/vnd.github.v3+json" \
-    "https://api.github.com/repos/nelsongrey/modulo-squares/actions/runners/registration-token" | \
+    "https://api.github.com/repos/mnelson3/vehicle-vitals/actions/runners/registration-token" | \
     jq -r '.token')
 
 if [ -z "$RUNNER_TOKEN" ] || [ "$RUNNER_TOKEN" = "null" ]; then
@@ -197,7 +197,7 @@ echo ""
 # Copy private key to all repositories
 echo "📁 Setting up private keys in repositories..."
 
-for repo in modulo-squares vehicle-vitals wishlist-wizard; do
+for repo in vehicle-vitals; do
     repo_path="/Users/marknelson/Circus/Repositories/$repo"
     key_dest="$repo_path/.github-app-private-key.pem"
 
@@ -215,7 +215,7 @@ echo ""
 # Update .env.runner files
 echo "⚙️  Updating configuration files..."
 
-for repo in modulo-squares vehicle-vitals wishlist-wizard; do
+for repo in vehicle-vitals; do
     env_file="/Users/marknelson/Circus/Repositories/$repo/.env.runner"
 
     if [ -f "$env_file" ]; then
@@ -235,7 +235,7 @@ echo ""
 echo "🎉 GitHub App setup complete!"
 echo ""
 echo "📋 Next steps:"
-echo "1. Test token refresh: cd /Users/marknelson/Circus/Repositories/modulo-squares && ./token-refresh.sh force_refresh"
+echo "1. Test token refresh: cd /Users/marknelson/Circus/Repositories/vehicle-vitals && ./token-refresh.sh force_refresh"
 echo "2. Check that runners come online in GitHub"
 echo "3. The launch agents will now use GitHub App authentication automatically"
 echo ""

@@ -93,6 +93,35 @@ describe('subscriptionService helpers', () => {
     expect(freeSummary.canDowngrade).toBe(false);
   });
 
+  it('shows a specific payment recovery message for past due subscriptions', () => {
+    expect(
+      getSubscriptionStatusDisplay(
+        makeSub({
+          status: 'past_due',
+          lastPaymentError: 'stripe_invoice_payment_failed',
+        })
+      )
+    ).toContain('Update your card');
+
+    expect(
+      getSubscriptionStatusDisplay(
+        makeSub({
+          status: 'past_due',
+          lastPaymentError: 'stripe_charge_disputed',
+        })
+      )
+    ).toContain('Payment Dispute');
+
+    expect(
+      getSubscriptionStatusDisplay(
+        makeSub({
+          status: 'past_due',
+          lastPaymentError: 'stripe_charge_refunded',
+        })
+      )
+    ).toContain('Payment Reversed');
+  });
+
   it('returns stable tier badge values', () => {
     expect(getTierBadge('free').name).toBe('Free');
     expect(getTierBadge('pro').badge).toBe('⭐');

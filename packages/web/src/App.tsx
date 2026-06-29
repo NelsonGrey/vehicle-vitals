@@ -10,6 +10,8 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
+import CookieConsentBanner from './components/CookieConsentBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';
@@ -25,7 +27,15 @@ import {
   buildReminderNotificationPath,
   subscribeToForegroundMessages,
 } from './shared/notificationService';
+import { replayStoredConsent } from './shared/consent';
+import { captureUtmParams } from './shared/marketingAnalytics';
 import { analytics, logger } from './utils/logger';
+
+// Replay any previously stored consent decision into GTM on every page load.
+replayStoredConsent();
+
+// Capture UTM params from the landing URL before any navigation occurs.
+captureUtmParams();
 
 // Component to handle logging and analytics
 function AppAnalytics() {
@@ -53,7 +63,8 @@ function AppAnalytics() {
     }
   }, [user]);
 
-  // Track page views
+  // Track page views. Use a microtask delay so PageSEO's useEffect (which
+  // updates document.title) runs first, giving us the correct route title.
   useEffect(() => {
     const startTime = Date.now();
     logger.info(`Page view: ${location.pathname}`, {
@@ -61,14 +72,17 @@ function AppAnalytics() {
       data: { path: location.pathname, search: location.search },
     });
 
-    // Track page view in analytics
-    analytics.trackEvent('page_view', {
-      page_path: location.pathname,
-      page_title: document.title,
-    });
+    const id = setTimeout(() => {
+      analytics.trackEvent('page_view', {
+        page_path: location.pathname,
+        page_search: location.search,
+        page_title: document.title,
+      });
+    }, 0);
 
     // Track time spent on page when leaving
     return () => {
+      clearTimeout(id);
       const timeSpent = Date.now() - startTime;
       logger.info(`Page exit: ${location.pathname}`, {
         category: 'navigation',
@@ -142,9 +156,14 @@ const SignUp = lazy(() => import('./pages/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const FeatureDemo = lazy(() => import('./pages/FeatureDemo'));
 const Instructions = lazy(() => import('./pages/Instructions'));
+const Help = lazy(() => import('./pages/Help'));
+const StartSteps = lazy(() => import('./pages/StartSteps'));
+const EverydayScreens = lazy(() => import('./pages/EverydayScreens'));
+const ShortVideoTours = lazy(() => import('./pages/ShortVideoTours'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const PersonaPage = lazy(() => import('./pages/PersonaPage'));
 const ComingSoon = lazy(() => import('./pages/ComingSoon'));
 
 // Protected pages - lazy loaded
@@ -196,8 +215,8 @@ function AuthOnlyRoute() {
 
 function App() {
   // Check if we should show the coming soon page
-  const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
   const environment = appEnvironment;
+  const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
   const marketingOnlyMode = isMarketingOnlyEnvironment;
 
   // Track app initialization
@@ -206,9 +225,10 @@ function App() {
     logger.info('App initialized', {
       category: 'app',
       data: {
-        environment: import.meta.env.MODE,
+        environment,
+        buildMode: import.meta.env.MODE,
         showComingSoon,
-        appEnvironment: environment,
+        marketingOnlyMode,
       },
     });
 
@@ -219,14 +239,12 @@ function App() {
     return () => {
       logger.info('App unmounting', { category: 'app' });
     };
-  }, [showComingSoon, environment]);
+  }, [showComingSoon, environment, marketingOnlyMode]);
 
   // Show Coming Soon page if flag is enabled
   if (showComingSoon) {
     return (
-      <BrowserRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
+      <BrowserRouter>
         <Suspense fallback={<LoadingSpinner />}>
           <ComingSoon />
         </Suspense>
@@ -235,12 +253,11 @@ function App() {
   }
 
   const appContent = (
-    <BrowserRouter
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-    >
+    <BrowserRouter>
       <AuthProvider>
         <AppAnalytics />
         <AppNotificationBridge />
+        <CookieConsentBanner />
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Marketing (anonymous) pages */}
@@ -259,7 +276,7 @@ function App() {
                 path="vin-decode-demo"
                 element={
                   <FeatureDemo
-                    title="VIN Decode"
+                    title="VIN Lookup"
                     subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
                     marketingBullets={[
                       'Enter a VIN and preview decoded year, make, and model.',
@@ -321,9 +338,15 @@ function App() {
               />
 
               <Route path="instructions" element={<Instructions />} />
+              <Route path="getting-started" element={<Instructions />} />
+              <Route path="help" element={<Help />} />
+              <Route path="start-steps" element={<StartSteps />} />
+              <Route path="everyday-screens" element={<EverydayScreens />} />
+              <Route path="short-video-tours" element={<ShortVideoTours />} />
               <Route path="contact" element={<Contact />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />
+              <Route path="personas/:personaId" element={<PersonaPage />} />
 
               {/* Legacy auth URLs */}
               <Route
@@ -454,7 +477,22 @@ function App() {
     </BrowserRouter>
   );
 
-  return appContent;
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        logger.error('Application error', {
+          category: 'error',
+          data: {
+            error: error.message,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+          },
+        });
+      }}
+    >
+      {appContent}
+    </ErrorBoundary>
+  );
 }
 
 export default App;

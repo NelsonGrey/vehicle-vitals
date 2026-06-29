@@ -81,13 +81,13 @@ After setting the passwords, deploy the environments:
 
 ```bash
 # Deploy staging
-gh workflow run ci-cd-pipeline.yml -f environment=STAGING
+gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging
 
 # Deploy development
-gh workflow run ci-cd-pipeline.yml -f environment=DEVELOPMENT
+gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=development
 
 # Deploy demonstration
-gh workflow run ci-cd-pipeline.yml -f environment=DEMONSTRATION
+gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=development
 ```
 
 ## Verification

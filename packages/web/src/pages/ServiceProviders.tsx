@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import AdPlacement from '../components/AdPlacement';
 import {
   getVehicle,
   getVehicles,
@@ -7,7 +6,13 @@ import {
 } from '../shared/firestoreService';
 import { getLocalServiceProviders } from '../utils/localServiceProviders';
 
-type ProviderTypeFilter = 'all' | 'repair_shop' | 'dealership';
+type ProviderTypeFilter =
+  | 'all'
+  | 'repair_shop'
+  | 'dealership'
+  | 'body_shop'
+  | 'car_wash'
+  | 'detailer';
 
 type HomeAddress = {
   street1: string;
@@ -20,7 +25,7 @@ type HomeAddress = {
 
 type LocalServiceProvider = {
   id: string;
-  type: 'repair_shop' | 'dealership';
+  type: 'repair_shop' | 'dealership' | 'body_shop' | 'car_wash' | 'detailer';
   name: string;
   distanceMiles: number;
   address: string;
@@ -28,6 +33,15 @@ type LocalServiceProvider = {
   website?: string;
   rating?: number;
   specialties?: string[];
+};
+
+const providerTypeLabels: Record<ProviderTypeFilter, string> = {
+  all: 'All provider types',
+  repair_shop: 'Repair shop',
+  dealership: 'Dealership',
+  body_shop: 'Body shop',
+  car_wash: 'Car wash',
+  detailer: 'Detailer',
 };
 
 const emptyAddress: HomeAddress = {
@@ -110,7 +124,10 @@ export default function ServiceProviders() {
         if (
           providerType === 'all' ||
           providerType === 'repair_shop' ||
-          providerType === 'dealership'
+          providerType === 'dealership' ||
+          providerType === 'body_shop' ||
+          providerType === 'car_wash' ||
+          providerType === 'detailer'
         ) {
           setPreferredProviderType(providerType as ProviderTypeFilter);
         }
@@ -141,12 +158,59 @@ export default function ServiceProviders() {
         if (!vehicleMakePreference && uniqueMakes.length > 0) {
           setPreferredVehicleMake(uniqueMakes[0]);
         }
+
+        const normalizedAddress = normalizeAddress({
+          street1: storedAddress?.street1 || '',
+          street2: storedAddress?.street2 || '',
+          city: storedAddress?.city || '',
+          stateProvince: storedAddress?.stateProvince || '',
+          postalCode: storedAddress?.postalCode || '',
+          country: storedAddress?.country || 'US',
+        });
+        const shouldAutoLookup = !validateAddress(normalizedAddress);
+
+        if (!shouldAutoLookup) {
+          return;
+        }
+
+        const resolvedProviderType =
+          providerType === 'all' ||
+          providerType === 'repair_shop' ||
+          providerType === 'dealership' ||
+          providerType === 'body_shop' ||
+          providerType === 'car_wash' ||
+          providerType === 'detailer'
+            ? (providerType as ProviderTypeFilter)
+            : 'all';
+
+        const resolvedRadiusMiles =
+          Number.isFinite(providerRadiusMiles) && providerRadiusMiles >= 5
+            ? Math.max(5, Math.min(100, Math.round(providerRadiusMiles)))
+            : 25;
+
+        const resolvedVehicleMake =
+          vehicleMakePreference || uniqueMakes[0] || '';
+
+        setLoading(true);
+        const result = await getLocalServiceProviders({
+          locationQuery: buildLocationSearchQuery(normalizedAddress),
+          radiusMiles: resolvedRadiusMiles,
+          maxResults: 8,
+          providerType: resolvedProviderType,
+          vehicleMake: useVehicleMakePreference ? resolvedVehicleMake : '',
+        });
+
+        setProviders(result.providers || []);
+        setLookupSource(result.source || 'unknown');
+        setStatus('Loaded nearby providers from your saved preferences.');
       } catch (loadError) {
         setError(
           loadError instanceof Error
             ? loadError.message
             : 'Failed to load provider preferences'
         );
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -209,8 +273,8 @@ export default function ServiceProviders() {
         Service Providers
       </h1>
       <p className="text-slate-600 dark:text-slate-300 mt-2 mb-6">
-        Find local repair shops and dealerships using your saved profile
-        preferences.
+        Find nearby repair shops, dealerships, body shops, car washes, and
+        detailers using your saved address, radius, and preferences.
       </p>
 
       {status && (
@@ -234,6 +298,10 @@ export default function ServiceProviders() {
         <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
           Search Preferences
         </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+          Save your home-area search settings here, then rerun the lookup any
+          time you want a fresh nearby-provider list.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="text-sm text-slate-700 dark:text-slate-300">
@@ -304,6 +372,9 @@ export default function ServiceProviders() {
               <option value="all">All</option>
               <option value="repair_shop">Repair shops</option>
               <option value="dealership">Dealerships</option>
+              <option value="body_shop">Body shops</option>
+              <option value="car_wash">Car washes</option>
+              <option value="detailer">Detailers</option>
             </select>
           </label>
           <label className="text-sm text-slate-700 dark:text-slate-300">
@@ -382,9 +453,7 @@ export default function ServiceProviders() {
                     </p>
                   </div>
                   <span className="text-xs rounded-full px-2 py-1 bg-slate-100 dark:bg-slate-700">
-                    {provider.type === 'dealership'
-                      ? 'Dealership'
-                      : 'Repair Shop'}
+                    {providerTypeLabels[provider.type] || 'Service provider'}
                   </span>
                 </div>
                 <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -413,7 +482,6 @@ export default function ServiceProviders() {
                 ) : null}
               </article>
             ))}
-            <AdPlacement placement="providerDirectory" className="mt-3" />
           </div>
         )}
       </div>

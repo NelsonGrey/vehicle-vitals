@@ -6,14 +6,14 @@
 
 ### 1. Certificate Repository Created
 
-- **Repository**: `https://github.com/mnelson3/nelson-grey`
+- **Repository**: `https://github.com/mnelson3/vehicle-vitals-certificates`
 - **Status**: Private repository created and initialized
 - **Contents**: README.md, .gitignore, setup script
 
 ### 2. Fastlane Configuration Updated
 
 - **Matchfile**: Configured for Vehicle Vitals certificates repository
-- **Appfile**: Updated with correct app identifier (`com.nelsongrey.vehiclevitals.app.ios`)
+- **Appfile**: Updated with correct app identifier (`com.vehiclevitals.app.ios`)
 - **Fastfile**: Added certificate management lanes:
   - `sync_signing` - Sync certificates from repo
   - `certificates_development` - Generate dev certificates
@@ -73,9 +73,9 @@ FASTLANE_ITC_TEAM_ID=YOUR_ITC_TEAM_ID
 APP_STORE_CONNECT_KEY_ID=YOUR_API_KEY_ID
 APP_STORE_CONNECT_ISSUER_ID=YOUR_ISSUER_ID
 APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----
-MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/nelson-grey.git
+MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/vehicle-vitals-certificates.git
 MATCH_PASSWORD=your_match_password
-BETA_FEEDBACK_EMAIL=feedback@nelsongrey.com
+BETA_FEEDBACK_EMAIL=support@vehicle-vitals.com
 ```
 
 ### Step 5: Test the Setup
@@ -94,7 +94,7 @@ fastlane beta
 ### Repository Structure
 
 ```
-nelson-grey/
+vehicle-vitals-certificates/
 ├── README.md
 ├── .gitignore
 └── certs/ (created by Fastlane Match)
@@ -107,7 +107,7 @@ nelson-grey/
 - **Storage**: Git-based certificate storage
 - **Encryption**: Password-protected certificates
 - **Branch**: `main` (matches main repo)
-- **App ID**: `com.nelsongrey.vehiclevitals.app.ios`
+- **App ID**: `com.vehiclevitals.app.ios`
 
 ### CI/CD Integration
 
@@ -144,4 +144,4 @@ If you encounter issues:
 
 **Generated**: $(date)
 **Project**: Vehicle Vitals
-**Certificate Repository**: https://github.com/mnelson3/nelson-grey
+**Certificate Repository**: https://github.com/mnelson3/vehicle-vitals-certificates

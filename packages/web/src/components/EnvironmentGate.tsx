@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '../shared/AuthContext';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../shared/AuthContext';
 import { auth } from '../shared/firebaseConfig';
 
 interface EnvironmentGateProps {
@@ -38,12 +38,7 @@ export default function EnvironmentGate({
     environment === 'development' ||
     environment === 'demonstration';
 
-  if (!requiresAuth) {
-    return <>{children}</>;
-  }
-
-  // Parse allowed emails/domains from environment variables
-  const getAllowedConfig = () => {
+  const allowedConfig = useMemo(() => {
     const domains = (import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS || '')
       .split(',')
       .map(d => d.trim().toLowerCase())
@@ -55,35 +50,45 @@ export default function EnvironmentGate({
       .filter(Boolean);
 
     return { domains, emails };
-  };
+  }, []);
 
   // Check if user email is authorized
-  const isEmailAuthorized = (userEmail: string | null | undefined): boolean => {
-    if (!userEmail) return false;
+  const isEmailAuthorized = useCallback(
+    (userEmail: string | null | undefined): boolean => {
+      if (!userEmail) return false;
 
-    const { domains, emails } = getAllowedConfig();
+      const { domains, emails } = allowedConfig;
 
-    // If no allowlist is configured, deny access
-    if (domains.length === 0 && emails.length === 0) {
+      // If no allowlist is configured, deny access
+      if (domains.length === 0 && emails.length === 0) {
+        return false;
+      }
+
+      // Check exact email match
+      if (emails.includes(userEmail.toLowerCase())) {
+        return true;
+      }
+
+      // Check domain match
+      const [, domain] = userEmail.split('@');
+      if (domain && domains.includes(domain.toLowerCase())) {
+        return true;
+      }
+
       return false;
-    }
-
-    // Check exact email match
-    if (emails.includes(userEmail.toLowerCase())) {
-      return true;
-    }
-
-    // Check domain match
-    const [, domain] = userEmail.split('@');
-    if (domain && domains.includes(domain.toLowerCase())) {
-      return true;
-    }
-
-    return false;
-  };
+    },
+    [allowedConfig]
+  );
 
   // Monitor auth state and check authorization
   useEffect(() => {
+    if (!requiresAuth) {
+      setIsAuthorized(true);
+      setIsLoading(false);
+      setError('');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -107,7 +112,7 @@ export default function EnvironmentGate({
     }
 
     setIsLoading(false);
-  }, [user]);
+  }, [isEmailAuthorized, requiresAuth, user]);
 
   // Handle Google Sign-In
   const handleSignIn = async () => {
@@ -138,6 +143,10 @@ export default function EnvironmentGate({
       setError('Failed to sign out. Please try again.');
     }
   };
+
+  if (!requiresAuth) {
+    return <>{children}</>;
+  }
 
   // If authorized, render children
   if (isAuthorized) {

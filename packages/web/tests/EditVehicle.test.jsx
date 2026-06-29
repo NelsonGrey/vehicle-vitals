@@ -4,11 +4,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import EditVehicle from '../src/pages/EditVehicle';
 
+const ROUTE_VIN = '1HGCM82633A004352';
+
 const mockNavigate = vi.fn();
 const mockGetVehicle = vi.fn();
 const mockUpdateVehicle = vi.fn();
 const mockDeleteVehicle = vi.fn();
 const mockDecodeVin = vi.fn();
+const mockTransferVehicle = vi.fn();
+const mockFindVehiclePhotoFromWeb = vi.fn();
 
 vi.mock('../src/hooks/useVehicleOptions', () => ({
   default: () => ({
@@ -46,6 +50,14 @@ vi.mock('../src/utils/vehicleService', () => ({
   decodeVin: (...args) => mockDecodeVin(...args),
 }));
 
+vi.mock('../src/utils/vehicleTransferService', () => ({
+  transferVehicle: (...args) => mockTransferVehicle(...args),
+}));
+
+vi.mock('../src/utils/vehiclePhotoService', () => ({
+  findVehiclePhotoFromWeb: (...args) => mockFindVehiclePhotoFromWeb(...args),
+}));
+
 vi.mock('@vehicle-vitals/shared', () => ({
   getUpcomingMaintenance: vi.fn(() => []),
 }));
@@ -56,7 +68,7 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     useNavigate: () => mockNavigate,
     useLocation: () => ({ state: undefined }),
-    useParams: () => ({ vin: 'TESTVIN123' }),
+    useParams: () => ({ vin: ROUTE_VIN }),
   };
 });
 
@@ -71,13 +83,14 @@ function renderPage() {
 }
 
 const BASE_VEHICLE = {
-  vin: 'TESTVIN123',
+  vin: ROUTE_VIN,
   year: '2020',
   make: 'Toyota',
   model: 'Camry',
   mileage: '45000',
   licensePlate: 'ABC123',
   purchaseDate: '2020-01-01',
+  vehicleStatus: 'active',
 };
 
 describe('EditVehicle page', () => {
@@ -89,6 +102,7 @@ describe('EditVehicle page', () => {
       vi.fn(() => true)
     );
     mockGetVehicle.mockResolvedValue({ ...BASE_VEHICLE });
+    mockFindVehiclePhotoFromWeb.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -105,7 +119,7 @@ describe('EditVehicle page', () => {
       expect(
         screen.getByRole('heading', { name: /edit vehicle/i })
       ).toBeInTheDocument();
-      expect(screen.getByDisplayValue('TESTVIN123')).toBeInTheDocument();
+      expect(screen.getByDisplayValue(ROUTE_VIN)).toBeInTheDocument();
     });
   });
 
@@ -122,11 +136,79 @@ describe('EditVehicle page', () => {
 
     await waitFor(() => {
       expect(mockUpdateVehicle).toHaveBeenCalledWith(
-        'TESTVIN123',
-        expect.objectContaining({ mileage: '50000' })
+        ROUTE_VIN,
+        expect.objectContaining({ mileage: '50000', vehicleStatus: 'active' })
       );
       expect(global.alert).toHaveBeenCalledWith('Vehicle updated successfully');
       expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('saves storage status selection', async () => {
+    mockUpdateVehicle.mockResolvedValue(undefined);
+    renderPage();
+
+    await waitFor(() => screen.getByLabelText(/location status/i));
+    await userEvent.selectOptions(
+      screen.getByLabelText(/location status/i),
+      'stored'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /save changes/i })
+    );
+
+    await waitFor(() => {
+      expect(mockUpdateVehicle).toHaveBeenCalledWith(
+        ROUTE_VIN,
+        expect.objectContaining({ vehicleStatus: 'stored' })
+      );
+    });
+  });
+
+  it('requires recipient email before transferring', async () => {
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'Enter the recipient email before transferring this vehicle.'
+    );
+    expect(mockTransferVehicle).not.toHaveBeenCalled();
+  });
+
+  it('transfers vehicle and navigates to app', async () => {
+    mockTransferVehicle.mockResolvedValue({
+      success: true,
+      recipientEmail: 'recipient@example.com',
+    });
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByPlaceholderText(/recipient account email/i)
+    );
+    await userEvent.type(
+      screen.getByPlaceholderText(/recipient account email/i),
+      'recipient@example.com'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+
+    await waitFor(() => {
+      expect(global.confirm).toHaveBeenCalled();
+      expect(mockTransferVehicle).toHaveBeenCalledWith({
+        vin: ROUTE_VIN,
+        recipientEmail: 'recipient@example.com',
+      });
+      expect(global.alert).toHaveBeenCalledWith(
+        'Vehicle transferred to recipient@example.com.'
+      );
+      expect(mockNavigate).toHaveBeenCalledWith('/app');
     });
   });
 
@@ -143,7 +225,7 @@ describe('EditVehicle page', () => {
 
     await waitFor(() => {
       expect(global.confirm).toHaveBeenCalled();
-      expect(mockDeleteVehicle).toHaveBeenCalledWith('TESTVIN123');
+      expect(mockDeleteVehicle).toHaveBeenCalledWith(ROUTE_VIN);
       expect(global.alert).toHaveBeenCalledWith('Vehicle deleted');
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
@@ -187,9 +269,27 @@ describe('EditVehicle page', () => {
     await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
 
     await waitFor(() => {
-      expect(mockDecodeVin).toHaveBeenCalledWith('TESTVIN123');
+      expect(mockDecodeVin).toHaveBeenCalledWith(ROUTE_VIN);
       expect(screen.getByText(/1 recall/i)).toBeInTheDocument();
       expect(screen.getByText(/source: nhtsa/i)).toBeInTheDocument();
     });
+  });
+
+  it('blocks decode for HIN identifiers', async () => {
+    mockGetVehicle.mockResolvedValue({
+      ...BASE_VEHICLE,
+      vin: 'ABC12345A595',
+      vehicleType: 'Boat',
+    });
+
+    renderPage();
+
+    await waitFor(() => screen.getByRole('button', { name: /decode vin/i }));
+    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'Decode currently supports VIN only. Detected HIN. You can still save this vehicle ID and edit details manually.'
+    );
+    expect(mockDecodeVin).not.toHaveBeenCalled();
   });
 });

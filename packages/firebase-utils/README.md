@@ -16,12 +16,12 @@ npm install @shared/firebase-utils
 import { FirebaseClient } from '@shared/firebase-utils';
 
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: 'your-api-key',
+  authDomain: 'vehicle-vitals-dev.firebaseapp.com',
+  projectId: 'vehicle-vitals-dev',
+  storageBucket: 'vehicle-vitals-dev.appspot.com',
+  messagingSenderId: '123456789',
+  appId: '1:123456789:web:abcdef123456',
 };
 
 const firebase = FirebaseClient.getInstance(firebaseConfig);
@@ -93,6 +93,7 @@ Use environment-specific Firebase configs:
 - `firebase.prod.json` - Production environment
 
 Mobile apps should use corresponding config files:
+
 - `google-services.dev.json` / `GoogleService-Info.dev.plist`
 - `google-services.staging.json` / `GoogleService-Info.staging.plist`
 - `google-services.prod.json` / `GoogleService-Info.prod.plist`

@@ -59,13 +59,13 @@ jobs:
 
           if [[ "$ENVIRONMENT" == "production" ]]; then
             CONFIG_FILE="firebase.prod.json"
-            PROJECT_ID="modulo-squares-prod"
+            PROJECT_ID="vehicle-vitals-prod"
           elif [[ "$ENVIRONMENT" == "staging" ]]; then
             CONFIG_FILE="firebase.staging.json"
-            PROJECT_ID="modulo-squares-staging"
+            PROJECT_ID="vehicle-vitals-staging"
           else
             CONFIG_FILE="firebase.dev.json"
-            PROJECT_ID="modulo-squares-dev"
+            PROJECT_ID="vehicle-vitals-dev"
           fi
 
           # Check if Firebase token is available

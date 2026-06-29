@@ -1,0 +1,3800 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.searchSupportUsersCallable = exports.getSupportAccessContextCallable = exports.recordSupportActionCallable = exports.applyRetentionPolicyCallable = exports.requestUserDataDeletionCallable = exports.requestUserDataExportCallable = exports.createPayableDraftCallable = exports.createInvoiceDraftCallable = exports.setOrganizationMemberRoleCallable = exports.getOrganizationMembersCallable = exports.stripeSubscriptionWebhook = exports.zapierMaintenanceWebhook = exports.consolidateAccountDataCallable = exports.transferVehicleCallable = exports.getZapierWebhookConfigCallable = exports.revokeApiAccessKeyCallable = exports.listApiAccessKeysCallable = exports.createApiAccessKeyCallable = exports.createSubscriptionCheckoutSessionCallable = exports.changeSubscriptionTierCallable = exports.getEffectiveEntitlementsCallable = exports.bootstrapEnterpriseContextCallable = exports.getPremiumEntitlement = exports.verifyPremiumPurchase = exports.createCalendarEventCallable = exports.createCalendarEvent = exports.getMaintenancePlan = exports.getWarrantySummary = exports.getOwnerManuals = exports.checkMaintenanceReminders = exports.sendMaintenanceReminder = exports.getLocalServiceProvidersCallable = exports.getVehicleInsightsCallable = exports.decodeVINCallable = exports.decodeVIN = exports.analyzeAttachmentTextCallable = exports.analyzeUploadedAttachment = void 0;
+exports.runMaintenanceReminderSchedule = runMaintenanceReminderSchedule;
+exports.runMaintenanceReminderSweep = runMaintenanceReminderSweep;
+exports.deriveUpcomingMaintenanceItems = deriveUpcomingMaintenanceItems;
+/* eslint-disable quotes, object-curly-spacing, arrow-parens, operator-linebreak, indent, max-len, quote-props */
+const crypto_1 = require("crypto");
+const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
+const firebase_functions_1 = require("firebase-functions");
+const https_1 = require("firebase-functions/https");
+const logger = __importStar(require("firebase-functions/logger"));
+const https_2 = require("firebase-functions/v2/https");
+const scheduler_1 = require("firebase-functions/v2/scheduler");
+const storage_1 = require("firebase-functions/v2/storage");
+const billing_provider_1 = require("./billing.provider");
+const calendar_provider_1 = require("./calendar.provider");
+const email_provider_1 = require("./email.provider");
+const integration_cache_1 = require("./integration.cache");
+const integrations_config_1 = require("./integrations.config");
+const manuals_provider_1 = require("./manuals.provider");
+const request_guards_1 = require("./request.guards");
+const schedule_provider_1 = require("./schedule.provider");
+const warranty_provider_1 = require("./warranty.provider");
+// Initialize Firebase Admin
+admin.initializeApp();
+const parseCsvEnvList = (value) => (value || '')
+    .split(',')
+    .map(item => item.trim().toLowerCase())
+    .filter(Boolean);
+const SUPER_ADMIN_EMAILS = parseCsvEnvList(process.env.SUPER_ADMIN_EMAILS);
+const SUPER_ADMIN_UIDS = parseCsvEnvList(process.env.SUPER_ADMIN_UIDS);
+const ROLE_RANK = {
+    org_owner: 5,
+    org_admin: 4,
+    billing_admin: 3,
+    support_agent: 2,
+    read_only: 1,
+};
+const tierRank = (tier) => {
+    switch (tier) {
+        case 'enterprise':
+            return 4;
+        case 'premium':
+            return 3;
+        case 'pro':
+            return 2;
+        default:
+            return 1;
+    }
+};
+const normalizeTier = (tier) => {
+    const value = (tier || 'free').toString();
+    if (value === 'enterprise' || value === 'premium' || value === 'pro') {
+        return value;
+    }
+    return 'free';
+};
+const getVehicleLimitForTier = (tier) => {
+    switch (tier) {
+        case 'enterprise':
+            return 999999;
+        case 'premium':
+            return 25;
+        case 'pro':
+            return 10;
+        default:
+            return 2;
+    }
+};
+const getFeatureSetForTier = (tier) => ({
+    vehicle_limit: true,
+    advanced_reminders: tier !== 'free',
+    calendar_sync: tier !== 'free',
+    pdf_export: tier !== 'free',
+    excel_export: tier !== 'free',
+    ai_analysis: tier !== 'free',
+    ai_predictions: tier === 'premium' || tier === 'enterprise',
+    cloud_sync: tier === 'premium' || tier === 'enterprise',
+    maintenance_planning_12mo: tier !== 'free',
+    maintenance_planning_36mo: tier === 'premium' || tier === 'enterprise',
+    ad_free: tier === 'premium' || tier === 'enterprise',
+    reduced_ads: tier !== 'free',
+    priority_support: tier !== 'free',
+    phone_support: tier === 'premium' || tier === 'enterprise',
+    multi_vehicle_dashboard: tier !== 'free',
+    api_access: tier === 'premium' || tier === 'enterprise',
+    zapier_integration: tier === 'premium' || tier === 'enterprise',
+});
+const getDefaultOrgId = (uid) => `personal_${uid}`;
+const normalizeMoneyAmount = (value) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+        throw new https_2.HttpsError('invalid-argument', 'Amount values must be numeric and non-negative');
+    }
+    return Math.round(parsed * 100) / 100;
+};
+const toOrgRole = (value) => {
+    const role = (value || 'read_only').toString();
+    return ROLE_RANK[role] ? role : 'read_only';
+};
+async function writeAuditEvent(params) {
+    const db = admin.firestore();
+    await db.collection(`orgs/${params.orgId}/audit`).add({
+        actorUid: params.actorUid,
+        action: params.action,
+        targetType: params.targetType,
+        targetId: params.targetId,
+        details: params.details || {},
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+async function ensurePersonalOrganization(uid, email) {
+    const db = admin.firestore();
+    const orgId = getDefaultOrgId(uid);
+    const orgRef = db.doc(`orgs/${orgId}`);
+    const memberRef = db.doc(`orgs/${orgId}/members/${uid}`);
+    const userMembershipRef = db.doc(`users/${uid}/orgMemberships/${orgId}`);
+    const [orgSnap, memberSnap] = await Promise.all([
+        orgRef.get(),
+        memberRef.get(),
+    ]);
+    const batch = db.batch();
+    if (!orgSnap.exists) {
+        batch.set(orgRef, {
+            orgId,
+            name: `Personal Garage (${uid.slice(0, 6)})`,
+            type: 'personal',
+            planTier: 'free',
+            createdByUid: uid,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    }
+    if (!memberSnap.exists) {
+        batch.set(memberRef, {
+            uid,
+            email: (email || '').toString(),
+            role: 'org_owner',
+            status: 'active',
+            joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    }
+    batch.set(userMembershipRef, {
+        orgId,
+        role: 'org_owner',
+        status: 'active',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    await batch.commit();
+    return orgId;
+}
+async function getPrimaryOrgIdForUser(uid) {
+    const db = admin.firestore();
+    const memberships = await db
+        .collection(`users/${uid}/orgMemberships`)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+    if (!memberships.empty) {
+        return memberships.docs[0].id;
+    }
+    return ensurePersonalOrganization(uid);
+}
+async function resolveEffectiveEntitlements(uid, requestedOrgId) {
+    var _a, _b, _c;
+    const db = admin.firestore();
+    const fallbackOrgId = await getPrimaryOrgIdForUser(uid);
+    const orgId = requestedOrgId || fallbackOrgId;
+    const [subscriptionSnap, premiumSnap, orgSnap] = await Promise.all([
+        db.doc(`users/${uid}/subscription/current`).get(),
+        db.doc(`users/${uid}/entitlements/premium`).get(),
+        db.doc(`orgs/${orgId}`).get(),
+    ]);
+    const subscriptionTier = normalizeTier((_a = subscriptionSnap.data()) === null || _a === void 0 ? void 0 : _a.tier);
+    const premiumActive = ((_b = premiumSnap.data()) === null || _b === void 0 ? void 0 : _b.active) === true;
+    const orgTier = normalizeTier((_c = orgSnap.data()) === null || _c === void 0 ? void 0 : _c.planTier);
+    let effectiveTier = subscriptionTier;
+    if (tierRank(orgTier) > tierRank(effectiveTier)) {
+        effectiveTier = orgTier;
+    }
+    if (premiumActive) {
+        effectiveTier = 'premium';
+    }
+    return {
+        orgId,
+        tier: effectiveTier,
+        vehicleLimit: getVehicleLimitForTier(effectiveTier),
+        features: getFeatureSetForTier(effectiveTier),
+    };
+}
+const hashApiAccessKey = (rawKey) => {
+    const salt = (process.env.API_KEY_HASH_SALT ||
+        process.env.GCLOUD_PROJECT ||
+        'vehicle-vitals')
+        .toString()
+        .trim() || 'vehicle-vitals';
+    return (0, crypto_1.scryptSync)(rawKey, salt, 64).toString('hex');
+};
+const resolveFunctionBaseUrl = () => {
+    const explicit = (process.env.API_WEBHOOK_BASE_URL || '').trim();
+    if (explicit) {
+        return explicit.replace(/\/$/, '');
+    }
+    const projectId = (process.env.GCLOUD_PROJECT ||
+        process.env.FIREBASE_PROJECT ||
+        admin.app().options.projectId ||
+        '')
+        .toString()
+        .trim();
+    if (!projectId) {
+        return '';
+    }
+    return `https://us-central1-${projectId}.cloudfunctions.net`;
+};
+const getRequestBodyBuffer = (request) => {
+    const rawBody = request.rawBody;
+    if (Buffer.isBuffer(rawBody)) {
+        return rawBody;
+    }
+    if (typeof request.body === 'string') {
+        return Buffer.from(request.body, 'utf8');
+    }
+    return Buffer.from(JSON.stringify(request.body || {}), 'utf8');
+};
+const isWebhookSignatureValid = (request, secret) => {
+    const rawSignature = (request.headers['x-vv-signature'] ||
+        request.headers['x-zapier-signature'] ||
+        '')
+        .toString()
+        .trim();
+    if (!rawSignature) {
+        return false;
+    }
+    const normalizedSignature = rawSignature.startsWith('sha256=')
+        ? rawSignature.slice(7)
+        : rawSignature;
+    if (!/^[a-f0-9]{64}$/i.test(normalizedSignature)) {
+        return false;
+    }
+    const expectedSignature = (0, crypto_1.createHmac)('sha256', secret)
+        .update(getRequestBodyBuffer(request))
+        .digest('hex');
+    const providedBuffer = Buffer.from(normalizedSignature.toLowerCase(), 'hex');
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    if (providedBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+    return (0, crypto_1.timingSafeEqual)(expectedBuffer, providedBuffer);
+};
+const parseStripeSignatureHeader = (signatureHeaderRaw) => {
+    const signatureHeader = (signatureHeaderRaw || '').toString().trim();
+    if (!signatureHeader) {
+        return null;
+    }
+    const segments = signatureHeader.split(',');
+    let timestamp = '';
+    let v1 = '';
+    for (const segment of segments) {
+        const [key, value] = segment.split('=');
+        if (key === 't' && value) {
+            timestamp = value.trim();
+        }
+        if (key === 'v1' && value) {
+            v1 = value.trim();
+        }
+    }
+    if (!timestamp || !v1) {
+        return null;
+    }
+    return { timestamp, v1 };
+};
+const isStripeWebhookSignatureValid = (request, secret) => {
+    const parsed = parseStripeSignatureHeader((request.headers['stripe-signature'] || '').toString());
+    if (!parsed) {
+        return false;
+    }
+    const toleranceSeconds = 5 * 60;
+    const timestampNumber = Number(parsed.timestamp);
+    if (!Number.isFinite(timestampNumber)) {
+        return false;
+    }
+    if (Math.abs(Math.floor(Date.now() / 1000) - timestampNumber) > toleranceSeconds) {
+        return false;
+    }
+    const payloadBuffer = getRequestBodyBuffer(request);
+    const signedPayload = `${parsed.timestamp}.${payloadBuffer.toString('utf8')}`;
+    const expectedSignature = (0, crypto_1.createHmac)('sha256', secret)
+        .update(signedPayload)
+        .digest('hex');
+    if (!/^[a-f0-9]{64}$/i.test(parsed.v1)) {
+        return false;
+    }
+    const provided = Buffer.from(parsed.v1.toLowerCase(), 'hex');
+    const expected = Buffer.from(expectedSignature, 'hex');
+    if (provided.length !== expected.length) {
+        return false;
+    }
+    return (0, crypto_1.timingSafeEqual)(expected, provided);
+};
+const getStripePriceLookup = () => {
+    const mapping = {};
+    const candidates = [
+        { envName: 'STRIPE_PRICE_ID_PRO_MONTHLY', tier: 'pro' },
+        { envName: 'STRIPE_PRICE_ID_PRO_ANNUAL', tier: 'pro' },
+        { envName: 'STRIPE_PRICE_ID_PREMIUM_MONTHLY', tier: 'premium' },
+        { envName: 'STRIPE_PRICE_ID_PREMIUM_ANNUAL', tier: 'premium' },
+    ];
+    for (const candidate of candidates) {
+        const value = (process.env[candidate.envName] || '').toString().trim();
+        if (value) {
+            mapping[value] = candidate.tier;
+        }
+    }
+    return mapping;
+};
+const getPriceIdFromStripeObject = (objectData) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+    const primaryPriceId = ((_c = (_b = (_a = objectData === null || objectData === void 0 ? void 0 : objectData.display_items) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.price) === null || _c === void 0 ? void 0 : _c.id) ||
+        ((_g = (_f = (_e = (_d = objectData === null || objectData === void 0 ? void 0 : objectData.line_items) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e[0]) === null || _f === void 0 ? void 0 : _f.price) === null || _g === void 0 ? void 0 : _g.id) ||
+        ((_l = (_k = (_j = (_h = objectData === null || objectData === void 0 ? void 0 : objectData.items) === null || _h === void 0 ? void 0 : _h.data) === null || _j === void 0 ? void 0 : _j[0]) === null || _k === void 0 ? void 0 : _k.price) === null || _l === void 0 ? void 0 : _l.id) ||
+        ((_m = objectData === null || objectData === void 0 ? void 0 : objectData.plan) === null || _m === void 0 ? void 0 : _m.id) ||
+        ((_o = objectData === null || objectData === void 0 ? void 0 : objectData.price) === null || _o === void 0 ? void 0 : _o.id);
+    return (primaryPriceId || '').toString().trim();
+};
+const resolveSubscriptionTierFromStripeObject = (objectData) => {
+    var _a, _b;
+    const metadataTier = (((_a = objectData === null || objectData === void 0 ? void 0 : objectData.metadata) === null || _a === void 0 ? void 0 : _a.targetTier) ||
+        ((_b = objectData === null || objectData === void 0 ? void 0 : objectData.metadata) === null || _b === void 0 ? void 0 : _b.tier) ||
+        '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    if (metadataTier === 'pro' || metadataTier === 'premium') {
+        return metadataTier;
+    }
+    const priceId = getPriceIdFromStripeObject(objectData);
+    if (!priceId) {
+        return null;
+    }
+    const priceLookup = getStripePriceLookup();
+    return priceLookup[priceId] || null;
+};
+const resolveBillingPeriodFromStripeObject = (objectData) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+    const metadataPeriod = (((_a = objectData === null || objectData === void 0 ? void 0 : objectData.metadata) === null || _a === void 0 ? void 0 : _a.billingPeriod) || '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    if (metadataPeriod === 'annual') {
+        return 'annual';
+    }
+    const interval = ((_f = (_e = (_d = (_c = (_b = objectData === null || objectData === void 0 ? void 0 : objectData.items) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.price) === null || _e === void 0 ? void 0 : _e.recurring) === null || _f === void 0 ? void 0 : _f.interval) ||
+        ((_l = (_k = (_j = (_h = (_g = objectData === null || objectData === void 0 ? void 0 : objectData.line_items) === null || _g === void 0 ? void 0 : _g.data) === null || _h === void 0 ? void 0 : _h[0]) === null || _j === void 0 ? void 0 : _j.price) === null || _k === void 0 ? void 0 : _k.recurring) === null || _l === void 0 ? void 0 : _l.interval) ||
+        ((_m = objectData === null || objectData === void 0 ? void 0 : objectData.plan) === null || _m === void 0 ? void 0 : _m.interval) ||
+        ((_p = (_o = objectData === null || objectData === void 0 ? void 0 : objectData.price) === null || _o === void 0 ? void 0 : _o.recurring) === null || _p === void 0 ? void 0 : _p.interval);
+    return interval === 'year' ? 'annual' : 'monthly';
+};
+const resolveSubscriptionStatusFromStripeObject = (objectData) => {
+    const status = ((objectData === null || objectData === void 0 ? void 0 : objectData.status) || '').toString().trim().toLowerCase();
+    if (status === 'trialing') {
+        return 'trialing';
+    }
+    if (status === 'past_due' || status === 'unpaid' || status === 'incomplete') {
+        return 'past_due';
+    }
+    if (status === 'canceled' ||
+        status === 'cancelled' ||
+        status === 'incomplete_expired') {
+        return 'canceled';
+    }
+    return 'active';
+};
+const resolveUidFromStripeObject = async (objectData) => {
+    var _a, _b;
+    const metadataUid = (((_a = objectData === null || objectData === void 0 ? void 0 : objectData.metadata) === null || _a === void 0 ? void 0 : _a.uid) || '').toString().trim();
+    if (metadataUid) {
+        return metadataUid;
+    }
+    const customerId = ((objectData === null || objectData === void 0 ? void 0 : objectData.customer) || '').toString().trim();
+    if (!customerId) {
+        return '';
+    }
+    const customerLookup = await admin
+        .firestore()
+        .doc(`stripeCustomerLookup/${customerId}`)
+        .get();
+    return (((_b = customerLookup.data()) === null || _b === void 0 ? void 0 : _b.uid) || '').toString().trim();
+};
+const toTimestampFromUnixSeconds = (value) => {
+    const numeric = Number(value || 0);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+        return null;
+    }
+    return firestore_1.Timestamp.fromDate(new Date(numeric * 1000));
+};
+async function applySubscriptionTierState(params) {
+    const db = admin.firestore();
+    const subscriptionRef = db.doc(`users/${params.uid}/subscription/current`);
+    const premiumEntitlementRef = db.doc(`users/${params.uid}/entitlements/premium`);
+    const now = firestore_1.Timestamp.now();
+    const renewalDate = params.targetTier === 'free'
+        ? null
+        : firestore_1.Timestamp.fromDate(new Date(Date.now() +
+            (params.billingPeriod === 'annual'
+                ? 365 * 24 * 60 * 60 * 1000
+                : 30 * 24 * 60 * 60 * 1000)));
+    let previousTier = 'free';
+    await db.runTransaction(async (tx) => {
+        var _a;
+        const currentSubscriptionSnap = await tx.get(subscriptionRef);
+        previousTier = normalizeTier((_a = currentSubscriptionSnap.data()) === null || _a === void 0 ? void 0 : _a.tier);
+        tx.set(subscriptionRef, {
+            tier: params.targetTier,
+            status: params.status || 'active',
+            currentPeriodStart: now,
+            currentPeriodEnd: renewalDate,
+            renewalDate,
+            autoRenew: params.targetTier !== 'free',
+            paymentMethod: params.paymentMethod === undefined
+                ? params.targetTier === 'free'
+                    ? null
+                    : 'stripe'
+                : params.paymentMethod,
+            stripeCustomerId: (params.stripeCustomerId || '').toString() || null,
+            stripeSubscriptionId: (params.stripeSubscriptionId || '').toString() || null,
+            lastPaymentError: params.lastPaymentError === undefined
+                ? null
+                : params.lastPaymentError,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        if (params.targetTier === 'premium') {
+            tx.set(premiumEntitlementRef, {
+                active: true,
+                verified: false,
+                verificationState: (params.verificationState || 'simulated_checkout').toString(),
+                verificationProvider: 'subscription_settlement',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        }
+        if (previousTier === 'premium' && params.targetTier !== 'premium') {
+            tx.set(premiumEntitlementRef, {
+                active: false,
+                verified: false,
+                verificationState: 'revoked_by_downgrade',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        }
+    });
+    const orgId = await ensurePersonalOrganization(params.uid);
+    const entitlements = await resolveEffectiveEntitlements(params.uid, orgId);
+    return {
+        previousTier,
+        orgId,
+        entitlements,
+    };
+}
+async function requireFeatureEntitlement(uid, featureName) {
+    var _a;
+    const entitlements = await resolveEffectiveEntitlements(uid);
+    if (!((_a = entitlements.features) === null || _a === void 0 ? void 0 : _a[featureName])) {
+        throw new https_2.HttpsError('permission-denied', `${featureName} is not enabled for the current subscription`);
+    }
+    return entitlements;
+}
+async function requireOrgRole(uid, orgId, allowedRoles) {
+    var _a;
+    const db = admin.firestore();
+    const memberSnap = await db.doc(`orgs/${orgId}/members/${uid}`).get();
+    if (!memberSnap.exists) {
+        throw new https_2.HttpsError('permission-denied', 'User is not an org member');
+    }
+    const role = toOrgRole((_a = memberSnap.data()) === null || _a === void 0 ? void 0 : _a.role);
+    if (!allowedRoles.includes(role)) {
+        throw new https_2.HttpsError('permission-denied', 'Insufficient organization role');
+    }
+    return role;
+}
+async function reserveIdempotencyKey(params) {
+    const key = (params.idempotencyKey || '').trim();
+    if (!key) {
+        return { isReplay: false };
+    }
+    const db = admin.firestore();
+    const digest = (0, crypto_1.createHash)('sha256')
+        .update(`${params.uid}:${params.operation}:${key}`)
+        .digest('hex');
+    const ref = db.doc(`idempotencyKeys/${digest}`);
+    const snap = await ref.get();
+    if (snap.exists) {
+        const data = snap.data() || {};
+        if (data.status === 'completed' && typeof data.result === 'object') {
+            return {
+                isReplay: true,
+                result: data.result,
+            };
+        }
+        throw new https_2.HttpsError('already-exists', 'Duplicate idempotency key is currently processing');
+    }
+    await ref.create({
+        uid: params.uid,
+        operation: params.operation,
+        status: 'in_progress',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { isReplay: false, ref };
+}
+async function completeIdempotencyKey(reservation, result) {
+    if (!reservation.ref) {
+        return;
+    }
+    await reservation.ref.set({
+        status: 'completed',
+        result,
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+}
+async function markIdempotencyFailed(reservation, reason) {
+    if (!reservation.ref) {
+        return;
+    }
+    await reservation.ref.set({
+        status: 'failed',
+        error: reason,
+        failedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+}
+const getSupportAccessContext = (request) => {
+    var _a;
+    const auth = request.auth;
+    if (!auth) {
+        return { isSuperAdmin: false, accessReason: 'Missing auth context' };
+    }
+    const uid = (auth.uid || '').toLowerCase();
+    const email = (((_a = auth.token) === null || _a === void 0 ? void 0 : _a.email) || '').toLowerCase();
+    const token = auth.token || {};
+    const isClaimedAdmin = token.superAdmin === true ||
+        token.admin === true ||
+        token.supportAdmin === true;
+    const isAllowlisted = SUPER_ADMIN_UIDS.includes(uid) || SUPER_ADMIN_EMAILS.includes(email);
+    if (isClaimedAdmin) {
+        return { isSuperAdmin: true, accessReason: 'Granted by custom claim' };
+    }
+    if (isAllowlisted) {
+        return {
+            isSuperAdmin: true,
+            accessReason: 'Granted by environment allowlist',
+        };
+    }
+    return {
+        isSuperAdmin: false,
+        accessReason: 'User is not a super-administrator',
+    };
+};
+const requireSuperAdmin = (request) => {
+    const access = getSupportAccessContext(request);
+    if (!access.isSuperAdmin) {
+        throw new https_2.HttpsError('permission-denied', access.accessReason);
+    }
+    return access;
+};
+const buildSupportUserSummary = async (userRecord) => {
+    const uid = userRecord.uid;
+    const db = admin.firestore();
+    const subscriptionSnap = await db
+        .doc(`users/${uid}/subscription/current`)
+        .get();
+    const entitlementSnap = await db
+        .doc(`users/${uid}/entitlements/premium`)
+        .get();
+    const vehicleSnap = await db.collection(`users/${uid}/vehicles`).get();
+    const subscription = subscriptionSnap.data() || {};
+    const entitlement = entitlementSnap.data() || {};
+    const vehicleCount = vehicleSnap.docs.filter(doc => doc.id !== '__preferences__').length;
+    const tier = (subscription.tier || 'free').toString();
+    return {
+        uid,
+        email: (userRecord.email || '').toString(),
+        displayName: (userRecord.displayName || '').toString(),
+        disabled: userRecord.disabled === true,
+        createdAt: userRecord.metadata.creationTime || null,
+        lastSignInTime: userRecord.metadata.lastSignInTime || null,
+        subscriptionTier: tier,
+        subscriptionStatus: (subscription.status || 'active').toString(),
+        vehicleCount,
+        premiumActive: entitlement.active === true,
+        premiumVerified: entitlement.verified === true,
+        vehicleLimit: tier === 'enterprise'
+            ? 999999
+            : tier === 'premium'
+                ? 25
+                : tier === 'pro'
+                    ? 10
+                    : 2,
+    };
+};
+const TRANSFERABLE_VEHICLE_SUBCOLLECTIONS = [
+    'maintenance',
+    'reminders',
+    'attachmentAnalyses',
+];
+async function resolveVehicleTransferTarget(params) {
+    const explicitUid = (params.recipientUid || '').toString().trim();
+    if (explicitUid) {
+        const userRecord = await admin.auth().getUser(explicitUid);
+        return {
+            uid: userRecord.uid,
+            email: (userRecord.email || '').toString(),
+        };
+    }
+    const recipientEmail = (params.recipientEmail || '').toString().trim();
+    if (!recipientEmail) {
+        throw new https_2.HttpsError('invalid-argument', 'recipientEmail or recipientUid is required');
+    }
+    try {
+        const userRecord = await admin.auth().getUserByEmail(recipientEmail);
+        return {
+            uid: userRecord.uid,
+            email: (userRecord.email || recipientEmail).toString(),
+        };
+    }
+    catch (error) {
+        throw new https_2.HttpsError('not-found', 'Recipient account was not found for that email');
+    }
+}
+async function queueVehicleTransferOperations(params) {
+    params.batch.set(params.targetVehicleRef, Object.assign(Object.assign({}, params.sourceVehicleData), { transferredFromUid: params.actorUid, transferredToUid: params.recipientUid, transferredAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }), { merge: true });
+    for (const subcollectionName of TRANSFERABLE_VEHICLE_SUBCOLLECTIONS) {
+        const sourceSubcollection = params.sourceVehicleRef.collection(subcollectionName);
+        const sourceSnapshot = await sourceSubcollection.get();
+        sourceSnapshot.docs.forEach(docSnap => {
+            const targetDocRef = params.targetVehicleRef
+                .collection(subcollectionName)
+                .doc(docSnap.id);
+            params.batch.set(targetDocRef, docSnap.data(), { merge: true });
+            params.batch.delete(docSnap.ref);
+        });
+    }
+    params.batch.delete(params.sourceVehicleRef);
+}
+/**
+ * Firestore CRUD helpers for Firebase Functions
+ */
+class FirestoreCrudHelpers {
+    /**
+     * Query documents with filters
+     * @param {string} collection The collection path to query
+     * @param {object} options Query options including filters, ordering, limits
+     * @return {Promise<any[]>} Array of documents with their data
+     */
+    static async queryDocuments(collection, options) {
+        // eslint-disable-line @typescript-eslint/no-explicit-any
+        let query = this.db.collection(collection);
+        // Apply filters
+        if (options === null || options === void 0 ? void 0 : options.filters) {
+            options.filters.forEach(filter => {
+                query = query.where(filter.field, filter.operator, filter.value);
+            });
+        }
+        // Apply ordering
+        if (options === null || options === void 0 ? void 0 : options.orderBy) {
+            query = query.orderBy(options.orderBy.field, options.orderBy.direction);
+        }
+        // Apply limit
+        if (options === null || options === void 0 ? void 0 : options.limit) {
+            query = query.limit(options.limit);
+        }
+        // Apply offset (startAfter) - simplified version
+        if (options === null || options === void 0 ? void 0 : options.offset) {
+            // In practice you'd need a document reference
+            // query = query.startAfter(options.offset);
+        }
+        const snapshot = await query.get();
+        return snapshot.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
+    }
+}
+FirestoreCrudHelpers.db = admin.firestore();
+// Start writing functions
+// https://firebase.google.com/docs/functions/typescript
+// For cost control, you can set the maximum number of containers that can be
+// running at the same time. This helps mitigate the impact of unexpected
+// traffic spikes by instead downgrading performance. This limit is a
+// per-function limit. You can override the limit for each function using the
+// `maxInstances` option in the function's options, e.g.
+// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
+// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
+// functions should each use functions.runWith({ maxInstances: 10 }) instead.
+// In the v1 API, each function can only serve one request per container, so
+// this will be the maximum concurrent request count.
+(0, firebase_functions_1.setGlobalOptions)({ maxInstances: 10 });
+function compactDefined(value) {
+    return Object.fromEntries(Object.entries(value).filter(([, entryValue]) => entryValue !== undefined));
+}
+function inferDocumentCategory(fileName, mimeType) {
+    const lower = fileName.toLowerCase();
+    const mime = (mimeType || '').toLowerCase();
+    if (lower.includes('receipt') || lower.includes('invoice')) {
+        return lower.includes('invoice') ? 'invoice' : 'receipt';
+    }
+    if (mime.startsWith('image/')) {
+        return 'image';
+    }
+    if (mime.includes('pdf') ||
+        mime.includes('word') ||
+        mime.includes('sheet') ||
+        mime.includes('text')) {
+        return 'document';
+    }
+    return 'other';
+}
+function inferServiceType(fileName) {
+    const lower = fileName.toLowerCase();
+    const mapping = [
+        { pattern: /oil/, label: 'Oil Change' },
+        { pattern: /tire|tyre|rotation/, label: 'Tire Service' },
+        { pattern: /brake/, label: 'Brake Service' },
+        { pattern: /battery/, label: 'Battery Service' },
+        { pattern: /inspection/, label: 'Inspection' },
+        { pattern: /alignment/, label: 'Alignment' },
+    ];
+    const match = mapping.find(item => item.pattern.test(lower));
+    return match === null || match === void 0 ? void 0 : match.label;
+}
+function extractCost(value) {
+    const text = value.toLowerCase();
+    const explicit = text.match(/(?:total|amount|invoice|paid|cost)\D{0,8}(\d{1,5}(?:[.,]\d{2})?)/i) || text.match(/\$(\d{1,5}(?:[.,]\d{2})?)/);
+    if (!explicit)
+        return undefined;
+    const normalized = explicit[1].replace(',', '.');
+    const parsed = Number(normalized);
+    if (!Number.isFinite(parsed) || parsed <= 0)
+        return undefined;
+    return Number(parsed.toFixed(2));
+}
+function extractMileage(value) {
+    const mileageMatch = value.match(/(\d{1,3}(?:,\d{3})+|\d{4,6})\s?(?:mi|miles|km)\b/i);
+    if (!mileageMatch)
+        return undefined;
+    const parsed = Number(mileageMatch[1].replace(/,/g, ''));
+    return Number.isFinite(parsed) ? parsed : undefined;
+}
+function toIsoDate(date) {
+    if (isNaN(date.getTime()))
+        return undefined;
+    return date.toISOString().slice(0, 10);
+}
+function extractServiceDate(value) {
+    const isoMatch = value.match(/\b(\d{4})[-_/](\d{2})[-_/](\d{2})\b/);
+    if (isoMatch) {
+        return toIsoDate(new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T00:00:00Z`));
+    }
+    const usMatch = value.match(/\b(\d{1,2})[-_/](\d{1,2})[-_/](\d{2,4})\b/);
+    if (usMatch) {
+        const month = usMatch[1].padStart(2, '0');
+        const day = usMatch[2].padStart(2, '0');
+        const year = usMatch[3].length === 2 ? `20${usMatch[3]}` : usMatch[3];
+        return toIsoDate(new Date(`${year}-${month}-${day}T00:00:00Z`));
+    }
+    return undefined;
+}
+async function callGeminiAnalysis(bucketName, objectPath, mimeType) {
+    var _a, _b, _c, _d, _e, _f;
+    try {
+        const projectId = process.env.GCLOUD_PROJECT ||
+            process.env.GOOGLE_CLOUD_PROJECT ||
+            admin.app().options.projectId;
+        if (!projectId) {
+            logger.warn('Gemini: no project ID available, skipping');
+            return null;
+        }
+        // Download file bytes from Storage
+        const bucket = admin.storage().bucket(bucketName);
+        const file = bucket.file(objectPath);
+        const [fileBuffer] = await file.download();
+        const base64Data = fileBuffer.toString('base64');
+        // Cap at 10 MB to avoid Gemini payload limits on very large files
+        if (fileBuffer.byteLength > 10 * 1024 * 1024) {
+            logger.warn('Gemini: file too large (>10 MB), skipping', { objectPath });
+            return null;
+        }
+        const SUPPORTED_MIMES = [
+            'application/pdf',
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/webp',
+            'image/heic',
+            'image/heif',
+            'image/gif',
+        ];
+        const effectiveMime = SUPPORTED_MIMES.includes(mimeType)
+            ? mimeType
+            : 'application/pdf';
+        // Load Vertex SDK lazily so function discovery during deploy stays fast.
+        const { VertexAI } = await import('@google-cloud/vertexai');
+        const vertexAI = new VertexAI({
+            project: projectId,
+            location: 'us-central1',
+        });
+        const model = vertexAI.getGenerativeModel({
+            model: 'gemini-2.0-flash-001',
+            generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0,
+            },
+        });
+        const prompt = `You are a vehicle document parser. Analyze the attached document and extract structured data.
+
+Return a JSON object with ONLY these fields (omit any field you cannot find):
+{
+  "documentCategory": "receipt" | "invoice" | "image" | "document" | "other",
+  "serviceType": "short description of the service (e.g. Oil Change, Tire Rotation, Brake Service, Annual Inspection, etc.)",
+  "totalCost": <number, dollars, no currency symbol>,
+  "currency": "USD",
+  "serviceDate": "YYYY-MM-DD",
+  "mileage": <number, odometer reading if present>,
+  "rawText": "full text content of the document in a single string"
+}
+
+Rules:
+- Extract costs as plain numbers (e.g. 89.99, not "$89.99")
+- If the document has multiple line items, use the grand total for totalCost
+- Use the document date as serviceDate (not today's date)
+- Omit any field that is not clearly present in the document
+- For documentCategory: receipt = retail receipt, invoice = professional service invoice, image = photo with no text, document = general document`;
+        const result = await model.generateContent({
+            contents: [
+                {
+                    role: 'user',
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: effectiveMime, data: base64Data } },
+                    ],
+                },
+            ],
+        });
+        const responseText = ((_f = (_e = (_d = (_c = (_b = (_a = result.response) === null || _a === void 0 ? void 0 : _a.candidates) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.content) === null || _d === void 0 ? void 0 : _d.parts) === null || _e === void 0 ? void 0 : _e[0]) === null || _f === void 0 ? void 0 : _f.text) || '';
+        if (!responseText)
+            return null;
+        // Strip markdown code fences if Gemini wraps the JSON
+        const cleaned = responseText
+            .replace(/^```(?:json)?\s*/i, '')
+            .replace(/\s*```$/i, '')
+            .trim();
+        const parsed = JSON.parse(cleaned);
+        return parsed;
+    }
+    catch (err) {
+        logger.warn('Gemini analysis failed, falling back to heuristics', {
+            error: String(err),
+        });
+        return null;
+    }
+}
+function buildAttachmentAnalysis(objectName, mimeType, customMetadata, gemini) {
+    const fileName = objectName.split('/').pop() || objectName;
+    const metadataText = [
+        fileName,
+        customMetadata === null || customMetadata === void 0 ? void 0 : customMetadata.title,
+        customMetadata === null || customMetadata === void 0 ? void 0 : customMetadata.description,
+        customMetadata === null || customMetadata === void 0 ? void 0 : customMetadata.notes,
+        customMetadata === null || customMetadata === void 0 ? void 0 : customMetadata.ocrText,
+        gemini === null || gemini === void 0 ? void 0 : gemini.rawText,
+    ]
+        .filter(Boolean)
+        .join(' ');
+    // Prefer Gemini-extracted values; fall back to heuristics for any missing field
+    const heuristicCategory = inferDocumentCategory(fileName, mimeType);
+    const heuristicServiceType = inferServiceType(metadataText);
+    const heuristicCost = extractCost(metadataText);
+    const heuristicDate = extractServiceDate(metadataText);
+    const heuristicMileage = extractMileage(metadataText);
+    const geminiCategory = gemini === null || gemini === void 0 ? void 0 : gemini.documentCategory;
+    const validCategories = [
+        'receipt',
+        'invoice',
+        'image',
+        'document',
+        'other',
+    ];
+    const extracted = compactDefined({
+        documentCategory: geminiCategory && validCategories.includes(geminiCategory)
+            ? geminiCategory
+            : heuristicCategory,
+        serviceType: (gemini === null || gemini === void 0 ? void 0 : gemini.serviceType) || heuristicServiceType,
+        totalCost: typeof (gemini === null || gemini === void 0 ? void 0 : gemini.totalCost) === 'number' ? gemini.totalCost : heuristicCost,
+        currency: (gemini === null || gemini === void 0 ? void 0 : gemini.currency) || 'USD',
+        serviceDate: (gemini === null || gemini === void 0 ? void 0 : gemini.serviceDate) || heuristicDate,
+        mileage: typeof (gemini === null || gemini === void 0 ? void 0 : gemini.mileage) === 'number' ? gemini.mileage : heuristicMileage,
+    });
+    const confidenceSignals = [
+        extracted.documentCategory !== 'other',
+        Boolean(extracted.serviceType),
+        typeof extracted.totalCost === 'number',
+        Boolean(extracted.serviceDate),
+        typeof extracted.mileage === 'number',
+    ].filter(Boolean).length;
+    // Gemini analysis earns a base confidence bonus
+    const geminiBonus = gemini ? 0.3 : 0;
+    const confidence = Math.min(0.25 + geminiBonus + confidenceSignals * 0.1, 0.95);
+    return { extracted, confidence, sourceText: metadataText };
+}
+function parseAttachmentPath(path) {
+    const match = path.match(/^users\/([^/]+)\/vehicles\/([^/]+)\/(maintenance|records)\/([^/]+)\/.+/);
+    if (!match)
+        return null;
+    return {
+        uid: match[1],
+        vin: match[2],
+        section: match[3],
+        parentId: match[4],
+    };
+}
+async function upsertAttachmentAnalysis(params) {
+    const { uid, vin, objectPath, bucket, contentType, sizeBytes, customMetadata, forceOcrText, skipGemini, } = params;
+    const pathContext = parseAttachmentPath(objectPath);
+    if (!pathContext) {
+        throw new https_2.HttpsError('invalid-argument', 'Invalid attachment storage path');
+    }
+    if (pathContext.uid !== uid) {
+        throw new https_2.HttpsError('permission-denied', 'Attachment path does not match authenticated user');
+    }
+    if (pathContext.vin !== vin) {
+        throw new https_2.HttpsError('invalid-argument', 'Attachment path VIN does not match request VIN');
+    }
+    const db = admin.firestore();
+    const mergedMetadata = Object.assign(Object.assign({}, (customMetadata || {})), (forceOcrText ? { ocrText: forceOcrText } : {}));
+    // Attempt Gemini analysis if we have a bucket reference and haven't been asked to skip
+    let geminiResult = null;
+    const effectiveBucket = bucket || admin.app().options.storageBucket || null;
+    const geminiEnabledMimes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/heic',
+        'image/heif',
+        'image/gif',
+    ];
+    const mimeForGemini = (contentType || '').toLowerCase();
+    const canUseGemini = !skipGemini &&
+        !forceOcrText &&
+        effectiveBucket &&
+        (geminiEnabledMimes.includes(mimeForGemini) || mimeForGemini === '');
+    if (canUseGemini && effectiveBucket) {
+        logger.info('Running Gemini analysis', { objectPath, contentType });
+        geminiResult = await callGeminiAnalysis(effectiveBucket, objectPath, mimeForGemini || 'application/pdf');
+        if (geminiResult) {
+            logger.info('Gemini analysis succeeded', {
+                objectPath,
+                serviceType: geminiResult.serviceType,
+                totalCost: geminiResult.totalCost,
+                confidence: 'computed-after-merge',
+            });
+        }
+    }
+    const { extracted, confidence, sourceText } = buildAttachmentAnalysis(objectPath, contentType || undefined, mergedMetadata, geminiResult);
+    const analysisDocId = encodeURIComponent(objectPath);
+    const analysisData = {
+        path: objectPath,
+        bucket: bucket || null,
+        contentType: contentType || null,
+        sizeBytes: typeof sizeBytes === 'number' ? sizeBytes : null,
+        fileName: objectPath.split('/').pop() || objectPath,
+        section: pathContext.section,
+        parentId: pathContext.parentId,
+        extracted,
+        confidence,
+        sourceText,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    await db
+        .doc(`users/${uid}/vehicles/${vin}/attachmentAnalyses/${analysisDocId}`)
+        .set(analysisData, { merge: true });
+    if (pathContext.section === 'maintenance' &&
+        !pathContext.parentId.startsWith('temp_')) {
+        const maintenanceRef = db.doc(`users/${uid}/vehicles/${vin}/maintenance/${pathContext.parentId}`);
+        const maintenanceSnap = await maintenanceRef.get();
+        if (maintenanceSnap.exists) {
+            const data = maintenanceSnap.data() || {};
+            const attachments = Array.isArray(data.attachments)
+                ? data.attachments
+                : [];
+            let changed = false;
+            const nextAttachments = attachments.map((attachment) => {
+                if ((attachment === null || attachment === void 0 ? void 0 : attachment.path) !== objectPath) {
+                    return attachment;
+                }
+                changed = true;
+                return Object.assign(Object.assign({}, attachment), { analysis: {
+                        extracted,
+                        confidence,
+                        updatedAt: new Date().toISOString(),
+                    } });
+            });
+            if (changed) {
+                await maintenanceRef.set({
+                    attachments: nextAttachments,
+                    attachmentAnalysisUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
+        }
+    }
+    return {
+        extracted,
+        confidence,
+        sourceText,
+        section: pathContext.section,
+        parentId: pathContext.parentId,
+    };
+}
+const storageAttachmentAnalysisEnabled = (process.env.ENABLE_STORAGE_ATTACHMENT_ANALYSIS || 'true')
+    .trim()
+    .toLowerCase() !== 'false';
+if (!storageAttachmentAnalysisEnabled) {
+    logger.info('Storage attachment analysis trigger disabled ' +
+        '(set ENABLE_STORAGE_ATTACHMENT_ANALYSIS=true to enable)');
+}
+exports.analyzeUploadedAttachment = storageAttachmentAnalysisEnabled
+    ? (0, storage_1.onObjectFinalized)(async (event) => {
+        const object = event.data;
+        const objectName = object.name;
+        if (!objectName) {
+            logger.warn('Skipping storage finalize event with missing object name');
+            return;
+        }
+        const pathContext = parseAttachmentPath(objectName);
+        if (!pathContext) {
+            return;
+        }
+        await upsertAttachmentAnalysis({
+            uid: pathContext.uid,
+            vin: pathContext.vin,
+            objectPath: objectName,
+            bucket: object.bucket,
+            contentType: object.contentType || null,
+            sizeBytes: Number(object.size || 0),
+            customMetadata: object.metadata,
+        });
+    })
+    : undefined;
+exports.analyzeAttachmentTextCallable = (0, https_2.onCall)({ timeoutSeconds: 120 }, async (request) => {
+    var _a, _b;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const { vin, storagePath, ocrText, contentType, bucket: bucketParam, } = (_b = request.data) !== null && _b !== void 0 ? _b : {};
+    const normalizedVin = (vin || '').trim().toUpperCase();
+    const normalizedPath = (storagePath || '').trim();
+    const normalizedText = (ocrText || '').trim();
+    if (!normalizedVin || normalizedVin.length !== 17) {
+        throw new https_2.HttpsError('invalid-argument', 'Valid 17-character VIN required');
+    }
+    if (!normalizedPath) {
+        throw new https_2.HttpsError('invalid-argument', 'storagePath is required');
+    }
+    const result = await upsertAttachmentAnalysis({
+        uid,
+        vin: normalizedVin,
+        objectPath: normalizedPath,
+        bucket: (bucketParam || '').trim() || null,
+        contentType: (contentType || '').trim() || null,
+        forceOcrText: normalizedText || undefined,
+    });
+    return {
+        success: true,
+        vin: normalizedVin,
+        storagePath: normalizedPath,
+        analysis: result,
+    };
+});
+async function decodeVinData(vinInput) {
+    const vin = vinInput.trim().toUpperCase();
+    if (vin.length !== 17) {
+        throw new Error('Valid 17-character VIN required');
+    }
+    if (!hasValidVinChecksum(vin)) {
+        throw new Error('Valid VIN checksum required');
+    }
+    logger.info(`Decoding VIN: ${vin.substring(0, 8)}...`);
+    const nhtsaUrl = 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/' +
+        `${encodeURIComponent(vin)}?format=json`;
+    const nhtsaResponse = await fetch(nhtsaUrl);
+    if (!nhtsaResponse.ok) {
+        throw new Error(`NHTSA API error: ${nhtsaResponse.status}`);
+    }
+    const data = await nhtsaResponse.json();
+    const results = (data === null || data === void 0 ? void 0 : data.Results) || [];
+    const sanitize = (value) => {
+        const s = (value !== null && value !== void 0 ? value : '').toString().trim();
+        if (!s)
+            return '';
+        const bad = new Set([
+            '0',
+            'NOT APPLICABLE',
+            'NULL',
+            'N/A',
+            'NONE',
+            'UNKNOWN',
+        ]);
+        return bad.has(s.toUpperCase()) ? '' : s;
+    };
+    const getVal = (key) => {
+        var _a;
+        return sanitize((_a = results.find((r) => r.Variable === key)) === null || _a === void 0 ? void 0 : _a.Value);
+    };
+    const vehicle = {
+        vin,
+        make: getVal('Make'),
+        model: getVal('Model'),
+        year: getVal('Model Year'),
+        bodyClass: getVal('Body Class'),
+        engineType: getVal('Engine Type'),
+        fuelType: getVal('Fuel Type - Primary'),
+        driveType: getVal('Drive Type'),
+        transmissionStyle: getVal('Transmission Style'),
+        trim: getVal('Trim'),
+        vehicleType: getVal('Vehicle Type'),
+    };
+    const vehicleDesc = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+    logger.info(`Successfully decoded VIN for ${vehicleDesc}`);
+    return vehicle;
+}
+async function lookupNhtsaRecalls(vinInput) {
+    const vin = vinInput.trim().toUpperCase();
+    if (vin.length !== 17) {
+        throw new Error('Valid 17-character VIN required');
+    }
+    if (!hasValidVinChecksum(vin)) {
+        throw new Error('Valid VIN checksum required');
+    }
+    const recallsUrl = 'https://api.nhtsa.gov/recalls/recallsByVehicle?vin=' +
+        encodeURIComponent(vin);
+    const recallsResponse = await fetch(recallsUrl);
+    if (!recallsResponse.ok) {
+        throw new Error(`NHTSA recalls API error: ${recallsResponse.status}`);
+    }
+    const recallsData = await recallsResponse.json();
+    const recalls = Array.isArray(recallsData === null || recallsData === void 0 ? void 0 : recallsData.results)
+        ? recallsData.results
+        : [];
+    return recalls.map((item) => ({
+        campaignNumber: (item['NHTSACampaignNumber'] || '').toString(),
+        reportReceivedDate: (item['ReportReceivedDate'] || '').toString(),
+        component: (item['Component'] || '').toString(),
+        summary: (item['Summary'] || '').toString(),
+        consequence: (item['Conequence'] || item['Consequence'] || '').toString(),
+        remedy: (item['Remedy'] || '').toString(),
+        manufacturer: (item['Manufacturer'] || '').toString(),
+    }));
+}
+function hashToSeed(value) {
+    let hash = 0;
+    for (let i = 0; i < value.length; i++) {
+        hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+}
+const VIN_TRANSLITERATION = {
+    A: 1,
+    B: 2,
+    C: 3,
+    D: 4,
+    E: 5,
+    F: 6,
+    G: 7,
+    H: 8,
+    J: 1,
+    K: 2,
+    L: 3,
+    M: 4,
+    N: 5,
+    P: 7,
+    R: 9,
+    S: 2,
+    T: 3,
+    U: 4,
+    V: 5,
+    W: 6,
+    X: 7,
+    Y: 8,
+    Z: 9,
+};
+const VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+function hasValidVinChecksum(vinInput) {
+    const vin = vinInput.trim().toUpperCase();
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+        return false;
+    }
+    let sum = 0;
+    for (let i = 0; i < vin.length; i += 1) {
+        const char = vin[i];
+        const parsedNumeric = Number(char);
+        const numericValue = Number.isFinite(parsedNumeric)
+            ? parsedNumeric
+            : VIN_TRANSLITERATION[char];
+        if (numericValue === undefined) {
+            return false;
+        }
+        sum += numericValue * VIN_WEIGHTS[i];
+    }
+    const remainder = sum % 11;
+    const expectedCheckDigit = remainder === 10 ? 'X' : String(remainder);
+    return vin[8] === expectedCheckDigit;
+}
+function deterministicShuffle(items, seed) {
+    const copy = [...items];
+    let currentSeed = seed;
+    for (let i = copy.length - 1; i > 0; i--) {
+        currentSeed = (currentSeed * 1664525 + 1013904223) >>> 0;
+        const j = currentSeed % (i + 1);
+        const temp = copy[i];
+        copy[i] = copy[j];
+        copy[j] = temp;
+    }
+    return copy;
+}
+function normalizeLocationText(value) {
+    return value.trim().replace(/\s+/g, ' ');
+}
+function buildLocalServiceProviders(locationQuery, radiusMiles, maxResults, vehicleMake, providerTypeFilter = 'all') {
+    const normalizedLocation = normalizeLocationText(locationQuery);
+    const focusMake = (vehicleMake || '').trim();
+    const seed = hashToSeed(`${normalizedLocation}:${focusMake}`);
+    const repairShopTemplates = [
+        { name: 'Precision Auto Care', specialties: ['Oil Change', 'Brakes'] },
+        {
+            name: 'Neighborhood Garage Works',
+            specialties: ['Diagnostics', 'Engine Repair'],
+        },
+        {
+            name: 'Summit Tire & Service',
+            specialties: ['Tires', 'Alignment', 'Suspension'],
+        },
+        {
+            name: 'Main Street Auto Clinic',
+            specialties: ['Transmission', 'AC Service'],
+        },
+    ];
+    const dealerTemplates = [
+        {
+            name: `${focusMake || 'Certified'} Auto Center`,
+            specialties: ['Factory Service', 'Warranty Repairs'],
+        },
+        {
+            name: `${focusMake || 'Premier'} Motors`,
+            specialties: ['Certified Pre-Owned', 'Recall Service'],
+        },
+        {
+            name: 'Metro Auto Dealership',
+            specialties: ['OEM Parts', 'Service Packages'],
+        },
+    ];
+    const providers = [
+        ...repairShopTemplates.map((template, index) => ({
+            id: `repair-${index + 1}`,
+            type: 'repair_shop',
+            name: template.name,
+            distanceMiles: Math.max(1, Math.min(radiusMiles, 2 + index * 3)),
+            address: `${100 + index * 11} Service Ave, ${normalizedLocation}`,
+            phone: `+1-555-01${(index + 10).toString()}`,
+            website: `https://example.com/repair/${index + 1}`,
+            rating: 4.2 + (index % 3) * 0.2,
+            specialties: template.specialties,
+        })),
+        ...dealerTemplates.map((template, index) => ({
+            id: `dealer-${index + 1}`,
+            type: 'dealership',
+            name: template.name,
+            distanceMiles: Math.max(2, Math.min(radiusMiles, 4 + index * 5)),
+            address: `${400 + index * 13} Dealer Blvd, ${normalizedLocation}`,
+            phone: `+1-555-02${(index + 20).toString()}`,
+            website: `https://example.com/dealer/${index + 1}`,
+            rating: 4.0 + (index % 3) * 0.3,
+            specialties: template.specialties,
+        })),
+        {
+            id: 'body-1',
+            type: 'body_shop',
+            name: 'Precision Collision Center',
+            distanceMiles: Math.max(1, Math.min(radiusMiles, 3.5)),
+            address: `520 Body Shop Way, ${normalizedLocation}`,
+            phone: '+1-555-0310',
+            website: 'https://example.com/body/1',
+            rating: 4.4,
+            specialties: ['Collision Repair', 'Paint Matching'],
+        },
+        {
+            id: 'wash-1',
+            type: 'car_wash',
+            name: 'Sparkle Tunnel Wash',
+            distanceMiles: Math.max(1, Math.min(radiusMiles, 2.2)),
+            address: `250 Clean Car Ln, ${normalizedLocation}`,
+            phone: '+1-555-0410',
+            website: 'https://example.com/wash/1',
+            rating: 4.3,
+            specialties: ['Exterior Wash', 'Monthly Plans'],
+        },
+        {
+            id: 'detail-1',
+            type: 'detailer',
+            name: 'Showroom Detail Studio',
+            distanceMiles: Math.max(1, Math.min(radiusMiles, 4.1)),
+            address: `680 Detailer Dr, ${normalizedLocation}`,
+            phone: '+1-555-0510',
+            website: 'https://example.com/detail/1',
+            rating: 4.7,
+            specialties: ['Interior Detailing', 'Ceramic Coating'],
+        },
+    ];
+    const filteredProviders = providerTypeFilter === 'all'
+        ? providers
+        : providers.filter(provider => provider.type === providerTypeFilter);
+    return deterministicShuffle(filteredProviders, seed)
+        .slice(0, maxResults)
+        .map((provider, index) => (Object.assign(Object.assign({}, provider), { distanceMiles: Number(Math.min(radiusMiles, provider.distanceMiles + index * 0.4).toFixed(1)), rating: Number(Math.min(5, provider.rating).toFixed(1)) })));
+}
+// VIN decoding function
+exports.decodeVIN = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    try {
+        // Only allow POST requests
+        if (request.method !== 'POST') {
+            response.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        const { vin } = request.body;
+        const normalizedVin = (vin || '').toString().trim().toUpperCase();
+        if (!normalizedVin || normalizedVin.length !== 17) {
+            response.status(400).json({ error: 'Valid 17-character VIN required' });
+            return;
+        }
+        if (!hasValidVinChecksum(normalizedVin)) {
+            response.status(400).json({ error: 'Valid VIN checksum required' });
+            return;
+        }
+        const vehicle = await decodeVinData(normalizedVin);
+        response.json({
+            success: true,
+            vehicle,
+        });
+    }
+    catch (error) {
+        logger.error('VIN decoding error:', error);
+        response.status(500).json({
+            success: false,
+            error: 'Failed to decode VIN',
+        });
+    }
+});
+exports.decodeVINCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    if (!((_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid)) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const vin = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.vin) || '').toString();
+    const normalizedVin = vin.trim().toUpperCase();
+    if (normalizedVin.length !== 17) {
+        throw new https_2.HttpsError('invalid-argument', 'Valid 17-character VIN required');
+    }
+    if (!hasValidVinChecksum(normalizedVin)) {
+        throw new https_2.HttpsError('invalid-argument', 'Valid VIN checksum required');
+    }
+    try {
+        const vehicle = await decodeVinData(normalizedVin);
+        return {
+            success: true,
+            vehicle,
+        };
+    }
+    catch (error) {
+        logger.error('VIN callable decoding error:', error);
+        throw new https_2.HttpsError('internal', 'Failed to decode VIN');
+    }
+});
+exports.getVehicleInsightsCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    if (!((_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid)) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const vin = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.vin) || '').toString();
+    if (vin.length !== 17) {
+        throw new https_2.HttpsError('invalid-argument', 'Valid 17-character VIN required');
+    }
+    const normalizedVin = vin.trim().toUpperCase();
+    if (!hasValidVinChecksum(normalizedVin)) {
+        throw new https_2.HttpsError('invalid-argument', 'Valid VIN checksum required');
+    }
+    try {
+        const [vehicleResult, recallsResult] = await Promise.allSettled([
+            decodeVinData(normalizedVin),
+            lookupNhtsaRecalls(normalizedVin),
+        ]);
+        if (vehicleResult.status !== 'fulfilled') {
+            logger.error('VIN profile lookup failed', {
+                vinPrefix: normalizedVin.substring(0, 8),
+                error: vehicleResult.reason,
+            });
+            throw new https_2.HttpsError('internal', 'Failed to decode VIN profile');
+        }
+        const vehicle = vehicleResult.value;
+        const recalls = recallsResult.status === 'fulfilled' ? recallsResult.value : [];
+        const recallsSource = recallsResult.status === 'fulfilled'
+            ? 'NHTSA'
+            : 'NHTSA (temporarily unavailable)';
+        if (recallsResult.status !== 'fulfilled') {
+            logger.warn('VIN recalls lookup failed, returning fallback recalls', {
+                vinPrefix: normalizedVin.substring(0, 8),
+                error: recallsResult.reason,
+            });
+        }
+        const integrationConfig = (0, integrations_config_1.getIntegrationConfig)();
+        return {
+            success: true,
+            vin: normalizedVin,
+            free: {
+                vinProfile: vehicle,
+                recalls: {
+                    source: recallsSource,
+                    count: recalls.length,
+                    items: recalls,
+                },
+            },
+            paid: {
+                manuals: {
+                    enabled: integrationConfig.features.manualsEnabled,
+                    provider: integrationConfig.providers.manuals,
+                },
+                warranty: {
+                    enabled: integrationConfig.features.warrantyEnabled,
+                    provider: integrationConfig.providers.warranty,
+                },
+                maintenancePlan: {
+                    enabled: integrationConfig.features.maintenancePlanEnabled,
+                    provider: integrationConfig.providers.schedule,
+                },
+            },
+            sources: {
+                free: ['NHTSA vPIC', 'NHTSA Recalls API'],
+                paid: [
+                    'Owner Manuals Provider',
+                    'Warranty Provider',
+                    'Maintenance Schedule Provider',
+                ],
+            },
+            warnings: recallsResult.status === 'fulfilled'
+                ? []
+                : ['Recalls data temporarily unavailable; VIN profile returned.'],
+        };
+    }
+    catch (error) {
+        logger.error('Vehicle insights callable error:', error);
+        throw new https_2.HttpsError('internal', 'Failed to fetch vehicle insights');
+    }
+});
+exports.getLocalServiceProvidersCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    const authRequired = (process.env.INTEGRATION_AUTH_REQUIRED || 'true').trim().toLowerCase() !==
+        'false';
+    if (authRequired && !((_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid)) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const { locationQuery, radiusMiles, maxResults, vehicleMake, providerType } = (_b = request.data) !== null && _b !== void 0 ? _b : {};
+    const normalizedLocation = normalizeLocationText((locationQuery || '').toString());
+    if (!normalizedLocation || normalizedLocation.length < 5) {
+        throw new https_2.HttpsError('invalid-argument', 'locationQuery is required to find nearby providers');
+    }
+    const safeRadius = Number.isFinite(Number(radiusMiles))
+        ? Math.max(5, Math.min(100, Number(radiusMiles)))
+        : 25;
+    const safeMaxResults = Number.isFinite(Number(maxResults))
+        ? Math.max(1, Math.min(25, Number(maxResults)))
+        : 8;
+    const allowedProviderTypes = new Set([
+        'all',
+        'repair_shop',
+        'dealership',
+        'body_shop',
+        'car_wash',
+        'detailer',
+    ]);
+    const safeProviderType = allowedProviderTypes.has(providerType || '')
+        ? providerType
+        : 'all';
+    const providers = buildLocalServiceProviders(normalizedLocation, safeRadius, safeMaxResults, vehicleMake, safeProviderType);
+    return {
+        success: true,
+        source: 'location_fallback',
+        locationQuery: normalizedLocation,
+        radiusMiles: safeRadius,
+        providerType: safeProviderType,
+        providers,
+    };
+});
+// Email reminder function
+exports.sendMaintenanceReminder = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    try {
+        // Only allow POST requests
+        if (request.method !== 'POST') {
+            response.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        const { email, vehicle, maintenanceItems } = request.body;
+        if (!email ||
+            !vehicle ||
+            !maintenanceItems ||
+            !Array.isArray(maintenanceItems)) {
+            response.status(400).json({
+                error: 'Missing required fields: email, vehicle, maintenanceItems',
+            });
+            return;
+        }
+        logger.info(`Sending maintenance reminder to ${email} for ` +
+            `${vehicle.make} ${vehicle.model}`);
+        // For now, we'll log the email content. In production, integrate
+        // with SendGrid
+        const emailContent = {
+            to: email,
+            subject: `Maintenance Reminder: ${vehicle.make} ` +
+                `${vehicle.model} (${vehicle.year})`,
+            html: `
+          <h2>Vehicle Maintenance Reminder</h2>
+          <p>Your <strong>${vehicle.year} ${vehicle.make} ` +
+                `${vehicle.model}</strong>
+          (VIN: ${vehicle.vin}) is due for maintenance:</p>
+          <ul>
+            ${maintenanceItems
+                    .map(item => `<li><strong>${item.title}</strong> - Due: ${item.dueDate}</li>`)
+                    .join('')}
+          </ul>
+          <p>Please schedule these services soon to keep your vehicle ` +
+                `in optimal condition.</p>
+          <br>
+          <p>Vehicle Vitals Team</p>
+        `,
+            text: `
+          Vehicle Maintenance Reminder
+
+          Your ${vehicle.year} ${vehicle.make} ${vehicle.model}
+          (VIN: ${vehicle.vin}) is due for maintenance:
+
+          ${maintenanceItems
+                .map(item => `- ${item.title} - Due: ${item.dueDate}`)
+                .join('\n')}
+
+          Please schedule these services soon to keep your vehicle
+          in optimal condition.
+
+          Vehicle Vitals Team
+        `,
+        };
+        await (0, email_provider_1.sendEmail)(emailContent);
+        response.json({
+            success: true,
+            message: 'Reminder email sent',
+        });
+    }
+    catch (error) {
+        logger.error('Email reminder error:', error);
+        response.status(500).json({
+            success: false,
+            error: 'Failed to send reminder email',
+        });
+    }
+});
+// Scheduled function to check for upcoming maintenance (runs daily)
+exports.checkMaintenanceReminders = (0, scheduler_1.onSchedule)('0 9 * * *', async () => {
+    await runMaintenanceReminderSchedule();
+});
+/**
+ * Execute one scheduled reminder run with logging and error swallowing.
+ * @param {Partial<ReminderScheduleRunDependencies>} dependencies Optional
+ * injected dependencies for tests
+ * @return {Promise<ReminderSweepSummary | null>} Sweep summary on success
+ */
+async function runMaintenanceReminderSchedule(dependencies) {
+    const runSweep = (dependencies === null || dependencies === void 0 ? void 0 : dependencies.runSweep) || runMaintenanceReminderSweep;
+    const onInfo = (dependencies === null || dependencies === void 0 ? void 0 : dependencies.onInfo) || logger.info;
+    const onError = (dependencies === null || dependencies === void 0 ? void 0 : dependencies.onError) || logger.error;
+    onInfo('Checking for maintenance reminders...');
+    try {
+        const summary = await runSweep();
+        onInfo('Maintenance reminder check completed', summary);
+        return summary;
+    }
+    catch (error) {
+        onError('Error checking maintenance reminders:', error);
+        return null;
+    }
+}
+/**
+ * Execute scheduled reminder eligibility checks and email dispatch.
+ * @param {ReminderSweepDependencies} dependencies Optional injected deps
+ * @return {Promise<ReminderSweepSummary>} Sweep counts for observability/tests
+ */
+async function runMaintenanceReminderSweep(dependencies) {
+    const queryDocuments = (dependencies === null || dependencies === void 0 ? void 0 : dependencies.queryDocuments) ||
+        FirestoreCrudHelpers.queryDocuments.bind(FirestoreCrudHelpers);
+    const resolveUpcomingMaintenance = (dependencies === null || dependencies === void 0 ? void 0 : dependencies.getUpcomingMaintenance) || getUpcomingMaintenance;
+    const deliverReminderEmail = (dependencies === null || dependencies === void 0 ? void 0 : dependencies.sendReminderEmail) || sendReminderEmail;
+    const deliverPushNotification = (dependencies === null || dependencies === void 0 ? void 0 : dependencies.sendPushNotification) || sendPushNotification;
+    const users = await queryDocuments('users');
+    let usersScanned = 0;
+    let vehiclesScanned = 0;
+    let remindersSent = 0;
+    let reminderFailures = 0;
+    let pushSent = 0;
+    let pushFailures = 0;
+    for (const user of users) {
+        usersScanned += 1;
+        const emailRemindersEnabled = user.emailRemindersEnabled !== false;
+        const hasEmail = Boolean(user.email);
+        const userLevelFcmToken = (user.fcmToken || '').toString();
+        const canSendEmail = emailRemindersEnabled && hasEmail;
+        const userId = (user.id || '').toString();
+        if (!userId) {
+            continue;
+        }
+        // Skip loading vehicle collections when no delivery channel is available.
+        if (!canSendEmail && !userLevelFcmToken) {
+            continue;
+        }
+        const vehicles = await queryDocuments(`users/${userId}/vehicles`);
+        // Extract FCM token from the preferences doc (virtual vehicle record).
+        const prefsDoc = vehicles.find(v => v.id === '__preferences__');
+        const userFcmToken = userLevelFcmToken || ((prefsDoc === null || prefsDoc === void 0 ? void 0 : prefsDoc.fcmToken) || '').toString();
+        for (const vehicle of vehicles) {
+            // Skip the preferences sentinel – it is not a real vehicle.
+            if (vehicle.id === '__preferences__') {
+                continue;
+            }
+            vehiclesScanned += 1;
+            const upcomingMaintenance = await resolveUpcomingMaintenance(vehicle, 30);
+            if (upcomingMaintenance.length === 0) {
+                continue;
+            }
+            if (canSendEmail) {
+                try {
+                    await deliverReminderEmail(user.email, vehicle, upcomingMaintenance);
+                    remindersSent += 1;
+                }
+                catch (error) {
+                    reminderFailures += 1;
+                    logger.error('Reminder email delivery failed', {
+                        userId,
+                        email: user.email,
+                        vin: vehicle.vin,
+                        error,
+                    });
+                }
+            }
+            if (userFcmToken) {
+                try {
+                    await deliverPushNotification(userFcmToken, vehicle, upcomingMaintenance);
+                    pushSent += 1;
+                }
+                catch (pushError) {
+                    pushFailures += 1;
+                    logger.warn('Push notification delivery failed', {
+                        userId,
+                        vin: vehicle.vin,
+                        pushError,
+                    });
+                }
+            }
+        }
+    }
+    return {
+        usersScanned,
+        vehiclesScanned,
+        remindersSent,
+        reminderFailures,
+        pushSent,
+        pushFailures,
+    };
+}
+/**
+ * Helper function to get upcoming maintenance items for a vehicle
+ * @param {Vehicle} vehicle The vehicle to check for upcoming maintenance
+ * @param {number} daysAhead Number of days to look ahead for maintenance
+ * @return {Promise<MaintenanceItem[]>} Array of upcoming maintenance items
+ */
+async function getUpcomingMaintenance(vehicle, daysAhead = 30) {
+    // Get maintenance entries using FirestoreCrudHelpers
+    const maintenanceEntries = await FirestoreCrudHelpers.queryDocuments(`users/${vehicle.uid || 'unknown'}/vehicles/${vehicle.vin}/maintenance`);
+    return deriveUpcomingMaintenanceItems(maintenanceEntries, daysAhead);
+}
+/**
+ * Build upcoming maintenance reminders from maintenance history entries.
+ * @param {MaintenanceEntry[]} maintenanceEntries User maintenance history
+ * @param {number} daysAhead Number of days to look ahead for reminders
+ * @return {MaintenanceItem[]} Array of upcoming maintenance items
+ */
+function deriveUpcomingMaintenanceItems(maintenanceEntries, daysAhead = 30) {
+    // This is a simplified version - in practice, you'd need manufacturer
+    // schedules. For now, we'll check existing maintenance entries and look
+    // for patterns
+    const upcomingItems = [];
+    const now = new Date();
+    const normalizedDaysAhead = Math.max(1, daysAhead);
+    // Simple logic: if no maintenance in last 6 months, suggest oil change
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(now.getMonth() - 6);
+    let hasRecentOilChange = false;
+    maintenanceEntries.forEach((entry) => {
+        var _a;
+        let entryDate;
+        if (entry.date instanceof Date) {
+            entryDate = entry.date;
+        }
+        else if (typeof entry.date === 'string') {
+            entryDate = new Date(entry.date);
+        }
+        else if (entry.date && typeof entry.date.toDate === 'function') {
+            entryDate = entry.date.toDate();
+        }
+        else {
+            return; // Skip invalid dates
+        }
+        if (((_a = entry.title) === null || _a === void 0 ? void 0 : _a.toLowerCase().includes('oil')) &&
+            entryDate > sixMonthsAgo) {
+            hasRecentOilChange = true;
+        }
+    });
+    if (!hasRecentOilChange) {
+        const dueDateLabel = normalizedDaysAhead <= 30
+            ? `Within ${normalizedDaysAhead} days`
+            : 'Within 1 month';
+        upcomingItems.push({
+            title: 'Oil Change',
+            dueDate: dueDateLabel,
+            type: 'preventive',
+        });
+    }
+    return upcomingItems;
+}
+/**
+ * Helper function to send reminder email (placeholder)
+ * @param {string} email The recipient email address
+ * @param {Vehicle} vehicle The vehicle information
+ * @param {MaintenanceItem[]} maintenanceItems Array of maintenance items due
+ */
+async function sendReminderEmail(email, vehicle, maintenanceItems) {
+    const emailContent = {
+        to: email,
+        subject: `Maintenance Reminder: ${vehicle.make} ` +
+            `${vehicle.model} (${vehicle.year})`,
+        html: `
+        <h2>Vehicle Maintenance Reminder</h2>
+        <p>Your
+        <strong>${vehicle.year} ${vehicle.make} ${vehicle.model}</strong>
+        (VIN: ${vehicle.vin}) is due for maintenance:</p>
+        <ul>
+          ${maintenanceItems
+            .map(item => `<li><strong>${item.title}</strong> - Due: ${item.dueDate}</li>`)
+            .join('')}
+        </ul>
+        <p>
+        Please schedule these services soon to keep your vehicle in
+        optimal condition.
+        </p>
+        <br>
+        <p>Vehicle Vitals Team</p>
+      `,
+        text: `
+      Vehicle Maintenance Reminder
+
+      Your ${vehicle.year} ${vehicle.make} ${vehicle.model}
+      (VIN: ${vehicle.vin}) is due for maintenance:
+
+      ${maintenanceItems
+            .map(item => `- ${item.title} - Due: ${item.dueDate}`)
+            .join('\n')}
+
+      Please schedule these services soon to keep your vehicle in
+      optimal condition.
+
+      Vehicle Vitals Team
+    `,
+    };
+    await (0, email_provider_1.sendEmail)(emailContent);
+}
+/**
+ * Send an FCM push notification for upcoming maintenance items.
+ * @param {string} fcmToken The recipient's Firebase Cloud Messaging token
+ * @param {Vehicle} vehicle The vehicle with upcoming maintenance
+ * @param {MaintenanceItem[]} maintenanceItems Items due for service
+ * @return {Promise<void>}
+ */
+async function sendPushNotification(fcmToken, vehicle, maintenanceItems) {
+    const firstItem = maintenanceItems[0];
+    const title = [
+        'Maintenance due:',
+        String(vehicle.year),
+        vehicle.make,
+        vehicle.model,
+    ].join(' ');
+    const body = maintenanceItems.length === 1
+        ? `${firstItem.title} — Due: ${firstItem.dueDate}`
+        : `${firstItem.title} and ` +
+            `${maintenanceItems.length - 1} more service(s) due`;
+    await admin.messaging().send({
+        token: fcmToken,
+        notification: { title, body },
+        data: {
+            vin: vehicle.vin,
+            type: 'maintenance_reminder',
+        },
+    });
+}
+// API roadmap scaffolds for cross-platform integrations.
+// These handlers provide stable contracts while provider
+// integrations are built.
+exports.getOwnerManuals = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    try {
+        if (!(0, request_guards_1.enforceRateLimit)(request, response, 'getOwnerManuals')) {
+            return;
+        }
+        const uid = await (0, request_guards_1.requireAuthenticatedUser)(request, response);
+        if (!uid)
+            return;
+        if (request.method !== 'GET') {
+            response.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        const vin = (request.query.vin || '').trim().toUpperCase();
+        if (!vin || vin.length !== 17) {
+            response.status(400).json({ error: 'Valid 17-character VIN required' });
+            return;
+        }
+        const config = (0, integrations_config_1.getIntegrationConfig)();
+        if (!config.features.manualsEnabled) {
+            response.status(503).json({
+                success: false,
+                error: 'Owner manual feature is disabled',
+                provider: config.providers.manuals,
+                vin,
+                manuals: [],
+            });
+            return;
+        }
+        if (config.providers.manuals !== 'manuals_primary') {
+            response.status(501).json({
+                success: false,
+                error: 'Owner manual provider integration not implemented',
+                provider: config.providers.manuals,
+                vin,
+                manuals: [],
+            });
+            return;
+        }
+        const cachedManuals = await (0, integration_cache_1.readIntegrationCache)(uid, vin, 'manuals');
+        if (cachedManuals.hit && Array.isArray(cachedManuals.value)) {
+            response.json({
+                success: true,
+                provider: config.providers.manuals,
+                vin,
+                manuals: cachedManuals.value,
+                cache: { hit: true },
+            });
+            return;
+        }
+        const manuals = await (0, manuals_provider_1.lookupOwnerManuals)(vin);
+        await (0, integration_cache_1.writeIntegrationCache)(uid, vin, 'manuals', manuals);
+        response.json({
+            success: true,
+            provider: config.providers.manuals,
+            vin,
+            manuals,
+            cache: { hit: false },
+        });
+    }
+    catch (error) {
+        logger.error('Owner manual lookup error:', error);
+        response.status(500).json({
+            success: false,
+            error: 'Failed to fetch owner manuals',
+        });
+    }
+});
+exports.getWarrantySummary = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    var _a;
+    try {
+        if (!(0, request_guards_1.enforceRateLimit)(request, response, 'getWarrantySummary')) {
+            return;
+        }
+        const uid = await (0, request_guards_1.requireAuthenticatedUser)(request, response);
+        if (!uid)
+            return;
+        if (request.method !== 'GET') {
+            response.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        const vin = (request.query.vin || '').trim().toUpperCase();
+        if (!vin || vin.length !== 17) {
+            response.status(400).json({ error: 'Valid 17-character VIN required' });
+            return;
+        }
+        const mileageRaw = Number((_a = request.query.currentMileage) !== null && _a !== void 0 ? _a : '');
+        const currentMileage = Number.isFinite(mileageRaw)
+            ? mileageRaw
+            : undefined;
+        const config = (0, integrations_config_1.getIntegrationConfig)();
+        if (!config.features.warrantyEnabled) {
+            response.status(503).json({
+                success: false,
+                error: 'Warranty feature is disabled',
+                provider: config.providers.warranty,
+                vin,
+                warranty: null,
+            });
+            return;
+        }
+        if (config.providers.warranty !== 'warranty_primary') {
+            response.status(501).json({
+                success: false,
+                error: 'Warranty provider integration not implemented',
+                provider: config.providers.warranty,
+                vin,
+                warranty: null,
+            });
+            return;
+        }
+        const cachedWarranty = await (0, integration_cache_1.readIntegrationCache)(uid, vin, 'warranty');
+        if (cachedWarranty.hit && cachedWarranty.value) {
+            response.json({
+                success: true,
+                provider: config.providers.warranty,
+                vin,
+                warranty: cachedWarranty.value,
+                cache: { hit: true },
+            });
+            return;
+        }
+        const warranty = await (0, warranty_provider_1.lookupWarrantySummary)(vin, currentMileage);
+        await (0, integration_cache_1.writeIntegrationCache)(uid, vin, 'warranty', warranty);
+        response.json({
+            success: true,
+            provider: config.providers.warranty,
+            vin,
+            warranty,
+            cache: { hit: false },
+        });
+    }
+    catch (error) {
+        logger.error('Warranty summary error:', error);
+        response.status(500).json({
+            success: false,
+            error: 'Failed to fetch warranty summary',
+        });
+    }
+});
+exports.getMaintenancePlan = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    var _a;
+    try {
+        if (!(0, request_guards_1.enforceRateLimit)(request, response, 'getMaintenancePlan')) {
+            return;
+        }
+        const uid = await (0, request_guards_1.requireAuthenticatedUser)(request, response);
+        if (!uid)
+            return;
+        if (request.method !== 'GET') {
+            response.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        const vin = (request.query.vin || '').trim().toUpperCase();
+        const currentMileage = Number((_a = request.query.currentMileage) !== null && _a !== void 0 ? _a : '');
+        if (!vin || vin.length !== 17) {
+            response.status(400).json({ error: 'Valid 17-character VIN required' });
+            return;
+        }
+        if (!Number.isFinite(currentMileage) || currentMileage < 0) {
+            response
+                .status(400)
+                .json({ error: 'Valid currentMileage is required' });
+            return;
+        }
+        const config = (0, integrations_config_1.getIntegrationConfig)();
+        if (!config.features.maintenancePlanEnabled) {
+            response.status(503).json({
+                success: false,
+                error: 'Maintenance plan feature is disabled',
+                provider: config.providers.schedule,
+                vin,
+                plan: null,
+            });
+            return;
+        }
+        if (config.providers.schedule !== 'schedule_primary') {
+            response.status(501).json({
+                success: false,
+                error: 'Maintenance schedule provider integration not implemented',
+                provider: config.providers.schedule,
+                vin,
+                plan: null,
+            });
+            return;
+        }
+        const plan = (0, schedule_provider_1.buildMaintenancePlan)(currentMileage);
+        response.json({
+            success: true,
+            provider: config.providers.schedule,
+            vin,
+            plan,
+        });
+    }
+    catch (error) {
+        logger.error('Maintenance plan error:', error);
+        response.status(500).json({
+            success: false,
+            error: 'Failed to build maintenance plan',
+        });
+    }
+});
+exports.createCalendarEvent = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    try {
+        if (!(0, request_guards_1.enforceRateLimit)(request, response, 'createCalendarEvent')) {
+            return;
+        }
+        const uid = await (0, request_guards_1.requireAuthenticatedUser)(request, response);
+        if (!uid)
+            return;
+        if (request.method !== 'POST') {
+            response.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        response.json(buildCalendarEventResponse(request.body));
+    }
+    catch (error) {
+        if (error instanceof https_2.HttpsError) {
+            const codeToStatus = {
+                'invalid-argument': 400,
+                unauthenticated: 401,
+                'failed-precondition': 503,
+                unimplemented: 501,
+            };
+            const status = codeToStatus[error.code] || 500;
+            response.status(status).json({ success: false, error: error.message });
+            return;
+        }
+        logger.error('Calendar event error:', error);
+        response.status(500).json({
+            success: false,
+            error: 'Failed to create calendar event',
+        });
+    }
+});
+/**
+ * Shared calendar event creation contract used by HTTP and callable triggers.
+ * @param {unknown} input Raw request payload
+ * @return {object} Success payload with normalized event data
+ */
+function buildCalendarEventResponse(input) {
+    var _a;
+    const { vehicleVin, title, startAt, target, description, endAt } = (_a = input) !== null && _a !== void 0 ? _a : {};
+    const vin = (vehicleVin || '').toString().trim().toUpperCase();
+    const allowedTargets = new Set(['google', 'apple', 'ics']);
+    if (!vin) {
+        throw new https_2.HttpsError('invalid-argument', 'vehicleVin is required');
+    }
+    if (!title || !startAt || !target || !allowedTargets.has(target)) {
+        throw new https_2.HttpsError('invalid-argument', 'Required fields: title, startAt, target (google|apple|ics)');
+    }
+    const config = (0, integrations_config_1.getIntegrationConfig)();
+    if (!config.features.calendarEnabled) {
+        throw new https_2.HttpsError('failed-precondition', 'Calendar feature is disabled');
+    }
+    if (config.providers.calendar !== 'calendar_primary') {
+        throw new https_2.HttpsError('unimplemented', 'Calendar provider integration not implemented');
+    }
+    const eventInput = {
+        vehicleVin: vin,
+        title,
+        description,
+        startAt,
+        endAt,
+        target,
+    };
+    const event = target === 'google'
+        ? (0, calendar_provider_1.buildGoogleCalendarEvent)(eventInput)
+        : target === 'apple'
+            ? (0, calendar_provider_1.buildAppleCalendarEvent)(eventInput)
+            : (0, calendar_provider_1.buildIcsEvent)(eventInput);
+    return {
+        success: true,
+        provider: config.providers.calendar,
+        vehicleVin: vin,
+        event: Object.assign({ target }, event),
+    };
+}
+exports.createCalendarEventCallable = (0, https_2.onCall)(async (request) => {
+    var _a;
+    const authRequired = (process.env.INTEGRATION_AUTH_REQUIRED || 'true').trim().toLowerCase() !==
+        'false';
+    if (authRequired && !((_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid)) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    try {
+        return buildCalendarEventResponse(request.data);
+    }
+    catch (error) {
+        if (error instanceof https_2.HttpsError) {
+            throw error;
+        }
+        logger.error('Callable calendar event error:', error);
+        throw new https_2.HttpsError('internal', 'Failed to create calendar event');
+    }
+});
+exports.verifyPremiumPurchase = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const { productId, purchaseId, verificationData, source, idempotencyKey, orgId: requestedOrgId, } = (_b = request.data) !== null && _b !== void 0 ? _b : {};
+    if (productId !== 'premium_ad_free') {
+        throw new https_2.HttpsError('invalid-argument', 'Unsupported premium productId');
+    }
+    const receipt = (verificationData || '').trim();
+    if (!receipt) {
+        throw new https_2.HttpsError('invalid-argument', 'verificationData is required for premium verification');
+    }
+    const receiptHash = (0, crypto_1.createHash)('sha256').update(receipt).digest('hex');
+    const purchaseSource = (source || 'unknown').toString();
+    const orgId = (requestedOrgId || '').toString().trim();
+    const reservation = await reserveIdempotencyKey({
+        uid,
+        operation: 'verifyPremiumPurchase',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const verification = await (0, billing_provider_1.verifyBillingPurchase)({
+            productId,
+            source: purchaseSource,
+            receipt,
+        });
+        const strictVerification = (process.env.PREMIUM_VERIFICATION_REQUIRED || 'false')
+            .trim()
+            .toLowerCase() === 'true';
+        if (strictVerification && !verification.verified) {
+            throw new https_2.HttpsError('failed-precondition', verification.reason ||
+                'Premium receipt verification failed in strict verification mode');
+        }
+        const db = admin.firestore();
+        const receiptRef = db.doc(`premiumReceipts/${receiptHash}`);
+        const entitlementRef = db.doc(`users/${uid}/entitlements/premium`);
+        await db.runTransaction(async (tx) => {
+            var _a;
+            const receiptSnap = await tx.get(receiptRef);
+            if (receiptSnap.exists) {
+                const existingUid = (((_a = receiptSnap.data()) === null || _a === void 0 ? void 0 : _a.uid) || '').toString();
+                if (existingUid && existingUid !== uid) {
+                    throw new https_2.HttpsError('permission-denied', 'Receipt is already linked to another account');
+                }
+            }
+            tx.set(receiptRef, {
+                uid,
+                productId,
+                source: purchaseSource,
+                purchaseId: (purchaseId || '').toString(),
+                receiptHash,
+                verified: verification.verified,
+                verificationState: verification.verificationState,
+                verificationProvider: verification.provider,
+                verificationReason: (verification.reason || '').toString(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            tx.set(entitlementRef, {
+                active: true,
+                productId,
+                source: purchaseSource,
+                purchaseId: (purchaseId || '').toString(),
+                receiptHash,
+                verificationState: verification.verificationState,
+                verified: verification.verified,
+                verificationProvider: verification.provider,
+                verificationReason: (verification.reason || '').toString(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        });
+        const ensuredOrgId = orgId || (await ensurePersonalOrganization(uid));
+        await writeAuditEvent({
+            orgId: ensuredOrgId,
+            actorUid: uid,
+            action: 'billing.verify_premium_purchase',
+            targetType: 'entitlement',
+            targetId: 'premium',
+            details: {
+                productId,
+                source: purchaseSource,
+                verificationState: verification.verificationState,
+            },
+        });
+        const result = {
+            success: true,
+            entitlement: {
+                premium: true,
+                verified: verification.verified,
+                verificationState: verification.verificationState,
+            },
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.getPremiumEntitlement = (0, https_2.onCall)(async (request) => {
+    var _a;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const entitlementSnap = await admin
+        .firestore()
+        .doc(`users/${uid}/entitlements/premium`)
+        .get();
+    const data = entitlementSnap.data() || {};
+    return {
+        success: true,
+        entitlement: {
+            premium: data.active === true,
+            verified: data.verified === true,
+            verificationState: (data.verificationState || 'none').toString(),
+            productId: (data.productId || '').toString(),
+            updatedAt: data.updatedAt || null,
+        },
+    };
+});
+exports.bootstrapEnterpriseContextCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const orgId = await ensurePersonalOrganization(uid, (((_c = (_b = request.auth) === null || _b === void 0 ? void 0 : _b.token) === null || _c === void 0 ? void 0 : _c.email) || '').toString());
+    const entitlements = await resolveEffectiveEntitlements(uid, orgId);
+    await writeAuditEvent({
+        orgId,
+        actorUid: uid,
+        action: 'enterprise.bootstrap_context',
+        targetType: 'organization',
+        targetId: orgId,
+    });
+    return {
+        success: true,
+        orgId,
+        entitlements,
+    };
+});
+exports.getEffectiveEntitlementsCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const requestedOrgId = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.orgId) || '').toString().trim();
+    if (!requestedOrgId) {
+        await ensurePersonalOrganization(uid, (((_d = (_c = request.auth) === null || _c === void 0 ? void 0 : _c.token) === null || _d === void 0 ? void 0 : _d.email) || '').toString());
+    }
+    const entitlements = await resolveEffectiveEntitlements(uid, requestedOrgId);
+    return {
+        success: true,
+        entitlements,
+    };
+});
+exports.changeSubscriptionTierCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const requestedTierRaw = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.targetTier) || '').toString().trim();
+    if (!requestedTierRaw) {
+        throw new https_2.HttpsError('invalid-argument', 'targetTier is required');
+    }
+    const requestedTier = normalizeTier(requestedTierRaw);
+    if (requestedTierRaw !== requestedTier && requestedTierRaw !== 'free') {
+        throw new https_2.HttpsError('invalid-argument', 'Unsupported targetTier');
+    }
+    if (requestedTier === 'enterprise') {
+        throw new https_2.HttpsError('failed-precondition', 'Enterprise requires a sales-managed contract');
+    }
+    const billingPeriod = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.billingPeriod) || '').toString().toLowerCase() === 'annual'
+        ? 'annual'
+        : 'monthly';
+    const idempotencyKey = (((_d = request.data) === null || _d === void 0 ? void 0 : _d.idempotencyKey) || '').toString();
+    const reservation = await reserveIdempotencyKey({
+        uid,
+        operation: 'changeSubscriptionTier',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const { previousTier, orgId, entitlements } = await applySubscriptionTierState({
+            uid,
+            targetTier: requestedTier,
+            billingPeriod,
+            status: 'active',
+            paymentMethod: requestedTier === 'free' ? null : 'stripe',
+            verificationState: 'simulated_checkout',
+        });
+        await writeAuditEvent({
+            orgId,
+            actorUid: uid,
+            action: 'billing.change_subscription_tier',
+            targetType: 'subscription',
+            targetId: uid,
+            details: {
+                previousTier,
+                requestedTier,
+                billingPeriod,
+            },
+        });
+        const result = {
+            success: true,
+            tier: requestedTier,
+            entitlements,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.createSubscriptionCheckoutSessionCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d, _e, _f;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const requestedTierRaw = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.targetTier) || '').toString().trim();
+    const requestedTier = normalizeTier(requestedTierRaw);
+    if (requestedTier !== 'pro' && requestedTier !== 'premium') {
+        throw new https_2.HttpsError('invalid-argument', 'Only pro and premium can be purchased through checkout');
+    }
+    const billingPeriod = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.billingPeriod) || '').toString().toLowerCase() === 'annual'
+        ? 'annual'
+        : 'monthly';
+    const idempotencyKey = (((_d = request.data) === null || _d === void 0 ? void 0 : _d.idempotencyKey) || '').toString();
+    const reservation = await reserveIdempotencyKey({
+        uid,
+        operation: 'createSubscriptionCheckoutSession',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const checkoutTemplate = (process.env.STRIPE_CHECKOUT_URL_TEMPLATE || '')
+            .toString()
+            .trim();
+        const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '')
+            .toString()
+            .trim();
+        const configuredAppBaseUrl = (process.env.APP_BASE_URL || '')
+            .toString()
+            .trim()
+            .replace(/\/$/, '');
+        const successUrl = (process.env.STRIPE_CHECKOUT_SUCCESS_URL || '').toString().trim() ||
+            (configuredAppBaseUrl
+                ? `${configuredAppBaseUrl}/app/subscription?checkout=success&session_id={CHECKOUT_SESSION_ID}`
+                : '');
+        const cancelUrl = (process.env.STRIPE_CHECKOUT_CANCEL_URL || '').toString().trim() ||
+            (configuredAppBaseUrl
+                ? `${configuredAppBaseUrl}/app/subscription?checkout=cancelled`
+                : '');
+        if (stripeSecretKey) {
+            if (!successUrl || !cancelUrl) {
+                throw new https_2.HttpsError('failed-precondition', 'Stripe checkout URLs are not configured');
+            }
+            const customerEmail = (((_f = (_e = request.auth) === null || _e === void 0 ? void 0 : _e.token) === null || _f === void 0 ? void 0 : _f.email) || '')
+                .toString()
+                .trim();
+            const stripeSession = await (0, billing_provider_1.createStripeCheckoutSession)({
+                uid,
+                tier: requestedTier,
+                billingPeriod,
+                successUrl,
+                cancelUrl,
+                customerEmail,
+            });
+            await admin
+                .firestore()
+                .doc(`users/${uid}/billingSessions/${stripeSession.sessionId}`)
+                .set({
+                sessionId: stripeSession.sessionId,
+                uid,
+                targetTier: requestedTier,
+                billingPeriod,
+                status: 'pending',
+                provider: 'stripe',
+                stripeCustomerId: stripeSession.customerId || null,
+                stripeSubscriptionId: stripeSession.subscriptionId || null,
+                checkoutUrl: stripeSession.checkoutUrl,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            if (stripeSession.customerId) {
+                await admin
+                    .firestore()
+                    .doc(`stripeCustomerLookup/${stripeSession.customerId}`)
+                    .set({
+                    uid,
+                    stripeCustomerId: stripeSession.customerId,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
+            const orgId = await ensurePersonalOrganization(uid);
+            await writeAuditEvent({
+                orgId,
+                actorUid: uid,
+                action: 'billing.create_checkout_session',
+                targetType: 'checkout_session',
+                targetId: stripeSession.sessionId,
+                details: {
+                    requestedTier,
+                    billingPeriod,
+                    provider: 'stripe',
+                },
+            });
+            const stripeResult = {
+                success: true,
+                mode: 'redirect',
+                checkoutUrl: stripeSession.checkoutUrl,
+                checkoutSessionId: stripeSession.sessionId,
+            };
+            await completeIdempotencyKey(reservation, stripeResult);
+            return stripeResult;
+        }
+        if (!checkoutTemplate) {
+            const applied = await applySubscriptionTierState({
+                uid,
+                targetTier: requestedTier,
+                billingPeriod,
+                status: 'active',
+                paymentMethod: 'stripe',
+                verificationState: 'simulated_checkout_fallback',
+            });
+            const fallbackResult = {
+                success: true,
+                mode: 'activated',
+                entitlements: applied.entitlements,
+                tier: requestedTier,
+            };
+            await writeAuditEvent({
+                orgId: applied.orgId,
+                actorUid: uid,
+                action: 'billing.checkout_fallback_activation',
+                targetType: 'subscription',
+                targetId: uid,
+                details: {
+                    requestedTier,
+                    billingPeriod,
+                },
+            });
+            await completeIdempotencyKey(reservation, fallbackResult);
+            return fallbackResult;
+        }
+        const sessionId = `cs_sim_${(0, crypto_1.randomBytes)(12).toString('hex')}`;
+        const checkoutUrl = checkoutTemplate
+            .replace('{CHECKOUT_SESSION_ID}', encodeURIComponent(sessionId))
+            .replace('{UID}', encodeURIComponent(uid))
+            .replace('{TIER}', encodeURIComponent(requestedTier))
+            .replace('{BILLING_PERIOD}', encodeURIComponent(billingPeriod));
+        await admin
+            .firestore()
+            .doc(`users/${uid}/billingSessions/${sessionId}`)
+            .set({
+            sessionId,
+            uid,
+            targetTier: requestedTier,
+            billingPeriod,
+            status: 'pending',
+            provider: 'stripe',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        const orgId = await ensurePersonalOrganization(uid);
+        await writeAuditEvent({
+            orgId,
+            actorUid: uid,
+            action: 'billing.create_checkout_session',
+            targetType: 'checkout_session',
+            targetId: sessionId,
+            details: {
+                requestedTier,
+                billingPeriod,
+            },
+        });
+        const result = {
+            success: true,
+            mode: 'redirect',
+            checkoutUrl,
+            checkoutSessionId: sessionId,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.createApiAccessKeyCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const entitlements = await requireFeatureEntitlement(uid, 'api_access');
+    const keyLabel = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.label) || 'Default key').toString().trim();
+    const label = keyLabel ? keyLabel.slice(0, 80) : 'Default key';
+    const idempotencyKey = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.idempotencyKey) || '').toString();
+    const reservation = await reserveIdempotencyKey({
+        uid,
+        operation: 'createApiAccessKey',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const db = admin.firestore();
+        const keyId = `key_${(0, crypto_1.randomBytes)(8).toString('hex')}`;
+        const rawKey = `vvk_${(0, crypto_1.randomBytes)(24).toString('hex')}`;
+        const keyPrefix = rawKey.slice(0, 12);
+        const keyHash = hashApiAccessKey(rawKey);
+        await db.doc(`users/${uid}/apiAccessKeys/${keyId}`).set({
+            keyId,
+            label,
+            keyPrefix,
+            keyHash,
+            active: true,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            lastUsedAt: null,
+            revokedAt: null,
+        });
+        await db.doc(`apiKeyLookup/${keyHash}`).set({
+            uid,
+            keyId,
+            active: true,
+            keyPrefix,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            revokedAt: null,
+        });
+        await writeAuditEvent({
+            orgId: entitlements.orgId,
+            actorUid: uid,
+            action: 'integration.create_api_access_key',
+            targetType: 'api_access_key',
+            targetId: keyId,
+            details: {
+                keyPrefix,
+                label,
+            },
+        });
+        const result = {
+            success: true,
+            key: {
+                keyId,
+                label,
+                keyPrefix,
+            },
+            rawKey,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.listApiAccessKeysCallable = (0, https_2.onCall)(async (request) => {
+    var _a;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    await requireFeatureEntitlement(uid, 'api_access');
+    const snapshot = await admin
+        .firestore()
+        .collection(`users/${uid}/apiAccessKeys`)
+        .orderBy('createdAt', 'desc')
+        .limit(25)
+        .get();
+    const keys = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            keyId: (data.keyId || doc.id).toString(),
+            label: (data.label || '').toString(),
+            keyPrefix: (data.keyPrefix || '').toString(),
+            active: data.active === true,
+            createdAt: data.createdAt || null,
+            updatedAt: data.updatedAt || null,
+            lastUsedAt: data.lastUsedAt || null,
+            revokedAt: data.revokedAt || null,
+        };
+    });
+    return {
+        success: true,
+        keys,
+    };
+});
+exports.revokeApiAccessKeyCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const entitlements = await requireFeatureEntitlement(uid, 'api_access');
+    const keyId = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.keyId) || '').toString().trim();
+    if (!keyId) {
+        throw new https_2.HttpsError('invalid-argument', 'keyId is required');
+    }
+    const keyRef = admin.firestore().doc(`users/${uid}/apiAccessKeys/${keyId}`);
+    const keySnap = await keyRef.get();
+    if (!keySnap.exists) {
+        throw new https_2.HttpsError('not-found', 'API access key not found');
+    }
+    await keyRef.set({
+        active: false,
+        revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    const keyData = keySnap.data();
+    const keyHash = ((keyData === null || keyData === void 0 ? void 0 : keyData.keyHash) || '').toString();
+    if (keyHash) {
+        await admin.firestore().doc(`apiKeyLookup/${keyHash}`).set({
+            active: false,
+            revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+    }
+    await writeAuditEvent({
+        orgId: entitlements.orgId,
+        actorUid: uid,
+        action: 'integration.revoke_api_access_key',
+        targetType: 'api_access_key',
+        targetId: keyId,
+    });
+    return {
+        success: true,
+        keyId,
+        revoked: true,
+    };
+});
+exports.getZapierWebhookConfigCallable = (0, https_2.onCall)(async (request) => {
+    var _a;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    await requireFeatureEntitlement(uid, 'zapier_integration');
+    await requireFeatureEntitlement(uid, 'api_access');
+    const baseUrl = resolveFunctionBaseUrl();
+    if (!baseUrl) {
+        throw new https_2.HttpsError('failed-precondition', 'Webhook base URL is not configured');
+    }
+    const webhookSecretConfigured = (process.env.ZAPIER_WEBHOOK_SECRET || '').trim().length > 0;
+    return {
+        success: true,
+        webhookUrl: `${baseUrl}/zapierMaintenanceWebhook`,
+        instructions: 'Send POST JSON with vin and title. Include your API key as x-api-key header. If signature is required, include x-vv-signature as sha256=<hmac_sha256_raw_body>.',
+        requiresSignature: webhookSecretConfigured,
+    };
+});
+exports.transferVehicleCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d, _e;
+    const actorUid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!actorUid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const vin = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.vin) || '').toString().trim();
+    const idempotencyKey = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.idempotencyKey) || '').toString();
+    if (!vin) {
+        throw new https_2.HttpsError('invalid-argument', 'vin is required');
+    }
+    const reservation = await reserveIdempotencyKey({
+        uid: actorUid,
+        operation: 'transferVehicle',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const targetUser = await resolveVehicleTransferTarget({
+            recipientUid: (_d = request.data) === null || _d === void 0 ? void 0 : _d.recipientUid,
+            recipientEmail: (_e = request.data) === null || _e === void 0 ? void 0 : _e.recipientEmail,
+        });
+        if (targetUser.uid === actorUid) {
+            throw new https_2.HttpsError('invalid-argument', 'You cannot transfer a vehicle to your own account');
+        }
+        const db = admin.firestore();
+        const sourceVehicleRef = db.doc(`users/${actorUid}/vehicles/${vin}`);
+        const targetVehicleRef = db.doc(`users/${targetUser.uid}/vehicles/${vin}`);
+        const [sourceVehicleSnap, targetVehicleSnap] = await Promise.all([
+            sourceVehicleRef.get(),
+            targetVehicleRef.get(),
+            ensurePersonalOrganization(targetUser.uid, targetUser.email || undefined),
+        ]);
+        if (!sourceVehicleSnap.exists) {
+            throw new https_2.HttpsError('not-found', 'Vehicle was not found');
+        }
+        if (targetVehicleSnap.exists) {
+            throw new https_2.HttpsError('already-exists', 'Recipient already has a vehicle with that ID');
+        }
+        const sourceVehicleData = sourceVehicleSnap.data() || {};
+        const batch = db.batch();
+        await queueVehicleTransferOperations({
+            batch,
+            sourceVehicleRef,
+            targetVehicleRef,
+            sourceVehicleData,
+            actorUid,
+            recipientUid: targetUser.uid,
+        });
+        await batch.commit();
+        const orgId = await getPrimaryOrgIdForUser(actorUid);
+        await writeAuditEvent({
+            orgId,
+            actorUid,
+            action: 'vehicle.transfer',
+            targetType: 'vehicle',
+            targetId: vin,
+            details: {
+                recipientUid: targetUser.uid,
+                recipientEmail: targetUser.email,
+            },
+        });
+        const result = {
+            success: true,
+            vin,
+            recipientUid: targetUser.uid,
+            recipientEmail: targetUser.email,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.consolidateAccountDataCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    const primaryUid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!primaryUid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const sourceUid = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.sourceUid) || '').toString().trim();
+    const idempotencyKey = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.idempotencyKey) || '').toString();
+    if (!sourceUid) {
+        throw new https_2.HttpsError('invalid-argument', 'sourceUid is required');
+    }
+    if (sourceUid === primaryUid) {
+        throw new https_2.HttpsError('invalid-argument', 'Cannot consolidate account into itself');
+    }
+    const reservation = await reserveIdempotencyKey({
+        uid: primaryUid,
+        operation: 'consolidateAccountData',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const db = admin.firestore();
+        // Verify source account exists
+        try {
+            await admin.auth().getUser(sourceUid);
+        }
+        catch (error) {
+            throw new https_2.HttpsError('not-found', `Source account uid ${sourceUid} not found`);
+        }
+        // Get all vehicles from source account
+        const sourceVehiclesSnap = await db
+            .collection(`users/${sourceUid}/vehicles`)
+            .get();
+        const vehiclesToMigrate = sourceVehiclesSnap.docs
+            .filter(doc => doc.id !== '__preferences__')
+            .map(doc => doc.id);
+        if (vehiclesToMigrate.length === 0) {
+            return {
+                success: true,
+                sourceUid,
+                primaryUid,
+                vehiclesMigrated: 0,
+                message: 'No vehicles to migrate from source account',
+            };
+        }
+        // Ensure primary account organization exists
+        await ensurePersonalOrganization(primaryUid, (((_e = (_d = request.auth) === null || _d === void 0 ? void 0 : _d.token) === null || _e === void 0 ? void 0 : _e.email) || '').toString());
+        // Migrate each vehicle
+        let vehiclesMigrated = 0;
+        let vehicleSkipped = 0;
+        const migratedVins = [];
+        for (const vin of vehiclesToMigrate) {
+            try {
+                const sourceVehicleRef = db.doc(`users/${sourceUid}/vehicles/${vin}`);
+                const targetVehicleRef = db.doc(`users/${primaryUid}/vehicles/${vin}`);
+                const [sourceVehicleSnap, targetVehicleSnap] = await Promise.all([
+                    sourceVehicleRef.get(),
+                    targetVehicleRef.get(),
+                ]);
+                if (!sourceVehicleSnap.exists) {
+                    vehicleSkipped += 1;
+                    continue;
+                }
+                // Skip if vehicle already exists in target
+                if (targetVehicleSnap.exists) {
+                    vehicleSkipped += 1;
+                    continue;
+                }
+                const sourceVehicleData = sourceVehicleSnap.data() || {};
+                const batch = db.batch();
+                await queueVehicleTransferOperations({
+                    batch,
+                    sourceVehicleRef,
+                    targetVehicleRef,
+                    sourceVehicleData,
+                    actorUid: sourceUid,
+                    recipientUid: primaryUid,
+                });
+                await batch.commit();
+                vehiclesMigrated += 1;
+                migratedVins.push(vin);
+            }
+            catch (vinError) {
+                logger.warn('Failed to migrate vehicle during consolidation', {
+                    sourceUid,
+                    primaryUid,
+                    vin,
+                    error: vinError,
+                });
+                vehicleSkipped += 1;
+            }
+        }
+        // Migrate subscription tier if source has a higher tier
+        const sourceSubscriptionSnap = await db
+            .doc(`users/${sourceUid}/subscription/current`)
+            .get();
+        const primarySubscriptionSnap = await db
+            .doc(`users/${primaryUid}/subscription/current`)
+            .get();
+        const sourceTier = normalizeTier((_f = sourceSubscriptionSnap.data()) === null || _f === void 0 ? void 0 : _f.tier);
+        const primaryTier = normalizeTier((_g = primarySubscriptionSnap.data()) === null || _g === void 0 ? void 0 : _g.tier);
+        if (tierRank(sourceTier) > tierRank(primaryTier)) {
+            const sourceSubData = sourceSubscriptionSnap.data() || {};
+            await db.doc(`users/${primaryUid}/subscription/current`).set({
+                tier: sourceTier,
+                status: sourceSubData.status || 'active',
+                autoRenew: sourceSubData.autoRenew !== false,
+                migratedFrom: sourceUid,
+                migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        }
+        // Migrate premium entitlements if source is premium
+        const sourcePremiumSnap = await db
+            .doc(`users/${sourceUid}/entitlements/premium`)
+            .get();
+        const primaryPremiumSnap = await db
+            .doc(`users/${primaryUid}/entitlements/premium`)
+            .get();
+        const sourcePremiumActive = ((_h = sourcePremiumSnap.data()) === null || _h === void 0 ? void 0 : _h.active) === true;
+        const primaryPremiumActive = ((_j = primaryPremiumSnap.data()) === null || _j === void 0 ? void 0 : _j.active) === true;
+        if (sourcePremiumActive && !primaryPremiumActive) {
+            const sourcePremiumData = sourcePremiumSnap.data() || {};
+            await db.doc(`users/${primaryUid}/entitlements/premium`).set({
+                active: true,
+                verified: sourcePremiumData.verified || false,
+                verificationState: sourcePremiumData.verificationState || 'migrated',
+                migratedFrom: sourceUid,
+                migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        }
+        const orgId = await getPrimaryOrgIdForUser(primaryUid);
+        await writeAuditEvent({
+            orgId,
+            actorUid: primaryUid,
+            action: 'account.consolidate_data',
+            targetType: 'user_account',
+            targetId: sourceUid,
+            details: {
+                vehiclesMigrated,
+                vehicleSkipped,
+                migratedVins,
+                sourceTierMigrated: sourceTier !== primaryTier ? sourceTier : null,
+                premiumMigrated: sourcePremiumActive && !primaryPremiumActive,
+            },
+        });
+        const result = {
+            success: true,
+            sourceUid,
+            primaryUid,
+            vehiclesMigrated,
+            vehicleSkipped,
+            migratedVins,
+            message: `Successfully migrated ${vehiclesMigrated} vehicle(s) from source account`,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.zapierMaintenanceWebhook = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    try {
+        if (!(0, request_guards_1.enforceRateLimit)(request, response, 'zapierMaintenanceWebhook')) {
+            return;
+        }
+        if (request.method !== 'POST') {
+            response
+                .status(405)
+                .json({ success: false, error: 'Method not allowed' });
+            return;
+        }
+        const apiKeyHeader = (request.headers['x-api-key'] || '').toString().trim() ||
+            (request.headers.authorization || '')
+                .toString()
+                .replace(/^Bearer\s+/i, '')
+                .trim();
+        if (!apiKeyHeader) {
+            response.status(401).json({ success: false, error: 'Missing API key' });
+            return;
+        }
+        const webhookSecret = (process.env.ZAPIER_WEBHOOK_SECRET || '').trim();
+        if (webhookSecret && !isWebhookSignatureValid(request, webhookSecret)) {
+            response
+                .status(401)
+                .json({ success: false, error: 'Invalid webhook signature' });
+            return;
+        }
+        const keyHash = hashApiAccessKey(apiKeyHeader);
+        const lookupSnap = await admin
+            .firestore()
+            .doc(`apiKeyLookup/${keyHash}`)
+            .get();
+        if (!lookupSnap.exists) {
+            response.status(401).json({ success: false, error: 'Invalid API key' });
+            return;
+        }
+        const lookupData = lookupSnap.data() || {};
+        if (lookupData.active !== true) {
+            response.status(401).json({ success: false, error: 'Invalid API key' });
+            return;
+        }
+        const uid = (lookupData.uid || '').toString().trim();
+        const keyId = (lookupData.keyId || '').toString().trim();
+        if (!uid) {
+            response
+                .status(401)
+                .json({ success: false, error: 'Invalid API key owner' });
+            return;
+        }
+        const keyDocRef = admin
+            .firestore()
+            .doc(`users/${uid}/apiAccessKeys/${keyId}`);
+        const keyDoc = await keyDocRef.get();
+        const keyData = keyDoc.data() || {};
+        if (!keyDoc.exists ||
+            keyData.active !== true ||
+            keyData.keyHash !== keyHash) {
+            response.status(401).json({ success: false, error: 'Invalid API key' });
+            return;
+        }
+        const entitlements = await resolveEffectiveEntitlements(uid);
+        if (!((_a = entitlements.features) === null || _a === void 0 ? void 0 : _a.api_access) ||
+            !((_b = entitlements.features) === null || _b === void 0 ? void 0 : _b.zapier_integration)) {
+            response.status(403).json({
+                success: false,
+                error: 'Plan does not allow webhook integrations',
+            });
+            return;
+        }
+        const vin = (((_c = request.body) === null || _c === void 0 ? void 0 : _c.vin) || '')
+            .toString()
+            .trim()
+            .toUpperCase();
+        const title = (((_d = request.body) === null || _d === void 0 ? void 0 : _d.title) || '').toString().trim();
+        const description = (((_e = request.body) === null || _e === void 0 ? void 0 : _e.description) || '')
+            .toString()
+            .trim();
+        const serviceType = (((_f = request.body) === null || _f === void 0 ? void 0 : _f.serviceType) || '')
+            .toString()
+            .trim();
+        const frequency = (((_g = request.body) === null || _g === void 0 ? void 0 : _g.frequency) || 'Webhook trigger')
+            .toString()
+            .trim();
+        const interval = Math.max(1, Number(((_h = request.body) === null || _h === void 0 ? void 0 : _h.interval) || 1));
+        const nextDueMileage = Number(((_j = request.body) === null || _j === void 0 ? void 0 : _j.nextDueMileage) || 0);
+        const milesUntilDue = Number(((_k = request.body) === null || _k === void 0 ? void 0 : _k.milesUntilDue) || 0);
+        if (!vin || !title) {
+            response.status(400).json({
+                success: false,
+                error: 'vin and title are required',
+            });
+            return;
+        }
+        const vehicleRef = admin.firestore().doc(`users/${uid}/vehicles/${vin}`);
+        const vehicleSnap = await vehicleRef.get();
+        if (!vehicleSnap.exists) {
+            response.status(404).json({
+                success: false,
+                error: 'Vehicle not found for API key owner',
+            });
+            return;
+        }
+        const reminderRef = await admin
+            .firestore()
+            .collection(`users/${uid}/vehicles/${vin}/reminders`)
+            .add({
+            title,
+            description,
+            serviceType: serviceType || null,
+            frequency,
+            interval,
+            nextDueMileage: Number.isFinite(nextDueMileage) ? nextDueMileage : 0,
+            milesUntilDue: Number.isFinite(milesUntilDue) ? milesUntilDue : 0,
+            status: 'active',
+            source: 'zapier_webhook',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        await keyDocRef.set({
+            lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await lookupSnap.ref.set({
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        response.status(200).json({
+            success: true,
+            uid,
+            vin,
+            reminderId: reminderRef.id,
+        });
+    }
+    catch (error) {
+        logger.error('Zapier webhook processing failed', error);
+        response
+            .status(500)
+            .json({ success: false, error: 'Failed to process webhook' });
+    }
+});
+exports.stripeSubscriptionWebhook = (0, https_1.onRequest)({ cors: true }, async (request, response) => {
+    var _a;
+    try {
+        if (!(0, request_guards_1.enforceRateLimit)(request, response, 'stripeSubscriptionWebhook')) {
+            return;
+        }
+        if (request.method !== 'POST') {
+            response
+                .status(405)
+                .json({ success: false, error: 'Method not allowed' });
+            return;
+        }
+        const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+        if (webhookSecret &&
+            !isStripeWebhookSignatureValid(request, webhookSecret)) {
+            response
+                .status(401)
+                .json({ success: false, error: 'Invalid signature' });
+            return;
+        }
+        const event = request.body && typeof request.body === 'object'
+            ? request.body
+            : JSON.parse(getRequestBodyBuffer(request).toString('utf8') || '{}');
+        const eventId = ((event === null || event === void 0 ? void 0 : event.id) || '').toString().trim();
+        const eventType = ((event === null || event === void 0 ? void 0 : event.type) || '').toString().trim();
+        const eventObject = ((_a = event === null || event === void 0 ? void 0 : event.data) === null || _a === void 0 ? void 0 : _a.object) || {};
+        if (!eventId || !eventType) {
+            response
+                .status(400)
+                .json({ success: false, error: 'Invalid event payload' });
+            return;
+        }
+        const eventRef = admin.firestore().doc(`billingWebhookEvents/${eventId}`);
+        const eventSnap = await eventRef.get();
+        if (eventSnap.exists) {
+            response
+                .status(200)
+                .json({ success: true, deduplicated: true, eventId });
+            return;
+        }
+        const uid = await resolveUidFromStripeObject(eventObject);
+        if (!uid) {
+            response.status(400).json({
+                success: false,
+                error: 'Missing user mapping for Stripe event',
+            });
+            return;
+        }
+        const stripeCustomerId = ((eventObject === null || eventObject === void 0 ? void 0 : eventObject.customer) || '').toString().trim();
+        const stripeSubscriptionId = ((eventObject === null || eventObject === void 0 ? void 0 : eventObject.subscription) ||
+            (eventObject === null || eventObject === void 0 ? void 0 : eventObject.id) ||
+            '')
+            .toString()
+            .trim();
+        if (stripeCustomerId) {
+            await admin
+                .firestore()
+                .doc(`stripeCustomerLookup/${stripeCustomerId}`)
+                .set({
+                uid,
+                stripeCustomerId,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        }
+        let reconciliationResult = {
+            eventType,
+            uid,
+            handled: false,
+        };
+        if (eventType === 'checkout.session.completed' ||
+            eventType === 'customer.subscription.updated' ||
+            eventType === 'invoice.payment_succeeded') {
+            const tier = resolveSubscriptionTierFromStripeObject(eventObject);
+            if (tier === 'pro' || tier === 'premium') {
+                const billingPeriod = resolveBillingPeriodFromStripeObject(eventObject);
+                const subscriptionStatus = resolveSubscriptionStatusFromStripeObject(eventObject);
+                const applied = await applySubscriptionTierState({
+                    uid,
+                    targetTier: tier,
+                    billingPeriod,
+                    status: subscriptionStatus,
+                    paymentMethod: 'stripe',
+                    stripeCustomerId,
+                    stripeSubscriptionId,
+                    lastPaymentError: null,
+                    verificationState: 'webhook_verified',
+                });
+                reconciliationResult = {
+                    eventType,
+                    uid,
+                    handled: true,
+                    tier,
+                    billingPeriod,
+                    status: subscriptionStatus,
+                    orgId: applied.orgId,
+                };
+            }
+        }
+        if (eventType === 'invoice.payment_failed') {
+            await admin
+                .firestore()
+                .doc(`users/${uid}/subscription/current`)
+                .set({
+                status: 'past_due',
+                paymentMethod: 'stripe',
+                stripeCustomerId: stripeCustomerId || null,
+                stripeSubscriptionId: stripeSubscriptionId || null,
+                lastPaymentError: 'stripe_invoice_payment_failed',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            reconciliationResult = {
+                eventType,
+                uid,
+                handled: true,
+                status: 'past_due',
+            };
+        }
+        if (eventType === 'customer.subscription.deleted') {
+            const periodEnd = toTimestampFromUnixSeconds(eventObject === null || eventObject === void 0 ? void 0 : eventObject.current_period_end) ||
+                firestore_1.Timestamp.now();
+            await admin
+                .firestore()
+                .doc(`users/${uid}/subscription/current`)
+                .set({
+                tier: 'free',
+                status: 'canceled',
+                autoRenew: false,
+                paymentMethod: 'stripe',
+                stripeCustomerId: stripeCustomerId || null,
+                stripeSubscriptionId: stripeSubscriptionId || null,
+                currentPeriodEnd: periodEnd,
+                renewalDate: periodEnd,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            await admin.firestore().doc(`users/${uid}/entitlements/premium`).set({
+                active: false,
+                verified: false,
+                verificationState: 'revoked_by_webhook_cancellation',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            reconciliationResult = {
+                eventType,
+                uid,
+                handled: true,
+                status: 'canceled',
+            };
+        }
+        if (eventType === 'charge.dispute.created') {
+            await admin
+                .firestore()
+                .doc(`users/${uid}/subscription/current`)
+                .set({
+                status: 'past_due',
+                paymentMethod: 'stripe',
+                stripeCustomerId: stripeCustomerId || null,
+                stripeSubscriptionId: stripeSubscriptionId || null,
+                lastPaymentError: 'stripe_charge_dispute',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            reconciliationResult = {
+                eventType,
+                uid,
+                handled: true,
+                status: 'past_due',
+                reason: 'dispute_created',
+            };
+        }
+        if (eventType === 'charge.refunded') {
+            await admin
+                .firestore()
+                .doc(`users/${uid}/subscription/current`)
+                .set({
+                status: 'past_due',
+                paymentMethod: 'stripe',
+                stripeCustomerId: stripeCustomerId || null,
+                stripeSubscriptionId: stripeSubscriptionId || null,
+                lastPaymentError: 'stripe_charge_refunded',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            reconciliationResult = {
+                eventType,
+                uid,
+                handled: true,
+                status: 'past_due',
+                reason: 'charge_refunded',
+            };
+        }
+        await eventRef.set({
+            eventId,
+            eventType,
+            uid,
+            reconciliationResult,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        response.status(200).json(Object.assign({ success: true, eventId }, reconciliationResult));
+    }
+    catch (error) {
+        logger.error('Stripe webhook processing failed', error);
+        response
+            .status(500)
+            .json({ success: false, error: 'Failed to process billing webhook' });
+    }
+});
+exports.getOrganizationMembersCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const requestedOrgId = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.orgId) || '').toString().trim();
+    const orgId = requestedOrgId || (await getPrimaryOrgIdForUser(uid));
+    await requireOrgRole(uid, orgId, [
+        'org_owner',
+        'org_admin',
+        'support_agent',
+        'billing_admin',
+        'read_only',
+    ]);
+    const membersSnap = await admin
+        .firestore()
+        .collection(`orgs/${orgId}/members`)
+        .get();
+    const members = membersSnap.docs.map(doc => (Object.assign({ uid: doc.id }, doc.data())));
+    return {
+        success: true,
+        orgId,
+        members,
+    };
+});
+exports.setOrganizationMemberRoleCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d, _e;
+    const actorUid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!actorUid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const orgId = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.orgId) || '').toString().trim();
+    const targetUid = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.targetUid) || '').toString().trim();
+    const newRole = toOrgRole((_d = request.data) === null || _d === void 0 ? void 0 : _d.role);
+    const idempotencyKey = (((_e = request.data) === null || _e === void 0 ? void 0 : _e.idempotencyKey) || '').toString();
+    if (!orgId || !targetUid) {
+        throw new https_2.HttpsError('invalid-argument', 'orgId and targetUid are required');
+    }
+    await requireOrgRole(actorUid, orgId, ['org_owner', 'org_admin']);
+    const reservation = await reserveIdempotencyKey({
+        uid: actorUid,
+        operation: 'setOrganizationMemberRole',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const memberRef = admin
+            .firestore()
+            .doc(`orgs/${orgId}/members/${targetUid}`);
+        const memberSnap = await memberRef.get();
+        if (!memberSnap.exists) {
+            throw new https_2.HttpsError('not-found', 'Organization member not found');
+        }
+        await memberRef.set({
+            role: newRole,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await admin
+            .firestore()
+            .doc(`users/${targetUid}/orgMemberships/${orgId}`)
+            .set({
+            orgId,
+            role: newRole,
+            status: 'active',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await writeAuditEvent({
+            orgId,
+            actorUid,
+            action: 'organization.set_member_role',
+            targetType: 'member',
+            targetId: targetUid,
+            details: { role: newRole },
+        });
+        const result = {
+            success: true,
+            orgId,
+            targetUid,
+            role: newRole,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.createInvoiceDraftCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    const actorUid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!actorUid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const payload = (request.data || {});
+    const orgId = (payload.orgId || '').toString().trim();
+    const customerName = (payload.customerName || '').toString().trim();
+    const dueDate = (payload.dueDate || '').toString().trim();
+    const issueDate = (payload.issueDate || '').toString().trim();
+    const currency = (payload.currency || 'USD').toString().trim().toUpperCase();
+    const notes = (payload.notes || '').toString().trim();
+    const lineItems = Array.isArray(payload.lineItems)
+        ? payload.lineItems
+            .map(item => {
+            var _a, _b;
+            return ({
+                description: ((item === null || item === void 0 ? void 0 : item.description) || '').toString().trim(),
+                quantity: normalizeMoneyAmount((_a = item === null || item === void 0 ? void 0 : item.quantity) !== null && _a !== void 0 ? _a : 0),
+                unitPrice: normalizeMoneyAmount((_b = item === null || item === void 0 ? void 0 : item.unitPrice) !== null && _b !== void 0 ? _b : 0),
+            });
+        })
+            .filter(item => item.description)
+        : [];
+    const idempotencyKey = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.idempotencyKey) || '').toString();
+    if (!orgId || !customerName || !dueDate) {
+        throw new https_2.HttpsError('invalid-argument', 'orgId, customerName, and dueDate are required');
+    }
+    await requireOrgRole(actorUid, orgId, [
+        'org_owner',
+        'org_admin',
+        'billing_admin',
+    ]);
+    const amountDue = payload.amountDue != null
+        ? normalizeMoneyAmount(payload.amountDue)
+        : Math.round(lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) * 100) / 100;
+    const reservation = await reserveIdempotencyKey({
+        uid: actorUid,
+        operation: 'createInvoiceDraft',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const invoiceRef = admin
+            .firestore()
+            .collection(`orgs/${orgId}/financeInvoices`)
+            .doc();
+        await invoiceRef.set({
+            orgId,
+            customerName,
+            issueDate: issueDate || new Date().toISOString().slice(0, 10),
+            dueDate,
+            currency,
+            amountDue,
+            amountPaid: 0,
+            status: 'draft',
+            notes,
+            lineItems,
+            createdByUid: actorUid,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        await writeAuditEvent({
+            orgId,
+            actorUid,
+            action: 'finance.create_invoice_draft',
+            targetType: 'invoice',
+            targetId: invoiceRef.id,
+            details: {
+                customerName,
+                dueDate,
+                currency,
+                amountDue,
+            },
+        });
+        const result = {
+            success: true,
+            orgId,
+            invoiceId: invoiceRef.id,
+            status: 'draft',
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.createPayableDraftCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c;
+    const actorUid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!actorUid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const payload = (request.data || {});
+    const orgId = (payload.orgId || '').toString().trim();
+    const vendorName = (payload.vendorName || '').toString().trim();
+    const dueDate = (payload.dueDate || '').toString().trim();
+    const billDate = (payload.billDate || '').toString().trim();
+    const currency = (payload.currency || 'USD').toString().trim().toUpperCase();
+    const category = (payload.category || '').toString().trim();
+    const notes = (payload.notes || '').toString().trim();
+    const amountDue = normalizeMoneyAmount((_b = payload.amountDue) !== null && _b !== void 0 ? _b : 0);
+    const idempotencyKey = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.idempotencyKey) || '').toString();
+    if (!orgId || !vendorName || !dueDate) {
+        throw new https_2.HttpsError('invalid-argument', 'orgId, vendorName, and dueDate are required');
+    }
+    await requireOrgRole(actorUid, orgId, [
+        'org_owner',
+        'org_admin',
+        'billing_admin',
+    ]);
+    const reservation = await reserveIdempotencyKey({
+        uid: actorUid,
+        operation: 'createPayableDraft',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const payableRef = admin
+            .firestore()
+            .collection(`orgs/${orgId}/financePayables`)
+            .doc();
+        await payableRef.set({
+            orgId,
+            vendorName,
+            billDate: billDate || new Date().toISOString().slice(0, 10),
+            dueDate,
+            currency,
+            amountDue,
+            amountPaid: 0,
+            status: 'draft',
+            category,
+            notes,
+            createdByUid: actorUid,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        await writeAuditEvent({
+            orgId,
+            actorUid,
+            action: 'finance.create_payable_draft',
+            targetType: 'payable',
+            targetId: payableRef.id,
+            details: {
+                vendorName,
+                dueDate,
+                currency,
+                amountDue,
+            },
+        });
+        const result = {
+            success: true,
+            orgId,
+            payableId: payableRef.id,
+            status: 'draft',
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.requestUserDataExportCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const idempotencyKey = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.idempotencyKey) || '').toString();
+    const reservation = await reserveIdempotencyKey({
+        uid,
+        operation: 'requestUserDataExport',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const requestRef = await admin
+            .firestore()
+            .collection('complianceRequests')
+            .add({
+            uid,
+            type: 'export',
+            status: 'requested',
+            piiTags: [
+                'email',
+                'vehicle_data',
+                'maintenance_history',
+                'subscription',
+            ],
+            requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        const result = {
+            success: true,
+            requestId: requestRef.id,
+            status: 'requested',
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.requestUserDataDeletionCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const idempotencyKey = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.idempotencyKey) || '').toString();
+    const reservation = await reserveIdempotencyKey({
+        uid,
+        operation: 'requestUserDataDeletion',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        const requestRef = await admin
+            .firestore()
+            .collection('complianceRequests')
+            .add({
+            uid,
+            type: 'deletion',
+            status: 'requested',
+            piiTags: [
+                'email',
+                'vehicle_data',
+                'maintenance_history',
+                'subscription',
+            ],
+            requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        const result = {
+            success: true,
+            requestId: requestRef.id,
+            status: 'requested',
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.applyRetentionPolicyCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d;
+    const uid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    requireSuperAdmin(request);
+    const orgId = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.orgId) || '').toString().trim();
+    const retentionDaysRaw = Number(((_c = request.data) === null || _c === void 0 ? void 0 : _c.retentionDays) || 365);
+    const idempotencyKey = (((_d = request.data) === null || _d === void 0 ? void 0 : _d.idempotencyKey) || '').toString();
+    if (!orgId) {
+        throw new https_2.HttpsError('invalid-argument', 'orgId is required');
+    }
+    const retentionDays = Number.isFinite(retentionDaysRaw)
+        ? Math.max(30, Math.min(3650, Math.floor(retentionDaysRaw)))
+        : 365;
+    const reservation = await reserveIdempotencyKey({
+        uid,
+        operation: 'applyRetentionPolicy',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        await admin.firestore().doc(`orgs/${orgId}/compliance/retention`).set({
+            retentionDays,
+            updatedByUid: uid,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await writeAuditEvent({
+            orgId,
+            actorUid: uid,
+            action: 'compliance.apply_retention_policy',
+            targetType: 'retention_policy',
+            targetId: orgId,
+            details: { retentionDays },
+        });
+        const result = {
+            success: true,
+            orgId,
+            retentionDays,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.recordSupportActionCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b, _c, _d, _e, _f;
+    const actorUid = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!actorUid) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    requireSuperAdmin(request);
+    const orgId = (((_b = request.data) === null || _b === void 0 ? void 0 : _b.orgId) || '').toString().trim();
+    const targetUid = (((_c = request.data) === null || _c === void 0 ? void 0 : _c.targetUid) || '').toString().trim();
+    const action = (((_d = request.data) === null || _d === void 0 ? void 0 : _d.action) || '').toString().trim();
+    const notes = (((_e = request.data) === null || _e === void 0 ? void 0 : _e.notes) || '').toString().trim();
+    const idempotencyKey = (((_f = request.data) === null || _f === void 0 ? void 0 : _f.idempotencyKey) || '').toString();
+    if (!orgId || !targetUid || !action) {
+        throw new https_2.HttpsError('invalid-argument', 'orgId, targetUid, and action are required');
+    }
+    const reservation = await reserveIdempotencyKey({
+        uid: actorUid,
+        operation: 'recordSupportAction',
+        idempotencyKey,
+    });
+    if (reservation.isReplay) {
+        return reservation.result;
+    }
+    try {
+        await writeAuditEvent({
+            orgId,
+            actorUid,
+            action: `support.${action}`,
+            targetType: 'user',
+            targetId: targetUid,
+            details: { notes },
+        });
+        const result = {
+            success: true,
+            orgId,
+            targetUid,
+            action,
+        };
+        await completeIdempotencyKey(reservation, result);
+        return result;
+    }
+    catch (error) {
+        await markIdempotencyFailed(reservation, error instanceof Error ? error.message : 'unknown_error');
+        throw error;
+    }
+});
+exports.getSupportAccessContextCallable = (0, https_2.onCall)(async (request) => {
+    var _a;
+    if (!((_a = request.auth) === null || _a === void 0 ? void 0 : _a.uid)) {
+        throw new https_2.HttpsError('unauthenticated', 'Missing auth context');
+    }
+    const access = getSupportAccessContext(request);
+    return Object.assign({ success: true }, access);
+});
+exports.searchSupportUsersCallable = (0, https_2.onCall)(async (request) => {
+    var _a, _b;
+    requireSuperAdmin(request);
+    const rawQuery = typeof ((_a = request.data) === null || _a === void 0 ? void 0 : _a.query) === 'string' ? request.data.query : '';
+    const query = rawQuery.trim().toLowerCase();
+    const rawLimit = Number(((_b = request.data) === null || _b === void 0 ? void 0 : _b.limit) || 12);
+    const limit = Number.isFinite(rawLimit)
+        ? Math.max(1, Math.min(25, Math.floor(rawLimit)))
+        : 12;
+    const auth = admin.auth();
+    const results = [];
+    let pageToken;
+    do {
+        const page = await auth.listUsers(1000, pageToken);
+        for (const userRecord of page.users) {
+            if (results.length >= limit) {
+                break;
+            }
+            const haystack = [
+                userRecord.uid,
+                userRecord.email,
+                userRecord.displayName,
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase();
+            if (query && !haystack.includes(query)) {
+                continue;
+            }
+            results.push(await buildSupportUserSummary(userRecord));
+        }
+        pageToken = page.pageToken || undefined;
+    } while (pageToken && results.length < limit);
+    return {
+        success: true,
+        query,
+        results,
+    };
+});
+//# sourceMappingURL=index.js.map

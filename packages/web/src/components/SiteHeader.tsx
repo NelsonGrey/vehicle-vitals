@@ -1,10 +1,9 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
-import {
-  isDevelopmentEnvironment,
-  isDevelopmentProject,
-} from '../shared/environment';
+import { isDemonstrationEnvironment } from '../shared/environment';
+import { personaPages } from '../data/personas';
+import { trackHeaderNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
 
 interface SiteHeaderProps {
@@ -13,13 +12,10 @@ interface SiteHeaderProps {
 
 export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
   const { user, signOut, supportAccess } = useAuth();
+  const isLoggedIn = Boolean(user && !user.isAnonymous);
 
   const linkClass = `hover:opacity-80 transition-opacity whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-900 ${
     overlay ? 'text-gray-100 hover:text-white' : 'text-current'
-  }`;
-
-  const sectionLabelClass = `text-[10px] font-semibold uppercase tracking-wider ${
-    overlay ? 'text-gray-200/90' : 'text-slate-500 dark:text-slate-400'
   }`;
 
   return (
@@ -30,7 +26,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
           : 'bg-slate-50 dark:bg-slate-900'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 py-3 w-full">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-3">
         <nav
           className={`rounded-xl border px-4 py-2.5 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between ${
             overlay
@@ -54,80 +50,75 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             </Link>
           </div>
 
-          <div className="ml-0 lg:ml-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3 text-sm w-full lg:w-auto">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-              {(isDevelopmentEnvironment || isDevelopmentProject) && (
-                <span className={sectionLabelClass}>Marketing</span>
+          <div className="ml-0 lg:ml-auto flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4 text-sm w-full lg:w-auto">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1">
+              {isLoggedIn ? (
+                <>
+                  <Link to="/getting-started" className={linkClass} onClick={() => trackHeaderNavClick('Getting Started', '/getting-started')}>
+                    Getting Started
+                  </Link>
+                  <Link to="/app" className={linkClass} onClick={() => trackHeaderNavClick('Garage', '/app')}>
+                    Garage
+                  </Link>
+                  <Link to="/app/profile" className={linkClass} onClick={() => trackHeaderNavClick('Profile', '/app/profile')}>
+                    Profile
+                  </Link>
+                  <Link to="/app/timeline" className={linkClass} onClick={() => trackHeaderNavClick('Timeline', '/app/timeline')}>
+                    Timeline
+                  </Link>
+                  <Link to="/app/upcoming" className={linkClass} onClick={() => trackHeaderNavClick('Upcoming', '/app/upcoming')}>
+                    Upcoming
+                  </Link>
+                  <Link to="/app/providers" className={linkClass} onClick={() => trackHeaderNavClick('Mechanics', '/app/providers')}>
+                    Mechanics
+                  </Link>
+                  {supportAccess?.isSuperAdmin && (
+                    <Link to="/app/admin" className={linkClass}>
+                      Admin
+                    </Link>
+                  )}
+                  {isDemonstrationEnvironment && (
+                    <Link to="/app/dev-seed" className={linkClass}>
+                      Data Seed
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <>
+                  {personaPages.map(persona => (
+                    <Link
+                      key={persona.id}
+                      to={persona.path}
+                      className={linkClass}
+                      onClick={() => trackHeaderNavClick(persona.navLabel, persona.path)}
+                    >
+                      {persona.navLabel}
+                    </Link>
+                  ))}
+                  <Link to="/subscription" className={linkClass} onClick={() => trackHeaderNavClick('Pricing', '/subscription')}>
+                    Pricing
+                  </Link>
+                  <Link to="/short-video-tours" className={linkClass} onClick={() => trackHeaderNavClick('Product Tour', '/short-video-tours')}>
+                    Product Tour
+                  </Link>
+                </>
               )}
-              <Link to="/" className={linkClass}>
-                Home
-              </Link>
-              <Link to="/instructions" className={linkClass}>
-                Instructions
-              </Link>
-              <Link to="/contact" className={linkClass}>
-                Contact
-              </Link>
-              <Link to="/subscription" className={linkClass}>
-                Plans
-              </Link>
             </div>
 
-            {(isDevelopmentEnvironment || isDevelopmentProject) && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-                <span className={sectionLabelClass}>Account</span>
-                {user ? (
-                  <>
-                    <Link to="/app/profile" className={linkClass}>
-                      Profile
-                    </Link>
-                    <button
-                      onClick={signOut}
-                      className={`p-0 bg-transparent border-none cursor-pointer ${linkClass}`}
-                    >
-                      Log out
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/auth/login" className={linkClass}>
-                      Login
-                    </Link>
-                    <Link to="/auth/signup" className={linkClass}>
-                      Sign Up
-                    </Link>
-                  </>
-                )}
-              </div>
-            )}
-
-            {(isDevelopmentEnvironment || isDevelopmentProject) && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1 border border-transparent md:border-slate-200/80 md:dark:border-slate-700/80">
-                <span className={sectionLabelClass}>Application</span>
-                <Link to="/app" className={linkClass}>
-                  Garage
+            <div className="flex items-center sm:justify-end rounded-lg px-2 py-1 min-w-[8rem] sm:min-w-[10rem]">
+              {isLoggedIn ? (
+                <button
+                  onClick={signOut}
+                  className={`p-0 bg-transparent border-none cursor-pointer ${linkClass}`}
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link to="/auth/login" className={linkClass}>
+                  Login / Sign Up
                 </Link>
-                <Link to="/app/timeline" className={linkClass}>
-                  Timeline
-                </Link>
-                <Link to="/app/upcoming" className={linkClass}>
-                  Upcoming
-                </Link>
-                <Link to="/app/providers" className={linkClass}>
-                  Providers
-                </Link>
-                {supportAccess?.isSuperAdmin && (
-                  <Link to="/app/admin" className={linkClass}>
-                    Admin
-                  </Link>
-                )}
-                {isDevelopmentEnvironment && (
-                  <Link to="/app/dev-seed" className={linkClass}>
-                    Data Seed
-                  </Link>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </nav>
       </div>

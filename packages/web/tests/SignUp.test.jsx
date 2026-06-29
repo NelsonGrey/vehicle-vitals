@@ -158,9 +158,9 @@ describe('SignUp page', () => {
       screen.getByRole('button', { name: /create.*account/i })
     );
 
-    // Button text changes to "Creating account…" while busy — find submit button by type
-    // eslint-disable-next-line testing-library/no-node-access
-    const submitBtn = document.querySelector('button[type="submit"]');
+    const submitBtn = screen.getByRole('button', {
+      name: /creating account/i,
+    });
     expect(submitBtn).toBeDisabled();
 
     resolveSignUp();

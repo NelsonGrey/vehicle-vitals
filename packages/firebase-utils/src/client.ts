@@ -1,4 +1,12 @@
 // Firebase Client SDK Utilities
+import {
+  getApps as getAdminApps,
+  initializeApp as initializeAdminApp,
+} from 'firebase-admin/app';
+import {
+  FieldValue as AdminFieldValue,
+  getFirestore as getAdminFirestore,
+} from 'firebase-admin/firestore';
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
@@ -16,8 +24,6 @@ import {
   connectStorageEmulator,
   getStorage,
 } from 'firebase/storage';
-// Removed: import * as admin from 'firebase-admin';
-
 export interface FirebaseConfig {
   apiKey: string;
   authDomain: string;
@@ -154,11 +160,10 @@ export class FirestoreCrudHelpers {
 
   private static async getDb() {
     if (!this.db) {
-      const admin = await import('firebase-admin');
-      if (!admin.apps.length) {
-        admin.initializeApp();
+      if (!getAdminApps().length) {
+        initializeAdminApp();
       }
-      this.db = admin.firestore();
+      this.db = getAdminFirestore();
     }
     return this.db;
   }
@@ -173,13 +178,11 @@ export class FirestoreCrudHelpers {
     options?: { id?: string; merge?: boolean }
   ): Promise<{ id: string; data: any }> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
-
     const documentData = {
       ...data,
       createdBy: userId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: AdminFieldValue.serverTimestamp(),
+      updatedAt: AdminFieldValue.serverTimestamp(),
     };
 
     let docRef: any;
@@ -225,11 +228,9 @@ export class FirestoreCrudHelpers {
     options?: { merge?: boolean }
   ): Promise<void> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
-
     const updateData = {
       ...data,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: AdminFieldValue.serverTimestamp(),
     };
 
     if (options?.merge) {
@@ -307,7 +308,6 @@ export class FirestoreCrudHelpers {
     userId: string
   ): Promise<Array<{ id: string; data: any }>> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
     const batch = db.batch();
     const results = [];
 
@@ -315,8 +315,8 @@ export class FirestoreCrudHelpers {
       const documentData = {
         ...doc.data,
         createdBy: userId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: AdminFieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
       };
 
       let docRef: any;
@@ -340,13 +340,12 @@ export class FirestoreCrudHelpers {
     updates: Array<{ id: string; data: any }>
   ): Promise<void> {
     const db = await this.getDb();
-    const admin = await import('firebase-admin');
     const batch = db.batch();
 
     for (const update of updates) {
       const updateData = {
         ...update.data,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
       };
 
       const docRef = db.collection(collection).doc(update.id);

@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { createHmac } = require('crypto');
 const {
   getOwnerManuals,
   getWarrantySummary,
@@ -11,8 +12,18 @@ const {
   verifyPremiumPurchase,
   bootstrapEnterpriseContextCallable,
   getEffectiveEntitlementsCallable,
+  createApiAccessKeyCallable,
+  createSubscriptionCheckoutSessionCallable,
+  listApiAccessKeysCallable,
+  revokeApiAccessKeyCallable,
+  getZapierWebhookConfigCallable,
+  zapierMaintenanceWebhook,
+  stripeSubscriptionWebhook,
+  transferVehicleCallable,
   getOrganizationMembersCallable,
   setOrganizationMemberRoleCallable,
+  createInvoiceDraftCallable,
+  createPayableDraftCallable,
   applyRetentionPolicyCallable,
   requestUserDataExportCallable,
   requestUserDataDeletionCallable,
@@ -86,6 +97,48 @@ function mockVpicResponse({ make, model, year }) {
       };
     },
   };
+}
+
+async function enablePremiumApiFeatures(uid, email) {
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  const admin = require('firebase-admin');
+  await admin.firestore().doc(`users/${uid}/subscription/current`).set(
+    {
+      tier: 'premium',
+      status: 'active',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+function buildWebhookSignature(payload, secret) {
+  const payloadText = JSON.stringify(payload || {});
+  return `sha256=${createHmac('sha256', secret).update(payloadText).digest('hex')}`;
+}
+
+function isGooglePlayApiUrl(url) {
+  try {
+    return new URL(String(url)).hostname === 'androidpublisher.googleapis.com';
+  } catch {
+    return false;
+  }
+}
+
+function buildStripeSignature(
+  payload,
+  secret,
+  timestamp = Math.floor(Date.now() / 1000)
+) {
+  const payloadText = JSON.stringify(payload || {});
+  const signedPayload = `${timestamp}.${payloadText}`;
+  const digest = createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('hex');
+  return `t=${timestamp},v1=${digest}`;
 }
 
 test('getOwnerManuals returns 503 when manuals feature disabled', async () => {
@@ -949,8 +1002,7 @@ test('verifyPremiumPurchase returns verified entitlement in strict mode with val
 
   const originalFetchForPlay = global.fetch;
   global.fetch = async url => {
-    const urlValue = String(url);
-    if (urlValue.includes('androidpublisher.googleapis.com')) {
+    if (isGooglePlayApiUrl(url)) {
       return {
         ok: true,
         async json() {
@@ -994,8 +1046,7 @@ test('verifyPremiumPurchase treats google_play source alias as Play Store', asyn
 
   const originalFetchForPlay = global.fetch;
   global.fetch = async url => {
-    const urlValue = String(url);
-    if (urlValue.includes('androidpublisher.googleapis.com')) {
+    if (isGooglePlayApiUrl(url)) {
       return {
         ok: true,
         async json() {
@@ -1038,8 +1089,7 @@ test('verifyPremiumPurchase rejects in strict mode when Play verification fails'
 
   const originalFetchForPlay = global.fetch;
   global.fetch = async url => {
-    const urlValue = String(url);
-    if (urlValue.includes('androidpublisher.googleapis.com')) {
+    if (isGooglePlayApiUrl(url)) {
       return {
         ok: true,
         async json() {
@@ -1155,6 +1205,710 @@ test('getPremiumEntitlement returns active provisional entitlement after verific
   assert.equal(entitlement.entitlement.productId, 'premium_ad_free');
 });
 
+test('createSubscriptionCheckoutSessionCallable rejects without auth context', async () => {
+  await assert.rejects(
+    () =>
+      createSubscriptionCheckoutSessionCallable.run({
+        data: { targetTier: 'pro', billingPeriod: 'monthly' },
+      }),
+    error => {
+      assert.equal(error.code, 'unauthenticated');
+      return true;
+    }
+  );
+});
+
+test('createSubscriptionCheckoutSessionCallable returns redirect payload when template configured', async () => {
+  const uid = `checkout-session-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousTemplate = process.env.STRIPE_CHECKOUT_URL_TEMPLATE;
+
+  process.env.STRIPE_CHECKOUT_URL_TEMPLATE =
+    'https://checkout.example/{CHECKOUT_SESSION_ID}?u={UID}&tier={TIER}&period={BILLING_PERIOD}';
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  try {
+    const result = await createSubscriptionCheckoutSessionCallable.run({
+      auth: { uid, token: { email } },
+      data: { targetTier: 'pro', billingPeriod: 'annual' },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.mode, 'redirect');
+    assert.equal(typeof result.checkoutUrl, 'string');
+    assert.equal(result.checkoutUrl.includes('checkout.example/'), true);
+    assert.equal(
+      result.checkoutUrl.includes(`u=${encodeURIComponent(uid)}`),
+      true
+    );
+    assert.equal(result.checkoutUrl.includes('tier=pro'), true);
+    assert.equal(result.checkoutUrl.includes('period=annual'), true);
+  } finally {
+    if (typeof previousTemplate === 'undefined') {
+      delete process.env.STRIPE_CHECKOUT_URL_TEMPLATE;
+    } else {
+      process.env.STRIPE_CHECKOUT_URL_TEMPLATE = previousTemplate;
+    }
+  }
+});
+
+test('createSubscriptionCheckoutSessionCallable uses Stripe API when secret key is configured', async () => {
+  const uid = `checkout-stripe-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousTemplate = process.env.STRIPE_CHECKOUT_URL_TEMPLATE;
+  const previousStripeKey = process.env.STRIPE_SECRET_KEY;
+  const previousPrice = process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY;
+  const previousSuccessUrl = process.env.STRIPE_CHECKOUT_SUCCESS_URL;
+  const previousCancelUrl = process.env.STRIPE_CHECKOUT_CANCEL_URL;
+  const originalFetchForStripe = global.fetch;
+
+  delete process.env.STRIPE_CHECKOUT_URL_TEMPLATE;
+  process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
+  process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY = 'price_premium_monthly_test';
+  process.env.STRIPE_CHECKOUT_SUCCESS_URL =
+    'https://app.vehicle-vitals.test/app/subscription?checkout=success&session_id={CHECKOUT_SESSION_ID}';
+  process.env.STRIPE_CHECKOUT_CANCEL_URL =
+    'https://app.vehicle-vitals.test/app/subscription?checkout=cancelled';
+
+  global.fetch = async (url, options) => {
+    if (String(url).includes('api.stripe.com/v1/checkout/sessions')) {
+      assert.equal(options?.method, 'POST');
+      assert.equal(
+        String(options?.headers?.Authorization || '').startsWith(
+          'Bearer sk_test_'
+        ),
+        true
+      );
+
+      return {
+        ok: true,
+        async json() {
+          return {
+            id: `cs_live_${Date.now()}`,
+            url: 'https://checkout.stripe.test/session/live',
+            customer: `cus_live_${Date.now()}`,
+            subscription: `sub_live_${Date.now()}`,
+          };
+        },
+      };
+    }
+
+    throw new Error(`Unexpected fetch URL in checkout test: ${url}`);
+  };
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  try {
+    const result = await createSubscriptionCheckoutSessionCallable.run({
+      auth: { uid, token: { email } },
+      data: { targetTier: 'premium', billingPeriod: 'monthly' },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.mode, 'redirect');
+    assert.equal(
+      result.checkoutUrl,
+      'https://checkout.stripe.test/session/live'
+    );
+    assert.equal(String(result.checkoutSessionId).startsWith('cs_live_'), true);
+  } finally {
+    global.fetch = originalFetchForStripe;
+    if (typeof previousTemplate === 'undefined') {
+      delete process.env.STRIPE_CHECKOUT_URL_TEMPLATE;
+    } else {
+      process.env.STRIPE_CHECKOUT_URL_TEMPLATE = previousTemplate;
+    }
+    if (typeof previousStripeKey === 'undefined') {
+      delete process.env.STRIPE_SECRET_KEY;
+    } else {
+      process.env.STRIPE_SECRET_KEY = previousStripeKey;
+    }
+    if (typeof previousPrice === 'undefined') {
+      delete process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY;
+    } else {
+      process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY = previousPrice;
+    }
+    if (typeof previousSuccessUrl === 'undefined') {
+      delete process.env.STRIPE_CHECKOUT_SUCCESS_URL;
+    } else {
+      process.env.STRIPE_CHECKOUT_SUCCESS_URL = previousSuccessUrl;
+    }
+    if (typeof previousCancelUrl === 'undefined') {
+      delete process.env.STRIPE_CHECKOUT_CANCEL_URL;
+    } else {
+      process.env.STRIPE_CHECKOUT_CANCEL_URL = previousCancelUrl;
+    }
+  }
+});
+
+test('createApiAccessKeyCallable rejects without auth context', async () => {
+  await assert.rejects(
+    () => createApiAccessKeyCallable.run({ data: { label: 'Primary' } }),
+    error => {
+      assert.equal(error.code, 'unauthenticated');
+      return true;
+    }
+  );
+});
+
+test('API key callables create, list, and revoke keys for entitled user', async () => {
+  const uid = `api-keys-${Date.now()}`;
+  const email = `${uid}@example.com`;
+
+  await enablePremiumApiFeatures(uid, email);
+
+  const created = await createApiAccessKeyCallable.run({
+    auth: { uid, token: { email } },
+    data: { label: 'Zapier Primary' },
+  });
+
+  assert.equal(created.success, true);
+  assert.equal(created.key.label, 'Zapier Primary');
+  assert.equal(created.key.keyId.startsWith('key_'), true);
+  assert.equal(created.rawKey.startsWith('vvk_'), true);
+
+  const listBeforeRevoke = await listApiAccessKeysCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  assert.equal(listBeforeRevoke.success, true);
+  assert.equal(Array.isArray(listBeforeRevoke.keys), true);
+  assert.equal(
+    listBeforeRevoke.keys.some(key => key.keyId === created.key.keyId),
+    true
+  );
+
+  const revoked = await revokeApiAccessKeyCallable.run({
+    auth: { uid, token: { email } },
+    data: { keyId: created.key.keyId },
+  });
+
+  assert.equal(revoked.success, true);
+  assert.equal(revoked.keyId, created.key.keyId);
+
+  const listAfterRevoke = await listApiAccessKeysCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  const revokedRecord = listAfterRevoke.keys.find(
+    key => key.keyId === created.key.keyId
+  );
+  assert.ok(revokedRecord);
+  assert.equal(revokedRecord.active, false);
+});
+
+test('getZapierWebhookConfigCallable returns configured webhook URL for entitled user', async () => {
+  const uid = `zapier-config-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousBaseUrl = process.env.API_WEBHOOK_BASE_URL;
+
+  process.env.API_WEBHOOK_BASE_URL = 'https://example.test/functions';
+  await enablePremiumApiFeatures(uid, email);
+
+  try {
+    const result = await getZapierWebhookConfigCallable.run({
+      auth: { uid, token: { email } },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(
+      result.webhookUrl,
+      'https://example.test/functions/zapierMaintenanceWebhook'
+    );
+  } finally {
+    if (typeof previousBaseUrl === 'undefined') {
+      delete process.env.API_WEBHOOK_BASE_URL;
+    } else {
+      process.env.API_WEBHOOK_BASE_URL = previousBaseUrl;
+    }
+  }
+});
+
+test('zapierMaintenanceWebhook enforces signature when webhook secret is configured', async () => {
+  const uid = `zapier-signature-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const vin = `VIN-ZAPIER-${Date.now()}`;
+  const previousSecret = process.env.ZAPIER_WEBHOOK_SECRET;
+  process.env.ZAPIER_WEBHOOK_SECRET = 'test-zapier-secret';
+
+  await enablePremiumApiFeatures(uid, email);
+
+  const admin = require('firebase-admin');
+  await admin.firestore().doc(`users/${uid}/vehicles/${vin}`).set({
+    vin,
+    make: 'Honda',
+    model: 'Civic',
+    year: 2022,
+  });
+
+  const created = await createApiAccessKeyCallable.run({
+    auth: { uid, token: { email } },
+    data: { label: 'Zapier Signed' },
+  });
+
+  const payload = {
+    vin,
+    title: 'Webhook Oil Change',
+    description: 'Created by Zapier',
+    frequency: 'Webhook trigger',
+    interval: 1,
+  };
+
+  try {
+    const missingSigReq = {
+      method: 'POST',
+      headers: {
+        ...baseHeaders(),
+        'x-api-key': created.rawKey,
+      },
+      body: payload,
+      ip: '198.51.100.30',
+    };
+    const missingSigRes = makeResponse();
+    await zapierMaintenanceWebhook(missingSigReq, missingSigRes);
+    assert.equal(missingSigRes.state.statusCode, 401);
+    assert.equal(missingSigRes.state.body.error, 'Invalid webhook signature');
+
+    const signedReq = {
+      method: 'POST',
+      headers: {
+        ...baseHeaders(),
+        'x-api-key': created.rawKey,
+        'x-vv-signature': buildWebhookSignature(payload, 'test-zapier-secret'),
+      },
+      body: payload,
+      ip: '198.51.100.31',
+    };
+    const signedRes = makeResponse();
+    await zapierMaintenanceWebhook(signedReq, signedRes);
+
+    assert.equal(signedRes.state.statusCode, 200);
+    assert.equal(signedRes.state.body.success, true);
+    assert.equal(signedRes.state.body.uid, uid);
+    assert.equal(signedRes.state.body.vin, vin);
+
+    const reminderSnap = await admin
+      .firestore()
+      .doc(
+        `users/${uid}/vehicles/${vin}/reminders/${signedRes.state.body.reminderId}`
+      )
+      .get();
+    assert.equal(reminderSnap.exists, true);
+    assert.equal(reminderSnap.data().source, 'zapier_webhook');
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.ZAPIER_WEBHOOK_SECRET;
+    } else {
+      process.env.ZAPIER_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
+test('stripeSubscriptionWebhook reconciles subscription for signed checkout event', async () => {
+  const uid = `stripe-webhook-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-test-secret';
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  const eventPayload = {
+    id: `evt_${Date.now()}`,
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: `cs_${Date.now()}`,
+        customer: `cus_${Date.now()}`,
+        subscription: `sub_${Date.now()}`,
+        metadata: {
+          uid,
+          targetTier: 'pro',
+          billingPeriod: 'monthly',
+        },
+      },
+    },
+  };
+
+  const signedReq = {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(),
+      'stripe-signature': buildStripeSignature(
+        eventPayload,
+        'stripe-webhook-test-secret'
+      ),
+    },
+    body: eventPayload,
+    rawBody: Buffer.from(JSON.stringify(eventPayload)),
+    ip: '198.51.100.32',
+  };
+  const signedRes = makeResponse();
+
+  try {
+    await stripeSubscriptionWebhook(signedReq, signedRes);
+    assert.equal(signedRes.state.statusCode, 200);
+    assert.equal(signedRes.state.body.success, true);
+    assert.equal(signedRes.state.body.uid, uid);
+
+    const admin = require('firebase-admin');
+    const subscriptionSnap = await admin
+      .firestore()
+      .doc(`users/${uid}/subscription/current`)
+      .get();
+    assert.equal(subscriptionSnap.exists, true);
+    assert.equal(subscriptionSnap.data().tier, 'pro');
+    assert.equal(subscriptionSnap.data().status, 'active');
+    assert.equal(subscriptionSnap.data().paymentMethod, 'stripe');
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    } else {
+      process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
+test('stripeSubscriptionWebhook marks subscription past_due on invoice.payment_failed', async () => {
+  const uid = `stripe-failed-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-test-secret';
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  const eventPayload = {
+    id: `evt_fail_${Date.now()}`,
+    type: 'invoice.payment_failed',
+    data: {
+      object: {
+        id: `in_${Date.now()}`,
+        customer: `cus_fail_${Date.now()}`,
+        subscription: `sub_fail_${Date.now()}`,
+        metadata: {
+          uid,
+        },
+      },
+    },
+  };
+
+  const req = {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(),
+      'stripe-signature': buildStripeSignature(
+        eventPayload,
+        'stripe-webhook-test-secret'
+      ),
+    },
+    body: eventPayload,
+    rawBody: Buffer.from(JSON.stringify(eventPayload)),
+    ip: '198.51.100.33',
+  };
+  const res = makeResponse();
+
+  try {
+    await stripeSubscriptionWebhook(req, res);
+    assert.equal(res.state.statusCode, 200);
+    assert.equal(res.state.body.success, true);
+
+    const admin = require('firebase-admin');
+    const subscriptionSnap = await admin
+      .firestore()
+      .doc(`users/${uid}/subscription/current`)
+      .get();
+    assert.equal(subscriptionSnap.exists, true);
+    assert.equal(subscriptionSnap.data().status, 'past_due');
+    assert.equal(
+      subscriptionSnap.data().lastPaymentError,
+      'stripe_invoice_payment_failed'
+    );
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    } else {
+      process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
+test('stripeSubscriptionWebhook downgrades and revokes premium on customer.subscription.deleted', async () => {
+  const uid = `stripe-cancel-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-test-secret';
+
+  await enablePremiumApiFeatures(uid, email);
+
+  const eventPayload = {
+    id: `evt_cancel_${Date.now()}`,
+    type: 'customer.subscription.deleted',
+    data: {
+      object: {
+        id: `sub_cancel_${Date.now()}`,
+        customer: `cus_cancel_${Date.now()}`,
+        current_period_end: Math.floor(Date.now() / 1000) + 3600,
+        metadata: {
+          uid,
+        },
+      },
+    },
+  };
+
+  const req = {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(),
+      'stripe-signature': buildStripeSignature(
+        eventPayload,
+        'stripe-webhook-test-secret'
+      ),
+    },
+    body: eventPayload,
+    rawBody: Buffer.from(JSON.stringify(eventPayload)),
+    ip: '198.51.100.34',
+  };
+  const res = makeResponse();
+
+  try {
+    await stripeSubscriptionWebhook(req, res);
+    assert.equal(res.state.statusCode, 200);
+    assert.equal(res.state.body.success, true);
+
+    const admin = require('firebase-admin');
+    const [subscriptionSnap, premiumSnap] = await Promise.all([
+      admin.firestore().doc(`users/${uid}/subscription/current`).get(),
+      admin.firestore().doc(`users/${uid}/entitlements/premium`).get(),
+    ]);
+
+    assert.equal(subscriptionSnap.exists, true);
+    assert.equal(subscriptionSnap.data().tier, 'free');
+    assert.equal(subscriptionSnap.data().status, 'canceled');
+    assert.equal(subscriptionSnap.data().autoRenew, false);
+
+    assert.equal(premiumSnap.exists, true);
+    assert.equal(premiumSnap.data().active, false);
+    assert.equal(
+      premiumSnap.data().verificationState,
+      'revoked_by_webhook_cancellation'
+    );
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    } else {
+      process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
+test('stripeSubscriptionWebhook preserves trialing status from customer.subscription.updated', async () => {
+  const uid = `stripe-trialing-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-test-secret';
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  const eventPayload = {
+    id: `evt_trial_${Date.now()}`,
+    type: 'customer.subscription.updated',
+    data: {
+      object: {
+        id: `sub_trial_${Date.now()}`,
+        customer: `cus_trial_${Date.now()}`,
+        status: 'trialing',
+        metadata: {
+          uid,
+          targetTier: 'premium',
+          billingPeriod: 'monthly',
+        },
+      },
+    },
+  };
+
+  const req = {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(),
+      'stripe-signature': buildStripeSignature(
+        eventPayload,
+        'stripe-webhook-test-secret'
+      ),
+    },
+    body: eventPayload,
+    rawBody: Buffer.from(JSON.stringify(eventPayload)),
+    ip: '198.51.100.35',
+  };
+  const res = makeResponse();
+
+  try {
+    await stripeSubscriptionWebhook(req, res);
+    assert.equal(res.state.statusCode, 200);
+    assert.equal(res.state.body.success, true);
+    assert.equal(res.state.body.status, 'trialing');
+
+    const admin = require('firebase-admin');
+    const subscriptionSnap = await admin
+      .firestore()
+      .doc(`users/${uid}/subscription/current`)
+      .get();
+
+    assert.equal(subscriptionSnap.exists, true);
+    assert.equal(subscriptionSnap.data().tier, 'premium');
+    assert.equal(subscriptionSnap.data().status, 'trialing');
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    } else {
+      process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
+test('stripeSubscriptionWebhook marks subscription past_due on charge.dispute.created', async () => {
+  const uid = `stripe-dispute-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-test-secret';
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  const eventPayload = {
+    id: `evt_dispute_${Date.now()}`,
+    type: 'charge.dispute.created',
+    data: {
+      object: {
+        id: `dp_${Date.now()}`,
+        customer: `cus_dispute_${Date.now()}`,
+        subscription: `sub_dispute_${Date.now()}`,
+        metadata: {
+          uid,
+        },
+      },
+    },
+  };
+
+  const req = {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(),
+      'stripe-signature': buildStripeSignature(
+        eventPayload,
+        'stripe-webhook-test-secret'
+      ),
+    },
+    body: eventPayload,
+    rawBody: Buffer.from(JSON.stringify(eventPayload)),
+    ip: '198.51.100.36',
+  };
+  const res = makeResponse();
+
+  try {
+    await stripeSubscriptionWebhook(req, res);
+    assert.equal(res.state.statusCode, 200);
+    assert.equal(res.state.body.success, true);
+    assert.equal(res.state.body.status, 'past_due');
+
+    const admin = require('firebase-admin');
+    const subscriptionSnap = await admin
+      .firestore()
+      .doc(`users/${uid}/subscription/current`)
+      .get();
+
+    assert.equal(subscriptionSnap.exists, true);
+    assert.equal(subscriptionSnap.data().status, 'past_due');
+    assert.equal(
+      subscriptionSnap.data().lastPaymentError,
+      'stripe_charge_dispute'
+    );
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    } else {
+      process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
+test('stripeSubscriptionWebhook marks subscription past_due on charge.refunded', async () => {
+  const uid = `stripe-refund-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-test-secret';
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  const eventPayload = {
+    id: `evt_refund_${Date.now()}`,
+    type: 'charge.refunded',
+    data: {
+      object: {
+        id: `ch_${Date.now()}`,
+        customer: `cus_refund_${Date.now()}`,
+        subscription: `sub_refund_${Date.now()}`,
+        metadata: {
+          uid,
+        },
+      },
+    },
+  };
+
+  const req = {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(),
+      'stripe-signature': buildStripeSignature(
+        eventPayload,
+        'stripe-webhook-test-secret'
+      ),
+    },
+    body: eventPayload,
+    rawBody: Buffer.from(JSON.stringify(eventPayload)),
+    ip: '198.51.100.37',
+  };
+  const res = makeResponse();
+
+  try {
+    await stripeSubscriptionWebhook(req, res);
+    assert.equal(res.state.statusCode, 200);
+    assert.equal(res.state.body.success, true);
+    assert.equal(res.state.body.status, 'past_due');
+
+    const admin = require('firebase-admin');
+    const subscriptionSnap = await admin
+      .firestore()
+      .doc(`users/${uid}/subscription/current`)
+      .get();
+
+    assert.equal(subscriptionSnap.exists, true);
+    assert.equal(subscriptionSnap.data().status, 'past_due');
+    assert.equal(
+      subscriptionSnap.data().lastPaymentError,
+      'stripe_charge_refunded'
+    );
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    } else {
+      process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
 test('bootstrapEnterpriseContextCallable rejects without auth context', async () => {
   await assert.rejects(
     () => bootstrapEnterpriseContextCallable.run({}),
@@ -1205,6 +1959,40 @@ test('getEffectiveEntitlementsCallable returns premium tier when premium entitle
   assert.equal(entitlements.entitlements.vehicleLimit, 25);
   assert.equal(entitlements.entitlements.features.ad_free, true);
 });
+
+const runFirestoreIntegration =
+  process.env.FIRESTORE_EMULATOR_HOST ||
+  process.env.ALLOW_LIVE_FIRESTORE_TESTS === 'true';
+
+(runFirestoreIntegration ? test : test.skip)(
+  'getEffectiveEntitlementsCallable elevates to enterprise for org enterprise tier',
+  async () => {
+    const uid = `enterprise-org-tier-${Date.now()}`;
+    const context = await bootstrapEnterpriseContextCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+    });
+
+    const admin = require('firebase-admin');
+    await admin.firestore().doc(`orgs/${context.orgId}`).set(
+      {
+        planTier: 'enterprise',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const entitlements = await getEffectiveEntitlementsCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+      data: { orgId: context.orgId },
+    });
+
+    assert.equal(entitlements.success, true);
+    assert.equal(entitlements.entitlements.tier, 'enterprise');
+    assert.equal(entitlements.entitlements.vehicleLimit, 999999);
+    assert.equal(entitlements.entitlements.features.ad_free, true);
+    assert.equal(entitlements.entitlements.features.api_access, true);
+  }
+);
 
 test('organization membership and role management callables work for org owner', async () => {
   const ownerUid = `org-owner-${Date.now()}`;
@@ -1265,6 +2053,247 @@ test('organization membership and role management callables work for org owner',
 
   assert.equal(roleUpdate.success, true);
   assert.equal(roleUpdate.role, 'org_admin');
+});
+
+const runFinanceCallableTests =
+  typeof createInvoiceDraftCallable?.run === 'function' &&
+  typeof createPayableDraftCallable?.run === 'function';
+
+const runFinanceFirestoreIntegration =
+  runFinanceCallableTests && runFirestoreIntegration;
+
+(runFinanceCallableTests ? test : test.skip)(
+  'createInvoiceDraftCallable rejects without auth context',
+  async () => {
+    await assert.rejects(
+      () =>
+        createInvoiceDraftCallable.run({
+          data: {
+            orgId: 'org_test',
+            customerName: 'Fleet Ops',
+            dueDate: '2026-07-01',
+          },
+        }),
+      error => {
+        assert.equal(error.code, 'unauthenticated');
+        return true;
+      }
+    );
+  }
+);
+
+(runFinanceCallableTests ? test : test.skip)(
+  'createPayableDraftCallable rejects invalid payload without required fields',
+  async () => {
+    await assert.rejects(
+      () =>
+        createPayableDraftCallable.run({
+          auth: { uid: `finance-test-${Date.now()}` },
+          data: {
+            orgId: '',
+            vendorName: '',
+            dueDate: '',
+          },
+        }),
+      error => {
+        assert.equal(error.code, 'invalid-argument');
+        return true;
+      }
+    );
+  }
+);
+
+(runFinanceFirestoreIntegration ? test : test.skip)(
+  'createInvoiceDraftCallable creates draft invoice and audit event',
+  async () => {
+    const uid = `finance-invoice-${Date.now()}`;
+    const context = await bootstrapEnterpriseContextCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+    });
+    const admin = require('firebase-admin');
+
+    const result = await createInvoiceDraftCallable.run({
+      auth: { uid },
+      data: {
+        orgId: context.orgId,
+        customerName: 'Acme Fleet Services',
+        dueDate: '2026-08-01',
+        issueDate: '2026-07-15',
+        currency: 'usd',
+        notes: 'Quarterly maintenance services',
+        lineItems: [
+          { description: 'Service labor', quantity: 2, unitPrice: 100 },
+          { description: 'Parts', quantity: 1, unitPrice: 49.99 },
+        ],
+        idempotencyKey: `invoice-${Date.now()}`,
+      },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.orgId, context.orgId);
+    assert.equal(result.status, 'draft');
+    assert.ok(result.invoiceId);
+
+    const invoiceSnap = await admin
+      .firestore()
+      .doc(`orgs/${context.orgId}/financeInvoices/${result.invoiceId}`)
+      .get();
+
+    assert.equal(invoiceSnap.exists, true);
+    const invoice = invoiceSnap.data();
+    assert.equal(invoice.customerName, 'Acme Fleet Services');
+    assert.equal(invoice.currency, 'USD');
+    assert.equal(invoice.status, 'draft');
+    assert.equal(invoice.createdByUid, uid);
+    assert.equal(invoice.amountDue, 249.99);
+    assert.equal(Array.isArray(invoice.lineItems), true);
+    assert.equal(invoice.lineItems.length, 2);
+
+    const auditSnap = await admin
+      .firestore()
+      .collection(`orgs/${context.orgId}/audit`)
+      .where('action', '==', 'finance.create_invoice_draft')
+      .where('targetId', '==', result.invoiceId)
+      .get();
+
+    assert.equal(auditSnap.empty, false);
+    const auditEntry = auditSnap.docs[0].data();
+    assert.equal(auditEntry.targetType, 'invoice');
+    assert.equal(auditEntry.actorUid, uid);
+    assert.equal(auditEntry.details.customerName, 'Acme Fleet Services');
+  }
+);
+
+(runFinanceFirestoreIntegration ? test : test.skip)(
+  'createPayableDraftCallable creates draft payable and audit event',
+  async () => {
+    const uid = `finance-payable-${Date.now()}`;
+    const context = await bootstrapEnterpriseContextCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+    });
+    const admin = require('firebase-admin');
+
+    const result = await createPayableDraftCallable.run({
+      auth: { uid },
+      data: {
+        orgId: context.orgId,
+        vendorName: 'Northwind Repair Co',
+        dueDate: '2026-08-10',
+        billDate: '2026-07-20',
+        currency: 'usd',
+        category: 'operations',
+        notes: 'Shop tooling invoice',
+        amountDue: 120.456,
+        idempotencyKey: `payable-${Date.now()}`,
+      },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.orgId, context.orgId);
+    assert.equal(result.status, 'draft');
+    assert.ok(result.payableId);
+
+    const payableSnap = await admin
+      .firestore()
+      .doc(`orgs/${context.orgId}/financePayables/${result.payableId}`)
+      .get();
+
+    assert.equal(payableSnap.exists, true);
+    const payable = payableSnap.data();
+    assert.equal(payable.vendorName, 'Northwind Repair Co');
+    assert.equal(payable.currency, 'USD');
+    assert.equal(payable.status, 'draft');
+    assert.equal(payable.createdByUid, uid);
+    assert.equal(payable.category, 'operations');
+    assert.equal(payable.amountDue, 120.46);
+
+    const auditSnap = await admin
+      .firestore()
+      .collection(`orgs/${context.orgId}/audit`)
+      .where('action', '==', 'finance.create_payable_draft')
+      .where('targetId', '==', result.payableId)
+      .get();
+
+    assert.equal(auditSnap.empty, false);
+    const auditEntry = auditSnap.docs[0].data();
+    assert.equal(auditEntry.targetType, 'payable');
+    assert.equal(auditEntry.actorUid, uid);
+    assert.equal(auditEntry.details.vendorName, 'Northwind Repair Co');
+  }
+);
+
+test('transferVehicleCallable moves vehicle document and related subcollections', async () => {
+  const senderUid = `transfer-sender-${Date.now()}`;
+  const recipientUid = `transfer-recipient-${Date.now()}`;
+  const senderEmail = `${senderUid}@example.com`;
+  const recipientEmail = `${recipientUid}@example.com`;
+  const vin = `TRANSFER-${Date.now()}`;
+  const admin = require('firebase-admin');
+
+  await admin.auth().createUser({
+    uid: senderUid,
+    email: senderEmail,
+  });
+  await admin.auth().createUser({
+    uid: recipientUid,
+    email: recipientEmail,
+  });
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid: senderUid, token: { email: senderEmail } },
+  });
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid: recipientUid, token: { email: recipientEmail } },
+  });
+
+  const sourceVehicleRef = admin
+    .firestore()
+    .doc(`users/${senderUid}/vehicles/${vin}`);
+  await sourceVehicleRef.set({
+    vin,
+    make: 'Ford',
+    model: 'Bronco',
+    year: 2022,
+    mileage: 12000,
+    vehicleStatus: 'stored',
+  });
+  await sourceVehicleRef.collection('maintenance').doc('entry-1').set({
+    title: 'Battery tender',
+    date: '2025-05-01',
+  });
+  await sourceVehicleRef.collection('reminders').doc('reminder-1').set({
+    title: 'Start engine monthly',
+    status: 'active',
+  });
+
+  const result = await transferVehicleCallable.run({
+    auth: { uid: senderUid, token: { email: senderEmail } },
+    data: {
+      vin,
+      recipientEmail,
+      idempotencyKey: `transfer-${Date.now()}`,
+    },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.recipientUid, recipientUid);
+  assert.equal(result.recipientEmail, recipientEmail);
+
+  const [sourceVehicleSnap, targetVehicleSnap, targetMaintenanceSnap] =
+    await Promise.all([
+      admin.firestore().doc(`users/${senderUid}/vehicles/${vin}`).get(),
+      admin.firestore().doc(`users/${recipientUid}/vehicles/${vin}`).get(),
+      admin
+        .firestore()
+        .collection(`users/${recipientUid}/vehicles/${vin}/maintenance`)
+        .get(),
+    ]);
+
+  assert.equal(sourceVehicleSnap.exists, false);
+  assert.equal(targetVehicleSnap.exists, true);
+  assert.equal(targetVehicleSnap.data().vehicleStatus, 'stored');
+  assert.equal(targetVehicleSnap.data().transferredFromUid, senderUid);
+  assert.equal(targetMaintenanceSnap.size, 1);
 });
 
 test('applyRetentionPolicyCallable requires super-admin context', async () => {

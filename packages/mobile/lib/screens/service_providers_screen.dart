@@ -70,7 +70,12 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
         }
 
         final type = (prefs['preferredProviderType'] ?? 'all').toString();
-        if (type == 'all' || type == 'repair_shop' || type == 'dealership') {
+        if (type == 'all' ||
+            type == 'repair_shop' ||
+            type == 'dealership' ||
+            type == 'body_shop' ||
+            type == 'car_wash' ||
+            type == 'detailer') {
           _preferredProviderType = type;
         }
 
@@ -80,7 +85,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Unable to load provider preferences: $error';
+        _error = 'Unable to load mechanic preferences: $error';
       });
     }
   }
@@ -143,13 +148,13 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
           result['providers'] as List? ?? const <Map<String, dynamic>>[],
         );
         _status =
-            'Found ${_providers.length} provider(s) from ${(result['source'] ?? 'unknown').toString()}.';
+            'Found ${_providers.length} mechanic(s) from ${(result['source'] ?? 'unknown').toString()}.';
       });
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _providers = const [];
-        _error = 'Provider lookup failed: $error';
+        _error = 'Mechanic lookup failed: $error';
       });
     } finally {
       if (mounted) {
@@ -173,7 +178,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Service Providers')),
+      appBar: AppBar(title: const Text('Mechanics')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -270,7 +275,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                         DropdownButtonFormField<String>(
                           initialValue: _preferredProviderType,
                           decoration: const InputDecoration(
-                            labelText: 'Provider type',
+                            labelText: 'Mechanic type',
                           ),
                           items: const [
                             DropdownMenuItem(
@@ -284,6 +289,18 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                             DropdownMenuItem(
                               value: 'dealership',
                               child: Text('Dealerships'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'body_shop',
+                              child: Text('Body shops'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'car_wash',
+                              child: Text('Car washes'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'detailer',
+                              child: Text('Detailers'),
                             ),
                           ],
                           onChanged: _searching
@@ -307,7 +324,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                                   ),
                                 )
                               : const Icon(Icons.search),
-                          label: const Text('Find Nearby Providers'),
+                          label: const Text('Find Nearby Mechanics'),
                         ),
                       ],
                     ),
@@ -315,10 +332,13 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                 ),
                 const SizedBox(height: 12),
                 ..._providers.map((provider) {
-                  final name = (provider['name'] ?? 'Unnamed provider')
+                  final name = (provider['name'] ?? 'Unnamed mechanic')
                       .toString();
-                  final providerType = (provider['providerType'] ?? 'provider')
-                      .toString();
+                  final providerType =
+                      (provider['type'] ??
+                              provider['providerType'] ??
+                              'provider')
+                          .toString();
                   final distanceMiles = (provider['distanceMiles'] as num?)
                       ?.toStringAsFixed(1);
 

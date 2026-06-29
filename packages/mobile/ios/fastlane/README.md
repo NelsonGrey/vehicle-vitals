@@ -15,69 +15,13 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
-### ios distribute
-
-```sh
-[bundle exec] fastlane ios distribute
-```
-
-Distribute iOS app to Firebase App Distribution
-
-### ios debug
-
-```sh
-[bundle exec] fastlane ios debug
-```
-
-Distribute debug build to internal testers
-
-### ios sync_signing
-
-```sh
-[bundle exec] fastlane ios sync_signing
-```
-
-Sync code signing certificates
-
-### ios certificates_development
-
-```sh
-[bundle exec] fastlane ios certificates_development
-```
-
-Generate development certificates
-
 ### ios certificates_appstore
 
 ```sh
 [bundle exec] fastlane ios certificates_appstore
 ```
 
-Zero-touch certificate management - automatically handles certificate acquisition and sharing
-
-### ios certificates_all
-
-```sh
-[bundle exec] fastlane ios certificates_all
-```
-
-
-
-### ios build_development
-
-```sh
-[bundle exec] fastlane ios build_development
-```
-
-Build iOS app for development without code signing
-
-### ios build_testflight
-
-```sh
-[bundle exec] fastlane ios build_testflight
-```
-
-Build iOS app for TestFlight with proper code signing
+Sync code signing certificates for App Store
 
 ### ios beta
 

@@ -38,6 +38,17 @@ const STUB_PROVIDERS = [
     website: 'https://mainsteetauto.example.com',
   },
   {
+    id: 'detail-1',
+    type: 'detailer',
+    name: 'Showroom Detail Studio',
+    address: '88 Detail Way, Springfield, IL 62701',
+    distanceMiles: 3.3,
+    rating: 4.8,
+    phone: '555-900-0010',
+    specialties: ['ceramic coating'],
+    website: 'https://detail.example.com',
+  },
+  {
     id: 'dealer-1',
     type: 'dealership',
     name: 'Elite Toyota',
@@ -149,6 +160,7 @@ describe('ServiceProviders', () => {
       )
     );
     expect(await screen.findByText('Main Street Auto')).toBeInTheDocument();
+    expect(screen.getByText('Showroom Detail Studio')).toBeInTheDocument();
     expect(screen.getByText('Elite Toyota')).toBeInTheDocument();
   });
 
@@ -244,5 +256,37 @@ describe('ServiceProviders', () => {
     );
 
     await waitFor(() => screen.getByText(/nearby providers updated/i));
+  });
+
+  it('auto-loads nearby providers when a valid saved address exists', async () => {
+    getVehicle.mockResolvedValue({
+      preferredProviderRadiusMiles: 30,
+      preferredProviderType: 'all',
+      homeAddress: {
+        street1: '100 Market St',
+        city: 'Springfield',
+        stateProvince: 'IL',
+        postalCode: '62701',
+        country: 'US',
+      },
+    });
+
+    render(<ServiceProviders />);
+
+    await waitFor(() =>
+      expect(getLocalServiceProviders).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locationQuery: expect.stringContaining('Springfield'),
+          radiusMiles: 30,
+          providerType: 'all',
+        })
+      )
+    );
+
+    expect(
+      await screen.findByText(
+        /loaded nearby providers from your saved preferences/i
+      )
+    ).toBeInTheDocument();
   });
 });

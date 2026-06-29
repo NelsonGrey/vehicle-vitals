@@ -33,7 +33,7 @@
     <key>NSLocalNetworkUsageDescription</key>
     <string>This app uses the local network to connect to Firebase services and development tools</string>
     <key>GADApplicationIdentifier</key>
-    <string>ca-app-pub-3940256099942544~1458002511</string>
+    <string>ca-app-pub-5198775482699756~9962129501</string>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true />
     <key>UILaunchStoryboardName</key>

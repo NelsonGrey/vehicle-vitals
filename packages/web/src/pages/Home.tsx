@@ -1,21 +1,28 @@
 // -----------------------------
 // File: web/pages/Home.jsx
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import AdPlacement from '../components/AdPlacement';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
+import { CachedImage } from '../components/CachedImage';
+import VehicleHealthPanel from '../components/VehicleHealthPanel';
+import { VehicleListItem } from '../components/VehicleListItem';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
-import { showDemoSeedControls } from '../shared/environment';
 import {
-  deleteVehicle,
-  getVehicles,
-  updateVehicle,
+    isDemonstrationEnvironment,
+    showDemoSeedControls,
+} from '../shared/environment';
+import {
+    deleteVehicle,
+    getMaintenanceEntries,
+    getVehicles,
+    updateVehicle,
 } from '../shared/firestoreService';
+import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
 import {
-  buildPersistedVinInsights,
-  getVehicleInsights,
+    buildPersistedVinInsights,
+    getVehicleInsights,
 } from '../utils/vehicleService';
 
 interface Vehicle {
@@ -23,6 +30,11 @@ interface Vehicle {
   make: string;
   model: string;
   year: string;
+  vehicleStatus?: 'active' | 'stored';
+  photoUrl?: string;
+  photoSource?: string;
+  photoAttributionUrl?: string;
+  photoAttributionText?: string;
   mileage?: string;
   recallsCount?: number;
   vinInsights?: {
@@ -42,11 +54,25 @@ interface UpcomingItem {
   nextDueMileage: number;
 }
 
+interface MaintenanceEntry {
+  id?: string;
+  title?: string;
+  serviceType?: string;
+  description?: string;
+  date?: string;
+  mileage?: string;
+  notes?: string;
+}
+
 type AlertLevel = 'urgent' | 'soon' | null;
 
 interface VehicleAlert {
   level: AlertLevel;
   items: UpcomingItem[];
+}
+
+function getVehicleStatus(vehicle: Vehicle): 'active' | 'stored' {
+  return vehicle.vehicleStatus === 'stored' ? 'stored' : 'active';
 }
 
 function getPortfolioRequiredProgress(vehicle: Vehicle) {
@@ -70,7 +96,16 @@ function getPortfolioRequiredProgress(vehicle: Vehicle) {
 
 export default function Home() {
   const { user } = useAuth();
+  const { tier } = useSubscription();
+  const hasPlanning12mo = useFeatureFlag('maintenance_planning_12mo');
+  const hasPlanning36mo = useFeatureFlag('maintenance_planning_36mo');
+  const showBobDemoSeedControls =
+    showDemoSeedControls && isDemonstrationEnvironment;
+  const VEHICLE_PAGE_SIZE = 50;
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehiclesLastDoc, setVehiclesLastDoc] = useState<unknown>(null);
+  const [hasMoreVehicles, setHasMoreVehicles] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isBackfillingInsights, setIsBackfillingInsights] = useState(false);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
   const [isSeedingDemo, setIsSeedingDemo] = useState(false);
@@ -79,11 +114,72 @@ export default function Home() {
   const [vehicleAlerts, setVehicleAlerts] = useState<
     Record<string, VehicleAlert>
   >({});
+  const [maintenanceEntriesByVin, setMaintenanceEntriesByVin] = useState<
+    Record<string, MaintenanceEntry[]>
+  >({});
+  const [loadingHealthVin, setLoadingHealthVin] = useState<string | null>(null);
 
-  const refreshVehicles = async () => {
-    const list = await getVehicles();
-    setVehicles(list);
-  };
+  const applyVehiclePage = useCallback(
+    (
+      result:
+        | Vehicle[]
+        | { data: Vehicle[]; lastDoc: unknown; hasMore: boolean },
+      append = false
+    ) => {
+      if (Array.isArray(result)) {
+        setVehicles(result);
+        setVehiclesLastDoc(null);
+        setHasMoreVehicles(false);
+        return;
+      }
+
+      setVehicles(current =>
+        append ? [...current, ...result.data] : result.data
+      );
+      setVehiclesLastDoc(result.lastDoc);
+      setHasMoreVehicles(result.hasMore);
+    },
+    []
+  );
+
+  const refreshVehicles = useCallback(async () => {
+    const result = await getVehicles({ pageSize: VEHICLE_PAGE_SIZE });
+    applyVehiclePage(result as Vehicle[] | {
+      data: Vehicle[];
+      lastDoc: unknown;
+      hasMore: boolean;
+    });
+  }, [VEHICLE_PAGE_SIZE, applyVehiclePage]);
+
+  const loadMoreVehicles = useCallback(async () => {
+    if (!hasMoreVehicles || !vehiclesLastDoc || isLoadingMore) {
+      return;
+    }
+
+    setIsLoadingMore(true);
+    try {
+      const result = await getVehicles({
+        pageSize: VEHICLE_PAGE_SIZE,
+        startAfter: vehiclesLastDoc,
+      });
+      applyVehiclePage(
+        result as Vehicle[] | {
+          data: Vehicle[];
+          lastDoc: unknown;
+          hasMore: boolean;
+        },
+        true
+      );
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [
+    VEHICLE_PAGE_SIZE,
+    applyVehiclePage,
+    hasMoreVehicles,
+    isLoadingMore,
+    vehiclesLastDoc,
+  ]);
 
   const normalizedSearch = searchTerm.toLowerCase();
   const filteredVehicles = vehicles.filter(v => {
@@ -100,13 +196,19 @@ export default function Home() {
       vinText.includes(normalizedSearch)
     );
   });
+  const activeVehicles = filteredVehicles.filter(
+    vehicle => getVehicleStatus(vehicle) === 'active'
+  );
+  const storedVehicles = filteredVehicles.filter(
+    vehicle => getVehicleStatus(vehicle) === 'stored'
+  );
 
   useEffect(() => {
     const fetchVehicles = async () => {
       await refreshVehicles();
     };
     fetchVehicles();
-  }, []);
+  }, [refreshVehicles]);
 
   useEffect(() => {
     if (vehicles.length === 0) return;
@@ -142,55 +244,133 @@ export default function Home() {
       return;
     }
 
-    const hasSelectedVehicle = vehicles.some(
+    const hasSelectedVehicle = filteredVehicles.some(
       vehicle => vehicle.vin === selectedVin
     );
     if (!hasSelectedVehicle) {
-      setSelectedVin(vehicles[0].vin);
+      setSelectedVin(filteredVehicles[0]?.vin || null);
     }
-  }, [selectedVin, vehicles]);
+  }, [filteredVehicles, selectedVin, vehicles.length]);
 
-  const backfillVinInsights = async () => {
-    const candidates = vehicles.filter(
-      vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
-    );
-
-    if (candidates.length === 0) {
-      setBackfillMessage('All vehicles already have full VIN insights.');
+  useEffect(() => {
+    if (!selectedVin || maintenanceEntriesByVin[selectedVin]) {
       return;
     }
 
-    setIsBackfillingInsights(true);
-    setBackfillMessage(null);
+    let isActive = true;
+    setLoadingHealthVin(selectedVin);
 
-    let successCount = 0;
-    let failureCount = 0;
+    void getMaintenanceEntries(selectedVin)
+      .then(entries => {
+        if (!isActive) {
+          return;
+        }
 
-    for (const vehicle of candidates) {
-      try {
-        const insights = await getVehicleInsights(vehicle.vin);
-        await updateVehicle(vehicle.vin, buildPersistedVinInsights(insights));
-        successCount += 1;
-      } catch (error) {
-        console.error(`VIN insight backfill failed for ${vehicle.vin}`, error);
-        failureCount += 1;
+        setMaintenanceEntriesByVin(current => ({
+          ...current,
+          [selectedVin]: Array.isArray(entries) ? entries : [],
+        }));
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setMaintenanceEntriesByVin(current => ({
+          ...current,
+          [selectedVin]: [],
+        }));
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoadingHealthVin(current => (current === selectedVin ? null : current));
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [maintenanceEntriesByVin, selectedVin]);
+
+  const backfillVinInsights = useCallback(
+    async (automatic = false) => {
+      const candidates = vehicles.filter(
+        vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
+      );
+
+      if (candidates.length === 0) {
+        if (!automatic) {
+          setBackfillMessage('All vehicles already have full VIN insights.');
+        }
+        return;
       }
+
+      setIsBackfillingInsights(true);
+      setBackfillMessage(null);
+
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const vehicle of candidates) {
+        try {
+          const insights = await getVehicleInsights(vehicle.vin);
+          await updateVehicle(vehicle.vin, buildPersistedVinInsights(insights));
+          successCount += 1;
+        } catch (error) {
+          console.error(
+            `VIN insight backfill failed for ${vehicle.vin}`,
+            error
+          );
+          failureCount += 1;
+        }
+      }
+
+      await refreshVehicles();
+
+      const modeLabel = automatic ? 'Auto VIN sync' : 'VIN insights backfill';
+      if (failureCount === 0) {
+        setBackfillMessage(
+          `${modeLabel} complete: ${successCount} vehicle${successCount === 1 ? '' : 's'} updated.`
+        );
+      } else {
+        setBackfillMessage(
+          `${modeLabel} finished: ${successCount} updated, ${failureCount} failed. Automatic retry will continue.`
+        );
+      }
+
+      setIsBackfillingInsights(false);
+    },
+    [refreshVehicles, vehicles]
+  );
+
+  useEffect(() => {
+    const hasCandidates = vehicles.some(
+      vehicle => vehicle.vin?.length === 17 && !vehicle.vinInsights
+    );
+
+    if (!hasCandidates || isBackfillingInsights) {
+      return;
     }
 
-    await refreshVehicles();
+    let cancelled = false;
 
-    if (failureCount === 0) {
-      setBackfillMessage(
-        `VIN insights backfill complete: ${successCount} vehicle${successCount === 1 ? '' : 's'} updated.`
-      );
-    } else {
-      setBackfillMessage(
-        `VIN insights backfill finished: ${successCount} updated, ${failureCount} failed.`
-      );
-    }
+    const run = async () => {
+      if (cancelled || isBackfillingInsights) {
+        return;
+      }
+      await backfillVinInsights(true);
+    };
 
-    setIsBackfillingInsights(false);
-  };
+    void run();
+    const intervalId = window.setInterval(() => {
+      void run();
+    }, 45000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [backfillVinInsights, isBackfillingInsights, vehicles]);
 
   const handleDelete = async (vin: string) => {
     const ok = window.confirm('Delete this vehicle? This cannot be undone.');
@@ -240,8 +420,8 @@ export default function Home() {
 
   const statusText = backfillMessage
     ? backfillMessage
-    : showDemoSeedControls
-      ? 'No recent status yet. Click "Load Bob Demo Data" to run document seeding and show upload diagnostics here.'
+    : showBobDemoSeedControls
+      ? 'No recent status yet. Use "Load Bob Demo Data" to seed demonstration fixtures. VIN insight sync runs automatically.'
       : 'No recent status yet. Demo seed controls are disabled in this environment.';
 
   return (
@@ -250,17 +430,20 @@ export default function Home() {
         <div className="flex items-end justify-between mb-6">
           <div>
             <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-              Vehicle Vitals
+              Garage
             </h1>
             {vehicles.length > 0 && (
               <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
-                {vehicles.length} vehicle{vehicles.length === 1 ? '' : 's'} in
-                garage
+                {activeVehicles.length} active vehicle
+                {activeVehicles.length === 1 ? '' : 's'} in garage
+                {storedVehicles.length > 0
+                  ? ` • ${storedVehicles.length} in storage`
+                  : ''}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2">
-            {showDemoSeedControls && (
+            {showBobDemoSeedControls && (
               <button
                 onClick={() => void handleSeedDemo()}
                 disabled={isSeedingDemo}
@@ -271,15 +454,6 @@ export default function Home() {
                   : `Load Bob Demo Data (${bobDemoVehicleCount} vehicles)`}
               </button>
             )}
-            <button
-              onClick={() => void backfillVinInsights()}
-              disabled={isBackfillingInsights || vehicles.length === 0}
-              className="px-4 py-2.5 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isBackfillingInsights
-                ? 'Backfilling VIN...'
-                : 'Backfill VIN Data'}
-            </button>
             <Link
               to="/add-vehicle"
               className="inline-block px-4 py-2.5 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90 transition-opacity no-underline font-medium"
@@ -300,8 +474,8 @@ export default function Home() {
               No vehicles yet
             </h3>
             <p className="text-slate-600 dark:text-slate-400 mb-3">
-              Get started by adding your first vehicle. You can use VIN decode
-              to speed things up.
+              Get started by adding your first vehicle. We can look up details
+              for some vehicles to make setup quicker.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -310,7 +484,7 @@ export default function Home() {
               >
                 Add your first vehicle
               </Link>
-              {showDemoSeedControls && (
+              {showBobDemoSeedControls && (
                 <button
                   onClick={() => void handleSeedDemo()}
                   disabled={isSeedingDemo}
@@ -340,99 +514,108 @@ export default function Home() {
                 />
               </div>
               <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
-                {filteredVehicles.map((v, index) => {
-                  const isSelected = v.vin === selectedVin;
-                  const portfolioProgress = getPortfolioRequiredProgress(v);
-                  return (() => {
-                    const vinText = String(v.vin ?? '').trim();
-                    const makeText = String(v.make ?? '').trim();
-                    const modelText = String(v.model ?? '').trim();
-                    const yearText = String(v.year ?? '').trim();
-                    const isPhantom =
-                      !vinText || !makeText || !modelText || !yearText;
+                {[
+                  {
+                    key: 'active',
+                    title: 'Active Garage',
+                    description: 'Daily and regularly used vehicles.',
+                    items: activeVehicles,
+                  },
+                  {
+                    key: 'stored',
+                    title: 'Storage',
+                    description:
+                      'Special-use, seasonal, barn, or shed vehicles kept out of the main garage.',
+                    items: storedVehicles,
+                  },
+                ].map(section => (
+                  <div key={section.key}>
+                    <div className="px-1 pb-2 pt-1">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        {section.title}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {section.description}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {section.items.map((v, index) => {
+                        const isSelected = v.vin === selectedVin;
+                        const portfolioProgress =
+                          getPortfolioRequiredProgress(v);
+                        return (() => {
+                          const vinText = String(v.vin ?? '').trim();
+                          const makeText = String(v.make ?? '').trim();
+                          const modelText = String(v.model ?? '').trim();
+                          const yearText = String(v.year ?? '').trim();
+                          const isPhantom =
+                            !vinText || !makeText || !modelText || !yearText;
 
-                    if (isPhantom) {
-                      return (
-                        <div
-                          key={vinText || `phantom-${index}`}
-                          className="w-full text-left rounded-lg border border-dashed border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3"
-                        >
-                          <div className="font-medium text-red-700 dark:text-red-400 text-sm line-clamp-1">
-                            Corrupted entry
-                          </div>
-                          <div className="text-xs text-red-500 dark:text-red-500 line-clamp-1 mb-2">
-                            ID: {vinText || 'Missing document ID'}
-                          </div>
-                          <div className="text-xs text-red-600 dark:text-red-400 mb-2">
-                            Missing vehicle year/make/model fields
-                          </div>
-                          <button
-                            type="button"
-                            className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 rounded transition-colors cursor-pointer"
-                            onClick={() => handleDelete(vinText)}
-                            disabled={!vinText}
-                          >
-                            Delete
-                          </button>
+                          if (isPhantom) {
+                            return (
+                              <div
+                                key={
+                                  vinText || `phantom-${section.key}-${index}`
+                                }
+                                className="w-full text-left rounded-lg border border-dashed border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3"
+                              >
+                                <div className="font-medium text-red-700 dark:text-red-400 text-sm line-clamp-1">
+                                  Corrupted entry
+                                </div>
+                                <div className="text-xs text-red-500 dark:text-red-500 line-clamp-1 mb-2">
+                                  ID: {vinText || 'Missing document ID'}
+                                </div>
+                                <div className="text-xs text-red-600 dark:text-red-400 mb-2">
+                                  Missing vehicle year/make/model fields
+                                </div>
+                                <button
+                                  type="button"
+                                  className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 rounded transition-colors cursor-pointer"
+                                  onClick={() => handleDelete(vinText)}
+                                  disabled={!vinText}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            );
+                          }
+                          return (
+                            <VehicleListItem
+                              key={vinText}
+                              vehicle={v}
+                              isSelected={isSelected}
+                              onSelect={setSelectedVin}
+                              alertLevel={vehicleAlerts[v.vin]?.level ?? null}
+                              portfolioComplete={portfolioProgress.complete}
+                              portfolioRequired={portfolioProgress.required}
+                            />
+                          );
+                        })();
+                      })}
+                      {section.items.length === 0 && (
+                        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
+                          {section.key === 'stored'
+                            ? 'No stored vehicles match this search.'
+                            : 'No active vehicles match this search.'}
                         </div>
-                      );
-                    }
-                    return (
-                      <button
-                        key={vinText}
-                        type="button"
-                        onClick={() => setSelectedVin(vinText)}
-                        className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                          isSelected
-                            ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
-                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
-                        }`}
-                      >
-                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
-                          {yearText} {makeText} {modelText}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                          {vinText}
-                          {v.mileage ? ` • ${v.mileage} mi` : ''}
-                        </div>
-                        {Number(v.recallsCount || 0) > 0 && (
-                          <div className="mt-1.5 text-xs">
-                            <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5">
-                              {v.recallsCount} recall
-                              {Number(v.recallsCount) === 1 ? '' : 's'}
-                            </span>
-                          </div>
-                        )}
-                        {portfolioProgress.required > 0 && (
-                          <div className="mt-1 text-xs">
-                            <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5">
-                              Records: {portfolioProgress.complete}/
-                              {portfolioProgress.required}
-                            </span>
-                          </div>
-                        )}
-                        {vehicleAlerts[v.vin]?.level === 'urgent' && (
-                          <div className="mt-1 text-xs">
-                            <span className="inline-block rounded-full bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 px-2 py-0.5">
-                              ⚠ Maintenance due!
-                            </span>
-                          </div>
-                        )}
-                        {vehicleAlerts[v.vin]?.level === 'soon' && (
-                          <div className="mt-1 text-xs">
-                            <span className="inline-block rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-2 py-0.5">
-                              Service due soon
-                            </span>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })();
-                })}
+                      )}
+                    </div>
+                  </div>
+                ))}
                 {filteredVehicles.length === 0 && (
                   <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
                     No vehicles match this search.
                   </div>
+                )}
+                {hasMoreVehicles && !normalizedSearch && (
+                  <button
+                    type="button"
+                    onClick={loadMoreVehicles}
+                    disabled={isLoadingMore}
+                    className="w-full mt-3 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-60"
+                  >
+                    {isLoadingMore ? 'Loading more vehicles…' : 'Load more vehicles'}
+                  </button>
                 )}
               </div>
             </div>
@@ -445,7 +628,7 @@ export default function Home() {
                 </p>
               ) : (
                 (() => {
-                  const selectedVehicle = vehicles.find(
+                  const selectedVehicle = filteredVehicles.find(
                     v => v.vin === selectedVin
                   );
                   if (!selectedVehicle) {
@@ -458,26 +641,71 @@ export default function Home() {
 
                   const portfolioProgress =
                     getPortfolioRequiredProgress(selectedVehicle);
+                  const healthEntries =
+                    maintenanceEntriesByVin[selectedVehicle.vin] ?? [];
+                  const isLoadingHealth =
+                    loadingHealthVin === selectedVehicle.vin &&
+                    !maintenanceEntriesByVin[selectedVehicle.vin];
 
                   return (
                     <>
                       <div className="flex items-start justify-between gap-4 mb-4">
-                        <div>
-                          <h3 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-                            {selectedVehicle.year} {selectedVehicle.make}{' '}
-                            {selectedVehicle.model}
-                          </h3>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
-                            VIN: {selectedVehicle.vin}
-                            {selectedVehicle.mileage
-                              ? ` • ${selectedVehicle.mileage} mi`
-                              : ''}
-                          </p>
+                        <div className="flex items-start gap-3">
+                          <div className="h-20 w-28 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex-shrink-0">
+                            {selectedVehicle.photoUrl ? (
+                              <CachedImage
+                                src={selectedVehicle.photoUrl}
+                                alt={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
+                                className="h-full w-full object-cover"
+                                width={112}
+                                height={80}
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-slate-400 text-2xl">
+                                🚗
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                              {selectedVehicle.year} {selectedVehicle.make}{' '}
+                              {selectedVehicle.model}
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                              VIN: {selectedVehicle.vin}
+                              {selectedVehicle.mileage
+                                ? ` • ${selectedVehicle.mileage} mi`
+                                : ''}
+                            </p>
+                            {selectedVehicle.photoSource === 'wikimedia' && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                                Image source: Wikimedia
+                                {selectedVehicle.photoAttributionUrl && (
+                                  <>
+                                    {' '}
+                                    <a
+                                      href={selectedVehicle.photoAttributionUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                                    >
+                                      View source
+                                    </a>
+                                  </>
+                                )}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
 
                       {/* Vehicle Status Badges */}
                       <div className="flex flex-wrap gap-2 mb-4">
+                        {getVehicleStatus(selectedVehicle) === 'stored' && (
+                          <span className="inline-block rounded-full bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 px-2.5 py-1 text-xs font-medium">
+                            In storage
+                          </span>
+                        )}
                         {Number(selectedVehicle.recallsCount || 0) > 0 && (
                           <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2.5 py-1 text-xs font-medium">
                             {selectedVehicle.recallsCount} open recall
@@ -498,6 +726,15 @@ export default function Home() {
                           </span>
                         )}
                       </div>
+
+                      <VehicleHealthPanel
+                        vehicle={selectedVehicle}
+                        maintenanceEntries={healthEntries}
+                        tier={tier}
+                        hasPlanning12mo={hasPlanning12mo}
+                        hasPlanning36mo={hasPlanning36mo}
+                        loading={isLoadingHealth}
+                      />
 
                       {/* Upcoming Maintenance */}
                       {vehicleAlerts[selectedVehicle.vin] && (
@@ -585,10 +822,6 @@ export default function Home() {
                           Delete Vehicle
                         </button>
                       </div>
-                      <AdPlacement
-                        placement="sidebar"
-                        className="mt-4 hidden lg:block"
-                      />
                     </>
                   );
                 })()

@@ -1,9 +1,24 @@
-import { functions } from '../shared/firebaseConfig';
+import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import { db, functions } from '../shared/firebaseConfig';
 import {
   getLegacyFirebase,
   getOrInitializeLegacyFirebaseApp,
   hasLegacyFirebaseModules,
 } from '../shared/firebaseLegacy';
+
+const generateIdempotencyKey = () => {
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+
+  if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(bytes);
+    return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+  }
+
+  return `idem_${Date.now()}`;
+};
 
 const createFirebaseService = async () => {
   try {
@@ -26,8 +41,8 @@ const createFirebaseService = async () => {
     }
 
     throw new Error('Firebase Functions not available');
-  } catch (error) {
-    console.warn('Support admin service unavailable:', error);
+    } catch {
+      console.warn('Support admin service unavailable');
     return {
       functions: null,
       httpsCallable: () => () => Promise.resolve({ data: { success: false } }),
@@ -114,7 +129,6 @@ export async function setOrganizationMemberRole({
   orgId,
   targetUid,
   role,
-  idempotencyKey,
 }) {
   const firebaseService = await createFirebaseService();
 
@@ -131,7 +145,7 @@ export async function setOrganizationMemberRole({
     orgId,
     targetUid,
     role,
-    idempotencyKey,
+    idempotencyKey: generateIdempotencyKey(),
   });
 
   if (!result.data?.success) {
@@ -145,10 +159,40 @@ export async function setOrganizationMemberRole({
   };
 }
 
+export async function setGarageStorageMode({
+  orgId,
+  garageStorageMode,
+}) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'setGarageStorageModeCallable'
+  );
+
+  const result = await callable({
+    orgId,
+    garageStorageMode,
+    idempotencyKey: generateIdempotencyKey(),
+  });
+
+  if (!result.data?.success) {
+    throw new Error(result.data?.error || 'Failed to update garage storage mode');
+  }
+
+  return {
+    orgId: (result.data.orgId || '').toString(),
+    garageStorageMode: (result.data.garageStorageMode || '').toString(),
+  };
+}
+
 export async function applyRetentionPolicy({
   orgId,
   retentionDays,
-  idempotencyKey,
 }) {
   const firebaseService = await createFirebaseService();
 
@@ -164,7 +208,7 @@ export async function applyRetentionPolicy({
   const result = await callable({
     orgId,
     retentionDays,
-    idempotencyKey,
+    idempotencyKey: generateIdempotencyKey(),
   });
 
   if (!result.data?.success) {
@@ -174,5 +218,178 @@ export async function applyRetentionPolicy({
   return {
     orgId: (result.data.orgId || '').toString(),
     retentionDays: Number(result.data.retentionDays || retentionDays),
+  };
+}
+
+function toMillis(value) {
+  if (!value) {
+    return 0;
+  }
+
+  if (typeof value.toMillis === 'function') {
+    return value.toMillis();
+  }
+
+  if (typeof value.toDate === 'function') {
+    return value.toDate().getTime();
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function mapFinanceDraft(docSnapshot, kind) {
+  const data = docSnapshot.data() || {};
+  const counterparty = kind === 'invoice' ? data.customerName : data.vendorName;
+
+  return {
+    id: docSnapshot.id,
+    kind,
+    counterparty: (counterparty || '').toString(),
+    amountDue: Number(data.amountDue || 0),
+    currency: (data.currency || 'USD').toString(),
+    dueDate: (data.dueDate || data.billDate || '').toString(),
+    status: (data.status || 'draft').toString(),
+    createdAt:
+      data.createdAt && data.createdAt.toDate
+        ? data.createdAt.toDate().toISOString()
+        : (data.createdAt || '').toString(),
+    createdAtValue: toMillis(data.createdAt),
+  };
+}
+
+export async function getFinanceDrafts(orgId, limitCount = 5) {
+  const normalizedOrgId = (orgId || '').toString().trim();
+
+  if (!normalizedOrgId) {
+    return {
+      orgId: '',
+      drafts: [],
+    };
+  }
+
+  const [invoiceSnapshot, payableSnapshot] = await Promise.all([
+    getDocs(
+      query(
+        collection(db, 'orgs', normalizedOrgId, 'financeInvoices'),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      )
+    ),
+    getDocs(
+      query(
+        collection(db, 'orgs', normalizedOrgId, 'financePayables'),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      )
+    ),
+  ]);
+
+  const drafts = [
+    ...invoiceSnapshot.docs.map(docSnapshot =>
+      mapFinanceDraft(docSnapshot, 'invoice')
+    ),
+    ...payableSnapshot.docs.map(docSnapshot =>
+      mapFinanceDraft(docSnapshot, 'payable')
+    ),
+  ]
+    .sort((left, right) => right.createdAtValue - left.createdAtValue)
+    .map(draft => {
+      const nextDraft = { ...draft };
+      delete nextDraft.createdAtValue;
+      return nextDraft;
+    });
+
+  return {
+    orgId: normalizedOrgId,
+    drafts,
+  };
+}
+
+export async function createInvoiceDraft({
+  orgId,
+  customerName,
+  dueDate,
+  issueDate,
+  currency,
+  notes,
+  amountDue,
+  lineItems,
+}) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'createInvoiceDraftCallable'
+  );
+
+  const result = await callable({
+    orgId,
+    customerName,
+    dueDate,
+    issueDate,
+    currency,
+    notes,
+    amountDue,
+    lineItems,
+    idempotencyKey: generateIdempotencyKey(),
+  });
+
+  if (!result.data?.success) {
+    throw new Error(result.data?.error || 'Failed to create invoice draft');
+  }
+
+  return {
+    orgId: (result.data.orgId || '').toString(),
+    invoiceId: (result.data.invoiceId || '').toString(),
+    status: (result.data.status || '').toString(),
+  };
+}
+
+export async function createPayableDraft({
+  orgId,
+  vendorName,
+  dueDate,
+  billDate,
+  currency,
+  category,
+  notes,
+  amountDue,
+}) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'createPayableDraftCallable'
+  );
+
+  const result = await callable({
+    orgId,
+    vendorName,
+    dueDate,
+    billDate,
+    currency,
+    category,
+    notes,
+    amountDue,
+    idempotencyKey: generateIdempotencyKey(),
+  });
+
+  if (!result.data?.success) {
+    throw new Error(result.data?.error || 'Failed to create payable draft');
+  }
+
+  return {
+    orgId: (result.data.orgId || '').toString(),
+    payableId: (result.data.payableId || '').toString(),
+    status: (result.data.status || '').toString(),
   };
 }

@@ -2,7 +2,10 @@ class Maintenance {
   final String id;
   final String title;
   final String notes;
+  final String mileage;
   final double cost;
+  final String performedBy;
+  final String coverage;
   final DateTime date;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -11,7 +14,10 @@ class Maintenance {
     required this.id,
     required this.title,
     this.notes = '',
+    this.mileage = '',
     this.cost = 0.0,
+    this.performedBy = 'mechanic',
+    this.coverage = 'parts_and_labor',
     required this.date,
     required this.createdAt,
     required this.updatedAt,
@@ -22,7 +28,10 @@ class Maintenance {
       id: docId,
       title: map['title'] ?? '',
       notes: map['notes'] ?? '',
+      mileage: (map['mileage'] ?? '').toString(),
       cost: (map['cost'] ?? 0.0).toDouble(),
+      performedBy: (map['performedBy'] ?? 'mechanic').toString(),
+      coverage: (map['coverage'] ?? 'parts_and_labor').toString(),
       date: map['date'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
               map['date'].millisecondsSinceEpoch,
@@ -45,7 +54,10 @@ class Maintenance {
     return {
       'title': title,
       'notes': notes,
+      'mileage': mileage,
       'cost': cost,
+      'performedBy': performedBy,
+      'coverage': coverage,
       'date': date,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -56,7 +68,10 @@ class Maintenance {
     String? id,
     String? title,
     String? notes,
+    String? mileage,
     double? cost,
+    String? performedBy,
+    String? coverage,
     DateTime? date,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -65,7 +80,10 @@ class Maintenance {
       id: id ?? this.id,
       title: title ?? this.title,
       notes: notes ?? this.notes,
+      mileage: mileage ?? this.mileage,
       cost: cost ?? this.cost,
+      performedBy: performedBy ?? this.performedBy,
+      coverage: coverage ?? this.coverage,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

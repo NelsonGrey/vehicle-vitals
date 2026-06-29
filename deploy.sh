@@ -40,12 +40,21 @@ case $ENVIRONMENT in
         ;;
 esac
 
-echo "🔧 Building application..."
-"$SCRIPT_DIR/scripts/build-web-sanitized-env.sh" "$ENVIRONMENT"
+echo "📦 Triggering Firebase App Hosting rollout..."
 
-echo "📦 Deploying to Firebase..."
-firebase use $FIREBASE_PROJECT
-firebase deploy --only hosting
+case $ENVIRONMENT in
+    production)
+        GIT_BRANCH="main"
+        ;;
+    staging)
+        GIT_BRANCH="staging"
+        ;;
+    *)
+        GIT_BRANCH="develop"
+        ;;
+esac
+
+firebase apphosting:rollouts:create vehicle-vitals --project "$FIREBASE_PROJECT" --git-branch "$GIT_BRANCH" --force
 
 echo "✅ Deployment complete!"
-echo "🌐 Your app is live at: https://$FIREBASE_PROJECT.web.app"
+echo "🌐 App Hosting URL: https://vehicle-vitals--$FIREBASE_PROJECT.us-central1.hosted.app"

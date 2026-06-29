@@ -26,7 +26,9 @@ Update the placeholder values in `.env.staging` and `.env.development` with your
 
 ### Option A: GitHub Actions (Recommended)
 
-The repository includes a GitHub Action (`.github/workflows/ci-cd-pipeline.yml`) that automatically deploys based on the target environment.
+The active deployment workflow is `.github/workflows/master-pipeline.yml`
+(`Master CI/CD Pipeline`). It builds and deploys based on the target
+environment.
 
 #### Setup GitHub Secrets
 
@@ -42,6 +44,21 @@ In your repository settings -> Secrets -> Actions, add:
 - **Production**: Push to `main` branch
 - **Staging**: Push to `staging` branch or create PR to `main`
 - **Development**: Push to `develop` branch
+
+#### Manual Workflow Dispatch
+
+```bash
+gh workflow run master-pipeline.yml \
+  -f action=build_and_deploy \
+  -f environment=staging
+
+gh workflow run master-pipeline.yml \
+  -f action=build_and_deploy \
+  -f environment=production
+```
+
+Use `deploy_only` only for an intentional Firebase-only redeploy. Production
+`deploy_only` skips Functions and deploys Firestore, Storage, and Hosting.
 
 ### Option B: Manual Deployment
 
@@ -66,15 +83,15 @@ npm run build:demonstration
 ```bash
 # Production
 firebase use production
-firebase deploy --only hosting
+firebase deploy --only firestore,storage,functions,hosting
 
 # Staging
 firebase use staging
-firebase deploy --only hosting
+firebase deploy --only firestore,storage,functions,hosting
 
 # Development
 firebase use development
-firebase deploy --only hosting
+firebase deploy --only firestore,storage,functions,hosting
 
 # Demonstration (project alias may remain development depending on local firebase aliases)
 firebase use development
@@ -93,3 +110,6 @@ firebase deploy --only hosting
 - Always test builds locally before deploying: `npm run build:staging` etc.
 - The workflow installs dependencies and runs the appropriate build command based on the target environment.
 - For manual deployments, ensure you're using the correct Firebase project with `firebase use <environment>`.
+- Firestore and Storage rules are launch-critical; do not use Hosting-only
+  deploys for release candidates unless rules and Functions are intentionally
+  unchanged.

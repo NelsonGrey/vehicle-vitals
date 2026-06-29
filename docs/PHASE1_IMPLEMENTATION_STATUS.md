@@ -1,7 +1,7 @@
 # Phase 1 Implementation Status
 
-**Last Updated**: May 13, 2026  
-**Status**: 🟢 CORE INFRASTRUCTURE + WEB GATING IMPLEMENTATION COMPLETE
+**Last Updated**: June 11, 2026  
+**Status**: 🟢 CORE INFRASTRUCTURE COMPLETE; RELEASE HARDENING IN PROGRESS
 
 ---
 
@@ -15,7 +15,7 @@
   - Calendar sync gate in maintenance planner
   - CSV/PDF export gates in maintenance history
   - AI attachment analysis and retry gates in maintenance attachments
-- Subscription plans page is routed and reachable (`/app/subscription`) with plan matrix and pricing controls.
+- Subscription page is routed and reachable (`/app/subscription`) with subscription matrix and pricing controls.
 - Web test automation remains healthy after integration updates.
 
 ### 1. ✅ Feature Flag System
@@ -25,7 +25,7 @@
 **Features**:
 
 - Define all tier-based features in one source of truth
-- Vehicle limit enforcement (Free: 3, Pro: 10, Premium: unlimited)
+- Vehicle limit enforcement (Free: 2, Pro: 10, Premium: 25, Enterprise: contract-defined)
 - Quota limits (AI analyses, receipt uploads)
 - Pricing information
 - Feature comparison utilities
@@ -229,9 +229,11 @@ function EditVehicleScreen() {
 **Unit Tests (Monetization)**:
 
 - [x] `featureFlags.test.ts` - Feature gate logic
-- [ ] `subscriptionService.test.ts` - Subscription state management
-- [ ] `adAnalytics.test.ts` - Event tracking
-- [ ] `quotaService.test.ts` - Quota calculations
+- [x] `subscriptionService.test.ts` - Subscription state management
+- [x] `adAnalytics.test.ts` - Event tracking
+- [x] `quotaService.test.ts` - Quota calculations
+- [x] `firestoreServiceFactory.pagination.test.ts` - Firestore cursor pagination
+- [x] `CachedImage.test.tsx`, `VehicleListItem.test.tsx`, `ErrorBoundary.test.tsx` - Garage UX hardening
 - [x] `adPlacements.test.ts` - Ad rendering logic
 
 **Integration / Acceptance Tests**:
@@ -245,8 +247,8 @@ function EditVehicleScreen() {
 
 **Manual Testing**:
 
-- [ ] Create free account, verify can track 3 vehicles
-- [ ] Try to add 4th vehicle, verify upgrade prompt
+- [ ] Create free account, verify can track 2 vehicles
+- [ ] Try to add 3rd vehicle, verify upgrade prompt
 - [ ] Verify ads render for free tier
 - [ ] Verify pro tier shows fewer ads
 - [ ] Verify premium tier shows no ads

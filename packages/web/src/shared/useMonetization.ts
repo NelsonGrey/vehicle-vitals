@@ -3,6 +3,7 @@
  * Provides convenient hooks for using feature flags, subscriptions, and ads in components
  */
 
+import { doc, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,10 +19,12 @@ import {
 } from './entitlementsService';
 import {
   canAccessFeature,
+  getTierRank,
   getVehicleLimit,
   isFeatureEnabled,
   type UserTier,
 } from './featureFlags';
+import { db } from './firebaseConfig';
 import {
   watchSubscription,
   type SubscriptionData,
@@ -88,6 +91,48 @@ export function useEffectiveEntitlements(): {
   const [entitlements, setEntitlements] =
     useState<EffectiveEntitlements | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshSignal, setRefreshSignal] = useState(0);
+
+  useEffect(() => {
+    if (!user || !db) {
+      return;
+    }
+
+    const subscriptionRef = doc(
+      db,
+      'users',
+      user.uid,
+      'subscription',
+      'current'
+    );
+    const premiumEntitlementRef = doc(
+      db,
+      'users',
+      user.uid,
+      'entitlements',
+      'premium'
+    );
+
+    const triggerRefresh = () => {
+      setRefreshSignal(current => current + 1);
+    };
+
+    const unsubscribeSubscription = onSnapshot(
+      subscriptionRef,
+      triggerRefresh,
+      triggerRefresh
+    );
+    const unsubscribePremium = onSnapshot(
+      premiumEntitlementRef,
+      triggerRefresh,
+      triggerRefresh
+    );
+
+    return () => {
+      unsubscribeSubscription();
+      unsubscribePremium();
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -123,7 +168,7 @@ export function useEffectiveEntitlements(): {
     return () => {
       isActive = false;
     };
-  }, [user]);
+  }, [user, refreshSignal]);
 
   return { entitlements, isLoading };
 }
@@ -136,7 +181,7 @@ export function useFeatureFlag(
   featureName: string,
   options?: { onDenied?: () => void }
 ): boolean {
-  const { tier, subscription } = useSubscription();
+  const { tier } = useSubscription();
   const { entitlements } = useEffectiveEntitlements();
   const { user } = useAuth();
   const [isEnabled, setIsEnabled] = useState(false);
@@ -207,7 +252,7 @@ export function useUpgradePrompt(): {
   const requiredTier: UserTier = targetTier || 'pro';
 
   const openUpgradeModal = (requiredTier: UserTier, triggerName: string) => {
-    if (tier === 'premium' || (tier === 'pro' && requiredTier !== 'premium')) {
+    if (getTierRank(tier) >= getTierRank(requiredTier)) {
       // User already has access
       return;
     }
@@ -258,8 +303,7 @@ export function useIfFeatureAvailable(featureName: string): {
   openUpgrade: (trigger: string) => void;
 } {
   const { tier } = useSubscription();
-  const { shouldShowModal, openUpgradeModal, closeUpgradeModal } =
-    useUpgradePrompt();
+  const { openUpgradeModal } = useUpgradePrompt();
   const isAvailable = isFeatureEnabled(featureName, tier);
 
   return {

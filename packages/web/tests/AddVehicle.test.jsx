@@ -9,6 +9,7 @@ const mockAddOrUpdateVehicle = vi.fn();
 const mockGetVehicles = vi.fn();
 const mockDecodeVin = vi.fn();
 const mockBuildPersistedVinInsights = vi.fn();
+const mockFindVehiclePhotoFromWeb = vi.fn();
 
 vi.mock('@vehicle-vitals/shared', () => ({
   defaultVehicle: {
@@ -51,6 +52,10 @@ vi.mock('../src/utils/vehicleService', () => ({
     mockBuildPersistedVinInsights(...args),
 }));
 
+vi.mock('../src/utils/vehiclePhotoService', () => ({
+  findVehiclePhotoFromWeb: (...args) => mockFindVehiclePhotoFromWeb(...args),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -75,6 +80,7 @@ describe('AddVehicle page', () => {
     vi.stubGlobal('alert', vi.fn());
     mockBuildPersistedVinInsights.mockReturnValue({ persisted: true });
     mockGetVehicles.mockResolvedValue([]);
+    mockFindVehiclePhotoFromWeb.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -91,12 +97,45 @@ describe('AddVehicle page', () => {
     expect(screen.getByLabelText(/year/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/make/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/model/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^vin$/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /decode vin/i })
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /vin lookup/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /add vehicle/i })
+    ).toBeInTheDocument();
+  });
+
+  it('shows subtype options for RVs and trailers', async () => {
+    renderPage();
+
+    expect(
+      screen.queryByLabelText(/vehicle subtype/i)
+    ).not.toBeInTheDocument();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'RVs'
+    );
+    expect(screen.getByLabelText(/vehicle subtype/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: /motorhome/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: /camping \/ travel trailer/i })
+    ).toBeInTheDocument();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'Trailers'
+    );
+    expect(
+      screen.getByRole('option', { name: /boat trailer/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: /utility trailer/i })
     ).toBeInTheDocument();
   });
 
@@ -106,7 +145,7 @@ describe('AddVehicle page', () => {
     await userEvent.click(screen.getByRole('button', { name: /add vehicle/i }));
 
     expect(global.alert).toHaveBeenCalledWith(
-      'VIN is required before saving a vehicle.'
+      'A vehicle ID (VIN/HIN/Serial) is required before saving.'
     );
     expect(mockAddOrUpdateVehicle).not.toHaveBeenCalled();
   });
@@ -144,8 +183,11 @@ describe('AddVehicle page', () => {
 
     renderPage();
 
-    await userEvent.type(screen.getByLabelText(/^vin$/i), '1HGCM82633A004352');
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      '1HGCM82633A004352'
+    );
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     await waitFor(() => {
       expect(mockDecodeVin).toHaveBeenCalledWith('1HGCM82633A004352');
@@ -160,7 +202,7 @@ describe('AddVehicle page', () => {
     renderPage();
 
     await userEvent.type(
-      screen.getByLabelText(/^vin$/i),
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
       ' 1HGCM82633A004352 '
     );
     await userEvent.type(screen.getByLabelText(/mileage/i), '50000');
@@ -175,9 +217,73 @@ describe('AddVehicle page', () => {
     });
   });
 
+  it('persists RV subtype selection when saving', async () => {
+    mockAddOrUpdateVehicle.mockResolvedValue(undefined);
+
+    renderPage();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'RVs'
+    );
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle subtype/i),
+      'Motorhome'
+    );
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      'RV1234567'
+    );
+    await userEvent.click(screen.getByRole('button', { name: /add vehicle/i }));
+
+    await waitFor(() => {
+      expect(mockAddOrUpdateVehicle).toHaveBeenCalled();
+      expect(mockAddOrUpdateVehicle.mock.calls[0][0].vehicleSubtype).toBe(
+        'Motorhome'
+      );
+    });
+  });
+
   it('shows decode alert if VIN is blank', async () => {
     renderPage();
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
-    expect(global.alert).toHaveBeenCalledWith('Enter a VIN first');
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
+    expect(global.alert).toHaveBeenCalled();
+    const alertMessage = global.alert.mock.calls[0]?.[0] || '';
+    expect(alertMessage).toMatch(/non-VIN assets/i);
+    expect(alertMessage).toMatch(/Year\/Make\/Model/i);
+  });
+
+  it('blocks decode when VIN check digit is invalid', async () => {
+    renderPage();
+
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      '1HGCM82633A004353'
+    );
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'VIN decode requires a valid 17-character VIN with a correct check digit.'
+    );
+    expect(mockDecodeVin).not.toHaveBeenCalled();
+  });
+
+  it('blocks decode for HIN identifiers and allows manual save path', async () => {
+    renderPage();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText(/vehicle type/i),
+      'Boats'
+    );
+    await userEvent.type(
+      screen.getByLabelText(/vehicle id \(vin\/hin\/serial\)/i),
+      'ABC12345A595'
+    );
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'Decode currently supports VIN only. Detected HIN. You can still save this vehicle ID and complete details manually.'
+    );
+    expect(mockDecodeVin).not.toHaveBeenCalled();
   });
 });

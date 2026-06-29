@@ -69,7 +69,22 @@ class Logger {
   }
 
   generateSessionId() {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const bytes = new Uint8Array(12);
+    if (
+      globalThis.crypto &&
+      typeof globalThis.crypto.getRandomValues === 'function'
+    ) {
+      globalThis.crypto.getRandomValues(bytes);
+    } else {
+      // Fallback for environments without Web Crypto support.
+      for (let i = 0; i < bytes.length; i += 1) {
+        bytes[i] = (Date.now() + i) & 0xff;
+      }
+    }
+    const randomPart = Array.from(bytes, value =>
+      value.toString(16).padStart(2, '0')
+    ).join('');
+    return `session_${Date.now()}_${randomPart}`;
   }
 
   // Set current user for analytics

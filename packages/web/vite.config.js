@@ -9,8 +9,8 @@ export default defineConfig({
     alias: {
       // allow imports like 'shared/...'
       shared: path.resolve(__dirname, '../shared/src'),
-      // ensure firebase imports from shared files resolve to root node_modules
-      firebase: path.resolve(__dirname, '../../node_modules/firebase'),
+      // resolve workspace package imports
+      '@vehicle-vitals/shared': path.resolve(__dirname, '../shared/src'),
     },
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },

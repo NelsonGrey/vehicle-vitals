@@ -2,12 +2,30 @@
 
 Project overview: Vehicle Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
 
-Last updated: May 14, 2026
-Project status: CORE IMPLEMENTED, R1 GATE CLOSURE IN PROGRESS
+Last updated: June 11, 2026
+Project status: CORE IMPLEMENTED, R1 GATE 2 CLOSURE IN PROGRESS
 
 ---
 
-## Enterprise Foundation Update (May 14, 2026)
+## Firebase Garage Improvements (Delivered June 11, 2026)
+
+Completed this cycle:
+
+- Firestore cursor pagination for vehicles and maintenance in shared/web/mobile services
+- Composite indexes defined in `firestore.indexes.json` and documented in `docs/FIREBASE_INDEXES.md`
+- Web garage refactor to `VehicleListItem` + `CachedImage` with load-more pagination
+- Firebase Analytics error reporting from web `ErrorBoundary`
+- Firebase Crashlytics global error handling on mobile (`ErrorWidget.builder` + platform handlers)
+
+Validation evidence:
+
+- Shared: `packages/shared/tests/firestoreServiceFactory.pagination.test.ts`
+- Web unit: `CachedImage`, `VehicleListItem`, `ErrorBoundary`, `Home` tests
+- Web UAT: `TC-PAGINATION-001`, `TC-CACHE-001`, `TC-ERROR-001`, `TC-ERROR-002` in `packages/web/tests/uat.spec.ts`
+
+---
+
+## Enterprise Foundation Update (Delivered May 14, 2026; validated in current baseline)
 
 Completed this cycle:
 
@@ -55,7 +73,7 @@ Key reality:
 
 ---
 
-## Feature Traceability Baseline (April 2026)
+## Feature Traceability Baseline (Current baseline; originally established April 2026)
 
 | Feature Area                                               | Implementation Status | Production-Ready Status | Evidence                                                                                                                                                                                                                                 | Remaining for Production Claim                                         |
 | ---------------------------------------------------------- | --------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -77,88 +95,97 @@ Legend: Implemented, Partial, Not Implemented
 
 ## Feature Tier Implementation Status
 
-**Monetization Model**: Three-tier freemium with feature gating and advertising (see [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md))
+**Monetization Model**: Four-tier freemium with feature gating and advertising (see [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md))
 
 ### Free Tier Feature Implementation
 
-| Feature                       | Status         | Notes                                                        |
-| ----------------------------- | -------------- | ------------------------------------------------------------ |
-| 3-vehicle limit               | ⏸ Planned     | Quota enforcement needed in firestore security rules         |
-| Basic mileage-based reminders | 🟡 Partial     | Reminder lifecycle implemented; mileage-based logic complete |
-| CSV export only               | 🟡 Partial     | CSV export working; PDF/Excel gated for Pro/Premium          |
-| 10 receipt uploads/month      | ⏸ Planned     | Quota tracking and enforcement in Cloud Functions needed     |
-| Ad placements (3-5/page)      | ⏸ Planned     | Ad network integration (Google AdSense, Criteo) required     |
-| Community support only        | 🟢 Implemented | Support portal and forums infrastructure ready               |
+| Feature                       | Status         | Notes                                                                              |
+| ----------------------------- | -------------- | ---------------------------------------------------------------------------------- |
+| 2-vehicle limit               | 🟡 Partial     | Limit defined in web/mobile feature flags; backend quota enforcement still pending |
+| Basic mileage-based reminders | 🟢 Implemented | Reminder lifecycle and delivery reliability are now covered                        |
+| CSV export only               | 🟢 Implemented | CSV export is working; PDF/Excel remain gated for higher tiers                     |
+| 10 receipt uploads/month      | ⏸ Planned     | Quota tracking and enforcement in Cloud Functions needed                           |
+| Ad placements (3-5/page)      | ⏸ Planned     | Ad network integration (Google AdSense, Criteo) required                           |
+| Community support only        | 🟢 Implemented | Support portal and forums infrastructure ready                                     |
 
 ### Pro Tier Feature Implementation ($2.99/month)
 
-| Feature                           | Status     | Notes                                                                                    |
-| --------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
-| 10-vehicle limit                  | ⏸ Planned | Quota system in security rules needed                                                    |
-| Advanced time + mileage reminders | 🟡 Partial | Mileage-based working; time-based interval logic needs implementation                    |
-| PDF + CSV + Excel export          | ⏸ Planned | PDF export framework exists; multi-format parity needed                                  |
-| 100 receipt uploads/month         | ⏸ Planned | Quota tracking across tiers required                                                     |
-| Calendar sync (Google/Outlook)    | 🟡 Partial | `packages/functions/src/calendar.provider.ts` exists; provider-account validation needed |
-| AI attachment analysis (5/month)  | ⏸ Planned | Google Cloud Vision integration + quota system needed                                    |
-| 12-month maintenance planning     | ⏸ Planned | Forecasting algorithm + UI components needed                                             |
-| 1-2 ads/page (reduced)            | ⏸ Planned | Ad placement reduction logic + rendering conditional                                     |
-| Priority email support (24-48h)   | ⏸ Planned | Support ticketing system required                                                        |
+| Feature                           | Status         | Notes                                                                              |
+| --------------------------------- | -------------- | ---------------------------------------------------------------------------------- |
+| 10-vehicle limit                  | 🟡 Partial     | Limit defined in web/mobile feature flags; quota enforcement still needs hardening |
+| Advanced time + mileage reminders | 🟡 Partial     | Mileage-based working; time-based interval logic still needs full rollout          |
+| PDF + CSV + Excel export          | 🟢 Implemented | Multi-format export support is now wired through web/mobile flows                  |
+| 100 receipt uploads/month         | ⏸ Planned     | Quota tracking across tiers required                                               |
+| Calendar sync (Google/Outlook)    | 🟡 Partial     | Calendar callable/provider flow exists; provider-account validation still needed   |
+| AI attachment analysis (5/month)  | 🟡 Partial     | Analysis callables exist; quota and provider verification still need tightening    |
+| 12-month maintenance planning     | 🟡 Partial     | Forecasting surfaces exist; delivery parity and signoff remain                     |
+| 1-2 ads/page (reduced)            | ⏸ Planned     | Ad placement reduction logic + rendering conditional                               |
+| Priority email support (24-48h)   | 🟡 Partial     | Support portal and workflow exist; SLA automation still pending                    |
 
 ### Premium Tier Feature Implementation ($6.99/month)
 
-| Feature                                | Status         | Notes                                              |
-| -------------------------------------- | -------------- | -------------------------------------------------- |
-| Unlimited vehicles                     | ⏸ Planned     | Remove quota enforcement for Premium tier          |
-| Advanced + AI predictions              | ⏸ Planned     | Predictive ML model + integration needed           |
-| Unlimited receipt uploads              | 🟢 Implemented | No limits for Premium tier                         |
-| PDF + CSV + Excel + cloud sync         | ⏸ Planned     | Cloud sync backend infrastructure needed           |
-| No ads (ad-free)                       | ⏸ Planned     | Ad rendering conditional on tier                   |
-| All calendar providers                 | ⏸ Planned     | Calendar sync extended to Apple, Microsoft, others |
-| Unlimited AI analysis                  | ⏸ Planned     | Remove quota for Premium tier                      |
-| 36-month maintenance planning          | ⏸ Planned     | Extended forecasting models                        |
-| Multi-vehicle dashboard (customizable) | ⏸ Planned     | Dashboard UI with per-vehicle alert thresholds     |
-| API/integrations (Zapier, IFTTT)       | ⏸ Planned     | REST API + webhook infrastructure needed           |
-| Priority phone support (4-8h)          | ⏸ Planned     | Phone support staffing and infrastructure          |
+| Feature                                | Status         | Notes                                                                     |
+| -------------------------------------- | -------------- | ------------------------------------------------------------------------- |
+| 25-vehicle limit                       | 🟡 Partial     | Premium limit is defined; backend quota enforcement still needs hardening |
+| Advanced + AI predictions              | ⏸ Planned     | Predictive ML model + integration needed                                  |
+| Unlimited receipt uploads              | 🟢 Implemented | No limits for Premium tier                                                |
+| PDF + CSV + Excel + cloud sync         | 🟡 Partial     | Export support exists; cloud sync parity remains                          |
+| No ads (ad-free)                       | 🟡 Partial     | Ad-free rendering is defined but release QA remains                       |
+| All calendar providers                 | 🟡 Partial     | Calendar sync exists; broader provider support remains                    |
+| Unlimited AI analysis                  | 🟡 Partial     | Premium quota behavior still needs release signoff                        |
+| 36-month maintenance planning          | 🟡 Partial     | Extended forecasting UI/logic still needs completion                      |
+| Multi-vehicle dashboard (customizable) | 🟡 Partial     | Dashboard support exists; customizable thresholds remain                  |
+| API/integrations (Zapier, IFTTT)       | 🟡 Partial     | Web/backend integration surfaces exist; release validation remains        |
+| Priority phone support (4-8h)          | ⏸ Planned     | Phone support staffing and infrastructure                                 |
 
 ### Billing & Subscription System Status
 
-| Component                          | Status     | Notes                                                                                   |
-| ---------------------------------- | ---------- | --------------------------------------------------------------------------------------- |
-| Stripe integration                 | ⏸ Planned | Stripe library in dependencies; payment flow not yet implemented                        |
-| RevenueCat (mobile)                | ⏸ Planned | Mobile IAP abstraction layer not yet integrated                                         |
-| Subscription state in Firestore    | ⏸ Planned | User document schema needs `subscription` field with `tier`, `renewalDate`, `autoRenew` |
-| Tier enforcement (web)             | ⏸ Planned | Feature flag system needed to gate features by tier                                     |
-| Tier enforcement (mobile)          | ⏸ Planned | Mobile feature gate logic required                                                      |
-| Free trial (7-day Pro)             | ⏸ Planned | Trial claim + expiration tracking needed                                                |
-| Grace period after failed payment  | ⏸ Planned | 7-day access continuation logic + retry workflow                                        |
-| Churn prevention (email reminders) | ⏸ Planned | Automated renewal reminder emails (14 days, 1 day before expiry)                        |
-| Win-back campaigns (lapsed users)  | ⏸ Planned | Segment lapsed Premium users; offer re-engagement discounts                             |
+| Component                          | Status     | Notes                                                                                               |
+| ---------------------------------- | ---------- | --------------------------------------------------------------------------------------------------- |
+| Stripe integration                 | 🟡 Partial | Checkout session creation and webhook reconciliation are implemented; production validation remains |
+| RevenueCat (mobile)                | ⏸ Planned | Mobile IAP abstraction layer not yet integrated                                                     |
+| Subscription state in Firestore    | 🟡 Partial | User document schema now carries subscription state; additional hardening remains                   |
+| Tier enforcement (web)             | 🟡 Partial | Web feature flags and tier gates are present; parity hardening remains                              |
+| Tier enforcement (mobile)          | 🟡 Partial | Mobile feature gate logic exists; plan parity still needs completion                                |
+| Free trial (7-day Pro)             | ⏸ Planned | Trial claim + expiration tracking needed                                                            |
+| Grace period after failed payment  | 🟡 Partial | Payment failure states and recovery UX exist; continuation logic still needs hardening              |
+| Churn prevention (email reminders) | ⏸ Planned | Automated renewal reminder emails (14 days, 1 day before expiry)                                    |
+| Win-back campaigns (lapsed users)  | ⏸ Planned | Segment lapsed Premium users; offer re-engagement discounts                                         |
 
 Legend: 🟢 Implemented, 🟡 Partial, ⏸ Planned
 
 **Next Steps for Monetization Launch** (Phase 2 - Month 4+):
 
-1. Implement Stripe + RevenueCat integration
-2. Add subscription state to Firestore schema
-3. Implement tier quota enforcement (vehicle limits, upload quotas)
-4. Add feature gate system (web + mobile)
-5. Integrate ad networks (Google AdSense minimum viable)
-6. Create upgrade prompt flows (3rd vehicle, calendar sync, etc.)
-7. QA: Test all tier transitions and grace period flows
+1. Complete Stripe production validation (live checkout, webhook monitoring, and failed-payment recovery)
+2. Integrate RevenueCat mobile IAP flow and reconcile subscriptions with backend entitlement state
+3. Harden tier quota enforcement (vehicle limits, upload quotas, and API usage) in backend and rules
+4. Validate tier transitions and grace-period behavior end-to-end across web, mobile, and backend
+5. Integrate ad networks for Free/Pro delivery and verify Premium ad suppression in release builds
+6. Finalize churn prevention automation (renewal reminders and lapsed-user recovery campaigns)
+7. Publish production evidence package for monetization reliability and entitlement correctness
 
 ---
 
-## Feature Traceability Baseline (April 2026)
+## R1 Gate Traceability Baseline (Current baseline; originally established April 2026)
 
 R1 is the minimum release confidence gate.
 
-| Gate                             | Current State                                | Exit Criteria                                                                                | Evidence Required                                                                                                        |
-| -------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Reminder delivery reliability    | ✅ Complete (May 7, 2026)                    | Scheduled and manual paths produce persisted delivery outcomes with stable provider behavior | `artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log` (12/12 pass, HTTP 200)                                    |
-| Mobile runtime parity validation | In Progress — build PASS, acceptance pending | iOS release-like acceptance run confirms real backend traffic and stable core workflows      | `artifacts/smoke/r1-mobile-build-20260507T214730Z.log` (build PASS); runtime acceptance blocker: Developer Mode on HADES |
-| Export parity signoff            | ✅ Automated Complete (May 7, 2026)          | Web/mobile exports match expected field set and ordering for shared fixtures                 | `artifacts/smoke/r1-export-parity-report-20260507T174923Z.md` (CSV PASS, PDF structural PASS)                            |
+| Gate                             | Current State                                        | Exit Criteria                                                                                | Evidence Required                                                                                                                                                                                          |
+| -------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reminder delivery reliability    | ✅ Complete (May 7, 2026)                            | Scheduled and manual paths produce persisted delivery outcomes with stable provider behavior | `artifacts/smoke/r1-reminder-reliability-20260506T234254Z.log` (12/12 pass, HTTP 200)                                                                                                                      |
+| Mobile runtime parity validation | In Progress — Build/launch PASS; acceptance/backend BLOCKED | iOS release-like acceptance run confirms real backend traffic and stable core workflows      | `artifacts/smoke/r1-mobile-build-20260615T154819Z.log` (build PASS), `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log` (HADES launch PASS); acceptance/backend evidence BLOCKED pending end-to-end checklist and backend-traffic proof |
+| Export parity signoff            | ✅ Automated Complete (May 7, 2026)                  | Web/mobile exports match expected field set and ordering for shared fixtures                 | `artifacts/smoke/r1-export-parity-report-20260507T174923Z.md` (CSV PASS, PDF structural PASS)                                                                                                              |
 
-R1 production-capable claim is blocked until Gate 2 runtime acceptance is closed. Gates 1 and 3 are complete.
+R1 production-capable claim is blocked until Gate 2 runtime acceptance is closed. Gate 2 status is Build/launch PASS with current release-like iOS evidence; acceptance/backend evidence remains BLOCKED pending end-to-end checklist completion and backend-traffic proof. Gates 1 and 3 are complete.
+
+## Subscription Tier Parity Matrix
+
+| Plan       | Web status                                                          | Mobile status                          | Parity verdict | Notes                                                                                            |
+| ---------- | ------------------------------------------------------------------- | -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| Free       | Core baseline available                                             | Core baseline available                | Mostly aligned | Core workflows exist on both clients, but mobile release validation is still pending.            |
+| Pro        | Full contract defined in web feature flags                          | Partial subset in mobile feature flags | Not identical  | iOS exposes a narrower Pro surface than the web matrix.                                          |
+| Premium    | Full contract defined in web feature flags                          | Partial subset in mobile feature flags | Not identical  | Web includes cloud sync, predictive maintenance, and automation that mobile does not yet mirror. |
+| Enterprise | Org, entitlement, and support workflows defined in web/backend docs | Sales/contact handoff only             | Not identical  | Enterprise capability is primarily web/backend-led today.                                        |
 
 ---
 
@@ -225,7 +252,7 @@ This update corrects prior drift where docs claimed:
 - Mobile AdMob and premium flow were missing
 - Route/status wording no longer matched implementation
 
-Current docs now reflect code reality as of April 13, 2026.
+Current docs now reflect code reality as of May 27, 2026, with historical evidence links retained for auditability.
 
 ---
 

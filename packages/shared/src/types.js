@@ -7,6 +7,13 @@ export const defaultVehicle = {
   model: '',
   year: '',
   vin: '',
+  vehicleStatus: 'active',
+  vehicleType: '',
+  photoUrl: '',
+  photoPath: '',
+  photoSource: '',
+  photoAttributionUrl: '',
+  photoAttributionText: '',
   licensePlate: '',
   mileage: '',
   purchaseDate: '', // ISO date string (e.g., '2025-09-30')
@@ -24,6 +31,36 @@ export const defaultMaintenanceRecord = {
   mileage: '',
   cost: undefined,
   provider: '',
+  performedBy: 'mechanic',
+  coverage: 'parts_and_labor',
+  notes: '',
+};
+
+// Default accounts receivable invoice draft structure
+export const defaultInvoiceDraft = {
+  orgId: '',
+  customerName: '',
+  issueDate: '',
+  dueDate: '',
+  currency: 'USD',
+  amountDue: undefined,
+  amountPaid: 0,
+  status: 'draft',
+  notes: '',
+  lineItems: [],
+};
+
+// Default accounts payable bill draft structure
+export const defaultPayableDraft = {
+  orgId: '',
+  vendorName: '',
+  billDate: '',
+  dueDate: '',
+  currency: 'USD',
+  amountDue: undefined,
+  amountPaid: 0,
+  status: 'draft',
+  category: '',
   notes: '',
 };
 

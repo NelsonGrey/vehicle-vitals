@@ -4,10 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import Home from '../src/pages/Home';
-import { getVehicles } from '../src/shared/firestoreService';
+import {
+  getMaintenanceEntries,
+  getVehicles,
+} from '../src/shared/firestoreService';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getVehicles: vi.fn(),
+  getMaintenanceEntries: vi.fn(),
   deleteVehicle: vi.fn(),
   updateVehicle: vi.fn(),
 }));
@@ -19,6 +23,67 @@ vi.mock('../src/utils/vehicleService', () => ({
 
 vi.mock('@vehicle-vitals/shared', () => ({
   getUpcomingMaintenance: vi.fn(() => []),
+  computeVehicleHealthSnapshot: vi.fn(() => ({
+    overallHealthScore: 74,
+    overallConfidenceBand: 'medium',
+    nextLikelyService: 'Oil',
+    estimatedMilesPerMonth: 900,
+    estimatedSpend90dLow: 120,
+    estimatedSpend90dHigh: 260,
+    estimatedSpend12mLow: 240,
+    estimatedSpend12mHigh: 520,
+    estimatedSpend36mLow: 800,
+    estimatedSpend36mHigh: 1600,
+    accuracyTip:
+      'Keep mileage and service entries current so remaining-life estimates stay accurate.',
+    components: [
+      {
+        componentId: 'oil_change',
+        label: 'Oil',
+        status: 'service_soon',
+        remainingLifePercent: 0.2,
+        remainingMiles: 800,
+        confidenceBand: 'high',
+        estimatedCostLow: 70,
+        estimatedCostHigh: 140,
+      },
+      {
+        componentId: 'tire_rotation',
+        label: 'Rotation',
+        status: 'watch',
+        remainingLifePercent: 0.4,
+        remainingMiles: 2400,
+        confidenceBand: 'medium',
+        estimatedCostLow: 25,
+        estimatedCostHigh: 60,
+      },
+      {
+        componentId: 'brake_service',
+        label: 'Brakes',
+        status: 'good',
+        remainingLifePercent: 0.75,
+        remainingMiles: 12000,
+        confidenceBand: 'low',
+        estimatedCostLow: 300,
+        estimatedCostHigh: 900,
+      },
+      {
+        componentId: 'battery_replacement',
+        label: 'Battery',
+        status: 'watch',
+        remainingLifePercent: 0.35,
+        remainingMiles: 5000,
+        confidenceBand: 'low',
+        estimatedCostLow: 160,
+        estimatedCostHigh: 320,
+      },
+    ],
+  })),
+}));
+
+vi.mock('../src/shared/useMonetization', () => ({
+  useSubscription: () => ({ tier: 'free' }),
+  useFeatureFlag: vi.fn(() => false),
 }));
 
 const TOYOTA = {
@@ -28,6 +93,7 @@ const TOYOTA = {
   year: '2022',
   mileage: '30000',
   recallsCount: 0,
+  vehicleStatus: 'active',
 };
 
 function renderHome() {
@@ -43,7 +109,12 @@ function renderHome() {
 describe('Home – smart maintenance alert badges', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getVehicles.mockResolvedValue([TOYOTA]);
+    getVehicles.mockResolvedValue({
+      data: [TOYOTA],
+      lastDoc: null,
+      hasMore: false,
+    });
+    getMaintenanceEntries.mockResolvedValue([]);
     getUpcomingMaintenance.mockReturnValue([]);
   });
 
@@ -54,7 +125,7 @@ describe('Home – smart maintenance alert badges', () => {
   it('shows no maintenance badge when getUpcomingMaintenance returns empty', async () => {
     getUpcomingMaintenance.mockReturnValue([]);
     renderHome();
-    await waitFor(() => screen.getAllByText("2022 Toyota Camry"));
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
     expect(screen.queryByText(/maintenance due/i)).toBeNull();
     expect(screen.queryByText(/service due soon/i)).toBeNull();
   });
@@ -69,7 +140,7 @@ describe('Home – smart maintenance alert badges', () => {
       },
     ]);
     renderHome();
-    await waitFor(() => screen.getAllByText("2022 Toyota Camry"));
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
     expect(screen.queryByText(/maintenance due/i)).toBeNull();
     expect(screen.queryByText(/service due soon/i)).toBeNull();
   });
@@ -154,8 +225,8 @@ describe('Home – smart maintenance alert badges', () => {
       },
     ]);
     renderHome();
-    await waitFor(() => screen.getByText('800 mi'));
-    expect(screen.getByText('800 mi')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByText('800 mi').length).toBeGreaterThan(0));
+    expect(screen.getAllByText('800 mi').length).toBeGreaterThan(0);
   });
 
   it('detail panel shows "Due now" for an overdue item (milesUntilDue ≤ 0)', async () => {
@@ -185,5 +256,58 @@ describe('Home – smart maintenance alert badges', () => {
     await waitFor(() => screen.getByText('View all →'));
     const link = screen.getByText('View all →').closest('a');
     expect(link).toHaveAttribute('href', '/app/upcoming');
+  });
+
+  it('does not render manual backfill or Bob demo seed buttons by default', async () => {
+    renderHome();
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
+
+    expect(
+      screen.queryByRole('button', { name: /Backfill VIN Data/i })
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Load Bob Demo Data/i })
+    ).toBeNull();
+  });
+
+  it('renders vehicle health messaging that encourages current records', async () => {
+    renderHome();
+    await waitFor(() => screen.getByText(/remaining-life forecast/i));
+
+    expect(screen.getByText(/Health Score/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Keep mileage and service entries current/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Unlock the full vehicle health forecast/i)
+    ).toBeInTheDocument();
+  });
+
+  it('renders active and storage sections with status summary', async () => {
+    getVehicles.mockResolvedValue({
+      data: [
+        { ...TOYOTA, vin: 'VIN001', vehicleStatus: 'active' },
+        {
+          ...TOYOTA,
+          vin: 'VIN002',
+          make: 'Ford',
+          model: 'Bronco',
+          year: '2021',
+          vehicleStatus: 'stored',
+        },
+      ],
+      lastDoc: null,
+      hasMore: false,
+    });
+
+    renderHome();
+
+    await waitFor(() =>
+      expect(screen.getByText(/1 active vehicle/i)).toBeInTheDocument()
+    );
+    expect(screen.getByText(/1 in storage/i)).toBeInTheDocument();
+    expect(screen.getByText('Active Garage')).toBeInTheDocument();
+    expect(screen.getByText('Storage')).toBeInTheDocument();
+    expect(screen.getByText('Stored')).toBeInTheDocument();
   });
 });

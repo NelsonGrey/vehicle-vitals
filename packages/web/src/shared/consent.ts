@@ -27,8 +27,8 @@ function pushConsent(analytics: ConsentChoice, ads: ConsentChoice): void {
   // Fallback: re-create the same Arguments-object push that gtag() uses internally,
   // so GTM can process it correctly when it initialises later.
   window.dataLayer = window.dataLayer || [];
-  // eslint-disable-next-line prefer-rest-params
-  (function () { (window.dataLayer as unknown[]).push(arguments); })(
+  // eslint-disable-next-line prefer-rest-params, @typescript-eslint/no-unused-vars
+  (function (..._: unknown[]) { (window.dataLayer as unknown[]).push(arguments); })(
     'consent',
     'update',
     params

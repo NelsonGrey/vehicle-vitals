@@ -169,15 +169,6 @@ For each new project, update these values:
 - [ ] GitHub Actions workflow completes successfully
 - [ ] Legacy Beta Channel build appears in App Store Connect
 
-## 🎯 Cost Optimization
-
-**Use self-hosted runners** for significant savings:
-
-- GitHub hosted: ~$0.08/minute
-- Self-hosted: FREE (your hardware)
-
-See [macOS Runner Setup](./MACOS_RUNNER_SETUP.md) for details.
-
 ---
 
 **📖 Full Guide**: [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)

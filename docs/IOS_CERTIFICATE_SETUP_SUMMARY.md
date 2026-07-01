@@ -111,7 +111,7 @@ vehicle-vitals-certificates/
 
 ### CI/CD Integration
 
-- **Runner**: Self-hosted macOS runner (`vehicle-vitals` label)
+- **Runner**: GitHub-hosted `macos-latest` runner
 - **Trigger**: Push/PR to `main`/`develop` branches affecting mobile code
 - **Environment**: Automatic environment selection based on branch
 

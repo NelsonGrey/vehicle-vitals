@@ -424,7 +424,6 @@ fastlane match appstore       # Recreate certificates
 
 ### Performance Optimization
 
-- Use self-hosted runners for cost savings
 - Implement caching for dependencies
 - Parallelize test execution
 - Monitor build times and optimize bottlenecks

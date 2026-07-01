@@ -300,7 +300,6 @@ mnao305/chrome-extension-upload@v5.0.0
 
 ### Resource Optimization
 
-- **Self-Hosted Runners**: 90% cost reduction vs GitHub-hosted
 - **Intelligent Scaling**: Auto-scale based on load
 - **Resource Monitoring**: Prevent over-provisioning
 

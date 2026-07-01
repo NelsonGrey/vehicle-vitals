@@ -703,40 +703,31 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Marketing header is not directly visible in this deployment target.'
       );
 
-      const hasLegacyContextLinks =
-        (await header
-          .getByRole('link', { name: /Product Overview/i })
-          .isVisible()
-          .catch(() => false)) ||
-        (await header
-          .getByRole('link', { name: /Help & How-To/i })
-          .isVisible()
-          .catch(() => false));
+      await expect(
+        header.getByRole('link', { name: /For Owners/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Pricing/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Product Tour/i })
+      ).toBeVisible();
 
-      if (hasLegacyContextLinks) {
-        await expect(
-          header.getByRole('link', { name: /Product Overview/i })
-        ).toBeVisible();
-        await expect(
-          header.getByRole('link', { name: /Help & How-To/i })
-        ).toBeVisible();
-      } else {
-        await expect(
-          header.getByRole('link', { name: /VIN Lookup/i })
-        ).toBeVisible();
-        await expect(
-          header.getByRole('link', { name: /Product Overview/i })
-        ).toHaveCount(0);
-        await expect(
-          header.getByRole('link', { name: /Help & How-To/i })
-        ).toHaveCount(0);
-        await expect(
-          header.getByRole('link', { name: /Getting Started/i })
-        ).toHaveCount(0);
-        await expect(
-          header.getByRole('link', { name: /Subscriptions/i })
-        ).toHaveCount(0);
-      }
+      await expect(
+        header.getByRole('link', { name: /Product Overview/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Help & How-To/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /VIN Lookup/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Getting Started/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Subscriptions/i })
+      ).toHaveCount(0);
 
       await expect(header.getByRole('link', { name: /^Garage$/i })).toHaveCount(
         0

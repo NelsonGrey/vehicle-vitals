@@ -42,7 +42,7 @@ jobs:
 
   build-and-distribute:
     needs: test
-    runs-on: macos-latest # Change to self-hosted for cost savings
+    runs-on: macos-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
     steps:
       - name: Checkout code
@@ -113,48 +113,6 @@ MATCH_PASSWORD             → your_match_password
 
 # Distribution
 BETA_FEEDBACK_EMAIL        → feedback@yourcompany.com
-```
-
-## 🏃‍♂️ Self-Hosted Runner Setup
-
-### Cost Comparison
-
-- **GitHub Hosted macOS**: ~$0.08/minute ($48/hour)
-- **Self-Hosted macOS**: FREE (your hardware)
-
-### Runner Labels Strategy
-
-```yaml
-runs-on: [self-hosted, macos-latest, ios, vehicle-vitals]
-```
-
-### Runner Setup Script
-
-```bash
-#!/bin/bash
-# setup-ios-runner.sh
-
-# Install Xcode Command Line Tools
-xcode-select --install
-
-# Install Homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Flutter
-brew install flutter
-flutter doctor
-
-# Install Ruby (for Fastlane)
-brew install ruby
-echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> ~/.zshrc
-
-# Install Fastlane
-gem install fastlane -v 2.228.0
-
-# Setup GitHub Runner (isolated directory)
-mkdir -p ~/actions-runner-ios
-cd ~/actions-runner-ios
-# Download and configure runner...
 ```
 
 ## 🔄 GitLab CI Setup
@@ -401,4 +359,3 @@ jobs:
 **📖 Related Documentation:**
 
 - [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)
-- [macOS Runner Setup Guide](./MACOS_RUNNER_SETUP.md)

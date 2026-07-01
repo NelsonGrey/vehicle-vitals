@@ -62,19 +62,6 @@ targets:
     enabled: false
 
 ci:
-  runners:
-    macos:
-      labels:
-        - self-hosted
-        - macOS
-        - ios
-      required: true
-    docker:
-      labels:
-        - self-hosted
-        - docker
-      required: false
-
   triggers:
     - event: push
       branches:

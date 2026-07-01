@@ -489,6 +489,12 @@ jobs:
         run: |
           set -e
 
+          echo "DEBUG: MATCH_GIT_URL length: ${#MATCH_GIT_URL}"
+          echo "DEBUG: MATCH_GIT_URL contains '@': $([[ "$MATCH_GIT_URL" == *"@"* ]] && echo yes || echo no)"
+          echo "DEBUG: MATCH_GIT_URL starts with https://: $([[ "$MATCH_GIT_URL" == https://* ]] && echo yes || echo no)"
+          echo "DEBUG: MATCH_GIT_URL starts with git@: $([[ "$MATCH_GIT_URL" == git@* ]] && echo yes || echo no)"
+          echo "DEBUG: NELSON_GREY_PAT length: ${#NELSON_GREY_PAT}"
+
           # Secrets can include a trailing newline if pasted accidentally; strip CR/LF.
           MATCH_GIT_URL="$(printf %s "$MATCH_GIT_URL" | tr -d '\r\n')"
           NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"

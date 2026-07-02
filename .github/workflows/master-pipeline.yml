@@ -513,6 +513,16 @@ jobs:
           path: packages/mobile/ios/builds/Vehicle-Vitals.ipa
           if-no-files-found: warn
 
+      - name: Upload Fastlane/gym Logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-fastlane-logs-${{ needs.load-config.outputs.target_environment }}
+          path: |
+            ~/Library/Logs/gym
+            ~/Library/Logs/fastlane
+          if-no-files-found: ignore
+
   build-android:
     name: Build Android App
     needs: load-config

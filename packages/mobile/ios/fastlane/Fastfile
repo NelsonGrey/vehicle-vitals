@@ -1,26 +1,9 @@
 
+require 'shellwords'
+
 default_platform(:ios)
 
 platform :ios do
-  # Helper functions for certificate management
-  def match_repo_write_url
-    raw = ENV["MATCH_GIT_URL"].to_s.strip
-    raise "MATCH_GIT_URL is not set" if raw.empty?
-
-    pat = ENV["NELSON_GREY_PAT"].to_s.strip
-    return raw if pat.empty?
-
-    repo_path = nil
-    if raw.match?(%r{\Agit@github\.com:})
-      repo_path = raw.sub(%r{\Agit@github\.com:}, "").sub(%r{\.git\z}, "")
-    elsif raw.match?(%r{\Ahttps?://github\.com/})
-      repo_path = raw.sub(%r{\Ahttps?://github\.com/}, "").sub(%r{\.git\z}, "")
-    end
-
-    return raw if repo_path.to_s.empty?
-    "https://mnelson3:#{pat}@github.com/#{repo_path}.git"
-  end
-
   def normalized_firebase_env
     raw = ENV["FIREBASE_ENV"].to_s.strip.downcase
     return "production" if raw.empty?
@@ -50,180 +33,124 @@ platform :ios do
     end
   end
 
-  desc "Sync code signing certificates for App Store"
-  lane :certificates_appstore do
-    # Set up API key authentication
+  # Normalizes APP_STORE_CONNECT_KEY into raw PEM/base64 content, handling
+  # quoting/escaping artifacts from however the secret was pasted in.
+  def normalized_app_store_connect_key_content
     private_key_content = ENV["APP_STORE_CONNECT_KEY"]
     if private_key_content.nil? || private_key_content.empty?
       UI.error("APP_STORE_CONNECT_KEY environment variable is not set or empty")
       raise "Missing APP_STORE_CONNECT_KEY"
     end
+    private_key_content
+  end
 
-    # Detect key format
+  # Builds the fastlane App Store Connect API key object, for actions that
+  # talk to the App Store Connect web API directly (upload_to_testflight).
+  def app_store_api_key
+    private_key_content = normalized_app_store_connect_key_content
+
     is_pem = private_key_content.include?("-----BEGIN")
     cleaned = private_key_content.gsub(/\s+/, "")
     looks_base64 = cleaned =~ /\A[A-Za-z0-9+\/=]+\z/ && cleaned.length > 100
 
     if !is_pem && looks_base64
       UI.message("Detected APP_STORE_CONNECT_KEY as base64; passing directly as key_content (is_key_content_base64: true)")
-      api_key = app_store_connect_api_key(
+      return app_store_connect_api_key(
         key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
         issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
         key_content: cleaned,
         is_key_content_base64: true,
         in_house: false
       )
-    else
-      # Process as PEM
-      private_key_content = private_key_content.strip
-      private_key_content = private_key_content.gsub(/\A['\"]|['\"]\z/, '')
-      private_key_content = private_key_content.gsub(/\\n/, "\n")
-      private_key_content = private_key_content.gsub(/\r\n?/, "\n")
-      private_key_content = private_key_content.lines.map { |l| l.strip }.reject { |l| l.empty? }.join("\n") + "\n"
-
-      unless private_key_content.include?("-----BEGIN PRIVATE KEY-----") || private_key_content.include?("-----BEGIN EC PRIVATE KEY-----")
-        begin
-          require 'base64'
-          decoded = Base64.decode64(private_key_content)
-          if decoded.include?("-----BEGIN")
-            private_key_content = decoded
-            UI.message("Decoded APP_STORE_CONNECT_KEY from base64")
-          end
-        rescue => e
-          UI.message("Failed to decode APP_STORE_CONNECT_KEY as base64: #{e.message}")
-        end
-      end
-
-      require 'tempfile'
-      key_file = Tempfile.new(['app_store_connect_key', '.p8'])
-      key_file.write(private_key_content)
-      key_file.close
-
-      UI.message("Created temporary App Store Connect key file: #{key_file.path}")
-
-      api_key = app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-        key_filepath: key_file.path
-      )
     end
 
-    # Clean up ALL distribution certificates from the login keychain before starting
-    # This prevents contamination where old certs without private keys interfere with signing
-    UI.message("🧹 Cleaning up all distribution certificates from login keychain...")
-    begin
-      login_keychain = File.expand_path("~/Library/Keychains/login.keychain-db")
-      
-      # Find all Apple Distribution certificates
-      cert_list = `security find-certificate -a -c "Apple Distribution" -Z "#{login_keychain}" 2>/dev/null`
-      
-      # Extract SHA-1 hashes
-      sha1_hashes = cert_list.scan(/SHA-1 hash: ([A-F0-9]{40})/).flatten
-      
-      if sha1_hashes.any?
-        UI.message("Found #{sha1_hashes.length} distribution certificate(s) in login keychain, removing them...")
-        sha1_hashes.each do |sha1|
-          begin
-            sh("security delete-certificate -Z #{sha1} \"#{login_keychain}\" 2>/dev/null || true", log: false)
-            UI.message("  ✅ Deleted certificate: #{sha1}")
-          rescue => e
-            UI.message("  ⚠️ Could not delete #{sha1}: #{e.message}")
-          end
-        end
-        UI.success("✅ Cleaned #{sha1_hashes.length} certificate(s) from login keychain")
-      else
-        UI.message("✓ No distribution certificates found in login keychain")
-      end
-    rescue => e
-      UI.message("⚠️ Login keychain cleanup had issues (non-fatal): #{e.message}")
-    end
+    private_key_content = private_key_content.strip
+    private_key_content = private_key_content.gsub(/\A['\"]|['\"]\z/, '')
+    private_key_content = private_key_content.gsub(/\\n/, "\n")
+    private_key_content = private_key_content.gsub(/\r\n?/, "\n")
+    private_key_content = private_key_content.lines.map { |l| l.strip }.reject { |l| l.empty? }.join("\n") + "\n"
 
-    # ZERO-TOUCH certificate management
-    should_retry = false
-    creation_attempt = 0
-
-    begin
-      # Try readonly first
-      UI.message("🔄 Attempting to use existing certificates...")
-      match(
-        type: "appstore",
-        readonly: true,
-        git_url: ENV['MATCH_GIT_URL'],
-        keychain_name: ENV['MATCH_KEYCHAIN_NAME'],
-        keychain_password: ENV['MATCH_KEYCHAIN_PASSWORD'],
-        api_key: api_key
-      )
-      UI.success("✅ Using existing certificates")
-
-    rescue => e
-      if e.message.include?("No code signing identity found") || e.message.include?("No matching provisioning profiles found")
-        creation_attempt += 1
-        if creation_attempt > 1
-          UI.error("❌ Failed after multiple attempts")
-          raise e
+    unless private_key_content.include?("-----BEGIN PRIVATE KEY-----") || private_key_content.include?("-----BEGIN EC PRIVATE KEY-----")
+      begin
+        require 'base64'
+        decoded = Base64.decode64(private_key_content)
+        if decoded.include?("-----BEGIN")
+          private_key_content = decoded
+          UI.message("Decoded APP_STORE_CONNECT_KEY from base64")
         end
-        
-        UI.message("⚠️  Creating new certificates...")
-        begin
-          # Ensure keychain is unlocked before attempting to create certs
-          keychain_name = ENV['MATCH_KEYCHAIN_NAME']
-          keychain_password = ENV['MATCH_KEYCHAIN_PASSWORD']
-          if keychain_name && keychain_password
-            keychain_path = File.expand_path("~/Library/Keychains/#{keychain_name}.keychain-db")
-            system("security unlock-keychain -p '#{keychain_password}' '#{keychain_path}' || true")
-            system("security set-key-partition-list -S apple-tool:,apple:,codesign: -s -t private -k '#{keychain_password}' '#{keychain_path}' 2>/dev/null || true")
-          end
-          
-          match(
-            type: "appstore",
-            readonly: false,
-            git_url: ENV['MATCH_GIT_URL'],
-            keychain_name: ENV['MATCH_KEYCHAIN_NAME'],
-            keychain_password: ENV['MATCH_KEYCHAIN_PASSWORD'],
-            api_key: api_key
-          )
-          UI.success("✅ Created new certificates")
-          
-        rescue => create_error
-          if create_error.message.include?("Maximum number of certificates") || create_error.message.include?("reached the maximum number")
-            UI.important("⚠️  Hit Apple's certificate limit. Using match_nuke...")
-            
-            begin
-              match_nuke(
-                type: "appstore",
-                skip_confirmation: true,
-                readonly: false,
-                api_key: api_key
-              )
-              
-              UI.success("✅ Revoked old certificates")
-              should_retry = true
-              creation_attempt = 0
-              retry
-            rescue => nuke_error
-              UI.error("❌ Failed to nuke certificates: #{nuke_error.message}")
-              raise create_error
-            end
-          else
-            raise create_error
-          end
-        end
-      else
-        raise e
-      end
-      
-      if should_retry
-        should_retry = false
-        creation_attempt = 0
-        retry
+      rescue => e
+        UI.message("Failed to decode APP_STORE_CONNECT_KEY as base64: #{e.message}")
       end
     end
+
+    require 'tempfile'
+    key_file = Tempfile.new(['app_store_connect_key', '.p8'])
+    key_file.write(private_key_content)
+    key_file.close
+
+    UI.message("Created temporary App Store Connect key file: #{key_file.path}")
+
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: key_file.path
+    )
+  end
+
+  # Writes the same App Store Connect key to a temp .p8 FILE PATH, for
+  # xcodebuild's -authenticationKeyPath flag (automatic signing via
+  # -allowProvisioningUpdates authenticates at the xcodebuild CLI level,
+  # not through fastlane's Spaceship session, so it needs a path rather
+  # than the api_key object above).
+  def app_store_connect_key_file_path
+    private_key_content = normalized_app_store_connect_key_content
+
+    unless private_key_content.include?("-----BEGIN")
+      require 'base64'
+      decoded = Base64.decode64(private_key_content.gsub(/\s+/, ""))
+      private_key_content = decoded if decoded.include?("-----BEGIN")
+    end
+
+    private_key_content = private_key_content.gsub(/\A['\"]|['\"]\z/, '')
+    private_key_content = private_key_content.gsub(/\\n/, "\n")
+    private_key_content = private_key_content.gsub(/\r\n?/, "\n")
+    private_key_content = private_key_content.lines.map { |l| l.strip }.reject { |l| l.empty? }.join("\n") + "\n"
+
+    unless private_key_content.include?("-----BEGIN PRIVATE KEY-----") || private_key_content.include?("-----BEGIN EC PRIVATE KEY-----")
+      UI.user_error!("APP_STORE_CONNECT_KEY could not be converted to a valid .p8 key file")
+    end
+
+    require 'tempfile'
+    key_file = Tempfile.new(['app_store_connect_xcode_auth', '.p8'])
+    key_file.write(private_key_content)
+    key_file.flush
+    key_file.close
+
+    # Keep a strong reference so Ruby GC does not unlink the tempfile before xcodebuild uses it.
+    @xcode_auth_key_tempfile = key_file
+    key_file.path
+  end
+
+  # Forces the Runner target into automatic signing. The project's
+  # pbxproj does not set CODE_SIGN_STYLE on the Runner target (only on
+  # RunnerTests) — don't assume it defaults to automatic.
+  def ensure_xcode_automatic_signing!
+    team_id = ENV["FASTLANE_TEAM_ID"].to_s.strip
+    raise "Missing FASTLANE_TEAM_ID" if team_id.empty?
+
+    update_code_signing_settings(
+      use_automatic_signing: true,
+      path: "Runner.xcodeproj",
+      targets: ["Runner"],
+      team_id: team_id
+    )
+
+    team_id
   end
 
   desc "Upload to TestFlight"
   lane :beta do
     release_notes = ENV["RELEASE_NOTES"] || "Automated build for TestFlight"
-    feedback_email = ENV["BETA_FEEDBACK_EMAIL"] || "mark.a.nelson@outlook.com"
     firebase_env = normalized_firebase_env
     expected_project_id = expected_firebase_project_id_for_env(firebase_env)
 
@@ -231,23 +158,20 @@ platform :ios do
     increment_build_number(build_number: build_number)
     UI.message("Using iOS build number: #{build_number}")
 
-    # Sync code signing certificates for TestFlight (distribution/appstore).
-    # Development certificates are not required for an unsigned Flutter build + later resign.
-    certificates_appstore
-
-    # Set environment variables for manual code signing in Flutter build
-    ENV['PROVISIONING_PROFILE'] = ENV['sigh_com.vehiclevitals.app.ios_appstore']
-    ENV['CODE_SIGN_IDENTITY'] = ENV['sigh_com.vehiclevitals.app.ios_appstore_certificate-name']
-    ENV['DEVELOPMENT_TEAM'] = ENV['sigh_com.vehiclevitals.app.ios_appstore_team-id']
+    api_key = app_store_api_key
+    team_id = ensure_xcode_automatic_signing!
+    authentication_key_path = app_store_connect_key_file_path
+    authentication_key_id = ENV["APP_STORE_CONNECT_KEY_ID"].to_s.strip
+    authentication_issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s.strip
 
     # Install CocoaPods dependencies first
     # Ensure a clean slate for CocoaPods to avoid linker issues (absl/gRPC)
     sh("rm -rf ../Pods")
     sh("rm -f ../Podfile.lock")
-    
+
     # Use fastlane action to clear derived data safely
     clear_derived_data
-    
+
     # Ensure dependencies are available
     Dir.chdir("../../") do
       sh("rm -rf build")
@@ -260,9 +184,6 @@ platform :ios do
       sh("rm -f Podfile.lock")
       sh("pod install --repo-update")
     end
-
-    # Build using gym (build_app) for reliable artifact creation and signing
-    # Force manual signing to avoid Xcode looking for development certs
 
     begin
       actual_project_id = sh(
@@ -285,23 +206,6 @@ platform :ios do
     end
 
     UI.message("Firebase iOS config validated for #{firebase_env} (#{actual_project_id})")
-    
-    app_id = "com.vehiclevitals.app.ios"
-    profile_name = ENV["sigh_#{app_id}_appstore_profile-name"]
-    team_id = ENV["sigh_#{app_id}_appstore_team-id"] || ENV["FASTLANE_TEAM_ID"]
-    cert_name = ENV["sigh_#{app_id}_appstore_certificate-name"] || "Apple Distribution"
-
-    # Use update_code_signing_settings to specifically target the Runner project
-    # This avoids setting global xcodebuild args that break Pods signing (like FirebaseAppCheck)
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path: "Runner.xcodeproj",
-      targets: ["Runner"],
-      code_sign_identity: cert_name,
-      bundle_identifier: app_id,
-      profile_name: profile_name,
-      team_id: team_id
-    )
 
     # Build DART_DEFINES with an explicit Firebase environment and optional AdMob IDs.
     require 'base64'
@@ -314,24 +218,36 @@ platform :ios do
     dart_defines_xcarg = "DART_DEFINES='#{dart_define_parts.join(',')}'"
     UI.message("DART_DEFINES injected with VV_FIREBASE_ENV=#{firebase_env}")
 
-    build_app(
-      scheme: "Runner",
-      workspace: "Runner.xcworkspace",
-      clean: true,
-      export_method: "app-store",
-      output_directory: "./builds",
-      output_name: "Vehicle-Vitals.ipa",
-      xcargs: dart_defines_xcarg,
-      export_options: {
-        provisioningProfiles: {
-          app_id => profile_name
-        }
-      }
-    )
+    begin
+      build_app(
+        scheme: "Runner",
+        workspace: "Runner.xcworkspace",
+        clean: true,
+        export_method: "app-store",
+        output_directory: "./builds",
+        output_name: "Vehicle-Vitals.ipa",
+        export_options: {
+          signingStyle: "automatic",
+          teamID: team_id
+        },
+        xcargs: [
+          dart_defines_xcarg,
+          "-allowProvisioningUpdates",
+          "-authenticationKeyPath #{Shellwords.escape(authentication_key_path)}",
+          "-authenticationKeyID #{Shellwords.escape(authentication_key_id)}",
+          "-authenticationKeyIssuerID #{Shellwords.escape(authentication_issuer_id)}"
+        ].join(" ")
+      )
+    ensure
+      if @xcode_auth_key_tempfile
+        @xcode_auth_key_tempfile.unlink
+        @xcode_auth_key_tempfile = nil
+      end
+    end
 
     # Get IPA path from lane context (gym sets this automatically)
     ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
-    
+
     # Verify IPA using the actual path from gym
     unless File.exist?(ipa_path)
        UI.user_error!("gym failed to create IPA at #{ipa_path}")
@@ -341,73 +257,18 @@ platform :ios do
     unless File.size(ipa_path) > 0
        UI.user_error!("IPA file is empty at #{ipa_path}")
     end
-    
+
     UI.success("✅ IPA created successfully at #{ipa_path}")
 
     # IPA is already signed by gym/build_app - no need to resign
     UI.success("📦 IPA is signed and ready for upload")
 
-    # Set up API key authentication
-    private_key_content = ENV["APP_STORE_CONNECT_KEY"]
-    if private_key_content.nil? || private_key_content.empty?
-      UI.error("APP_STORE_CONNECT_KEY environment variable is not set or empty")
-      raise "Missing APP_STORE_CONNECT_KEY"
-    end
-
-    # Detect key format
-    is_pem = private_key_content.include?("-----BEGIN")
-    cleaned = private_key_content.gsub(/\s+/, "")
-    looks_base64 = cleaned =~ /\A[A-Za-z0-9+\/=]+\z/ && cleaned.length > 100
-
-    if !is_pem && looks_base64
-      UI.message("Detected APP_STORE_CONNECT_KEY as base64; passing directly as key_content (is_key_content_base64: true)")
-      api_key = app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-        key_content: cleaned,
-        is_key_content_base64: true,
-        in_house: false
-      )
-    else
-      # Process as PEM
-      private_key_content = private_key_content.strip
-      private_key_content = private_key_content.gsub(/\A['\"]|['\"]\z/, '')
-      private_key_content = private_key_content.gsub(/\\n/, "\n")
-      private_key_content = private_key_content.gsub(/\r\n?/, "\n")
-      private_key_content = private_key_content.lines.map { |l| l.strip }.reject { |l| l.empty? }.join("\n") + "\n"
-
-      unless private_key_content.include?("-----BEGIN PRIVATE KEY-----") || private_key_content.include?("-----BEGIN EC PRIVATE KEY-----")
-        begin
-          require 'base64'
-          decoded = Base64.decode64(private_key_content)
-          if decoded.include?("-----BEGIN")
-            private_key_content = decoded
-            UI.message("Decoded APP_STORE_CONNECT_KEY from base64")
-          end
-        rescue => e
-          UI.message("Failed to decode APP_STORE_CONNECT_KEY as base64: #{e.message}")
-        end
-      end
-
-      require 'tempfile'
-      key_file = Tempfile.new(['app_store_connect_key', '.p8'])
-      key_file.write(private_key_content)
-      key_file.close
-
-      UI.message("Created temporary App Store Connect key file: #{key_file.path}")
-
-      api_key = app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-        key_filepath: key_file.path
-      )
-    end
-
     # Upload to TestFlight
     upload_to_testflight(
       api_key: api_key,
       ipa: ipa_path,
-      skip_waiting_for_build_processing: true
+      skip_waiting_for_build_processing: true,
+      changelog: release_notes
     )
   end
 end

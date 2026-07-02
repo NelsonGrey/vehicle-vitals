@@ -473,6 +473,19 @@ jobs:
             echo "- PROJECT_ID: $ACTUAL_PROJECT_ID"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Select Xcode Version
+        run: |
+          # Xcode 16.4 has a provisioning-profile resolution bug with automatic signing;
+          # newer Xcode handles it correctly. Select the latest available Xcode 26+.
+          LATEST=$(ls /Applications/ | grep -E "^Xcode_2[6-9]\.[0-9]+\.app$|^Xcode_[3-9][0-9]\.[0-9]+\.app$" | sort -t_ -k2 -V | tail -1)
+          if [ -n "$LATEST" ]; then
+            sudo xcode-select -s "/Applications/${LATEST}"
+            echo "Selected $LATEST"
+          else
+            echo "No Xcode 26+ found; using default $(xcode-select -p)"
+          fi
+          xcodebuild -version
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -480,106 +493,14 @@ jobs:
           bundler-cache: true
           working-directory: packages/mobile/ios
 
-      - name: Resolve Match Repo Auth
-        working-directory: packages/mobile/ios
-        env:
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          NELSON_GREY_PAT: ${{ secrets.NELSON_GREY_PAT }}
-          MATCH_SSH_PRIVATE_KEY: ${{ secrets.MATCH_SSH_PRIVATE_KEY }}
-        run: |
-          set -e
-
-          echo "DEBUG: MATCH_GIT_URL length: ${#MATCH_GIT_URL}"
-          echo "DEBUG: MATCH_GIT_URL contains '@': $([[ "$MATCH_GIT_URL" == *"@"* ]] && echo yes || echo no)"
-          echo "DEBUG: MATCH_GIT_URL starts with https://: $([[ "$MATCH_GIT_URL" == https://* ]] && echo yes || echo no)"
-          echo "DEBUG: MATCH_GIT_URL starts with git@: $([[ "$MATCH_GIT_URL" == git@* ]] && echo yes || echo no)"
-          echo "DEBUG: NELSON_GREY_PAT length: ${#NELSON_GREY_PAT}"
-
-          # Secrets can include a trailing newline if pasted accidentally; strip CR/LF.
-          MATCH_GIT_URL="$(printf %s "$MATCH_GIT_URL" | tr -d '\r\n')"
-          NELSON_GREY_PAT="$(printf %s "$NELSON_GREY_PAT" | tr -d '\r\n')"
-          # SSH private keys must keep newlines; only strip CR (Windows line endings).
-          MATCH_SSH_PRIVATE_KEY="$(printf %s "$MATCH_SSH_PRIVATE_KEY" | tr -d '\r')"
-
-          USE_MATCH_SSH=0
-          if [ -n "$MATCH_SSH_PRIVATE_KEY" ]; then
-            echo "SSH key provided for match repo access; validating..."
-            mkdir -p "$HOME/.ssh"
-            chmod 700 "$HOME/.ssh"
-            MATCH_SSH_KEY_FILE="$HOME/.ssh/match_repo_key"
-
-            if [[ "$MATCH_SSH_PRIVATE_KEY" == "-----BEGIN "* ]]; then
-              printf '%s' "$MATCH_SSH_PRIVATE_KEY" > "$MATCH_SSH_KEY_FILE"
-            else
-              if printf '%s' "$MATCH_SSH_PRIVATE_KEY" | base64 -d > "$MATCH_SSH_KEY_FILE" 2>/dev/null; then
-                :
-              else
-                printf '%s' "$MATCH_SSH_PRIVATE_KEY" > "$MATCH_SSH_KEY_FILE"
-              fi
-            fi
-
-            chmod 600 "$MATCH_SSH_KEY_FILE"
-            if [ -n "$(tail -c 1 "$MATCH_SSH_KEY_FILE")" ]; then
-              echo >> "$MATCH_SSH_KEY_FILE"
-            fi
-
-            if ssh-keygen -y -f "$MATCH_SSH_KEY_FILE" >/dev/null 2>&1; then
-              USE_MATCH_SSH=1
-              echo "SSH key is valid"
-            else
-              echo "::warning::MATCH_SSH_PRIVATE_KEY is not a valid SSH private key; falling back to PAT/HTTPS match repo access"
-              rm -f "$MATCH_SSH_KEY_FILE" || true
-            fi
-          fi
-
-          if [ "$USE_MATCH_SSH" = "1" ]; then
-            echo "Using SSH key for match repo access"
-            ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
-            RESOLVED_GIT_SSH_COMMAND="ssh -i $MATCH_SSH_KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
-            echo "GIT_SSH_COMMAND=$RESOLVED_GIT_SSH_COMMAND" >> "$GITHUB_ENV"
-            RESOLVED_MATCH_GIT_URL="git@github.com:mnelson3/vehicle-vitals-certificates.git"
-          else
-            BASE_MATCH_URL="$MATCH_GIT_URL"
-            if [ -z "$BASE_MATCH_URL" ]; then
-              BASE_MATCH_URL="https://github.com/mnelson3/vehicle-vitals-certificates.git"
-            fi
-
-            if [[ "$BASE_MATCH_URL" == *"@"* ]]; then
-              RESOLVED_MATCH_GIT_URL="$BASE_MATCH_URL"
-            else
-              if [ -z "$NELSON_GREY_PAT" ]; then
-                echo "::error::MATCH_GIT_URL does not include credentials and NELSON_GREY_PAT is not set."
-                exit 1
-              fi
-              if [[ "$BASE_MATCH_URL" == https://* ]]; then
-                RESOLVED_MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@${BASE_MATCH_URL#https://}"
-              else
-                RESOLVED_MATCH_GIT_URL="https://mnelson3:${NELSON_GREY_PAT}@github.com/${BASE_MATCH_URL#github.com/}"
-              fi
-            fi
-          fi
-
-          echo "MATCH_GIT_URL=$RESOLVED_MATCH_GIT_URL" >> "$GITHUB_ENV"
-
-          echo "Verifying access to match certificates repo..."
-          if ! ERR_OUT=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$RESOLVED_MATCH_GIT_URL" HEAD 2>&1 >/dev/null); then
-            echo "::error::Cannot access match repo using MATCH_GIT_URL. Check MATCH_GIT_URL / NELSON_GREY_PAT permissions/validity."
-            echo "Git said: ${ERR_OUT}"
-            exit 1
-          fi
-          echo "Match repo accessible"
-
       - name: Run Fastlane Beta (Signed Build + TestFlight)
         working-directory: packages/mobile/ios
         env:
           TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
-          FASTLANE_APPLE_ID: ${{ secrets.FASTLANE_APPLE_ID }}
           FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
-          FASTLANE_ITC_TEAM_ID: ${{ secrets.FASTLANE_ITC_TEAM_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           RELEASE_NOTES: "Automated build from ${{ github.ref_name }} (${{ github.sha }})"
         run: |
           FIREBASE_ENV="$TARGET_ENV" bundle exec fastlane beta

@@ -150,7 +150,6 @@ platform :ios do
 
   desc "Upload to TestFlight"
   lane :beta do
-    release_notes = ENV["RELEASE_NOTES"] || "Automated build for TestFlight"
     firebase_env = normalized_firebase_env
     expected_project_id = expected_firebase_project_id_for_env(firebase_env)
 
@@ -264,11 +263,15 @@ platform :ios do
     UI.success("📦 IPA is signed and ready for upload")
 
     # Upload to TestFlight
+    # Note: deliberately not passing `changelog:` here — combined with
+    # skip_waiting_for_build_processing, pilot will poll App Store Connect
+    # until the build appears in the build list just to attach it (can take
+    # a very long time; see fastlane/fastlane#14997), even though the
+    # upload itself already succeeded by that point.
     upload_to_testflight(
       api_key: api_key,
       ipa: ipa_path,
-      skip_waiting_for_build_processing: true,
-      changelog: release_notes
+      skip_waiting_for_build_processing: true
     )
   end
 end

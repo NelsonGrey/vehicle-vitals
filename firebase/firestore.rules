@@ -30,6 +30,22 @@ service cloud.firestore {
         && get(orgMemberDoc(orgId)).data.role in ['org_owner', 'org_admin', 'billing_admin', 'support_agent'];
     }
 
+    // read_only is a real, assignable member role (see setOrganizationMemberRoleCallable) —
+    // every other role may write vehicle data, only read_only may not.
+    function canWriteOrgVehicles(orgId) {
+      return isOrgMember(orgId)
+        && get(orgMemberDoc(orgId)).data.role != 'read_only';
+    }
+
+    // Matches the role set required to create drafts in
+    // createInvoiceDraftCallable/createPayableDraftCallable — without this,
+    // billing admins get permission-denied reading the drafts the UI just
+    // created via those callables.
+    function isOrgBillingAdmin(orgId) {
+      return isOrgMember(orgId)
+        && get(orgMemberDoc(orgId)).data.role in ['org_owner', 'org_admin', 'billing_admin'];
+    }
+
     // Allow public writes to launch signups and suggestions for Coming Soon page
     match /launch_signups/{document} {
       allow create: if request.auth == null
@@ -74,10 +90,12 @@ service cloud.firestore {
       }
 
       match /vehicles/{vehicleId} {
-        allow read, write: if isOrgMember(orgId);
+        allow read: if isOrgMember(orgId);
+        allow write: if canWriteOrgVehicles(orgId);
 
         match /{vehicleDocument=**} {
-          allow read, write: if isOrgMember(orgId);
+          allow read: if isOrgMember(orgId);
+          allow write: if canWriteOrgVehicles(orgId);
         }
       }
 
@@ -88,6 +106,16 @@ service cloud.firestore {
 
       match /compliance/{docId} {
         allow read: if isOrgAdmin(orgId);
+        allow write: if false; // Managed via Cloud Functions
+      }
+
+      match /financeInvoices/{invoiceId} {
+        allow read: if isOrgBillingAdmin(orgId);
+        allow write: if false; // Managed via Cloud Functions
+      }
+
+      match /financePayables/{payableId} {
+        allow read: if isOrgBillingAdmin(orgId);
         allow write: if false; // Managed via Cloud Functions
       }
     }

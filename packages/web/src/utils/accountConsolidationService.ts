@@ -45,8 +45,33 @@ export interface ConsolidationResult {
   message: string;
 }
 
+export interface ConsolidationCodeRequestResult {
+  success: boolean;
+  sentTo: string;
+}
+
+export async function requestAccountConsolidation(
+  sourceUid: string
+): Promise<ConsolidationCodeRequestResult> {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'requestAccountConsolidationCallable'
+  );
+
+  const result = await callable({ sourceUid });
+
+  return result.data as ConsolidationCodeRequestResult;
+}
+
 export async function consolidateAccountData(params: {
   sourceUid: string;
+  verificationCode: string;
   idempotencyKey?: string;
 }): Promise<ConsolidationResult> {
   const firebaseService = await createFirebaseService();
@@ -62,6 +87,7 @@ export async function consolidateAccountData(params: {
 
   const result = await callable({
     sourceUid: params.sourceUid,
+    verificationCode: params.verificationCode,
     idempotencyKey: params.idempotencyKey,
   });
 

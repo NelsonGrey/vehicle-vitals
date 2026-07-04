@@ -496,6 +496,62 @@ export default function Home() {
                 </button>
               )}
             </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 m-0 mb-3">
+                Add a vehicle &rarr; Track service and costs &rarr; Stay on
+                top of what&apos;s next
+              </p>
+              <ol className="list-none p-0 m-0 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="flex-none w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center">
+                    1
+                  </span>
+                  <div>
+                    <Link
+                      to="/app/add-vehicle"
+                      className="font-medium text-teal-700 dark:text-teal-400 no-underline hover:underline"
+                    >
+                      Add your first vehicle
+                    </Link>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                      Enter a VIN or vehicle details to start your garage.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-none w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center">
+                    2
+                  </span>
+                  <div>
+                    <p className="font-medium text-slate-700 dark:text-slate-300 m-0">
+                      Log your first service record
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                      Unlocks once you&apos;ve added a vehicle — track
+                      costs, dates, and documents.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-none w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center">
+                    3
+                  </span>
+                  <div>
+                    <Link
+                      to="/app/upcoming"
+                      className="font-medium text-teal-700 dark:text-teal-400 no-underline hover:underline"
+                    >
+                      Review upcoming maintenance
+                    </Link>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                      See what&apos;s due next once your garage has
+                      vehicles.
+                    </p>
+                  </div>
+                </li>
+              </ol>
+            </div>
           </div>
         ) : (
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">

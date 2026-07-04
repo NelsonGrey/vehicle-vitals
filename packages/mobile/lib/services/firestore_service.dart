@@ -284,6 +284,33 @@ class FirestoreService {
     return Vehicle.fromMap(snapshot.data()!);
   }
 
+  // Get stored attachment-analysis metadata for a set of storage paths,
+  // keyed by storage path. Mirrors web's getAttachmentAnalyses, which reads
+  // attachmentAnalyses/{encodeURIComponent(storagePath)} under the vehicle.
+  Future<Map<String, Map<String, dynamic>>> getAttachmentAnalyses(
+    String vin,
+    List<String> storagePaths,
+  ) async {
+    if (storagePaths.isEmpty) return {};
+
+    final context = await _resolveGarageContext();
+    final collection = _db.collection(
+      buildVehicleChildCollectionPath(context, vin, 'attachmentAnalyses'),
+    );
+
+    final entries = await Future.wait(
+      storagePaths.map((path) async {
+        final doc = await collection.doc(Uri.encodeComponent(path)).get();
+        return MapEntry(path, doc.data());
+      }),
+    );
+
+    return {
+      for (final entry in entries)
+        if (entry.value != null) entry.key: entry.value!,
+    };
+  }
+
   // Stream vehicles for real-time updates
   Stream<List<Vehicle>> getVehiclesStream() async* {
     final vehiclesCollection = await _vehiclesCollection();

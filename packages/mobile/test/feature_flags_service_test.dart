@@ -31,5 +31,50 @@ void main() {
     test('keeps ad free disabled for pro tier', () {
       expect(FeatureFlagsService.isFeatureEnabled('ad_free', 'pro'), isFalse);
     });
+
+    test('matches web planning-horizon tier mapping (3/12/36 months)', () {
+      expect(
+        FeatureFlagsService.isFeatureEnabled(
+          'maintenance_planning_12mo',
+          'free',
+        ),
+        isFalse,
+      );
+      expect(
+        FeatureFlagsService.isFeatureEnabled(
+          'maintenance_planning_36mo',
+          'free',
+        ),
+        isFalse,
+      );
+      expect(
+        FeatureFlagsService.isFeatureEnabled(
+          'maintenance_planning_12mo',
+          'pro',
+        ),
+        isTrue,
+      );
+      expect(
+        FeatureFlagsService.isFeatureEnabled(
+          'maintenance_planning_36mo',
+          'pro',
+        ),
+        isFalse,
+      );
+      expect(
+        FeatureFlagsService.isFeatureEnabled(
+          'maintenance_planning_36mo',
+          'premium',
+        ),
+        isTrue,
+      );
+      expect(
+        FeatureFlagsService.isFeatureEnabled(
+          'maintenance_planning_36mo',
+          'enterprise',
+        ),
+        isTrue,
+      );
+    });
   });
 }

@@ -15,6 +15,8 @@ class FeatureFlagsService {
       'priority_support': false,
       'phone_support': false,
       'api_access': false,
+      'maintenance_planning_12mo': false,
+      'maintenance_planning_36mo': false,
     },
     proTier: {
       'vehicle_limit': true,
@@ -26,6 +28,8 @@ class FeatureFlagsService {
       'priority_support': true,
       'phone_support': false,
       'api_access': false,
+      'maintenance_planning_12mo': true,
+      'maintenance_planning_36mo': false,
     },
     premiumTier: {
       'vehicle_limit': true,
@@ -37,6 +41,8 @@ class FeatureFlagsService {
       'priority_support': true,
       'phone_support': true,
       'api_access': true,
+      'maintenance_planning_12mo': true,
+      'maintenance_planning_36mo': true,
     },
     enterpriseTier: {
       'vehicle_limit': true,
@@ -48,6 +54,8 @@ class FeatureFlagsService {
       'priority_support': true,
       'phone_support': true,
       'api_access': true,
+      'maintenance_planning_12mo': true,
+      'maintenance_planning_36mo': true,
     },
   };
 

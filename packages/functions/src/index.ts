@@ -414,6 +414,38 @@ async function getPrimaryOrgIdForUser(uid: string): Promise<string> {
   return ensurePersonalOrganization(uid);
 }
 
+// Mirrors packages/shared/src/firestoreServiceFactory.js's
+// resolveGarageContext/resolveVehicleScope: for org_scoped or dual_write
+// garages, vehicles live under orgs/{orgId}/vehicles instead of
+// users/{uid}/vehicles. Server-side callers that write vehicle-scoped data
+// (e.g. webhooks) must resolve the same root the client reads from, or
+// writes land in a collection the app never looks at. Read-only: does not
+// create an organization if none exists.
+async function resolveVehicleCollectionRoot(uid: string): Promise<string> {
+  const db = admin.firestore();
+  const memberships = await db
+    .collection(`users/${uid}/orgMemberships`)
+    .where('status', '==', 'active')
+    .limit(1)
+    .get();
+
+  if (memberships.empty) {
+    return `users/${uid}/vehicles`;
+  }
+
+  const orgId = memberships.docs[0].id;
+  const orgSnap = await db.doc(`orgs/${orgId}`).get();
+  const garageStorageMode = normalizeGarageStorageMode(
+    orgSnap.data()?.garageStorageMode
+  );
+
+  if (garageStorageMode === 'org_scoped' || garageStorageMode === 'dual_write') {
+    return `orgs/${orgId}/vehicles`;
+  }
+
+  return `users/${uid}/vehicles`;
+}
+
 async function resolveEffectiveEntitlements(
   uid: string,
   requestedOrgId?: string
@@ -1055,6 +1087,70 @@ const TRANSFERABLE_VEHICLE_SUBCOLLECTIONS = [
   'attachmentAnalyses',
 ];
 
+// Copies (not moves) every user-scoped vehicle into the org's vehicle
+// collection when a garage is promoted into org_scoped/dual_write mode.
+// Without this, existing vehicles stay invisible to the org-scoped list
+// query the client switches to, and quota checks see an empty garage —
+// dual_write in particular is meant to keep the user-scoped copy valid
+// during the transition, so this deliberately does not delete the source.
+async function copyUserVehiclesIntoOrg(params: {
+  uid: string;
+  orgId: string;
+}): Promise<number> {
+  const db = admin.firestore();
+  const sourceVehiclesSnap = await db
+    .collection(`users/${params.uid}/vehicles`)
+    .get();
+
+  const vins = sourceVehiclesSnap.docs
+    .map(doc => doc.id)
+    .filter(id => id !== '__preferences__');
+
+  let copiedCount = 0;
+  for (const vin of vins) {
+    const sourceVehicleRef = db.doc(`users/${params.uid}/vehicles/${vin}`);
+    const targetVehicleRef = db.doc(`orgs/${params.orgId}/vehicles/${vin}`);
+    const targetSnap = await targetVehicleRef.get();
+    if (targetSnap.exists) {
+      continue;
+    }
+
+    const sourceSnap = await sourceVehicleRef.get();
+    if (!sourceSnap.exists) {
+      continue;
+    }
+
+    const batch = db.batch();
+    batch.set(
+      targetVehicleRef,
+      {
+        ...sourceSnap.data(),
+        copiedFromUserScopedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    for (const subcollectionName of TRANSFERABLE_VEHICLE_SUBCOLLECTIONS) {
+      const subSnap = await sourceVehicleRef
+        .collection(subcollectionName)
+        .get();
+      subSnap.docs.forEach(docSnap => {
+        batch.set(
+          targetVehicleRef.collection(subcollectionName).doc(docSnap.id),
+          docSnap.data(),
+          { merge: true }
+        );
+      });
+    }
+
+    await batch.commit();
+    copiedCount += 1;
+  }
+
+  return copiedCount;
+}
+
 async function resolveVehicleTransferTarget(params: {
   recipientUid?: unknown;
   recipientEmail?: unknown;
@@ -1492,23 +1588,45 @@ function buildAttachmentAnalysis(
 }
 
 function parseAttachmentPath(path: string): {
-  uid: string;
+  collectionRoot: string;
+  ownerType: 'user' | 'org';
+  ownerId: string;
   vin: string;
   section: 'maintenance' | 'records';
   parentId: string;
 } | null {
-  const match = path.match(
+  const userMatch = path.match(
     /^users\/([^/]+)\/vehicles\/([^/]+)\/(maintenance|records)\/([^/]+)\/.+/
   );
+  if (userMatch) {
+    return {
+      collectionRoot: `users/${userMatch[1]}`,
+      ownerType: 'user',
+      ownerId: userMatch[1],
+      vin: userMatch[2],
+      section: userMatch[3] as 'maintenance' | 'records',
+      parentId: userMatch[4],
+    };
+  }
 
-  if (!match) return null;
+  // Org-scoped garages (org_scoped/dual_write) store vehicles under
+  // orgs/{orgId}/vehicles instead of users/{uid}/vehicles — attachments
+  // uploaded there need the same analysis path.
+  const orgMatch = path.match(
+    /^orgs\/([^/]+)\/vehicles\/([^/]+)\/(maintenance|records)\/([^/]+)\/.+/
+  );
+  if (orgMatch) {
+    return {
+      collectionRoot: `orgs/${orgMatch[1]}`,
+      ownerType: 'org',
+      ownerId: orgMatch[1],
+      vin: orgMatch[2],
+      section: orgMatch[3] as 'maintenance' | 'records',
+      parentId: orgMatch[4],
+    };
+  }
 
-  return {
-    uid: match[1],
-    vin: match[2],
-    section: match[3] as 'maintenance' | 'records',
-    parentId: match[4],
-  };
+  return null;
 }
 
 async function upsertAttachmentAnalysis(params: {
@@ -1521,6 +1639,12 @@ async function upsertAttachmentAnalysis(params: {
   customMetadata?: Record<string, string>;
   forceOcrText?: string;
   skipGemini?: boolean;
+  // Only set for user-invoked calls (analyzeAttachmentTextCallable) where
+  // `uid` is the authenticated caller and must be checked against the
+  // storage path's actual owner/org. The storage finalize trigger has no
+  // separate caller to validate against — the object path itself is the
+  // source of truth — so it omits this.
+  requireCallerMembership?: boolean;
 }) {
   const {
     uid,
@@ -1532,6 +1656,7 @@ async function upsertAttachmentAnalysis(params: {
     customMetadata,
     forceOcrText,
     skipGemini,
+    requireCallerMembership,
   } = params;
 
   const pathContext = parseAttachmentPath(objectPath);
@@ -1539,11 +1664,23 @@ async function upsertAttachmentAnalysis(params: {
     throw new HttpsError('invalid-argument', 'Invalid attachment storage path');
   }
 
-  if (pathContext.uid !== uid) {
-    throw new HttpsError(
-      'permission-denied',
-      'Attachment path does not match authenticated user'
-    );
+  if (requireCallerMembership) {
+    if (pathContext.ownerType === 'user') {
+      if (pathContext.ownerId !== uid) {
+        throw new HttpsError(
+          'permission-denied',
+          'Attachment path does not match authenticated user'
+        );
+      }
+    } else {
+      await requireOrgRole(uid, pathContext.ownerId, [
+        'org_owner',
+        'org_admin',
+        'billing_admin',
+        'support_agent',
+        'read_only',
+      ]);
+    }
   }
 
   if (pathContext.vin !== vin) {
@@ -1620,7 +1757,9 @@ async function upsertAttachmentAnalysis(params: {
   };
 
   await db
-    .doc(`users/${uid}/vehicles/${vin}/attachmentAnalyses/${analysisDocId}`)
+    .doc(
+      `${pathContext.collectionRoot}/vehicles/${vin}/attachmentAnalyses/${analysisDocId}`
+    )
     .set(analysisData, { merge: true });
 
   if (
@@ -1628,7 +1767,7 @@ async function upsertAttachmentAnalysis(params: {
     !pathContext.parentId.startsWith('temp_')
   ) {
     const maintenanceRef = db.doc(
-      `users/${uid}/vehicles/${vin}/maintenance/${pathContext.parentId}`
+      `${pathContext.collectionRoot}/vehicles/${vin}/maintenance/${pathContext.parentId}`
     );
     const maintenanceSnap = await maintenanceRef.get();
     if (maintenanceSnap.exists) {
@@ -1702,7 +1841,10 @@ export const analyzeUploadedAttachment = storageAttachmentAnalysisEnabled
       }
 
       await upsertAttachmentAnalysis({
-        uid: pathContext.uid,
+        // No separate caller here — the storage object path itself is the
+        // source of truth, so this is passed through without
+        // requireCallerMembership.
+        uid: pathContext.ownerId,
         vin: pathContext.vin,
         objectPath: objectName,
         bucket: object.bucket,
@@ -1757,6 +1899,7 @@ export const analyzeAttachmentTextCallable = onCall(
       bucket: (bucketParam || '').trim() || null,
       contentType: (contentType || '').trim() || null,
       forceOcrText: normalizedText || undefined,
+      requireCallerMembership: true,
     });
 
     return {
@@ -3349,6 +3492,16 @@ export const promotePersonalGarageToHouseholdCallable = onCall(
         { merge: true }
       );
 
+      // The client's vehicle list switches to reading orgs/{orgId}/vehicles
+      // as soon as garageStorageMode is org_scoped/dual_write — without
+      // copying existing vehicles over now, a newly promoted household
+      // would show an empty garage until every vehicle was individually
+      // rewritten.
+      let vehiclesCopied = 0;
+      if (requestedMode === 'org_scoped' || requestedMode === 'dual_write') {
+        vehiclesCopied = await copyUserVehiclesIntoOrg({ uid, orgId });
+      }
+
       await writeAuditEvent({
         orgId,
         actorUid: uid,
@@ -3359,6 +3512,7 @@ export const promotePersonalGarageToHouseholdCallable = onCall(
           previousType: (orgData.type || 'personal').toString(),
           garageStorageMode: requestedMode,
           householdName: nextName,
+          vehiclesCopied,
         },
       });
 
@@ -3369,6 +3523,7 @@ export const promotePersonalGarageToHouseholdCallable = onCall(
         orgType: 'household',
         garageStorageMode: requestedMode,
         name: nextName,
+        vehiclesCopied,
         entitlements,
       };
 
@@ -3480,10 +3635,14 @@ export const changeSubscriptionTierCallable = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Unsupported targetTier');
   }
 
-  if (requestedTier === 'enterprise') {
+  // This callable only ever downgrades to free — it performs no payment
+  // verification. Upgrades to a paid tier must go through
+  // createSubscriptionCheckoutSessionCallable (real Stripe Checkout) or the
+  // Stripe webhook (server-verified payment).
+  if (requestedTier !== 'free') {
     throw new HttpsError(
       'failed-precondition',
-      'Enterprise requires a sales-managed contract'
+      'Paid tiers must be purchased through checkout'
     );
   }
 
@@ -3548,6 +3707,17 @@ export const changeSubscriptionTierCallable = onCall(async request => {
 });
 
 export const createSubscriptionCheckoutSessionCallable = onCall(
+  {
+    secrets: [
+      'STRIPE_SECRET_KEY',
+      'STRIPE_CHECKOUT_SUCCESS_URL',
+      'STRIPE_CHECKOUT_CANCEL_URL',
+      'STRIPE_PRICE_ID_PRO_MONTHLY',
+      'STRIPE_PRICE_ID_PRO_ANNUAL',
+      'STRIPE_PRICE_ID_PREMIUM_MONTHLY',
+      'STRIPE_PRICE_ID_PREMIUM_ANNUAL',
+    ],
+  },
   async request => {
     const uid = request.auth?.uid;
     if (!uid) {
@@ -3683,40 +3853,13 @@ export const createSubscriptionCheckoutSessionCallable = onCall(
       }
 
       if (!checkoutTemplate) {
-        const applied = await applySubscriptionTierState({
-          uid,
-          targetTier: requestedTier,
-          billingPeriod,
-          status: 'active',
-          paymentMethod: 'stripe',
-          verificationState: 'simulated_checkout_fallback',
-        });
-
-        const fallbackResult = {
-          success: true,
-          mode: 'activated',
-          entitlements: applied.entitlements,
-          tier: requestedTier,
-        };
-
-        await writeAuditEvent({
-          orgId: applied.orgId,
-          actorUid: uid,
-          action: 'billing.checkout_fallback_activation',
-          targetType: 'subscription',
-          targetId: uid,
-          details: {
-            requestedTier,
-            billingPeriod,
-          },
-        });
-
-        await completeIdempotencyKey(
-          reservation,
-          fallbackResult as unknown as Record<string, unknown>
+        // Fail closed: without a real Stripe secret key or an explicit test
+        // checkout template configured, there is no way to verify payment.
+        // Never silently activate a paid tier for free.
+        throw new HttpsError(
+          'failed-precondition',
+          'Checkout is not configured for this environment'
         );
-
-        return fallbackResult;
       }
 
       const sessionId = `cs_sim_${randomBytes(12).toString('hex')}`;
@@ -4086,6 +4229,112 @@ export const transferVehicleCallable = onCall(async request => {
   }
 });
 
+const ACCOUNT_CONSOLIDATION_CODE_TTL_MS = 15 * 60 * 1000;
+const ACCOUNT_CONSOLIDATION_RESEND_COOLDOWN_MS = 60 * 1000;
+const ACCOUNT_CONSOLIDATION_MAX_ATTEMPTS = 5;
+
+function hashConsolidationCode(code: string): string {
+  return createHash('sha256').update(code).digest('hex');
+}
+
+function maskEmailForDisplay(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) {
+    return '***';
+  }
+  const visible = local.slice(0, 1);
+  return `${visible}${'*'.repeat(Math.max(local.length - 1, 3))}@${domain}`;
+}
+
+// Step 1 of account consolidation: prove the caller actually controls the
+// source account by emailing a one-time code to its registered address.
+// Without this, any signed-in user who learned another UID could migrate
+// that account's vehicles and subscription into their own (see
+// consolidateAccountDataCallable below).
+export const requestAccountConsolidationCallable = onCall(async request => {
+  const primaryUid = request.auth?.uid;
+  if (!primaryUid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
+  }
+
+  const sourceUid = (request.data?.sourceUid || '').toString().trim();
+  if (!sourceUid) {
+    throw new HttpsError('invalid-argument', 'sourceUid is required');
+  }
+
+  if (sourceUid === primaryUid) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Cannot consolidate account into itself'
+    );
+  }
+
+  let sourceEmail = '';
+  try {
+    const sourceUser = await admin.auth().getUser(sourceUid);
+    sourceEmail = (sourceUser.email || '').toString().trim();
+  } catch (error) {
+    throw new HttpsError(
+      'not-found',
+      `Source account uid ${sourceUid} not found`
+    );
+  }
+
+  if (!sourceEmail) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Source account has no email on file; cannot verify ownership'
+    );
+  }
+
+  const db = admin.firestore();
+  const requestRef = db.doc(`accountConsolidationRequests/${primaryUid}`);
+  const existing = await requestRef.get();
+  const existingData = existing.data();
+  if (existingData?.createdAtMs) {
+    const elapsed = Date.now() - Number(existingData.createdAtMs);
+    if (elapsed < ACCOUNT_CONSOLIDATION_RESEND_COOLDOWN_MS) {
+      throw new HttpsError(
+        'resource-exhausted',
+        'A code was just sent — please wait before requesting another'
+      );
+    }
+  }
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  await requestRef.set({
+    sourceUid,
+    codeHash: hashConsolidationCode(code),
+    attempts: 0,
+    createdAtMs: Date.now(),
+    expiresAt: Timestamp.fromMillis(
+      Date.now() + ACCOUNT_CONSOLIDATION_CODE_TTL_MS
+    ),
+  });
+
+  await sendEmail({
+    to: sourceEmail,
+    subject: 'Confirm account consolidation — Vehicle Vitals',
+    text:
+      `A Vehicle Vitals account is requesting to merge this account's ` +
+      `data into it. If this was you, enter this code to confirm: ${code}\n\n` +
+      `This code expires in 15 minutes. If you did not request this, ` +
+      `you can safely ignore this email.`,
+    html:
+      `<p>A Vehicle Vitals account is requesting to merge this account's ` +
+      `data into it.</p><p>If this was you, enter this code to confirm:</p>` +
+      `<p style="font-size:24px;font-weight:bold;">${code}</p>` +
+      `<p>This code expires in 15 minutes. If you did not request this, ` +
+      `you can safely ignore this email.</p>`,
+  });
+
+  return {
+    success: true,
+    sentTo: maskEmailForDisplay(sourceEmail),
+  };
+});
+
 export const consolidateAccountDataCallable = onCall(async request => {
   const primaryUid = request.auth?.uid;
   if (!primaryUid) {
@@ -4094,6 +4343,9 @@ export const consolidateAccountDataCallable = onCall(async request => {
 
   const sourceUid = (request.data?.sourceUid || '').toString().trim();
   const idempotencyKey = (request.data?.idempotencyKey || '').toString();
+  const verificationCode = (request.data?.verificationCode || '')
+    .toString()
+    .trim();
 
   if (!sourceUid) {
     throw new HttpsError('invalid-argument', 'sourceUid is required');
@@ -4103,6 +4355,13 @@ export const consolidateAccountDataCallable = onCall(async request => {
     throw new HttpsError(
       'invalid-argument',
       'Cannot consolidate account into itself'
+    );
+  }
+
+  if (!verificationCode) {
+    throw new HttpsError(
+      'failed-precondition',
+      'A verification code is required — request one first'
     );
   }
 
@@ -4127,6 +4386,67 @@ export const consolidateAccountDataCallable = onCall(async request => {
         `Source account uid ${sourceUid} not found`
       );
     }
+
+    // Require proof of ownership: a verification code must have been
+    // requested via requestAccountConsolidationCallable and emailed to the
+    // source account's registered address, and match here.
+    const requestRef = db.doc(`accountConsolidationRequests/${primaryUid}`);
+    const requestSnap = await requestRef.get();
+    const requestData = requestSnap.data();
+
+    if (!requestSnap.exists || !requestData) {
+      throw new HttpsError(
+        'failed-precondition',
+        'No pending verification request — request a new code'
+      );
+    }
+
+    if (requestData.sourceUid !== sourceUid) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Verification request does not match this source account'
+      );
+    }
+
+    const expiresAtMs =
+      requestData.expiresAt instanceof Timestamp
+        ? requestData.expiresAt.toMillis()
+        : 0;
+    if (Date.now() > expiresAtMs) {
+      await requestRef.delete();
+      throw new HttpsError(
+        'failed-precondition',
+        'Verification code expired — request a new one'
+      );
+    }
+
+    if (
+      Number(requestData.attempts || 0) >= ACCOUNT_CONSOLIDATION_MAX_ATTEMPTS
+    ) {
+      await requestRef.delete();
+      throw new HttpsError(
+        'failed-precondition',
+        'Too many incorrect attempts — request a new code'
+      );
+    }
+
+    const providedHash = hashConsolidationCode(verificationCode);
+    const expectedHash = (requestData.codeHash || '').toString();
+    const providedBuf = Buffer.from(providedHash, 'hex');
+    const expectedBuf = Buffer.from(expectedHash, 'hex');
+    const codeMatches =
+      providedBuf.length === expectedBuf.length &&
+      timingSafeEqual(providedBuf, expectedBuf);
+
+    if (!codeMatches) {
+      await requestRef.update({
+        attempts: admin.firestore.FieldValue.increment(1),
+      });
+      throw new HttpsError('permission-denied', 'Incorrect verification code');
+    }
+
+    // Code verified — consume it immediately so it cannot be replayed.
+    await requestRef.delete();
 
     // Get all vehicles from source account
     const sourceVehiclesSnap = await db
@@ -4413,7 +4733,10 @@ export const zapierMaintenanceWebhook = onRequest(
         return;
       }
 
-      const vehicleRef = admin.firestore().doc(`users/${uid}/vehicles/${vin}`);
+      const vehicleCollectionRoot = await resolveVehicleCollectionRoot(uid);
+      const vehicleRef = admin
+        .firestore()
+        .doc(`${vehicleCollectionRoot}/${vin}`);
       const vehicleSnap = await vehicleRef.get();
       if (!vehicleSnap.exists) {
         response.status(404).json({
@@ -4425,7 +4748,7 @@ export const zapierMaintenanceWebhook = onRequest(
 
       const reminderRef = await admin
         .firestore()
-        .collection(`users/${uid}/vehicles/${vin}/reminders`)
+        .collection(`${vehicleCollectionRoot}/${vin}/reminders`)
         .add({
           title,
           description,
@@ -4471,7 +4794,7 @@ export const zapierMaintenanceWebhook = onRequest(
 );
 
 export const stripeSubscriptionWebhook = onRequest(
-  { cors: true },
+  { cors: true, secrets: ['STRIPE_WEBHOOK_SECRET'] },
   async (request, response) => {
     try {
       if (!enforceRateLimit(request, response, 'stripeSubscriptionWebhook')) {
@@ -4485,9 +4808,12 @@ export const stripeSubscriptionWebhook = onRequest(
         return;
       }
 
+      // Fail closed: a missing/misconfigured secret must never be treated
+      // as "signature verification not required" — this is a public,
+      // unauthenticated endpoint.
       const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
       if (
-        webhookSecret &&
+        !webhookSecret ||
         !isStripeWebhookSignatureValid(request, webhookSecret)
       ) {
         response

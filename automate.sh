@@ -109,9 +109,6 @@ main() {
         "docker")
             manage_docker "$subcommand"
             ;;
-        "runners")
-            manage_runners "$subcommand"
-            ;;
         *)
             log_error "Unknown command: $command"
             show_help
@@ -147,10 +144,6 @@ setup_system() {
     # Setup monitoring
     log_info "Setting up monitoring system..."
     bash scripts/monitoring.sh --setup
-
-    # Setup runners
-    log_info "Setting up GitHub runners..."
-    manage_runners setup
 
     log_success "System setup completed!"
     log_info "Run './automate.sh health' to verify everything is working"
@@ -371,14 +364,6 @@ health_check() {
         log_warning "Firebase not accessible or not logged in"
     fi
 
-    # Check runners
-    manage_runners status >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        log_success "GitHub runners operational"
-    else
-        log_warning "GitHub runners may not be operational"
-    fi
-
     # Summary
     if [ $issues_found -eq 0 ]; then
         log_success "All health checks passed!"
@@ -398,70 +383,9 @@ manage_docker() {
             # Add Docker build commands here
             log_success "Docker images built"
             ;;
-        "runner")
-            manage_runners setup
-            ;;
         *)
             log_error "Unknown Docker action: $action"
-            log_info "Available actions: build, runner"
-            exit 1
-            ;;
-    esac
-}
-
-# Manage GitHub runners
-manage_runners() {
-    local action="$1"
-
-    case "$action" in
-        "setup")
-            log_info "Setting up GitHub runners..."
-
-            # Linux runner (Docker)
-            if [ -f "docker-compose.runner.yml" ]; then
-                log_info "Starting Linux Docker runner..."
-                docker compose --env-file .env.runner -f docker-compose.runner.yml up -d 2>/dev/null || true
-            fi
-
-            # macOS runner (if on macOS)
-            if [ "$(uname)" = "Darwin" ] && [ -d "actions-runner" ]; then
-                log_info "Setting up macOS runner..."
-                cd actions-runner
-                ./svc.sh install 2>/dev/null || true
-                ./svc.sh start 2>/dev/null || true
-                cd ..
-            fi
-
-            log_success "GitHub runners setup completed"
-            ;;
-        "status")
-            local linux_status="unknown"
-            local macos_status="unknown"
-
-            # Check Linux runner
-            if docker ps --filter "name=vehicle-vitals-runner" --format "{{.Names}}" | grep -q "vehicle-vitals-runner"; then
-                linux_status="running"
-            fi
-
-            # Check macOS runner
-            if [ "$(uname)" = "Darwin" ] && [ -d "actions-runner" ]; then
-                if ./actions-runner/svc.sh status 2>/dev/null | grep -q "Started"; then
-                    macos_status="running"
-                fi
-            fi
-
-            echo "Linux Runner: $linux_status"
-            echo "macOS Runner: $macos_status"
-
-            if [ "$linux_status" = "running" ] || [ "$macos_status" = "running" ]; then
-                return 0
-            else
-                return 1
-            fi
-            ;;
-        *)
-            log_error "Unknown runner action: $action"
-            log_info "Available actions: setup, status"
+            log_info "Available actions: build"
             exit 1
             ;;
     esac
@@ -603,8 +527,7 @@ show_help() {
     echo "  tokens     <action>      Token management (rotate|status)"
     echo "  environment <action>     Environment management (setup|sync|status) [environment]"
     echo "  health                   System health check"
-    echo "  docker     <action>      Docker management (build|runner)"
-    echo "  runners    <action>      GitHub runners (setup|status)"
+    echo "  docker     <action>      Docker management (build)"
     echo ""
     echo "Environments: development (default), staging, production"
     echo ""

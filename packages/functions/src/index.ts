@@ -3480,10 +3480,14 @@ export const changeSubscriptionTierCallable = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Unsupported targetTier');
   }
 
-  if (requestedTier === 'enterprise') {
+  // This callable only ever downgrades to free — it performs no payment
+  // verification. Upgrades to a paid tier must go through
+  // createSubscriptionCheckoutSessionCallable (real Stripe Checkout) or the
+  // Stripe webhook (server-verified payment).
+  if (requestedTier !== 'free') {
     throw new HttpsError(
       'failed-precondition',
-      'Enterprise requires a sales-managed contract'
+      'Paid tiers must be purchased through checkout'
     );
   }
 
@@ -3548,6 +3552,17 @@ export const changeSubscriptionTierCallable = onCall(async request => {
 });
 
 export const createSubscriptionCheckoutSessionCallable = onCall(
+  {
+    secrets: [
+      'STRIPE_SECRET_KEY',
+      'STRIPE_CHECKOUT_SUCCESS_URL',
+      'STRIPE_CHECKOUT_CANCEL_URL',
+      'STRIPE_PRICE_ID_PRO_MONTHLY',
+      'STRIPE_PRICE_ID_PRO_ANNUAL',
+      'STRIPE_PRICE_ID_PREMIUM_MONTHLY',
+      'STRIPE_PRICE_ID_PREMIUM_ANNUAL',
+    ],
+  },
   async request => {
     const uid = request.auth?.uid;
     if (!uid) {
@@ -3683,40 +3698,13 @@ export const createSubscriptionCheckoutSessionCallable = onCall(
       }
 
       if (!checkoutTemplate) {
-        const applied = await applySubscriptionTierState({
-          uid,
-          targetTier: requestedTier,
-          billingPeriod,
-          status: 'active',
-          paymentMethod: 'stripe',
-          verificationState: 'simulated_checkout_fallback',
-        });
-
-        const fallbackResult = {
-          success: true,
-          mode: 'activated',
-          entitlements: applied.entitlements,
-          tier: requestedTier,
-        };
-
-        await writeAuditEvent({
-          orgId: applied.orgId,
-          actorUid: uid,
-          action: 'billing.checkout_fallback_activation',
-          targetType: 'subscription',
-          targetId: uid,
-          details: {
-            requestedTier,
-            billingPeriod,
-          },
-        });
-
-        await completeIdempotencyKey(
-          reservation,
-          fallbackResult as unknown as Record<string, unknown>
+        // Fail closed: without a real Stripe secret key or an explicit test
+        // checkout template configured, there is no way to verify payment.
+        // Never silently activate a paid tier for free.
+        throw new HttpsError(
+          'failed-precondition',
+          'Checkout is not configured for this environment'
         );
-
-        return fallbackResult;
       }
 
       const sessionId = `cs_sim_${randomBytes(12).toString('hex')}`;
@@ -4471,7 +4459,7 @@ export const zapierMaintenanceWebhook = onRequest(
 );
 
 export const stripeSubscriptionWebhook = onRequest(
-  { cors: true },
+  { cors: true, secrets: ['STRIPE_WEBHOOK_SECRET'] },
   async (request, response) => {
     try {
       if (!enforceRateLimit(request, response, 'stripeSubscriptionWebhook')) {
@@ -4485,9 +4473,12 @@ export const stripeSubscriptionWebhook = onRequest(
         return;
       }
 
+      // Fail closed: a missing/misconfigured secret must never be treated
+      // as "signature verification not required" — this is a public,
+      // unauthenticated endpoint.
       const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
       if (
-        webhookSecret &&
+        !webhookSecret ||
         !isStripeWebhookSignatureValid(request, webhookSecret)
       ) {
         response

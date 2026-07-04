@@ -8,6 +8,7 @@ import {
   getMaintenanceEntries,
   getVehicles,
 } from '../src/shared/firestoreService';
+import { getHouseholdGarageStatus } from '../src/utils/householdGarageService';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getVehicles: vi.fn(),
@@ -19,6 +20,10 @@ vi.mock('../src/shared/firestoreService', () => ({
 vi.mock('../src/utils/vehicleService', () => ({
   getVehicleInsights: vi.fn(),
   buildPersistedVinInsights: vi.fn(),
+}));
+
+vi.mock('../src/utils/householdGarageService', () => ({
+  getHouseholdGarageStatus: vi.fn(),
 }));
 
 vi.mock('@vehicle-vitals/shared', () => ({
@@ -361,5 +366,54 @@ describe('Home – zero-vehicle onboarding', () => {
     await waitFor(() => screen.getByText('Vehicles'));
 
     expect(screen.queryByText('No vehicles yet')).not.toBeInTheDocument();
+  });
+});
+
+describe('Home – household garage badge', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getVehicles.mockResolvedValue({
+      data: [TOYOTA],
+      lastDoc: null,
+      hasMore: false,
+    });
+    getMaintenanceEntries.mockResolvedValue([]);
+    getUpcomingMaintenance.mockReturnValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('shows a household badge when the garage is a shared household', async () => {
+    getHouseholdGarageStatus.mockResolvedValue({
+      success: true,
+      orgId: 'org-1',
+      orgType: 'household',
+      garageStorageMode: 'dual_write',
+      name: 'The Nelson Household',
+    });
+
+    renderHome();
+
+    await waitFor(() =>
+      screen.getByText(/The Nelson Household — shared household garage/i)
+    );
+  });
+
+  it('does not show a household badge for a personal garage', async () => {
+    getHouseholdGarageStatus.mockResolvedValue({
+      success: true,
+      orgId: 'org-1',
+      orgType: 'personal',
+      garageStorageMode: 'user_scoped',
+    });
+
+    renderHome();
+
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
+    expect(
+      screen.queryByText(/shared household garage/i)
+    ).not.toBeInTheDocument();
   });
 });

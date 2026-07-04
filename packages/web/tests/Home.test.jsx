@@ -311,3 +311,55 @@ describe('Home – smart maintenance alert badges', () => {
     expect(screen.getByText('Stored')).toBeInTheDocument();
   });
 });
+
+describe('Home – zero-vehicle onboarding', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getVehicles.mockResolvedValue({ data: [], lastDoc: null, hasMore: false });
+    getMaintenanceEntries.mockResolvedValue([]);
+    getUpcomingMaintenance.mockReturnValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('shows the 3-step onboarding guide when the garage is empty', async () => {
+    renderHome();
+
+    await waitFor(() => screen.getByText('No vehicles yet'));
+
+    expect(
+      screen.getByText(/Add a vehicle.*Track service and costs.*Stay on/i)
+    ).toBeInTheDocument();
+    const addVehicleLinks = screen.getAllByRole('link', {
+      name: /add your first vehicle/i,
+    });
+    expect(
+      addVehicleLinks.some(link => link.getAttribute('href') === '/app/add-vehicle')
+    ).toBe(true);
+    expect(
+      screen.getByText(/log your first service record/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/unlocks once you've added a vehicle/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /review upcoming maintenance/i })
+    ).toHaveAttribute('href', '/app/upcoming');
+  });
+
+  it('does not show the onboarding guide once vehicles exist', async () => {
+    getVehicles.mockResolvedValue({
+      data: [TOYOTA],
+      lastDoc: null,
+      hasMore: false,
+    });
+
+    renderHome();
+
+    await waitFor(() => screen.getByText('Vehicles'));
+
+    expect(screen.queryByText('No vehicles yet')).not.toBeInTheDocument();
+  });
+});

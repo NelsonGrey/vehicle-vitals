@@ -20,6 +20,7 @@ import {
     updateVehicle,
 } from '../shared/firestoreService';
 import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
+import { getHouseholdGarageStatus } from '../utils/householdGarageService';
 import {
     buildPersistedVinInsights,
     getVehicleInsights,
@@ -118,6 +119,7 @@ export default function Home() {
     Record<string, MaintenanceEntry[]>
   >({});
   const [loadingHealthVin, setLoadingHealthVin] = useState<string | null>(null);
+  const [householdName, setHouseholdName] = useState<string | null>(null);
 
   const applyVehiclePage = useCallback(
     (
@@ -209,6 +211,28 @@ export default function Home() {
     };
     fetchVehicles();
   }, [refreshVehicles]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadHouseholdBadge = async () => {
+      try {
+        const status = await getHouseholdGarageStatus();
+        if (!isActive) return;
+        setHouseholdName(
+          status.orgType === 'household' ? status.name || null : null
+        );
+      } catch (error) {
+        console.warn('Unable to load household garage badge', error);
+      }
+    };
+
+    void loadHouseholdBadge();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (vehicles.length === 0) return;
@@ -432,6 +456,12 @@ export default function Home() {
             <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
               Garage
             </h1>
+            {householdName && (
+              <p className="mt-1 mb-0 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <span aria-hidden="true">🏠</span>
+                {householdName} — shared household garage
+              </p>
+            )}
             {vehicles.length > 0 && (
               <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
                 {activeVehicles.length} active vehicle

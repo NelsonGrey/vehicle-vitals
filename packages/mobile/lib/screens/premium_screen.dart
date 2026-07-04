@@ -434,6 +434,16 @@ class PremiumPlanCatalog extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 2),
+            Text(
+              _tierTagline(tier),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                fontStyle: FontStyle.italic,
+                color: Colors.black54,
+              ),
+            ),
             const SizedBox(height: 6),
             Text(
               _tierVehicleLimitLabel(tier),
@@ -487,12 +497,30 @@ class PremiumPlanCatalog extends StatelessWidget {
     }
   }
 
+  // Matches the marketing/web tier taglines (packages/web/src/shared/featureFlags.ts,
+  // docs/APP_ALIGNMENT_PLAN.md) so the story is consistent end-to-end.
+  String _tierTagline(String tier) {
+    switch (tier) {
+      case 'pro':
+        return 'Plan and coordinate';
+      case 'premium':
+        return 'Forecast and automate';
+      case 'enterprise':
+        return 'Govern and integrate';
+      case 'free':
+      default:
+        return 'Learn and document';
+    }
+  }
+
   String _tierPriceLabel(String tier, String? currentPremiumPrice) {
     switch (tier) {
       case 'pro':
-        return '\$5/mo';
+        // No live App Store product is wired up for Pro; match the web
+        // TIER_PRICING constant (featureFlags.ts) until one is.
+        return '\$2.99/mo';
       case 'premium':
-        return currentPremiumPrice ?? '\$4.99';
+        return currentPremiumPrice ?? '\$6.99/mo';
       case 'enterprise':
         return 'Contact sales';
       case 'free':

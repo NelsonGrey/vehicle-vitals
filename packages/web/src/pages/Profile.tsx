@@ -19,6 +19,10 @@ import {
   type HouseholdGarageStatus,
 } from '../utils/householdGarageService';
 import { getLocalServiceProviders } from '../utils/localServiceProviders';
+import {
+  requestAccountDataDeletion,
+  requestAccountDataExport,
+} from '../utils/privacyRequestService';
 
 // Declare Firebase global
 declare global {
@@ -43,7 +47,6 @@ interface AuthService {
     credential: unknown
   ) => Promise<void>;
   updatePassword: (user: unknown, newPassword: string) => Promise<void>;
-  deleteUser: (user: unknown) => Promise<void>;
 }
 
 interface HomeAddress {
@@ -126,7 +129,6 @@ const createFirebaseAuthService = async () => {
       EmailAuthProvider: firebase.auth.EmailAuthProvider,
       reauthenticateWithCredential: firebase.auth.reauthenticateWithCredential,
       updatePassword: firebase.auth.updatePassword,
-      deleteUser: firebase.auth.deleteUser,
     };
   } catch (error) {
     console.warn('Firebase auth not available:', error);
@@ -135,7 +137,6 @@ const createFirebaseAuthService = async () => {
       EmailAuthProvider: { credential: () => ({}) },
       reauthenticateWithCredential: async () => {},
       updatePassword: async () => {},
-      deleteUser: async () => {},
     };
   }
 };
@@ -973,9 +974,9 @@ export default function Profile() {
     }
   };
 
-  const onDeleteAccount = async () => {
+  const onRequestAccountDeletion = async () => {
     const sure = window.confirm(
-      'This will permanently delete your account and all your vehicles. Continue?'
+      'This will file a request to delete your account and all associated vehicle, maintenance, and subscription data. This cannot be undone once processed. Continue?'
     );
     if (!sure) return;
     setError('');
@@ -983,12 +984,35 @@ export default function Profile() {
     setBusy(true);
     try {
       await reauth();
-      await authService!.deleteUser(user);
-      setStatus('Account deleted.');
-      // Optionally sign out cleanup
-      await signOut();
+      const result = await requestAccountDataDeletion();
+      setStatus(
+        `Account deletion request filed (request ${result.requestId}). Your data will be deleted as part of processing this request; you remain signed in until then.`
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete account');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to file account deletion request'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onRequestDataExport = async () => {
+    setError('');
+    setStatus('');
+    setBusy(true);
+    try {
+      await reauth();
+      const result = await requestAccountDataExport();
+      setStatus(
+        `Data export request filed (request ${result.requestId}). We'll notify you when it's ready.`
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to file data export request'
+      );
     } finally {
       setBusy(false);
     }
@@ -2135,11 +2159,14 @@ export default function Profile() {
 
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 border-l-4 border-red-500 space-y-6">
             <h2 className="font-serif font-bold text-2xl text-red-700 dark:text-red-400 m-0">
-              Delete Account
+              Privacy &amp; Data Requests
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
-              Delete your account and all associated data. This action cannot be
-              undone.
+              Request a copy of your data, or request deletion of your account
+              and all associated vehicle, maintenance, and subscription data.
+              Deletion requests are processed by our team and cannot be
+              undone; you remain signed in until a deletion request has been
+              processed.
             </p>
             <div>
               <label
@@ -2156,13 +2183,20 @@ export default function Profile() {
                 onChange={e => setCurrentPassword(e.target.value)}
               />
             </div>
-            <div>
+            <div className="flex flex-wrap gap-3">
               <button
-                className="bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-                onClick={onDeleteAccount}
+                className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                onClick={() => void onRequestDataExport()}
                 disabled={busy}
               >
-                Delete account
+                Request My Data Export
+              </button>
+              <button
+                className="bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                onClick={() => void onRequestAccountDeletion()}
+                disabled={busy}
+              >
+                Request Account Deletion
               </button>
             </div>
           </div>

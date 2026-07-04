@@ -115,6 +115,87 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _requestDataExport() async {
+    setState(() => _busy = true);
+    try {
+      final authService = context.read<AuthService>();
+      final result = await authService.requestAccountDataExport();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Data export request filed (request ${result['requestId']}). '
+              "We'll notify you when it's ready.",
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<void> _requestAccountDeletion() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Request Account Deletion'),
+        content: const Text(
+          'This will file a request to delete your account and all '
+          'associated vehicle, maintenance, and subscription data. This '
+          'cannot be undone once processed. You remain signed in until the '
+          'request has been processed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Request Deletion'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      final authService = context.read<AuthService>();
+      final result = await authService.requestAccountDataDeletion();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Account deletion request filed (request ${result['requestId']}). '
+              'Your data will be deleted as part of processing this request; '
+              'you remain signed in until then.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   Future<void> _rerunSetup() async {
     setState(() => _busy = true);
 
@@ -372,6 +453,51 @@ class _AccountScreenState extends State<AccountScreen> {
                         onPressed: _busy ? null : _rerunSetup,
                         icon: const Icon(Icons.restart_alt),
                         label: const Text('Re-run Setup'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Privacy & Data Requests',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Request a copy of your data, or request deletion of '
+                        'your account and all associated vehicle, '
+                        'maintenance, and subscription data. Deletion '
+                        'requests are processed by our team and cannot be '
+                        'undone; you remain signed in until a deletion '
+                        'request has been processed.',
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _busy ? null : _requestDataExport,
+                        icon: const Icon(Icons.download),
+                        label: const Text('Request My Data Export'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _busy ? null : _requestAccountDeletion,
+                        icon: const Icon(Icons.delete_forever),
+                        label: const Text('Request Account Deletion'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                        ),
                       ),
                     ],
                   ),

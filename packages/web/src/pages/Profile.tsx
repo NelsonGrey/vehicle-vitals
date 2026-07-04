@@ -141,6 +141,7 @@ export default function Profile() {
     signOut,
     linkWithGoogle,
     linkWithApple,
+    requestAccountConsolidation,
     consolidateAccountData,
   } = useAuth();
   const hasApiAccess = useFeatureFlag('api_access');
@@ -201,6 +202,9 @@ export default function Profile() {
   const [zapierRequiresSignature, setZapierRequiresSignature] = useState(false);
 
   const [consolidationSourceUid, setConsolidationSourceUid] = useState('');
+  const [consolidationCode, setConsolidationCode] = useState('');
+  const [consolidationCodeSentTo, setConsolidationCodeSentTo] = useState('');
+  const [requestCodeBusy, setRequestCodeBusy] = useState(false);
   const [consolidationBusy, setConsolidationBusy] = useState(false);
   const [consolidationResult, setConsolidationResult] = useState<{
     vehiclesMigrated: number;
@@ -208,7 +212,7 @@ export default function Profile() {
     migratedVins: string[];
   } | null>(null);
 
-  const handleConsolidateAccount = async () => {
+  const handleRequestConsolidationCode = async () => {
     if (!consolidationSourceUid.trim()) {
       setError('Please enter the source account UID');
       return;
@@ -216,6 +220,42 @@ export default function Profile() {
 
     if (consolidationSourceUid.trim() === user.uid) {
       setError('Cannot consolidate an account with itself');
+      return;
+    }
+
+    setError('');
+    setStatus('');
+    setRequestCodeBusy(true);
+
+    try {
+      const result = await requestAccountConsolidation(
+        consolidationSourceUid.trim()
+      );
+      if (result.success) {
+        setConsolidationCodeSentTo(result.sentTo);
+        setStatus(
+          `We sent a verification code to ${result.sentTo}. Enter it below to confirm the merge — only the owner of that account can see this code.`
+        );
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to send verification code';
+      setError(errorMessage);
+    } finally {
+      setRequestCodeBusy(false);
+    }
+  };
+
+  const handleConsolidateAccount = async () => {
+    if (!consolidationSourceUid.trim()) {
+      setError('Please enter the source account UID');
+      return;
+    }
+
+    if (!consolidationCode.trim()) {
+      setError('Please enter the verification code sent to that account');
       return;
     }
 
@@ -230,9 +270,10 @@ export default function Profile() {
     setConsolidationResult(null);
 
     try {
-      const result = await consolidateAccountData(
-        consolidationSourceUid.trim()
-      );
+      const result = await consolidateAccountData({
+        sourceUid: consolidationSourceUid.trim(),
+        verificationCode: consolidationCode.trim(),
+      });
       if (result.success) {
         setStatus(
           `Successfully migrated ${result.vehiclesMigrated} vehicle(s) from the source account.${
@@ -247,6 +288,8 @@ export default function Profile() {
           migratedVins: result.migratedVins,
         });
         setConsolidationSourceUid('');
+        setConsolidationCode('');
+        setConsolidationCodeSentTo('');
       } else {
         setError(result.message || 'Account consolidation failed');
       }
@@ -1022,11 +1065,69 @@ export default function Profile() {
               id="consolidationSourceUid"
               type="text"
               value={consolidationSourceUid}
-              onChange={e => setConsolidationSourceUid(e.target.value)}
+              onChange={e => {
+                setConsolidationSourceUid(e.target.value);
+                setConsolidationCodeSentTo('');
+                setConsolidationCode('');
+              }}
               placeholder="Paste the UID from your secondary account"
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
             />
           </div>
+
+          {!consolidationCodeSentTo ? (
+            <button
+              type="button"
+              onClick={() => void handleRequestConsolidationCode()}
+              disabled={requestCodeBusy || !consolidationSourceUid.trim()}
+              className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            >
+              {requestCodeBusy ? 'Sending code…' : 'Send Verification Code'}
+            </button>
+          ) : (
+            <>
+              <div>
+                <label
+                  htmlFor="consolidationCode"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+                >
+                  Verification Code
+                </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+                  Sent to {consolidationCodeSentTo}. Only the owner of that
+                  account can retrieve this code.
+                </p>
+                <input
+                  id="consolidationCode"
+                  type="text"
+                  inputMode="numeric"
+                  value={consolidationCode}
+                  onChange={e => setConsolidationCode(e.target.value)}
+                  placeholder="6-digit code"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleConsolidateAccount()}
+                  disabled={consolidationBusy || !consolidationCode.trim()}
+                  className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                >
+                  {consolidationBusy ? 'Merging…' : 'Confirm & Merge'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleRequestConsolidationCode()}
+                  disabled={requestCodeBusy}
+                  className="text-sm text-slate-600 dark:text-slate-300 underline"
+                >
+                  {requestCodeBusy ? 'Sending…' : 'Resend code'}
+                </button>
+              </div>
+            </>
+          )}
+
           {consolidationResult && (
             <div className="rounded-lg border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30 px-4 py-3">
               <p className="text-sm text-green-900 dark:text-green-200 m-0 mb-2">
@@ -1050,14 +1151,6 @@ export default function Profile() {
               </ul>
             </div>
           )}
-          <button
-            type="button"
-            onClick={() => void handleConsolidateAccount()}
-            disabled={consolidationBusy || !consolidationSourceUid.trim()}
-            className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-          >
-            {consolidationBusy ? 'Consolidating…' : 'Consolidate Accounts'}
-          </button>
         </div>
       </div>
       {status && (

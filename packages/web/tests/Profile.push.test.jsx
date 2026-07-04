@@ -29,6 +29,7 @@ vi.mock('../src/shared/notificationService', () => ({
 // Use a stable object reference for `user` so the [user] useEffect dependency
 // does not change on every render, preventing an infinite loadPreferences loop.
 const consolidateAccountData = vi.fn();
+const requestAccountConsolidation = vi.fn();
 const MOCK_USER = {
   uid: 'user-1',
   email: 'test@example.com',
@@ -40,6 +41,7 @@ vi.mock('../src/shared/AuthContext', () => ({
     signOut: vi.fn(),
     linkWithGoogle: vi.fn(),
     linkWithApple: vi.fn(),
+    requestAccountConsolidation,
     consolidateAccountData,
   }),
 }));
@@ -84,6 +86,7 @@ describe('Profile – push notification opt-in', () => {
     updateVehicle.mockResolvedValue(undefined);
     requestNotificationPermission.mockResolvedValue(null);
     consolidateAccountData.mockReset();
+    requestAccountConsolidation.mockReset();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
@@ -180,16 +183,21 @@ describe('Profile – push notification opt-in', () => {
       target: { value: MOCK_USER.uid },
     });
     fireEvent.click(
-      screen.getByRole('button', { name: /consolidate accounts/i })
+      screen.getByRole('button', { name: /send verification code/i })
     );
 
     await waitFor(() =>
       screen.getByText(/cannot consolidate an account with itself/i)
     );
+    expect(requestAccountConsolidation).not.toHaveBeenCalled();
     expect(consolidateAccountData).not.toHaveBeenCalled();
   });
 
   it('shows consolidation results after a successful account merge', async () => {
+    requestAccountConsolidation.mockResolvedValue({
+      success: true,
+      sentTo: 's***@example.com',
+    });
     consolidateAccountData.mockResolvedValue({
       success: true,
       sourceUid: 'source-user-2',
@@ -207,11 +215,26 @@ describe('Profile – push notification opt-in', () => {
       target: { value: 'source-user-2' },
     });
     fireEvent.click(
-      screen.getByRole('button', { name: /consolidate accounts/i })
+      screen.getByRole('button', { name: /send verification code/i })
     );
 
     await waitFor(() =>
-      expect(consolidateAccountData).toHaveBeenCalledWith('source-user-2')
+      expect(requestAccountConsolidation).toHaveBeenCalledWith(
+        'source-user-2'
+      )
+    );
+
+    const codeInput = await screen.findByLabelText(/verification code/i);
+    fireEvent.change(codeInput, { target: { value: '123456' } });
+    fireEvent.click(
+      screen.getByRole('button', { name: /confirm & merge/i })
+    );
+
+    await waitFor(() =>
+      expect(consolidateAccountData).toHaveBeenCalledWith({
+        sourceUid: 'source-user-2',
+        verificationCode: '123456',
+      })
     );
     await waitFor(() => screen.getByText(/consolidation successful!/i));
     expect(

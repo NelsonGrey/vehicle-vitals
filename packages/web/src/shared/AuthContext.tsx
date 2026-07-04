@@ -24,7 +24,9 @@ import {
 } from 'react';
 import {
   consolidateAccountData,
+  ConsolidationCodeRequestResult,
   ConsolidationResult,
+  requestAccountConsolidation,
 } from '../utils/accountConsolidationService';
 import { getSupportAccessContext } from '../utils/supportAdminService';
 import { auth } from './firebaseConfig';
@@ -47,10 +49,14 @@ interface AuthContextType {
   linkWithGoogle: () => Promise<UserCredential>;
   linkWithApple: () => Promise<UserCredential>;
   resetPassword: (email: string) => Promise<void>;
-  consolidateAccountData: (
-    sourceUid: string,
-    idempotencyKey?: string
-  ) => Promise<ConsolidationResult>;
+  requestAccountConsolidation: (
+    sourceUid: string
+  ) => Promise<ConsolidationCodeRequestResult>;
+  consolidateAccountData: (params: {
+    sourceUid: string;
+    verificationCode: string;
+    idempotencyKey?: string;
+  }) => Promise<ConsolidationResult>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -80,6 +86,9 @@ const AuthContext = createContext<AuthContextType>({
     throw new Error('Firebase not initialized');
   },
   resetPassword: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  requestAccountConsolidation: async () => {
     throw new Error('Firebase not initialized');
   },
   consolidateAccountData: async () => {
@@ -283,8 +292,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       linkWithGoogle: () => linkCurrentUserWithProvider(googleProvider),
       linkWithApple: () => linkCurrentUserWithProvider(appleProvider),
       resetPassword: (email: string) => sendPasswordResetEmail(auth, email),
-      consolidateAccountData: (sourceUid: string, idempotencyKey?: string) =>
-        consolidateAccountData({ sourceUid, idempotencyKey }),
+      requestAccountConsolidation: (sourceUid: string) =>
+        requestAccountConsolidation(sourceUid),
+      consolidateAccountData: (params: {
+        sourceUid: string;
+        verificationCode: string;
+        idempotencyKey?: string;
+      }) => consolidateAccountData(params),
     };
   }, [user, loading, supportAccess, supportAccessLoading]);
 

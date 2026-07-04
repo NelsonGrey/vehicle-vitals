@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../services/firestore_service.dart';
 import '../services/onboarding_service.dart';
 import '../services/premium_service.dart';
 
@@ -14,6 +15,32 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _submitting = false;
+  bool _loadingVehicles = true;
+  String? _firstVehicleVin;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirstVehicle();
+  }
+
+  Future<void> _loadFirstVehicle() async {
+    try {
+      final vehicles = await FirestoreService().getVehicles();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _firstVehicleVin = vehicles.isNotEmpty ? vehicles.first.vin : null;
+        _loadingVehicles = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _loadingVehicles = false);
+    }
+  }
 
   Future<void> _completeSetup() async {
     setState(() => _submitting = true);
@@ -55,6 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final premiumService = context.watch<PremiumService>();
     final tier = premiumService.subscriptionTier;
+    final hasVehicle = _firstVehicleVin != null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Setup your workspace')),
@@ -62,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Start productive in a few minutes',
+            'Add a vehicle → Log service records → Stay on top of what\'s next',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
@@ -71,31 +99,84 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
-          _SetupStepCard(
+          _PrimaryStepCard(
+            stepNumber: 1,
             icon: Icons.directions_car_filled,
-            title: 'Add your first vehicle',
+            title: 'Add your first vehicle or scan VIN',
             subtitle:
                 'Create your working garage so reminders, records, and timeline are useful from day one.',
-            buttonLabel: 'Add vehicle',
-            onTap: () => context.push('/app/add-vehicle'),
+            actions: [
+              _StepAction(
+                label: 'Add vehicle',
+                onTap: () => context.push('/app/add-vehicle'),
+              ),
+              _StepAction(
+                label: 'Scan VIN',
+                onTap: () => context.push('/app/scan-vin'),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
-          _SetupStepCard(
-            icon: Icons.notifications_active,
-            title: 'Set reminder preferences',
-            subtitle:
-                'Tune lead time and daily mileage assumptions to match how you use your vehicles.',
-            buttonLabel: 'Set reminders',
-            onTap: () => context.push('/app/reminder-preferences'),
+          _PrimaryStepCard(
+            stepNumber: 2,
+            icon: Icons.receipt_long,
+            title: 'Log a service record',
+            subtitle: hasVehicle
+                ? 'Add your first maintenance record so costs and history start building up.'
+                : 'Unlocks once you\'ve added a vehicle.',
+            actions: hasVehicle
+                ? [
+                    _StepAction(
+                      label: 'Add records',
+                      onTap: () =>
+                          context.push('/app/records/$_firstVehicleVin'),
+                    ),
+                  ]
+                : const [],
+            isLoading: _loadingVehicles,
           ),
           const SizedBox(height: 10),
-          _SetupStepCard(
-            icon: Icons.workspace_premium,
-            title: 'Review subscription options',
+          _PrimaryStepCard(
+            stepNumber: 3,
+            icon: Icons.event_available,
+            title: 'Review upcoming maintenance',
             subtitle:
-                'Check what is included for your current tier and where upgrades unlock more workflows.',
-            buttonLabel: 'Review subscriptions',
-            onTap: () => context.push('/app/premium'),
+                'See what\'s due soon across your garage so nothing sneaks up on you.',
+            actions: [
+              _StepAction(
+                label: 'View upcoming',
+                onTap: () => context.push('/app/upcoming'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'More setup (optional)',
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: Colors.black54),
+          ),
+          const SizedBox(height: 6),
+          Card(
+            child: Column(
+              children: [
+                _SecondaryStepTile(
+                  icon: Icons.notifications_active,
+                  title: 'Set reminder preferences',
+                  subtitle:
+                      'Tune lead time and daily mileage assumptions to match how you use your vehicles.',
+                  onTap: () => context.push('/app/reminder-preferences'),
+                ),
+                const Divider(height: 1),
+                _SecondaryStepTile(
+                  icon: Icons.workspace_premium,
+                  title: 'Review subscription options',
+                  subtitle:
+                      'Check what is included for your current tier and where upgrades unlock more workflows.',
+                  onTap: () => context.push('/app/premium'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           Card(
@@ -136,20 +217,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-class _SetupStepCard extends StatelessWidget {
-  const _SetupStepCard({
+class _StepAction {
+  const _StepAction({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+}
+
+class _PrimaryStepCard extends StatelessWidget {
+  const _PrimaryStepCard({
+    required this.stepNumber,
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.buttonLabel,
-    required this.onTap,
+    required this.actions,
+    this.isLoading = false,
   });
 
+  final int stepNumber;
   final IconData icon;
   final String title;
   final String subtitle;
-  final String buttonLabel;
-  final VoidCallback onTap;
+  final List<_StepAction> actions;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -159,29 +249,93 @@ class _SetupStepCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 24),
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Text(
+                '$stepNumber',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
+                  Row(
+                    children: [
+                      Icon(icon, size: 20),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(subtitle),
-                  const SizedBox(height: 10),
-                  OutlinedButton(onPressed: onTap, child: Text(buttonLabel)),
+                  if (isLoading) ...[
+                    const SizedBox(height: 10),
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ] else if (actions.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: actions
+                          .map(
+                            (action) => OutlinedButton(
+                              onPressed: action.onTap,
+                              child: Text(action.label),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SecondaryStepTile extends StatelessWidget {
+  const _SecondaryStepTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, size: 20),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
     );
   }
 }

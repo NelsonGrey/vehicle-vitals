@@ -272,7 +272,7 @@ end
 
    jobs:
      distribute-ios:
-       runs-on: macos-latest # or self-hosted
+       runs-on: macos-latest
        steps:
          - uses: actions/checkout@v4
          - uses: subosito/flutter-action@v2
@@ -284,16 +284,6 @@ end
              cd packages/mobile/ios
              fastlane beta
    ```
-
-### Self-Hosted Runner (Cost Optimization)
-
-For cost savings, use a self-hosted macOS runner:
-
-```yaml
-runs-on: [self-hosted, macos-latest, vehicle-vitals]
-```
-
-See the macOS Runner Setup Guide for complete instructions.
 
 ## 🔧 Maintenance & Troubleshooting
 
@@ -359,6 +349,4 @@ fastlane match appstore           # Recreate certificates
 
 **📖 Related Documentation:**
 
-- [macOS Runner Setup Guide](./MACOS_RUNNER_SETUP.md)
-- [CI/CD Pipeline Guide](./CICD_SETUP_GUIDE.md)
 - [Fastlane Documentation](https://docs.fastlane.tools)

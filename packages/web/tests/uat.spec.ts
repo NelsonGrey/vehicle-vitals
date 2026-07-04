@@ -157,9 +157,11 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       // Navigate to profile and look for sign out
       await page.goto(`${BASE_URL}/app/profile`);
 
-      const signOutButton = page.getByRole('button', {
-        name: /Sign Out|Log Out|Logout/i,
-      });
+      const signOutButton = page
+        .getByRole('button', {
+          name: /Sign Out|Log Out|Logout/i,
+        })
+        .first();
       if (await signOutButton.isVisible()) {
         await signOutButton.click();
         await page.waitForURL(/\/|\/auth/, { timeout: 10000 });
@@ -217,8 +219,13 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           page.waitForTimeout(3000),
         ]);
         await submitButton.click();
-        // Wait for page state to settle after form submission
-        await page.waitForLoadState('networkidle').catch(() => null);
+        // Wait for page state to settle after form submission. Bounded
+        // explicitly: a Firestore-backed app with persistent listeners may
+        // never reach true network-idle, and an unbounded wait can consume
+        // the entire test timeout budget.
+        await page
+          .waitForLoadState('networkidle', { timeout: 5000 })
+          .catch(() => null);
       }
     });
 
@@ -703,40 +710,31 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Marketing header is not directly visible in this deployment target.'
       );
 
-      const hasLegacyContextLinks =
-        (await header
-          .getByRole('link', { name: /Product Overview/i })
-          .isVisible()
-          .catch(() => false)) ||
-        (await header
-          .getByRole('link', { name: /Help & How-To/i })
-          .isVisible()
-          .catch(() => false));
+      await expect(
+        header.getByRole('link', { name: /For Owners/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Pricing/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Product Tour/i })
+      ).toBeVisible();
 
-      if (hasLegacyContextLinks) {
-        await expect(
-          header.getByRole('link', { name: /Product Overview/i })
-        ).toBeVisible();
-        await expect(
-          header.getByRole('link', { name: /Help & How-To/i })
-        ).toBeVisible();
-      } else {
-        await expect(
-          header.getByRole('link', { name: /VIN Lookup/i })
-        ).toBeVisible();
-        await expect(
-          header.getByRole('link', { name: /Product Overview/i })
-        ).toHaveCount(0);
-        await expect(
-          header.getByRole('link', { name: /Help & How-To/i })
-        ).toHaveCount(0);
-        await expect(
-          header.getByRole('link', { name: /Getting Started/i })
-        ).toHaveCount(0);
-        await expect(
-          header.getByRole('link', { name: /Subscriptions/i })
-        ).toHaveCount(0);
-      }
+      await expect(
+        header.getByRole('link', { name: /Product Overview/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Help & How-To/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /VIN Lookup/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Getting Started/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Subscriptions/i })
+      ).toHaveCount(0);
 
       await expect(header.getByRole('link', { name: /^Garage$/i })).toHaveCount(
         0
@@ -874,12 +872,16 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       }
 
       await expect(statusSelect).toBeVisible();
+      // Native <select> options are only rendered by the OS-level dropdown
+      // when open; WebKit's a11y tree reports them as not-visible while
+      // closed, unlike Chromium/Firefox. Check DOM attachment instead of
+      // visibility so this holds across browsers.
       await expect(
         page.getByRole('option', { name: /In Garage/i })
-      ).toBeVisible();
+      ).toBeAttached();
       await expect(
         page.getByRole('option', { name: /In Storage/i })
-      ).toBeVisible();
+      ).toBeAttached();
     });
   });
 

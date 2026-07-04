@@ -57,7 +57,6 @@ This collection provides everything needed to set up iOS projects with professio
 - GitHub Actions templates
 - GitLab CI configuration
 - Jenkins Pipeline setup
-- Self-hosted runner configuration
 - Security best practices
 - Performance optimization
 
@@ -129,7 +128,6 @@ chmod +x scripts/setup-ios-project.sh
 ### CI/CD Pipeline
 
 - [ ] Setup GitHub Actions (or preferred CI platform)
-- [ ] Configure self-hosted runners (optional, for cost savings)
 - [ ] Test automated builds and deployments
 - [ ] Setup notifications and monitoring
 
@@ -145,7 +143,6 @@ chmod +x scripts/setup-ios-project.sh
 ### CI/CD Automation
 
 - **Multi-Platform**: GitHub Actions, GitLab CI, Jenkins support
-- **Cost Optimization**: Self-hosted runners save ~90% on costs
 - **Security**: Secrets management and access controls
 - **Monitoring**: Build status, performance metrics, alerts
 
@@ -169,7 +166,6 @@ chmod +x scripts/setup-ios-project.sh
 **Small Team (2-10 developers)**:
 
 - Use Setup Guide + CI/CD Integration
-- Self-hosted runners for cost savings
 - Automated certificate management
 
 **Enterprise Team (10+ developers)**:
@@ -203,7 +199,6 @@ Track these to ensure successful implementation:
 - **Build Success Rate**: > 95% for automated builds
 - **Deployment Frequency**: Multiple releases per week
 - **Certificate Validity**: > 30 days remaining
-- **Cost Savings**: 80-90% with self-hosted runners
 
 ## 🔄 Maintenance & Updates
 
@@ -231,8 +226,6 @@ Track these to ensure successful implementation:
 
 ### Related Documentation
 
-- [macOS Runner Setup Guide](./MACOS_RUNNER_SETUP.md)
-- [CI/CD Pipeline Guide](./CICD_SETUP_GUIDE.md)
 - [Fastlane Documentation](https://docs.fastlane.tools)
 - [App Store Connect API](https://developer.apple.com/support/app-store-connect-api/)
 

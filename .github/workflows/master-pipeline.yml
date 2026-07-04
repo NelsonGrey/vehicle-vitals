@@ -377,122 +377,29 @@ jobs:
 
   build-ios:
     name: Build iOS App
-    needs: load-config
+    needs: [load-config, quality-gate]
     if: |
       needs.load-config.outputs.ios_enabled == 'true' &&
       (needs.load-config.outputs.trigger_context == 'build_all' ||
-       needs.load-config.outputs.trigger_context == 'build_and_deploy')
-    runs-on: self-hosted
+       needs.load-config.outputs.trigger_context == 'build_and_deploy') &&
+      (needs.load-config.outputs.target_environment == 'staging' ||
+       needs.load-config.outputs.target_environment == 'production') &&
+      needs.quality-gate.result == 'success'
+    runs-on: macos-latest
     timeout-minutes: 60
-    env:
-      COCOAPODS_DISABLE_STATS: true
-      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Prepare Isolated iOS Workspace
-        id: ios_workspace
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.38.4'
+
+      - name: Install Flutter Dependencies
         run: |
-          BUILD_ROOT="/private/tmp/vehicle-vitals-ios-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          rm -rf "$BUILD_ROOT"
-          mkdir -p "$BUILD_ROOT"
-          rsync -a --delete "$GITHUB_WORKSPACE/packages/mobile/" "$BUILD_ROOT/"
-
-          # Build outside the runner checkout path to avoid runner-specific EPERM
-          # failures against generated Flutter artifacts under .dart_tool.
-          chmod -R u+rwX "$BUILD_ROOT"
-          chmod -RN "$BUILD_ROOT" || true
-          xattr -cr "$BUILD_ROOT" || true
-
-          echo "mobile_dir=$BUILD_ROOT" >> "$GITHUB_OUTPUT"
-
-      - name: Ensure Flutter SDK
-        run: |
-          if [ ! -d "$HOME/flutter" ]; then
-            git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$HOME/flutter"
-          fi
-          echo "$HOME/flutter/bin" >> "$GITHUB_PATH"
-
-      - name: Flutter Doctor
-        run: |
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
-          export PATH="$HOME/flutter/bin:$PATH"
-          flutter doctor -v
-
-      - name: Setup Xcode Context
-        run: |
-          set -e
-          TARGET_XCODE="/Applications/Xcode.app/Contents/Developer"
-          CURRENT_XCODE="$(xcode-select -p 2>/dev/null || true)"
-
-          echo "Current xcode-select path: ${CURRENT_XCODE}"
-
-          if [ "${CURRENT_XCODE}" = "${TARGET_XCODE}" ]; then
-            echo "Xcode is already set to the expected path"
-          elif [ -d "${TARGET_XCODE}" ]; then
-            if [ "$(id -u)" -eq 0 ]; then
-              xcode-select -s "${TARGET_XCODE}"
-            elif sudo -n true 2>/dev/null; then
-              sudo xcode-select -s "${TARGET_XCODE}"
-            else
-              echo "::warning::Cannot switch Xcode path without passwordless sudo. Continuing with current selection (${CURRENT_XCODE})."
-            fi
-          else
-            echo "::warning::Expected Xcode path not found at ${TARGET_XCODE}."
-          fi
-
-          xcode-select -p
-          xcodebuild -version
-
-      - name: Ensure iOS Platform Support
-        run: |
-          set -e
-          echo "Checking installed Apple SDKs"
-          xcodebuild -showsdks
-
-          if xcodebuild -showsdks | grep -q "iphoneos"; then
-            echo "At least one iOS device SDK is installed"
-          else
-            echo "[warn] No iOS device SDK detected. Attempting platform download via xcodebuild"
-            xcodebuild -downloadPlatform iOS || true
-            xcodebuild -showsdks
-
-            if ! xcodebuild -showsdks | grep -q "iphoneos"; then
-              echo "::error::No iOS device SDK found on this runner. Install iOS platform components in Xcode > Settings > Components."
-              exit 1
-            fi
-          fi
-
-      - name: Clean iOS Build State
-        run: |
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
-          export PATH="$HOME/flutter/bin:$PATH"
-          flutter clean
-          rm -rf ios/Pods ios/Podfile.lock
-          
-          # Normalize DerivedData permissions before removing
-          # macOS self-hosted runners can have restrictive ACLs that prevent rm -rf
-          if [ -d "$HOME/Library/Developer/Xcode/DerivedData" ]; then
-            chmod -R u+rwX "$HOME/Library/Developer/Xcode/DerivedData" || true
-            chmod -RN "$HOME/Library/Developer/Xcode/DerivedData" || true
-            xattr -cr "$HOME/Library/Developer/Xcode/DerivedData" || true
-          fi
-          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
-
-      - name: Normalize Workspace Permissions
-        run: |
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
-          # Self-hosted macOS runners can inherit restrictive ACL/xattr metadata.
-          # Normalize here so Flutter/Xcode can read generated artifacts during lipo.
-          chmod -R u+rwX "$PWD"
-          chmod -RN "$PWD" || true
-          xattr -cr "$PWD" || true
-
-      - name: Regenerate Flutter iOS Config
-        run: |
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
-          export PATH="$HOME/flutter/bin:$PATH"
+          cd packages/mobile
           flutter pub get
 
       - name: Align iOS Firebase Environment
@@ -501,7 +408,7 @@ jobs:
           TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
         run: |
           set -e
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
+          cd packages/mobile
 
           case "$TARGET_ENV" in
             development)
@@ -559,8 +466,6 @@ jobs:
           fi
 
           echo "iOS Firebase config validated for $TARGET_ENV ($ACTUAL_PROJECT_ID)"
-          echo "environment=$TARGET_ENV" >> "$GITHUB_OUTPUT"
-          echo "project_id=$ACTUAL_PROJECT_ID" >> "$GITHUB_OUTPUT"
 
           {
             echo "### iOS Firebase Guard"
@@ -568,65 +473,54 @@ jobs:
             echo "- PROJECT_ID: $ACTUAL_PROJECT_ID"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Install CocoaPods
+      - name: Select Xcode Version
         run: |
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
-          cd ios
-          pod install --repo-update
-
-      - name: Validate iOS Build Destinations
-        run: |
-          set -e
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}/ios"
-
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -showdestinations 2>&1 | tee /tmp/ios-destinations.log
-
-          if grep -Eiq "error:iOS [0-9.]+ is not installed|Unable to find a destination matching" /tmp/ios-destinations.log; then
-            echo "::error::Runner is missing required iOS platform support for the current device/runtime. Install the matching iOS platform in Xcode > Settings > Components (or update Xcode on the runner)."
-            exit 1
+          # Xcode 16.4 has a provisioning-profile resolution bug with automatic signing;
+          # newer Xcode handles it correctly. Select the latest available Xcode 26+.
+          LATEST=$(ls /Applications/ | grep -E "^Xcode_2[6-9]\.[0-9]+\.app$|^Xcode_[3-9][0-9]\.[0-9]+\.app$" | sort -t_ -k2 -V | tail -1)
+          if [ -n "$LATEST" ]; then
+            sudo xcode-select -s "/Applications/${LATEST}"
+            echo "Selected $LATEST"
+          else
+            echo "No Xcode 26+ found; using default $(xcode-select -p)"
           fi
+          xcodebuild -version
 
-      - name: Build iOS (No Codesign)
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Run Fastlane Beta (Signed Build + TestFlight)
+        working-directory: packages/mobile/ios
         env:
           TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+          FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
         run: |
-          cd "${{ steps.ios_workspace.outputs.mobile_dir }}"
-          export PATH="$HOME/flutter/bin:$PATH"
-          set +e
-          flutter build ios --release --no-codesign --dart-define=VV_FIREBASE_ENV="$TARGET_ENV" 2>&1 | tee /tmp/flutter-ios-build.log
-          BUILD_EXIT=${PIPESTATUS[0]}
+          FIREBASE_ENV="$TARGET_ENV" bundle exec fastlane beta
 
-          if [ $BUILD_EXIT -ne 0 ]; then
-            if grep -Eiq "error:iOS [0-9.]+ is not installed|Unable to find a destination matching" /tmp/flutter-ios-build.log; then
-              echo "::error::Build failed due to missing iOS platform support on this runner. Update Xcode/iOS Components before retrying."
-              exit $BUILD_EXIT
-            fi
-
-            echo "[warn] Initial iOS build failed; retrying once after resetting Flutter build intermediates"
-            find .dart_tool/flutter_build -path '*/arm64/App.framework/App' -print -exec ls -lO@ {} \; 2>/dev/null || true
-            rm -rf .dart_tool/flutter_build
-            chmod -R u+rwX .dart_tool || true
-            xattr -cr .dart_tool || true
-            flutter build ios --release --no-codesign --dart-define=VV_FIREBASE_ENV="$TARGET_ENV" 2>&1 | tee /tmp/flutter-ios-build-retry.log
-            BUILD_EXIT=${PIPESTATUS[0]}
-          fi
-
-          exit $BUILD_EXIT
-
-      - name: Upload iOS Build Artifacts
+      - name: Upload iOS Build Artifact
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ios-no-codesign-build
-          path: |
-            ${{ steps.ios_workspace.outputs.mobile_dir }}/build/ios/iphoneos
-            ${{ steps.ios_workspace.outputs.mobile_dir }}/build/ios/archive
+          name: ios-signed-build-${{ needs.load-config.outputs.target_environment }}
+          path: packages/mobile/ios/builds/Vehicle-Vitals.ipa
           if-no-files-found: warn
 
-      - name: Cleanup Isolated iOS Workspace
+      - name: Upload Fastlane/gym Logs
         if: always()
-        run: |
-          rm -rf "${{ steps.ios_workspace.outputs.mobile_dir }}"
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-fastlane-logs-${{ needs.load-config.outputs.target_environment }}
+          path: |
+            ~/Library/Logs/gym
+            ~/Library/Logs/fastlane
+          if-no-files-found: ignore
 
   build-android:
     name: Build Android App

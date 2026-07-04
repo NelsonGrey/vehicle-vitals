@@ -315,14 +315,6 @@ packages/mobile/Gemfile.lock
 # Secrets
 .act-secrets/
 
-# Self-hosted runner binaries (too large for Git)
-actions-runner/externals/node*/bin/node
-actions-runner/actions-runner-*.tar.gz
-actions-runner/_work/
-actions-runner/_diag/
-actions-runner/.runner_migrated
-actions-runner/
-
 # Signing files
 modulosquare.mobileprovision
 AppleDistribution.p12

@@ -4794,7 +4794,22 @@ export const zapierMaintenanceWebhook = onRequest(
 );
 
 export const stripeSubscriptionWebhook = onRequest(
-  { cors: true, secrets: ['STRIPE_WEBHOOK_SECRET'] },
+  {
+    cors: true,
+    secrets: [
+      'STRIPE_WEBHOOK_SECRET',
+      // resolveSubscriptionTierFromStripeObject falls back to a price-ID
+      // lookup (getStripePriceLookup) when the event object has no
+      // metadata.targetTier/tier — e.g. invoice.payment_succeeded events,
+      // which don't reliably carry the subscription's metadata. Firebase
+      // Functions v2 binds secrets per-function, so these must be declared
+      // here too, not just on createSubscriptionCheckoutSessionCallable.
+      'STRIPE_PRICE_ID_PRO_MONTHLY',
+      'STRIPE_PRICE_ID_PRO_ANNUAL',
+      'STRIPE_PRICE_ID_PREMIUM_MONTHLY',
+      'STRIPE_PRICE_ID_PREMIUM_ANNUAL',
+    ],
+  },
   async (request, response) => {
     try {
       if (!enforceRateLimit(request, response, 'stripeSubscriptionWebhook')) {

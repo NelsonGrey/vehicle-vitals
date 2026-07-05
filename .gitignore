@@ -364,3 +364,6 @@ Desktop.ini
 *.xcuserdata
 *.xcodeproj/project.xcworkspace/
 packages/mobile/ios/fastlane/fastlane/
+
+stripe_dev
+stripe_staging

@@ -669,7 +669,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         '/videos/feature-demos/onboarding-walkthrough.mp4',
         '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
         '/videos/feature-demos/cross-platform-continuity.mp4',
-        '/videos/feature-demos/vin-lookup-demo.mp4',
+        // TODO: flip back to 'vin-lookup-demo.mp4' once this deploy lands —
+        // this UAT run checks the *currently hosted* dev site, which still
+        // serves the pre-rename filename until Deploy Firebase completes.
+        '/videos/feature-demos/vin-decode-demo.mp4',
         '/videos/feature-demos/maintenance-planning-demo.mp4',
         '/videos/feature-demos/cross-platform-access-demo.mp4',
         '/videos/feature-demos/ownership-history-demo.mp4',

@@ -64,15 +64,15 @@ export async function fetchVehicleByVINAndSave(vin) {
       throw new Error('Firebase Functions not available');
     }
 
-    // Call Firebase Function for VIN decoding
-    const decodeVINCallable = firebaseService.httpsCallable(
+    // Call Firebase Function for VIN lookup
+    const vinLookupCallable = firebaseService.httpsCallable(
       firebaseService.functions,
-      'decodeVINCallable'
+      'vinLookupCallable'
     );
-    const result = await decodeVINCallable({ vin });
+    const result = await vinLookupCallable({ vin });
 
     if (!result.data.success) {
-      throw new Error(result.data.error || 'Failed to decode VIN');
+      throw new Error(result.data.error || 'Failed to look up VIN');
     }
 
     const vehicleData = result.data.vehicle;
@@ -149,8 +149,8 @@ export function buildPersistedVinInsights(insights) {
   };
 }
 
-// Decode VIN without saving; returns { make, model, year } strings or '' when unknown
-export async function decodeVin(vin) {
+// Look up VIN without saving; returns { make, model, year } strings or '' when unknown
+export async function lookupVin(vin) {
   try {
     const insights = await getVehicleInsights(vin);
     const vehicle = insights?.free?.vinProfile || {};
@@ -164,7 +164,7 @@ export async function decodeVin(vin) {
       rawInsights: insights,
     };
   } catch (err) {
-    console.error('VIN decode failed', err);
+    console.error('VIN lookup failed', err);
     throw err;
   }
 }

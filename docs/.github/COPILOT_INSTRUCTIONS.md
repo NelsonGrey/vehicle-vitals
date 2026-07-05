@@ -34,7 +34,7 @@ Two frontends (web + mobile) share Firebase-backed utilities in `shared/`. Follo
   - Tests: `web/tests/firestoreService.test.js` uses Vitest + `@firebase/rules-unit-testing`; it `vi.mock`s `shared/firebaseConfig` so the service uses a test DB.
 
 - Integration points
-  - VIN decode: `web/src/utils/vehicleService.js` `fetchVehicleByVINAndSave(vin)` calls NHTSA VPIC, then writes to `users/${uid}/vehicles/${vin}` (web-config path).
+  - VIN lookup: `web/src/utils/vehicleService.js` `fetchVehicleByVINAndSave(vin)` calls NHTSA VPIC, then writes to `users/${uid}/vehicles/${vin}` (web-config path).
 
 - Editing rules (project-specific)
   - Preserve Firestore document paths and the VIN-as-id convention (vehicles and maintenance).

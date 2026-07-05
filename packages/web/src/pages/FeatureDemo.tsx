@@ -27,7 +27,7 @@ const mediaByFeature: Record<
       '/images/features/add-vehicle.png',
     ],
     videoPoster: '/images/features/add-vehicle.png',
-    videoPath: '/videos/feature-demos/vin-decode-demo.mp4',
+    videoPath: '/videos/feature-demos/vin-lookup-demo.mp4',
   },
   'Maintenance Planning': {
     hero: '/images/features/upcoming.png',

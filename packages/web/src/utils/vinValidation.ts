@@ -90,15 +90,15 @@ export function hasValidVinChecksum(vinInput: string): boolean {
   return vin[8] === expectedCheckDigit;
 }
 
-export function getVinDecodeValidationError(vinInput: string): string | null {
+export function getVinLookupValidationError(vinInput: string): string | null {
   const vin = (vinInput || '').trim().toUpperCase();
 
   if (!looksLikeVin(vin)) {
-    return 'VIN decode requires a valid 17-character VIN.';
+    return 'VIN lookup requires a valid 17-character VIN.';
   }
 
   if (!hasValidVinChecksum(vin)) {
-    return 'VIN decode requires a valid 17-character VIN with a correct check digit.';
+    return 'VIN lookup requires a valid 17-character VIN with a correct check digit.';
   }
 
   return null;

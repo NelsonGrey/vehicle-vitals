@@ -18,7 +18,7 @@ Define a single backend API surface for both web and mobile so we can deliver:
 
 This roadmap assumes Firebase Functions as the API gateway layer.
 
-As of May 2026, the API surface already includes VIN decode, calendar sync, owner manuals, warranty summaries, maintenance planning, premium verification, subscription checkout, Zapier webhook handling, and enterprise support callables.
+As of May 2026, the API surface already includes VIN lookup, calendar sync, owner manuals, warranty summaries, maintenance planning, premium verification, subscription checkout, Zapier webhook handling, and enterprise support callables.
 
 ---
 
@@ -26,9 +26,9 @@ As of May 2026, the API surface already includes VIN decode, calendar sync, owne
 
 | Capability                         | Current State        | Evidence                                                                                                                                                                                                                                                                   |
 | ---------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| VIN decode backend                 | Partial, implemented | `packages/functions/src/index.ts` (`decodeVIN`)                                                                                                                                                                                                                            |
-| VIN decode web usage               | Partial, implemented | `packages/web/src/utils/vehicleService.js`                                                                                                                                                                                                                                 |
-| VIN decode mobile usage            | Partial, implemented | Callable integration in `packages/mobile/lib/screens/add_vehicle_screen.dart`                                                                                                                                                                                              |
+| VIN lookup backend                 | Partial, implemented | `packages/functions/src/index.ts` (`vinLookup`)                                                                                                                                                                                                                            |
+| VIN lookup web usage               | Partial, implemented | `packages/web/src/utils/vehicleService.js`                                                                                                                                                                                                                                 |
+| VIN lookup mobile usage            | Partial, implemented | Callable integration in `packages/mobile/lib/screens/add_vehicle_screen.dart`                                                                                                                                                                                              |
 | Reminder scheduler                 | Partial              | `checkMaintenanceReminders` in `packages/functions/src/index.ts`                                                                                                                                                                                                           |
 | Reminder actions (snooze/complete) | Partial, implemented | Firestore persistence in `packages/shared/src/firestoreServiceFactory.js`                                                                                                                                                                                                  |
 | Email reminder delivery            | Partial              | Function exists with provider integration in `packages/functions/src/email.provider.ts` and reminder delivery reconciliation in `packages/functions/src/index.ts`                                                                                                          |
@@ -42,10 +42,10 @@ As of May 2026, the API surface already includes VIN decode, calendar sync, owne
 
 Use Firebase HTTPS functions for a normalized API contract regardless of data provider.
 
-### 1) VIN Decode
+### 1) VIN Lookup
 
-- `POST /api/vehicles/decode-vin`
-- Purpose: Normalize VIN decode output for clients.
+- `POST /api/vehicles/vin-lookup`
+- Purpose: Normalize VIN lookup output for clients.
 - Backing provider: NHTSA VPIC (existing), extensible for premium providers.
 
 Request:
@@ -197,7 +197,7 @@ Create provider interfaces in Functions so clients never call third-party APIs d
 
 ```ts
 interface VehicleDataProvider {
-  decodeVin(vin: string): Promise<DecodedVehicle>;
+  lookupVin(vin: string): Promise<VehicleLookupResult>;
 }
 
 interface ManualProvider {
@@ -244,7 +244,7 @@ Common metadata fields:
 
 ## Security and Compliance Requirements
 
-- Require Firebase Auth for all new integration endpoints except optional public VIN decode.
+- Require Firebase Auth for all new integration endpoints except optional public VIN lookup.
 - Store provider API keys only in Functions secrets.
 - Redact VIN in logs (only first 8 chars).
 - Add endpoint rate limits and abuse controls for public routes.
@@ -298,7 +298,7 @@ A capability is considered done when:
 Completed:
 
 1. Add new Functions endpoints as scaffold handlers returning `501 Not Implemented` with the schemas above.
-2. Replace mobile mock VIN decode with real `decodeVIN` callable integration.
+2. Replace mobile mock VIN lookup with real `vinLookup` callable integration.
 3. Implement reminder lifecycle persistence in `packages/shared/src/firestoreServiceFactory.js`.
 4. Implement an email provider adapter in `packages/functions/src/email.provider.ts` and wire `sendMaintenanceReminder` to use it.
 5. Add integration endpoint guards in `packages/functions/src/request.guards.ts` (Firebase auth + per-endpoint rate limiting).

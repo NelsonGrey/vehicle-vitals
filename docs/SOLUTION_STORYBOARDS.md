@@ -106,13 +106,13 @@ Business focus:
 
 Technical focus:
 
-- VIN decode integration and graceful fallback states
+- VIN lookup integration and graceful fallback states
 - Required-field validation aligned with Firestore schema
 
 Review prompts:
 
 - Does the form balance speed and accuracy?
-- Is manual fallback obvious when VIN decode fails?
+- Is manual fallback obvious when VIN lookup fails?
 
 <div style="page-break-after: always;"></div>
 

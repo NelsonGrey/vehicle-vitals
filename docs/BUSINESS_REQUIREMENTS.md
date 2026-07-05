@@ -465,7 +465,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 #### Cost Structure (per active user)
 
 - **Infrastructure (Firebase, compute, CDN)**: $0.30-0.50/user/month
-- **Third-party APIs (VIN decode, storage, email)**: $0.30-0.40/user/month
+- **Third-party APIs (VIN lookup, storage, email)**: $0.30-0.40/user/month
   - _(Email/SMS costs reduced via Postmark migration, estimated $0.05/user/month)_
 - **Support & Operations**: $0.10-0.15/user/month
 - **COGS Total**: $0.70-1.05/user/month
@@ -484,7 +484,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 
 - **COGS (Infrastructure + Platform fees)**: $1.50/user
   - Firebase: $0.80
-  - Third-party APIs (VIN decode, etc.): $0.40
+  - Third-party APIs (VIN lookup, etc.): $0.40
   - Payment processing: $0.20
   - Support/infrastructure: $0.10
 
@@ -561,7 +561,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 | **Crash Rate**                               | <0.3%        | <0.2%         | Crashlytics    | Engineering |
 | **Critical Bugs (Age >7d)**                  | 0            | 0             | Issue tracking | Engineering |
 | **Page Load Time (P95)**                     | <2s          | <2.5s         | Analytics      | Engineering |
-| **Successful VIN Decode Rate**               | 95%          | 98%           | Logs           | Product     |
+| **Successful VIN Lookup Rate**               | 95%          | 98%           | Logs           | Product     |
 
 ---
 
@@ -573,7 +573,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 | ---------------------------------------------------------------------------------- | ------ | ---------- | -------------------------------------------------------------------------------------- | ------------- |
 | **Market saturation** from competitors (e.g., mileage-tracking apps pivoting)      | High   | Medium     | Differentiate via superior UX, B2B partnerships, first-mover advantage in premium tier | Product       |
 | **Low user adoption** due to habit/inertia (most users never digitize records)     | High   | Medium     | Invest in onboarding, VIN scanning simplicity, referral incentives, partner push       | Growth        |
-| **API deprecation risk** (VIN decode APIs changing)                                | Medium | Low        | Multi-source fallback, internal ML model development roadmap                           | Engineering   |
+| **API deprecation risk** (VIN lookup APIs changing)                                | Medium | Low        | Multi-source fallback, internal ML model development roadmap                           | Engineering   |
 | **Privacy regulation changes** (GDPR, state auto-data laws)                        | Medium | Medium     | Legal review Q1, privacy-by-design architecture, compliance audit                      | Legal         |
 | **Mechanic/dealership resistance** to sharing data                                 | Medium | Medium     | Positioning as consumer tool (not competitor), offer partnership benefits              | BD            |
 | **iOS/Android policy changes** affecting freemium model                            | Medium | Low        | Monitor App Store policies quarterly, diversify revenue (web, B2B)                     | Product       |
@@ -585,7 +585,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 ### Key Assumptions
 
 1. **Market Assumption**: Target users will digitize vehicle maintenance records if solution is simple/free
-2. **Technology Assumption**: VIN decode APIs remain available and accurate
+2. **Technology Assumption**: VIN lookup APIs remain available and accurate
 3. **Growth Assumption**: Viral coefficient >1.0 achievable through referral incentives
 4. **Business Assumption**: Premium conversion >3% achievable at $129/year price point
 5. **Regulatory Assumption**: No major auto-data privacy laws blocking feature development

@@ -4,18 +4,18 @@ Firebase Cloud Functions for Vehicle Vitals backend services.
 
 ## Features
 
-- 🔍 **VIN Decoding**: Decode vehicle identification numbers using NHTSA VPIC API
+- 🔍 **VIN Lookup**: Look up vehicle identification numbers using NHTSA VPIC API
 - 📧 **Maintenance Reminders**: Automated email reminders for upcoming vehicle maintenance
 - ⏰ **Scheduled Tasks**: Daily checks for maintenance due dates
 - 🔧 **Firestore Integration**: CRUD operations for vehicle and maintenance data
 
 ## Functions
 
-### `decodeVIN`
+### `vinLookup`
 
-HTTP endpoint that decodes VINs using the NHTSA Vehicle Information API.
+HTTP endpoint that looks up VINs using the NHTSA Vehicle Information API.
 
-**Endpoint**: `POST /decodeVIN`
+**Endpoint**: `POST /vinLookup`
 **Request Body**:
 
 ```json
@@ -108,7 +108,7 @@ lib/               # Compiled JavaScript output
 
 - **Node.js**: Version 22
 - **Firebase**: Functions runtime
-- **NHTSA VPIC API**: For VIN decoding (no API key required)
+- **NHTSA VPIC API**: For VIN lookup (no API key required)
 
 ### Integration Runtime Flags
 

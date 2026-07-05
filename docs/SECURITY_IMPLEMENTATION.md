@@ -643,7 +643,7 @@ export const protectedFunction = onCall(async request => {
 
 ```typescript
 // Validate and sanitize all inputs
-export const decodeVIN = onRequest({ cors: true }, async (req, res) => {
+export const vinLookup = onRequest({ cors: true }, async (req, res) => {
   const { vin } = req.body;
 
   // Type validation
@@ -675,7 +675,7 @@ export const decodeVIN = onRequest({ cors: true }, async (req, res) => {
 
 ```typescript
 // Firebase Functions v2 built-in rate limiting
-export const decodeVIN = onRequest(
+export const vinLookup = onRequest(
   {
     cors: true,
     maxInstances: 10, // Limit concurrent executions
@@ -723,7 +723,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-export const decodeVIN = onRequest(async (req, res) => {
+export const vinLookup = onRequest(async (req, res) => {
   cors(corsOptions)(req, res, async () => {
     // Function logic...
   });

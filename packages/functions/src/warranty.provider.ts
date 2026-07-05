@@ -16,7 +16,7 @@ export interface WarrantySummary {
   notes: string;
 }
 
-interface DecodedVehicleIdentity {
+interface VehicleIdentityLookup {
   vin: string;
   make: string;
   model: string;
@@ -24,7 +24,7 @@ interface DecodedVehicleIdentity {
 }
 
 /**
- * Normalize decoded text values from VPIC.
+ * Normalize looked-up text values from VPIC.
  * @param {string | undefined} value Raw source value
  * @return {string} Sanitized value
  */
@@ -56,11 +56,11 @@ function getVal(
 }
 
 /**
- * Decode VIN into a minimal identity object.
+ * Look up VIN into a minimal identity object.
  * @param {string} vin Vehicle VIN
- * @return {Promise<DecodedVehicleIdentity>} Decoded identity
+ * @return {Promise<VehicleIdentityLookup>} Resolved identity
  */
-async function decodeVinIdentity(vin: string): Promise<DecodedVehicleIdentity> {
+async function lookupVinIdentity(vin: string): Promise<VehicleIdentityLookup> {
   const nhtsaUrl =
     "https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/" +
     `${encodeURIComponent(vin)}?format=json`;
@@ -151,7 +151,7 @@ export async function lookupWarrantySummary(
   vin: string,
   currentMileage?: number
 ): Promise<WarrantySummary> {
-  const identity = await decodeVinIdentity(vin);
+  const identity = await lookupVinIdentity(vin);
   const inService = resolveInServiceDate(identity.year);
   const basicEnd = yearsFromNow(inService, 3);
   const powertrainEnd = yearsFromNow(inService, 5);

@@ -44,7 +44,7 @@ The marketing site establishes the vision — persona-driven messaging, dark-and
 ### Key product surfaces (as marketed)
 
 - 3-step onboarding: Add vehicle → Track service and costs → Stay on top of what's next
-- VIN Lookup — decode and auto-populate vehicle profile
+- VIN Lookup — look up and auto-populate vehicle profile
 - Maintenance Planning — schedule, reminders, upcoming tasks
 - Ownership History — timeline, document portfolio, export
 - Cross-Platform Access — same account on web and iOS

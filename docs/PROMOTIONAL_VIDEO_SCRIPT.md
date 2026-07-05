@@ -65,9 +65,9 @@
 
 **[ANIMATED CALLOUTS: Point to Year dropdown, Make dropdown, Model dropdown, VIN field]**
 
-**On-Screen Text:** "VIN Auto-Decode"
+**On-Screen Text:** "VIN Auto-Lookup"
 
-**Voice-Over:** "Vehicle Vitals can even decode your VIN to auto-fill details."
+**Voice-Over:** "Vehicle Vitals can even look up your VIN to auto-fill details."
 
 ---
 

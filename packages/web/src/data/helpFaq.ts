@@ -243,7 +243,7 @@ export const iosFaq: FaqItem[] = [
     answers: [
       'Yes.',
       'Use the Scan VIN route and confirm captured VIN.',
-      'Continue to add/edit flow to decode and save.',
+      'Continue to add/edit flow to look up and save.',
     ],
   },
   {

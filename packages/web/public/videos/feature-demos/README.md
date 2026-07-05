@@ -9,7 +9,7 @@ Expected filenames used by the web marketing pages:
 - onboarding-walkthrough.mp4
 - maintenance-lifecycle-tour.mp4
 - cross-platform-continuity.mp4
-- vin-decode-demo.mp4
+- vin-lookup-demo.mp4
 - maintenance-planning-demo.mp4
 - cross-platform-access-demo.mp4
 - ownership-history-demo.mp4
@@ -38,7 +38,7 @@ Interactive generation:
 - Generate only the VIN interactive pilot clip:
   `npm run videos:generate:interactive:vin`
 - The all-video interactive script supports scoped generation with `VV_INTERACTIVE_ONLY`:
-  `VV_INTERACTIVE_ONLY=vin-decode-demo,help-center-overview npm run videos:generate:interactive`
+  `VV_INTERACTIVE_ONLY=vin-lookup-demo,help-center-overview npm run videos:generate:interactive`
 - For neural narration, set `VV_TTS_PROVIDER=openai` and `OPENAI_API_KEY`.
 - Optional OpenAI voice settings: `VV_OPENAI_TTS_MODEL` (default `gpt-4o-mini-tts`) and `VV_OPENAI_TTS_VOICE` (default `alloy`).
 - Optional OpenAI style and reliability settings:

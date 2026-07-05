@@ -52,17 +52,19 @@ export default function StackedVLogo({
         aria-hidden="true"
         focusable="false"
       >
-  {/* Outer V (further inset to avoid edge collision and add breathing room) */}
-  <path d="M12 4 L32 30 L52 4" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
-  {/* Middle V — more inset to increase spacing */}
-  <path d="M14 5 L32 26 L50 5" stroke={color} strokeOpacity="0.75" strokeWidth="2.1" strokeLinecap="round" />
-  {/* Inner V — further inset and higher clearance for stronger separation */}
-  <path d="M24 8 L32 20 L40 8" stroke={accent} strokeWidth="3.0" strokeLinecap="round" />
+  {/* Crossed wrenches, echoing the app icon's badge mark */}
+  {/* Wrench 1: lower-left jaw to upper-right jaw */}
+  <line x1="16" y1="28" x2="48" y2="6" stroke={color} strokeWidth="3.2" strokeLinecap="round" />
+  <circle cx="16" cy="28" r="3.8" stroke={color} strokeWidth="2.4" fill="none" />
+  <circle cx="48" cy="6" r="3.8" stroke={color} strokeWidth="2.4" fill="none" />
 
-        {/* Bolt accents (hex nuts) at endpoints and apex */}
-  <Hex cx={12} cy={4} r={3.5} fill={color} />
-  <Hex cx={52} cy={4} r={3.5} fill={color} />
-        <Hex cx={32} cy={30} r={3.5} fill={accent} />
+  {/* Wrench 2: upper-left jaw to lower-right jaw, in the accent color for contrast */}
+  <line x1="16" y1="6" x2="48" y2="28" stroke={accent} strokeWidth="3.2" strokeLinecap="round" />
+  <circle cx="16" cy="6" r="3.8" stroke={accent} strokeWidth="2.4" fill="none" />
+  <circle cx="48" cy="28" r="3.8" stroke={accent} strokeWidth="2.4" fill="none" />
+
+        {/* Pivot bolt where the wrenches cross */}
+        <Hex cx={32} cy={17} r={3.2} fill={accent} />
       </svg>
       {showText && wordmark}
     </div>

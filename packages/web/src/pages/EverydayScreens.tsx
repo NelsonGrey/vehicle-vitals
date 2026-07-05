@@ -22,7 +22,7 @@ export default function EverydayScreens() {
       title: 'Add vehicle screen',
       description: 'A simple form to set up your first vehicle.',
       image: '/images/features/add-vehicle.png',
-      demoPath: '/vin-decode-demo',
+      demoPath: '/vin-lookup-demo',
       platform: 'Web',
     },
     {

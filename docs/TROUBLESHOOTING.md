@@ -181,12 +181,12 @@ pkill -f firebase
 firebase emulators:start --import=./emulator-data --export-on-exit
 ```
 
-### Issue: VIN decoding fails
+### Issue: VIN lookup fails
 
 **Symptoms**:
 
 ```
-Error: Failed to decode VIN
+Error: Failed to look up VIN
 ```
 
 **Causes**:
@@ -217,7 +217,7 @@ fetch('https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/1HGBH41JXMN109186?forma
   .catch(err => console.error('NHTSA API Error:', err));
 
 // Check Firebase Function logs
-firebase functions:log --only decodeVIN
+firebase functions:log --only vinLookup
 
 // Test function locally
 firebase emulators:start --only functions
@@ -485,7 +485,7 @@ await FirebaseFirestore.instance.clearPersistence();
 
 ```typescript
 // Solution 1: Increase minimum instances (keeps functions warm)
-export const decodeVIN = onRequest(
+export const vinLookup = onRequest(
   {
     cors: true,
     minInstances: 1, // Keep 1 instance always running (costs $)

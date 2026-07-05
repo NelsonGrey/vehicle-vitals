@@ -7,7 +7,7 @@ import AddVehicle from '../src/pages/AddVehicle';
 const mockNavigate = vi.fn();
 const mockAddOrUpdateVehicle = vi.fn();
 const mockGetVehicles = vi.fn();
-const mockDecodeVin = vi.fn();
+const mockLookupVin = vi.fn();
 const mockBuildPersistedVinInsights = vi.fn();
 const mockFindVehiclePhotoFromWeb = vi.fn();
 
@@ -47,7 +47,7 @@ vi.mock('../src/shared/licensePlateUtils', () => ({
 }));
 
 vi.mock('../src/utils/vehicleService', () => ({
-  decodeVin: (...args) => mockDecodeVin(...args),
+  lookupVin: (...args) => mockLookupVin(...args),
   buildPersistedVinInsights: (...args) =>
     mockBuildPersistedVinInsights(...args),
 }));
@@ -162,8 +162,8 @@ describe('AddVehicle page', () => {
     ).toBeInTheDocument();
   });
 
-  it('decodes VIN and updates preview state', async () => {
-    mockDecodeVin.mockResolvedValue({
+  it('looks up VIN and updates preview state', async () => {
+    mockLookupVin.mockResolvedValue({
       make: 'Toyota',
       model: 'Camry',
       year: '2020',
@@ -190,7 +190,7 @@ describe('AddVehicle page', () => {
     await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     await waitFor(() => {
-      expect(mockDecodeVin).toHaveBeenCalledWith('1HGCM82633A004352');
+      expect(mockLookupVin).toHaveBeenCalledWith('1HGCM82633A004352');
       expect(screen.getByText(/2 recalls/i)).toBeInTheDocument();
       expect(screen.getByText(/vehicle specifications/i)).toBeInTheDocument();
     });
@@ -244,7 +244,7 @@ describe('AddVehicle page', () => {
     });
   });
 
-  it('shows decode alert if VIN is blank', async () => {
+  it('shows lookup alert if VIN is blank', async () => {
     renderPage();
     await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
     expect(global.alert).toHaveBeenCalled();
@@ -253,7 +253,7 @@ describe('AddVehicle page', () => {
     expect(alertMessage).toMatch(/Year\/Make\/Model/i);
   });
 
-  it('blocks decode when VIN check digit is invalid', async () => {
+  it('blocks lookup when VIN check digit is invalid', async () => {
     renderPage();
 
     await userEvent.type(
@@ -263,12 +263,12 @@ describe('AddVehicle page', () => {
     await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     expect(global.alert).toHaveBeenCalledWith(
-      'VIN decode requires a valid 17-character VIN with a correct check digit.'
+      'VIN lookup requires a valid 17-character VIN with a correct check digit.'
     );
-    expect(mockDecodeVin).not.toHaveBeenCalled();
+    expect(mockLookupVin).not.toHaveBeenCalled();
   });
 
-  it('blocks decode for HIN identifiers and allows manual save path', async () => {
+  it('blocks lookup for HIN identifiers and allows manual save path', async () => {
     renderPage();
 
     await userEvent.selectOptions(
@@ -282,8 +282,8 @@ describe('AddVehicle page', () => {
     await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     expect(global.alert).toHaveBeenCalledWith(
-      'Decode currently supports VIN only. Detected HIN. You can still save this vehicle ID and complete details manually.'
+      'VIN lookup currently supports VIN only. Detected HIN. You can still save this vehicle ID and complete details manually.'
     );
-    expect(mockDecodeVin).not.toHaveBeenCalled();
+    expect(mockLookupVin).not.toHaveBeenCalled();
   });
 });

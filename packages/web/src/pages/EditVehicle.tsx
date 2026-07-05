@@ -31,11 +31,11 @@ import {
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
-import { decodeVin } from '../utils/vehicleService';
+import { lookupVin } from '../utils/vehicleService';
 import { transferVehicle } from '../utils/vehicleTransferService';
 import {
   detectVehicleIdentifierType,
-  getVinDecodeValidationError,
+  getVinLookupValidationError,
 } from '../utils/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
@@ -337,12 +337,12 @@ export default function EditVehicle() {
     }
   };
 
-  const handleDecodeVin = async () => {
+  const handleLookupVin = async () => {
     if (!form) return;
     const v = (form.vin || '').trim();
     if (!v) {
       alert(
-        'Enter a VIN first for decode. Non-VIN assets can be saved using the vehicle ID.'
+        'Enter a VIN first for lookup. Non-VIN assets can be saved using the vehicle ID.'
       );
       return;
     }
@@ -352,12 +352,12 @@ export default function EditVehicle() {
       const detectedTypeLabel =
         identifierType === 'hin' ? 'HIN' : 'Serial/Other';
       alert(
-        `Decode currently supports VIN only. Detected ${detectedTypeLabel}. You can still save this vehicle ID and edit details manually.`
+        `VIN lookup currently supports VIN only. Detected ${detectedTypeLabel}. You can still save this vehicle ID and edit details manually.`
       );
       return;
     }
 
-    const vinValidationError = getVinDecodeValidationError(v);
+    const vinValidationError = getVinLookupValidationError(v);
     if (vinValidationError) {
       alert(vinValidationError);
       return;
@@ -379,7 +379,7 @@ export default function EditVehicle() {
         vehicleType,
         recallsItems,
         vinProfile,
-      } = await decodeVin(v);
+      } = await lookupVin(v);
       setForm(prev =>
         prev
           ? {
@@ -423,7 +423,7 @@ export default function EditVehicle() {
           : null
       );
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to decode VIN');
+      alert(e instanceof Error ? e.message : 'Failed to look up VIN');
     }
   };
 
@@ -671,11 +671,11 @@ export default function EditVehicle() {
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               />
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Enter VIN and click Decode to prefill compatible vehicle
+                Enter VIN and click Lookup to prefill compatible vehicle
                 details, or maintain this vehicle manually for non-VIN assets.
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
-                Identifier type detected: {detectedIdentifierLabel}. Decode
+                Identifier type detected: {detectedIdentifierLabel}. Lookup
                 currently supports VIN only.
               </p>
             </div>
@@ -818,10 +818,10 @@ export default function EditVehicle() {
             <div className="flex flex-col gap-2 pt-2">
               <button
                 type="button"
-                onClick={handleDecodeVin}
+                onClick={handleLookupVin}
                 className="w-full px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium rounded-md transition-colors"
               >
-                Decode VIN (VIN only)
+                VIN Lookup (VIN only)
               </button>
               <button
                 onClick={handleUpdate}
@@ -847,7 +847,7 @@ export default function EditVehicle() {
 
           {!form.vehicleType ? (
             <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Run VIN decode to populate vehicle insights from NHTSA database
+              Run VIN lookup to populate vehicle insights from NHTSA database
             </p>
           ) : (
             <>

@@ -134,7 +134,7 @@ export default function ComingSoon() {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
                 <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
-                  VIN decode & quick add
+                  VIN lookup & quick add
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400">
                   Enter a VIN to prefill year, make, and model from the NHTSA

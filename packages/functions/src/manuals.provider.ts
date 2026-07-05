@@ -10,7 +10,7 @@ export interface OwnerManualDocument {
   source: string;
 }
 
-interface DecodedVehicleIdentity {
+interface VehicleIdentityLookup {
   vin: string;
   make: string;
   model: string;
@@ -50,11 +50,11 @@ function getVal(
 }
 
 /**
- * Decode VIN into core identity fields.
+ * Look up VIN to resolve core identity fields.
  * @param {string} vin Vehicle VIN
- * @return {Promise<DecodedVehicleIdentity>} Decoded identity
+ * @return {Promise<VehicleIdentityLookup>} Resolved identity
  */
-async function decodeVinIdentity(vin: string): Promise<DecodedVehicleIdentity> {
+async function lookupVinIdentity(vin: string): Promise<VehicleIdentityLookup> {
   const nhtsaUrl =
     "https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/" +
     `${encodeURIComponent(vin)}?format=json`;
@@ -79,7 +79,7 @@ async function decodeVinIdentity(vin: string): Promise<DecodedVehicleIdentity> {
 
 /**
  * Map vehicle make to an official OEM owner-manual portal.
- * @param {string} make Decoded make
+ * @param {string} make Looked-up make
  * @return {string} Portal URL
  */
 function ownerPortalForMake(make: string): string {
@@ -120,7 +120,7 @@ function ownerPortalForMake(make: string): string {
 export async function lookupOwnerManuals(
   vin: string
 ): Promise<OwnerManualDocument[]> {
-  const identity = await decodeVinIdentity(vin);
+  const identity = await lookupVinIdentity(vin);
   const make = identity.make || "Vehicle";
   const model = identity.model || "";
   const yearLabel = identity.year ? `${identity.year} ` : "";

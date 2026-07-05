@@ -24,7 +24,7 @@
 Vehicle Vitals uses a **Firebase-First Architecture** where:
 
 - **Client apps** communicate directly with Firebase services (Auth, Firestore, Storage)
-- **Firebase Functions** handle server-side business logic (VIN decoding, scheduled tasks)
+- **Firebase Functions** handle server-side business logic (VIN lookup, scheduled tasks)
 - **Firestore** serves as the primary database with security rules for access control
 - **External APIs** (NHTSA VPIC) are called exclusively from Firebase Functions
 
@@ -36,9 +36,9 @@ Current implementation also includes enterprise org membership and entitlement c
 
 ## Firebase Functions API
 
-### Function: `decodeVIN`
+### Function: `vinLookup`
 
-**Purpose**: Decode a 17-character Vehicle Identification Number (VIN) using NHTSA VPIC API.
+**Purpose**: Look up a 17-character Vehicle Identification Number (VIN) using NHTSA VPIC API.
 
 **Type**: HTTPS Callable Function  
 **Authentication**: Not required (public endpoint)  
@@ -47,7 +47,7 @@ Current implementation also includes enterprise org membership and entitlement c
 #### Request
 
 ```typescript
-POST https://us-central1-vehicle-vitals-prod.cloudfunctions.net/decodeVIN
+POST https://us-central1-vehicle-vitals-prod.cloudfunctions.net/vinLookup
 Content-Type: application/json
 
 {
@@ -58,7 +58,7 @@ Content-Type: application/json
 **Request Body Schema**:
 
 ```typescript
-interface DecodeVINRequest {
+interface VinLookupRequest {
   vin: string; // 17-character VIN (alphanumeric, no I, O, Q)
 }
 ```
@@ -79,7 +79,7 @@ interface DecodeVINRequest {
 **Response Schema**:
 
 ```typescript
-interface DecodeVINResponse {
+interface VinLookupResponse {
   make: string;
   model: string;
   year: string;
@@ -97,7 +97,7 @@ interface DecodeVINResponse {
 
 // 500 Internal Server Error - NHTSA API failure
 {
-  "error": "Failed to decode VIN"
+  "error": "Failed to look up VIN"
 }
 ```
 
@@ -109,13 +109,13 @@ interface DecodeVINResponse {
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const functions = getFunctions();
-const decodeVIN = httpsCallable(functions, 'decodeVIN');
+const vinLookup = httpsCallable(functions, 'vinLookup');
 
 try {
-  const result = await decodeVIN({ vin: '1HGBH41JXMN109186' });
+  const result = await vinLookup({ vin: '1HGBH41JXMN109186' });
   console.log(result.data); // { make: 'Honda', model: 'Accord', year: '2021', vin: '...' }
 } catch (error) {
-  console.error('VIN decode failed:', error.message);
+  console.error('VIN lookup failed:', error.message);
 }
 ```
 
@@ -127,14 +127,14 @@ import 'package:cloud_functions/cloud_functions.dart';
 final functions = FirebaseFunctions.instance;
 
 try {
-  final result = await functions.httpsCallable('decodeVIN').call({
+  final result = await functions.httpsCallable('vinLookup').call({
     'vin': '1HGBH41JXMN109186'
   });
 
   final vehicleData = result.data;
   print('Make: ${vehicleData['make']}'); // Honda
 } catch (e) {
-  print('VIN decode failed: $e');
+  print('VIN lookup failed: $e');
 }
 ```
 
@@ -142,7 +142,7 @@ try {
 
 ```bash
 curl -X POST \
-  https://us-central1-vehicle-vitals-prod.cloudfunctions.net/decodeVIN \
+  https://us-central1-vehicle-vitals-prod.cloudfunctions.net/vinLookup \
   -H 'Content-Type: application/json' \
   -d '{"vin":"1HGBH41JXMN109186"}'
 ```
@@ -151,7 +151,7 @@ curl -X POST \
 
 ```typescript
 // packages/functions/src/index.ts
-export const decodeVIN = onRequest(
+export const vinLookup = onRequest(
   { cors: true },
   async (request, response) => {
     try {
@@ -190,8 +190,8 @@ export const decodeVIN = onRequest(
 
       response.json(vehicleData);
     } catch (error) {
-      logger.error('VIN decode error', error);
-      response.status(500).json({ error: 'Failed to decode VIN' });
+      logger.error('VIN lookup error', error);
+      response.status(500).json({ error: 'Failed to look up VIN' });
     }
   }
 );
@@ -748,7 +748,7 @@ export const vehicleService = {
 
 #### `vpicService.js`
 
-**Purpose**: Interface to NHTSA VIN decoding Firebase Function.
+**Purpose**: Interface to NHTSA VIN lookup Firebase Function.
 
 ```javascript
 // packages/web/src/utils/vpicService.js
@@ -757,20 +757,20 @@ import { functions } from '../shared/firebaseConfig';
 
 export const vpicService = {
   /**
-   * Decode a VIN using Firebase Function
+   * Look up a VIN using Firebase Function
    * @param {string} vin - 17-character VIN
    * @returns {Promise<Object>} - Vehicle data {make, model, year, vin}
    * @throws {Error} - If VIN is invalid or API fails
    */
-  async decodeVIN(vin) {
-    const decodeVIN = httpsCallable(functions, 'decodeVIN');
+  async vinLookup(vin) {
+    const vinLookup = httpsCallable(functions, 'vinLookup');
 
     try {
-      const result = await decodeVIN({ vin: vin.trim().toUpperCase() });
+      const result = await vinLookup({ vin: vin.trim().toUpperCase() });
       return result.data;
     } catch (error) {
-      console.error('VIN decode error:', error);
-      throw new Error(error.message || 'Failed to decode VIN');
+      console.error('VIN lookup error:', error);
+      throw new Error(error.message || 'Failed to look up VIN');
     }
   },
 
@@ -931,7 +931,7 @@ GET https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/1HGBH41JXMN109186?format=j
 **Caching Strategy**:
 
 ```typescript
-// Cache VIN decodes in Firestore to reduce API calls
+// Cache VIN lookups in Firestore to reduce API calls
 const vinCacheRef = doc(db, 'vinCache', vin);
 const cached = await getDoc(vinCacheRef);
 
@@ -1027,7 +1027,7 @@ Future<List<Vehicle>> getVehiclesWithErrorHandling(String userId) async {
 ### Server-Side Error Handling (Firebase Functions)
 
 ```typescript
-export const decodeVIN = onRequest(
+export const vinLookup = onRequest(
   { cors: true },
   async (request, response) => {
     try {
@@ -1044,7 +1044,7 @@ export const decodeVIN = onRequest(
       const vehicleData = await callNHTSA(request.body.vin);
       response.json(vehicleData);
     } catch (error: any) {
-      logger.error('VIN decode failed', {
+      logger.error('VIN lookup failed', {
         vin: request.body.vin,
         error: error.message,
         stack: error.stack,
@@ -1052,7 +1052,7 @@ export const decodeVIN = onRequest(
 
       // Generic error response
       response.status(500).json({
-        error: 'Failed to decode VIN',
+        error: 'Failed to look up VIN',
         code: 'INTERNAL_ERROR',
       });
     }

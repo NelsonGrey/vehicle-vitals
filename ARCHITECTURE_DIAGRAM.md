@@ -35,7 +35,7 @@ Vehicle Vitals is a monorepo containing a vehicle management application with we
 │                    ┌─────────────────────┐                                   │
 │                    │  External APIs      │                                   │
 │                    │  • NHTSA VPIC API   │                                   │
-│                    │    (VIN Decoding)   │                                   │
+│                    │    (VIN Lookup)     │                                   │
 │                    └─────────────────────┘                                   │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -73,7 +73,7 @@ vehicle-vitals/
 │   │   │   │   ├── ProtectedRoute.tsx
 │   │   │   │   └── EnvironmentGate.tsx
 │   │   │   ├── utils/             # Utility functions
-│   │   │   │   ├── vehicleService.js  # VIN decoding
+│   │   │   │   ├── vehicleService.js  # VIN lookup
 │   │   │   │   └── logger.js      # Analytics & logging
 │   │   │   ├── shared/            # Web-specific shared code
 │   │   │   │   └── AuthContext.tsx
@@ -122,7 +122,7 @@ vehicle-vitals/
 │   └── functions/                 # Firebase Cloud Functions
 │       ├── src/
 │       │   └── index.ts          # Cloud functions
-│       │       ├── decodeVIN()   # VIN decoding via NHTSA API
+│       │       ├── vinLookup()   # VIN lookup via NHTSA API
 │       │       ├── sendMaintenanceReminder()  # Email reminders
 │       │       └── checkMaintenanceReminders()  # Scheduled daily check
 │       └── package.json
@@ -188,11 +188,11 @@ vehicle-vitals/
 │  │  └────────────────────────────────────────┘  │                          │
 │  └──────────────────────────────────────────────┘                          │
 │         │                                                                   │
-│         │ 4. VIN Decoding Request                                           │
+│         │ 4. VIN Lookup Request                                             │
 │         ▼                                                                   │
 │  ┌──────────────┐                                                           │
 │  │ Cloud Func:  │                                                           │
-│  │ decodeVIN()  │                                                           │
+│  │ vinLookup()  │                                                           │
 │  └──────┬───────┘                                                           │
 │         │                                                                   │
 │         │ 5. API Call                                                       │
@@ -206,10 +206,10 @@ vehicle-vitals/
 │         ▼                                                                   │
 │  ┌──────────────┐                                                           │
 │  │ Cloud Func:  │                                                           │
-│  │ decodeVIN()  │                                                           │
+│  │ vinLookup()  │                                                           │
 │  └──────┬───────┘                                                           │
 │         │                                                                   │
-│         │ 7. Decoded Vehicle Info                                           │
+│         │ 7. Vehicle Info                                                   │
 │         ▼                                                                   │
 │  ┌──────────────┐                                                           │
 │  │ Web/Mobile   │                                                           │
@@ -290,7 +290,7 @@ vehicle-vitals/
   - StorageHelpers: Storage operations
 
 ### Cloud Functions
-- **decodeVIN**: Decodes VIN using NHTSA VPIC API
+- **vinLookup**: Looks up VIN using NHTSA VPIC API
 - **sendMaintenanceReminder**: Sends email reminders for maintenance
 - **checkMaintenanceReminders**: Scheduled function (daily) to check for upcoming maintenance
 
@@ -356,18 +356,18 @@ users/
 ### Cloud Functions Deployment
 - Deployed via Firebase CLI
 - Scheduled functions for maintenance reminders
-- HTTP-triggered functions for VIN decoding
+- HTTP-triggered functions for VIN lookup
 
 ## External Integrations
 
-- **NHTSA VPIC API**: VIN decoding
+- **NHTSA VPIC API**: VIN lookup
 - **SendGrid**: Email reminders (integration pending)
 - **Google Mobile Ads**: Ad monetization (mobile)
 - **Firebase Analytics**: User analytics
 
 ## Key Features
 
-1. **Vehicle Management**: Add, edit, delete vehicles with VIN decoding
+1. **Vehicle Management**: Add, edit, delete vehicles with VIN lookup
 2. **Maintenance Tracking**: Log maintenance entries with dates, mileage, costs
 3. **Reminders**: Email and push notifications for upcoming maintenance
 4. **Timeline View**: Visual timeline of maintenance history

@@ -313,7 +313,7 @@ remoteConfig.defaultConfig = {
   enable_ads: 'false',
   max_vehicles_free_tier: '3',
   maintenance_reminder_days_ahead: '30',
-  enable_vin_decode: 'true',
+  enable_vin_lookup: 'true',
   enable_export: 'true',
   enable_calendar_sync: 'true',
   enable_ai_attachment_analysis: 'false',

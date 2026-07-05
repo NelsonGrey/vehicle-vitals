@@ -1911,7 +1911,7 @@ export const analyzeAttachmentTextCallable = onCall(
   }
 );
 
-async function decodeVinData(vinInput: string) {
+async function lookupVinData(vinInput: string) {
   const vin = vinInput.trim().toUpperCase();
   if (vin.length !== 17) {
     throw new Error('Valid 17-character VIN required');
@@ -1921,7 +1921,7 @@ async function decodeVinData(vinInput: string) {
     throw new Error('Valid VIN checksum required');
   }
 
-  logger.info(`Decoding VIN: ${vin.substring(0, 8)}...`);
+  logger.info(`Looking up VIN: ${vin.substring(0, 8)}...`);
 
   const nhtsaUrl =
     'https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/' +
@@ -1971,7 +1971,7 @@ async function decodeVinData(vinInput: string) {
   };
 
   const vehicleDesc = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
-  logger.info(`Successfully decoded VIN for ${vehicleDesc}`);
+  logger.info(`Successfully looked up VIN for ${vehicleDesc}`);
 
   return vehicle;
 }
@@ -2215,8 +2215,8 @@ function buildLocalServiceProviders(
     }));
 }
 
-// VIN decoding function
-export const decodeVIN = onRequest(
+// VIN lookup function
+export const vinLookup = onRequest(
   { cors: true },
   async (request, response) => {
     try {
@@ -2236,23 +2236,23 @@ export const decodeVIN = onRequest(
         response.status(400).json({ error: 'Valid VIN checksum required' });
         return;
       }
-      const vehicle = await decodeVinData(normalizedVin);
+      const vehicle = await lookupVinData(normalizedVin);
 
       response.json({
         success: true,
         vehicle,
       });
     } catch (error) {
-      logger.error('VIN decoding error:', error);
+      logger.error('VIN lookup error:', error);
       response.status(500).json({
         success: false,
-        error: 'Failed to decode VIN',
+        error: 'Failed to look up VIN',
       });
     }
   }
 );
 
-export const decodeVINCallable = onCall(async request => {
+export const vinLookupCallable = onCall(async request => {
   if (!request.auth?.uid) {
     throw new HttpsError('unauthenticated', 'Missing auth context');
   }
@@ -2268,14 +2268,14 @@ export const decodeVINCallable = onCall(async request => {
   }
 
   try {
-    const vehicle = await decodeVinData(normalizedVin);
+    const vehicle = await lookupVinData(normalizedVin);
     return {
       success: true,
       vehicle,
     };
   } catch (error) {
-    logger.error('VIN callable decoding error:', error);
-    throw new HttpsError('internal', 'Failed to decode VIN');
+    logger.error('VIN lookup callable error:', error);
+    throw new HttpsError('internal', 'Failed to look up VIN');
   }
 });
 
@@ -2296,7 +2296,7 @@ export const getVehicleInsightsCallable = onCall(async request => {
 
   try {
     const [vehicleResult, recallsResult] = await Promise.allSettled([
-      decodeVinData(normalizedVin),
+      lookupVinData(normalizedVin),
       lookupNhtsaRecalls(normalizedVin),
     ]);
 
@@ -2305,7 +2305,7 @@ export const getVehicleInsightsCallable = onCall(async request => {
         vinPrefix: normalizedVin.substring(0, 8),
         error: vehicleResult.reason,
       });
-      throw new HttpsError('internal', 'Failed to decode VIN profile');
+      throw new HttpsError('internal', 'Failed to look up VIN profile');
     }
 
     const vehicle = vehicleResult.value;

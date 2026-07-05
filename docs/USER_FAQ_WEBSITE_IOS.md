@@ -29,15 +29,15 @@ Use the password reset email link, then return to Login with your new password.
 ### 4) How do I add my first vehicle?
 
 Go to Garage and select Add Vehicle.
-Enter VIN (17 characters) and run decode, or fill Year/Make/Model manually if needed.
+Enter VIN (17 characters) and run lookup, or fill Year/Make/Model manually if needed.
 Add mileage and save.
 The vehicle appears in Garage and is available to Records, Upcoming, and Timeline features.
 
-### 5) How does VIN Decode help me?
+### 5) How does VIN Lookup help me?
 
-VIN decode can auto-populate vehicle details (for example make/model/year and additional profile data where available).
-After decoding, review fields for accuracy and save.
-If decode is unavailable, enter details manually and continue.
+VIN lookup can auto-populate vehicle details (for example make/model/year and additional profile data where available).
+After looking up, review fields for accuracy and save.
+If lookup is unavailable, enter details manually and continue.
 
 ### 6) Can I edit a vehicle after adding it?
 
@@ -204,7 +204,7 @@ Return to Login and sign in with your updated password.
 ### 5) How do I add a vehicle on iOS?
 
 From Garage, tap Add Vehicle.
-Enter VIN and decode, or fill fields manually.
+Enter VIN and look up, or fill fields manually.
 Provide mileage and save.
 If subscription limits are reached, app guidance routes to Premium or Contact flows.
 
@@ -212,9 +212,9 @@ If subscription limits are reached, app guidance routes to Premium or Contact fl
 
 Yes.
 Use the Scan VIN route and confirm captured VIN.
-Continue to add/edit flow to decode and save.
+Continue to add/edit flow to look up and save.
 
-### 7) What happens if VIN decode fails on iOS?
+### 7) What happens if VIN lookup fails on iOS?
 
 The app shows an error and you can retry.
 You can still enter Year/Make/Model manually and save.

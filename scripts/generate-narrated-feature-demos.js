@@ -95,9 +95,9 @@ const videoBlueprints = [
     ],
   },
   {
-    output: 'vin-decode-demo.mp4',
+    output: 'vin-lookup-demo.mp4',
     narration:
-      'The VIN flow accelerates setup. Add a vehicle with decoded details, refine key fields in the editor, and immediately connect that data to maintenance planning and records.',
+      'The VIN flow accelerates setup. Add a vehicle with looked-up details, refine key fields in the editor, and immediately connect that data to maintenance planning and records.',
     scenes: [
       { image: 'add-vehicle.png', title: 'VIN add flow', seconds: 4.5 },
       { image: 'edit-vehicle.png', title: 'Vehicle editing', seconds: 4.5 },

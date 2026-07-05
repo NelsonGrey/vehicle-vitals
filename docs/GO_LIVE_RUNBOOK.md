@@ -558,7 +558,7 @@ BASE_URL=https://vehicle-vitals-staging.web.app ./scripts/run-uat-tests.sh stagi
   - [ ] Landing page loads, no console errors
   - [ ] Sign up with a new email → confirm Firebase Auth creates user
   - [ ] Sign in / sign out cycle
-  - [ ] Add vehicle (VIN decode working, data saves)
+  - [ ] Add vehicle (VIN lookup working, data saves)
   - [ ] Edit vehicle (status: active/stored)
   - [ ] Maintenance create, edit, delete
   - [ ] Upcoming reminders visible

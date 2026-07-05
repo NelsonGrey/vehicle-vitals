@@ -161,9 +161,9 @@ Fill in the following fields:
 | **License Plate** | State plate number                         |
 | **Odometer**      | Current mileage reading                    |
 
-### VIN Decode
+### VIN Lookup
 
-After entering a valid VIN, click **Decode VIN** to automatically backfill the year, make, and model from NHTSA data. This saves time and ensures accuracy.
+After entering a valid VIN, click **VIN Lookup** to automatically backfill the year, make, and model from NHTSA data. This saves time and ensures accuracy.
 
 ### Saving the Vehicle
 
@@ -390,8 +390,8 @@ A: Yes. There is no limit to the number of vehicles you can add to your Garage.
 **Q: What file types can I upload for records?**
 A: PDF files are recommended for all record uploads. Each record category can have multiple attachments.
 
-**Q: How does VIN Decode work?**
-A: When you enter a VIN and click "Decode VIN," Vehicle Vitals queries the NHTSA (National Highway Traffic Safety Administration) database to retrieve the official make, model, and year.
+**Q: How does VIN Lookup work?**
+A: When you enter a VIN and click "VIN Lookup," Vehicle Vitals queries the NHTSA (National Highway Traffic Safety Administration) database to retrieve the official make, model, and year.
 
 **Q: How are cost totals calculated?**
 A: Costs are extracted from uploaded service invoices and repair records using document intelligence. The more records you upload, the more accurate your cost-of-ownership data becomes.

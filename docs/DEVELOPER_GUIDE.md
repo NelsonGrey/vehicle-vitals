@@ -31,7 +31,7 @@ Welcome to the Vehicle Vitals development team! This guide will help you set up 
 Vehicle Vitals is a cross-platform vehicle management application that helps users:
 
 - Track vehicle information and maintenance history
-- Decode VINs automatically using NHTSA API
+- Look up VINs automatically using NHTSA API
 - Receive maintenance reminders
 - Export maintenance records for warranty claims
 

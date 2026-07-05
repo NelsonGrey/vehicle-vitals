@@ -48,7 +48,7 @@ const videoPlans = [
       { type: 'clickLink', name: /Getting Started/i, wait: 900 },
       { type: 'clickLink', name: /Login\s*\/\s*Sign Up/i, wait: 900 },
       { type: 'clickLink', name: /Create Account/i, wait: 900 },
-      { type: 'goto', route: '/vin-decode-demo', wait: 1200 },
+      { type: 'goto', route: '/vin-lookup-demo', wait: 1200 },
     ],
   },
   {
@@ -86,19 +86,19 @@ const videoPlans = [
     ],
   },
   {
-    output: 'vin-decode-demo.mp4',
-    route: '/vin-decode-demo',
+    output: 'vin-lookup-demo.mp4',
+    route: '/vin-lookup-demo',
     narration:
-      'In this VIN decode walkthrough, navigate between feature pages, open the sign in route, type credentials, and return to the demo lane to highlight the marketing and product bridge.',
+      'In this VIN lookup walkthrough, navigate between feature pages, open the sign in route, type credentials, and return to the demo lane to highlight the marketing and product bridge.',
     actions: [
       { type: 'wait', ms: 900 },
       { type: 'clickLink', name: /^Maintenance$/i, wait: 700 },
-      { type: 'clickLink', name: /^VIN Decode$/i, wait: 900 },
+      { type: 'clickLink', name: /^VIN Lookup$/i, wait: 900 },
       { type: 'clickLink', name: /Login\s*\/\s*Sign Up/i, wait: 700 },
       { type: 'typeIfVisible', selector: '#email', value: DEMO_EMAIL },
       { type: 'typeIfVisible', selector: '#password', value: DEMO_PASSWORD },
       { type: 'clickButton', name: /Sign In/i, wait: 1200 },
-      { type: 'goto', route: '/vin-decode-demo', wait: 1000 },
+      { type: 'goto', route: '/vin-lookup-demo', wait: 1000 },
       { type: 'scrollHeading', name: /Video Walkthrough Lane/i, wait: 1300 },
     ],
   },
@@ -162,7 +162,7 @@ const videoPlans = [
       'This generic feature overview shows primary navigation, page transitions, and route-level interaction pacing for a broad marketing story across the product surface.',
     actions: [
       { type: 'wait', ms: 900 },
-      { type: 'clickLink', name: /^VIN Decode$/i, wait: 700 },
+      { type: 'clickLink', name: /^VIN Lookup$/i, wait: 700 },
       { type: 'clickLink', name: /^Maintenance$/i, wait: 700 },
       { type: 'clickLink', name: /^Cross Platform$/i, wait: 700 },
       { type: 'clickLink', name: /^Ownership History$/i, wait: 700 },

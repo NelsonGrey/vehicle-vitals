@@ -10,7 +10,7 @@ const mockNavigate = vi.fn();
 const mockGetVehicle = vi.fn();
 const mockUpdateVehicle = vi.fn();
 const mockDeleteVehicle = vi.fn();
-const mockDecodeVin = vi.fn();
+const mockLookupVin = vi.fn();
 const mockTransferVehicle = vi.fn();
 const mockFindVehiclePhotoFromWeb = vi.fn();
 
@@ -47,7 +47,7 @@ vi.mock('../src/utils/calendarService', () => ({
 }));
 
 vi.mock('../src/utils/vehicleService', () => ({
-  decodeVin: (...args) => mockDecodeVin(...args),
+  lookupVin: (...args) => mockLookupVin(...args),
 }));
 
 vi.mock('../src/utils/vehicleTransferService', () => ({
@@ -245,8 +245,8 @@ describe('EditVehicle page', () => {
     expect(mockDeleteVehicle).not.toHaveBeenCalled();
   });
 
-  it('decodes VIN and updates visible details', async () => {
-    mockDecodeVin.mockResolvedValue({
+  it('looks up VIN and updates visible details', async () => {
+    mockLookupVin.mockResolvedValue({
       make: 'Toyota',
       model: 'Camry',
       year: '2021',
@@ -265,17 +265,17 @@ describe('EditVehicle page', () => {
 
     renderPage();
 
-    await waitFor(() => screen.getByRole('button', { name: /decode vin/i }));
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+    await waitFor(() => screen.getByRole('button', { name: /vin lookup/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     await waitFor(() => {
-      expect(mockDecodeVin).toHaveBeenCalledWith(ROUTE_VIN);
+      expect(mockLookupVin).toHaveBeenCalledWith(ROUTE_VIN);
       expect(screen.getByText(/1 recall/i)).toBeInTheDocument();
       expect(screen.getByText(/source: nhtsa/i)).toBeInTheDocument();
     });
   });
 
-  it('blocks decode for HIN identifiers', async () => {
+  it('blocks lookup for HIN identifiers', async () => {
     mockGetVehicle.mockResolvedValue({
       ...BASE_VEHICLE,
       vin: 'ABC12345A595',
@@ -284,12 +284,12 @@ describe('EditVehicle page', () => {
 
     renderPage();
 
-    await waitFor(() => screen.getByRole('button', { name: /decode vin/i }));
-    await userEvent.click(screen.getByRole('button', { name: /decode vin/i }));
+    await waitFor(() => screen.getByRole('button', { name: /vin lookup/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
 
     expect(global.alert).toHaveBeenCalledWith(
-      'Decode currently supports VIN only. Detected HIN. You can still save this vehicle ID and edit details manually.'
+      'VIN lookup currently supports VIN only. Detected HIN. You can still save this vehicle ID and edit details manually.'
     );
-    expect(mockDecodeVin).not.toHaveBeenCalled();
+    expect(mockLookupVin).not.toHaveBeenCalled();
   });
 });

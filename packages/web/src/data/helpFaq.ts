@@ -173,7 +173,7 @@ export const websiteFaq: FaqItem[] = [
   {
     question: 'How do I contact support from the website?',
     answers: [
-      'Open Contact from footer or support links in help pages.',
+      'Open Support from footer or support links in help pages.',
       'Provide issue summary, environment, and steps to reproduce.',
       'Include relevant VIN/context when asking about record-specific issues.',
     ],
@@ -235,7 +235,7 @@ export const iosFaq: FaqItem[] = [
       'Select the vehicle type (car, truck, motorcycle, RV, boat, trailer, or other).',
       'Enter a vehicle ID (VIN/HIN/Serial), then use lookup if it is a VIN, or fill fields manually.',
       'Provide mileage and save.',
-      'If subscription limits are reached, app guidance routes to Premium or Contact flows.',
+      'If subscription limits are reached, app guidance routes to Premium or Support flows.',
     ],
   },
   {
@@ -345,7 +345,7 @@ export const iosFaq: FaqItem[] = [
   {
     question: 'How do I contact support from iOS?',
     answers: [
-      'Use Contact screen in app routes.',
+      'Use Support screen in app routes.',
       'Provide device model, iOS version, and steps that reproduce the issue.',
     ],
   },
@@ -364,7 +364,7 @@ export const troubleshootingFaq: FaqItem[] = [
     answers: [
       'Confirm email spelling and keyboard auto-correct behavior.',
       'Reset password from Forgot Password.',
-      'If issue persists, contact support with timestamp and environment.',
+      'If issue persists, visit Support with timestamp and environment.',
     ],
   },
   {

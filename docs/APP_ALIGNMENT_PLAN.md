@@ -14,7 +14,7 @@ The marketing site establishes the vision — persona-driven messaging, dark-and
 - Product name: Vehicle Vitals
 - Tagline: "One garage for every vehicle record, reminder, and repair cost"
 - Visual identity: dark slate-950 background, teal accent (#14b8a6), white text, Inter sans + Playfair Display serif headings
-- Contact: support@vehicle-vitals.com / sales@vehicle-vitals.com
+- Support: support@vehicle-vitals.com / sales@vehicle-vitals.com
 
 ### Five personas (with recommended tier paths)
 
@@ -193,7 +193,7 @@ Both platforms should use plain-language, non-technical copy consistent with the
 
 ### Support contact
 
-Both web app and iOS app should surface `support@vehicle-vitals.com` consistently in Contact and Help screens. The sales email (`sales@vehicle-vitals.com`) belongs only on the marketing/pricing surface, not in the authenticated app.
+Both web app and iOS app route to a Support form (name/email/topic/message) rather than displaying `support@vehicle-vitals.com` directly — submissions are emailed to that address server-side, with the submitter's address set as reply-to. The sales email (`sales@vehicle-vitals.com`) belongs only on the marketing/pricing surface, not in the authenticated app.
 
 ---
 

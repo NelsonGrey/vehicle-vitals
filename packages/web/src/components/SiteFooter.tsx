@@ -21,7 +21,7 @@ const appNavLinks = [
 
 const supportLinks = [
   { label: 'Help', to: '/help' },
-  { label: 'Support', to: '/contact' },
+  { label: 'Support', to: '/support' },
   { label: 'Privacy', to: '/privacy' },
   { label: 'Terms', to: '/terms' },
 ];

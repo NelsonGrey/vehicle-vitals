@@ -89,7 +89,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Please restart the app or contact support if the problem persists.',
+                'Please restart the app or visit Support if the problem persists.',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],

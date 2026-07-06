@@ -257,26 +257,20 @@ export default function SubscriptionPage() {
             <p className="mt-1 text-sm text-rose-900/90 dark:text-rose-100/90">
               {subscription?.lastPaymentError ===
               'stripe_invoice_payment_failed'
-                ? 'Your card was declined. Update your payment details or contact support if the issue continues.'
+                ? 'Your card was declined. Update your payment details or visit Support if the issue continues.'
                 : subscription?.lastPaymentError === 'stripe_charge_disputed'
-                  ? 'A dispute is open on this payment. Contact support to review the next steps.'
+                  ? 'A dispute is open on this payment. Visit Support to review the next steps.'
                   : subscription?.lastPaymentError === 'stripe_charge_refunded'
-                    ? 'This charge was refunded. Contact support to restore access.'
-                    : 'Please review your billing details and contact support if you need help restoring access.'}
+                    ? 'This charge was refunded. Visit Support to restore access.'
+                    : 'Please review your billing details and visit Support if you need help restoring access.'}
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
               <Link
-                to="/contact"
+                to="/support"
                 className="inline-flex rounded-md bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800"
               >
-                Contact support
+                Support
               </Link>
-              <a
-                href="mailto:support@vehicle-vitals.com"
-                className="inline-flex rounded-md border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-100 dark:border-rose-700 dark:text-rose-200 dark:hover:bg-rose-950/40"
-              >
-                Email support
-              </a>
             </div>
           </div>
         )}

@@ -67,18 +67,18 @@ export default function Privacy() {
             </h2>
             <ul className="list-disc pl-5 space-y-1">
               <li>Access, update, or delete your data via the app</li>
-              <li>Contact us to make a privacy request</li>
+              <li>Visit Support to make a privacy request</li>
             </ul>
           </section>
 
           <section>
             <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
-              Contact
+              Support
             </h2>
             <p>
               Questions about privacy? Visit{' '}
-              <Link to="/contact" className="underline">
-                Contact Us
+              <Link to="/support" className="underline">
+                Support
               </Link>
               .
             </p>

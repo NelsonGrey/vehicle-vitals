@@ -209,10 +209,10 @@ describe('SubscriptionPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/billing action needed/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /contact support/i })
-    ).toHaveAttribute('href', '/contact');
+      screen.getByRole('link', { name: /^support$/i })
+    ).toHaveAttribute('href', '/support');
     expect(
-      screen.getByRole('link', { name: /email support/i })
-    ).toHaveAttribute('href', 'mailto:support@vehicle-vitals.com');
+      screen.queryByRole('link', { name: /email support/i })
+    ).not.toBeInTheDocument();
   });
 });

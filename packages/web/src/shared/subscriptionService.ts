@@ -37,7 +37,7 @@ function getPaymentIssueDisplay(sub: SubscriptionData): string {
     case 'stripe_charge_disputed':
       return 'Payment Dispute • Review the dispute with support';
     case 'stripe_charge_refunded':
-      return 'Payment Reversed • Contact support to restore access';
+      return 'Payment Reversed • Visit Support to restore access';
     default:
       return 'Payment Issue • Update required';
   }

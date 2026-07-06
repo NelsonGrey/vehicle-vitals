@@ -94,12 +94,12 @@ export default function Terms() {
 
           <section>
             <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
-              8. Contact
+              8. Support
             </h2>
             <p>
-              Questions about these Terms? Contact us at{' '}
-              <Link to="/contact" className="underline">
-                Contact Us
+              Questions about these Terms? Reach out via{' '}
+              <Link to="/support" className="underline">
+                Support
               </Link>
               .
             </p>

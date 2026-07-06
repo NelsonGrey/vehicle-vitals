@@ -72,7 +72,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </div>
             
             <p className="text-slate-600 dark:text-slate-400 mb-6">
-              We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+              We encountered an unexpected error. Please try refreshing the page or visit Support if the problem persists.
             </p>
 
             {this.state.error && process.env.NODE_ENV === 'development' && (

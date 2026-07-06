@@ -407,6 +407,6 @@ A: Check your spam folder first. If emails still don't arrive, verify your remin
 
 ---
 
-_For additional help, visit the [Contact page](../contact) or email support._
+_For additional help, visit the [Support page](../support)._
 
 _Last updated: May 2026_

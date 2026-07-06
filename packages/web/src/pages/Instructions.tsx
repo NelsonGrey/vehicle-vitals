@@ -104,10 +104,10 @@ export default function Instructions() {
           </Link>
           , or{' '}
           <Link
-            to="/contact"
+            to="/support"
             className="underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
           >
-            contact us
+            visit Support
           </Link>
           .
         </p>

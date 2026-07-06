@@ -159,7 +159,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
       isLoading: premiumService.isLoading,
       premiumPrice: premiumService.premiumProduct?.price,
       onChoosePremium: () => _purchasePremium(premiumService),
-      onContactSales: () => context.push('/app/contact'),
+      onContactSales: () => context.push('/app/support'),
     );
   }
 

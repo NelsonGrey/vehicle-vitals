@@ -133,11 +133,11 @@ If a format is locked, upgrade prompts can appear to explain the required subscr
 ### 21) Why can’t I access some app routes in production web?
 
 Production web may operate in marketing-focused mode depending on environment policy.
-If app routes are restricted, use permitted marketing/help/contact flows for that environment.
+If app routes are restricted, use permitted marketing/help/support flows for that environment.
 
 ### 22) How do I contact support from the website?
 
-Open Contact from footer or support links in help pages.
+Open Support from footer or support links in help pages.
 Provide issue summary, environment, and steps to reproduce.
 Include relevant VIN/context when asking about record-specific issues.
 
@@ -206,7 +206,7 @@ Return to Login and sign in with your updated password.
 From Garage, tap Add Vehicle.
 Enter VIN and look up, or fill fields manually.
 Provide mileage and save.
-If subscription limits are reached, app guidance routes to Premium or Contact flows.
+If subscription limits are reached, app guidance routes to Premium or Support flows.
 
 ### 6) Can I scan a VIN on iOS?
 
@@ -318,7 +318,7 @@ Some environment-dependent or admin-focused functions may vary by deployment mod
 
 ### 25) How do I contact support from iOS?
 
-Use Contact screen in app routes.
+Use Support screen in app routes.
 Provide device model, iOS version, and steps that reproduce the issue.
 
 ### 26) What should I include when reporting a bug?
@@ -332,7 +332,7 @@ This shortens resolution time significantly.
 
 Confirm email spelling and keyboard auto-correct behavior.
 Reset password from Forgot Password.
-If issue persists, contact support with timestamp and environment.
+If issue persists, visit Support with timestamp and environment.
 
 ### 2) A vehicle does not appear after saving. What should I check?
 

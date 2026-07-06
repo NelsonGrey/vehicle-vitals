@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final isPremiumLike = tier == 'premium' || tier == 'enterprise';
     final message = isPremiumLike
-        ? 'Your current subscription has reached the vehicle limit. Contact support for Enterprise expansion.'
+        ? 'Your current subscription has reached the vehicle limit. Visit Support for Enterprise expansion.'
         : 'Vehicle limit reached for your current subscription. Upgrade to add more vehicles.';
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -96,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (isPremiumLike) {
-      context.push('/app/contact');
+      context.push('/app/support');
     } else {
       context.push('/app/premium');
     }

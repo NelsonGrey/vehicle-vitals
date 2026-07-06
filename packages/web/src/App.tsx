@@ -343,6 +343,7 @@ function App() {
               <Route path="start-steps" element={<StartSteps />} />
               <Route path="everyday-screens" element={<EverydayScreens />} />
               <Route path="short-video-tours" element={<ShortVideoTours />} />
+              <Route path="support" element={<Contact />} />
               <Route path="contact" element={<Contact />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />

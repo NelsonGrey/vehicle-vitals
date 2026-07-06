@@ -53,11 +53,11 @@ const quickActions = [
     ctaLabel: 'Open reminder preferences',
   },
   {
-    title: 'Contact support',
+    title: 'Support',
     details:
       'Use this path when you are blocked, need account help, or want to report an issue with a specific workflow.',
-    to: '/contact',
-    ctaLabel: 'Contact support',
+    to: '/support',
+    ctaLabel: 'Open Support',
   },
 ];
 
@@ -75,7 +75,7 @@ const supportPaths = [
   {
     title: 'Need a human response',
     summary: 'Open support with browser/app version and issue details.',
-    to: '/contact',
+    to: '/support',
   },
 ];
 
@@ -284,8 +284,8 @@ export default function Help() {
               Use Help for
             </h3>
             <p className="m-0 mt-2 text-slate-700 dark:text-slate-300">
-              Step-by-step setup, daily tasks, troubleshooting, and support
-              contact.
+              Step-by-step setup, daily tasks, troubleshooting, and Support
+              access.
             </p>
             <Link
               to="/getting-started"
@@ -472,7 +472,7 @@ export default function Help() {
           Need more help?
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">
-          If you still need help, contact support and include your browser or
+          If you still need help, visit Support and include your browser or
           app version plus a short description of what happened.
         </p>
         <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
@@ -521,10 +521,10 @@ export default function Help() {
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
           <Link
-            to="/contact"
+            to="/support"
             className="inline-flex items-center px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-800 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
           >
-            Contact Support
+            Support
           </Link>
           <Link
             to="/getting-started"

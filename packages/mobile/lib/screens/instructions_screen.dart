@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class InstructionsScreen extends StatelessWidget {
   const InstructionsScreen({super.key});
@@ -7,7 +8,7 @@ class InstructionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Instructions')),
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,10 +89,19 @@ class InstructionsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'If you need additional assistance, please contact our support team at support@vehiclevitals.app',
+                    const SizedBox(height: 8),
+                    const Text(
+                      'If you need additional assistance, visit Support.',
                       style: TextStyle(fontSize: 16),
+                    ),
+                    TextButton(
+                      onPressed: () => context.push('/app/support'),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Visit Support'),
                     ),
                   ],
                 ),

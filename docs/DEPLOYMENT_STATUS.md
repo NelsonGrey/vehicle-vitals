@@ -38,7 +38,7 @@ Status: Stripe subscription settlement now has clearer post-checkout and recover
 Progress evaluation completed:
 
 - Subscription checkout now returns users to `/app/subscription` with explicit `checkout=success` and `checkout=cancelled` banners.
-- Past-due subscription states now surface Stripe-specific recovery text and a dedicated support panel with links to `/contact` and support email.
+- Past-due subscription states now surface Stripe-specific recovery text and a dedicated support panel linking to `/support`.
 - Stripe webhook handling continues to record payment-failure, dispute, and refund outcomes into subscription state for downstream UI recovery.
 
 Automation updates delivered:

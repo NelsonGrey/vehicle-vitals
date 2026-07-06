@@ -284,14 +284,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             SnackBar(
               content: Text(
                 isPremiumLike
-                    ? 'Your vehicle limit is reached. Contact support for Enterprise expansion.'
+                    ? 'Your vehicle limit is reached. Visit Support for Enterprise expansion.'
                     : 'Vehicle limit reached. Upgrade to add more vehicles.',
               ),
               backgroundColor: colorScheme.secondary,
             ),
           );
 
-          context.push(isPremiumLike ? '/app/contact' : '/app/premium');
+          context.push(isPremiumLike ? '/app/support' : '/app/premium');
           return;
         }
       }

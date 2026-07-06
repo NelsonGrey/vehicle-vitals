@@ -725,7 +725,7 @@ Profile / Settings
 │   └── Data location (EU, US, etc.)
 ├── Help & Support
 │   ├── FAQ
-│   ├── Contact support
+│   ├── Support
 │   └── Report bug
 └── About
     ├── App version

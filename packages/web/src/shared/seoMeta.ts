@@ -144,10 +144,19 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
     ogType: 'website',
   },
 
+  '/support': {
+    title: `Support — ${SITE_NAME}`,
+    description: 'Get help with Vehicle Vitals. Contact our support team for questions, billing, or technical issues.',
+    canonical: `${APP_URL}/support`,
+    ogType: 'website',
+  },
+
+  // Legacy URL — canonical still points at /support so search engines
+  // converge on the new path.
   '/contact': {
     title: `Support — ${SITE_NAME}`,
     description: 'Get help with Vehicle Vitals. Contact our support team for questions, billing, or technical issues.',
-    canonical: `${APP_URL}/contact`,
+    canonical: `${APP_URL}/support`,
     ogType: 'website',
   },
 

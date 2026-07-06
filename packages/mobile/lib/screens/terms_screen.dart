@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -7,7 +8,7 @@ class TermsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Terms of Service')),
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,14 +67,23 @@ class TermsScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
-            Text(
-              'Contact Information',
+            const Text(
+              'Support',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            Text(
-              'For questions about these Terms of Service, contact us at support@vehiclevitals.app',
+            const SizedBox(height: 8),
+            const Text(
+              'Questions about these Terms of Service?',
               style: TextStyle(fontSize: 16),
+            ),
+            TextButton(
+              onPressed: () => context.push('/app/support'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Visit Support'),
             ),
           ],
         ),

@@ -541,16 +541,11 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       expect(screensPageMetrics.hasScreensHeading).toBe(true);
       expect(screensPageMetrics.screenshotCards).toBeGreaterThanOrEqual(6);
-      // TODO: flip back to '/vin-lookup-demo' once this promotion's Deploy
-      // Firebase lands on staging — same pre-deploy/post-deploy tension as
-      // TC-UI-009 (see the vin-decode-demo.mp4 TODO below): staging's
-      // currently hosted EverydayScreens page still links to the pre-rename
-      // route until this deploy completes.
       expect(screensPageMetrics.publicDemoLinks).toEqual(
         expect.arrayContaining([
           '/cross-platform-access-demo',
           '/ownership-history-demo',
-          '/vin-decode-demo',
+          '/vin-lookup-demo',
           '/maintenance-planning-demo',
         ])
       );
@@ -674,12 +669,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         '/videos/feature-demos/onboarding-walkthrough.mp4',
         '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
         '/videos/feature-demos/cross-platform-continuity.mp4',
-        // TODO: flip back to 'vin-lookup-demo.mp4' once this promotion's
-        // Deploy Firebase lands on staging — this UAT run checks the
-        // *currently hosted* staging site, which still serves the
-        // pre-rename filename until this deploy completes (same
-        // dev-side dance as ad268e7 / 362cd1c, now recurring for staging).
-        '/videos/feature-demos/vin-decode-demo.mp4',
+        '/videos/feature-demos/vin-lookup-demo.mp4',
         '/videos/feature-demos/maintenance-planning-demo.mp4',
         '/videos/feature-demos/cross-platform-access-demo.mp4',
         '/videos/feature-demos/ownership-history-demo.mp4',

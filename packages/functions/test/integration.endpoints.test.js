@@ -27,6 +27,7 @@ const {
   applyRetentionPolicyCallable,
   requestUserDataExportCallable,
   requestUserDataDeletionCallable,
+  submitSupportRequestCallable,
   deriveUpcomingMaintenanceItems,
   runMaintenanceReminderSweep,
   runMaintenanceReminderSchedule,
@@ -2345,6 +2346,90 @@ test('compliance request callables return requested status', async () => {
 
   assert.equal(deletionRequest.success, true);
   assert.equal(deletionRequest.status, 'requested');
+});
+
+test('submitSupportRequestCallable rejects an invalid email', async () => {
+  process.env.EMAIL_PROVIDER = 'log';
+
+  await assert.rejects(
+    () =>
+      submitSupportRequestCallable.run({
+        auth: null,
+        data: {
+          name: 'Jamie Driver',
+          email: 'not-an-email',
+          topic: 'Bug Report',
+          message: 'The app crashes when I add a vehicle.',
+        },
+      }),
+    err => {
+      assert.equal(err.code, 'invalid-argument');
+      return true;
+    }
+  );
+});
+
+test('submitSupportRequestCallable rejects an unknown topic', async () => {
+  process.env.EMAIL_PROVIDER = 'log';
+
+  await assert.rejects(
+    () =>
+      submitSupportRequestCallable.run({
+        auth: null,
+        data: {
+          name: 'Jamie Driver',
+          email: 'jamie@example.com',
+          topic: 'Not A Real Topic',
+          message: 'The app crashes when I add a vehicle.',
+        },
+      }),
+    err => {
+      assert.equal(err.code, 'invalid-argument');
+      return true;
+    }
+  );
+});
+
+test('submitSupportRequestCallable succeeds for a valid submission', async () => {
+  process.env.EMAIL_PROVIDER = 'log';
+
+  const result = await submitSupportRequestCallable.run({
+    auth: null,
+    rawRequest: { ip: `198.51.100.${Date.now() % 250}` },
+    data: {
+      name: 'Jamie Driver',
+      email: 'jamie@example.com',
+      topic: 'Bug Report',
+      message: 'The app crashes when I add a vehicle.',
+    },
+  });
+
+  assert.equal(result.success, true);
+});
+
+test('submitSupportRequestCallable rate-limits repeated submissions', async () => {
+  process.env.EMAIL_PROVIDER = 'log';
+  const ip = `203.0.113.${Date.now() % 250}`;
+  const submit = () =>
+    submitSupportRequestCallable.run({
+      auth: null,
+      rawRequest: { ip },
+      data: {
+        name: 'Jamie Driver',
+        email: 'jamie@example.com',
+        topic: 'Bug Report',
+        message: 'The app crashes when I add a vehicle.',
+      },
+    });
+
+  for (let i = 0; i < 5; i += 1) {
+    await submit();
+  }
+
+  await assert.rejects(submit, err => {
+    assert.equal(err.code, 'resource-exhausted');
+    return true;
+  });
 });
 
 test.after(() => {

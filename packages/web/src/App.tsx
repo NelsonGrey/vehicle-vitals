@@ -273,13 +273,13 @@ function App() {
             {/* Marketing and user-app routes with main layout */}
             <Route path="/" element={<Layout />}>
               <Route
-                path="vin-decode-demo"
+                path="vin-lookup-demo"
                 element={
                   <FeatureDemo
                     title="VIN Lookup"
                     subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
                     marketingBullets={[
-                      'Enter a VIN and preview decoded year, make, and model.',
+                      'Enter a VIN and preview looked-up year, make, and model.',
                       'Understand how quick add reduces setup friction.',
                       'See the path from initial lookup to saved vehicle records.',
                     ]}

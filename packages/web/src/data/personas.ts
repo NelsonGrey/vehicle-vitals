@@ -97,7 +97,7 @@ export const personaPages: PersonaPageContent[] = [
     recommendedPlan: 'Free to Pro',
     image: '/images/features/add-vehicle.png',
     ctaLabel: 'See quick setup',
-    demoTo: '/vin-decode-demo',
+    demoTo: '/vin-lookup-demo',
     path: '/personas/new-drivers',
     accent:
       'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100',

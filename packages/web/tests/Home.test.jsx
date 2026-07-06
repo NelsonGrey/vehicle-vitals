@@ -8,6 +8,7 @@ import {
   getMaintenanceEntries,
   getVehicles,
 } from '../src/shared/firestoreService';
+import { getHouseholdGarageStatus } from '../src/utils/householdGarageService';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getVehicles: vi.fn(),
@@ -19,6 +20,10 @@ vi.mock('../src/shared/firestoreService', () => ({
 vi.mock('../src/utils/vehicleService', () => ({
   getVehicleInsights: vi.fn(),
   buildPersistedVinInsights: vi.fn(),
+}));
+
+vi.mock('../src/utils/householdGarageService', () => ({
+  getHouseholdGarageStatus: vi.fn(),
 }));
 
 vi.mock('@vehicle-vitals/shared', () => ({
@@ -309,5 +314,106 @@ describe('Home – smart maintenance alert badges', () => {
     expect(screen.getByText('Active Garage')).toBeInTheDocument();
     expect(screen.getByText('Storage')).toBeInTheDocument();
     expect(screen.getByText('Stored')).toBeInTheDocument();
+  });
+});
+
+describe('Home – zero-vehicle onboarding', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getVehicles.mockResolvedValue({ data: [], lastDoc: null, hasMore: false });
+    getMaintenanceEntries.mockResolvedValue([]);
+    getUpcomingMaintenance.mockReturnValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('shows the 3-step onboarding guide when the garage is empty', async () => {
+    renderHome();
+
+    await waitFor(() => screen.getByText('No vehicles yet'));
+
+    expect(
+      screen.getByText(/Add a vehicle.*Track service and costs.*Stay on/i)
+    ).toBeInTheDocument();
+    const addVehicleLinks = screen.getAllByRole('link', {
+      name: /add your first vehicle/i,
+    });
+    expect(
+      addVehicleLinks.some(link => link.getAttribute('href') === '/app/add-vehicle')
+    ).toBe(true);
+    expect(
+      screen.getByText(/log your first service record/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/unlocks once you've added a vehicle/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /review upcoming maintenance/i })
+    ).toHaveAttribute('href', '/app/upcoming');
+  });
+
+  it('does not show the onboarding guide once vehicles exist', async () => {
+    getVehicles.mockResolvedValue({
+      data: [TOYOTA],
+      lastDoc: null,
+      hasMore: false,
+    });
+
+    renderHome();
+
+    await waitFor(() => screen.getByText('Vehicles'));
+
+    expect(screen.queryByText('No vehicles yet')).not.toBeInTheDocument();
+  });
+});
+
+describe('Home – household garage badge', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getVehicles.mockResolvedValue({
+      data: [TOYOTA],
+      lastDoc: null,
+      hasMore: false,
+    });
+    getMaintenanceEntries.mockResolvedValue([]);
+    getUpcomingMaintenance.mockReturnValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('shows a household badge when the garage is a shared household', async () => {
+    getHouseholdGarageStatus.mockResolvedValue({
+      success: true,
+      orgId: 'org-1',
+      orgType: 'household',
+      garageStorageMode: 'dual_write',
+      name: 'The Nelson Household',
+    });
+
+    renderHome();
+
+    await waitFor(() =>
+      screen.getByText(/The Nelson Household — shared household garage/i)
+    );
+  });
+
+  it('does not show a household badge for a personal garage', async () => {
+    getHouseholdGarageStatus.mockResolvedValue({
+      success: true,
+      orgId: 'org-1',
+      orgType: 'personal',
+      garageStorageMode: 'user_scoped',
+    });
+
+    renderHome();
+
+    await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
+    expect(
+      screen.queryByText(/shared household garage/i)
+    ).not.toBeInTheDocument();
   });
 });

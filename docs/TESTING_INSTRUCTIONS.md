@@ -82,7 +82,7 @@ Run these after changes to the marketing demo narration pipeline:
 
 1. `npm run test:scripts`
 2. `OPENAI_API_KEY=... npm run openai:tts:validate`
-3. `VV_TTS_PROVIDER=openai VV_INTERACTIVE_ONLY=vin-decode-demo npm run videos:generate:interactive`
+3. `VV_TTS_PROVIDER=openai VV_INTERACTIVE_ONLY=vin-lookup-demo npm run videos:generate:interactive`
 
 Coverage objective for this update:
 

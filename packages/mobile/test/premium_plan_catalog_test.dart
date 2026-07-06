@@ -70,4 +70,59 @@ void main() {
 
     expect(contactSalesTapped, 1);
   });
+
+  testWidgets('shows marketing taglines for all four tiers', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: _testTheme,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PremiumPlanCatalog(
+              currentTier: 'free',
+              isLoading: false,
+              premiumPrice: null,
+              onChoosePremium: () {},
+              onContactSales: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Learn and document'), findsOneWidget);
+    expect(find.text('Plan and coordinate'), findsOneWidget);
+    expect(find.text('Forecast and automate'), findsOneWidget);
+    expect(find.text('Govern and integrate'), findsOneWidget);
+  });
+
+  testWidgets(
+    'falls back to web-aligned pricing when no live product price is available',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: PremiumPlanCatalog(
+                currentTier: 'free',
+                isLoading: false,
+                premiumPrice: null,
+                onChoosePremium: () {},
+                onContactSales: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Regression guard: these must match TIER_PRICING in
+      // packages/web/src/shared/featureFlags.ts, not stale placeholder values.
+      expect(find.text(r'$2.99/mo'), findsOneWidget);
+      expect(find.text(r'$6.99/mo'), findsOneWidget);
+      expect(find.text(r'$5/mo'), findsNothing);
+      expect(find.text(r'$4.99'), findsNothing);
+    },
+  );
 }

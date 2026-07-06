@@ -35,7 +35,7 @@ describe('EverydayScreens page', () => {
       screen.getByRole('link', {
         name: /Open the public demo for Add vehicle screen/i,
       })
-    ).toHaveAttribute('href', '/vin-decode-demo');
+    ).toHaveAttribute('href', '/vin-lookup-demo');
     expect(
       screen.getByRole('link', {
         name: /Open the public demo for Service records/i,

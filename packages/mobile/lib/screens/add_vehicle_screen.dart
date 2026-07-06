@@ -96,14 +96,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     super.dispose();
   }
 
-  Future<void> _decodeVIN() async {
+  Future<void> _lookupVin() async {
     final vin = _vinController.text.trim().toUpperCase();
     if (!_looksLikeVin(vin)) {
       final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            'VIN decode requires a 17-character VIN. You can still save using a vehicle ID.',
+            'VIN lookup requires a 17-character VIN. You can still save using a vehicle ID.',
           ),
           backgroundColor: colorScheme.error,
         ),
@@ -130,34 +130,34 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
         if (!shouldFallback) {
           if (e.code == 'unauthenticated') {
-            throw Exception('Please sign in to decode VIN.');
+            throw Exception('Please sign in to look up VIN.');
           }
-          throw Exception(e.message ?? 'VIN decode service unavailable');
+          throw Exception(e.message ?? 'VIN lookup service unavailable');
         }
 
         try {
-          final decodeResult = await functions
-              .httpsCallable('decodeVINCallable')
+          final lookupResult = await functions
+              .httpsCallable('vinLookupCallable')
               .call({'vin': vin});
-          data = Map<String, dynamic>.from(decodeResult.data as Map);
-        } on FirebaseFunctionsException catch (decodeError) {
-          final decodeFallbackAllowed =
-              decodeError.code == 'not-found' ||
-              decodeError.code == 'unimplemented' ||
-              decodeError.code == 'internal';
+          data = Map<String, dynamic>.from(lookupResult.data as Map);
+        } on FirebaseFunctionsException catch (lookupError) {
+          final lookupFallbackAllowed =
+              lookupError.code == 'not-found' ||
+              lookupError.code == 'unimplemented' ||
+              lookupError.code == 'internal';
 
-          if (!decodeFallbackAllowed) {
-            if (decodeError.code == 'unauthenticated') {
-              throw Exception('Please sign in to decode VIN.');
+          if (!lookupFallbackAllowed) {
+            if (lookupError.code == 'unauthenticated') {
+              throw Exception('Please sign in to look up VIN.');
             }
             throw Exception(
-              decodeError.message ?? 'VIN decode service unavailable',
+              lookupError.message ?? 'VIN lookup service unavailable',
             );
           }
 
           final projectId = Firebase.app().options.projectId;
           final uri = Uri.parse(
-            'https://us-central1-$projectId.cloudfunctions.net/decodeVIN',
+            'https://us-central1-$projectId.cloudfunctions.net/vinLookup',
           );
 
           final client = HttpClient();
@@ -173,7 +173,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           );
 
           if (response.statusCode < 200 || response.statusCode >= 300) {
-            final errorMessage = (data['error'] ?? 'VIN decode failed')
+            final errorMessage = (data['error'] ?? 'VIN lookup failed')
                 .toString();
             throw Exception(errorMessage);
           }
@@ -181,7 +181,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       }
 
       if (data['success'] != true) {
-        final errorMessage = (data['error'] ?? 'VIN decode failed').toString();
+        final errorMessage = (data['error'] ?? 'VIN lookup failed').toString();
         throw Exception(errorMessage);
       }
 
@@ -200,13 +200,13 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             (data['vehicle'] as Map?) ??
             <String, dynamic>{},
       );
-      final decodedYear = (vehicleData['year'] ?? '').toString();
+      final lookupYear = (vehicleData['year'] ?? '').toString();
 
       setState(() {
         _makeController.text = (vehicleData['make'] ?? '').toString();
         _modelController.text = (vehicleData['model'] ?? '').toString();
-        if (decodedYear.isNotEmpty) {
-          _yearController.text = decodedYear;
+        if (lookupYear.isNotEmpty) {
+          _yearController.text = lookupYear;
         }
 
         final recallsCountValue = int.tryParse(
@@ -237,7 +237,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('VIN decoded successfully$recallsNote'),
+            content: Text('VIN looked up successfully$recallsNote'),
             backgroundColor: colorScheme.primary,
           ),
         );
@@ -545,7 +545,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Enter a vehicle ID (VIN/HIN/Serial). VIN decode can auto-fill details for compatible VINs.',
+                              'Enter a vehicle ID (VIN/HIN/Serial). VIN lookup can auto-fill details for compatible VINs.',
                               style: TextStyle(
                                 color: colorScheme.onSurfaceVariant,
                                 fontSize: 12,
@@ -574,18 +574,18 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                               },
                               textCapitalization: TextCapitalization.characters,
                               onChanged: (value) {
-                                // Auto-decode only when ID appears to be a VIN.
+                                // Auto-lookup only when ID appears to be a VIN.
                                 if (_looksLikeVin(value) && !_isLoading) {
-                                  _decodeVIN();
+                                  _lookupVin();
                                 }
                               },
                             ),
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            onPressed: _isLoading ? null : _decodeVIN,
+                            onPressed: _isLoading ? null : _lookupVin,
                             icon: const Icon(Icons.search),
-                            tooltip: 'Decode VIN (17-character VIN only)',
+                            tooltip: 'Look Up VIN (17-character VIN only)',
                           ),
                         ],
                       ),
@@ -651,7 +651,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             const SizedBox(height: 6),
                             Text(
                               _recallsCount == null
-                                  ? 'Decode a VIN to preview body class, powertrain details, and recall metadata before saving.'
+                                  ? 'Look up a VIN to preview body class, powertrain details, and recall metadata before saving.'
                                   : [
                                           _engineType,
                                           _transmissionStyle,

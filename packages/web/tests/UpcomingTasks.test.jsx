@@ -364,4 +364,53 @@ describe('UpcomingTasks reminder actions', () => {
       ).toBeInTheDocument();
     });
   });
+
+  it('shows a 3-month horizon with an upgrade-to-Pro nudge for free tier', async () => {
+    mockUseFeatureFlag.mockImplementation(featureName => {
+      if (
+        featureName === 'maintenance_planning_12mo' ||
+        featureName === 'maintenance_planning_36mo'
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    renderUpcomingTasks();
+
+    await waitFor(() => {
+      expect(screen.getByText(/3-month forecast/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Upgrade to Pro/i)).toBeInTheDocument();
+    expect(screen.getByText(/plan 12 months ahead/i)).toBeInTheDocument();
+  });
+
+  it('shows a 12-month horizon with an upgrade-to-Premium nudge for pro tier', async () => {
+    mockUseFeatureFlag.mockImplementation(featureName => {
+      if (featureName === 'maintenance_planning_36mo') {
+        return false;
+      }
+      return true;
+    });
+
+    renderUpcomingTasks();
+
+    await waitFor(() => {
+      expect(screen.getByText(/12-month forecast/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Upgrade to Premium/i)).toBeInTheDocument();
+    expect(screen.getByText(/plan 36 months ahead/i)).toBeInTheDocument();
+  });
+
+  it('shows a 36-month horizon with no upgrade nudge for premium/enterprise tier', async () => {
+    mockUseFeatureFlag.mockImplementation(() => true);
+
+    renderUpcomingTasks();
+
+    await waitFor(() => {
+      expect(screen.getByText(/36-month forecast/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Upgrade to Premium/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Upgrade to Pro/i)).not.toBeInTheDocument();
+  });
 });

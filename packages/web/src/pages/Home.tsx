@@ -20,6 +20,7 @@ import {
     updateVehicle,
 } from '../shared/firestoreService';
 import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
+import { getHouseholdGarageStatus } from '../utils/householdGarageService';
 import {
     buildPersistedVinInsights,
     getVehicleInsights,
@@ -118,6 +119,7 @@ export default function Home() {
     Record<string, MaintenanceEntry[]>
   >({});
   const [loadingHealthVin, setLoadingHealthVin] = useState<string | null>(null);
+  const [householdName, setHouseholdName] = useState<string | null>(null);
 
   const applyVehiclePage = useCallback(
     (
@@ -209,6 +211,28 @@ export default function Home() {
     };
     fetchVehicles();
   }, [refreshVehicles]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadHouseholdBadge = async () => {
+      try {
+        const status = await getHouseholdGarageStatus();
+        if (!isActive) return;
+        setHouseholdName(
+          status.orgType === 'household' ? status.name || null : null
+        );
+      } catch (error) {
+        console.warn('Unable to load household garage badge', error);
+      }
+    };
+
+    void loadHouseholdBadge();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (vehicles.length === 0) return;
@@ -432,6 +456,12 @@ export default function Home() {
             <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
               Garage
             </h1>
+            {householdName && (
+              <p className="mt-1 mb-0 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <span aria-hidden="true">🏠</span>
+                {householdName} — shared household garage
+              </p>
+            )}
             {vehicles.length > 0 && (
               <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
                 {activeVehicles.length} active vehicle
@@ -495,6 +525,62 @@ export default function Home() {
                     : `Load Bob Demo Data (${bobDemoVehicleCount} vehicles)`}
                 </button>
               )}
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 m-0 mb-3">
+                Add a vehicle &rarr; Track service and costs &rarr; Stay on
+                top of what&apos;s next
+              </p>
+              <ol className="list-none p-0 m-0 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="flex-none w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center">
+                    1
+                  </span>
+                  <div>
+                    <Link
+                      to="/app/add-vehicle"
+                      className="font-medium text-teal-700 dark:text-teal-400 no-underline hover:underline"
+                    >
+                      Add your first vehicle
+                    </Link>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                      Enter a VIN or vehicle details to start your garage.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-none w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center">
+                    2
+                  </span>
+                  <div>
+                    <p className="font-medium text-slate-700 dark:text-slate-300 m-0">
+                      Log your first service record
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                      Unlocks once you&apos;ve added a vehicle — track
+                      costs, dates, and documents.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-none w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center">
+                    3
+                  </span>
+                  <div>
+                    <Link
+                      to="/app/upcoming"
+                      className="font-medium text-teal-700 dark:text-teal-400 no-underline hover:underline"
+                    >
+                      Review upcoming maintenance
+                    </Link>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                      See what&apos;s due next once your garage has
+                      vehicles.
+                    </p>
+                  </div>
+                </li>
+              </ol>
             </div>
           </div>
         ) : (

@@ -39,25 +39,25 @@ export default function StartSteps() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="flex flex-col gap-5">
         {startSteps.map(item => (
           <article
             key={item.title}
-            className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800"
+            className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800 sm:flex-row"
           >
-            <div className="relative h-56 sm:h-64 overflow-hidden">
+            <div className="relative h-56 overflow-hidden sm:h-auto sm:w-72 sm:shrink-0">
               <img
                 src={item.image}
                 alt={`${item.title} capability preview`}
                 className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent sm:bg-linear-to-r" />
               <div className="absolute bottom-3 left-3 rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-slate-900">
                 Quick look
               </div>
             </div>
-            <div className="p-5">
+            <div className="flex flex-1 flex-col justify-center p-5">
               <h2 className="font-serif text-xl text-slate-900 dark:text-slate-100">
                 {item.title}
               </h2>
@@ -66,7 +66,7 @@ export default function StartSteps() {
               </p>
               <Link
                 to={item.to}
-                className="mt-4 inline-flex items-center rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+                className="mt-4 inline-flex w-fit items-center rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
               >
                 {item.ctaLabel}
               </Link>

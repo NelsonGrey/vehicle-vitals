@@ -150,6 +150,11 @@ export default function UpcomingTasks() {
   const leadMilesThreshold = effectiveLeadDays * effectiveDailyMiles;
   const planningHorizonMonths = hasPlanning36mo ? 36 : hasPlanning12mo ? 12 : 3;
   const planningHorizonMiles = effectiveDailyMiles * 30 * planningHorizonMonths;
+  const planningHorizonUpgrade = hasPlanning36mo
+    ? null
+    : hasPlanning12mo
+      ? { planName: 'Premium', months: 36 }
+      : { planName: 'Pro', months: 12 };
 
   const estimateDueDateLabel = (milesUntilDue: number) => {
     const safeDailyMiles = Math.max(1, effectiveDailyMiles);
@@ -729,6 +734,16 @@ export default function UpcomingTasks() {
             Planning horizon:{' '}
             <strong>{planningHorizonMonths}-month forecast</strong>
           </div>
+          {planningHorizonUpgrade && (
+            <div className="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
+              You're seeing the next <strong>{planningHorizonMonths} months</strong>{' '}
+              of maintenance planning.{' '}
+              <Link to="/app/subscription" className="font-medium underline">
+                Upgrade to {planningHorizonUpgrade.planName}
+              </Link>{' '}
+              to plan {planningHorizonUpgrade.months} months ahead.
+            </div>
+          )}
           <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-3 text-sm text-teal-900 dark:border-teal-900/40 dark:bg-teal-950/30 dark:text-teal-100">
             <div>
               Tasks due within about <strong>{effectiveLeadDays} days</strong>{' '}
@@ -931,6 +946,18 @@ export default function UpcomingTasks() {
               <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 {recommendationsBeyondPlanWindow}
               </p>
+              {planningHorizonUpgrade && recommendationsBeyondPlanWindow > 0 && (
+                <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Past your {planningHorizonMonths}-month horizon.{' '}
+                  <Link
+                    to="/app/subscription"
+                    className="font-medium underline"
+                  >
+                    Upgrade
+                  </Link>{' '}
+                  to see further ahead.
+                </p>
+              )}
             </div>
           </div>
 

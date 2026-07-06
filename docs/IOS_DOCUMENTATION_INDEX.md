@@ -18,7 +18,7 @@ This collection provides everything needed to set up iOS projects with professio
 **Includes**:
 
 - Account and authentication flows
-- Garage, add/edit vehicle, VIN decode/scan
+- Garage, add/edit vehicle, VIN lookup/scan
 - Records, reminders, upcoming tasks, and calendar actions
 - Profile, service providers, premium, and troubleshooting
 

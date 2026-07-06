@@ -83,7 +83,7 @@ Progress evaluation completed:
 - Logged-in header now hides `Product Overview`.
 - Header `Help & How-To` link removed; footer `Help` remains the primary help entry point.
 - `Getting Started` now renders only for authenticated users.
-- Logged-out marketing nav remains focused on feature demos (`VIN Decode`, `Maintenance`, `Cross Platform`, `Ownership History`) plus auth action.
+- Logged-out marketing nav remains focused on feature demos (`VIN Lookup`, `Maintenance`, `Cross Platform`, `Ownership History`) plus auth action.
 
 Automation updates delivered:
 

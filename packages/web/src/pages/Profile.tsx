@@ -13,7 +13,16 @@ import {
   listApiAccessKeys,
   revokeApiAccessKey,
 } from '../utils/apiAccessService';
+import {
+  getHouseholdGarageStatus,
+  promotePersonalGarageToHousehold,
+  type HouseholdGarageStatus,
+} from '../utils/householdGarageService';
 import { getLocalServiceProviders } from '../utils/localServiceProviders';
+import {
+  requestAccountDataDeletion,
+  requestAccountDataExport,
+} from '../utils/privacyRequestService';
 
 // Declare Firebase global
 declare global {
@@ -38,7 +47,6 @@ interface AuthService {
     credential: unknown
   ) => Promise<void>;
   updatePassword: (user: unknown, newPassword: string) => Promise<void>;
-  deleteUser: (user: unknown) => Promise<void>;
 }
 
 interface HomeAddress {
@@ -121,7 +129,6 @@ const createFirebaseAuthService = async () => {
       EmailAuthProvider: firebase.auth.EmailAuthProvider,
       reauthenticateWithCredential: firebase.auth.reauthenticateWithCredential,
       updatePassword: firebase.auth.updatePassword,
-      deleteUser: firebase.auth.deleteUser,
     };
   } catch (error) {
     console.warn('Firebase auth not available:', error);
@@ -130,7 +137,6 @@ const createFirebaseAuthService = async () => {
       EmailAuthProvider: { credential: () => ({}) },
       reauthenticateWithCredential: async () => {},
       updatePassword: async () => {},
-      deleteUser: async () => {},
     };
   }
 };
@@ -211,6 +217,12 @@ export default function Profile() {
     vehicleSkipped: number;
     migratedVins: string[];
   } | null>(null);
+
+  const [householdStatus, setHouseholdStatus] =
+    useState<HouseholdGarageStatus | null>(null);
+  const [householdStatusLoading, setHouseholdStatusLoading] = useState(true);
+  const [householdName, setHouseholdName] = useState('');
+  const [householdBusy, setHouseholdBusy] = useState(false);
 
   const handleRequestConsolidationCode = async () => {
     if (!consolidationSourceUid.trim()) {
@@ -305,6 +317,75 @@ export default function Profile() {
   useEffect(() => {
     createFirebaseAuthService().then(setAuthService);
   }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadHouseholdStatus = async () => {
+      if (!user) return;
+      setHouseholdStatusLoading(true);
+      try {
+        const result = await getHouseholdGarageStatus();
+        if (!isActive) return;
+        setHouseholdStatus(result);
+        if (result.name) {
+          setHouseholdName(result.name);
+        }
+      } catch (householdError) {
+        console.warn('Unable to load household garage status', householdError);
+      } finally {
+        if (isActive) {
+          setHouseholdStatusLoading(false);
+        }
+      }
+    };
+
+    void loadHouseholdStatus();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user]);
+
+  const handlePromoteToHousehold = async () => {
+    if (!householdName.trim()) {
+      setError('Please name your household garage');
+      return;
+    }
+
+    const sure = window.confirm(
+      'This will convert your personal garage into a shared household garage. Your existing vehicles will be copied into the shared garage. Continue?'
+    );
+    if (!sure) return;
+
+    setError('');
+    setStatus('');
+    setHouseholdBusy(true);
+
+    try {
+      const result = await promotePersonalGarageToHousehold({
+        householdName: householdName.trim(),
+      });
+      setHouseholdStatus({
+        success: true,
+        orgId: result.orgId,
+        orgType: result.orgType,
+        garageStorageMode: result.garageStorageMode,
+        name: result.name,
+      });
+      setStatus(
+        `${result.name} is now a household garage. ${result.vehiclesCopied} vehicle(s) were copied into the shared garage.`
+      );
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to create household garage';
+      setError(errorMessage);
+    } finally {
+      setHouseholdBusy(false);
+    }
+  };
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -893,9 +974,9 @@ export default function Profile() {
     }
   };
 
-  const onDeleteAccount = async () => {
+  const onRequestAccountDeletion = async () => {
     const sure = window.confirm(
-      'This will permanently delete your account and all your vehicles. Continue?'
+      'This will file a request to delete your account and all associated vehicle, maintenance, and subscription data. This cannot be undone once processed. Continue?'
     );
     if (!sure) return;
     setError('');
@@ -903,12 +984,35 @@ export default function Profile() {
     setBusy(true);
     try {
       await reauth();
-      await authService!.deleteUser(user);
-      setStatus('Account deleted.');
-      // Optionally sign out cleanup
-      await signOut();
+      const result = await requestAccountDataDeletion();
+      setStatus(
+        `Account deletion request filed (request ${result.requestId}). Your data will be deleted as part of processing this request; you remain signed in until then.`
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete account');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to file account deletion request'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onRequestDataExport = async () => {
+    setError('');
+    setStatus('');
+    setBusy(true);
+    try {
+      await reauth();
+      const result = await requestAccountDataExport();
+      setStatus(
+        `Data export request filed (request ${result.requestId}). We'll notify you when it's ready.`
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to file data export request'
+      );
     } finally {
       setBusy(false);
     }
@@ -1153,6 +1257,71 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-4">
+        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
+          Household Garage
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
+          Share one garage with your household so everyone sees the same
+          vehicles, records, and reminders.
+        </p>
+
+        {householdStatusLoading ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
+            Loading household status…
+          </p>
+        ) : householdStatus?.orgType === 'household' ? (
+          <div className="rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 space-y-1">
+            <p className="text-sm text-emerald-900 dark:text-emerald-200 m-0">
+              <strong>{householdStatus.name || 'Household Garage'}</strong> is
+              a shared household garage.
+            </p>
+            <p className="text-xs text-emerald-800 dark:text-emerald-300 m-0">
+              Storage mode:{' '}
+              {householdStatus.garageStorageMode === 'org_scoped'
+                ? 'Shared only'
+                : 'Shared (dual write)'}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 mb-0">
+              TODO: inviting additional members to this household is not yet
+              available.
+            </p>
+          </div>
+        ) : (
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+            <div>
+              <label
+                htmlFor="householdName"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
+              >
+                Household garage name
+              </label>
+              <input
+                id="householdName"
+                type="text"
+                value={householdName}
+                onChange={e => setHouseholdName(e.target.value)}
+                placeholder="e.g. The Nelson Household"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+              />
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+              Your existing vehicles will be copied into the shared garage.
+              You remain the owner and keep access to your personal garage.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handlePromoteToHousehold()}
+              disabled={householdBusy || !householdName.trim()}
+              className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            >
+              {householdBusy ? 'Creating…' : 'Create Household Garage'}
+            </button>
+          </div>
+        )}
+      </div>
+
       {status && (
         <div
           className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6"
@@ -1990,11 +2159,14 @@ export default function Profile() {
 
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 border-l-4 border-red-500 space-y-6">
             <h2 className="font-serif font-bold text-2xl text-red-700 dark:text-red-400 m-0">
-              Delete Account
+              Privacy &amp; Data Requests
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
-              Delete your account and all associated data. This action cannot be
-              undone.
+              Request a copy of your data, or request deletion of your account
+              and all associated vehicle, maintenance, and subscription data.
+              Deletion requests are processed by our team and cannot be
+              undone; you remain signed in until a deletion request has been
+              processed.
             </p>
             <div>
               <label
@@ -2011,13 +2183,20 @@ export default function Profile() {
                 onChange={e => setCurrentPassword(e.target.value)}
               />
             </div>
-            <div>
+            <div className="flex flex-wrap gap-3">
               <button
-                className="bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-                onClick={onDeleteAccount}
+                className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                onClick={() => void onRequestDataExport()}
                 disabled={busy}
               >
-                Delete account
+                Request My Data Export
+              </button>
+              <button
+                className="bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                onClick={() => void onRequestAccountDeletion()}
+                disabled={busy}
+              >
+                Request Account Deletion
               </button>
             </div>
           </div>

@@ -11,7 +11,9 @@ import '../components/app_bottom_nav.dart';
 import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../services/calendar_service.dart';
+import '../services/feature_flags_service.dart';
 import '../services/firestore_service.dart';
+import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 import '../theme/tailwind_utilities.dart';
 import 'maintenance_list_screen.dart';
@@ -589,6 +591,32 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         )
         .length;
 
+    final tier = context.watch<PremiumService>().subscriptionTier;
+    final hasPlanning12mo = FeatureFlagsService.isFeatureEnabled(
+      'maintenance_planning_12mo',
+      tier,
+    );
+    final hasPlanning36mo = FeatureFlagsService.isFeatureEnabled(
+      'maintenance_planning_36mo',
+      tier,
+    );
+    final planningHorizonMonths = hasPlanning36mo
+        ? 36
+        : hasPlanning12mo
+        ? 12
+        : 3;
+    // NOTE: this indicator is informational only — MaintenanceSchedule
+    // .getUpcomingMaintenance() is not yet wired to a tier-based mileage
+    // cutoff (it always uses its 50,000-mile default), so the queue below
+    // is not actually clipped to this horizon. TODO: wire maxMileage to
+    // this horizon once product confirms the desired mileage-per-month
+    // assumption for mobile (web derives it from preferredDailyMiles).
+    final planningHorizonUpgrade = hasPlanning36mo
+        ? null
+        : hasPlanning12mo
+        ? ('Premium', 36)
+        : ('Pro', 12);
+
     return ListView.builder(
       padding: EdgeInsets.all(TwSpace.s4),
       itemCount: _upcomingItems.length + 2, // +2 for summary and legend
@@ -616,6 +644,39 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                   'Urgent: $urgentCount  •  Soon: $soonCount  •  Queue: ${_upcomingItems.length}',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
+                SizedBox(height: TwSpace.s2),
+                Text(
+                  'Planning horizon: $planningHorizonMonths-month forecast',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (planningHorizonUpgrade != null) ...[
+                  SizedBox(height: TwSpace.s2),
+                  Container(
+                    padding: EdgeInsets.all(TwSpace.s2),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(TwRadius.base),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Upgrade to ${planningHorizonUpgrade.$1} to plan '
+                            '${planningHorizonUpgrade.$2} months ahead.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Colors.indigo),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => context.push('/app/premium'),
+                          child: const Text('Upgrade'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 SizedBox(height: TwSpace.s3),
                 DropdownButtonFormField<String>(
                   initialValue: _calendarTarget,

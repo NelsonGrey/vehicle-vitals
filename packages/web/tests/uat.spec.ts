@@ -545,7 +545,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         expect.arrayContaining([
           '/cross-platform-access-demo',
           '/ownership-history-demo',
-          '/vin-decode-demo',
+          '/vin-lookup-demo',
           '/maintenance-planning-demo',
         ])
       );
@@ -669,7 +669,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         '/videos/feature-demos/onboarding-walkthrough.mp4',
         '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
         '/videos/feature-demos/cross-platform-continuity.mp4',
-        '/videos/feature-demos/vin-decode-demo.mp4',
+        '/videos/feature-demos/vin-lookup-demo.mp4',
         '/videos/feature-demos/maintenance-planning-demo.mp4',
         '/videos/feature-demos/cross-platform-access-demo.mp4',
         '/videos/feature-demos/ownership-history-demo.mp4',

@@ -57,7 +57,7 @@ This document contains both product vision and delivery claims. The matrix below
 | Capability | Current Status | Evidence / Notes |
 | --- | --- | --- |
 | Multi-vehicle management | 🟢 Implemented | Web CRUD in `Home.tsx`, `AddVehicle.tsx`, `EditVehicle.tsx`; iOS in `firestore_service.dart`; active/stored status on both platforms |
-| VIN decode / auto-populate | 🟢 Implemented | Callable in `functions/src/index.ts`; web `AddVehicle.tsx` and iOS `ScanVinScreen` consume it |
+| VIN lookup / auto-populate | 🟢 Implemented | Callable in `functions/src/index.ts`; web `AddVehicle.tsx` and iOS `ScanVinScreen` consume it |
 | Maintenance logging + timeline | 🟢 Implemented | Web: `EditVehicle.tsx`, `TimelineDashboard.tsx`; iOS: `MaintenanceListScreen`, `TimelineDashboardScreen` |
 | Document portfolio + AI analysis | 🟡 Partial (web only) | Web: full portfolio with file upload and analysis in `Records.tsx`; iOS: `RecordsScreen` exists but lacks analysis display and ownership insights — see APP_ALIGNMENT_PLAN.md |
 | Smart reminders (dismiss/snooze/complete) | 🟢 Implemented | Full lifecycle on web (`UpcomingTasks.tsx`) and iOS (`upcoming_tasks_screen.dart`); delivery outcome persisted |
@@ -272,7 +272,7 @@ Install App
   ↓
 [Add First Vehicle]
   ├→ Option A: Scan VIN (camera barcode scanner)
-  │   └→ VIN decoded → Auto-populate (make, model, year, engine)
+  │   └→ VIN looked up → Auto-populate (make, model, year, engine)
   ├→ Option B: Manual entry (Make / Model / Year / VIN)
   ├→ Option C: Skip & enter later
   └→ Vehicle added, ready to track
@@ -427,7 +427,7 @@ My Vehicles (Dashboard)
 
 **Status**: 🟡 Partial
 
-**VIN Decoding Process**:
+**VIN Lookup Process**:
 
 1. User taps "Scan VIN" button
 2. Camera opens (with preview, focus guides)
@@ -493,7 +493,7 @@ My Vehicles (Dashboard)
 
 **Alert Generation**:
 
-- Baseline: Manufacturer maintenance schedule (from VIN decode)
+- Baseline: Manufacturer maintenance schedule (from VIN lookup)
 - Customization: User can adjust intervals (if prefer more frequent service)
 - Triggers: Automatically generate when vehicle is within:
   - 500 miles (high priority, yellow)
@@ -771,7 +771,7 @@ Budget & Insights
 ### Pre-Launch
 
 - ✅ Beta testing with target users (responsible car owners)
-- ✅ VIN decoder accuracy validation (edge cases, older vehicles)
+- ✅ VIN lookup accuracy validation (edge cases, older vehicles)
 - ✅ Cross-platform testing (iOS, Android, web)
 - ✅ App Store/Play Store listings and screenshots
 - ✅ Privacy policy & terms of service published

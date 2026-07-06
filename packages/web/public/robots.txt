@@ -9,4 +9,4 @@ Disallow: /auth/
 Disallow: /app/admin
 Disallow: /app/dev-seed
 
-Sitemap: https://vehiclevitals.com/sitemap.xml
+Sitemap: https://vehicle-vitals.com/sitemap.xml

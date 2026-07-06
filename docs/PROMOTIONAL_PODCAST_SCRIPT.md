@@ -153,7 +153,7 @@ It integrates with your existing records — you can upload documents, photos, i
 
 **Host:** If you're tired of managing vehicle maintenance the old way — with sticky notes, spreadsheets, and crossed fingers — **Vehicle Vitals** is worth checking out.
 
-Head over to **[www.vehiclevitals.com](http://www.vehiclevitals.com)** to sign up. The first 30 days are free, so you can see exactly how it works for your vehicles.
+Head over to **[www.vehicle-vitals.com](http://www.vehicle-vitals.com)** to sign up. The first 30 days are free, so you can see exactly how it works for your vehicles.
 
 Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or you take your vehicles to the shop, Vehicle Vitals makes vehicle ownership smarter, cheaper, and way less stressful.
 
@@ -173,11 +173,11 @@ Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or
 
 ### 30-Second Radio Spot
 
-> Tired of guessing when your car needs maintenance? Or tracking repair costs across a notebook and three email threads? **Vehicle Vitals** is a cloud platform that organizes everything — maintenance schedules, service records, repair costs, and nearby mechanics. See your true cost of vehicle ownership. Get proactive reminders before repairs fail. Never lose a receipt again. **Vehicle Vitals — smarter vehicle ownership.** Visit vehiclevitals.com today.
+> Tired of guessing when your car needs maintenance? Or tracking repair costs across a notebook and three email threads? **Vehicle Vitals** is a cloud platform that organizes everything — maintenance schedules, service records, repair costs, and nearby mechanics. See your true cost of vehicle ownership. Get proactive reminders before repairs fail. Never lose a receipt again. **Vehicle Vitals — smarter vehicle ownership.** Visit vehicle-vitals.com today.
 
 ### 60-Second YouTube Pre-Roll
 
-> [VISUAL: Screenshots of landing page, garage page] Ever wonder how much you're _really_ spending on your vehicle? [VISUAL: Cost breakdown chart] **Vehicle Vitals** is your personal vehicle assistant. Add your cars, upload service records, and the platform does the rest. See your maintenance timeline, get reminders before service is due, and find trusted mechanics near you. [VISUAL: Timeline page] For fleet managers, it means fewer breakdowns and smarter budgeting. [VISUAL: Profile, records pages] One place for everything — costs, records, reminders, and peace of mind. **Get started free at vehiclevitals.com.**
+> [VISUAL: Screenshots of landing page, garage page] Ever wonder how much you're _really_ spending on your vehicle? [VISUAL: Cost breakdown chart] **Vehicle Vitals** is your personal vehicle assistant. Add your cars, upload service records, and the platform does the rest. See your maintenance timeline, get reminders before service is due, and find trusted mechanics near you. [VISUAL: Timeline page] For fleet managers, it means fewer breakdowns and smarter budgeting. [VISUAL: Profile, records pages] One place for everything — costs, records, reminders, and peace of mind. **Get started free at vehicle-vitals.com.**
 
 ### Social Media Teasers
 
@@ -189,7 +189,7 @@ Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or
 >
 > See your true cost of ownership. Track maintenance. Never miss a service.
 >
-> vehiclevitals.com
+> vehicle-vitals.com
 
 **Instagram Caption:**
 
@@ -202,7 +202,7 @@ Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or
 > - ✅ Smart reminders before failures
 > - ✅ Organized records for insurance, resale, everything
 >
-> That's Vehicle Vitals. Free for 30 days. vehiclevitals.com 🚗
+> That's Vehicle Vitals. Free for 30 days. vehicle-vitals.com 🚗
 
 ---
 

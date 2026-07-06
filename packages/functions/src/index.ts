@@ -1054,7 +1054,7 @@ const buildSupportUserSummary = async (
   const subscription = subscriptionSnap.data() || {};
   const entitlement = entitlementSnap.data() || {};
   const vehicleCount = vehicleSnap.docs.filter(
-    doc => doc.id !== '__preferences__'
+    doc => doc.id !== 'preferences'
   ).length;
   const tier = (subscription.tier || 'free').toString();
 
@@ -1104,7 +1104,7 @@ async function copyUserVehiclesIntoOrg(params: {
 
   const vins = sourceVehiclesSnap.docs
     .map(doc => doc.id)
-    .filter(id => id !== '__preferences__');
+    .filter(id => id !== 'preferences');
 
   let copiedCount = 0;
   for (const vin of vins) {
@@ -2612,13 +2612,13 @@ export async function runMaintenanceReminderSweep(
     const vehicles = await queryDocuments(`users/${userId}/vehicles`);
 
     // Extract FCM token from the preferences doc (virtual vehicle record).
-    const prefsDoc = (vehicles as any[]).find(v => v.id === '__preferences__');
+    const prefsDoc = (vehicles as any[]).find(v => v.id === 'preferences');
     const userFcmToken: string =
       userLevelFcmToken || (prefsDoc?.fcmToken || '').toString();
 
     for (const vehicle of vehicles as Vehicle[]) {
       // Skip the preferences sentinel – it is not a real vehicle.
-      if ((vehicle as any).id === '__preferences__') {
+      if ((vehicle as any).id === 'preferences') {
         continue;
       }
 
@@ -4454,7 +4454,7 @@ export const consolidateAccountDataCallable = onCall(async request => {
       .get();
 
     const vehiclesToMigrate = sourceVehiclesSnap.docs
-      .filter(doc => doc.id !== '__preferences__')
+      .filter(doc => doc.id !== 'preferences')
       .map(doc => doc.id);
 
     if (vehiclesToMigrate.length === 0) {

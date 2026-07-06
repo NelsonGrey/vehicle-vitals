@@ -7,6 +7,7 @@ import {
   linkWithPopup,
   OAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithPopup,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -48,6 +49,8 @@ interface AuthContextType {
   signInWithApple: () => Promise<UserCredential>;
   linkWithGoogle: () => Promise<UserCredential>;
   linkWithApple: () => Promise<UserCredential>;
+  reauthenticateWithGoogle: () => Promise<UserCredential>;
+  reauthenticateWithApple: () => Promise<UserCredential>;
   resetPassword: (email: string) => Promise<void>;
   requestAccountConsolidation: (
     sourceUid: string
@@ -83,6 +86,12 @@ const AuthContext = createContext<AuthContextType>({
     throw new Error('Firebase not initialized');
   },
   linkWithApple: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  reauthenticateWithGoogle: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  reauthenticateWithApple: async () => {
     throw new Error('Firebase not initialized');
   },
   resetPassword: async () => {
@@ -266,6 +275,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return linkWithPopup(auth.currentUser, provider);
     };
 
+    const reauthenticateCurrentUserWithProvider = async (
+      provider: GoogleAuthProvider | OAuthProvider
+    ) => {
+      if (!auth.currentUser) {
+        throw new Error('Sign in first before reauthenticating.');
+      }
+      return reauthenticateWithPopup(auth.currentUser, provider);
+    };
+
     return {
       user,
       loading,
@@ -291,6 +309,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signInWithApple: () => signInWithProvider(appleProvider),
       linkWithGoogle: () => linkCurrentUserWithProvider(googleProvider),
       linkWithApple: () => linkCurrentUserWithProvider(appleProvider),
+      reauthenticateWithGoogle: () =>
+        reauthenticateCurrentUserWithProvider(googleProvider),
+      reauthenticateWithApple: () =>
+        reauthenticateCurrentUserWithProvider(appleProvider),
       resetPassword: (email: string) => sendPasswordResetEmail(auth, email),
       requestAccountConsolidation: (sourceUid: string) =>
         requestAccountConsolidation(sourceUid),

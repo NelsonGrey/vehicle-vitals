@@ -73,6 +73,7 @@ export default function SiteFooter() {
               color="#ffffff"
               accent="#14b8a6"
               wordmarkColor="#cbd5e1"
+              windowColor="#020617"
             />
           </Link>
 

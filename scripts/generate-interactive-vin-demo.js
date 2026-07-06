@@ -19,7 +19,7 @@ const OUTPUT_PATH = path.join(
   'public',
   'videos',
   'feature-demos',
-  'vin-decode-demo.mp4'
+  'vin-lookup-demo.mp4'
 );
 const TMP_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'vv-interactive-vin-'));
 
@@ -39,8 +39,8 @@ const SAY_VOICE = process.env.VV_NARRATION_VOICE || 'Samantha';
 const SAY_RATE = process.env.VV_NARRATION_RATE || '170';
 
 const narrationText =
-  'In Vehicle Vitals, start from the VIN Decode demo page, navigate features from the header, and open authentication to continue. ' +
-  'Fill your email and password, then return to VIN decode to review the walkthrough lane and supporting content.';
+  'In Vehicle Vitals, start from the VIN Lookup demo page, navigate features from the header, and open authentication to continue. ' +
+  'Fill your email and password, then return to VIN lookup to review the walkthrough lane and supporting content.';
 
 function run(bin, args, options = {}) {
   execFileSync(bin, args, {
@@ -127,7 +127,7 @@ async function recordInteractiveFlow() {
   const page = await context.newPage();
   const videoHandle = page.video();
 
-  await page.goto(`${BASE_URL}/vin-decode-demo`, {
+  await page.goto(`${BASE_URL}/vin-lookup-demo`, {
     waitUntil: 'domcontentloaded',
   });
   await maybeUnlockEnvironmentGate(page);
@@ -142,7 +142,7 @@ async function recordInteractiveFlow() {
     await page.waitForTimeout(900);
   }
 
-  const vinNav = page.getByRole('link', { name: /^VIN Decode$/i }).first();
+  const vinNav = page.getByRole('link', { name: /^VIN Lookup$/i }).first();
   if (await vinNav.isVisible().catch(() => false)) {
     await vinNav.click();
     await page.waitForLoadState('domcontentloaded');
@@ -176,7 +176,7 @@ async function recordInteractiveFlow() {
     await page.waitForTimeout(1500);
   }
 
-  await page.goto(`${BASE_URL}/vin-decode-demo`, {
+  await page.goto(`${BASE_URL}/vin-lookup-demo`, {
     waitUntil: 'domcontentloaded',
   });
   await page.waitForTimeout(1000);

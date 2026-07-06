@@ -79,7 +79,7 @@ Vehicle Vitals is a cross-platform vehicle management application built on a **F
 │  ┌──────────────────────────────────────────────────┐         │
 │  │         Firebase Functions                       │         │
 │  │         (Serverless Business Logic)              │         │
-│  │   - VIN Decoding (NHTSA API)                     │         │
+│  │   - VIN Lookup (NHTSA API)                       │         │
 │  │   - Maintenance Scheduling                       │         │
 │  │   - Data Validation                              │         │
 │  └──────────────────────────────────────────────────┘         │
@@ -104,7 +104,7 @@ Vehicle Vitals is a cross-platform vehicle management application built on a **F
 │                          │                                     │
 │  ┌───────────────────────▼──────────────────────────┐         │
 │  │         NHTSA VPIC API                           │         │
-│  │         (Vehicle VIN Decoding Service)           │         │
+│  │         (Vehicle VIN Lookup Service)             │         │
 │  └──────────────────────────────────────────────────┘         │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -117,7 +117,7 @@ Vehicle Vitals is a cross-platform vehicle management application built on a **F
 - User authentication and authorization
 - Vehicle CRUD operations
 - Maintenance history tracking
-- VIN decoding and vehicle data enrichment
+- VIN lookup and vehicle data enrichment
 - Real-time data synchronization
 - Offline mobile data access
 - Multi-device data sync
@@ -170,8 +170,8 @@ const vehicles = await getDocs(q);
 **Implementation**:
 
 ```typescript
-// Firebase Function: VIN decoding
-export const decodeVIN = onRequest(
+// Firebase Function: VIN lookup
+export const vinLookup = onRequest(
   { cors: true },
   async (request, response) => {
     const { vin } = request.body;
@@ -617,7 +617,7 @@ match /vehicles/{vehicleId}/maintenance/{maintenanceId} {
 }
 ```
 
-#### VIN Decoding Flow
+#### VIN Lookup Flow
 
 ```
 ┌──────────┐    ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
@@ -625,7 +625,7 @@ match /vehicles/{vehicleId}/maintenance/{maintenanceId} {
 │          │    │   Functions  │    │   VPIC API  │    │              │
 └────┬─────┘    └──────┬───────┘    └──────┬──────┘    └──────┬───────┘
      │                 │                   │                   │
-     │ 1. Decode VIN   │                   │                   │
+     │ 1. Look up VIN  │                   │                   │
      │ (17-char)       │                   │                   │
      ├────────────────>│                   │                   │
      │                 │                   │                   │
@@ -658,7 +658,7 @@ match /vehicles/{vehicleId}/maintenance/{maintenanceId} {
 
 ```typescript
 // packages/functions/src/index.ts
-export const decodeVIN = onRequest(
+export const vinLookup = onRequest(
   { cors: true },
   async (request, response) => {
     const { vin } = request.body;
@@ -685,8 +685,8 @@ export const decodeVIN = onRequest(
 
       response.json(vehicleData);
     } catch (error) {
-      logger.error('VIN decode error', error);
-      response.status(500).json({ error: 'Failed to decode VIN' });
+      logger.error('VIN lookup error', error);
+      response.status(500).json({ error: 'Failed to look up VIN' });
     }
   }
 );
@@ -1016,7 +1016,7 @@ const validateEmail = (email: string): boolean => {
 **Server-Side Validation** (Firebase Functions):
 
 ```typescript
-export const decodeVIN = onRequest({ cors: true }, async (req, res) => {
+export const vinLookup = onRequest({ cors: true }, async (req, res) => {
   const { vin } = req.body;
 
   // Validate VIN format
@@ -1047,7 +1047,7 @@ match /vehicles/{vehicleId} {
 **Firebase Functions CORS**:
 
 ```typescript
-export const decodeVIN = onRequest(
+export const vinLookup = onRequest(
   {
     cors: true, // Allows cross-origin requests
   },
@@ -1269,7 +1269,7 @@ restored testing and deployment capability.
 | **Concurrent Users**     | 100,000 DAU | Unlimited        | Firebase auto-scales            |
 | **Firestore Reads**      | 10M/day     | 50M/day (quota)  | Implement client-side caching   |
 | **Firestore Writes**     | 1M/day      | 10M/day (quota)  | Batch writes, optimize updates  |
-| **Function Invocations** | 1M/day      | 10M/day (quota)  | Cache VIN decodes, rate limit   |
+| **Function Invocations** | 1M/day      | 10M/day (quota)  | Cache VIN lookups, rate limit   |
 | **Storage**              | 100GB       | Unlimited (paid) | Implement file size limits      |
 | **Database Size**        | 10GB        | Unlimited (paid) | Archive old maintenance records |
 
@@ -1281,10 +1281,10 @@ restored testing and deployment capability.
 // Web: Track custom metrics
 import { trace } from 'firebase/performance';
 
-const vinDecodeTrace = trace(performance, 'vin_decode');
-vinDecodeTrace.start();
-await decodeVIN(vin);
-vinDecodeTrace.stop();
+const vinLookupTrace = trace(performance, 'vin_lookup');
+vinLookupTrace.start();
+await vinLookup(vin);
+vinLookupTrace.stop();
 ```
 
 **Cloud Functions Logging**:
@@ -1292,8 +1292,8 @@ vinDecodeTrace.stop();
 ```typescript
 import * as logger from 'firebase-functions/logger';
 
-logger.info('VIN decoded successfully', { vin, make, model, year });
-logger.error('VIN decode failed', { vin, error: error.message });
+logger.info('VIN looked up successfully', { vin, make, model, year });
+logger.error('VIN lookup failed', { vin, error: error.message });
 ```
 
 **Metrics to Track**:
@@ -1310,7 +1310,7 @@ logger.error('VIN decode failed', { vin, error: error.message });
 
 ### External APIs
 
-#### NHTSA VPIC API (VIN Decoding)
+#### NHTSA VPIC API (VIN Lookup)
 
 **Endpoint**: `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/{VIN}?format=json`
 
@@ -1341,7 +1341,7 @@ try {
 
 **Caching Strategy**:
 
-- Cache decoded VINs in Firestore for 90 days
+- Cache looked-up VINs in Firestore for 90 days
 - Check cache before calling NHTSA API to reduce external calls
 
 ### Future Integrations (Roadmap)
@@ -1437,7 +1437,7 @@ try {
 - **DAU**: Daily Active Users
 - **VIN**: Vehicle Identification Number (17-character unique code)
 - **NHTSA**: National Highway Traffic Safety Administration
-- **VPIC**: Vehicle Product Information Catalog (NHTSA's VIN decoder)
+- **VPIC**: Vehicle Product Information Catalog (NHTSA's VIN lookup service)
 - **CDN**: Content Delivery Network
 - **SPA**: Single Page Application
 - **PWA**: Progressive Web App

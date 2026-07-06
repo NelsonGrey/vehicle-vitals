@@ -356,7 +356,7 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 
 ## 3. Third-Party Service Cost Recovery
 
-### 3.1 VIN Decoding & Vehicle Data
+### 3.1 VIN Lookup & Vehicle Data
 
 **Service**: NHTSA VPIC API  
 **Current Cost**: $0/month (free tier, no commercial restrictions)  
@@ -526,7 +526,7 @@ Vehicle Vitals will adopt a **freemium subscription model** with **contextual ad
 
 | Service                  | Monthly Cost | Recovery Strategy                | Monthly Revenue | Net          |
 | ------------------------ | ------------ | -------------------------------- | --------------- | ------------ |
-| VIN Decoding (NHTSA)     | $0           | None needed                      | $0              | $0           |
+| VIN Lookup (NHTSA)       | $0           | None needed                      | $0              | $0           |
 | Provider Directory (API) | $1,000       | Sponsored listings + affiliate   | $1,630          | +$630        |
 | Email/SMS Delivery       | $40,000      | Email optimization + SMS premium | $600            | -$39,400     |
 | AI Features              | $1,500       | Premium tier bundling            | $0 (bundled)    | -$1,500      |

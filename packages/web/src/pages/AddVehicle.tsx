@@ -17,10 +17,10 @@ import {
   useVehicleLimit,
 } from '../shared/useMonetization';
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
-import { buildPersistedVinInsights, decodeVin } from '../utils/vehicleService';
+import { buildPersistedVinInsights, lookupVin } from '../utils/vehicleService';
 import {
   detectVehicleIdentifierType,
-  getVinDecodeValidationError,
+  getVinLookupValidationError,
 } from '../utils/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
@@ -267,7 +267,7 @@ export default function AddVehicle() {
     }
   };
 
-  const handleDecodeVin = async () => {
+  const handleLookupVin = async () => {
     const vin = (form.vin || '').trim();
     if (!vin) {
       alert(
@@ -284,12 +284,12 @@ export default function AddVehicle() {
       const detectedTypeLabel =
         identifierType === 'hin' ? 'HIN' : 'Serial/Other';
       alert(
-        `Decode currently supports VIN only. Detected ${detectedTypeLabel}. You can still save this vehicle ID and complete details manually.`
+        `VIN lookup currently supports VIN only. Detected ${detectedTypeLabel}. You can still save this vehicle ID and complete details manually.`
       );
       return;
     }
 
-    const vinValidationError = getVinDecodeValidationError(vin);
+    const vinValidationError = getVinLookupValidationError(vin);
     if (vinValidationError) {
       alert(vinValidationError);
       return;
@@ -312,7 +312,7 @@ export default function AddVehicle() {
         recallsItems,
         vinProfile,
         rawInsights,
-      } = await decodeVin(vin);
+      } = await lookupVin(vin);
       setForm(prev => ({
         ...prev,
         make: make || prev.make,
@@ -572,7 +572,7 @@ export default function AddVehicle() {
             <div className="flex flex-col gap-2 pt-2">
               <button
                 type="button"
-                onClick={handleDecodeVin}
+                onClick={handleLookupVin}
                 className="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
               >
                 VIN Lookup
@@ -822,7 +822,7 @@ export default function AddVehicle() {
 
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4">
-            Decode Preview
+            Lookup Preview
           </h3>
 
           {!insights ? (

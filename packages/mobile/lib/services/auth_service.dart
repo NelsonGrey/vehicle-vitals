@@ -325,6 +325,42 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>> requestAccountDataDeletion() async {
+    if (_auth.currentUser == null) {
+      throw Exception('Sign in first before requesting account deletion.');
+    }
+
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'requestUserDataDeletionCallable',
+      );
+      final result = await callable({});
+      return result.data as Map<String, dynamic>;
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(
+        'Failed to file deletion request: ${e.message ?? "Unknown error"}',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> requestAccountDataExport() async {
+    if (_auth.currentUser == null) {
+      throw Exception('Sign in first before requesting a data export.');
+    }
+
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'requestUserDataExportCallable',
+      );
+      final result = await callable({});
+      return result.data as Map<String, dynamic>;
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(
+        'Failed to file data export request: ${e.message ?? "Unknown error"}',
+      );
+    }
+  }
+
   @override
   void dispose() {
     _authSubscription?.cancel();

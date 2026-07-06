@@ -16,7 +16,7 @@ Source of truth: docs/PRODUCT_DESIGN.md
 | --- | --- | --- | --- |
 | Cross-platform consistency | Web and mobile should feel like one product | In progress | Shared design tokens are in use; some screen-level parity work remains |
 | Multi-vehicle management | Manage several vehicles with clear hierarchy | Strong | Core CRUD and primary dashboard workflows are implemented |
-| VIN decode and auto-populate | Decode VIN and prefill profile fields | Partial | VIN flows are present on web/mobile; release-confidence validation remains |
+| VIN lookup and auto-populate | Look up VIN and prefill profile fields | Partial | VIN flows are present on web/mobile; release-confidence validation remains |
 | Maintenance timeline | Clear, chronological, actionable timeline | Partial | Both platforms have timeline surfaces; mobile depth and semantics still trail web |
 | Smart alerts and reminder actions | Dismiss, snooze, complete with urgency clarity | Partial | Lifecycle actions are implemented; delivery reliability and production validation remain open |
 | Export records for compliance/resale | CSV/PDF exports with confidence | Partial | Export features exist on web/mobile; parity signoff still open |

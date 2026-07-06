@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +9,8 @@ import '../components/app_bottom_nav.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/record_storage_service.dart';
+import '../utils/document_analysis_summary.dart';
+import '../utils/ownership_insights.dart';
 
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({super.key, required this.vin});
@@ -25,6 +30,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
   final Map<String, List<PlatformFile>> _failedUploadsByKey = {};
   Vehicle? _vehicle;
   Map<String, dynamic>? _portfolio;
+  Map<String, Map<String, dynamic>> _analysisByPath = {};
 
   @override
   void initState() {
@@ -49,6 +55,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
         _portfolio = Map<String, dynamic>.from(vehicle.documentPortfolio ?? {});
         _isLoading = false;
       });
+
+      unawaited(_refreshAnalyses(_allFilePaths()));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,6 +70,51 @@ class _RecordsScreenState extends State<RecordsScreen> {
   }
 
   List<dynamic> get _categories => (_portfolio?['categories'] as List?) ?? [];
+
+  List<String> _allFilePaths() {
+    final paths = <String>[];
+    for (final category in _categories) {
+      final categoryMap = Map<String, dynamic>.from(category as Map);
+      final items = (categoryMap['items'] as List?) ?? [];
+      for (final item in items) {
+        final itemMap = Map<String, dynamic>.from(item as Map);
+        final files = (itemMap['files'] as List?) ?? [];
+        for (final file in files) {
+          final fileMap = Map<String, dynamic>.from(file as Map);
+          final path = (fileMap['path'] ?? '').toString();
+          if (path.isNotEmpty) paths.add(path);
+        }
+      }
+    }
+    return paths;
+  }
+
+  Future<void> _refreshAnalyses(List<String> paths) async {
+    if (paths.isEmpty) return;
+    try {
+      final analyses = await _firestoreService.getAttachmentAnalyses(
+        widget.vin,
+        paths,
+      );
+      if (!mounted || analyses.isEmpty) return;
+      setState(() {
+        _analysisByPath = {..._analysisByPath, ...analyses};
+      });
+    } catch (_) {
+      // Non-fatal: render without analysis enrichment.
+    }
+  }
+
+  Future<void> _requestAnalysis(String path) async {
+    try {
+      await FirebaseFunctions.instance
+          .httpsCallable('analyzeAttachmentTextCallable')
+          .call({'vin': widget.vin, 'storagePath': path});
+    } catch (_) {
+      // Non-fatal: the storage-finalize trigger will analyze it regardless.
+    }
+    await _refreshAnalyses([path]);
+  }
 
   String _itemUploadKey(int categoryIndex, int itemIndex) =>
       '$categoryIndex:$itemIndex';
@@ -211,6 +264,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
           );
           _appendItemFile(categoryIndex, itemIndex, uploaded);
           uploadedCount += 1;
+          final uploadedPath = (uploaded['path'] ?? '').toString();
+          if (uploadedPath.isNotEmpty) {
+            unawaited(_requestAnalysis(uploadedPath));
+          }
         } catch (_) {
           failedFiles.add(file);
         }
@@ -285,6 +342,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
           );
           _appendItemFile(categoryIndex, itemIndex, uploaded);
           recoveredCount += 1;
+          final uploadedPath = (uploaded['path'] ?? '').toString();
+          if (uploadedPath.isNotEmpty) {
+            unawaited(_requestAnalysis(uploadedPath));
+          }
         } catch (_) {
           stillFailing.add(file);
         }
@@ -384,6 +445,18 @@ class _RecordsScreenState extends State<RecordsScreen> {
       (count, files) => count + files.length,
     );
 
+    final allFiles = <Map<String, dynamic>>[];
+    for (final path in _allFilePaths()) {
+      final analysis = _analysisByPath[path];
+      if (analysis != null) {
+        allFiles.add({'path': path, 'analysis': analysis});
+      }
+    }
+    final insights = computeOwnershipInsights(
+      allFiles,
+      vehicleYear: _vehicle?.year,
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Vehicle Records')),
       body: Padding(
@@ -450,6 +523,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
                 ],
               ),
             ),
+            if (insights.hasAnyInsight) ...[
+              const SizedBox(height: 12),
+              _OwnershipInsightsPanel(insights: insights),
+            ],
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
@@ -639,45 +716,21 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                     categoryIndex,
                                     itemIndex,
                                   ).asMap().entries.map(
-                                    (entry) => ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      title: Text(
-                                        (entry.value['name'] ?? 'Attachment')
-                                            .toString(),
-                                      ),
-                                      subtitle: Text(
-                                        (entry.value['type'] ?? '').toString(),
-                                      ),
-                                      onTap: () => _openItemFile(
+                                    (entry) => _FileAttachmentTile(
+                                      file: entry.value,
+                                      analysis:
+                                          _analysisByPath[(entry.value['path'] ??
+                                                  '')
+                                              .toString()],
+                                      onOpen: () => _openItemFile(
                                         categoryIndex,
                                         itemIndex,
                                         entry.key,
                                       ),
-                                      trailing: Wrap(
-                                        spacing: 4,
-                                        children: [
-                                          IconButton(
-                                            onPressed: () => _openItemFile(
-                                              categoryIndex,
-                                              itemIndex,
-                                              entry.key,
-                                            ),
-                                            icon: const Icon(Icons.open_in_new),
-                                            tooltip: 'Open attachment',
-                                          ),
-                                          IconButton(
-                                            onPressed: () => _removeItemFile(
-                                              categoryIndex,
-                                              itemIndex,
-                                              entry.key,
-                                            ),
-                                            icon: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.red,
-                                            ),
-                                            tooltip: 'Remove attachment',
-                                          ),
-                                        ],
+                                      onRemove: () => _removeItemFile(
+                                        categoryIndex,
+                                        itemIndex,
+                                        entry.key,
                                       ),
                                     ),
                                   ),
@@ -707,6 +760,247 @@ class _RecordsScreenState extends State<RecordsScreen> {
         ),
       ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),
+    );
+  }
+}
+
+({String label, Color color}) _analysisBadge(double? confidence) {
+  if (confidence == null) {
+    return (label: 'Unscored', color: Colors.blueGrey);
+  }
+  if (confidence >= 0.7) {
+    return (label: 'Auto-Verified', color: Colors.green);
+  }
+  if (confidence >= 0.4) {
+    return (label: 'Review Suggested', color: Colors.orange);
+  }
+  return (label: 'Needs Review', color: Colors.red);
+}
+
+class _OwnershipInsightsPanel extends StatelessWidget {
+  const _OwnershipInsightsPanel({required this.insights});
+
+  final OwnershipInsights insights;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.insights, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  'Ownership Insights',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Documents analyzed: ${insights.analyzedDocumentCount}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Maintenance spend captured: \$${insights.maintenanceTotalCost.toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              '${insights.maintenanceDocsCount} doc${insights.maintenanceDocsCount == 1 ? '' : 's'}'
+              ' • Avg \$${insights.maintenanceAverageCost.toStringAsFixed(2)}'
+              '${insights.latestServiceDate != null ? ' • Latest ${insights.latestServiceDate}' : ''}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              insights.estimatedMonthlyPayment != null
+                  ? 'Estimated monthly payment: \$${insights.estimatedMonthlyPayment!.toStringAsFixed(2)}'
+                  : 'Estimated monthly payment: add finance docs',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              'Finance docs detected: ${insights.financeDocsCount}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (insights.estimatedValueRealized != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Estimated value realized: \$${insights.estimatedValueRealized!.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              if (insights.estimatedCurrentValue != null)
+                Text(
+                  'Est. current value \$${insights.estimatedCurrentValue!.toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FileAttachmentTile extends StatelessWidget {
+  const _FileAttachmentTile({
+    required this.file,
+    required this.analysis,
+    required this.onOpen,
+    required this.onRemove,
+  });
+
+  final Map<String, dynamic> file;
+  final Map<String, dynamic>? analysis;
+  final VoidCallback onOpen;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final extracted = Map<String, dynamic>.from(
+      analysis?['extracted'] as Map? ?? {},
+    );
+    final confidence = analysis?['confidence'];
+    final sourceText = analysis?['sourceText']?.toString();
+    final badge = _analysisBadge(confidence is num ? confidence.toDouble() : null);
+    final summary = buildDocumentSummary(
+      analysis != null ? extracted : null,
+      sourceText,
+    );
+    final hasExtractedFields =
+        extracted['serviceType'] != null ||
+        extracted['totalCost'] != null ||
+        extracted['serviceDate'] != null ||
+        extracted['mileage'] != null;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text((file['name'] ?? 'Attachment').toString()),
+            subtitle: Text((file['type'] ?? '').toString()),
+            onTap: onOpen,
+            trailing: Wrap(
+              spacing: 4,
+              children: [
+                IconButton(
+                  onPressed: onOpen,
+                  icon: const Icon(Icons.open_in_new),
+                  tooltip: 'Open attachment',
+                ),
+                IconButton(
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  tooltip: 'Remove attachment',
+                ),
+              ],
+            ),
+          ),
+          if (analysis != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: badge.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      badge.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: badge.color,
+                      ),
+                    ),
+                  ),
+                  Text(summary, style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+            if (hasExtractedFields)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, top: 4),
+                child: ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Analysis details',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  childrenPadding: const EdgeInsets.only(bottom: 8),
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _AnalysisDetailRow(
+                            'Category',
+                            (extracted['documentCategory'] ?? 'n/a')
+                                .toString(),
+                          ),
+                          _AnalysisDetailRow(
+                            'Service type',
+                            (extracted['serviceType'] ?? 'n/a').toString(),
+                          ),
+                          _AnalysisDetailRow(
+                            'Total cost',
+                            extracted['totalCost'] is num
+                                ? '\$${(extracted['totalCost'] as num).toStringAsFixed(2)}'
+                                : 'n/a',
+                          ),
+                          _AnalysisDetailRow(
+                            'Service date',
+                            (extracted['serviceDate'] ?? 'n/a').toString(),
+                          ),
+                          _AnalysisDetailRow(
+                            'Mileage',
+                            extracted['mileage'] is num
+                                ? '${(extracted['mileage'] as num).toStringAsFixed(0)} mi'
+                                : 'n/a',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AnalysisDetailRow extends StatelessWidget {
+  const _AnalysisDetailRow(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Text(
+        '$label: $value',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
     );
   }
 }

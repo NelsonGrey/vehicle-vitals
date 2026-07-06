@@ -147,6 +147,8 @@ export default function Profile() {
     signOut,
     linkWithGoogle,
     linkWithApple,
+    reauthenticateWithGoogle,
+    reauthenticateWithApple,
     requestAccountConsolidation,
     consolidateAccountData,
   } = useAuth();
@@ -583,6 +585,9 @@ export default function Profile() {
   const hasApple = (user.providerData || []).some(
     provider => provider.providerId === 'apple.com'
   );
+  const hasPassword = (user.providerData || []).some(
+    provider => provider.providerId === 'password'
+  );
 
   const handleEnablePushNotifications = async () => {
     setPushSaving(true);
@@ -694,6 +699,24 @@ export default function Profile() {
   };
 
   const reauth = async () => {
+    // Password reauth requires typing the current password, which only
+    // makes sense (and is only shown in the UI) for accounts that have a
+    // password provider linked. Google/Apple-only accounts have no
+    // password to enter, so they reauthenticate via the same provider's
+    // popup flow instead — otherwise they'd be unable to change password,
+    // or file data export/deletion requests, at all.
+    if (!hasPassword) {
+      if (hasGoogle) {
+        await reauthenticateWithGoogle();
+        return;
+      }
+      if (hasApple) {
+        await reauthenticateWithApple();
+        return;
+      }
+      throw new Error('No supported sign-in provider found for reauthentication');
+    }
+
     if (!user.email) {
       throw new Error('User email is required for reauthentication');
     }

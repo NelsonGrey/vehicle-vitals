@@ -4251,7 +4251,13 @@ function maskEmailForDisplay(email: string): string {
 // Without this, any signed-in user who learned another UID could migrate
 // that account's vehicles and subscription into their own (see
 // consolidateAccountDataCallable below).
-export const requestAccountConsolidationCallable = onCall(async request => {
+export const requestAccountConsolidationCallable = onCall(
+  // sendEmail() reads SENDGRID_API_KEY/SENDGRID_FROM_EMAIL when
+  // EMAIL_PROVIDER=sendgrid; Firebase Functions v2 binds secrets
+  // per-function, so this must declare them itself (same class of gap
+  // fixed on stripeSubscriptionWebhook).
+  {secrets: ['SENDGRID_API_KEY', 'SENDGRID_FROM_EMAIL']},
+  async request => {
   const primaryUid = request.auth?.uid;
   if (!primaryUid) {
     throw new HttpsError('unauthenticated', 'Missing auth context');
@@ -4334,6 +4340,100 @@ export const requestAccountConsolidationCallable = onCall(async request => {
     sentTo: maskEmailForDisplay(sourceEmail),
   };
 });
+
+const SUPPORT_REQUEST_TOPICS = [
+  'Bug Report',
+  'Account / Login',
+  'Billing / Subscription',
+  'VIN Lookup / Vehicle Data',
+  'Feature Request',
+  'Other',
+];
+
+const supportRequestRateState = new Map<
+  string,
+  {count: number; windowStartMs: number}
+>();
+
+function enforceSupportRequestRateLimit(clientKey: string): void {
+  const maxRequests = 5;
+  const windowMs = 60 * 60 * 1000;
+  const now = Date.now();
+  const current = supportRequestRateState.get(clientKey);
+
+  if (!current || now - current.windowStartMs >= windowMs) {
+    supportRequestRateState.set(clientKey, {count: 1, windowStartMs: now});
+    return;
+  }
+
+  if (current.count >= maxRequests) {
+    throw new HttpsError(
+      'resource-exhausted',
+      'Too many support requests — please wait before trying again'
+    );
+  }
+
+  current.count += 1;
+  supportRequestRateState.set(clientKey, current);
+}
+
+export const submitSupportRequestCallable = onCall(
+  {secrets: ['SENDGRID_API_KEY', 'SENDGRID_FROM_EMAIL']},
+  async request => {
+    const clientKey = request.auth?.uid || request.rawRequest?.ip || 'unknown';
+    enforceSupportRequestRateLimit(clientKey);
+
+    const name = (request.data?.name || '').toString().trim();
+    const email = (request.data?.email || '').toString().trim();
+    const topic = (request.data?.topic || '').toString().trim();
+    const message = (request.data?.message || '').toString().trim();
+
+    if (!name || name.length > 200) {
+      throw new HttpsError('invalid-argument', 'A valid name is required');
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) {
+      throw new HttpsError('invalid-argument', 'A valid email is required');
+    }
+
+    if (!SUPPORT_REQUEST_TOPICS.includes(topic)) {
+      throw new HttpsError('invalid-argument', 'A valid topic is required');
+    }
+
+    if (!message || message.length > 5000) {
+      throw new HttpsError(
+        'invalid-argument',
+        'A message (up to 5000 characters) is required'
+      );
+    }
+
+    const escapeHtml = (value: string) =>
+      value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    await sendEmail({
+      to: 'support@vehicle-vitals.com',
+      replyTo: email,
+      subject: `[Support] ${topic} — ${name}`,
+      text:
+        `New support request\n\n` +
+        `Name: ${name}\n` +
+        `Email: ${email}\n` +
+        `Topic: ${topic}\n\n` +
+        `${message}`,
+      html:
+        `<p><strong>New support request</strong></p>` +
+        `<p>Name: ${escapeHtml(name)}<br>` +
+        `Email: ${escapeHtml(email)}<br>` +
+        `Topic: ${escapeHtml(topic)}</p>` +
+        `<p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>`,
+    });
+
+    return {success: true};
+  }
+);
 
 export const consolidateAccountDataCallable = onCall(async request => {
   const primaryUid = request.auth?.uid;

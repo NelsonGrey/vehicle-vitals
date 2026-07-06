@@ -5,6 +5,7 @@ export interface EmailMessage {
   subject: string;
   html: string;
   text: string;
+  replyTo?: string;
 }
 
 type EmailProvider = "log" | "sendgrid";
@@ -42,6 +43,7 @@ async function sendWithSendGrid(message: EmailMessage): Promise<void> {
     body: JSON.stringify({
       personalizations: [{to: [{email: message.to}]}],
       from: {email: fromEmail},
+      ...(message.replyTo ? {reply_to: {email: message.replyTo}} : {}),
       subject: message.subject,
       content: [
         {type: "text/plain", value: message.text},

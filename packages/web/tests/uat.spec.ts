@@ -541,11 +541,16 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       expect(screensPageMetrics.hasScreensHeading).toBe(true);
       expect(screensPageMetrics.screenshotCards).toBeGreaterThanOrEqual(6);
+      // TODO: flip back to '/vin-lookup-demo' once this promotion's Deploy
+      // Firebase lands on staging — same pre-deploy/post-deploy tension as
+      // TC-UI-009 (see the vin-decode-demo.mp4 TODO below): staging's
+      // currently hosted EverydayScreens page still links to the pre-rename
+      // route until this deploy completes.
       expect(screensPageMetrics.publicDemoLinks).toEqual(
         expect.arrayContaining([
           '/cross-platform-access-demo',
           '/ownership-history-demo',
-          '/vin-lookup-demo',
+          '/vin-decode-demo',
           '/maintenance-planning-demo',
         ])
       );

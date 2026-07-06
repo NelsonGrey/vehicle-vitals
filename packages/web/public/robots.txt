@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vehicle-vitals.com/sitemap.xml

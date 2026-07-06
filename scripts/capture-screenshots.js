@@ -14,7 +14,7 @@ const WEB_FEATURE_IMAGES_DIR = path.join(
   '../packages/web/public/images/features'
 );
 const SCREENSHOT_VIEWPORT = { width: 1280, height: 1800 };
-const DEMO_EMAIL = process.env.VV_SCREENSHOT_EMAIL || 'demo@vehiclevitals.com';
+const DEMO_EMAIL = process.env.VV_SCREENSHOT_EMAIL || 'demo@vehicle-vitals.com';
 const DEMO_PASSWORD =
   process.env.VV_SCREENSHOT_PASSWORD || 'Demo2025!';
 

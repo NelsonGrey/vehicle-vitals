@@ -715,9 +715,9 @@ import * as cors from 'cors';
 
 const corsOptions = {
   origin: [
-    'https://vehiclevitals.com',
-    'https://www.vehiclevitals.com',
-    'https://staging.vehiclevitals.com',
+    'https://vehicle-vitals.com',
+    'https://www.vehicle-vitals.com',
+    'https://staging.vehicle-vitals.com',
   ],
   methods: ['POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -991,13 +991,13 @@ npm outdated
 
 **Security Team**:
 
-- **Email**: security@vehiclevitals.com
+- **Email**: security@vehicle-vitals.com
 - **On-Call**: [PagerDuty/Phone Number]
 - **Slack**: #security-incidents
 
 **Reporting Security Issues**:
 
-- Email: security@vehiclevitals.com
+- Email: security@vehicle-vitals.com
 - Subject: [SECURITY] Brief description
 - Include: Steps to reproduce, impact assessment
 
@@ -1048,4 +1048,4 @@ npm outdated
 **Maintained By**: Mark Nelson (Security Lead)  
 **Review Cycle**: Quarterly or after security incidents  
 **Next Review**: May 16, 2026  
-**Feedback**: Email security@vehiclevitals.com
+**Feedback**: Email security@vehicle-vitals.com

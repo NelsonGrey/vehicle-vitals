@@ -189,7 +189,8 @@ const canonicalHostedOriginsByHostname: Record<string, string> = {
   'vehicle-vitals-dev.firebaseapp.com': 'https://vehicle-vitals-dev.web.app',
   'vehicle-vitals-staging.firebaseapp.com':
     'https://vehicle-vitals-staging.web.app',
-  'vehicle-vitals-prod.firebaseapp.com': 'https://vehicle-vitals-prod.web.app',
+  'vehicle-vitals-prod.firebaseapp.com': 'https://vehicle-vitals.com',
+  'vehicle-vitals-prod.web.app': 'https://vehicle-vitals.com',
 };
 
 const redirectToCanonicalHostedOrigin = (): void => {

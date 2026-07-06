@@ -1086,7 +1086,7 @@ export const vinLookup = onRequest(
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │  STAGING                                             │  │
 │  │  - Firebase Project: vehicle-vitals-staging          │  │
-│  │  - Web: staging.vehiclevitals.com                    │  │
+│  │  - Web: staging.vehicle-vitals.com                    │  │
 │  │  - Mobile: iOS pre-release validation / Android on hold│  │
 │  │  - Database: Staging Firestore (test data)           │  │
 │  │  - CI/CD: Auto-deploy on 'develop' branch push       │  │
@@ -1095,7 +1095,7 @@ export const vinLookup = onRequest(
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │  PRODUCTION                                          │  │
 │  │  - Firebase Project: vehicle-vitals-prod             │  │
-│  │  - Web: www.vehiclevitals.com                        │  │
+│  │  - Web: www.vehicle-vitals.com                        │  │
 │  │  - Mobile: App Store target (iOS) / Android on hold  │  │
 │  │  - Database: Production Firestore (live data)        │  │
 │  │  - CI/CD: Manual approval required for deploy        │  │
@@ -1167,8 +1167,8 @@ jobs:
 │                                                        │
 │  ┌──────────────────────────────────────────────┐    │
 │  │  Custom Domains                              │    │
-│  │  - Production: www.vehiclevitals.com         │    │
-│  │  - Staging: staging.vehiclevitals.com        │    │
+│  │  - Production: www.vehicle-vitals.com         │    │
+│  │  - Staging: staging.vehicle-vitals.com        │    │
 │  │  - Auto-renewal SSL certificates             │    │
 │  └──────────────────────────────────────────────┘    │
 │                                                        │

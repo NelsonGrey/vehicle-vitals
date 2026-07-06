@@ -855,7 +855,7 @@ npm uninstall unused-package
    - Environment details (OS, browser, versions)
 
 3. **Contact support**:
-   - **Email**: support@vehiclevitals.com
+   - **Email**: support@vehicle-vitals.com
    - **GitHub Issues**: https://github.com/mnelson3/vehicle-vitals/issues
    - **Slack** (internal): #vehicle-vitals-support
 
@@ -968,4 +968,4 @@ Check Firebase service status:
 **Maintained By**: Mark Nelson  
 **Review Cycle**: Monthly or when new issues discovered  
 **Next Review**: March 16, 2026  
-**Feedback**: Create GitHub issue or email support@vehiclevitals.com
+**Feedback**: Create GitHub issue or email support@vehicle-vitals.com

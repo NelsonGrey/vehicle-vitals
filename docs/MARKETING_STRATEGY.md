@@ -63,7 +63,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 - [ ] Record with professional voice actor / host
 - [ ] Add background music (royalty-free, modern tech vibe)
 - [ ] Create podcast cover art
-- [ ] Add show notes with links to vehiclevitals.com, screenshots
+- [ ] Add show notes with links to vehicle-vitals.com, screenshots
 - [ ] Upload to Spotify, Apple Podcasts, Google Podcasts, etc.
 - [ ] Create clips for TikTok, Instagram, LinkedIn
 - [ ] Write transcripts for SEO / accessibility
@@ -209,7 +209,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 > **Vehicle Vitals – Smart Vehicle Management**
 > Know your true cost of ownership. Track maintenance. Get proactive reminders.
 > Free 30-day trial. No credit card required.
-> vehiclevitals.com
+> vehicle-vitals.com
 
 **Budget:** $500–1,000/month  
 **Expected CPC:** $1–3 (varies by competitiveness)  

@@ -35,6 +35,11 @@
   flex-direction: column;
 }
 
+.stacked-v-logo-mark {
+  display: block;
+  flex: 0 0 auto;
+}
+
 .stacked-v-logo-wordmark {
   font-size: 11px;
   letter-spacing: 2px;

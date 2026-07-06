@@ -246,9 +246,9 @@
 
 **On-Screen Text (Medium):** "30 Days. No Credit Card."
 
-**[TEXT: "vehiclevitals.com"]** appears at bottom
+**[TEXT: "vehicle-vitals.com"]** appears at bottom
 
-**Voice-Over:** "Visit vehiclevitals.com today. Try it free for 30 days — no credit card required."
+**Voice-Over:** "Visit vehicle-vitals.com today. Try it free for 30 days — no credit card required."
 
 **[VISUAL: Quick montage of app screenshots fading in sequence]**
 

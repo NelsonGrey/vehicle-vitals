@@ -8,8 +8,8 @@
 
 import { personaPages } from '../data/personas';
 
-// Set VITE_APP_URL=https://vehiclevitals.com in your production .env
-const APP_URL = (import.meta.env.VITE_APP_URL || 'https://vehiclevitals.com').replace(/\/$/, '');
+// Set VITE_APP_URL=https://vehicle-vitals.com in your production .env
+const APP_URL = (import.meta.env.VITE_APP_URL || 'https://vehicle-vitals.com').replace(/\/$/, '');
 
 const SITE_NAME = 'Vehicle Vitals';
 

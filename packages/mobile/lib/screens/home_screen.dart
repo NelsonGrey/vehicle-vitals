@@ -13,6 +13,8 @@ import '../services/firestore_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -469,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       : Column(
                           children: [
                             Expanded(
-                              flex: 3,
+                              flex: _screenshotMode ? 2 : 3,
                               child: Card(
                                 margin: EdgeInsets.zero,
                                 child: ListView(
@@ -611,7 +613,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 10),
                             Expanded(
-                              flex: 4,
+                              flex: _screenshotMode ? 5 : 4,
                               child: Card(
                                 margin: EdgeInsets.zero,
                                 child: selected == null
@@ -761,22 +763,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     ),
                                                   ],
                                                 ),
-                                                const SizedBox(height: 8),
-                                                SizedBox(
-                                                  width: double.infinity,
-                                                  child: ElevatedButton.icon(
-                                                    onPressed: () => context.push(
-                                                      '/app/maintenance/${activeVehicle.vin}',
-                                                    ),
-                                                    icon: const Icon(
-                                                      Icons.build,
-                                                      size: 16,
-                                                    ),
-                                                    label: const Text(
-                                                      'Maintenance',
+                                                if (!_screenshotMode) ...[
+                                                  const SizedBox(height: 8),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    child: ElevatedButton.icon(
+                                                      onPressed: () => context.push(
+                                                        '/app/maintenance/${activeVehicle.vin}',
+                                                      ),
+                                                      icon: const Icon(
+                                                        Icons.build,
+                                                        size: 16,
+                                                      ),
+                                                      label: const Text(
+                                                        'Maintenance',
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
+                                                ],
                                               ],
                                             ),
                                           );

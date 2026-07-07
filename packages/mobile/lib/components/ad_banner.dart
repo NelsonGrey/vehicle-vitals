@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 /// AdMob banner widget for mobile apps
 /// Configure with environment variables or fallback to placeholder
 class AdBanner extends StatefulWidget {
@@ -41,6 +43,9 @@ class _AdBannerState extends State<AdBanner> {
   @override
   void initState() {
     super.initState();
+    if (_screenshotMode) {
+      return;
+    }
     _loadAd();
   }
 
@@ -102,6 +107,10 @@ class _AdBannerState extends State<AdBanner> {
       builder: (context, premiumService, child) {
         if (!premiumService.shouldShowAds()) {
           return const SizedBox.shrink(); // Hide ads for premium users
+        }
+
+        if (_screenshotMode) {
+          return const SizedBox.shrink();
         }
 
         // Show placeholder when no ads configured or failed to load

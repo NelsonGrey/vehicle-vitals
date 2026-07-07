@@ -48,6 +48,8 @@ import 'services/onboarding_service.dart';
 import 'services/premium_service.dart';
 import 'theme/app_theme.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -169,6 +171,7 @@ class VehicleVitalsApp extends StatelessWidget {
           return ErrorWidgetWrapper(
             child: MaterialApp.router(
               title: 'Garage',
+              debugShowCheckedModeBanner: !_screenshotMode,
               theme: AppTheme.lightTheme(),
               darkTheme: AppTheme.darkTheme(),
               themeMode: ThemeMode.system,
@@ -176,11 +179,13 @@ class VehicleVitalsApp extends StatelessWidget {
               builder: (context, child) {
                 return Column(
                   children: [
-                    if (kDebugMode) const _DebugFirebaseEnvBanner(),
-                    const SafeArea(
-                      bottom: false,
-                      child: AdBanner(margin: EdgeInsets.zero),
-                    ),
+                    if (kDebugMode && !_screenshotMode)
+                      const _DebugFirebaseEnvBanner(),
+                    if (!_screenshotMode)
+                      const SafeArea(
+                        bottom: false,
+                        child: AdBanner(margin: EdgeInsets.zero),
+                      ),
                     Expanded(child: child ?? const SizedBox.shrink()),
                   ],
                 );

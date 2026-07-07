@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 class OnboardingService extends ChangeNotifier {
   String? _activeUid;
   bool _isLoading = true;
@@ -22,6 +24,13 @@ class OnboardingService extends ChangeNotifier {
 
     if (uid == null || uid.isEmpty) {
       _isCompleted = false;
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    if (_screenshotMode) {
+      _isCompleted = true;
       _isLoading = false;
       notifyListeners();
       return;

@@ -44,12 +44,12 @@ Navigate to `packages/mobile/android/app/src/main/res/mipmap-*/` directories.
 - **Size**: Source icon should be at least 1024x1024 pixels
 - **Format**: PNG with transparency (for overlays), or solid background
 - **Padding**: Include ~10% padding around main icon content for better visibility
-- **Colors**: Match Vehicle Vitals brand colors (cream #fffaf3, complementary accents)
-- **Style**: Modern, automotive-themed, recognizable at small sizes
+- **Colors**: Match the Vehicle Vitals dark slate and cyan/teal brand system (`#020617`, `#06b6d4`, `#14b8a6`, `#fffaf3`)
+- **Style**: Modern, professional, automotive-health themed, and recognizable at small sizes
 
 ## Current Icon Design
 
-The current icon features the Vehicle Vitals logo - centered on a cream background to create a square format suitable for all platforms. The logo represents automotive health monitoring and maintenance tracking.
+The current icon uses a dark slate app tile with a garage-roof/road `V`, vehicle-health gauge, and verified-record document badge. It represents maintenance planning, vehicle health confidence, and ownership proof.
 
 ## Updating the Icon
 

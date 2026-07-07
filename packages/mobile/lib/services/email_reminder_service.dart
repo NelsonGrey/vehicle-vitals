@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 class EmailReminderService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -32,6 +34,13 @@ class EmailReminderService {
 
   // Get user's email reminder preferences
   Future<Map<String, dynamic>> getEmailPreferences() async {
+    if (_screenshotMode) {
+      return {
+        'emailRemindersEnabled': true,
+        'email': 'demo@vehicle-vitals.com',
+      };
+    }
+
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('Not authenticated');
@@ -46,6 +55,8 @@ class EmailReminderService {
 
   // Update email reminder preferences
   Future<void> updateEmailPreferences(bool enabled) async {
+    if (_screenshotMode) return;
+
     await _firestore.collection('users').doc(_userId).set({
       'emailRemindersEnabled': enabled,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -54,6 +65,8 @@ class EmailReminderService {
 
   // Send a test maintenance reminder
   Future<void> sendTestReminder() async {
+    if (_screenshotMode) return;
+
     final user = _auth.currentUser;
     if (user == null || user.email == null || user.email!.isEmpty) {
       throw Exception('No authenticated email available');

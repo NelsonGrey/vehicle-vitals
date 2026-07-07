@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 class AnalyticsService extends ChangeNotifier {
   static const String _analyticsEnabledKey = 'analytics_enabled';
 
@@ -33,6 +35,7 @@ class AnalyticsService extends ChangeNotifier {
 
   Future<void> setAnalyticsEnabled(bool enabled) async {
     await _saveAnalyticsPreference(enabled);
+    if (_screenshotMode) return;
 
     final uid = _userId;
     if (uid != null) {
@@ -48,6 +51,7 @@ class AnalyticsService extends ChangeNotifier {
     String eventName,
     Map<String, dynamic> parameters,
   ) async {
+    if (_screenshotMode) return;
     if (!_isAnalyticsEnabled) return;
 
     final uid = _userId;
@@ -81,6 +85,17 @@ class AnalyticsService extends ChangeNotifier {
 
   // Get analytics insights
   Future<Map<String, dynamic>> getAnalyticsInsights() async {
+    if (_screenshotMode) {
+      return {
+        'totalEvents': 128,
+        'screenViews': 74,
+        'maintenanceActions': 21,
+        'vehicleActions': 18,
+        'mostVisitedScreen': 'Garage',
+        'period': 'last_30_days',
+      };
+    }
+
     final uid = _userId;
     if (uid == null) {
       return {
@@ -146,6 +161,36 @@ class AnalyticsService extends ChangeNotifier {
 
   // Get maintenance insights
   Future<Map<String, dynamic>> getMaintenanceInsights() async {
+    if (_screenshotMode) {
+      return {
+        'totalVehicles': 3,
+        'totalMaintenanceEntries': 9,
+        'totalMaintenanceCost': 843.47,
+        'averageCostPerEntry': 93.72,
+        'mostCommonMaintenance': 'Oil and filter service',
+        'recentMaintenance': [
+          {
+            'title': 'Oil and filter service',
+            'cost': 86.42,
+            'date': DateTime.now().subtract(const Duration(days: 28)),
+            'vin': '1FTEW1EP8NFA23457',
+          },
+          {
+            'title': 'Tire rotation and pressure check',
+            'cost': 29.99,
+            'date': DateTime.now().subtract(const Duration(days: 84)),
+            'vin': '5YJ3E1EA7PF123456',
+          },
+          {
+            'title': 'Brake inspection',
+            'cost': 164.75,
+            'date': DateTime.now().subtract(const Duration(days: 132)),
+            'vin': '2HGFE2F53PH654321',
+          },
+        ],
+      };
+    }
+
     final uid = _userId;
     if (uid == null) {
       return {

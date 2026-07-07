@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/design_tokens.dart';
 import 'ad_banner.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 enum MobileAdPlacement { inlineAuth, inlineContent }
 
 class InlineAdSection extends StatelessWidget {
@@ -40,6 +42,10 @@ class InlineAdSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_screenshotMode) {
+      return const SizedBox.shrink();
+    }
+
     final colorScheme = AppDesignTokens.colorScheme(
       Theme.of(context).brightness,
     );

@@ -1,6 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('Handling background message: ${message.messageId}');
 }
@@ -15,6 +17,12 @@ class NotificationService extends ChangeNotifier {
 
   Future<void> initialize() async {
     if (_isInitialized) return;
+
+    if (_screenshotMode) {
+      _isInitialized = true;
+      notifyListeners();
+      return;
+    }
 
     try {
       await _firebaseMessaging.requestPermission();

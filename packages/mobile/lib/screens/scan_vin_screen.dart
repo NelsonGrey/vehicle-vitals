@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 class ScanVINScreen extends StatefulWidget {
   const ScanVINScreen({super.key});
 
@@ -58,10 +60,53 @@ class _ScanVINScreenState extends State<ScanVINScreen> {
       body: Column(
         children: [
           Expanded(
-            child: MobileScanner(
-              controller: _cameraController,
-              onDetect: _foundBarcode,
-            ),
+            child: _screenshotMode
+                ? Container(
+                    width: double.infinity,
+                    color: Colors.black87,
+                    child: Center(
+                      child: Container(
+                        margin: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 3),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.document_scanner,
+                              color: Colors.white,
+                              size: 72,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'VIN barcode frame',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              '1FTEW1EP8NFA23457',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : MobileScanner(
+                    controller: _cameraController,
+                    onDetect: _foundBarcode,
+                  ),
           ),
           Container(
             width: double.infinity,

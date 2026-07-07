@@ -647,9 +647,9 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                 SizedBox(height: TwSpace.s2),
                 Text(
                   'Planning horizon: $planningHorizonMonths-month forecast',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 if (planningHorizonUpgrade != null) ...[
                   SizedBox(height: TwSpace.s2),
@@ -806,45 +806,34 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                   ),
                 ),
                 SizedBox(height: TwSpace.s3),
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Due at: ${(item['nextDueMileage'] as int).toStringAsFixed(0)} miles',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.color
-                                      ?.withValues(alpha: 0.7),
-                                ),
-                          ),
-                          Text(
-                            'Miles until due: ${milesUntilDue.toStringAsFixed(0)}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.color
-                                      ?.withValues(alpha: 0.7),
-                                ),
-                          ),
-                        ],
+                    Text(
+                      'Due at: ${(item['nextDueMileage'] as int).toStringAsFixed(0)} miles',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                       ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Text(
+                      'Miles until due: ${milesUntilDue.toStringAsFixed(0)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    SizedBox(height: TwSpace.s3),
+                    Wrap(
+                      spacing: TwSpace.s2,
+                      runSpacing: TwSpace.s2,
                       children: [
                         OutlinedButton(
                           onPressed: () => _addItemToCalendar(vehicle, item),
                           child: const Text('Add to Calendar'),
                         ),
-                        SizedBox(width: TwSpace.s2),
                         OutlinedButton(
                           onPressed: isReminderBusy
                               ? null
@@ -919,7 +908,6 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                                 : 'Reminder Actions',
                           ),
                         ),
-                        SizedBox(width: TwSpace.s2),
                         ElevatedButton(
                           onPressed: () {
                             Navigator.push(

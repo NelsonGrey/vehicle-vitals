@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+const bool _screenshotSignedOut = bool.fromEnvironment(
+  'VV_SCREENSHOT_SIGNED_OUT',
+);
 const String _screenshotEmail = String.fromEnvironment('VV_SCREENSHOT_EMAIL');
 const String _screenshotPassword = String.fromEnvironment(
   'VV_SCREENSHOT_PASSWORD',
@@ -51,23 +54,40 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   void _init() {
+    if (_screenshotMode) {
+      if (_screenshotSignedOut) {
+        _currentUser = null;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      _signInForScreenshots();
+      return;
+    }
+
     _currentUser = _mapUser(_auth.currentUser);
     _authSubscription = _auth.authStateChanges().listen((firebaseUser) {
       _currentUser = _mapUser(firebaseUser);
       _isLoading = false;
       notifyListeners();
     });
-
-    if (_screenshotMode && _currentUser == null) {
-      _signInForScreenshots();
-    }
   }
 
   Future<void> _signInForScreenshots() async {
     if (_screenshotEmail.isEmpty || _screenshotPassword.isEmpty) {
       debugPrint(
-        'Screenshot mode enabled but demo credentials were not provided.',
+        'Screenshot mode enabled without demo credentials; using local demo user.',
       );
+      _currentUser = User(
+        uid: 'screenshot-demo-user',
+        email: 'demo@vehicle-vitals.com',
+        displayName: 'Demo User',
+        emailVerified: true,
+        providerIds: const ['password'],
+      );
+      _isLoading = false;
+      notifyListeners();
       return;
     }
 
@@ -75,6 +95,15 @@ class AuthService extends ChangeNotifier {
       await signInWithEmailAndPassword(_screenshotEmail, _screenshotPassword);
     } catch (e) {
       debugPrint('Screenshot auto sign-in failed: $e');
+      _currentUser = User(
+        uid: 'screenshot-demo-user',
+        email: _screenshotEmail,
+        displayName: 'Demo User',
+        emailVerified: true,
+        providerIds: const ['password'],
+      );
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -304,8 +333,10 @@ class AuthService extends ChangeNotifier {
 
     try {
       final functions = FirebaseFunctions.instance;
-      final callable = functions.httpsCallable('consolidateAccountDataCallable');
-      
+      final callable = functions.httpsCallable(
+        'consolidateAccountDataCallable',
+      );
+
       final result = await callable({
         'sourceUid': sourceUid,
         'idempotencyKey': idempotencyKey,
@@ -319,9 +350,7 @@ class AuthService extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Account consolidation error: $e');
-      throw Exception(
-        'Failed to consolidate accounts: ${e.toString()}',
-      );
+      throw Exception('Failed to consolidate accounts: ${e.toString()}');
     }
   }
 

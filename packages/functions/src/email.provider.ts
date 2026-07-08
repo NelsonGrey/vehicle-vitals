@@ -1,4 +1,5 @@
 import * as logger from "firebase-functions/logger";
+import * as nodemailer from "nodemailer";
 
 export interface EmailMessage {
   to: string;
@@ -8,7 +9,7 @@ export interface EmailMessage {
   replyTo?: string;
 }
 
-type EmailProvider = "log" | "sendgrid";
+type EmailProvider = "log" | "workspace";
 
 /**
  * Resolve outbound email provider from environment.
@@ -16,46 +17,41 @@ type EmailProvider = "log" | "sendgrid";
  */
 function getEmailProvider(): EmailProvider {
   const raw = (process.env.EMAIL_PROVIDER || "log").trim().toLowerCase();
-  return raw === "sendgrid" ? "sendgrid" : "log";
+  return raw === "workspace" ? "workspace" : "log";
 }
 
 /**
- * Send an email using SendGrid v3 Mail Send API.
+ * Send an email through Google Workspace's Gmail SMTP using an
+ * account app password (smtp.gmail.com, port 465).
  * @param {EmailMessage} message Email payload
  * @return {Promise<void>} Resolves on successful submission
  */
-async function sendWithSendGrid(message: EmailMessage): Promise<void> {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+async function sendWithWorkspace(message: EmailMessage): Promise<void> {
+  const user = process.env.WORKSPACE_SMTP_USER;
+  const pass = process.env.WORKSPACE_SMTP_APP_PASSWORD;
 
-  if (!apiKey || !fromEmail) {
+  if (!user || !pass) {
     throw new Error(
-      "Missing SENDGRID_API_KEY or SENDGRID_FROM_EMAIL for sendgrid provider"
+      "Missing WORKSPACE_SMTP_USER or WORKSPACE_SMTP_APP_PASSWORD " +
+      "for workspace provider"
     );
   }
 
-  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      personalizations: [{to: [{email: message.to}]}],
-      from: {email: fromEmail},
-      ...(message.replyTo ? {reply_to: {email: message.replyTo}} : {}),
-      subject: message.subject,
-      content: [
-        {type: "text/plain", value: message.text},
-        {type: "text/html", value: message.html},
-      ],
-    }),
+  const transport = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {user, pass},
   });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`SendGrid API error ${response.status}: ${body}`);
-  }
+  await transport.sendMail({
+    from: user,
+    to: message.to,
+    replyTo: message.replyTo,
+    subject: message.subject,
+    text: message.text,
+    html: message.html,
+  });
 }
 
 /**
@@ -66,9 +62,9 @@ async function sendWithSendGrid(message: EmailMessage): Promise<void> {
 export async function sendEmail(message: EmailMessage): Promise<void> {
   const provider = getEmailProvider();
 
-  if (provider === "sendgrid") {
-    await sendWithSendGrid(message);
-    logger.info("Reminder email sent via sendgrid", {
+  if (provider === "workspace") {
+    await sendWithWorkspace(message);
+    logger.info("Reminder email sent via workspace", {
       to: message.to,
       subject: message.subject,
     });

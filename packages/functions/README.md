@@ -115,10 +115,14 @@ lib/               # Compiled JavaScript output
 Email delivery:
 
 ```bash
-EMAIL_PROVIDER=log|sendgrid
-SENDGRID_API_KEY=...
-SENDGRID_FROM_EMAIL=no-reply@example.com
+EMAIL_PROVIDER=log|workspace
+WORKSPACE_SMTP_USER=no-reply@yourdomain.com
+WORKSPACE_SMTP_APP_PASSWORD=...
 ```
+
+`workspace` sends via Google Workspace's Gmail SMTP (smtp.gmail.com:465)
+using an app password generated for `WORKSPACE_SMTP_USER`. That account
+needs 2-Step Verification enabled to generate an app password.
 
 Provider flags:
 

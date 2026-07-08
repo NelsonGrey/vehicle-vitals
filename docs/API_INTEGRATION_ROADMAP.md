@@ -318,5 +318,5 @@ Completed:
 Next:
 
 1. Replace heuristic warranty adapter with OEM/dealer authoritative provider integration.
-2. Add provider secret/config documentation for production deployment (`EMAIL_PROVIDER`, `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, manuals and warranty provider flags, auth/rate-limit/cache flags).
+2. Add provider secret/config documentation for production deployment (`EMAIL_PROVIDER`, `WORKSPACE_SMTP_USER`, `WORKSPACE_SMTP_APP_PASSWORD`, manuals and warranty provider flags, auth/rate-limit/cache flags).
 3. Execute `scripts/smoke-calendar-auth-all.sh` with generated staging/prod ID tokens and archive the emitted evidence log artifact.

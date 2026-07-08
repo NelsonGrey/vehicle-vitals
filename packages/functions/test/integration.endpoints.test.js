@@ -351,9 +351,9 @@ test('sendMaintenanceReminder returns 200 for valid payload', async () => {
 });
 
 test('sendMaintenanceReminder returns 500 when provider send fails', async () => {
-  process.env.EMAIL_PROVIDER = 'sendgrid';
-  delete process.env.SENDGRID_API_KEY;
-  delete process.env.SENDGRID_FROM_EMAIL;
+  process.env.EMAIL_PROVIDER = 'workspace';
+  delete process.env.WORKSPACE_SMTP_USER;
+  delete process.env.WORKSPACE_SMTP_APP_PASSWORD;
 
   const req = {
     method: 'POST',

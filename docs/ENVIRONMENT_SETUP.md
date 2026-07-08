@@ -258,21 +258,25 @@ by runtime environment flags. Configure these in your Functions environment
 
 ```
 EMAIL_PROVIDER
-SENDGRID_API_KEY
-SENDGRID_FROM_EMAIL
+WORKSPACE_SMTP_USER
+WORKSPACE_SMTP_APP_PASSWORD
 ```
 
 Recommended values:
 
 - `EMAIL_PROVIDER=log` for local/dev simulation
-- `EMAIL_PROVIDER=sendgrid` for staging/production delivery
+- `EMAIL_PROVIDER=workspace` for staging/production delivery via Google
+  Workspace's Gmail SMTP (smtp.gmail.com:465)
 
-To configure SendGrid in Firebase Functions:
+`WORKSPACE_SMTP_USER` is the sending mailbox (e.g. `no-reply@yourdomain.com`).
+`WORKSPACE_SMTP_APP_PASSWORD` is an app password generated for that account
+(requires 2-Step Verification to be enabled on it). To configure per Firebase
+project:
 
 ```bash
 cd packages/functions
-firebase functions:secrets:set SENDGRID_API_KEY
-firebase functions:secrets:set SENDGRID_FROM_EMAIL
+firebase functions:secrets:set WORKSPACE_SMTP_USER --project <project-id>
+firebase functions:secrets:set WORKSPACE_SMTP_APP_PASSWORD --project <project-id>
 ```
 
 ### Integration Providers and Feature Flags

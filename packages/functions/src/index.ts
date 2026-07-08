@@ -2447,7 +2447,10 @@ export const getLocalServiceProvidersCallable = onCall(async request => {
 
 // Email reminder function
 export const sendMaintenanceReminder = onRequest(
-  { cors: true },
+  {
+    cors: true,
+    secrets: ['WORKSPACE_SMTP_USER', 'WORKSPACE_SMTP_APP_PASSWORD'],
+  },
   async (request, response) => {
     try {
       // Only allow POST requests
@@ -2475,8 +2478,8 @@ export const sendMaintenanceReminder = onRequest(
           `${vehicle.make} ${vehicle.model}`
       );
 
-      // For now, we'll log the email content. In production, integrate
-      // with SendGrid
+      // sendEmail() logs in dev and sends via Google Workspace SMTP
+      // when EMAIL_PROVIDER=workspace.
       const emailContent = {
         to: email,
         subject:
@@ -2535,9 +2538,15 @@ export const sendMaintenanceReminder = onRequest(
 );
 
 // Scheduled function to check for upcoming maintenance (runs daily)
-export const checkMaintenanceReminders = onSchedule('0 9 * * *', async () => {
-  await runMaintenanceReminderSchedule();
-});
+export const checkMaintenanceReminders = onSchedule(
+  {
+    schedule: '0 9 * * *',
+    secrets: ['WORKSPACE_SMTP_USER', 'WORKSPACE_SMTP_APP_PASSWORD'],
+  },
+  async () => {
+    await runMaintenanceReminderSchedule();
+  }
+);
 
 /**
  * Execute one scheduled reminder run with logging and error swallowing.
@@ -4252,11 +4261,11 @@ function maskEmailForDisplay(email: string): string {
 // that account's vehicles and subscription into their own (see
 // consolidateAccountDataCallable below).
 export const requestAccountConsolidationCallable = onCall(
-  // sendEmail() reads SENDGRID_API_KEY/SENDGRID_FROM_EMAIL when
-  // EMAIL_PROVIDER=sendgrid; Firebase Functions v2 binds secrets
+  // sendEmail() reads WORKSPACE_SMTP_USER/WORKSPACE_SMTP_APP_PASSWORD when
+  // EMAIL_PROVIDER=workspace; Firebase Functions v2 binds secrets
   // per-function, so this must declare them itself (same class of gap
   // fixed on stripeSubscriptionWebhook).
-  {secrets: ['SENDGRID_API_KEY', 'SENDGRID_FROM_EMAIL']},
+  {secrets: ['WORKSPACE_SMTP_USER', 'WORKSPACE_SMTP_APP_PASSWORD']},
   async request => {
   const primaryUid = request.auth?.uid;
   if (!primaryUid) {
@@ -4378,7 +4387,7 @@ function enforceSupportRequestRateLimit(clientKey: string): void {
 }
 
 export const submitSupportRequestCallable = onCall(
-  {secrets: ['SENDGRID_API_KEY', 'SENDGRID_FROM_EMAIL']},
+  {secrets: ['WORKSPACE_SMTP_USER', 'WORKSPACE_SMTP_APP_PASSWORD']},
   async request => {
     const clientKey = request.auth?.uid || request.rawRequest?.ip || 'unknown';
     enforceSupportRequestRateLimit(clientKey);

@@ -239,7 +239,7 @@ vehicle-vitals/
 │         ▼                                                                   │
 │  ┌──────────────┐                                                           │
 │  │ Email Service│                                                           │
-│  │ (SendGrid)   │                                                           │
+│  │ (Workspace)  │                                                           │
 │  └──────────────┘                                                           │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -361,7 +361,7 @@ users/
 ## External Integrations
 
 - **NHTSA VPIC API**: VIN lookup
-- **SendGrid**: Email reminders (integration pending)
+- **Google Workspace (Gmail SMTP)**: Email reminders (integration pending — needs secrets configured)
 - **Google Mobile Ads**: Ad monetization (mobile)
 - **Firebase Analytics**: User analytics
 

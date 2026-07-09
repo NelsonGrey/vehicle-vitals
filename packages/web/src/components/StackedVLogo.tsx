@@ -25,14 +25,18 @@ export default function StackedVLogo({
     ? '/assets/vehicle-vitals-header-mark-light.png'
     : '/assets/vehicle-vitals-header-mark.png';
 
-  const compactFontSize = Math.max(14, Math.round(size * 0.3));
+  const compactFontSize = Math.max(14, Math.round(size * 0.5556));
+  const compactGap = Math.max(6, Math.round(size * 0.2778));
+  const compactLetterSpacing = +(compactFontSize * -0.025).toFixed(2);
 
   const wordmark = (
     <div
       className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`}
       style={{
         color: wordmarkColor,
-        ...(compact ? { fontSize: compactFontSize } : {}),
+        ...(compact
+          ? { fontSize: compactFontSize, letterSpacing: `${compactLetterSpacing}px` }
+          : {}),
       }}
     >
       {compact ? 'Vehicle Vitals' : <>VEHICLE<br />VITALS</>}
@@ -40,7 +44,10 @@ export default function StackedVLogo({
   );
 
   return (
-    <div className={`stacked-v-logo-container ${compact ? 'compact' : ''}`}>
+    <div
+      className={`stacked-v-logo-container ${compact ? 'compact' : ''}`}
+      style={compact ? { gap: compactGap } : undefined}
+    >
       <img
         src={logoSrc}
         width={width}

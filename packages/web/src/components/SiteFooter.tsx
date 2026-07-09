@@ -69,8 +69,7 @@ export default function SiteFooter() {
           >
             <StackedVLogo
               size={33}
-              compact
-              showText
+              showText={false}
               color="#ffffff"
               accent="#14b8a6"
               wordmarkColor="#cbd5e1"
@@ -78,44 +77,12 @@ export default function SiteFooter() {
             />
           </Link>
 
-          <nav
-            aria-label="Product"
-            className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
-          >
-            {productLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="transition-colors hover:text-white"
-                onClick={() => trackFooterNavClick(link.label, link.to)}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {!user ? (
+          <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:gap-x-10 sm:gap-y-4">
             <nav
-              aria-label="Personas"
+              aria-label="Product"
               className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
             >
-              {personaPages.map(persona => (
-                <Link
-                  key={persona.id}
-                  to={persona.path}
-                  className="transition-colors hover:text-white"
-                  onClick={() => trackFooterNavClick(persona.navLabel, persona.path)}
-                >
-                  {persona.navLabel}
-                </Link>
-              ))}
-            </nav>
-          ) : (
-            <nav
-              aria-label="App"
-              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
-            >
-              {appNavLinks.map(link => (
+              {productLinks.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
@@ -126,23 +93,57 @@ export default function SiteFooter() {
                 </Link>
               ))}
             </nav>
-          )}
 
-          <nav
-            aria-label="Support and legal"
-            className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400"
-          >
-            {supportLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="transition-colors hover:text-white"
-                onClick={() => trackFooterNavClick(link.label, link.to)}
+            {!user ? (
+              <nav
+                aria-label="Personas"
+                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
               >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+                {personaPages.map(persona => (
+                  <Link
+                    key={persona.id}
+                    to={persona.path}
+                    className="transition-colors hover:text-white"
+                    onClick={() => trackFooterNavClick(persona.navLabel, persona.path)}
+                  >
+                    {persona.navLabel}
+                  </Link>
+                ))}
+              </nav>
+            ) : (
+              <nav
+                aria-label="App"
+                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
+              >
+                {appNavLinks.map(link => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="transition-colors hover:text-white"
+                    onClick={() => trackFooterNavClick(link.label, link.to)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            )}
+
+            <nav
+              aria-label="Support and legal"
+              className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400"
+            >
+              {supportLinks.map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="transition-colors hover:text-white"
+                  onClick={() => trackFooterNavClick(link.label, link.to)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
 
         <div className="mt-3 flex flex-col gap-2 border-t border-slate-700 pt-3 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">

@@ -815,20 +815,28 @@ stale-UAT-test fix, and reopening branch promotion).
   lint re-verified clean
 - ✅ CodeQL (0 open) and Dependabot security alerts (0 open) re-verified
 - ✅ Runbook fully refreshed with July 9 evidence (this update)
-- ✅ Branch promotion reopened: **PR #120** (develop→staging), supersedes the
-  closed PR #103. Required "Pipeline Summary" check is green (reusing the
-  already-passing `develop` CI run `29034124504`, since the PR head commit is
-  identical). **Needs Mark's review/approval to merge** — `staging` requires
-  1 approving review and this isn't a decision I'll make unilaterally.
+- ✅ Verified Stripe Sandbox setup (P0-11 detail): dev/staging fully wired
+  (product catalog + all 8 required secrets), `vehicle-vitals-prod` has none
+  of the 8 — added as a concrete blocker distinct from "no checkout evidence".
+- ⚠️ Branch promotion PR #120 (develop→staging) hit a `npm ci` failure caused
+  by PR #115 (Dependabot) adding a `vite` override that conflicted with the
+  web workspace's own version pin. Mark asked @copilot to resolve; it fixed
+  the issue in PRs #121 and #122 (merged to `develop`), and #120 was closed
+  as stale in the process rather than merged.
+- ✅ Branch promotion reopened again: **PR #123** (develop→staging),
+  supersedes both #103 and #120. `develop` CI is green on `c022336`; PR
+  #123's required "Pipeline Summary" check passes. **Needs Mark's
+  review/approval to merge** — `staging` requires 1 approving review and
+  this isn't a decision I'll make unilaterally.
 
 **Remaining — requires your action:**
 
-1. **Review and merge PR #120** (develop→staging):
+1. **Review and merge PR #123** (develop→staging):
    ```bash
-   gh pr view 120 --web       # review the diff
-   gh pr merge 120 --squash   # merge once satisfied
+   gh pr view 123 --web       # review the diff
+   gh pr merge 123 --squash   # merge once satisfied
    ```
-   This is the highest-priority item — the gap was 258 commits and growing
+   This is the highest-priority item — the gap was 258+ commits and growing
    before this PR, and every day it stays open makes the next promotion
    larger and riskier to review.
 
@@ -858,7 +866,7 @@ stale-UAT-test fix, and reopening branch promotion).
    - Update `docs/R1_COMPLETION_CHECKLIST.md`, `docs/PRODUCTION_RELEASE_BRIEF.md`,
      and this runbook when Gate 2 is PASS.
 
-3. **Run staging rehearsal** (Phase 7) after PR #120 merges — this is the
+3. **Run staging rehearsal** (Phase 7) after PR #123 merges — this is the
    first time the Workspace SMTP secrets and the current iOS signing setup
    will be exercised together in the staging environment:
    ```bash

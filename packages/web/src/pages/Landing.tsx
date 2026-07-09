@@ -76,14 +76,14 @@ export default function Landing() {
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/75 to-teal-950/60" />
               <div className="relative grid gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-[1.1fr_0.9fr] lg:px-12 lg:py-16">
                 <div>
-                  <div className="inline-flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <img
                       src="/android-chrome-512x512.png"
                       alt=""
                       aria-hidden="true"
-                      width={72}
-                      height={72}
-                      className="h-[72px] w-[72px] rounded-2xl shadow-lg ring-1 ring-white/20"
+                      width={160}
+                      height={160}
+                      className="h-30 w-30 rounded-2xl shadow-lg ring-1 ring-white/20 sm:h-40 sm:w-40"
                     />
                     <span className="text-sm font-semibold uppercase tracking-wide text-slate-100">
                       Vehicle Vitals

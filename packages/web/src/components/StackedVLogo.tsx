@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 interface StackedVLogoProps {
   size?: number;
   color?: string;
@@ -31,19 +33,25 @@ export default function StackedVLogo({
   const wordmark = (
     <div
       className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`}
-      style={{
-        color: wordmarkColor,
-        ...(compact
-          ? { fontSize: compactFontSize, letterSpacing: `${compactLetterSpacing}px` }
-          : {}),
-      }}
+      style={{ color: wordmarkColor }}
     >
       {compact ? 'Vehicle Vitals' : <>VEHICLE<br />VITALS</>}
     </div>
   );
 
   return (
-    <div className={`stacked-v-logo-container ${compact ? 'compact' : ''}`}>
+    <div
+      className={`stacked-v-logo-container ${compact ? 'compact' : ''}`}
+      style={
+        compact
+          ? ({
+              '--logo-icon-size': `${size}px`,
+              '--logo-font-size': `${compactFontSize}px`,
+              '--logo-letter-spacing': `${compactLetterSpacing}px`,
+            } as CSSProperties)
+          : undefined
+      }
+    >
       <img
         src={logoSrc}
         width={width}

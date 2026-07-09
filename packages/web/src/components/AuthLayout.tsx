@@ -16,7 +16,8 @@ export default function AuthLayout() {
               className="inline-flex no-underline text-current"
             >
               <StackedVLogo
-                size={34}
+                size={44}
+                compact
                 showText
                 color="currentColor"
                 accent="#334155"

@@ -49,27 +49,30 @@
   text-align: center;
 }
 
+.stacked-v-logo-container.compact .stacked-v-logo-mark {
+  width: var(--logo-icon-size);
+  height: var(--logo-icon-size);
+}
+
 .stacked-v-logo-wordmark.compact {
+  font-size: var(--logo-font-size);
+  letter-spacing: var(--logo-letter-spacing);
   line-height: 1;
-  letter-spacing: 0.2px;
   margin-top: 0;
   text-align: left;
   white-space: nowrap;
 }
 
+/* Cap (never enlarge) the compact lockup on narrow screens, so a
+   small usage (e.g. auth header) isn't blown up past its own size. */
 @media (max-width: 640px) {
-  .stacked-v-logo-container.compact {
-    gap: 10px;
-  }
-
   .stacked-v-logo-container.compact .stacked-v-logo-mark {
-    width: 56px;
-    height: 56px;
+    width: min(var(--logo-icon-size), 56px);
+    height: min(var(--logo-icon-size), 56px);
   }
 
   .stacked-v-logo-wordmark.compact {
-    font-size: 20px !important;
-    letter-spacing: -0.5px !important;
+    font-size: min(var(--logo-font-size), 20px);
   }
 }
 

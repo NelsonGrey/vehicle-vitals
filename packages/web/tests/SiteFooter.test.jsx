@@ -51,7 +51,7 @@ describe('SiteFooter', () => {
     expect(within(footer).getByRole('link', { name: /YouTube/i })).toBeInTheDocument();
 
     // Copyright
-    expect(within(footer).getByText(/Vehicle Vitals/)).toBeInTheDocument();
+    expect(within(footer).getByText(/© \d{4} Vehicle Vitals/)).toBeInTheDocument();
   });
 
   it('shows app nav and hides persona nav when signed in', () => {

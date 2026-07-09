@@ -942,7 +942,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       );
 
       await page.getByLabel(/source account uid/i).fill(currentUid);
-      await page.getByRole('button', { name: /consolidate accounts/i }).click();
+      await page
+        .getByRole('button', { name: /send verification code/i })
+        .click();
 
       await expect(
         page.getByText(/cannot consolidate an account with itself/i)

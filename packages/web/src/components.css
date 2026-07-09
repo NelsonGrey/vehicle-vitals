@@ -51,10 +51,25 @@
 
 .stacked-v-logo-wordmark.compact {
   line-height: 1;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.2px;
   margin-top: 0;
   text-align: left;
   white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .stacked-v-logo-container.compact {
+    gap: 10px;
+  }
+
+  .stacked-v-logo-container.compact .stacked-v-logo-mark {
+    width: 56px;
+    height: 56px;
+  }
+
+  .stacked-v-logo-wordmark.compact {
+    font-size: 20px !important;
+  }
 }
 
 .stacked-v-logo-wordmark.shadow {

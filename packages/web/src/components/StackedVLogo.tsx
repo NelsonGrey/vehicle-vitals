@@ -35,7 +35,7 @@ export default function StackedVLogo({
         ...(compact ? { fontSize: compactFontSize } : {}),
       }}
     >
-      {compact ? 'VEHICLE VITALS' : <>VEHICLE<br />VITALS</>}
+      {compact ? 'Vehicle Vitals' : <>VEHICLE<br />VITALS</>}
     </div>
   );
 

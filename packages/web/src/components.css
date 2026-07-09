@@ -59,7 +59,7 @@
 
 @media (max-width: 640px) {
   .stacked-v-logo-container.compact {
-    gap: 10px;
+    gap: 16px !important;
   }
 
   .stacked-v-logo-container.compact .stacked-v-logo-mark {
@@ -68,7 +68,8 @@
   }
 
   .stacked-v-logo-wordmark.compact {
-    font-size: 20px !important;
+    font-size: 31px !important;
+    letter-spacing: -0.78px !important;
   }
 }
 

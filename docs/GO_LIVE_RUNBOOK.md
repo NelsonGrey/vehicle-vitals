@@ -1,6 +1,6 @@
 # Vehicle Vitals Go Live Runbook
 
-Last updated: June 17, 2026
+Last updated: July 9, 2026
 Current decision: NO-GO
 Release manager: Mark Nelson (interim)
 
@@ -35,51 +35,84 @@ Out of scope unless explicitly re-approved:
 
 ## Current Readiness Summary
 
-As of June 17, 2026, Vehicle Vitals is not ready for market launch.
+As of July 9, 2026, Vehicle Vitals is not ready for market launch.
 
-The local engineering gate is materially improved: web type-check, web lint,
-web unit tests, production web build, shared package checks/tests, Firebase
-utils build, Functions build/lint/tests, mobile tests, mobile analyzer, script
-tests, and Firebase Firestore/Storage rules startup all pass locally.
+The local engineering gate remains materially improved: web type-check, web
+lint, web unit tests, production web build, and CI's Quality Gate (unit tests
++ Playwright UAT across chromium/firefox/webkit) all pass on `develop`,
+confirmed on the latest CI run (`29034124504`, commit `27b4a12`).
 
-The Dependabot queue has been substantially resolved — 18 of the 20 open PRs
-that were blocking on June 15 have been merged or closed, leaving only 2 open
-PRs (both with CLEAN merge status). CodeQL continues to report 0 open alerts.
+Two infrastructure gaps discovered and closed since the June 17 snapshot:
+
+- **Email delivery provider**: the codebase had SendGrid scaffolded but never
+  actually configured (`EMAIL_PROVIDER` defaulted to a no-op `"log"` mode) —
+  this was silently blocking every Firebase Functions deploy in all three
+  projects (`vehicle-vitals-dev`, `-staging`, `-prod`) because Functions v2
+  requires declared secrets to exist in Secret Manager before deploy succeeds,
+  and the SendGrid secrets had never been created. Migrated to Google
+  Workspace SMTP (commit `4dd5ad6`); `WORKSPACE_SMTP_USER` and
+  `WORKSPACE_SMTP_APP_PASSWORD` secrets are now set in all three Firebase
+  projects, and Deploy Firebase has succeeded repeatedly since. This also
+  fixed a latent bug where `sendMaintenanceReminder`/`checkMaintenanceReminders`
+  had no secrets binding at all and would have crashed at runtime.
+- **Stale UAT test**: `TC-PROFILE-002` (account consolidation) asserted a
+  button (`"Consolidate Accounts"`) that no longer exists — the UI moved to a
+  two-step verification-code flow — and was intermittently failing Quality
+  Gate. Fixed to match current UI (commit in the July 9 session).
+
+**Branch promotion regressed.** PR #103 (develop→staging) was closed without
+merging; `develop` is now 258 commits ahead of `staging` (up from 160 on
+June 17) and neither branch has moved toward the other since. A new
+develop→staging PR is being opened as part of this update — see Immediate
+Next Execution Order.
+
+Security posture is unchanged and clean: CodeQL 0 open alerts, Dependabot
+security 0 open alerts. The Dependabot PR queue is not fully empty — 1 new
+routine (non-security) version-bump PR (#115) is open.
+
+Stripe/subscription production proof (P0-11) has **not** changed since
+June 17 — still no live-checkout evidence captured, still blocking a paid
+launch. See Phase 4 for the fastest-path option (defer paid tiers) if that's
+preferred over completing full Stripe/RevenueCat validation.
 
 The release is still blocked by unresolved R1 Gate 2 mobile/backend evidence,
-branch promotion divergence, the 2 remaining Dependabot PRs pending final
-triage, subscription production proof, and remaining governance signoff outside
-the synchronized release docs.
+branch promotion divergence (now worse), subscription production proof, and
+remaining governance signoff outside the synchronized release docs.
 
 ## Current Evidence Snapshot
 
-Run date: June 17, 2026
+Run date: July 9, 2026. Rows marked "re-verified July 9" were actually re-run
+this session; all other rows are the June 15/17 baseline and should be
+re-run before a release cut.
 
 | Area                 | Command or source                                                                                 | Result                                                         | Go-live meaning                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Local branch sync    | `git rev-list --left-right --count @{upstream}...HEAD`                                            | `0 0`                                                          | Local `develop` is synced with `origin/develop`.                                                |
-| Local worktree       | `git status --short --branch`                                                                     | Clean as of June 17 update                                     | Release-candidate source can be cut only from a clean, traceable commit.                         |
-| Web unit tests       | `npm --workspace=@vehicle-vitals/web run test:unit`                                               | Pass, 378 tests (June 15 baseline; re-run before release cut) | Good baseline.                                                                                  |
-| Web type check       | `npm --workspace=@vehicle-vitals/web run check`                                                   | Pass                                                           | Local blocker cleared; must remain green in CI.                                                 |
-| Web lint             | `npm --workspace=@vehicle-vitals/web run lint`                                                    | Pass, 18 warnings                                              | Local blocker cleared; React hook/compiler warnings are intentionally non-blocking for this cut. |
-| Web production build | `npm run build:web`                                                                               | Pass with chunk/dynamic-import warnings                        | Deployable artifact builds; warnings need performance disposition before public launch.         |
-| Shared package       | `npm --workspace=@vehicle-vitals/shared run check`; `cd packages/shared && npx vitest run tests`  | Pass, 25 tests                                                 | Good baseline.                                                                                  |
-| Firebase utils       | `npm --workspace=@shared/firebase-utils run build`                                                | Pass                                                           | Good baseline.                                                                                  |
-| Functions            | `npm --workspace=functions run build`; `npm --workspace=functions test`                           | Pass, 70 tests run, 67 pass, 3 skipped                         | Good backend baseline.                                                                          |
-| Functions lint       | `npm --workspace=functions run lint`                                                              | Pass with 4 warnings                                           | Non-blocking cleanup.                                                                           |
-| Mobile tests         | `cd packages/mobile && flutter test`                                                              | Pass, 17 tests                                                 | Good baseline.                                                                                  |
-| Mobile analyze       | `cd packages/mobile && flutter analyze`                                                           | Pass                                                           | Local blocker cleared.                                                                          |
-| Script tests         | `npm run test:scripts`                                                                            | Pass, 4 tests                                                  | Good baseline.                                                                                  |
-| Firebase rules       | `firebase emulators:exec --only firestore,storage --project vehicle-vitals-dev 'echo rules-ok'`   | Pass                                                           | Firestore and Storage rules load successfully; path behavior still needs release-flow smoke.     |
-| R1 mobile build/launch | `./scripts/smoke-r1-mobile-runtime.sh`; HADES release run                                        | Pass; built `build/ios/iphoneos/Runner.app` and launched on HADES | Release-like iOS build and launch path is current; acceptance/backend proof still blocks Gate 2. |
-| CodeQL               | `gh api "repos/mnelson3/vehicle-vitals/code-scanning/alerts?state=open"`                         | 0 open alerts (25 total, all closed/dismissed)                 | CodeQL blocker remains closed on `develop`.                                                      |
-| GitHub CI            | Run `27699695742` for commit `22cf9b9`                                                            | Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅ (June 17); Build iOS App queued (macOS runner) | iOS build must complete before merging PR #103 to staging.                             |
-| GitHub PR queue      | `gh pr list --state open`                                                                         | 0 Dependabot PRs open; PR #103 (develop→staging) open, CI Quality Gate green | Merge PR #103 after iOS build completes to advance P0-09.                              |
-| Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop`                               | staging ahead 3, develop ahead 163                             | Staging is not a current release candidate.                                                     |
-| Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging`                                  | main ahead 18, staging ahead 599                               | Production promotion path is not clean.                                                         |
-| Branch protection    | `npm run security:audit` (branch protection snapshot)                                             | `develop` and `main` lack required status checks and signed commits; `staging` is fully protected | Governance gap: `develop` and `main` protection needs decision before release freeze.  |
-| Security features    | `npm run security:audit` (repository security features)                                           | Dependabot security updates enabled; secret scanning enabled; push protection enabled | Good posture. No open Dependabot security alerts (1 dismissed as tolerable_risk).      |
-| Readiness report     | `bash scripts/staging-production-readiness-report.sh`                                             | NO-GO (last run June 15)                                        | Re-run before release cut; `artifacts/release/staging-to-production-readiness-20260615T202036Z.md` is the latest artifact. |
+| Local branch sync    | `git rev-list --left-right --count @{upstream}...HEAD` (re-verified July 9)                       | `0 0`                                                          | Local `develop` is synced with `origin/develop`.                                                |
+| Local worktree       | `git status --short --branch` (re-verified July 9)                                                | Clean (only pre-existing untracked scratch dirs, unrelated)    | Release-candidate source can be cut only from a clean, traceable commit.                         |
+| Web unit tests       | `npm --workspace=@vehicle-vitals/web run test:unit`                                               | Pass, 399 tests (July 9, during footer/logo work this session) | Good baseline; grew from 378 (June 15) to 399.                                                  |
+| Web type check       | `npm --workspace=@vehicle-vitals/web run check` (re-verified July 9)                              | Pass                                                           | Local blocker cleared; confirmed clean in CI on every deploy this session.                      |
+| Web lint             | `npm --workspace=@vehicle-vitals/web run lint` (re-verified July 9)                                | Pass, 19 warnings                                              | Local blocker cleared; React hook/compiler warnings are intentionally non-blocking for this cut. |
+| Web production build | `npm run build:web`                                                                               | Pass with chunk/dynamic-import warnings (June 15/17 baseline)  | Deployable artifact builds; warnings need performance disposition before public launch.         |
+| Shared package       | `npm --workspace=@vehicle-vitals/shared run check`; `cd packages/shared && npx vitest run tests`  | Pass, 25 tests (June 15/17 baseline, not re-run this session)  | Good baseline.                                                                                  |
+| Firebase utils       | `npm --workspace=@shared/firebase-utils run build`                                                | Pass (June 15/17 baseline, not re-run this session)            | Good baseline.                                                                                  |
+| Functions            | `npm --workspace=functions run build`; `npm --workspace=functions test`                           | Pass, 70 tests run, 67 pass, 3 skipped (June 15/17 baseline, not re-run this session) | Good backend baseline; Functions source did change this session (email provider migration) — recommend re-running before release cut. |
+| Functions lint       | `npm --workspace=functions run lint`                                                              | Pass with 4 warnings (June 15/17 baseline)                     | Non-blocking cleanup.                                                                           |
+| Mobile tests         | `cd packages/mobile && flutter test`                                                              | Pass, 17 tests (June 15/17 baseline, not re-run this session)  | Good baseline.                                                                                  |
+| Mobile analyze       | `cd packages/mobile && flutter analyze`                                                           | Pass (June 15/17 baseline, not re-run this session)            | Local blocker cleared.                                                                          |
+| Script tests         | `npm run test:scripts`                                                                            | Pass, 4 tests (June 15/17 baseline, not re-run this session)   | Good baseline.                                                                                  |
+| Firebase rules       | `firebase emulators:exec --only firestore,storage --project vehicle-vitals-dev 'echo rules-ok'`   | Pass (June 15/17 baseline, not re-run this session)            | Firestore and Storage rules load successfully; path behavior still needs release-flow smoke.     |
+| R1 mobile build/launch | `./scripts/smoke-r1-mobile-runtime.sh`; HADES release run                                        | Pass (June 15 baseline); no newer evidence in `artifacts/smoke/` | Release-like iOS build and launch path is current as of June 15; acceptance/backend proof still blocks Gate 2. |
+| Email delivery provider | Migration commit `4dd5ad6`; `gcloud secrets versions list` for `WORKSPACE_SMTP_USER`/`WORKSPACE_SMTP_APP_PASSWORD` (re-verified July 9) | SendGrid was scaffolded but never configured (dead code, no secrets ever existed) — migrated to Google Workspace SMTP; secrets now exist with enabled versions in all 3 Firebase projects | Previously-undiscovered deploy blocker (Functions deploy failed in all 3 projects on missing secrets) is now resolved and confirmed via multiple successful Deploy Firebase runs this session. |
+| Stripe / subscriptions | Phase 4 checklist; `./scripts/smoke-monetization-readiness-capture.sh`                            | Not run — no live Stripe checkout/webhook/portal evidence captured (unchanged since June 17) | Still blocks a paid launch (P0-11). Free-tier+ads or coming-soon options in Phase 4 do not require this. |
+| CodeQL               | `gh api "repos/mnelson3/vehicle-vitals/code-scanning/alerts?state=open"` (re-verified July 9)     | 0 open alerts                                                  | CodeQL blocker remains closed on `develop`.                                                      |
+| Dependabot alerts     | `gh api repos/mnelson3/vehicle-vitals/dependabot/alerts` (re-verified July 9)                    | 0 open security alerts                                         | Security posture unchanged and clean.                                                            |
+| GitHub CI            | Run `29034124504` for commit `27b4a12` (re-verified July 9)                                       | Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅ (development environment) | `develop` is deployable to its own environment; iOS build not exercised this run (only triggers for staging/production). |
+| GitHub PR queue      | `gh pr list --state open` (re-verified July 9)                                                    | 1 open PR: #115, routine (non-security) Dependabot root-npm bump; **PR #103 (develop→staging) was closed without merging** | Queue is not empty; branch promotion regressed and needs a fresh PR (see Immediate Next Execution Order). |
+| Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop` (re-verified July 9)          | staging ahead 1, develop ahead 258                              | Staging is further from current than on June 17 (was develop-ahead 160-163); gap grew instead of closing. |
+| Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging` (re-verified July 9)             | main ahead 20, staging ahead 604                                | Production promotion path is still not clean.                                                    |
+| Branch protection    | `gh api repos/mnelson3/vehicle-vitals/branches/{branch}/protection` (re-verified July 9)          | `develop` still lacks required status checks, reviews, and signed commits; `staging` is fully protected (1 required review, signed commits, enforced admins, required Pipeline Summary check) | Governance gap unchanged: `develop` and `main` protection needs decision before release freeze. Note: `staging`'s required review means I (Claude) can open the develop→staging PR but cannot merge it myself — Mark's review/approval is required. |
+| Security features    | `npm run security:audit` (repository security features)                                           | Dependabot security updates enabled; secret scanning enabled; push protection enabled (June 15/17 baseline) | Good posture. No open Dependabot security alerts.                                       |
+| Readiness report     | `bash scripts/staging-production-readiness-report.sh`                                             | NO-GO (last run June 15, not re-run this session)               | Re-run before release cut; `artifacts/release/staging-to-production-readiness-20260615T202036Z.md` is the latest artifact. |
 
 ## P0 Go-Live Blockers
 
@@ -95,11 +128,12 @@ subscription launch may proceed until every P0 item is closed.
 | P0-05 | Closed locally         | Household/org garage writes are not allowed by rules     | Firestore rules allow active org members under `orgs/{orgId}/vehicles`; Storage rules allow active org members under `orgs/{orgId}/vehicles`; `firebase.json` deploys Storage rules; emulator startup passes                       | Rules and release-flow smoke support org-scoped vehicles, or household storage mode is disabled before release.                                                      |
 | P0-06 | Open                   | R1 Gate 2 is still incomplete                            | Latest build and launch evidence is PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`, `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`); acceptance/backend artifacts remain PARTIAL/BLOCKED (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`, `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) | Gate 2 acceptance and backend evidence are PASS with artifacts under `artifacts/smoke/`.                                                                             |
 | P0-07 | Closed                 | Open high-severity CodeQL alert                          | CodeQL run for `ce6d530` succeeded and GitHub code scanning reports 0 open alerts                                                                                                                                                  | Alert is fixed and closed by CodeQL, dismissed with documented false-positive rationale, or accepted by risk owner before launch.                                     |
-| P0-08 | Closed                 | Dependabot PR queue is unstable                          | All 20 Dependabot PRs are resolved: PR #101 (root-npm group) and PR #102 (path_provider) were merged June 17 at 15:03 UTC. No Dependabot security alerts are open (1 dismissed as tolerable_risk). | ✅ Done. Monitor for new security PRs through release freeze. |
-| P0-09 | Open                   | Branch promotion path is stale/diverged                  | As of June 17: `develop` is 160 commits ahead of `staging`; `staging` is 3 commits ahead of `develop`; `staging` is 599 commits ahead of `main`; `main` is 18 ahead of `develop`; readiness report last run June 15 returns NO-GO | Release branch policy is re-established and readiness report returns GO.                                                                                             |
+| P0-08 | Open                   | Dependabot PR queue is unstable                          | Resolved June 17 (PRs #101/#102 merged), but a new routine version-bump PR (#115, root-npm group, non-security) opened since. 0 Dependabot security alerts open. | Queue returns to 0 open PRs, or remaining PRs are confirmed non-security and explicitly deferred past release freeze. |
+| P0-09 | Open — regressed       | Branch promotion path is stale/diverged                  | As of July 9: `develop` is 258 commits ahead of `staging` (up from 160 on June 17); `staging` is 1 commit ahead of `develop`; `staging` is 604 commits ahead of `main`; `main` is 20 ahead of `develop`. PR #103 (develop→staging) was **closed without merging** — a new PR is being opened as part of this update. Readiness report last run June 15 returns NO-GO. | Release branch policy is re-established and readiness report returns GO. |
 | P0-10 | Closed locally         | Active deployment docs reference obsolete workflow names | `docs/DEPLOY.md` and `docs/PROD_SETUP_GUIDE.md` now reference `master-pipeline.yml`; pipeline deploy targets include Firestore, Storage, Functions, and Hosting                                                                    | Docs name `master-pipeline.yml`, correct workflow inputs, and correct deploy targets.                                                                                |
-| P0-11 | Open                   | Subscription launch is not production-proven             | Existing docs mark Stripe production validation, RevenueCat, backend quotas, ad behavior, trial/grace automation incomplete                                                                                                       | Paid launch evidence proves checkout, webhooks, entitlement reconciliation, quota enforcement, failed-payment recovery, refunds/cancellations, and support handling. |
-| P0-12 | Partially open         | Release governance docs need final signoff               | This runbook, production release brief, R1 checklist, requirements, release scope, and next-features execution plan are synchronized to the current Gate 2 state                                                                    | `PROJECT_PLAN`, `PRODUCTION_RELEASE_BRIEF`, `R1_COMPLETION_CHECKLIST`, and this runbook are synchronized and signed off.                                             |
+| P0-11 | Open — unchanged       | Subscription launch is not production-proven             | No live Stripe checkout/webhook/portal evidence captured as of July 9 (unchanged since June 17). RevenueCat/IAP proof also outstanding.                                                                                          | Paid launch evidence proves checkout, webhooks, entitlement reconciliation, quota enforcement, failed-payment recovery, refunds/cancellations, and support handling — or launch copy explicitly defers paid tiers (Phase 4, Option A/B). |
+| P0-12 | Partially open         | Release governance docs need final signoff               | This runbook is now current as of July 9; production release brief, R1 checklist, requirements, release scope, and next-features execution plan have not been re-synchronized this session                                          | `PROJECT_PLAN`, `PRODUCTION_RELEASE_BRIEF`, `R1_COMPLETION_CHECKLIST`, and this runbook are synchronized and signed off.                                             |
+| P0-13 | Closed                 | Email delivery provider was scaffolded (SendGrid) but never configured, silently blocking every Functions deploy in all 3 Firebase projects | Migrated to Google Workspace SMTP (commit `4dd5ad6`); `WORKSPACE_SMTP_USER`/`WORKSPACE_SMTP_APP_PASSWORD` secrets created in `vehicle-vitals-dev`, `-staging`, and `-prod`; Deploy Firebase has succeeded repeatedly since (e.g. run `29034124504`) | ✅ Done. Functions deploy is unblocked in all three environments. |
 
 ## P1 Market Readiness Gaps
 
@@ -728,11 +762,11 @@ Required signoffs:
 
 | Area                 | Owner         | Decision | Notes |
 | -------------------- | ------------- | -------- | ----- |
-| Engineering          | Mark Nelson   |          | Phase 2 local gate PASS June 17; CI confirmation pending |
+| Engineering          | Mark Nelson   |          | Quality Gate green on `develop` as of July 9 (CI run `29034124504`); email-provider deploy blocker resolved |
 | Product              | Mark Nelson   |          | Launch scope decision required (see Phase 4 options) |
-| Security/privacy     | Mark Nelson   |          | CodeQL 0, Dependabot security 0; privacy policy signoff needed |
-| Mobile/iOS           | Mark Nelson   |          | Gate 2 acceptance still open — build PASS, runtime PARTIAL |
-| Billing/monetization | Mark Nelson   |          | Stripe/RevenueCat not proven; defer or prove before launch |
+| Security/privacy     | Mark Nelson   |          | CodeQL 0, Dependabot security 0 (confirmed July 9); privacy policy signoff needed |
+| Mobile/iOS           | Mark Nelson   |          | Gate 2 acceptance still open — build PASS (June 15), runtime PARTIAL; iOS build not re-exercised since July 2 |
+| Billing/monetization | Mark Nelson   |          | Stripe/RevenueCat not proven, unchanged since June 17; defer or prove before launch |
 | Support/operations   | Mark Nelson   |          | Support runbook and escalation path not published |
 | Marketing/comms      | Mark Nelson   |          | Copy alignment with launch scope required |
 
@@ -741,6 +775,7 @@ Open conditions (pre-filled for review):
 1. R1 Gate 2 acceptance evidence: close before any iOS launch claim.
 2. Launch scope decision: web-only free tier, web+iOS, or coming-soon — determines what P0-11 (subscriptions) blocks.
 3. Paid tier disposition: Stripe+RevenueCat proven OR launch copy explicitly defers paid tiers.
+4. Branch promotion: develop→staging PR must merge (requires Mark's review per branch protection) before a staging rehearsal is meaningful.
 
 Final decision rationale: (complete at go/no-go meeting)
 
@@ -761,22 +796,37 @@ After each readiness state change, update these files as needed:
 
 ## Immediate Next Execution Order
 
-As of June 17, 2026 (updated after Phase 2 and P0-08 closure).
+As of July 9, 2026 (updated after the Google Workspace email migration, a
+stale-UAT-test fix, and reopening branch promotion).
 
 **Completed this session:**
-- ✅ P0-08 Closed: merged Dependabot PRs #101 and #102 (June 17 15:03 UTC)
-- ✅ Phase 2 local validation gate: all commands pass (evidence table above)
-- ✅ Phase 3 partial: CodeQL 0, Dependabot security 0, secrets posture confirmed
-- ✅ Mobile test fix: InkSparkle shader mismatch resolved in `premium_plan_catalog_test.dart`
-- ✅ Branch promotion PR opened: PR #103 (develop→staging)
-- ✅ CI run `27699695742` (commit `22cf9b9`): Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅; iOS queued
-- ✅ Phase 7 staging rehearsal checklist expanded with concrete commands and smoke steps
-- ✅ Phase 8 production release checklist updated with coming-soon secret guidance
-- ✅ Go/No-Go Record pre-filled with current known state across all 7 signoff areas
+- ✅ P0-13 Closed: migrated email delivery off never-configured SendGrid onto
+  Google Workspace SMTP (commit `4dd5ad6`); secrets created in all 3 Firebase
+  projects; this was silently blocking every Functions deploy
+- ✅ Fixed stale `TC-PROFILE-002` UAT test that was intermittently failing
+  Quality Gate (asserted a removed "Consolidate Accounts" button)
+- ✅ Web unit tests grew to 399 (from 378), all passing; web type-check and
+  lint re-verified clean
+- ✅ CodeQL (0 open) and Dependabot security alerts (0 open) re-verified
+- ✅ Runbook fully refreshed with July 9 evidence (this update)
+- ✅ Branch promotion reopened: **PR #120** (develop→staging), supersedes the
+  closed PR #103. Required "Pipeline Summary" check is green (reusing the
+  already-passing `develop` CI run `29034124504`, since the PR head commit is
+  identical). **Needs Mark's review/approval to merge** — `staging` requires
+  1 approving review and this isn't a decision I'll make unilaterally.
 
 **Remaining — requires your action:**
 
-1. **Close R1 Gate 2** (P0-06) — CRITICAL BLOCKER:
+1. **Review and merge PR #120** (develop→staging):
+   ```bash
+   gh pr view 120 --web       # review the diff
+   gh pr merge 120 --squash   # merge once satisfied
+   ```
+   This is the highest-priority item — the gap was 258 commits and growing
+   before this PR, and every day it stays open makes the next promotion
+   larger and riskier to review.
+
+2. **Close R1 Gate 2** (P0-06) — CRITICAL BLOCKER, still open since June 15:
    - Enable Developer Mode on HADES and trust the host Mac.
    - Run the full 7-phase acceptance checklist (auth → vehicle CRUD → maintenance
      CRUD → reminders → export → backend verification → performance).
@@ -802,26 +852,25 @@ As of June 17, 2026 (updated after Phase 2 and P0-08 closure).
    - Update `docs/R1_COMPLETION_CHECKLIST.md`, `docs/PRODUCTION_RELEASE_BRIEF.md`,
      and this runbook when Gate 2 is PASS.
 
-2. **Merge develop→staging PR #103** — CI run `27699695742` (commit `22cf9b9`) is green on
-   Quality Gate, Build Web App, and Deploy Firebase. Confirm iOS build completes, then merge:
+3. **Run staging rehearsal** (Phase 7) after PR #120 merges — this is the
+   first time the Workspace SMTP secrets and the current iOS signing setup
+   will be exercised together in the staging environment:
    ```bash
-   gh run view 27699695742 --json jobs   # confirm iOS build result
-   gh pr merge 103 --squash              # merge when iOS is done or confirmed non-blocking
+   gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging
    ```
+   Confirm Deploy Firebase and Build iOS App both succeed, then smoke-test
+   `vehicle-vitals-staging.web.app` manually.
 
-3. **Apply branch protection** to `develop` and `main` (P1 gap):
+4. **Apply branch protection** to `develop` and `main` (P1 gap, unchanged):
    - See Phase 3 checklist for the `gh api` command template.
    - Decision: match `staging`'s protection (Pipeline Summary check, enforce_admins,
      signed commits) or apply a lighter policy appropriate for the development branch.
 
-4. **Run staging rehearsal** (Phase 7) after PR #103 merges:
-   ```bash
-   gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging
-   ```
-
-5. **Prove or defer paid subscription launch behavior** (P0-11):
+5. **Prove or defer paid subscription launch behavior** (P0-11, unchanged since June 17):
    - Run `./scripts/smoke-monetization-readiness-capture.sh` with live Stripe evidence
-   - OR update all public launch copy to defer paid tiers explicitly.
+   - OR update all public launch copy to defer paid tiers explicitly (Phase 4,
+     Option A/B — fastest path if full Stripe/RevenueCat proof isn't a priority
+     for this launch).
 
 6. **Readiness report**: re-run after staging rehearsal passes:
    ```bash

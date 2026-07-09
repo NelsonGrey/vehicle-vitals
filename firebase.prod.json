@@ -75,6 +75,24 @@
         ]
       },
       {
+        "source": "/assets/vehicle-vitals-header-mark.png",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/assets/vehicle-vitals-header-mark-light.png",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "**/*.js",
         "headers": [
           {

@@ -50,11 +50,11 @@
 }
 
 .stacked-v-logo-wordmark.compact {
-  font-size: 16px;
-  line-height: 1.2;
+  line-height: 1;
   letter-spacing: 1.5px;
   margin-top: 0;
   text-align: left;
+  white-space: nowrap;
 }
 
 .stacked-v-logo-wordmark.shadow {

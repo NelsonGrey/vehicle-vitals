@@ -25,8 +25,16 @@ export default function StackedVLogo({
     ? '/assets/vehicle-vitals-header-mark-light.png'
     : '/assets/vehicle-vitals-header-mark.png';
 
+  const compactFontSize = Math.max(12, Math.round(size * 0.22));
+
   const wordmark = (
-    <div className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`} style={{ color: wordmarkColor }}>
+    <div
+      className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`}
+      style={{
+        color: wordmarkColor,
+        ...(compact ? { fontSize: compactFontSize } : {}),
+      }}
+    >
       VEHICLE<br />VITALS
     </div>
   );

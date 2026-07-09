@@ -50,8 +50,8 @@
 }
 
 .stacked-v-logo-container.compact .stacked-v-logo-mark {
-  width: var(--logo-icon-size);
-  height: var(--logo-icon-size);
+  width: var(--logo-icon-width);
+  height: var(--logo-icon-height);
 }
 
 .stacked-v-logo-wordmark.compact {
@@ -67,8 +67,8 @@
    small usage (e.g. auth header) isn't blown up past its own size. */
 @media (max-width: 640px) {
   .stacked-v-logo-container.compact .stacked-v-logo-mark {
-    width: min(var(--logo-icon-size), 56px);
-    height: min(var(--logo-icon-size), 56px);
+    width: min(var(--logo-icon-width), 94px);
+    height: min(var(--logo-icon-height), 56px);
   }
 
   .stacked-v-logo-wordmark.compact {

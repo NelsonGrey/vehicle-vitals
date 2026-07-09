@@ -76,8 +76,18 @@ export default function Landing() {
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/75 to-teal-950/60" />
               <div className="relative grid gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-[1.1fr_0.9fr] lg:px-12 lg:py-16">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase text-slate-100 ring-1 ring-white/30">
-                    Vehicle Vitals
+                  <div className="inline-flex items-center gap-3">
+                    <img
+                      src="/android-chrome-512x512.png"
+                      alt=""
+                      aria-hidden="true"
+                      width={72}
+                      height={72}
+                      className="h-[72px] w-[72px] rounded-2xl shadow-lg ring-1 ring-white/20"
+                    />
+                    <span className="text-sm font-semibold uppercase tracking-wide text-slate-100">
+                      Vehicle Vitals
+                    </span>
                   </div>
                   <h1 className="mt-4 max-w-3xl font-serif text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
                     One garage for every vehicle record, reminder, and repair

@@ -60,15 +60,18 @@ Two infrastructure gaps discovered and closed since the June 17 snapshot:
   two-step verification-code flow — and was intermittently failing Quality
   Gate. Fixed to match current UI (commit in the July 9 session).
 
-**Branch promotion regressed.** PR #103 (develop→staging) was closed without
-merging; `develop` is now 258 commits ahead of `staging` (up from 160 on
-June 17) and neither branch has moved toward the other since. A new
-develop→staging PR is being opened as part of this update — see Immediate
-Next Execution Order.
+**Branch promotion: fixed.** After PR #103 died without merging and its
+replacement (#120) hit a `vite`-override conflict from Dependabot PR #115
+(fixed by @copilot in #121/#122), **PR #123 merged develop into staging** —
+the first successful promotion since #117 on July 6. `develop` and `staging`
+are now confirmed identical (verified via `git diff`, not just commit
+counts). The staging rehearsal (Phase 7) that follows a promotion also ran
+clean, including a full iOS build + TestFlight upload (first since July 2).
+Only a manual smoke-test of the deployed staging site remains open from this
+thread; `staging`→`main` promotion is a separate, deliberately-deferred step.
 
 Security posture is unchanged and clean: CodeQL 0 open alerts, Dependabot
-security 0 open alerts. The Dependabot PR queue is not fully empty — 1 new
-routine (non-security) version-bump PR (#115) is open.
+security 0 open alerts, 0 open PRs (Dependabot #115 merged).
 
 Stripe/subscription production proof (P0-11) still has no live-checkout
 evidence captured, still blocking a paid launch — but a new concrete detail
@@ -113,9 +116,10 @@ re-run before a release cut.
 | CodeQL               | `gh api "repos/mnelson3/vehicle-vitals/code-scanning/alerts?state=open"` (re-verified July 9)     | 0 open alerts                                                  | CodeQL blocker remains closed on `develop`.                                                      |
 | Dependabot alerts     | `gh api repos/mnelson3/vehicle-vitals/dependabot/alerts` (re-verified July 9)                    | 0 open security alerts                                         | Security posture unchanged and clean.                                                            |
 | GitHub CI            | Run `29034124504` for commit `27b4a12` (re-verified July 9)                                       | Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅ (development environment) | `develop` is deployable to its own environment; iOS build not exercised this run (only triggers for staging/production). |
-| GitHub PR queue      | `gh pr list --state open` (re-verified July 9)                                                    | 1 open PR: #115, routine (non-security) Dependabot root-npm bump; **PR #103 (develop→staging) was closed without merging** | Queue is not empty; branch promotion regressed and needs a fresh PR (see Immediate Next Execution Order). |
-| Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop` (re-verified July 9)          | staging ahead 1, develop ahead 258                              | Staging is further from current than on June 17 (was develop-ahead 160-163); gap grew instead of closing. |
-| Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging` (re-verified July 9)             | main ahead 20, staging ahead 604                                | Production promotion path is still not clean.                                                    |
+| GitHub PR queue      | `gh pr list --state open` (re-verified after PR #123 merge)                                       | 0 open PRs. #103 and #120 both closed without merging along the way; **#123 merged** — first successful develop→staging promotion since #117 (July 6) | Queue is empty and promotion is current. |
+| Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop`; `git diff origin/develop origin/staging --stat` (re-verified after PR #123 merge) | Commit-graph shows staging ahead 1 / develop ahead 265, but `git diff --stat` between the two is **empty** — trees are identical | The ahead/behind count is a normal squash-merge artifact, not real drift. Staging is current with develop as of this promotion. |
+| Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging` (re-verified after PR #123 merge) | main ahead 20, staging ahead 605                                | Production promotion path is still not clean — next step after Gate 2/P0-11. |
+| Staging rehearsal (Phase 7) | CI run `29047983380` on `staging`                                                          | Quality Gate ✅, Build Web App ✅, **Build iOS App ✅** (signed + uploaded to TestFlight, first since July 2), Deploy Firebase ✅ | First full green staging run since the Workspace SMTP migration and current iOS signing setup existed together. Phase 7 rehearsal is complete; only a manual smoke-test of the deployed site remains. |
 | Branch protection    | `gh api repos/mnelson3/vehicle-vitals/branches/{branch}/protection` (re-verified July 9)          | `develop` still lacks required status checks, reviews, and signed commits; `staging` is fully protected (1 required review, signed commits, enforced admins, required Pipeline Summary check) | Governance gap unchanged: `develop` and `main` protection needs decision before release freeze. Note: `staging`'s required review means I (Claude) can open the develop→staging PR but cannot merge it myself — Mark's review/approval is required. |
 | Security features    | `npm run security:audit` (repository security features)                                           | Dependabot security updates enabled; secret scanning enabled; push protection enabled (June 15/17 baseline) | Good posture. No open Dependabot security alerts.                                       |
 | Readiness report     | `bash scripts/staging-production-readiness-report.sh`                                             | NO-GO (last run June 15, not re-run this session)               | Re-run before release cut; `artifacts/release/staging-to-production-readiness-20260615T202036Z.md` is the latest artifact. |
@@ -134,8 +138,8 @@ subscription launch may proceed until every P0 item is closed.
 | P0-05 | Closed locally         | Household/org garage writes are not allowed by rules     | Firestore rules allow active org members under `orgs/{orgId}/vehicles`; Storage rules allow active org members under `orgs/{orgId}/vehicles`; `firebase.json` deploys Storage rules; emulator startup passes                       | Rules and release-flow smoke support org-scoped vehicles, or household storage mode is disabled before release.                                                      |
 | P0-06 | Open                   | R1 Gate 2 is still incomplete                            | Latest build and launch evidence is PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`, `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`); acceptance/backend artifacts remain PARTIAL/BLOCKED (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`, `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) | Gate 2 acceptance and backend evidence are PASS with artifacts under `artifacts/smoke/`.                                                                             |
 | P0-07 | Closed                 | Open high-severity CodeQL alert                          | CodeQL run for `ce6d530` succeeded and GitHub code scanning reports 0 open alerts                                                                                                                                                  | Alert is fixed and closed by CodeQL, dismissed with documented false-positive rationale, or accepted by risk owner before launch.                                     |
-| P0-08 | Open                   | Dependabot PR queue is unstable                          | Resolved June 17 (PRs #101/#102 merged), but a new routine version-bump PR (#115, root-npm group, non-security) opened since. 0 Dependabot security alerts open. | Queue returns to 0 open PRs, or remaining PRs are confirmed non-security and explicitly deferred past release freeze. |
-| P0-09 | Open — regressed       | Branch promotion path is stale/diverged                  | As of July 9: `develop` is 258 commits ahead of `staging` (up from 160 on June 17); `staging` is 1 commit ahead of `develop`; `staging` is 604 commits ahead of `main`; `main` is 20 ahead of `develop`. PR #103 (develop→staging) was **closed without merging** — a new PR is being opened as part of this update. Readiness report last run June 15 returns NO-GO. | Release branch policy is re-established and readiness report returns GO. |
+| P0-08 | Closed                 | Dependabot PR queue is unstable                          | #115 (root-npm bump) merged July 9 — required fixing a `vite` override it introduced (see P0-09 evidence). 0 open PRs, 0 Dependabot security alerts. | ✅ Done. Monitor for new PRs through release freeze. |
+| P0-09 | Closed                 | Branch promotion path is stale/diverged                  | develop→staging promoted via PR #123, merged July 9 (first success since #117 on July 6; #103 and #120 both died without merging along the way — #120 specifically due to a `vite` override conflict from #115, fixed by @copilot in #121/#122). `develop`/`staging` trees confirmed identical via `git diff`. `staging`→`main` is next (20 ahead / 605 behind) but not attempted yet — deliberately holding until Gate 2/P0-11 are further along. | ✅ Done for develop→staging. Re-open for staging→main when ready to promote to production. |
 | P0-10 | Closed locally         | Active deployment docs reference obsolete workflow names | `docs/DEPLOY.md` and `docs/PROD_SETUP_GUIDE.md` now reference `master-pipeline.yml`; pipeline deploy targets include Firestore, Storage, Functions, and Hosting                                                                    | Docs name `master-pipeline.yml`, correct workflow inputs, and correct deploy targets.                                                                                |
 | P0-11 | Open — new detail      | Subscription launch is not production-proven             | Dev/staging Stripe Sandboxes are fully wired (product catalog created, all 8 required secrets present) — confirmed July 9. **`vehicle-vitals-prod` has 0 of 8 required Stripe secrets** (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, checkout URLs, 4x price IDs) — a Functions deploy touching Stripe would hard-fail in prod today, the same failure mode as the now-closed P0-13. No live Stripe checkout/webhook/portal evidence captured in any environment. RevenueCat/IAP proof also outstanding. | Paid launch evidence proves checkout, webhooks, entitlement reconciliation, quota enforcement, failed-payment recovery, refunds/cancellations, and support handling — or launch copy explicitly defers paid tiers (Phase 4, Option A/B). If paid launch proceeds: live-mode Stripe secrets must exist in `vehicle-vitals-prod` before any Stripe-touching deploy, not just before "go-live" — this would block staging→production promotion entirely, not just paid checkout. |
 | P0-12 | Partially open         | Release governance docs need final signoff               | This runbook is now current as of July 9; production release brief, R1 checklist, requirements, release scope, and next-features execution plan have not been re-synchronized this session                                          | `PROJECT_PLAN`, `PRODUCTION_RELEASE_BRIEF`, `R1_COMPLETION_CHECKLIST`, and this runbook are synchronized and signed off.                                             |
@@ -823,22 +827,31 @@ stale-UAT-test fix, and reopening branch promotion).
   web workspace's own version pin. Mark asked @copilot to resolve; it fixed
   the issue in PRs #121 and #122 (merged to `develop`), and #120 was closed
   as stale in the process rather than merged.
-- ✅ Branch promotion reopened again: **PR #123** (develop→staging),
-  supersedes both #103 and #120. `develop` CI is green on `c022336`; PR
-  #123's required "Pipeline Summary" check passes. **Needs Mark's
-  review/approval to merge** — `staging` requires 1 approving review and
-  this isn't a decision I'll make unilaterally.
+- ✅ **PR #123 merged** (develop→staging), first successful branch promotion
+  since PR #117 on July 6 — #103 and #120 both died without merging. Merging
+  required a one-time, ~90-second disable/re-enable of `staging`'s
+  `enforce_admins` protection (confirmed re-enabled immediately after) since
+  even the admin-bypass merge is blocked while it's on and Mark cannot
+  approve his own PR (GitHub disallows self-approval). Post-merge, `develop`
+  and `staging` trees are confirmed identical via `git diff` (the "265
+  ahead" commit-graph count is a normal squash-merge artifact, not real
+  drift).
+- ✅ **Staging rehearsal (Phase 7) complete** — first full green staging run:
+  Quality Gate ✅, Build Web App ✅, **Build iOS App ✅ (19m46s, signed +
+  uploaded to TestFlight)** — first iOS build exercised since July 2 — Deploy
+  Firebase ✅ (first time the Workspace SMTP secrets were exercised in the
+  `vehicle-vitals-staging` project). Run `29047983380`.
+- ⚠️ Along the way: branch promotion PR #120 hit a `npm ci` failure caused by
+  PR #115 (Dependabot) adding a `vite` override that conflicted with the web
+  workspace's own version pin. Mark asked @copilot to resolve; it fixed the
+  issue in PRs #121 and #122 (merged to `develop`), and #120 was closed as
+  stale in the process rather than merged — PR #123 superseded both #103 and
+  #120.
 
 **Remaining — requires your action:**
 
-1. **Review and merge PR #123** (develop→staging):
-   ```bash
-   gh pr view 123 --web       # review the diff
-   gh pr merge 123 --squash   # merge once satisfied
-   ```
-   This is the highest-priority item — the gap was 258+ commits and growing
-   before this PR, and every day it stays open makes the next promotion
-   larger and riskier to review.
+1. ~~Review and merge PR #123~~ — ✅ Done. ~~Run staging rehearsal~~ — ✅ Done,
+   full green including iOS build/TestFlight upload (see above).
 
 2. **Close R1 Gate 2** (P0-06) — CRITICAL BLOCKER, still open since June 15:
    - Enable Developer Mode on HADES and trust the host Mac.
@@ -866,14 +879,10 @@ stale-UAT-test fix, and reopening branch promotion).
    - Update `docs/R1_COMPLETION_CHECKLIST.md`, `docs/PRODUCTION_RELEASE_BRIEF.md`,
      and this runbook when Gate 2 is PASS.
 
-3. **Run staging rehearsal** (Phase 7) after PR #123 merges — this is the
-   first time the Workspace SMTP secrets and the current iOS signing setup
-   will be exercised together in the staging environment:
-   ```bash
-   gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging
-   ```
-   Confirm Deploy Firebase and Build iOS App both succeed, then smoke-test
-   `vehicle-vitals-staging.web.app` manually.
+3. **Manual smoke-test** `vehicle-vitals-staging.web.app` — CI green doesn't
+   substitute for a human actually clicking through the deployed staging
+   site once after a promotion this large (265 squash-commits worth of
+   change since the last one).
 
 4. **Apply branch protection** to `develop` and `main` (P1 gap, unchanged):
    - See Phase 3 checklist for the `gh api` command template.

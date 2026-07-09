@@ -66,7 +66,8 @@ export default function ComingSoon() {
         <div className="max-w-7xl mx-auto px-4 sm:px-5 py-3">
           <div className="flex items-center justify-center">
             <StackedVLogo
-              size={40}
+              size={44}
+              compact
               showText={true}
               color="currentColor"
               accent="#334155"

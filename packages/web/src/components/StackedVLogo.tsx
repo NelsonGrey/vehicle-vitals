@@ -16,7 +16,7 @@ export default function StackedVLogo({
   compact = false,
   wordmarkColor = '#64748b',
 }: StackedVLogoProps) {
-  const width = Math.round(size * 2.34);
+  const width = size;
   const isLightMark =
     color.toLowerCase() === '#ffffff' ||
     color.toLowerCase() === 'white' ||

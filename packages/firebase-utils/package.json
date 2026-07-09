@@ -31,9 +31,9 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^8.0.0",
-    "prettier": "^3.9.1",
+    "prettier": "^3.9.4",
     "typescript": "^5.6.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "firebase": "^12.15.0"

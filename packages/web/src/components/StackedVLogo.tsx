@@ -25,7 +25,7 @@ export default function StackedVLogo({
     ? '/assets/vehicle-vitals-header-mark-light.png'
     : '/assets/vehicle-vitals-header-mark.png';
 
-  const compactFontSize = Math.max(12, Math.round(size * 0.22));
+  const compactFontSize = Math.max(14, Math.round(size * 0.3));
 
   const wordmark = (
     <div
@@ -35,7 +35,7 @@ export default function StackedVLogo({
         ...(compact ? { fontSize: compactFontSize } : {}),
       }}
     >
-      VEHICLE<br />VITALS
+      {compact ? 'VEHICLE VITALS' : <>VEHICLE<br />VITALS</>}
     </div>
   );
 

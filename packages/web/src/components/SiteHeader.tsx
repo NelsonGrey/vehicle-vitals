@@ -41,7 +41,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               className="inline-flex no-underline text-current"
             >
               <StackedVLogo
-                size={56}
+                size={85}
                 compact
                 showText
                 color={overlay ? '#ffffff' : 'currentColor'}

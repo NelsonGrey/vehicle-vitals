@@ -28,7 +28,7 @@
 
 .stacked-v-logo-container.compact {
   flex-direction: row;
-  gap: 8px;
+  gap: 12px;
 }
 
 .stacked-v-logo-container:not(.compact) {
@@ -50,8 +50,11 @@
 }
 
 .stacked-v-logo-wordmark.compact {
-  font-size: 10px;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 1.5px;
   margin-top: 0;
+  text-align: left;
 }
 
 .stacked-v-logo-wordmark.shadow {

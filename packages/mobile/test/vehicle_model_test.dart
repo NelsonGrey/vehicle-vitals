@@ -14,6 +14,21 @@ void main() {
     expect(vehicle.vehicleStatus, 'active');
   });
 
+  test('Vehicle coerces string-typed numeric fields from Firestore', () {
+    final vehicle = Vehicle.fromMap({
+      'vin': 'VIN003',
+      'make': 'Honda',
+      'model': 'Civic',
+      'year': '2020',
+      'mileage': '45000',
+      'recallsCount': '2',
+    });
+
+    expect(vehicle.year, 2020);
+    expect(vehicle.mileage, 45000);
+    expect(vehicle.recallsCount, 2);
+  });
+
   test('Vehicle preserves status in toMap and copyWith', () {
     final vehicle = Vehicle(
       vin: 'VIN002',

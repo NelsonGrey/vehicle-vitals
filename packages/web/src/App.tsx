@@ -160,7 +160,7 @@ const Help = lazy(() => import('./pages/Help'));
 const StartSteps = lazy(() => import('./pages/StartSteps'));
 const EverydayScreens = lazy(() => import('./pages/EverydayScreens'));
 const ShortVideoTours = lazy(() => import('./pages/ShortVideoTours'));
-const Contact = lazy(() => import('./pages/Contact'));
+const Support = lazy(() => import('./pages/Support'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const PersonaPage = lazy(() => import('./pages/PersonaPage'));
@@ -172,6 +172,11 @@ const AddVehicle = lazy(() => import('./pages/AddVehicle'));
 const EditVehicle = lazy(() => import('./pages/EditVehicle'));
 const Records = lazy(() => import('./pages/Records'));
 const Profile = lazy(() => import('./pages/Profile'));
+const AccountSecurity = lazy(() => import('./pages/AccountSecurity'));
+const MaintenanceAlerts = lazy(() => import('./pages/MaintenanceAlerts'));
+const AccountConsolidation = lazy(() => import('./pages/AccountConsolidation'));
+const ApiAutomation = lazy(() => import('./pages/ApiAutomation'));
+const DataPrivacy = lazy(() => import('./pages/DataPrivacy'));
 const ServiceProviders = lazy(() => import('./pages/ServiceProviders'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
@@ -343,8 +348,8 @@ function App() {
               <Route path="start-steps" element={<StartSteps />} />
               <Route path="everyday-screens" element={<EverydayScreens />} />
               <Route path="short-video-tours" element={<ShortVideoTours />} />
-              <Route path="support" element={<Contact />} />
-              <Route path="contact" element={<Contact />} />
+              <Route path="support" element={<Support />} />
+              <Route path="contact" element={<Support />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />
               <Route path="personas/:personaId" element={<PersonaPage />} />
@@ -404,6 +409,17 @@ function App() {
                     <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
                     <Route path="records/:vin" element={<Records />} />
                     <Route path="profile" element={<Profile />} />
+                    <Route path="account" element={<AccountSecurity />} />
+                    <Route
+                      path="maintenance-alerts"
+                      element={<MaintenanceAlerts />}
+                    />
+                    <Route
+                      path="account-consolidation"
+                      element={<AccountConsolidation />}
+                    />
+                    <Route path="api-automation" element={<ApiAutomation />} />
+                    <Route path="data-privacy" element={<DataPrivacy />} />
                     <Route path="subscription" element={<SubscriptionPage />} />
                     <Route path="providers" element={<ServiceProviders />} />
                     <Route path="timeline" element={<TimelineDashboard />} />

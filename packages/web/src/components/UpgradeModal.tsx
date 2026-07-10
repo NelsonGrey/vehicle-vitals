@@ -147,7 +147,7 @@ export default function UpgradeModal({
             Current subscription: {getTierDisplayName(currentTier)}
           </p>
           {pricing.annualSavings && (
-            <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <p className="mt-1 text-xs font-medium text-accent-700 dark:text-accent-400">
               {pricing.annualSavings}
             </p>
           )}

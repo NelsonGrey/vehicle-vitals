@@ -139,6 +139,15 @@ describe('Records scheduled insight actions', () => {
     renderRecords();
 
     await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /Ownership Insights/i })
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ownership Insights/i })
+    );
+
+    await waitFor(() => {
       expect(screen.getByText('Scheduled Insight Actions')).toBeInTheDocument();
     });
 
@@ -168,6 +177,15 @@ describe('Records scheduled insight actions', () => {
 
     await waitFor(() => {
       expect(
+        screen.getByRole('button', { name: /Ownership Insights/i })
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ownership Insights/i })
+    );
+
+    await waitFor(() => {
+      expect(
         screen.getByRole('button', { name: 'Resume' })
       ).toBeInTheDocument();
     });
@@ -194,6 +212,15 @@ describe('Records scheduled insight actions', () => {
 
     await waitFor(() => {
       expect(
+        screen.getByRole('button', { name: /Ownership Insights/i })
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ownership Insights/i })
+    );
+
+    await waitFor(() => {
+      expect(
         screen.getByRole('button', { name: 'Complete' })
       ).toBeInTheDocument();
     });
@@ -217,6 +244,15 @@ describe('Records scheduled insight actions', () => {
     ]);
 
     renderRecords();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /Ownership Insights/i })
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ownership Insights/i })
+    );
 
     await waitFor(() => {
       expect(

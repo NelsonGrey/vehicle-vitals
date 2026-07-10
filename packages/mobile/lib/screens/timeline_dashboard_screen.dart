@@ -190,56 +190,51 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedVinFilter,
-                    decoration: const InputDecoration(
-                      labelText: 'Vehicle',
-                      border: OutlineInputBorder(),
-                      isDense: true,
+            DropdownButtonFormField<String>(
+              initialValue: _selectedVinFilter,
+              decoration: const InputDecoration(
+                labelText: 'Vehicle',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: [
+                const DropdownMenuItem(
+                  value: 'all',
+                  child: Text('All vehicles'),
+                ),
+                ..._vehicles.map((vehicle) {
+                  return DropdownMenuItem(
+                    value: vehicle.vin,
+                    child: Text(
+                      '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    items: [
-                      const DropdownMenuItem(
-                        value: 'all',
-                        child: Text('All vehicles'),
-                      ),
-                      ..._vehicles.map((vehicle) {
-                        return DropdownMenuItem(
-                          value: vehicle.vin,
-                          child: Text(
-                            '${vehicle.year} ${vehicle.make} ${vehicle.model}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _selectedVinFilter = value;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Wrap(
-                  spacing: 6,
-                  children: [30, 90, 365, 0].map((days) {
-                    final selected = _daysFilter == days;
-                    return ChoiceChip(
-                      label: Text(_dateFilterLabel(days)),
-                      selected: selected,
-                      onSelected: (_) {
-                        setState(() {
-                          _daysFilter = days;
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
+                  );
+                }),
               ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() {
+                  _selectedVinFilter = value;
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [30, 90, 365, 0].map((days) {
+                final selected = _daysFilter == days;
+                return ChoiceChip(
+                  label: Text(_dateFilterLabel(days)),
+                  selected: selected,
+                  onSelected: (_) {
+                    setState(() {
+                      _daysFilter = days;
+                    });
+                  },
+                );
+              }).toList(),
             ),
             const SizedBox(height: 16),
             Text('Event Feed', style: Theme.of(context).textTheme.titleMedium),

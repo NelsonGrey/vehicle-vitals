@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../components/safe_back_button.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/premium_service.dart';
@@ -507,6 +508,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Vehicle'),
+        leading: const SafeBackButton(),
         actions: [
           TextButton(
             onPressed: () => context.push('/app/scan-vin'),

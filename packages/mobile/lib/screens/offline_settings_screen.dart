@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../components/safe_back_button.dart';
 import '../services/offline_service.dart';
 
 class OfflineSettingsScreen extends StatefulWidget {
@@ -18,7 +19,10 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Offline Settings')),
+      appBar: AppBar(
+        title: const Text('Offline Settings'),
+        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
+      ),
       body: Consumer<OfflineService>(
         builder: (context, offlineService, child) {
           return SingleChildScrollView(
@@ -32,12 +36,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Offline Mode',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -72,12 +73,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Connection Status',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -126,12 +124,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Data Management',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 16),
                           Text(

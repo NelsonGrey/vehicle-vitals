@@ -1,6 +1,7 @@
 import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import CollapsibleSection from '../components/CollapsibleSection';
 import { formatFileDisplay } from '../shared/fileUtils';
 import {
   addReminder,
@@ -137,7 +138,7 @@ function getAnalysisBadge(confidence: number | undefined): {
     return {
       label: 'Auto-Verified',
       className:
-        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+        'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200',
     };
   }
 
@@ -145,7 +146,7 @@ function getAnalysisBadge(confidence: number | undefined): {
     return {
       label: 'Review Suggested',
       className:
-        'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+        'bg-warning-100 text-warning-800 dark:bg-warning-900 dark:text-warning-200',
     };
   }
 
@@ -309,8 +310,7 @@ export default function Records() {
 
         existingReminders.forEach((reminder: any) => {
           const serviceType = reminder?.serviceType as
-            | Exclude<InsightActionType, 'payment_calendar'>
-            | undefined;
+            Exclude<InsightActionType, 'payment_calendar'> | undefined;
           if (
             serviceType &&
             serviceType in INSIGHT_ACTION_LABELS &&
@@ -801,9 +801,9 @@ export default function Records() {
     missing:
       'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
     'in-progress':
-      'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+      'bg-warning-100 text-warning-800 dark:bg-warning-900/40 dark:text-warning-200',
     ready:
-      'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+      'bg-accent-100 text-accent-800 dark:bg-accent-900/40 dark:text-accent-200',
   };
 
   const statusLabelMap: Record<PortfolioItem['status'], string> = {
@@ -840,23 +840,17 @@ export default function Records() {
 
       <div className="space-y-4">
         {flattenedItems.length > 0 && (
-          <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <div className="flex items-start justify-between gap-3 flex-wrap">
-              <div>
-                <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-1">
-                  Ownership Insights
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-0">
-                  Estimates from extracted document data. Add finance contracts,
-                  payment statements, and purchase docs to increase precision.
-                </p>
-              </div>
+          <CollapsibleSection
+            title="Ownership Insights"
+            description="Estimates from extracted document data. Add finance contracts, payment statements, and purchase docs to increase precision."
+            headerRight={
               <div className="text-xs text-slate-600 dark:text-slate-300">
                 Documents analyzed: {insights.analyzedDocumentCount}
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+            }
+            defaultCollapsed
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   Maintenance spend captured
@@ -1134,7 +1128,7 @@ export default function Records() {
                                 )
                               }
                               disabled={actingReminderIds.has(reminder.id)}
-                              className="px-2 py-1 text-[11px] rounded-md border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 disabled:opacity-60"
+                              className="px-2 py-1 text-[11px] rounded-md border border-accent-300 dark:border-accent-700 text-accent-700 dark:text-accent-300 disabled:opacity-60"
                             >
                               {actingReminderIds.has(reminder.id)
                                 ? 'Working...'
@@ -1162,7 +1156,7 @@ export default function Records() {
                   </div>
                 )}
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
         {categories.length === 0 && (
@@ -1531,7 +1525,7 @@ export default function Records() {
                                   fileIndex
                                 )
                               }
-                              className="text-red-600 dark:text-red-400 bg-transparent border-0 cursor-pointer hover:opacity-70 flex-shrink-0"
+                              className="text-danger-600 dark:text-danger-400 bg-transparent border-0 cursor-pointer hover:opacity-70 flex-shrink-0"
                             >
                               Remove
                             </button>

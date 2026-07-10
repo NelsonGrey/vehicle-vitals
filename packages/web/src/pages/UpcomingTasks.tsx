@@ -642,10 +642,10 @@ export default function UpcomingTasks() {
   }).length;
 
   const getUrgencyColor = (milesUntilDue: number) => {
-    if (milesUntilDue <= 1000) return 'text-red-600 bg-red-50 border-red-200';
+    if (milesUntilDue <= 1000) return 'text-danger-600 bg-danger-50 border-danger-200';
     if (milesUntilDue <= 5000)
-      return 'text-orange-600 bg-orange-50 border-orange-200';
-    return 'text-green-600 bg-green-50 border-green-200';
+      return 'text-warning-600 bg-warning-50 border-warning-200';
+    return 'text-accent-600 bg-accent-50 border-accent-200';
   };
 
   const getUrgencyLabel = (milesUntilDue: number) => {
@@ -1060,10 +1060,10 @@ export default function UpcomingTasks() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               item.milesUntilDue <= 1000
-                                ? 'bg-red-100 text-red-800'
+                                ? 'bg-danger-100 text-danger-800'
                                 : item.milesUntilDue <= 5000
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-green-100 text-green-800'
+                                  ? 'bg-warning-100 text-warning-800'
+                                  : 'bg-accent-100 text-accent-800'
                             }`}
                           >
                             {getUrgencyLabel(item.milesUntilDue)}
@@ -1098,7 +1098,7 @@ export default function UpcomingTasks() {
                           </p>
                         )}
                         {item.milesUntilDue > leadMilesThreshold ? (
-                          <p className="mt-3 mb-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                          <p className="mt-3 mb-0 rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-900">
                             Outside your current reminder window. You can still
                             save it now if you want to track it early.
                           </p>
@@ -1177,15 +1177,15 @@ export default function UpcomingTasks() {
                 <h4 className="font-semibold mb-2 mt-0">Legend</h4>
                 <div className="flex gap-4 text-sm flex-wrap">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-200 rounded"></div>
+                    <div className="w-3 h-3 bg-danger-200 rounded"></div>
                     <span>Urgent (≤1,000 miles)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-orange-200 rounded"></div>
+                    <div className="w-3 h-3 bg-warning-200 rounded"></div>
                     <span>Soon (≤5,000 miles)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-200 rounded"></div>
+                    <div className="w-3 h-3 bg-accent-200 rounded"></div>
                     <span>Upcoming (&gt;5,000 miles)</span>
                   </div>
                 </div>

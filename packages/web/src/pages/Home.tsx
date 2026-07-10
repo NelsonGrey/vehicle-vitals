@@ -1,7 +1,10 @@
 // -----------------------------
 // File: web/pages/Home.jsx
-import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  computeVehicleHealthSnapshot,
+  getUpcomingMaintenance,
+} from '@vehicle-vitals/shared';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { CachedImage } from '../components/CachedImage';
@@ -10,20 +13,20 @@ import { VehicleListItem } from '../components/VehicleListItem';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
 import {
-    isDemonstrationEnvironment,
-    showDemoSeedControls,
+  isDemonstrationEnvironment,
+  showDemoSeedControls,
 } from '../shared/environment';
 import {
-    deleteVehicle,
-    getMaintenanceEntries,
-    getVehicles,
-    updateVehicle,
+  deleteVehicle,
+  getMaintenanceEntries,
+  getVehicles,
+  updateVehicle,
 } from '../shared/firestoreService';
 import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
 import { getHouseholdGarageStatus } from '../utils/householdGarageService';
 import {
-    buildPersistedVinInsights,
-    getVehicleInsights,
+  buildPersistedVinInsights,
+  getVehicleInsights,
 } from '../utils/vehicleService';
 
 interface Vehicle {
@@ -120,12 +123,17 @@ export default function Home() {
   >({});
   const [loadingHealthVin, setLoadingHealthVin] = useState<string | null>(null);
   const [householdName, setHouseholdName] = useState<string | null>(null);
+  // Cap on how many vehicles get a fetched health badge per Home load, same
+  // "reasonable effort" cap used on mobile -- large garages shouldn't
+  // trigger dozens of parallel maintenance-entry fetches just to render
+  // the list.
+  const MAX_HEALTH_BADGE_FETCHES = 50;
+  const healthFetchInFlightRef = useRef<Set<string>>(new Set());
 
   const applyVehiclePage = useCallback(
     (
       result:
-        | Vehicle[]
-        | { data: Vehicle[]; lastDoc: unknown; hasMore: boolean },
+        Vehicle[] | { data: Vehicle[]; lastDoc: unknown; hasMore: boolean },
       append = false
     ) => {
       if (Array.isArray(result)) {
@@ -146,11 +154,15 @@ export default function Home() {
 
   const refreshVehicles = useCallback(async () => {
     const result = await getVehicles({ pageSize: VEHICLE_PAGE_SIZE });
-    applyVehiclePage(result as Vehicle[] | {
-      data: Vehicle[];
-      lastDoc: unknown;
-      hasMore: boolean;
-    });
+    applyVehiclePage(
+      result as
+        | Vehicle[]
+        | {
+            data: Vehicle[];
+            lastDoc: unknown;
+            hasMore: boolean;
+          }
+    );
   }, [VEHICLE_PAGE_SIZE, applyVehiclePage]);
 
   const loadMoreVehicles = useCallback(async () => {
@@ -165,11 +177,13 @@ export default function Home() {
         startAfter: vehiclesLastDoc,
       });
       applyVehiclePage(
-        result as Vehicle[] | {
-          data: Vehicle[];
-          lastDoc: unknown;
-          hasMore: boolean;
-        },
+        result as
+          | Vehicle[]
+          | {
+              data: Vehicle[];
+              lastDoc: unknown;
+              hasMore: boolean;
+            },
         true
       );
     } finally {
@@ -307,7 +321,9 @@ export default function Home() {
       })
       .finally(() => {
         if (isActive) {
-          setLoadingHealthVin(current => (current === selectedVin ? null : current));
+          setLoadingHealthVin(current =>
+            current === selectedVin ? null : current
+          );
         }
       });
 
@@ -315,6 +331,72 @@ export default function Home() {
       isActive = false;
     };
   }, [maintenanceEntriesByVin, selectedVin]);
+
+  // Fetch maintenance entries for every visible vehicle (not just the
+  // selected one) so the garage list can show a health badge per row and an
+  // aggregate "Garage Health" banner, without a second/duplicate calculation.
+  useEffect(() => {
+    const inFlight = healthFetchInFlightRef.current;
+    const missing = filteredVehicles
+      .slice(0, MAX_HEALTH_BADGE_FETCHES)
+      .map(v => v.vin)
+      .filter(
+        vin => vin && !maintenanceEntriesByVin[vin] && !inFlight.has(vin)
+      );
+    if (missing.length === 0) return;
+
+    missing.forEach(vin => inFlight.add(vin));
+    let isActive = true;
+
+    void Promise.all(
+      missing.map(vin =>
+        getMaintenanceEntries(vin)
+          .then(entries => ({
+            vin,
+            entries: Array.isArray(entries) ? entries : [],
+          }))
+          .catch(() => ({ vin, entries: [] as MaintenanceEntry[] }))
+      )
+    ).then(results => {
+      missing.forEach(vin => inFlight.delete(vin));
+      if (!isActive) return;
+      setMaintenanceEntriesByVin(current => {
+        const next = { ...current };
+        for (const { vin, entries } of results) {
+          next[vin] = entries;
+        }
+        return next;
+      });
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [filteredVehicles, maintenanceEntriesByVin]);
+
+  const healthSnapshotByVin: Record<
+    string,
+    ReturnType<typeof computeVehicleHealthSnapshot>
+  > = {};
+  for (const vehicle of filteredVehicles) {
+    const entries = maintenanceEntriesByVin[vehicle.vin];
+    if (!entries) continue;
+    healthSnapshotByVin[vehicle.vin] = computeVehicleHealthSnapshot(
+      vehicle,
+      entries
+    );
+  }
+
+  const healthScores = Object.values(healthSnapshotByVin).map(
+    snapshot => snapshot.overallHealthScore
+  );
+  const garageHealthSummary =
+    healthScores.length === 0
+      ? null
+      : {
+          total: healthScores.length,
+          attentionCount: healthScores.filter(score => score < 80).length,
+        };
 
   const backfillVinInsights = useCallback(
     async (automatic = false) => {
@@ -457,7 +539,7 @@ export default function Home() {
               Garage
             </h1>
             {householdName && (
-              <p className="mt-1 mb-0 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              <p className="mt-1 mb-0 inline-flex items-center gap-1 text-xs font-medium text-accent-700 dark:text-accent-300">
                 <span aria-hidden="true">🏠</span>
                 {householdName} — shared household garage
               </p>
@@ -529,8 +611,8 @@ export default function Home() {
 
             <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-700">
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 m-0 mb-3">
-                Add a vehicle &rarr; Track service and costs &rarr; Stay on
-                top of what&apos;s next
+                Add a vehicle &rarr; Track service and costs &rarr; Stay on top
+                of what&apos;s next
               </p>
               <ol className="list-none p-0 m-0 space-y-3">
                 <li className="flex items-start gap-3">
@@ -558,8 +640,8 @@ export default function Home() {
                       Log your first service record
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
-                      Unlocks once you&apos;ve added a vehicle — track
-                      costs, dates, and documents.
+                      Unlocks once you&apos;ve added a vehicle — track costs,
+                      dates, and documents.
                     </p>
                   </div>
                 </li>
@@ -575,8 +657,7 @@ export default function Home() {
                       Review upcoming maintenance
                     </Link>
                     <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">
-                      See what&apos;s due next once your garage has
-                      vehicles.
+                      See what&apos;s due next once your garage has vehicles.
                     </p>
                   </div>
                 </li>
@@ -584,336 +665,362 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left Column: Vehicle List */}
-            <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-              <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
-                Vehicles
-              </h2>
-              <div className="mb-3">
-                <input
-                  type="search"
-                  value={searchTerm}
-                  onChange={event => setSearchTerm(event.target.value)}
-                  placeholder="Search by year, make, model, or VIN"
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
-                />
+          <>
+            {garageHealthSummary && (
+              <div
+                className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
+                  garageHealthSummary.attentionCount > 0
+                    ? 'bg-warning-50 text-warning-700 dark:bg-warning-950/30 dark:text-warning-200'
+                    : 'bg-accent-50 text-accent-700 dark:bg-accent-950/30 dark:text-accent-200'
+                }`}
+              >
+                <span aria-hidden="true">❤</span>
+                <span>
+                  Garage Health:{' '}
+                  {garageHealthSummary.attentionCount > 0
+                    ? `${garageHealthSummary.attentionCount} of ${garageHealthSummary.total} vehicle${garageHealthSummary.total === 1 ? '' : 's'} may need attention`
+                    : `all ${garageHealthSummary.total} vehicle${garageHealthSummary.total === 1 ? '' : 's'} looking good`}
+                </span>
               </div>
-              <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
-                {[
-                  {
-                    key: 'active',
-                    title: 'Active Garage',
-                    description: 'Daily and regularly used vehicles.',
-                    items: activeVehicles,
-                  },
-                  {
-                    key: 'stored',
-                    title: 'Storage',
-                    description:
-                      'Special-use, seasonal, barn, or shed vehicles kept out of the main garage.',
-                    items: storedVehicles,
-                  },
-                ].map(section => (
-                  <div key={section.key}>
-                    <div className="px-1 pb-2 pt-1">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        {section.title}
+            )}
+            <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              {/* Left Column: Vehicle List */}
+              <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+                  Vehicles
+                </h2>
+                <div className="mb-3">
+                  <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={event => setSearchTerm(event.target.value)}
+                    placeholder="Search by year, make, model, or VIN"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
+                  {[
+                    {
+                      key: 'active',
+                      title: 'Active Garage',
+                      description: 'Daily and regularly used vehicles.',
+                      items: activeVehicles,
+                    },
+                    {
+                      key: 'stored',
+                      title: 'Storage',
+                      description:
+                        'Special-use, seasonal, barn, or shed vehicles kept out of the main garage.',
+                      items: storedVehicles,
+                    },
+                  ].map(section => (
+                    <div key={section.key}>
+                      <div className="px-1 pb-2 pt-1">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {section.title}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {section.description}
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {section.description}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {section.items.map((v, index) => {
-                        const isSelected = v.vin === selectedVin;
-                        const portfolioProgress =
-                          getPortfolioRequiredProgress(v);
-                        return (() => {
-                          const vinText = String(v.vin ?? '').trim();
-                          const makeText = String(v.make ?? '').trim();
-                          const modelText = String(v.model ?? '').trim();
-                          const yearText = String(v.year ?? '').trim();
-                          const isPhantom =
-                            !vinText || !makeText || !modelText || !yearText;
+                      <div className="space-y-2">
+                        {section.items.map((v, index) => {
+                          const isSelected = v.vin === selectedVin;
+                          const portfolioProgress =
+                            getPortfolioRequiredProgress(v);
+                          return (() => {
+                            const vinText = String(v.vin ?? '').trim();
+                            const makeText = String(v.make ?? '').trim();
+                            const modelText = String(v.model ?? '').trim();
+                            const yearText = String(v.year ?? '').trim();
+                            const isPhantom =
+                              !vinText || !makeText || !modelText || !yearText;
 
-                          if (isPhantom) {
-                            return (
-                              <div
-                                key={
-                                  vinText || `phantom-${section.key}-${index}`
-                                }
-                                className="w-full text-left rounded-lg border border-dashed border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3"
-                              >
-                                <div className="font-medium text-red-700 dark:text-red-400 text-sm line-clamp-1">
-                                  Corrupted entry
-                                </div>
-                                <div className="text-xs text-red-500 dark:text-red-500 line-clamp-1 mb-2">
-                                  ID: {vinText || 'Missing document ID'}
-                                </div>
-                                <div className="text-xs text-red-600 dark:text-red-400 mb-2">
-                                  Missing vehicle year/make/model fields
-                                </div>
-                                <button
-                                  type="button"
-                                  className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 rounded transition-colors cursor-pointer"
-                                  onClick={() => handleDelete(vinText)}
-                                  disabled={!vinText}
+                            if (isPhantom) {
+                              return (
+                                <div
+                                  key={
+                                    vinText || `phantom-${section.key}-${index}`
+                                  }
+                                  className="w-full text-left rounded-lg border border-dashed border-danger-300 dark:border-danger-700 bg-danger-50 dark:bg-danger-900/20 p-3"
                                 >
-                                  Delete
-                                </button>
-                              </div>
+                                  <div className="font-medium text-danger-700 dark:text-danger-400 text-sm line-clamp-1">
+                                    Corrupted entry
+                                  </div>
+                                  <div className="text-xs text-danger-500 dark:text-danger-500 line-clamp-1 mb-2">
+                                    ID: {vinText || 'Missing document ID'}
+                                  </div>
+                                  <div className="text-xs text-danger-600 dark:text-danger-400 mb-2">
+                                    Missing vehicle year/make/model fields
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="text-xs px-2 py-1 bg-danger-100 hover:bg-danger-200 text-danger-700 border border-danger-300 rounded transition-colors cursor-pointer"
+                                    onClick={() => handleDelete(vinText)}
+                                    disabled={!vinText}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              );
+                            }
+                            return (
+                              <VehicleListItem
+                                key={vinText}
+                                vehicle={v}
+                                isSelected={isSelected}
+                                onSelect={setSelectedVin}
+                                alertLevel={vehicleAlerts[v.vin]?.level ?? null}
+                                portfolioComplete={portfolioProgress.complete}
+                                portfolioRequired={portfolioProgress.required}
+                                healthScore={
+                                  healthSnapshotByVin[v.vin]?.overallHealthScore
+                                }
+                              />
                             );
-                          }
-                          return (
-                            <VehicleListItem
-                              key={vinText}
-                              vehicle={v}
-                              isSelected={isSelected}
-                              onSelect={setSelectedVin}
-                              alertLevel={vehicleAlerts[v.vin]?.level ?? null}
-                              portfolioComplete={portfolioProgress.complete}
-                              portfolioRequired={portfolioProgress.required}
-                            />
-                          );
-                        })();
-                      })}
-                      {section.items.length === 0 && (
-                        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
-                          {section.key === 'stored'
-                            ? 'No stored vehicles match this search.'
-                            : 'No active vehicles match this search.'}
-                        </div>
-                      )}
+                          })();
+                        })}
+                        {section.items.length === 0 && (
+                          <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
+                            {section.key === 'stored'
+                              ? 'No stored vehicles match this search.'
+                              : 'No active vehicles match this search.'}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {filteredVehicles.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
-                    No vehicles match this search.
-                  </div>
-                )}
-                {hasMoreVehicles && !normalizedSearch && (
-                  <button
-                    type="button"
-                    onClick={loadMoreVehicles}
-                    disabled={isLoadingMore}
-                    className="w-full mt-3 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-60"
-                  >
-                    {isLoadingMore ? 'Loading more vehicles…' : 'Load more vehicles'}
-                  </button>
+                  ))}
+                  {filteredVehicles.length === 0 && (
+                    <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
+                      No vehicles match this search.
+                    </div>
+                  )}
+                  {hasMoreVehicles && !normalizedSearch && (
+                    <button
+                      type="button"
+                      onClick={loadMoreVehicles}
+                      disabled={isLoadingMore}
+                      className="w-full mt-3 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-60"
+                    >
+                      {isLoadingMore
+                        ? 'Loading more vehicles…'
+                        : 'Load more vehicles'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Vehicle Details */}
+              <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                {!selectedVin ? (
+                  <p className="text-slate-600 dark:text-slate-400 m-0">
+                    Select a vehicle to view details.
+                  </p>
+                ) : (
+                  (() => {
+                    const selectedVehicle = filteredVehicles.find(
+                      v => v.vin === selectedVin
+                    );
+                    if (!selectedVehicle) {
+                      return (
+                        <p className="text-slate-600 dark:text-slate-400 m-0">
+                          Vehicle not found.
+                        </p>
+                      );
+                    }
+
+                    const portfolioProgress =
+                      getPortfolioRequiredProgress(selectedVehicle);
+                    const healthEntries =
+                      maintenanceEntriesByVin[selectedVehicle.vin] ?? [];
+                    const isLoadingHealth =
+                      loadingHealthVin === selectedVehicle.vin &&
+                      !maintenanceEntriesByVin[selectedVehicle.vin];
+
+                    return (
+                      <>
+                        <div className="flex items-start justify-between gap-4 mb-4">
+                          <div className="flex items-start gap-3">
+                            <div className="h-20 w-28 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex-shrink-0">
+                              {selectedVehicle.photoUrl ? (
+                                <CachedImage
+                                  src={selectedVehicle.photoUrl}
+                                  alt={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
+                                  className="h-full w-full object-cover"
+                                  width={112}
+                                  height={80}
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center text-slate-400 text-2xl">
+                                  🚗
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                                {selectedVehicle.year} {selectedVehicle.make}{' '}
+                                {selectedVehicle.model}
+                              </h3>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                                VIN: {selectedVehicle.vin}
+                                {selectedVehicle.mileage
+                                  ? ` • ${selectedVehicle.mileage} mi`
+                                  : ''}
+                              </p>
+                              {selectedVehicle.photoSource === 'wikimedia' && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                                  Image source: Wikimedia
+                                  {selectedVehicle.photoAttributionUrl && (
+                                    <>
+                                      {' '}
+                                      <a
+                                        href={
+                                          selectedVehicle.photoAttributionUrl
+                                        }
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                                      >
+                                        View source
+                                      </a>
+                                    </>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Vehicle Status Badges */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {getVehicleStatus(selectedVehicle) === 'stored' && (
+                            <span className="inline-block rounded-full bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 px-2.5 py-1 text-xs font-medium">
+                              In storage
+                            </span>
+                          )}
+                          {Number(selectedVehicle.recallsCount || 0) > 0 && (
+                            <span className="inline-block rounded-full bg-warning-100 text-warning-800 dark:bg-warning-900/40 dark:text-warning-200 px-2.5 py-1 text-xs font-medium">
+                              {selectedVehicle.recallsCount} open recall
+                              {Number(selectedVehicle.recallsCount) === 1
+                                ? ''
+                                : 's'}
+                            </span>
+                          )}
+                          {portfolioProgress.required > 0 && (
+                            <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2.5 py-1 text-xs font-medium">
+                              Records: {portfolioProgress.complete}/
+                              {portfolioProgress.required} required complete
+                            </span>
+                          )}
+                          {selectedVehicle.vinInsights && (
+                            <span className="inline-block rounded-full bg-accent-100 text-accent-800 dark:bg-accent-900/40 dark:text-accent-200 px-2.5 py-1 text-xs font-medium">
+                              VIN insights loaded
+                            </span>
+                          )}
+                        </div>
+
+                        <VehicleHealthPanel
+                          vehicle={selectedVehicle}
+                          maintenanceEntries={healthEntries}
+                          tier={tier}
+                          hasPlanning12mo={hasPlanning12mo}
+                          hasPlanning36mo={hasPlanning36mo}
+                          loading={isLoadingHealth}
+                        />
+
+                        {/* Upcoming Maintenance */}
+                        {vehicleAlerts[selectedVehicle.vin] && (
+                          <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 m-0">
+                                Upcoming Maintenance
+                              </h4>
+                              <Link
+                                to="/app/upcoming"
+                                className="text-xs text-blue-600 dark:text-blue-400 no-underline hover:underline"
+                              >
+                                View all →
+                              </Link>
+                            </div>
+                            <ul className="space-y-1.5 m-0 p-0 list-none">
+                              {vehicleAlerts[selectedVehicle.vin].items.map(
+                                item => {
+                                  const isUrgent = item.milesUntilDue <= 1000;
+                                  const isSoon = item.milesUntilDue <= 5000;
+                                  return (
+                                    <li
+                                      key={item.id}
+                                      className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
+                                    >
+                                      <span
+                                        className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                          isUrgent
+                                            ? 'bg-danger-500'
+                                            : isSoon
+                                              ? 'bg-warning-400'
+                                              : 'bg-slate-300'
+                                        }`}
+                                      />
+                                      <span className="flex-1">
+                                        {item.description}
+                                      </span>
+                                      <span
+                                        className={`font-medium ${
+                                          isUrgent
+                                            ? 'text-danger-600 dark:text-danger-400'
+                                            : isSoon
+                                              ? 'text-warning-600 dark:text-warning-400'
+                                              : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                      >
+                                        {item.milesUntilDue <= 0
+                                          ? 'Due now'
+                                          : `${item.milesUntilDue.toLocaleString()} mi`}
+                                      </span>
+                                    </li>
+                                  );
+                                }
+                              )}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Cost of Ownership */}
+                        <div className="mb-1">
+                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+                            Cost of Ownership
+                          </p>
+                          <CostAnalysisReportlet vehicle={selectedVehicle} />
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            to={`/edit-vehicle/${selectedVehicle.vin}`}
+                            className="inline-block px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors no-underline text-sm font-medium"
+                          >
+                            Edit Vehicle
+                          </Link>
+                          <Link
+                            to={`/app/records/${selectedVehicle.vin}`}
+                            className="inline-block px-3 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors no-underline text-sm font-medium"
+                          >
+                            View Records
+                          </Link>
+                          <button
+                            className="px-3 py-2 bg-danger-100 hover:bg-danger-200 text-danger-700 border border-danger-300 rounded-lg transition-colors text-sm font-medium cursor-pointer"
+                            onClick={() => handleDelete(selectedVehicle.vin)}
+                          >
+                            Delete Vehicle
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()
                 )}
               </div>
-            </div>
-
-            {/* Right Column: Vehicle Details */}
-            <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              {!selectedVin ? (
-                <p className="text-slate-600 dark:text-slate-400 m-0">
-                  Select a vehicle to view details.
-                </p>
-              ) : (
-                (() => {
-                  const selectedVehicle = filteredVehicles.find(
-                    v => v.vin === selectedVin
-                  );
-                  if (!selectedVehicle) {
-                    return (
-                      <p className="text-slate-600 dark:text-slate-400 m-0">
-                        Vehicle not found.
-                      </p>
-                    );
-                  }
-
-                  const portfolioProgress =
-                    getPortfolioRequiredProgress(selectedVehicle);
-                  const healthEntries =
-                    maintenanceEntriesByVin[selectedVehicle.vin] ?? [];
-                  const isLoadingHealth =
-                    loadingHealthVin === selectedVehicle.vin &&
-                    !maintenanceEntriesByVin[selectedVehicle.vin];
-
-                  return (
-                    <>
-                      <div className="flex items-start justify-between gap-4 mb-4">
-                        <div className="flex items-start gap-3">
-                          <div className="h-20 w-28 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex-shrink-0">
-                            {selectedVehicle.photoUrl ? (
-                              <CachedImage
-                                src={selectedVehicle.photoUrl}
-                                alt={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
-                                className="h-full w-full object-cover"
-                                width={112}
-                                height={80}
-                              />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center text-slate-400 text-2xl">
-                                🚗
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-                              {selectedVehicle.year} {selectedVehicle.make}{' '}
-                              {selectedVehicle.model}
-                            </h3>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
-                              VIN: {selectedVehicle.vin}
-                              {selectedVehicle.mileage
-                                ? ` • ${selectedVehicle.mileage} mi`
-                                : ''}
-                            </p>
-                            {selectedVehicle.photoSource === 'wikimedia' && (
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
-                                Image source: Wikimedia
-                                {selectedVehicle.photoAttributionUrl && (
-                                  <>
-                                    {' '}
-                                    <a
-                                      href={selectedVehicle.photoAttributionUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 dark:text-blue-400 hover:underline"
-                                    >
-                                      View source
-                                    </a>
-                                  </>
-                                )}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Vehicle Status Badges */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {getVehicleStatus(selectedVehicle) === 'stored' && (
-                          <span className="inline-block rounded-full bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 px-2.5 py-1 text-xs font-medium">
-                            In storage
-                          </span>
-                        )}
-                        {Number(selectedVehicle.recallsCount || 0) > 0 && (
-                          <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2.5 py-1 text-xs font-medium">
-                            {selectedVehicle.recallsCount} open recall
-                            {Number(selectedVehicle.recallsCount) === 1
-                              ? ''
-                              : 's'}
-                          </span>
-                        )}
-                        {portfolioProgress.required > 0 && (
-                          <span className="inline-block rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2.5 py-1 text-xs font-medium">
-                            Records: {portfolioProgress.complete}/
-                            {portfolioProgress.required} required complete
-                          </span>
-                        )}
-                        {selectedVehicle.vinInsights && (
-                          <span className="inline-block rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 px-2.5 py-1 text-xs font-medium">
-                            VIN insights loaded
-                          </span>
-                        )}
-                      </div>
-
-                      <VehicleHealthPanel
-                        vehicle={selectedVehicle}
-                        maintenanceEntries={healthEntries}
-                        tier={tier}
-                        hasPlanning12mo={hasPlanning12mo}
-                        hasPlanning36mo={hasPlanning36mo}
-                        loading={isLoadingHealth}
-                      />
-
-                      {/* Upcoming Maintenance */}
-                      {vehicleAlerts[selectedVehicle.vin] && (
-                        <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 m-0">
-                              Upcoming Maintenance
-                            </h4>
-                            <Link
-                              to="/app/upcoming"
-                              className="text-xs text-blue-600 dark:text-blue-400 no-underline hover:underline"
-                            >
-                              View all →
-                            </Link>
-                          </div>
-                          <ul className="space-y-1.5 m-0 p-0 list-none">
-                            {vehicleAlerts[selectedVehicle.vin].items.map(
-                              item => {
-                                const isUrgent = item.milesUntilDue <= 1000;
-                                const isSoon = item.milesUntilDue <= 5000;
-                                return (
-                                  <li
-                                    key={item.id}
-                                    className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
-                                  >
-                                    <span
-                                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                        isUrgent
-                                          ? 'bg-red-500'
-                                          : isSoon
-                                            ? 'bg-orange-400'
-                                            : 'bg-slate-300'
-                                      }`}
-                                    />
-                                    <span className="flex-1">
-                                      {item.description}
-                                    </span>
-                                    <span
-                                      className={`font-medium ${
-                                        isUrgent
-                                          ? 'text-red-600 dark:text-red-400'
-                                          : isSoon
-                                            ? 'text-orange-600 dark:text-orange-400'
-                                            : 'text-slate-500 dark:text-slate-400'
-                                      }`}
-                                    >
-                                      {item.milesUntilDue <= 0
-                                        ? 'Due now'
-                                        : `${item.milesUntilDue.toLocaleString()} mi`}
-                                    </span>
-                                  </li>
-                                );
-                              }
-                            )}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Cost of Ownership */}
-                      <div className="mb-1">
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-                          Cost of Ownership
-                        </p>
-                        <CostAnalysisReportlet vehicle={selectedVehicle} />
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex flex-wrap gap-2">
-                        <Link
-                          to={`/edit-vehicle/${selectedVehicle.vin}`}
-                          className="inline-block px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors no-underline text-sm font-medium"
-                        >
-                          Edit Vehicle
-                        </Link>
-                        <Link
-                          to={`/app/records/${selectedVehicle.vin}`}
-                          className="inline-block px-3 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors no-underline text-sm font-medium"
-                        >
-                          View Records
-                        </Link>
-                        <button
-                          className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 rounded-lg transition-colors text-sm font-medium cursor-pointer"
-                          onClick={() => handleDelete(selectedVehicle.vin)}
-                        >
-                          Delete Vehicle
-                        </button>
-                      </div>
-                    </>
-                  );
-                })()
-              )}
-            </div>
-          </section>
+            </section>
+          </>
         )}
       </main>
     </div>

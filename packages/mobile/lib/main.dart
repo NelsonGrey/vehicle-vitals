@@ -15,9 +15,8 @@ import 'components/error_boundary.dart';
 import 'firebase_options.dart';
 import 'screens/account_screen.dart';
 import 'screens/add_vehicle_screen.dart';
-import 'screens/analytics_screen.dart';
 import 'screens/calendar_preferences_screen.dart';
-import 'screens/contact_screen.dart';
+import 'screens/data_privacy_screen.dart';
 import 'screens/edit_vehicle_screen.dart';
 import 'screens/email_preferences_screen.dart';
 import 'screens/forgot_password_screen.dart';
@@ -35,11 +34,13 @@ import 'screens/records_screen.dart';
 import 'screens/reminder_preferences_screen.dart';
 import 'screens/scan_vin_screen.dart';
 import 'screens/service_providers_screen.dart';
+import 'screens/settings_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/support_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/timeline_dashboard_screen.dart';
 import 'screens/upcoming_tasks_screen.dart';
-import 'services/analytics_service.dart';
+import 'screens/vehicle_detail_screen.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
@@ -164,7 +165,6 @@ class VehicleVitalsApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (context) => OfflineService()),
-        ChangeNotifierProvider(create: (context) => AnalyticsService()),
       ],
       child: Consumer2<AuthService, OnboardingService>(
         builder: (context, authService, onboardingService, child) {
@@ -282,6 +282,11 @@ class VehicleVitalsApp extends StatelessWidget {
         ),
         GoRoute(path: '/app', builder: (context, state) => const HomeScreen()),
         GoRoute(
+          path: '/app/vehicle/:vin',
+          builder: (context, state) =>
+              VehicleDetailScreen(vin: state.pathParameters['vin']!),
+        ),
+        GoRoute(
           path: '/app/add-vehicle',
           builder: (context, state) => const AddVehicleScreen(),
         ),
@@ -325,16 +330,24 @@ class VehicleVitalsApp extends StatelessWidget {
           redirect: (context, state) => '/app/profile',
         ),
         GoRoute(
+          path: '/app/settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
+        GoRoute(
+          path: '/app/data-privacy',
+          builder: (context, state) => const DataPrivacyScreen(),
+        ),
+        GoRoute(
           path: '/app/email-preferences',
           builder: (context, state) => const EmailPreferencesScreen(),
         ),
         GoRoute(
           path: '/app/support',
-          builder: (context, state) => const ContactScreen(),
+          builder: (context, state) => const SupportScreen(),
         ),
         GoRoute(
           path: '/app/contact',
-          builder: (context, state) => const ContactScreen(),
+          builder: (context, state) => const SupportScreen(),
         ),
         GoRoute(
           path: '/app/privacy',
@@ -367,10 +380,6 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/app/offline-settings',
           builder: (context, state) => const OfflineSettingsScreen(),
-        ),
-        GoRoute(
-          path: '/app/analytics',
-          builder: (context, state) => const AnalyticsScreen(),
         ),
         GoRoute(
           path: '/app/upcoming',
@@ -439,10 +448,7 @@ class VehicleVitalsApp extends StatelessWidget {
           path: '/offline-settings',
           redirect: (context, state) => '/app/offline-settings',
         ),
-        GoRoute(
-          path: '/analytics',
-          redirect: (context, state) => '/app/analytics',
-        ),
+        GoRoute(path: '/analytics', redirect: (context, state) => '/app'),
         GoRoute(
           path: '/upcoming',
           redirect: (context, state) => '/app/upcoming',

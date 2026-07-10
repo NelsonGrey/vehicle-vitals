@@ -46,6 +46,7 @@ export default {
           700: '#15803d',
           800: '#166534',
           900: '#14532d',
+          950: '#052e16',
         },
         // Warning/Danger colors
         warning: {
@@ -59,6 +60,7 @@ export default {
           700: '#b45309',
           800: '#92400e',
           900: '#78350f',
+          950: '#451a03',
         },
         danger: {
           50: '#fef2f2',
@@ -71,6 +73,7 @@ export default {
           700: '#b91c1c',
           800: '#991b1b',
           900: '#7f1d1d',
+          950: '#450a0a',
         },
         // Custom brand colors
         cream: '#fef7ed', // warm cream

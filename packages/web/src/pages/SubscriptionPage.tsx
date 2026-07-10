@@ -223,12 +223,12 @@ export default function SubscriptionPage() {
         )}
 
         {checkoutStatus === 'success' && (
-          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200">
+          <div className="mt-4 rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800 dark:border-accent-800 dark:bg-accent-950/20 dark:text-accent-200">
             Checkout completed. Your subscription is being finalized.
           </div>
         )}
         {checkoutStatus === 'cancelled' && (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-200">
+          <div className="mt-4 rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-950/20 dark:text-warning-200">
             Checkout was cancelled. No subscription change was applied.
           </div>
         )}
@@ -348,7 +348,7 @@ export default function SubscriptionPage() {
               {planTier !== 'enterprise' &&
                 billingPeriod === 'annual' &&
                 pricing.annualSavings && (
-                  <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  <p className="mt-1 text-xs font-medium text-accent-700 dark:text-accent-400">
                     {pricing.annualSavings}
                   </p>
                 )}

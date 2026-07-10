@@ -9,8 +9,9 @@ import '../components/app_bottom_nav.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/record_storage_service.dart';
-import '../utils/document_analysis_summary.dart';
+import '../theme/design_tokens.dart';
 import '../utils/ownership_insights.dart';
+import 'record_category_screen.dart';
 
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({super.key, required this.vin});
@@ -62,7 +63,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading records: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       context.go('/app');
@@ -190,7 +191,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error deleting attachment: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -209,9 +210,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
     if (url.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Attachment URL is missing'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Attachment URL is missing'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -224,7 +225,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error opening attachment: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -292,7 +293,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Upload summary: $uploadedLabel$failedLabel.'),
-          backgroundColor: hasFailures ? Colors.orange : Colors.green,
+          backgroundColor: hasFailures
+              ? Theme.of(context).colorScheme.tertiary
+              : AppDesignTokens.success,
         ),
       );
     } catch (e) {
@@ -300,7 +303,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error selecting attachments: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } finally {
@@ -369,7 +372,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Retry summary: $recoveredLabel$remainingLabel.'),
-          backgroundColor: stillFailing.isEmpty ? Colors.green : Colors.orange,
+          backgroundColor: stillFailing.isEmpty
+              ? AppDesignTokens.success
+              : Theme.of(context).colorScheme.tertiary,
         ),
       );
     } catch (e) {
@@ -377,7 +382,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Retry failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } finally {
@@ -398,7 +403,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Records updated successfully!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppDesignTokens.success,
         ),
       );
       context.go('/app');
@@ -407,7 +412,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving records: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } finally {
@@ -415,6 +420,59 @@ class _RecordsScreenState extends State<RecordsScreen> {
         setState(() => _isSaving = false);
       }
     }
+  }
+
+  ({int requiredCount, int readyRequiredCount, int totalFiles}) _categoryStats(
+    Map<String, dynamic> category,
+  ) {
+    final items = (category['items'] as List?) ?? [];
+    var requiredCount = 0;
+    var readyRequiredCount = 0;
+    var totalFiles = 0;
+    for (final item in items) {
+      final itemMap = Map<String, dynamic>.from(item as Map);
+      if (itemMap['required'] == true) {
+        requiredCount += 1;
+        if (itemMap['status'] == 'ready') {
+          readyRequiredCount += 1;
+        }
+      }
+      totalFiles += ((itemMap['files'] as List?) ?? []).length;
+    }
+    return (
+      requiredCount: requiredCount,
+      readyRequiredCount: readyRequiredCount,
+      totalFiles: totalFiles,
+    );
+  }
+
+  void _openCategory(int categoryIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecordCategoryScreen(
+          categoryIndex: categoryIndex,
+          categoryTitle:
+              (Map<String, dynamic>.from(
+                        _categories[categoryIndex] as Map,
+                      )['title'] ??
+                      '')
+                  .toString(),
+          getCategory: () =>
+              Map<String, dynamic>.from(_categories[categoryIndex] as Map),
+          getUploadingKey: () => _uploadingKey,
+          getFailedUploads: (key) => _failedUploadsByKey[key],
+          getAnalysis: (path) => _analysisByPath[path],
+          itemFiles: _itemFiles,
+          itemUploadKey: _itemUploadKey,
+          onUpdateItemField: _updateItemField,
+          onPickAndUpload: _pickAndUploadFiles,
+          onRetryFailedUploads: _retryFailedUploads,
+          onOpenItemFile: _openItemFile,
+          onRemoveItemFile: _removeItemFile,
+        ),
+      ),
+    ).then((_) => setState(() {}));
   }
 
   @override
@@ -507,13 +565,15 @@ class _RecordsScreenState extends State<RecordsScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.12),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.tertiary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '$pendingFailedUploads failed upload${pendingFailedUploads == 1 ? '' : 's'} pending retry.',
-                        style: const TextStyle(
-                          color: Colors.orange,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.tertiary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -535,211 +595,42 @@ class _RecordsScreenState extends State<RecordsScreen> {
                   final category = Map<String, dynamic>.from(
                     _categories[categoryIndex] as Map,
                   );
-                  final items = (category['items'] as List?) ?? [];
+                  final stats = _categoryStats(category);
+                  final isComplete =
+                      stats.requiredCount > 0 &&
+                      stats.readyRequiredCount == stats.requiredCount;
+                  final hasProgress =
+                      stats.readyRequiredCount > 0 || stats.totalFiles > 0;
+                  final colorScheme = Theme.of(context).colorScheme;
+                  final statusColor = isComplete
+                      ? AppDesignTokens.success
+                      : hasProgress
+                      ? colorScheme.tertiary
+                      : Colors.grey;
+                  final statusIcon = isComplete
+                      ? Icons.check_circle
+                      : hasProgress
+                      ? Icons.hourglass_bottom
+                      : Icons.radio_button_unchecked;
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            (category['title'] ?? '').toString(),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          ...List.generate(items.length, (itemIndex) {
-                            final item = Map<String, dynamic>.from(
-                              items[itemIndex] as Map,
-                            );
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    (item['title'] ?? '').toString(),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text((item['description'] ?? '').toString()),
-                                  const SizedBox(height: 8),
-                                  DropdownButtonFormField<String>(
-                                    initialValue: (item['status'] ?? 'missing')
-                                        .toString(),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'missing',
-                                        child: Text('Missing'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'in-progress',
-                                        child: Text('In Progress'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'ready',
-                                        child: Text('Ready'),
-                                      ),
-                                    ],
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      _updateItemField(
-                                        categoryIndex,
-                                        itemIndex,
-                                        'status',
-                                        value,
-                                      );
-                                    },
-                                    decoration: InputDecoration(
-                                      labelText: item['required'] == true
-                                          ? 'Required document status'
-                                          : 'Optional document status',
-                                      border: const OutlineInputBorder(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextFormField(
-                                    initialValue: (item['notes'] ?? '')
-                                        .toString(),
-                                    minLines: 2,
-                                    maxLines: 4,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Notes',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    onChanged: (value) => _updateItemField(
-                                      categoryIndex,
-                                      itemIndex,
-                                      'notes',
-                                      value,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      OutlinedButton.icon(
-                                        onPressed:
-                                            _uploadingKey ==
-                                                _itemUploadKey(
-                                                  categoryIndex,
-                                                  itemIndex,
-                                                )
-                                            ? null
-                                            : () => _pickAndUploadFiles(
-                                                categoryIndex,
-                                                itemIndex,
-                                              ),
-                                        icon: const Icon(Icons.attach_file),
-                                        label: Text(
-                                          _uploadingKey ==
-                                                  _itemUploadKey(
-                                                    categoryIndex,
-                                                    itemIndex,
-                                                  )
-                                              ? 'Upload in progress...'
-                                              : 'Upload attachments',
-                                        ),
-                                      ),
-                                      if ((_failedUploadsByKey[_itemUploadKey(
-                                                    categoryIndex,
-                                                    itemIndex,
-                                                  )]
-                                                  ?.length ??
-                                              0) >
-                                          0)
-                                        OutlinedButton.icon(
-                                          onPressed:
-                                              _uploadingKey ==
-                                                  _itemUploadKey(
-                                                    categoryIndex,
-                                                    itemIndex,
-                                                  )
-                                              ? null
-                                              : () => _retryFailedUploads(
-                                                  categoryIndex,
-                                                  itemIndex,
-                                                ),
-                                          icon: const Icon(Icons.refresh),
-                                          label: Text(
-                                            'Retry failed uploads (${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length})',
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  if ((_failedUploadsByKey[_itemUploadKey(
-                                                categoryIndex,
-                                                itemIndex,
-                                              )]
-                                              ?.length ??
-                                          0) >
-                                      0)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 6),
-                                      child: Text(
-                                        '${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length} failed upload${_failedUploadsByKey[_itemUploadKey(categoryIndex, itemIndex)]!.length == 1 ? '' : 's'} pending retry',
-                                        style: TextStyle(
-                                          color: Colors.orange[700],
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  if (_uploadingKey ==
-                                      _itemUploadKey(categoryIndex, itemIndex))
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 6),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: const [
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: LinearProgressIndicator(),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            'Updating attachment state...',
-                                            style: TextStyle(
-                                              color: Colors.blue,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ..._itemFiles(
-                                    categoryIndex,
-                                    itemIndex,
-                                  ).asMap().entries.map(
-                                    (entry) => _FileAttachmentTile(
-                                      file: entry.value,
-                                      analysis:
-                                          _analysisByPath[(entry.value['path'] ??
-                                                  '')
-                                              .toString()],
-                                      onOpen: () => _openItemFile(
-                                        categoryIndex,
-                                        itemIndex,
-                                        entry.key,
-                                      ),
-                                      onRemove: () => _removeItemFile(
-                                        categoryIndex,
-                                        itemIndex,
-                                        entry.key,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
+                    child: ListTile(
+                      onTap: () => _openCategory(categoryIndex),
+                      leading: Icon(statusIcon, color: statusColor),
+                      title: Text(
+                        (category['title'] ?? '').toString(),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
+                      subtitle: Text(
+                        stats.requiredCount > 0
+                            ? '${stats.readyRequiredCount}/${stats.requiredCount} required ready'
+                                  '${stats.totalFiles > 0 ? ' • ${stats.totalFiles} file${stats.totalFiles == 1 ? '' : 's'}' : ''}'
+                            : stats.totalFiles > 0
+                            ? '${stats.totalFiles} file${stats.totalFiles == 1 ? '' : 's'}'
+                            : 'No records yet',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
                     ),
                   );
                 },
@@ -764,19 +655,6 @@ class _RecordsScreenState extends State<RecordsScreen> {
   }
 }
 
-({String label, Color color}) _analysisBadge(double? confidence) {
-  if (confidence == null) {
-    return (label: 'Unscored', color: Colors.blueGrey);
-  }
-  if (confidence >= 0.7) {
-    return (label: 'Auto-Verified', color: Colors.green);
-  }
-  if (confidence >= 0.4) {
-    return (label: 'Review Suggested', color: Colors.orange);
-  }
-  return (label: 'Needs Review', color: Colors.red);
-}
-
 class _OwnershipInsightsPanel extends StatelessWidget {
   const _OwnershipInsightsPanel({required this.insights});
 
@@ -785,22 +663,17 @@ class _OwnershipInsightsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: const Icon(Icons.insights, size: 18),
+          title: Text(
+            'Ownership Insights',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.insights, size: 18),
-                const SizedBox(width: 6),
-                Text(
-                  'Ownership Insights',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
             Text(
               'Documents analyzed: ${insights.analyzedDocumentCount}',
               style: Theme.of(context).textTheme.bodySmall,
@@ -841,165 +714,6 @@ class _OwnershipInsightsPanel extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _FileAttachmentTile extends StatelessWidget {
-  const _FileAttachmentTile({
-    required this.file,
-    required this.analysis,
-    required this.onOpen,
-    required this.onRemove,
-  });
-
-  final Map<String, dynamic> file;
-  final Map<String, dynamic>? analysis;
-  final VoidCallback onOpen;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final extracted = Map<String, dynamic>.from(
-      analysis?['extracted'] as Map? ?? {},
-    );
-    final confidence = analysis?['confidence'];
-    final sourceText = analysis?['sourceText']?.toString();
-    final badge = _analysisBadge(confidence is num ? confidence.toDouble() : null);
-    final summary = buildDocumentSummary(
-      analysis != null ? extracted : null,
-      sourceText,
-    );
-    final hasExtractedFields =
-        extracted['serviceType'] != null ||
-        extracted['totalCost'] != null ||
-        extracted['serviceDate'] != null ||
-        extracted['mileage'] != null;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text((file['name'] ?? 'Attachment').toString()),
-            subtitle: Text((file['type'] ?? '').toString()),
-            onTap: onOpen,
-            trailing: Wrap(
-              spacing: 4,
-              children: [
-                IconButton(
-                  onPressed: onOpen,
-                  icon: const Icon(Icons.open_in_new),
-                  tooltip: 'Open attachment',
-                ),
-                IconButton(
-                  onPressed: onRemove,
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  tooltip: 'Remove attachment',
-                ),
-              ],
-            ),
-          ),
-          if (analysis != null) ...[
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: badge.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      badge.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: badge.color,
-                      ),
-                    ),
-                  ),
-                  Text(summary, style: Theme.of(context).textTheme.bodySmall),
-                ],
-              ),
-            ),
-            if (hasExtractedFields)
-              Padding(
-                padding: const EdgeInsets.only(left: 4, top: 4),
-                child: ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  title: const Text(
-                    'Analysis details',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  childrenPadding: const EdgeInsets.only(bottom: 8),
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _AnalysisDetailRow(
-                            'Category',
-                            (extracted['documentCategory'] ?? 'n/a')
-                                .toString(),
-                          ),
-                          _AnalysisDetailRow(
-                            'Service type',
-                            (extracted['serviceType'] ?? 'n/a').toString(),
-                          ),
-                          _AnalysisDetailRow(
-                            'Total cost',
-                            extracted['totalCost'] is num
-                                ? '\$${(extracted['totalCost'] as num).toStringAsFixed(2)}'
-                                : 'n/a',
-                          ),
-                          _AnalysisDetailRow(
-                            'Service date',
-                            (extracted['serviceDate'] ?? 'n/a').toString(),
-                          ),
-                          _AnalysisDetailRow(
-                            'Mileage',
-                            extracted['mileage'] is num
-                                ? '${(extracted['mileage'] as num).toStringAsFixed(0)} mi'
-                                : 'n/a',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _AnalysisDetailRow extends StatelessWidget {
-  const _AnalysisDetailRow(this.label, this.value);
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Text(
-        '$label: $value',
-        style: Theme.of(context).textTheme.bodySmall,
       ),
     );
   }

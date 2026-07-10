@@ -5,7 +5,7 @@ import {
   submitSupportRequest,
 } from '../utils/supportRequestService';
 
-export default function Contact() {
+export default function Support() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [topic, setTopic] = useState('');
@@ -48,7 +48,7 @@ export default function Contact() {
         {submitted ? (
           <div
             role="status"
-            className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-emerald-800 dark:text-emerald-200"
+            className="rounded-lg border border-accent-200 dark:border-accent-800 bg-accent-50 dark:bg-accent-950/40 px-4 py-3 text-accent-800 dark:text-accent-200"
           >
             Thanks — your message has been sent. We'll get back to you soon.
           </div>

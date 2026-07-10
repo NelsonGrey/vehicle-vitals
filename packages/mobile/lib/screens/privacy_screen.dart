@@ -14,18 +14,13 @@ class PrivacyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Privacy Policy',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text(
               'Last updated: October 2025',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             SizedBox(height: 24),
             Text(
               'Information We Collect',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),
             Text(
@@ -39,7 +34,7 @@ class PrivacyScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               'How We Use Your Information',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),
             Text(
@@ -53,7 +48,7 @@ class PrivacyScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               'Data Security',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),
             Text(
@@ -61,10 +56,7 @@ class PrivacyScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
-            const Text(
-              'Support',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text('Support', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             const Text(
               'Questions about this Privacy Policy?',

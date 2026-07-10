@@ -131,9 +131,7 @@ OwnershipInsights computeOwnershipInsights(
   }
 
   serviceDates.sort();
-  final latestServiceDate = serviceDates.isNotEmpty
-      ? serviceDates.last
-      : null;
+  final latestServiceDate = serviceDates.isNotEmpty ? serviceDates.last : null;
 
   final estimatedMonthlyPayment = monthlyPayments.isNotEmpty
       ? double.parse(
@@ -170,8 +168,7 @@ OwnershipInsights computeOwnershipInsights(
     maintenanceTotalCost: maintenanceCosts.fold(0.0, (a, b) => a + b),
     maintenanceAverageCost: maintenanceCosts.isNotEmpty
         ? double.parse(
-            (maintenanceCosts.reduce((a, b) => a + b) /
-                    maintenanceCosts.length)
+            (maintenanceCosts.reduce((a, b) => a + b) / maintenanceCosts.length)
                 .toStringAsFixed(2),
           )
         : 0,

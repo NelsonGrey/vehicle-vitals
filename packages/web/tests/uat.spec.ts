@@ -81,6 +81,68 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
     }
   };
 
+  // Adds a vehicle via the real Add Vehicle form and returns its VIN, or null
+  // if the flow could not complete (gated deployment target, tier limit
+  // already reached from a prior run against this shared test account, etc).
+  // Used by tests that need at least one vehicle to exist to exercise Home's
+  // health banner/badges or a vehicle's Records page.
+  let vehicleCounter = 0;
+  const addTestVehicle = async (
+    page: import('@playwright/test').Page
+  ): Promise<string | null> => {
+    vehicleCounter += 1;
+    const vin = `UATVEH${Date.now()}${vehicleCounter}`
+      .slice(0, 17)
+      .toUpperCase();
+
+    await page.goto(`${BASE_URL}/app/add-vehicle`);
+
+    const vinField = page.locator('#vin');
+    if (!(await vinField.isVisible().catch(() => false))) {
+      return null;
+    }
+    await vinField.fill(vin);
+
+    const yearSelect = page.locator('#year');
+    if (await yearSelect.isVisible().catch(() => false)) {
+      const yearValues = await yearSelect
+        .locator('option')
+        .evaluateAll(options =>
+          options.map(option => (option as HTMLOptionElement).value)
+        );
+      const firstRealYear = yearValues.find(y => /^\d{4}$/.test(y));
+      if (firstRealYear) {
+        await yearSelect.selectOption(firstRealYear);
+      }
+    }
+
+    const makeField = page.locator('#make');
+    if (await makeField.isVisible().catch(() => false)) {
+      await makeField.fill(TEST_VEHICLE_MAKE);
+    }
+
+    const modelField = page.locator('#model');
+    if (
+      (await modelField.isVisible().catch(() => false)) &&
+      !(await modelField.isDisabled().catch(() => true))
+    ) {
+      await modelField.fill(TEST_VEHICLE_MODEL);
+    }
+
+    const submitButton = page.getByRole('button', { name: /^Add Vehicle$/ });
+    if (!(await submitButton.isVisible().catch(() => false))) {
+      return null;
+    }
+    await submitButton.click();
+
+    try {
+      await page.waitForURL(/\/app\/?(\?.*)?$/, { timeout: 15000 });
+      return vin;
+    } catch {
+      return null;
+    }
+  };
+
   // ─────────────────────────────────────────────────────────────────
   // AUTHENTICATION TESTS
   // ─────────────────────────────────────────────────────────────────
@@ -235,6 +297,82 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       // Verify page loads without errors
       await expect(page.locator('body')).toBeVisible();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // VEHICLE HEALTH TESTS
+  // ─────────────────────────────────────────────────────────────────
+
+  test.describe('Vehicle Health', () => {
+    test.beforeEach(async ({ page }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Vehicle Health UAT requires auth UI in this deployment target.'
+      );
+
+      await ensureAuthenticated(page);
+    });
+
+    test('TC-HEALTH-001: Home shows a Garage Health banner and a per-vehicle score badge', async ({
+      page,
+    }) => {
+      const vin = await addTestVehicle(page);
+      test.skip(
+        !vin,
+        'Could not add a test vehicle in this deployment target.'
+      );
+
+      await page.goto(`${BASE_URL}/app`);
+
+      await expect(page.getByText(/^Garage Health:/i)).toBeVisible({
+        timeout: 20000,
+      });
+      await expect(page.getByText(/Health: \d+\/100/i).first()).toBeVisible({
+        timeout: 20000,
+      });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // RECORDS TESTS
+  // ─────────────────────────────────────────────────────────────────
+
+  test.describe('Records', () => {
+    test.beforeEach(async ({ page }) => {
+      const authUiAvailable = await isAuthUiAvailable(page);
+      test.skip(
+        !authUiAvailable,
+        'Records UAT requires auth UI in this deployment target.'
+      );
+
+      await ensureAuthenticated(page);
+    });
+
+    test('TC-INSIGHTS-001: Ownership Insights section is collapsed by default and expands on click', async ({
+      page,
+    }) => {
+      const vin = await addTestVehicle(page);
+      test.skip(
+        !vin,
+        'Could not add a test vehicle in this deployment target.'
+      );
+
+      await page.goto(`${BASE_URL}/app/records/${vin}`);
+
+      const insightsToggle = page.getByRole('button', {
+        name: /ownership insights/i,
+      });
+      test.skip(
+        !(await insightsToggle.isVisible().catch(() => false)),
+        'Ownership Insights section is not visible in this deployment target.'
+      );
+
+      await expect(insightsToggle).toHaveAttribute('aria-expanded', 'false');
+
+      await insightsToggle.click();
+      await expect(insightsToggle).toHaveAttribute('aria-expanded', 'true');
     });
   });
 
@@ -917,12 +1055,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         page.getByRole('heading', { name: /^profile$/i })
       ).toBeVisible({ timeout: 15000 });
 
-      await expect(
-        page.getByRole('heading', { name: /account consolidation/i })
-      ).toBeVisible({ timeout: 15000 });
-      await expect(page.getByLabel(/source account uid/i)).toBeVisible({
-        timeout: 15000,
-      });
+      // Account & Security (its own page since the Profile split) exposes the
+      // signed-in user's UID, which the consolidation self-merge guard below needs.
+      await page.getByRole('link', { name: /account & security/i }).click();
+      await page.waitForURL(/\/app\/account$/, { timeout: 15000 });
 
       const currentUid = await page.evaluate(() => {
         const cards = Array.from(document.querySelectorAll('div'));
@@ -936,9 +1072,22 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         return '';
       });
 
+      await page.goto(`${BASE_URL}/app/profile`);
+      await page.getByRole('link', { name: /merge & share garage/i }).click();
+      await page.waitForURL(/\/app\/account-consolidation/, {
+        timeout: 15000,
+      });
+
+      await expect(
+        page.getByRole('heading', { name: /account consolidation/i })
+      ).toBeVisible({ timeout: 15000 });
+      await expect(page.getByLabel(/source account uid/i)).toBeVisible({
+        timeout: 15000,
+      });
+
       test.skip(
         !currentUid,
-        'Current user UID is not visible on the profile page.'
+        'Current user UID is not visible on the account security page.'
       );
 
       await page.getByLabel(/source account uid/i).fill(currentUid);
@@ -949,6 +1098,51 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       await expect(
         page.getByText(/cannot consolidate an account with itself/i)
       ).toBeVisible();
+    });
+
+    test('TC-PROFILE-003: Profile hub links navigate to each split settings page', async ({
+      page,
+    }) => {
+      const destinations: Array<{
+        link: RegExp;
+        urlPattern: RegExp;
+        heading: RegExp;
+      }> = [
+        {
+          link: /^account & security$/i,
+          urlPattern: /\/app\/account$/,
+          heading: /^account & security$/i,
+        },
+        {
+          link: /^maintenance alerts$/i,
+          urlPattern: /\/app\/maintenance-alerts$/,
+          heading: /^maintenance alerts$/i,
+        },
+        {
+          link: /^merge & share garage$/i,
+          urlPattern: /\/app\/account-consolidation$/,
+          heading: /^merge & share garage$/i,
+        },
+        {
+          link: /^data & privacy$/i,
+          urlPattern: /\/app\/data-privacy$/,
+          heading: /^data & privacy$/i,
+        },
+      ];
+
+      for (const destination of destinations) {
+        await page.goto(`${BASE_URL}/app/profile`);
+        await page.waitForURL(/\/app\/profile/, { timeout: 15000 });
+
+        await page.getByRole('link', { name: destination.link }).click();
+        await page.waitForURL(destination.urlPattern, { timeout: 15000 });
+        await expect(
+          page.getByRole('heading', { name: destination.heading })
+        ).toBeVisible({ timeout: 15000 });
+
+        await page.getByRole('link', { name: /^back$/i }).click();
+        await page.waitForURL(/\/app\/profile$/, { timeout: 15000 });
+      }
     });
   });
 

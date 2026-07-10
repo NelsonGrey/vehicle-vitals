@@ -63,13 +63,13 @@ function formatDue(component: {
 function statusClasses(status: string) {
   switch (status) {
     case 'overdue':
-      return 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200';
+      return 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/50 dark:bg-danger-950/30 dark:text-danger-200';
     case 'service_soon':
-      return 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/50 dark:bg-orange-950/30 dark:text-orange-200';
+      return 'border-warning-200 bg-warning-50 text-warning-700 dark:border-warning-900/50 dark:bg-warning-950/30 dark:text-warning-200';
     case 'watch':
-      return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200';
+      return 'border-warning-200 bg-warning-50 text-warning-700 dark:border-warning-900/50 dark:bg-warning-950/30 dark:text-warning-200';
     default:
-      return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200';
+      return 'border-accent-200 bg-accent-50 text-accent-700 dark:border-accent-900/50 dark:bg-accent-950/30 dark:text-accent-200';
   }
 }
 
@@ -199,12 +199,12 @@ export default function VehicleHealthPanel({
                 <div
                   className={`h-full rounded-full ${
                     component.status === 'overdue'
-                      ? 'bg-red-500'
+                      ? 'bg-danger-500'
                       : component.status === 'service_soon'
-                        ? 'bg-orange-500'
+                        ? 'bg-warning-500'
                         : component.status === 'watch'
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
+                          ? 'bg-warning-500'
+                          : 'bg-accent-500'
                   }`}
                   style={{
                     width: `${Math.max(

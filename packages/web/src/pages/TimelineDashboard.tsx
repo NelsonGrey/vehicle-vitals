@@ -63,7 +63,7 @@ function getAnalysisBadge(confidence: number | undefined): {
     return {
       label: 'Auto-Verified',
       className:
-        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+        'bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-200',
     };
   }
 
@@ -71,7 +71,7 @@ function getAnalysisBadge(confidence: number | undefined): {
     return {
       label: 'Review Suggested',
       className:
-        'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+        'bg-warning-100 text-warning-800 dark:bg-warning-900 dark:text-warning-200',
     };
   }
 

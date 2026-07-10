@@ -51,9 +51,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
           <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-danger-100 dark:bg-danger-900/30 flex items-center justify-center">
                 <svg
-                  className="w-6 h-6 text-red-600 dark:text-red-400"
+                  className="w-6 h-6 text-danger-600 dark:text-danger-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

@@ -119,12 +119,12 @@ export default function ComingSoon() {
                   </button>
                 </form>
                 {submitStatus === 'success' && (
-                  <p className="mt-4 text-green-600 dark:text-green-400">
+                  <p className="mt-4 text-accent-600 dark:text-accent-400">
                     ✅ Thanks! We&apos;ll notify you when we launch.
                   </p>
                 )}
                 {submitStatus === 'error' && (
-                  <p className="mt-4 text-red-600 dark:text-red-400">
+                  <p className="mt-4 text-danger-600 dark:text-danger-400">
                     ❌ Something went wrong. Please try again.
                   </p>
                 )}
@@ -198,13 +198,13 @@ export default function ComingSoon() {
                 </button>
               </form>
               {submitStatus === 'suggestion_success' && (
-                <p className="mt-4 text-green-600 dark:text-green-400 text-center">
+                <p className="mt-4 text-accent-600 dark:text-accent-400 text-center">
                   ✅ Thanks for your suggestion! We&apos;ll consider it as we
                   build.
                 </p>
               )}
               {submitStatus === 'suggestion_error' && (
-                <p className="mt-4 text-red-600 dark:text-red-400 text-center">
+                <p className="mt-4 text-danger-600 dark:text-danger-400 text-center">
                   ❌ Something went wrong. Please try again.
                 </p>
               )}

@@ -13,7 +13,16 @@ class AppDesignTokens {
   static const slate800 = Color(0xFF1E293B);
   static const slate900 = Color(0xFF0F172A);
   static const teal700 = Color(0xFF0F766E);
-  static const danger = Color(0xFFB42318);
+
+  // Semantic status colors, used everywhere the app needs to signal
+  // error/warning/success rather than a screen-specific Colors.red/etc.
+  // Matches the web app's Tailwind danger/warning/accent .500 shades.
+  static const danger = Color(0xFFEF4444);
+  static const warning = Color(0xFFF59E0B);
+  static const success = Color(0xFF22C55E);
+  static const onDanger = Colors.white;
+  static const onWarning = Colors.black;
+  static const onSuccess = Colors.white;
 
   // Spacing scale (4px base)
   static const space1 = 4.0;

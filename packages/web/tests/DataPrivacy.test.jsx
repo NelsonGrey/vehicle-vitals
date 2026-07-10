@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import {
   cleanup,
   fireEvent,
@@ -7,37 +8,11 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import Profile from '../src/pages/Profile';
-import {
-  getVehicle,
-  getVehicles,
-  updateVehicle,
-} from '../src/shared/firestoreService';
-import { requestNotificationPermission } from '../src/shared/notificationService';
+import DataPrivacy from '../src/pages/DataPrivacy';
 import {
   requestAccountDataDeletion,
   requestAccountDataExport,
 } from '../src/utils/privacyRequestService';
-
-vi.mock('../src/shared/firestoreService', () => ({
-  getVehicle: vi.fn(),
-  getVehicles: vi.fn(),
-  updateVehicle: vi.fn(),
-}));
-
-vi.mock('../src/shared/notificationService', () => ({
-  requestNotificationPermission: vi.fn(),
-}));
-
-vi.mock('../src/utils/householdGarageService', () => ({
-  getHouseholdGarageStatus: vi.fn().mockResolvedValue({
-    success: true,
-    orgId: 'org-1',
-    orgType: 'personal',
-    garageStorageMode: 'user_scoped',
-  }),
-  promotePersonalGarageToHousehold: vi.fn(),
-}));
 
 vi.mock('../src/utils/privacyRequestService', () => ({
   requestAccountDataDeletion: vi.fn(),
@@ -52,11 +27,8 @@ const MOCK_USER = {
 vi.mock('../src/shared/AuthContext', () => ({
   useAuth: () => ({
     user: MOCK_USER,
-    signOut: vi.fn(),
-    linkWithGoogle: vi.fn(),
-    linkWithApple: vi.fn(),
-    requestAccountConsolidation: vi.fn(),
-    consolidateAccountData: vi.fn(),
+    reauthenticateWithGoogle: vi.fn(),
+    reauthenticateWithApple: vi.fn(),
   }),
 }));
 
@@ -74,28 +46,26 @@ const MOCK_FIREBASE = {
   storage: {},
 };
 
-describe('Profile – privacy and data requests', () => {
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <DataPrivacy />
+    </MemoryRouter>
+  );
+}
+
+describe('DataPrivacy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     vi.stubGlobal('firebase', MOCK_FIREBASE);
-    window.Notification = {
-      permission: 'default',
-      requestPermission: vi.fn().mockResolvedValue('default'),
-    };
-
-    getVehicle.mockResolvedValue(null);
-    getVehicles.mockResolvedValue([]);
-    updateVehicle.mockResolvedValue(undefined);
-    requestNotificationPermission.mockResolvedValue(null);
     vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   afterEach(() => {
     vi.stubGlobal('firebase', undefined);
-    delete window.Notification;
     vi.restoreAllMocks();
     cleanup();
   });
@@ -107,7 +77,7 @@ describe('Profile – privacy and data requests', () => {
       status: 'requested',
     });
 
-    render(<Profile />);
+    renderPage();
 
     await waitFor(() =>
       screen.getByRole('button', { name: /request my data export/i })
@@ -130,7 +100,7 @@ describe('Profile – privacy and data requests', () => {
       status: 'requested',
     });
 
-    render(<Profile />);
+    renderPage();
 
     await waitFor(() =>
       screen.getByRole('button', { name: /request account deletion/i })
@@ -142,16 +112,14 @@ describe('Profile – privacy and data requests', () => {
     await waitFor(() =>
       expect(requestAccountDataDeletion).toHaveBeenCalledTimes(1)
     );
-    await waitFor(() =>
-      screen.getByText(/account deletion request filed/i)
-    );
+    await waitFor(() => screen.getByText(/account deletion request filed/i));
     expect(
       screen.getByText(/you remain signed in until then/i)
     ).toBeInTheDocument();
   });
 
   it('does not offer an immediate irreversible delete button', async () => {
-    render(<Profile />);
+    renderPage();
 
     await waitFor(() =>
       screen.getByRole('button', { name: /request account deletion/i })

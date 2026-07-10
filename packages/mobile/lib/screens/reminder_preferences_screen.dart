@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../components/safe_back_button.dart';
+
 import '../services/firestore_service.dart';
 
 class ReminderPreferencesScreen extends StatefulWidget {
@@ -93,7 +95,10 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reminder Preferences')),
+      appBar: AppBar(
+        title: const Text('Reminder Preferences'),
+        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

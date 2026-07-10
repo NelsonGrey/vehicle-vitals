@@ -42,7 +42,7 @@ export default function ForgotPassword() {
 
       {error && (
         <div
-          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 p-3 rounded-lg mb-4"
+          className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 text-danger-800 dark:text-danger-200 p-3 rounded-lg mb-4"
           role="alert"
         >
           {error}
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
       )}
       {success && (
         <div
-          className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 p-3 rounded-lg mb-4"
+          className="bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800 text-accent-800 dark:text-accent-200 p-3 rounded-lg mb-4"
           role="status"
         >
           {success}

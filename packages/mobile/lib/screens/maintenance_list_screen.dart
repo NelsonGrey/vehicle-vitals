@@ -11,6 +11,7 @@ import '../services/calendar_service.dart';
 import '../services/data_export_service.dart';
 import '../services/firestore_service.dart';
 import '../services/premium_service.dart';
+import '../theme/design_tokens.dart';
 import 'maintenance_detail_screen.dart';
 
 String _performedByLabel(String value) {
@@ -245,7 +246,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Added $eventsAdded maintenance events to calendar'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -254,7 +255,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Calendar sync failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -319,9 +320,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     'Add Maintenance Entry',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -427,12 +428,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Recommended Maintenance',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(

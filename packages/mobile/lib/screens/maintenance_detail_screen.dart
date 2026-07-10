@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../components/safe_back_button.dart';
 import '../models/maintenance.dart';
 import '../services/firestore_service.dart';
 
@@ -173,7 +174,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -221,6 +224,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Maintenance'),
+        leading: SafeBackButton(
+          fallbackRoute: '/app/maintenance/${widget.vin}',
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.delete), onPressed: _deleteEntry),
         ],

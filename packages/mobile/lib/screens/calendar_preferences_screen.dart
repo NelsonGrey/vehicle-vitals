@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../components/safe_back_button.dart';
 import '../services/calendar_service.dart';
+import '../theme/design_tokens.dart';
 
 class CalendarPreferencesScreen extends StatefulWidget {
   const CalendarPreferencesScreen({super.key});
@@ -54,7 +56,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
             content: Text(
               'Error loading calendar preferences: ${e.toString()}',
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -74,7 +76,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Calendar permissions granted!'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppDesignTokens.success,
             ),
           );
         }
@@ -85,7 +87,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
               content: Text(
                 'Calendar permissions denied. Please enable in settings.',
               ),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppDesignTokens.warning,
             ),
           );
         }
@@ -95,7 +97,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error requesting permissions: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -117,7 +119,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Calendar preferences saved successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -126,7 +128,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving preferences: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -148,7 +150,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
             content: Text(
               'Successfully added $eventsAdded maintenance events to calendar!',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -157,7 +159,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error syncing to calendar: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -170,7 +172,10 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Calendar Preferences')),
+        appBar: AppBar(
+          title: const Text('Calendar Preferences'),
+          leading: const SafeBackButton(fallbackRoute: '/app/settings'),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -178,6 +183,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar Preferences'),
+        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
         actions: [
           if (_hasPermissions)
             TextButton(
@@ -204,19 +210,18 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Calendar Access',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(
                           _hasPermissions ? Icons.check_circle : Icons.error,
-                          color: _hasPermissions ? Colors.green : Colors.red,
+                          color: _hasPermissions
+                              ? AppDesignTokens.success
+                              : Theme.of(context).colorScheme.error,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -224,7 +229,9 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                               ? 'Calendar access granted'
                               : 'Calendar access required',
                           style: TextStyle(
-                            color: _hasPermissions ? Colors.green : Colors.red,
+                            color: _hasPermissions
+                                ? AppDesignTokens.success
+                                : Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
@@ -259,12 +266,9 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Maintenance Sync',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -325,8 +329,8 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                         : const Icon(Icons.sync),
                     label: const Text('Sync Upcoming Maintenance'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF59E0B),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppDesignTokens.warning,
+                      foregroundColor: AppDesignTokens.onWarning,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),

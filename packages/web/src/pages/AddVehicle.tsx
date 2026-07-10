@@ -721,12 +721,12 @@ export default function AddVehicle() {
                 placeholder="Plate number (optional)"
                 className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-900 dark:text-slate-100 ${
                   plateValidationError
-                    ? 'border-red-300 dark:border-red-600'
+                    ? 'border-danger-300 dark:border-danger-600'
                     : 'border-slate-300 dark:border-slate-600'
                 }`}
               />
               {plateValidationError && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                <p className="text-xs text-danger-600 dark:text-danger-400 mt-1">
                   {plateValidationError}
                 </p>
               )}
@@ -843,7 +843,7 @@ export default function AddVehicle() {
                     VIN {form.vin || 'not provided yet'}
                   </p>
                 </div>
-                <span className="inline-block rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2.5 py-1 text-xs font-medium">
+                <span className="inline-block rounded-full bg-warning-100 text-warning-800 dark:bg-warning-900/40 dark:text-warning-200 px-2.5 py-1 text-xs font-medium">
                   {insights.recallsCount} recall
                   {insights.recallsCount === 1 ? '' : 's'}
                 </span>
@@ -884,7 +884,7 @@ export default function AddVehicle() {
                   Recall details
                 </p>
                 {insights.recallsItems.length === 0 ? (
-                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+                  <div className="rounded-lg bg-accent-50 dark:bg-accent-900/20 p-3 text-sm text-accent-700 dark:text-accent-300">
                     No active recalls returned for this VIN.
                   </div>
                 ) : (

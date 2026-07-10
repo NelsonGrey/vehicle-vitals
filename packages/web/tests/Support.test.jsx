@@ -7,7 +7,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import Contact from '../src/pages/Contact';
+import Support from '../src/pages/Support';
 
 const mockSubmitSupportRequest = vi.fn();
 
@@ -23,7 +23,7 @@ vi.mock('../src/utils/supportRequestService', () => ({
   submitSupportRequest: (...args) => mockSubmitSupportRequest(...args),
 }));
 
-describe('Contact', () => {
+describe('Support', () => {
   beforeEach(() => {
     mockSubmitSupportRequest.mockReset();
   });
@@ -33,12 +33,12 @@ describe('Contact', () => {
   });
 
   it('does not render a mailto link — the form is the only way to reach support', () => {
-    render(<Contact />);
+    render(<Support />);
     expect(document.querySelector('a[href^="mailto:"]')).toBeNull();
   });
 
   it('renders all form fields with the expected topics', () => {
-    render(<Contact />);
+    render(<Support />);
     expect(screen.getByLabelText('Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Topic')).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('Contact', () => {
 
   it('submits the form and shows a success message', async () => {
     mockSubmitSupportRequest.mockResolvedValue({ success: true });
-    render(<Contact />);
+    render(<Support />);
 
     fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: 'Jamie Driver' },
@@ -87,7 +87,7 @@ describe('Contact', () => {
     mockSubmitSupportRequest.mockRejectedValue(
       new Error('Too many support requests — please wait before trying again')
     );
-    render(<Contact />);
+    render(<Support />);
 
     fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: 'Jamie Driver' },

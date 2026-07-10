@@ -1,6 +1,9 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
+import '../components/safe_back_button.dart';
+import '../theme/design_tokens.dart';
+
 const List<String> kSupportRequestTopics = [
   'Bug Report',
   'Account / Login',
@@ -10,14 +13,14 @@ const List<String> kSupportRequestTopics = [
   'Other',
 ];
 
-class ContactScreen extends StatefulWidget {
-  const ContactScreen({super.key});
+class SupportScreen extends StatefulWidget {
+  const SupportScreen({super.key});
 
   @override
-  State<ContactScreen> createState() => _ContactScreenState();
+  State<SupportScreen> createState() => _SupportScreenState();
 }
 
-class _ContactScreenState extends State<ContactScreen> {
+class _SupportScreenState extends State<SupportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -68,9 +71,7 @@ class _ContactScreenState extends State<ContactScreen> {
       if (!mounted) {
         return;
       }
-      setState(
-        () => _error = e.message ?? 'Failed to send your message',
-      );
+      setState(() => _error = e.message ?? 'Failed to send your message');
     } catch (e) {
       if (!mounted) {
         return;
@@ -86,32 +87,30 @@ class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Support')),
+      appBar: AppBar(
+        title: const Text('Support'),
+        leading: const SafeBackButton(),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Support',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
             const Text('We typically respond within 24 hours.'),
             const SizedBox(height: 20),
             if (_submitted)
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.12),
+                  color: AppDesignTokens.success.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green),
+                  border: Border.all(color: AppDesignTokens.success),
                 ),
                 child: const Text(
                   "Thanks — your message has been sent. We'll get back to "
                   'you soon.',
                   style: TextStyle(
-                    color: Colors.green,
+                    color: AppDesignTokens.success,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -128,7 +127,8 @@ class _ContactScreenState extends State<ContactScreen> {
                         labelText: 'Name',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) => (value == null || value.trim().isEmpty)
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
                           ? 'Name is required'
                           : null,
                     ),
@@ -143,7 +143,9 @@ class _ContactScreenState extends State<ContactScreen> {
                       ),
                       validator: (value) {
                         final trimmed = value?.trim() ?? '';
-                        final emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+                        final emailPattern = RegExp(
+                          r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                        );
                         if (!emailPattern.hasMatch(trimmed)) {
                           return 'A valid email is required';
                         }
@@ -183,7 +185,8 @@ class _ContactScreenState extends State<ContactScreen> {
                             'Describe your issue or question in as much '
                             'detail as possible…',
                       ),
-                      validator: (value) => (value == null || value.trim().isEmpty)
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
                           ? 'A message is required'
                           : null,
                     ),
@@ -192,12 +195,16 @@ class _ContactScreenState extends State<ContactScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.12),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.error.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           _error!,
-                          style: const TextStyle(color: Colors.red),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     ],

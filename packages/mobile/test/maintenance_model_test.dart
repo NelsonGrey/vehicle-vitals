@@ -26,6 +26,19 @@ void main() {
     },
   );
 
+  test('Maintenance parses string-typed date fields from Firestore', () {
+    final maintenance = Maintenance.fromMap({
+      'title': 'Oil change',
+      'date': '2025-12-19',
+      'createdAt': '2025-12-19',
+      'updatedAt': '2025-12-19',
+    }, 'entry-3');
+
+    expect(maintenance.date, DateTime.parse('2025-12-19'));
+    expect(maintenance.createdAt, DateTime.parse('2025-12-19'));
+    expect(maintenance.updatedAt, DateTime.parse('2025-12-19'));
+  });
+
   test('Maintenance defaults performedBy and coverage when missing', () {
     final maintenance = Maintenance.fromMap({
       'title': 'Oil change',

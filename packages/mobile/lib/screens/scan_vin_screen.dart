@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../components/safe_back_button.dart';
+
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
 class ScanVINScreen extends StatefulWidget {
@@ -40,7 +42,7 @@ class _ScanVINScreenState extends State<ScanVINScreen> {
           backgroundColor: colorScheme.primary,
         ),
       );
-      context.go('/app/add-vehicle/$code');
+      context.pushReplacement('/app/add-vehicle/$code');
       return;
     }
   }
@@ -52,9 +54,9 @@ class _ScanVINScreenState extends State<ScanVINScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan VIN'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/app/add-vehicle'),
+        leading: const SafeBackButton(
+          icon: Icons.arrow_back,
+          fallbackRoute: '/app/add-vehicle',
         ),
       ),
       body: Column(

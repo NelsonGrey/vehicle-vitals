@@ -279,7 +279,7 @@ export default function ServiceProviders() {
 
       {status && (
         <div
-          className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4"
+          className="bg-accent-50 border border-accent-200 text-accent-700 px-4 py-3 rounded-lg mb-4"
           role="alert"
         >
           {status}
@@ -287,7 +287,7 @@ export default function ServiceProviders() {
       )}
       {error && (
         <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4"
+          className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-lg mb-4"
           role="alert"
         >
           {error}

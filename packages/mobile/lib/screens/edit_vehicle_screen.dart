@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../components/safe_back_button.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/record_storage_service.dart';
@@ -654,6 +655,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Vehicle'),
+        leading: const SafeBackButton(),
         actions: [
           IconButton(
             onPressed: _deleteVehicle,

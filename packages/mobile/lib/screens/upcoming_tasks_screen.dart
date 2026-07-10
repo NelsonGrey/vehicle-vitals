@@ -262,13 +262,13 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
     }
   }
 
-  Future<void> _updateCalendarTarget(String targetId) async {
-    setState(() => _calendarTarget = targetId);
-    final prefs = await _calendarService.getCalendarPreferences();
-    await _calendarService.updateCalendarPreferences(
-      (prefs['calendarSyncEnabled'] as bool?) ?? false,
-      calendarId: targetId,
-    );
+  String _calendarTargetLabel() {
+    for (final target in _calendarTargets) {
+      if (target['id'] == _calendarTarget) {
+        return target['name'] ?? _calendarTarget;
+      }
+    }
+    return _calendarTarget;
   }
 
   Future<void> _saveReminder(Vehicle vehicle, Map<String, dynamic> item) async {
@@ -617,318 +617,359 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         ? ('Premium', 36)
         : ('Pro', 12);
 
-    return ListView.builder(
-      padding: EdgeInsets.all(TwSpace.s4),
-      itemCount: _upcomingItems.length + 2, // +2 for summary and legend
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return Container(
-            margin: EdgeInsets.only(bottom: TwSpace.s3),
-            padding: EdgeInsets.all(TwSpace.s4),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(TwRadius.lg),
-              border: Border.all(color: Theme.of(context).dividerColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Reminder Center',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+    return Column(
+      children: [
+        Container(
+          margin: EdgeInsets.fromLTRB(
+            TwSpace.s4,
+            TwSpace.s4,
+            TwSpace.s4,
+            TwSpace.s3,
+          ),
+          padding: EdgeInsets.all(TwSpace.s4),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(TwRadius.lg),
+            border: Border.all(color: Theme.of(context).dividerColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Reminder Center',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: TwSpace.s2),
+              Text(
+                'Urgent: $urgentCount  •  Soon: $soonCount  •  Queue: ${_upcomingItems.length}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              SizedBox(height: TwSpace.s2),
+              Text(
+                'Planning horizon: $planningHorizonMonths-month forecast',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              if (planningHorizonUpgrade != null) ...[
                 SizedBox(height: TwSpace.s2),
-                Text(
-                  'Urgent: $urgentCount  •  Soon: $soonCount  •  Queue: ${_upcomingItems.length}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                SizedBox(height: TwSpace.s2),
-                Text(
-                  'Planning horizon: $planningHorizonMonths-month forecast',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                if (planningHorizonUpgrade != null) ...[
-                  SizedBox(height: TwSpace.s2),
-                  Container(
-                    padding: EdgeInsets.all(TwSpace.s2),
-                    decoration: BoxDecoration(
-                      color: Colors.indigo.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(TwRadius.base),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Upgrade to ${planningHorizonUpgrade.$1} to plan '
-                            '${planningHorizonUpgrade.$2} months ahead.',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.indigo),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => context.push('/app/premium'),
-                          child: const Text('Upgrade'),
-                        ),
-                      ],
-                    ),
+                Container(
+                  padding: EdgeInsets.all(TwSpace.s2),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(TwRadius.base),
                   ),
-                ],
-                SizedBox(height: TwSpace.s3),
-                DropdownButtonFormField<String>(
-                  initialValue: _calendarTarget,
-                  decoration: const InputDecoration(
-                    labelText: 'Default calendar action',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _calendarTargets
-                      .map(
-                        (target) => DropdownMenuItem<String>(
-                          value: target['id'],
-                          child: Text(target['name'] ?? target['id'] ?? ''),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null || value == _calendarTarget) {
-                      return;
-                    }
-                    _updateCalendarTarget(value);
-                  },
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (index == _upcomingItems.length + 1) {
-          return _buildLegend();
-        }
-
-        final item = _upcomingItems[index - 1];
-        final vehicle = item['vehicle'] as Vehicle;
-        final serviceType = _serviceTypeForItem(item);
-        final reminder = _findReminder(vehicle.vin, serviceType);
-        final reminderStatus = (reminder?['status'] ?? '').toString();
-        final reminderKey = _buildReminderKey(vehicle.vin, serviceType);
-        final isReminderBusy =
-            _savingReminderKeys.contains(reminderKey) ||
-            (reminder != null &&
-                _actingReminderIds.contains(reminder['id']?.toString() ?? ''));
-        final milesUntilDue = item['milesUntilDue'] as int;
-
-        return Card(
-          margin: EdgeInsets.only(bottom: TwSpace.s3),
-          color: _getUrgencyBackgroundColor(milesUntilDue),
-          child: Padding(
-            padding: EdgeInsets.all(TwSpace.s4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item['description'] as String,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: TwSpace.s2,
-                        vertical: TwSpace.s1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getUrgencyColor(
-                          milesUntilDue,
-                        ).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(TwRadius.sm),
-                        border: Border.all(
-                          color: _getUrgencyColor(
-                            milesUntilDue,
-                          ).withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        _getUrgencyLabel(milesUntilDue),
-                        style: TextStyle(
-                          color: _getUrgencyColor(milesUntilDue),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    if (reminder != null) ...[
-                      SizedBox(width: TwSpace.s2),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: TwSpace.s2,
-                          vertical: TwSpace.s1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(TwRadius.sm),
-                        ),
+                  child: Row(
+                    children: [
+                      Expanded(
                         child: Text(
-                          'Reminder: ${reminderStatus.isEmpty ? 'active' : reminderStatus}',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          'Upgrade to ${planningHorizonUpgrade.$1} to plan '
+                          '${planningHorizonUpgrade.$2} months ahead.',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(color: Colors.indigo),
                         ),
+                      ),
+                      TextButton(
+                        onPressed: () => context.push('/app/premium'),
+                        child: const Text('Upgrade'),
                       ),
                     ],
-                  ],
-                ),
-                SizedBox(height: TwSpace.s2),
-                Text(
-                  '${vehicle.year} ${vehicle.make} ${vehicle.model}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   ),
-                ),
-                SizedBox(height: TwSpace.s1),
-                Text(
-                  item['frequency'] as String,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                  ),
-                ),
-                SizedBox(height: TwSpace.s3),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Due at: ${(item['nextDueMileage'] as int).toStringAsFixed(0)} miles',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    Text(
-                      'Miles until due: ${milesUntilDue.toStringAsFixed(0)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    SizedBox(height: TwSpace.s3),
-                    Wrap(
-                      spacing: TwSpace.s2,
-                      runSpacing: TwSpace.s2,
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => _addItemToCalendar(vehicle, item),
-                          child: const Text('Add to Calendar'),
-                        ),
-                        OutlinedButton(
-                          onPressed: isReminderBusy
-                              ? null
-                              : reminder == null
-                              ? () => _saveReminder(vehicle, item)
-                              : () {
-                                  showModalBottomSheet<void>(
-                                    context: context,
-                                    builder: (context) {
-                                      return SafeArea(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            if (reminderStatus != 'completed')
-                                              ListTile(
-                                                leading: const Icon(
-                                                  Icons.check_circle_outline,
-                                                ),
-                                                title: const Text(
-                                                  'Mark Reminder Complete',
-                                                ),
-                                                onTap: () {
-                                                  Navigator.of(context).pop();
-                                                  _completeReminder(reminder);
-                                                },
-                                              ),
-                                            if (reminderStatus != 'snoozed')
-                                              ListTile(
-                                                leading: const Icon(
-                                                  Icons.snooze,
-                                                ),
-                                                title: const Text(
-                                                  'Snooze 14 Days',
-                                                ),
-                                                onTap: () {
-                                                  Navigator.of(context).pop();
-                                                  _snoozeReminder(reminder);
-                                                },
-                                              ),
-                                            if (reminderStatus != 'dismissed')
-                                              ListTile(
-                                                leading: const Icon(
-                                                  Icons.cancel,
-                                                ),
-                                                title: const Text('Dismiss'),
-                                                onTap: () {
-                                                  Navigator.of(context).pop();
-                                                  _dismissReminder(reminder);
-                                                },
-                                              ),
-                                            if (reminderStatus == 'dismissed' ||
-                                                reminderStatus == 'completed')
-                                              ListTile(
-                                                leading: const Icon(
-                                                  Icons.restore,
-                                                ),
-                                                title: const Text('Restore'),
-                                                onTap: () {
-                                                  Navigator.of(context).pop();
-                                                  _restoreReminder(reminder);
-                                                },
-                                              ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                          child: Text(
-                            reminder == null
-                                ? 'Save Reminder'
-                                : 'Reminder Actions',
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    MaintenanceListScreen(vin: vehicle.vin),
-                              ),
-                            );
-                          },
-                          child: const Text('Mark Complete'),
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
               ],
-            ),
+              SizedBox(height: TwSpace.s2),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'New events go to: ${_calendarTargetLabel()}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.push('/app/calendar-preferences'),
+                    child: const Text('Change'),
+                  ),
+                ],
+              ),
+            ],
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.fromLTRB(TwSpace.s4, 0, TwSpace.s4, TwSpace.s4),
+            itemCount: _upcomingItems.length + 1, // +1 for legend
+            itemBuilder: (context, index) {
+              if (index == _upcomingItems.length) {
+                return _buildLegend();
+              }
+
+              final item = _upcomingItems[index];
+              final vehicle = item['vehicle'] as Vehicle;
+              final serviceType = _serviceTypeForItem(item);
+              final reminder = _findReminder(vehicle.vin, serviceType);
+              final reminderStatus = (reminder?['status'] ?? '').toString();
+              final reminderKey = _buildReminderKey(vehicle.vin, serviceType);
+              final isReminderBusy =
+                  _savingReminderKeys.contains(reminderKey) ||
+                  (reminder != null &&
+                      _actingReminderIds.contains(
+                        reminder['id']?.toString() ?? '',
+                      ));
+              final milesUntilDue = item['milesUntilDue'] as int;
+
+              return Card(
+                margin: EdgeInsets.only(bottom: TwSpace.s3),
+                color: _getUrgencyBackgroundColor(milesUntilDue),
+                child: Padding(
+                  padding: EdgeInsets.all(TwSpace.s4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item['description'] as String,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: TwSpace.s2,
+                              vertical: TwSpace.s1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getUrgencyColor(
+                                milesUntilDue,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(TwRadius.sm),
+                              border: Border.all(
+                                color: _getUrgencyColor(
+                                  milesUntilDue,
+                                ).withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              _getUrgencyLabel(milesUntilDue),
+                              style: TextStyle(
+                                color: _getUrgencyColor(milesUntilDue),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (reminder != null) ...[
+                            SizedBox(width: TwSpace.s2),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: TwSpace.s2,
+                                vertical: TwSpace.s1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(
+                                  TwRadius.sm,
+                                ),
+                              ),
+                              child: Text(
+                                'Reminder: ${reminderStatus.isEmpty ? 'active' : reminderStatus}',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      SizedBox(height: TwSpace.s2),
+                      Text(
+                        '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      SizedBox(height: TwSpace.s1),
+                      Text(
+                        item['frequency'] as String,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      SizedBox(height: TwSpace.s3),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Due at: ${(item['nextDueMileage'] as int).toStringAsFixed(0)} miles',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withValues(alpha: 0.7),
+                                ),
+                          ),
+                          Text(
+                            'Miles until due: ${milesUntilDue.toStringAsFixed(0)}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withValues(alpha: 0.7),
+                                ),
+                          ),
+                          SizedBox(height: TwSpace.s3),
+                          Wrap(
+                            spacing: TwSpace.s2,
+                            runSpacing: TwSpace.s2,
+                            children: [
+                              OutlinedButton(
+                                onPressed: () =>
+                                    _addItemToCalendar(vehicle, item),
+                                child: const Text('Add to Calendar'),
+                              ),
+                              OutlinedButton(
+                                onPressed: isReminderBusy
+                                    ? null
+                                    : reminder == null
+                                    ? () => _saveReminder(vehicle, item)
+                                    : () {
+                                        showModalBottomSheet<void>(
+                                          context: context,
+                                          builder: (context) {
+                                            return SafeArea(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (reminderStatus !=
+                                                      'completed')
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons
+                                                            .check_circle_outline,
+                                                      ),
+                                                      title: const Text(
+                                                        'Mark Reminder Complete',
+                                                      ),
+                                                      onTap: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        _completeReminder(
+                                                          reminder,
+                                                        );
+                                                      },
+                                                    ),
+                                                  if (reminderStatus !=
+                                                      'snoozed')
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.snooze,
+                                                      ),
+                                                      title: const Text(
+                                                        'Snooze 14 Days',
+                                                      ),
+                                                      onTap: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        _snoozeReminder(
+                                                          reminder,
+                                                        );
+                                                      },
+                                                    ),
+                                                  if (reminderStatus !=
+                                                      'dismissed')
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.cancel,
+                                                      ),
+                                                      title: const Text(
+                                                        'Dismiss',
+                                                      ),
+                                                      onTap: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        _dismissReminder(
+                                                          reminder,
+                                                        );
+                                                      },
+                                                    ),
+                                                  if (reminderStatus ==
+                                                          'dismissed' ||
+                                                      reminderStatus ==
+                                                          'completed')
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.restore,
+                                                      ),
+                                                      title: const Text(
+                                                        'Restore',
+                                                      ),
+                                                      onTap: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        _restoreReminder(
+                                                          reminder,
+                                                        );
+                                                      },
+                                                    ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                child: Text(
+                                  reminder == null
+                                      ? 'Save Reminder'
+                                      : 'Reminder Actions',
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MaintenanceListScreen(
+                                            vin: vehicle.vin,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Mark Complete'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

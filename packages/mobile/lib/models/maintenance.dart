@@ -1,3 +1,19 @@
+DateTime _parseDate(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  // Firestore Timestamp — duck-typed so this model doesn't need to depend
+  // on cloud_firestore directly.
+  try {
+    return DateTime.fromMillisecondsSinceEpoch(
+      (value as dynamic).millisecondsSinceEpoch as int,
+    );
+  } catch (_) {
+    return DateTime.now();
+  }
+}
+
 class Maintenance {
   final String id;
   final String title;
@@ -32,21 +48,9 @@ class Maintenance {
       cost: (map['cost'] ?? 0.0).toDouble(),
       performedBy: (map['performedBy'] ?? 'mechanic').toString(),
       coverage: (map['coverage'] ?? 'parts_and_labor').toString(),
-      date: map['date'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              map['date'].millisecondsSinceEpoch,
-            )
-          : DateTime.now(),
-      createdAt: map['createdAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              map['createdAt'].millisecondsSinceEpoch,
-            )
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              map['updatedAt'].millisecondsSinceEpoch,
-            )
-          : DateTime.now(),
+      date: _parseDate(map['date']),
+      createdAt: _parseDate(map['createdAt']),
+      updatedAt: _parseDate(map['updatedAt']),
     );
   }
 

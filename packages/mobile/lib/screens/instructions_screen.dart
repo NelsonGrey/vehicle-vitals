@@ -7,18 +7,12 @@ class InstructionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Instructions')),
+      appBar: AppBar(title: const Text('Help')),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'How to Use Vehicle Vitals',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 24),
-
             _InstructionSection(
               icon: Icons.add_circle,
               title: 'Adding a Vehicle',
@@ -82,10 +76,7 @@ class InstructionsScreen extends StatelessWidget {
                         SizedBox(width: 8),
                         Text(
                           'Need Help?',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
                     ),
@@ -138,13 +129,7 @@ class _InstructionSection extends StatelessWidget {
               children: [
                 Icon(icon, color: Colors.blue),
                 const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
               ],
             ),
             const SizedBox(height: 12),

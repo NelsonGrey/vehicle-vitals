@@ -14,18 +14,13 @@ class TermsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Terms of Service',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text(
               'Last updated: October 2025',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             SizedBox(height: 24),
             Text(
               'Acceptance of Terms',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),
             Text(
@@ -35,7 +30,7 @@ class TermsScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               'Description of Service',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),
             Text(
@@ -45,7 +40,7 @@ class TermsScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               'User Responsibilities',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),
             Text(
@@ -59,7 +54,7 @@ class TermsScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               'Limitation of Liability',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),
             Text(
@@ -67,10 +62,7 @@ class TermsScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
-            const Text(
-              'Support',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text('Support', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             const Text(
               'Questions about these Terms of Service?',

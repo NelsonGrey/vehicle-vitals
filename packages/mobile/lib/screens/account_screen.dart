@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../components/app_bottom_nav.dart';
 import '../firebase_options.dart';
 import '../services/auth_service.dart';
-import '../services/onboarding_service.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -115,112 +114,9 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
-  Future<void> _requestDataExport() async {
-    setState(() => _busy = true);
-    try {
-      final authService = context.read<AuthService>();
-      final result = await authService.requestAccountDataExport();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Data export request filed (request ${result['requestId']}). '
-              "We'll notify you when it's ready.",
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
-    }
-  }
-
-  Future<void> _requestAccountDeletion() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Request Account Deletion'),
-        content: const Text(
-          'This will file a request to delete your account and all '
-          'associated vehicle, maintenance, and subscription data. This '
-          'cannot be undone once processed. You remain signed in until the '
-          'request has been processed.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Request Deletion'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _busy = true);
-    try {
-      final authService = context.read<AuthService>();
-      final result = await authService.requestAccountDataDeletion();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Account deletion request filed (request ${result['requestId']}). '
-              'Your data will be deleted as part of processing this request; '
-              'you remain signed in until then.',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
-    }
-  }
-
-  Future<void> _rerunSetup() async {
-    setState(() => _busy = true);
-
-    try {
-      await context.read<OnboardingService>().resetForCurrentUser();
-      if (mounted) {
-        context.go('/app/onboarding');
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to restart setup: $error')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final authService = context.watch<AuthService>();
-    final onboardingService = context.watch<OnboardingService>();
     final user = authService.currentUser;
     final firebaseOptions = Firebase.app().options;
     final providerLabels =
@@ -242,20 +138,14 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Profile Overview',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'User Information',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
                       if (user != null) ...[
@@ -280,12 +170,9 @@ class _AccountScreenState extends State<AccountScreen> {
                         const SizedBox(height: 16),
                         const Divider(),
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           'Data Sync Identity',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -314,93 +201,9 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Notifications',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ListTile(
-                        leading: const Icon(Icons.email),
-                        title: const Text('Email Preferences'),
-                        subtitle: const Text('Manage maintenance reminders'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/email-preferences'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.calendar_today),
-                        title: const Text('Calendar Preferences'),
-                        subtitle: const Text('Sync maintenance to calendar'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/calendar-preferences'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.tune),
-                        title: const Text('Reminder Preferences'),
-                        subtitle: const Text(
-                          'Lead time and daily mileage settings',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/reminder-preferences'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.build_circle),
-                        title: const Text('Mechanics'),
-                        subtitle: const Text(
-                          'Find nearby mechanics and dealerships',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/service-providers'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.star),
-                        title: const Text('Premium Features'),
-                        subtitle: const Text(
-                          'Remove ads and unlock advanced features',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/premium'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.wifi_off),
-                        title: const Text('Offline Settings'),
-                        subtitle: const Text('Manage offline data access'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/offline-settings'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.analytics),
-                        title: const Text('Analytics'),
-                        subtitle: const Text('View usage insights'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/analytics'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.timeline),
-                        title: const Text('Timeline Dashboard'),
-                        subtitle: const Text('View maintenance history stream'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/timeline'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
+                      Text(
                         'Password Reset',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
                       TextField(
@@ -435,24 +238,40 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Setup',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                       Text(
-                        onboardingService.isCompleted
-                            ? 'Initial setup is complete. You can run setup again any time.'
-                            : 'Initial setup is still available. Continue setup to tune reminders and subscription options.',
+                        'Support & Legal',
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: _busy ? null : _rerunSetup,
-                        icon: const Icon(Icons.restart_alt),
-                        label: const Text('Re-run Setup'),
+                      const SizedBox(height: 16),
+                      ListTile(
+                        leading: const Icon(Icons.help_outline),
+                        title: const Text('Help'),
+                        subtitle: const Text('Tips for using Vehicle Vitals'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/instructions'),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.support_agent),
+                        title: const Text('Support'),
+                        subtitle: const Text(
+                          'Get help with a question or issue',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/support'),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.privacy_tip_outlined),
+                        title: const Text('Privacy'),
+                        subtitle: const Text('How we handle your data'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/privacy'),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.description_outlined),
+                        title: const Text('Terms'),
+                        subtitle: const Text('Terms of service'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/terms'),
                       ),
                     ],
                   ),
@@ -465,39 +284,28 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Privacy & Data Requests',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
+                      Text(
+                        'Manage',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      ListTile(
+                        leading: const Icon(Icons.settings_outlined),
+                        title: const Text('Settings'),
+                        subtitle: const Text(
+                          'Preferences, Mechanics, Premium, and more',
                         ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/settings'),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Request a copy of your data, or request deletion of '
-                        'your account and all associated vehicle, '
-                        'maintenance, and subscription data. Deletion '
-                        'requests are processed by our team and cannot be '
-                        'undone; you remain signed in until a deletion '
-                        'request has been processed.',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: _busy ? null : _requestDataExport,
-                        icon: const Icon(Icons.download),
-                        label: const Text('Request My Data Export'),
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _busy ? null : _requestAccountDeletion,
-                        icon: const Icon(Icons.delete_forever),
-                        label: const Text('Request Account Deletion'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
+                      ListTile(
+                        leading: const Icon(Icons.shield_outlined),
+                        title: const Text('Data & Privacy'),
+                        subtitle: const Text(
+                          'Export or delete your account data',
                         ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/data-privacy'),
                       ),
                     ],
                   ),
@@ -507,8 +315,8 @@ class _AccountScreenState extends State<AccountScreen> {
               ElevatedButton(
                 onPressed: _signOut,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
                 ),
                 child: const Text('Sign Out'),
               ),

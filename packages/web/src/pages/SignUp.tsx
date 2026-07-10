@@ -50,7 +50,7 @@ export default function SignUp() {
       </p>
       {error && (
         <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4"
+          className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded mb-4"
           role="alert"
         >
           {error}

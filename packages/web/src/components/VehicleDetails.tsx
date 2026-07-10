@@ -65,7 +65,7 @@ export const VehicleDetails: React.FC<VehicleDetailsProps> = ({
         <button
           type="button"
           onClick={onDelete}
-          className="px-3 py-1.5 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50 dark:bg-slate-800 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-900/20"
+          className="px-3 py-1.5 text-sm font-medium text-danger-700 bg-white border border-danger-300 rounded-md hover:bg-danger-50 dark:bg-slate-800 dark:text-danger-400 dark:border-danger-900 dark:hover:bg-danger-900/20"
         >
           Delete
         </button>

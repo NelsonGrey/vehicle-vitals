@@ -400,7 +400,7 @@ export default function AdminSupport() {
             <button
               type="button"
               onClick={handleApplyRetention}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-amber-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-warning-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-warning-800 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={loading || !supportAccess?.isSuperAdmin || !orgId}
             >
               Apply retention policy
@@ -665,7 +665,7 @@ export default function AdminSupport() {
           )}
 
           {financeStatus && (
-            <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <p className="mt-4 rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700 dark:border-accent-900 dark:bg-accent-950/40 dark:text-accent-300">
               {financeStatus}
             </p>
           )}
@@ -761,7 +761,7 @@ export default function AdminSupport() {
           )}
 
           {status && (
-            <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <p className="mt-3 rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700 dark:border-accent-900 dark:bg-accent-950/40 dark:text-accent-300">
               {status}
             </p>
           )}

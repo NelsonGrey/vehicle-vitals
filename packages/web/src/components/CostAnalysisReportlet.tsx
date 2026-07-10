@@ -224,9 +224,9 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
   const breakdown: CostBreakdown[] = [
     { label: 'Purchase', amount: purchasePrice, color: 'bg-blue-500' },
     { label: 'Financing', amount: loanPaidTotal, color: 'bg-indigo-400' },
-    { label: 'Service', amount: maintTotal, color: 'bg-emerald-500' },
-    { label: 'Insurance', amount: insuranceAnnual, color: 'bg-amber-400' },
-    { label: 'Fuel', amount: fuelTotal, color: 'bg-orange-400' },
+    { label: 'Service', amount: maintTotal, color: 'bg-accent-500' },
+    { label: 'Insurance', amount: insuranceAnnual, color: 'bg-warning-400' },
+    { label: 'Fuel', amount: fuelTotal, color: 'bg-warning-400' },
     { label: 'Registration', amount: registrationTotal, color: 'bg-slate-400' },
     { label: 'Inspection', amount: inspectionTotal, color: 'bg-purple-400' },
   ].filter(c => c.amount > 0);
@@ -292,13 +292,13 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
           label="Monthly Average"
           value={formatCurrency(monthlyAvg)}
           sub="/month"
-          accent="text-emerald-600 dark:text-emerald-400"
+          accent="text-accent-600 dark:text-accent-400"
         />
         <StatCard
           label="Service Spend"
           value={formatCurrency(maintTotal)}
           sub={`${maintenance.length} record${maintenance.length !== 1 ? 's' : ''}`}
-          accent="text-amber-600 dark:text-amber-400"
+          accent="text-warning-600 dark:text-warning-400"
         />
       </div>
 
@@ -339,7 +339,7 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
             {topMaint.map(([label, amt]) => (
               <span
                 key={label}
-                className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs"
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 rounded-full text-xs"
               >
                 {label}
                 <span className="font-semibold">{formatCurrency(amt)}</span>

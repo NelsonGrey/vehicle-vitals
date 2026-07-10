@@ -1,3 +1,10 @@
+int _toInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value.trim()) ?? fallback;
+  return fallback;
+}
+
 class Vehicle {
   final String vin;
   final String make;
@@ -66,10 +73,10 @@ class Vehicle {
       vin: map['vin'] ?? '',
       make: map['make'] ?? '',
       model: map['model'] ?? '',
-      year: map['year'] ?? 0,
-      mileage: map['mileage'] ?? 0,
+      year: _toInt(map['year']),
+      mileage: _toInt(map['mileage']),
       vehicleStatus: (map['vehicleStatus'] ?? 'active').toString(),
-      recallsCount: map['recallsCount'] ?? 0,
+      recallsCount: _toInt(map['recallsCount']),
       recallsSource: map['recallsSource'],
       engineType: map['engineType'],
       bodyClass: map['bodyClass'],

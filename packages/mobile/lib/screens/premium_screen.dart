@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../services/premium_service.dart';
+import '../theme/design_tokens.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
@@ -38,29 +39,30 @@ class _PremiumScreenState extends State<PremiumScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Card(
-            color: Colors.green.shade50,
+            color: AppDesignTokens.success.withValues(alpha: 0.08),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 32),
+                  Icon(
+                    Icons.check_circle,
+                    color: AppDesignTokens.success,
+                    size: 32,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Premium Active',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(color: AppDesignTokens.success),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Current tier: $tierLabel • Vehicle limit: ${premiumService.vehicleLimit}',
-                          style: TextStyle(color: Colors.green.shade700),
+                          style: TextStyle(color: AppDesignTokens.success),
                         ),
                       ],
                     ),
@@ -72,9 +74,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
           const SizedBox(height: 24),
           _buildPlanCatalog(premiumService),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Your Premium Benefits',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
           _buildFeatureItem(
@@ -213,7 +215,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
       return DataCell(
         Icon(
           available ? Icons.check_circle : Icons.cancel,
-          color: available ? Colors.green : Colors.grey,
+          color: available ? AppDesignTokens.success : Colors.grey,
           size: 18,
         ),
       );
@@ -222,9 +224,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Feature comparison',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         SingleChildScrollView(
@@ -278,7 +280,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: isActive ? Colors.green : Colors.grey, size: 24),
+          Icon(
+            icon,
+            color: isActive ? AppDesignTokens.success : Colors.grey,
+            size: 24,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -299,7 +305,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ],
             ),
           ),
-          if (isActive) const Icon(Icons.check_circle, color: Colors.green),
+          if (isActive)
+            Icon(Icons.check_circle, color: AppDesignTokens.success),
         ],
       ),
     );
@@ -313,7 +320,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Purchase failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -327,7 +334,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Purchase restored successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -336,7 +343,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Restore failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -372,9 +379,9 @@ class PremiumPlanCatalog extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Subscription options',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
         ..._tierOrder.map((tier) => _buildPlanCard(tier)),

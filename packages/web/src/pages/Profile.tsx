@@ -110,7 +110,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           {!selectedSection ? (
             <p className="text-slate-600 dark:text-slate-400 m-0">
               Select a section to view details.

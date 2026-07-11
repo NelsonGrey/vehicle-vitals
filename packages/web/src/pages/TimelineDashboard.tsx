@@ -514,7 +514,7 @@ export default function TimelineDashboard() {
           </div>
         </div>
 
-        <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           {recentDocumentInsights.length > 0 && (
             <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
               <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 mt-0 mb-2">

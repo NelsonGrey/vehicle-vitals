@@ -171,14 +171,12 @@ describe('UpcomingTasks reminder actions', () => {
     });
   });
 
-  it('shows empty state when no reminders exist', async () => {
+  it('shows empty state when no reminders or recommendations exist', async () => {
     getReminders.mockResolvedValue([]);
     renderUpcomingTasks();
 
     await waitFor(() => {
-      expect(
-        screen.getByText('No saved reminders match this filter yet.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('All caught up!')).toBeInTheDocument();
     });
   });
 

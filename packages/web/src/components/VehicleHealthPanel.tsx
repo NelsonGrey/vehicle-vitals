@@ -119,26 +119,17 @@ export default function VehicleHealthPanel({
 
   return (
     <section className="mb-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            Vehicle Health
-            {garageCompleteness && garageCompleteness.requiredTotal > 0 && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium normal-case tracking-normal text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                {getGarageCompletenessTierFlag(garageCompleteness.tier)}{' '}
-                {getGarageCompletenessTierLabel(garageCompleteness.tier)} garage
-              </span>
-            )}
-          </p>
-          <h4 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Remaining-life forecast
-          </h4>
-          <p className="mb-0 mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-            Estimated from mileage and recorded service history. Keep this
-            vehicle's records current to improve forecast accuracy.
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+      <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+        Vehicle Health
+        {garageCompleteness && garageCompleteness.requiredTotal > 0 && (
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium normal-case tracking-normal text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+            {getGarageCompletenessTierFlag(garageCompleteness.tier)}{' '}
+            {getGarageCompletenessTierLabel(garageCompleteness.tier)} garage
+          </span>
+        )}
+      </p>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
           <GaugeDial
             size="md"
             value={snapshot.overallHealthScore}
@@ -146,6 +137,15 @@ export default function VehicleHealthPanel({
             label="Health Score"
             sublabel={`${snapshot.overallConfidenceBand} confidence`}
           />
+        </div>
+        <div>
+          <h4 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Remaining-life forecast
+          </h4>
+          <p className="mb-0 mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+            Estimated from mileage and recorded service history. Keep this
+            vehicle's records current to improve forecast accuracy.
+          </p>
         </div>
       </div>
 

@@ -128,7 +128,7 @@ export default function VehicleHealthPanel({
           </span>
         )}
       </p>
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex items-center gap-4">
         <div className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
           <GaugeDial
             size="md"
@@ -138,11 +138,11 @@ export default function VehicleHealthPanel({
             sublabel={`${snapshot.overallConfidenceBand} confidence`}
           />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h4 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
             Remaining-life forecast
           </h4>
-          <p className="mb-0 mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+          <p className="mb-0 mt-1 text-sm text-slate-600 dark:text-slate-400">
             Estimated from mileage and recorded service history. Keep this
             vehicle's records current to improve forecast accuracy.
           </p>

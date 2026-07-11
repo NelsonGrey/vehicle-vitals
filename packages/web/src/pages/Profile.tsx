@@ -1,13 +1,18 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import type { ComponentType } from 'react';
 import { useAuth } from '../shared/AuthContext';
 import { useFeatureFlag } from '../shared/useMonetization';
+import { AccountSecurityContent } from './AccountSecurity';
+import { MaintenanceAlertsContent } from './MaintenanceAlerts';
+import { AccountConsolidationContent } from './AccountConsolidation';
+import { ApiAutomationContent } from './ApiAutomation';
+import { DataPrivacyContent } from './DataPrivacy';
 
 interface ProfileSection {
   key: string;
-  to: string;
   title: string;
   description: string;
+  Content: ComponentType;
 }
 
 export default function Profile() {
@@ -17,39 +22,39 @@ export default function Profile() {
   const sections: ProfileSection[] = [
     {
       key: 'account',
-      to: '/app/account',
       title: 'Account & Security',
       description: 'Email, linked sign-in providers, and password.',
+      Content: AccountSecurityContent,
     },
     {
       key: 'alerts',
-      to: '/app/maintenance-alerts',
       title: 'Maintenance Alerts',
       description:
         'Reminder timing, driving distance, and push notifications.',
+      Content: MaintenanceAlertsContent,
     },
     {
       key: 'merge',
-      to: '/app/account-consolidation',
       title: 'Merge & Share Garage',
       description:
         'Consolidate a split account or convert to a household garage.',
+      Content: AccountConsolidationContent,
     },
     ...(hasApiAccess
       ? [
           {
             key: 'api',
-            to: '/app/api-automation',
             title: 'API & Automation',
             description: 'API keys and Zapier webhook configuration.',
+            Content: ApiAutomationContent,
           },
         ]
       : []),
     {
       key: 'privacy',
-      to: '/app/data-privacy',
       title: 'Data & Privacy',
       description: 'Export your data or request account deletion.',
+      Content: DataPrivacyContent,
     },
   ];
 
@@ -118,12 +123,7 @@ export default function Profile() {
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
                 {selectedSection.description}
               </p>
-              <Link
-                to={selectedSection.to}
-                className="inline-block px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg no-underline text-sm font-medium"
-              >
-                Go to {selectedSection.title} →
-              </Link>
+              <selectedSection.Content />
             </>
           )}
         </div>

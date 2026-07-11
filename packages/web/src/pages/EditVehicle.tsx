@@ -122,6 +122,7 @@ interface MaintenanceEntry {
   cost: string;
   date: string;
   performedBy?: 'self' | 'mechanic' | 'business';
+  providerName?: string;
   coverage?: 'parts_only' | 'parts_and_labor';
   attachments?: Array<{
     name: string;
@@ -995,6 +996,7 @@ function MaintenanceList({
     notes: '',
     cost: '',
     performedBy: 'mechanic',
+    providerName: '',
     coverage: 'parts_and_labor',
     attachments: [] as Array<{
       name: string;
@@ -1494,6 +1496,7 @@ function MaintenanceList({
         notes: '',
         cost: '',
         performedBy: 'mechanic',
+        providerName: '',
         coverage: 'parts_and_labor',
         attachments: [],
       });
@@ -1829,6 +1832,28 @@ function MaintenanceList({
                   <option value="parts_and_labor">Parts and labor</option>
                 </select>
               </div>
+              {form.performedBy !== 'self' && (
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="providerName"
+                    className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200"
+                  >
+                    Shop / mechanic name
+                  </label>
+                  <input
+                    id="providerName"
+                    name="providerName"
+                    placeholder="e.g. Downtown Auto Repair"
+                    value={form.providerName}
+                    onChange={handleChange}
+                    aria-label="Shop or mechanic name"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
+                  />
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Shown on the Mechanics page under "Providers You've Used."
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <div>

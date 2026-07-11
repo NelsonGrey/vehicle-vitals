@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 
 import { computeVehicleHealthSnapshot } from '@vehicle-vitals/shared';
 import type { UserTier } from '../shared/featureFlags';
+import { formatCurrencyRange } from '../utils/currency';
+import GaugeDial from './charts/GaugeDial';
 
 interface MaintenanceEntry {
   id?: string;
@@ -26,12 +28,6 @@ interface Props {
   hasPlanning12mo: boolean;
   hasPlanning36mo: boolean;
   loading?: boolean;
-}
-
-function formatCurrencyRange(low?: number | null, high?: number | null) {
-  const safeLow = Math.max(0, Math.round(low || 0));
-  const safeHigh = Math.max(safeLow, Math.round(high || 0));
-  return `$${safeLow.toLocaleString()}-$${safeHigh.toLocaleString()}`;
 }
 
 function formatPercent(value?: number | null) {
@@ -120,16 +116,14 @@ export default function VehicleHealthPanel({
             current to improve forecast accuracy.
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-right dark:border-slate-700 dark:bg-slate-900">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Health Score
-          </div>
-          <div className="mt-1 text-3xl font-bold text-slate-900 dark:text-slate-100">
-            {snapshot.overallHealthScore}
-          </div>
-          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {snapshot.overallConfidenceBand} confidence
-          </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+          <GaugeDial
+            size="md"
+            value={snapshot.overallHealthScore}
+            formatValue={v => `${Math.round(v)}`}
+            label="Health Score"
+            sublabel={`${snapshot.overallConfidenceBand} confidence`}
+          />
         </div>
       </div>
 
@@ -182,39 +176,21 @@ export default function VehicleHealthPanel({
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {component.label}
                   </div>
-                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-                    {formatPercent(component.remainingLifePercent)}
-                  </div>
+                  <span
+                    className={`mt-1 inline-block rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${statusClasses(
+                      component.status
+                    )}`}
+                  >
+                    {component.status.replace('_', ' ')}
+                  </span>
                 </div>
-                <span
-                  className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${statusClasses(
-                    component.status
-                  )}`}
-                >
-                  {component.status.replace('_', ' ')}
-                </span>
-              </div>
-
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                <div
-                  className={`h-full rounded-full ${
-                    component.status === 'overdue'
-                      ? 'bg-danger-500'
-                      : component.status === 'service_soon'
-                        ? 'bg-warning-500'
-                        : component.status === 'watch'
-                          ? 'bg-warning-500'
-                          : 'bg-accent-500'
-                  }`}
-                  style={{
-                    width: `${Math.max(
-                      5,
-                      Math.min(
-                        100,
-                        Math.round((component.remainingLifePercent || 0) * 100)
-                      )
-                    )}%`,
-                  }}
+                <GaugeDial
+                  size="sm"
+                  value={Math.max(
+                    0,
+                    Math.min(100, Math.round((component.remainingLifePercent || 0) * 100))
+                  )}
+                  formatValue={() => formatPercent(component.remainingLifePercent)}
                 />
               </div>
 

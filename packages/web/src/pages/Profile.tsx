@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { useFeatureFlag } from '../shared/useMonetization';
@@ -9,18 +10,41 @@ interface ProfileLinkProps {
 }
 
 function ProfileLink({ to, title, description }: ProfileLinkProps) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <Link
-      to={to}
-      className="block rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 no-underline hover:bg-slate-50 dark:hover:bg-slate-700/70 transition-colors"
-    >
-      <div className="font-medium text-slate-900 dark:text-slate-100">
-        {title}
+    <section className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <div className="flex items-center justify-between gap-3 p-4">
+        <Link
+          to={to}
+          className="font-medium text-slate-900 dark:text-slate-100 no-underline hover:underline"
+        >
+          {title}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setExpanded(current => !current)}
+          aria-expanded={expanded}
+          aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}
+          className="shrink-0 rounded-md border border-slate-200 dark:border-slate-700 px-2 py-1 text-slate-500 dark:text-slate-400 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-700/70 cursor-pointer"
+        >
+          {expanded ? '▲' : '▼'}
+        </button>
       </div>
-      <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-        {description}
-      </div>
-    </Link>
+      {expanded && (
+        <div className="px-4 pb-4">
+          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
+            {description}
+          </p>
+          <Link
+            to={to}
+            className="mt-2 inline-block text-sm font-medium text-teal-700 dark:text-teal-400 hover:underline"
+          >
+            Go to {title} →
+          </Link>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -31,7 +55,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="mb-6">
         <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
           Profile
@@ -54,11 +78,6 @@ export default function Profile() {
           to="/app/maintenance-alerts"
           title="Maintenance Alerts"
           description="Reminder timing, driving distance, and push notifications."
-        />
-        <ProfileLink
-          to="/app/providers"
-          title="Mechanics"
-          description="Home address and nearby repair shop / dealership search."
         />
         <ProfileLink
           to="/app/account-consolidation"

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  getMaintenanceEntries,
   getVehicle,
   getVehicles,
   updateVehicle,
@@ -33,6 +34,21 @@ type LocalServiceProvider = {
   website?: string;
   rating?: number;
   specialties?: string[];
+};
+
+type PreferredProvider = {
+  id: string;
+  name: string;
+  type: ProviderTypeFilter;
+  address?: string;
+  phone?: string;
+  website?: string;
+};
+
+type PastProvider = {
+  name: string;
+  serviceCount: number;
+  lastServiceDate?: string;
 };
 
 const providerTypeLabels: Record<ProviderTypeFilter, string> = {
@@ -102,6 +118,20 @@ export default function ServiceProviders() {
   const [preferredVehicleMake, setPreferredVehicleMake] = useState('');
   const [garageMakes, setGarageMakes] = useState<string[]>([]);
 
+  const [preferredProviders, setPreferredProviders] = useState<
+    PreferredProvider[]
+  >([]);
+  const [savingPreferredId, setSavingPreferredId] = useState<string | null>(
+    null
+  );
+  const [manualProviderName, setManualProviderName] = useState('');
+  const [manualProviderAddress, setManualProviderAddress] = useState('');
+  const [manualProviderType, setManualProviderType] =
+    useState<ProviderTypeFilter>('repair_shop');
+
+  const [pastProviders, setPastProviders] = useState<PastProvider[]>([]);
+  const [loadingPastProviders, setLoadingPastProviders] = useState(true);
+
   useEffect(() => {
     const loadPreferences = async () => {
       try {
@@ -133,6 +163,13 @@ export default function ServiceProviders() {
         }
         setPreferredProviderUseVehicleMake(useVehicleMakePreference);
         setPreferredVehicleMake(vehicleMakePreference);
+
+        const storedPreferredProviders = Array.isArray(
+          prefs?.preferredProviders
+        )
+          ? (prefs.preferredProviders as PreferredProvider[])
+          : [];
+        setPreferredProviders(storedPreferredProviders);
 
         if (storedAddress && typeof storedAddress === 'object') {
           setHomeAddress({
@@ -217,6 +254,108 @@ export default function ServiceProviders() {
     void loadPreferences();
   }, []);
 
+  useEffect(() => {
+    const loadPastProviders = async () => {
+      try {
+        const vehicles = (await getVehicles()) as Array<{ vin: string }>;
+        const byName = new Map<string, PastProvider>();
+
+        for (const vehicle of vehicles) {
+          const entries = (await getMaintenanceEntries(vehicle.vin)) as Array<{
+            providerName?: string;
+            date?: string;
+          }>;
+
+          for (const entry of entries || []) {
+            const name = (entry.providerName || '').trim();
+            if (!name) continue;
+
+            const existing = byName.get(name);
+            const entryDate = entry.date;
+            if (existing) {
+              existing.serviceCount += 1;
+              if (
+                entryDate &&
+                (!existing.lastServiceDate ||
+                  entryDate > existing.lastServiceDate)
+              ) {
+                existing.lastServiceDate = entryDate;
+              }
+            } else {
+              byName.set(name, {
+                name,
+                serviceCount: 1,
+                lastServiceDate: entryDate,
+              });
+            }
+          }
+        }
+
+        setPastProviders(
+          Array.from(byName.values()).sort(
+            (a, b) => b.serviceCount - a.serviceCount
+          )
+        );
+      } catch {
+        // Non-critical — past providers is a nice-to-have summary
+      } finally {
+        setLoadingPastProviders(false);
+      }
+    };
+
+    void loadPastProviders();
+  }, []);
+
+  const savePreferredProviders = async (next: PreferredProvider[]) => {
+    setPreferredProviders(next);
+    try {
+      await updateVehicle('preferences', { preferredProviders: next });
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Failed to save preferred providers'
+      );
+    }
+  };
+
+  const addPreferredProvider = async (candidate: PreferredProvider) => {
+    if (preferredProviders.some(p => p.id === candidate.id)) return;
+    setSavingPreferredId(candidate.id);
+    try {
+      await savePreferredProviders([...preferredProviders, candidate]);
+    } finally {
+      setSavingPreferredId(null);
+    }
+  };
+
+  const removePreferredProvider = async (id: string) => {
+    setSavingPreferredId(id);
+    try {
+      await savePreferredProviders(
+        preferredProviders.filter(p => p.id !== id)
+      );
+    } finally {
+      setSavingPreferredId(null);
+    }
+  };
+
+  const handleAddManualPreferredProvider = () => {
+    const name = manualProviderName.trim();
+    if (!name) {
+      setError('Enter a provider name to save it as preferred.');
+      return;
+    }
+    void addPreferredProvider({
+      id: `manual-${Date.now()}-${name.toLowerCase().replace(/\s+/g, '-')}`,
+      name,
+      type: manualProviderType,
+      address: manualProviderAddress.trim() || undefined,
+    });
+    setManualProviderName('');
+    setManualProviderAddress('');
+  };
+
   const locationSearchQuery = useMemo(
     () => buildLocationSearchQuery(normalizeAddress(homeAddress)),
     [homeAddress]
@@ -293,6 +432,150 @@ export default function ServiceProviders() {
           {error}
         </div>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+          <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+            Preferred Providers
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+            Pin providers you trust so they're easy to find next time.
+          </p>
+
+          {preferredProviders.length === 0 ? (
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+              No preferred providers saved yet. Pin one from your search
+              results below, or add one manually.
+            </p>
+          ) : (
+            <div className="space-y-2 mb-4">
+              {preferredProviders.map(provider => (
+                <div
+                  key={provider.id}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3"
+                >
+                  <div>
+                    <div className="font-medium text-slate-900 dark:text-slate-100">
+                      ★ {provider.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {providerTypeLabels[provider.type] || 'Service provider'}
+                      {provider.address ? ` • ${provider.address}` : ''}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void removePreferredProvider(provider.id)}
+                    disabled={savingPreferredId === provider.id}
+                    className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input
+              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm"
+              placeholder="Provider name"
+              value={manualProviderName}
+              onChange={event => setManualProviderName(event.target.value)}
+            />
+            <select
+              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm"
+              value={manualProviderType}
+              onChange={event =>
+                setManualProviderType(
+                  event.target.value as ProviderTypeFilter
+                )
+              }
+            >
+              <option value="repair_shop">Repair shop</option>
+              <option value="dealership">Dealership</option>
+              <option value="body_shop">Body shop</option>
+              <option value="car_wash">Car wash</option>
+              <option value="detailer">Detailer</option>
+            </select>
+            <input
+              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm sm:col-span-2"
+              placeholder="Address (optional)"
+              value={manualProviderAddress}
+              onChange={event => setManualProviderAddress(event.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleAddManualPreferredProvider}
+            className="mt-2 px-3 py-2 text-sm rounded-md bg-slate-700 hover:bg-slate-800 text-white"
+          >
+            Save as Preferred
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+          <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+            Providers You've Used
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+            Built from the shop/mechanic name saved on maintenance records
+            across your garage.
+          </p>
+
+          {loadingPastProviders ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0">
+              Loading service history…
+            </p>
+          ) : pastProviders.length === 0 ? (
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
+              No past providers yet. Add a "Shop / mechanic name" the next
+              time you log a maintenance record.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {pastProviders.map(provider => {
+                const isPreferred = preferredProviders.some(
+                  p => p.name.toLowerCase() === provider.name.toLowerCase()
+                );
+                return (
+                  <div
+                    key={provider.name}
+                    className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3"
+                  >
+                    <div>
+                      <div className="font-medium text-slate-900 dark:text-slate-100">
+                        {provider.name}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {provider.serviceCount} service
+                        {provider.serviceCount === 1 ? '' : 's'}
+                        {provider.lastServiceDate
+                          ? ` • Last ${new Date(provider.lastServiceDate).toLocaleDateString()}`
+                          : ''}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void addPreferredProvider({
+                          id: `used-${provider.name.toLowerCase().replace(/\s+/g, '-')}`,
+                          name: provider.name,
+                          type: 'repair_shop',
+                        })
+                      }
+                      disabled={isPreferred}
+                      className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
+                    >
+                      {isPreferred ? 'Preferred' : 'Save as Preferred'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">
         <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
@@ -470,16 +753,40 @@ export default function ServiceProviders() {
                     </p>
                   ) : null}
                 </div>
-                {provider.website ? (
-                  <a
-                    href={provider.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-block mt-2 text-sm text-teal-700 hover:text-teal-800"
+                <div className="mt-3 flex items-center gap-3">
+                  {provider.website ? (
+                    <a
+                      href={provider.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-teal-700 hover:text-teal-800"
+                    >
+                      Visit website
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void addPreferredProvider({
+                        id: provider.id,
+                        name: provider.name,
+                        type: provider.type,
+                        address: provider.address,
+                        phone: provider.phone,
+                        website: provider.website,
+                      })
+                    }
+                    disabled={
+                      savingPreferredId === provider.id ||
+                      preferredProviders.some(p => p.id === provider.id)
+                    }
+                    className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
                   >
-                    Visit website
-                  </a>
-                ) : null}
+                    {preferredProviders.some(p => p.id === provider.id)
+                      ? '★ Preferred'
+                      : '☆ Save as Preferred'}
+                  </button>
+                </div>
               </article>
             ))}
           </div>

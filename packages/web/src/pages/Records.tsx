@@ -2,6 +2,8 @@ import { createStandardVehiclePortfolio } from '@vehicle-vitals/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import CollapsibleSection from '../components/CollapsibleSection';
+import GaugeDial from '../components/charts/GaugeDial';
+import WheelBreakdownChart from '../components/charts/WheelBreakdownChart';
 import { formatFileDisplay } from '../shared/fileUtils';
 import {
   addReminder,
@@ -25,6 +27,7 @@ import {
   buildDocumentSummary,
   getSourceSnippet,
 } from '../utils/documentAnalysisSummary';
+import { formatCurrency as formatCurrencyUtil } from '../utils/currency';
 import { computeOwnershipInsights } from '../utils/ownershipInsights';
 
 type AnalysisData = {
@@ -176,13 +179,17 @@ function buildFutureDate(daysAhead: number): Date {
   return date;
 }
 
-function formatCurrency(value?: number): string {
-  if (typeof value !== 'number') {
-    return 'Unknown';
-  }
+const formatCurrency = formatCurrencyUtil;
 
-  return `$${value.toFixed(2)}`;
-}
+const SPEND_WHEEL_COLORS = [
+  '#22c55e',
+  '#3b82f6',
+  '#f59e0b',
+  '#a78bfa',
+  '#f43f5e',
+  '#14b8a6',
+  '#94a3b8',
+];
 
 function formatInsightDueDate(value?: string): string {
   if (!value) {
@@ -230,6 +237,7 @@ export default function Records() {
     'all' | 'required' | PortfolioItem['status']
   >('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [recordListExpanded, setRecordListExpanded] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -826,16 +834,23 @@ export default function Records() {
           <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
             {vehicle?.year} {vehicle?.make} {vehicle?.model} • {vehicle?.vin}
           </p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">
-            Required records complete: {readyCount}/{requiredCount}
-          </p>
         </div>
-        <Link
-          to="/app"
-          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
-        >
-          Back
-        </Link>
+        <div className="flex items-center gap-4">
+          {requiredCount > 0 && (
+            <GaugeDial
+              size="sm"
+              value={Math.round((readyCount / requiredCount) * 100)}
+              label="Records Complete"
+              sublabel={`${readyCount}/${requiredCount}`}
+            />
+          )}
+          <Link
+            to="/app"
+            className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
+          >
+            Back
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -856,11 +871,11 @@ export default function Records() {
                   Maintenance spend captured
                 </div>
                 <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
-                  ${insights.maintenanceTotalCost.toFixed(2)}
+                  {formatCurrency(insights.maintenanceTotalCost)}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {insights.maintenanceDocsCount} docs • Avg $
-                  {insights.maintenanceAverageCost.toFixed(2)}
+                  {insights.maintenanceDocsCount} docs • Avg{' '}
+                  {formatCurrency(insights.maintenanceAverageCost)}
                   {insights.latestServiceDate
                     ? ` • Latest ${new Date(insights.latestServiceDate).toLocaleDateString()}`
                     : ''}
@@ -873,7 +888,7 @@ export default function Records() {
                 </div>
                 <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
                   {typeof insights.estimatedMonthlyPayment === 'number'
-                    ? `$${insights.estimatedMonthlyPayment.toFixed(2)}`
+                    ? formatCurrency(insights.estimatedMonthlyPayment)
                     : 'Add finance docs'}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -887,16 +902,34 @@ export default function Records() {
                 </div>
                 <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
                   {typeof insights.estimatedValueRealized === 'number'
-                    ? `$${insights.estimatedValueRealized.toFixed(2)} realized`
+                    ? `${formatCurrency(insights.estimatedValueRealized)} realized`
                     : 'Need principal doc'}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {typeof insights.estimatedCurrentValue === 'number'
-                    ? `Est. current value $${insights.estimatedCurrentValue.toFixed(2)}`
+                    ? `Est. current value ${formatCurrency(insights.estimatedCurrentValue)}`
                     : 'Upload purchase/loan principal to unlock estimate'}
                 </div>
               </div>
             </div>
+
+            {(insights.maintenanceBreakdown || []).length > 0 && (
+              <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <div className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
+                  Maintenance Spend Breakdown
+                </div>
+                <WheelBreakdownChart
+                  segments={(insights.maintenanceBreakdown || []).map((entry, index) => ({
+                    label: entry.label,
+                    amount: entry.amount,
+                    color: SPEND_WHEEL_COLORS[index % SPEND_WHEEL_COLORS.length],
+                  }))}
+                  formatAmount={formatCurrency}
+                  centerValue={formatCurrency(insights.maintenanceTotalCost)}
+                  centerLabel="Total spend"
+                />
+              </div>
+            )}
 
             {insights.upcomingPaymentDates.length > 0 &&
               typeof insights.estimatedMonthlyPayment === 'number' && (
@@ -917,15 +950,15 @@ export default function Records() {
                           {date}
                         </div>
                         <div className="font-medium text-slate-900 dark:text-slate-100">
-                          ${insights.estimatedMonthlyPayment.toFixed(2)}
+                          {formatCurrency(insights.estimatedMonthlyPayment)}
                         </div>
                       </div>
                     ))}
                   </div>
                   {typeof insights.estimatedPaidToDate === 'number' && (
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                      Estimated paid to date: $
-                      {insights.estimatedPaidToDate.toFixed(2)}
+                      Estimated paid to date:{' '}
+                      {formatCurrency(insights.estimatedPaidToDate)}
                     </div>
                   )}
                 </div>
@@ -1176,10 +1209,13 @@ export default function Records() {
 
         {flattenedItems.length > 0 && (
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-              <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
-                Record List
-              </h2>
+            <div className="lg:col-span-4">
+              <CollapsibleSection
+                title="Record List"
+                description="Search and filter this vehicle's document portfolio."
+                collapsed={!recordListExpanded}
+                onToggle={next => setRecordListExpanded(!next)}
+              >
               <div className="mb-3 space-y-2">
                 <input
                   type="search"
@@ -1277,10 +1313,15 @@ export default function Records() {
                   </div>
                 )}
               </div>
+              </CollapsibleSection>
             </div>
 
             <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              {!selectedEntry ? (
+              {!recordListExpanded ? (
+                <p className="text-slate-600 dark:text-slate-400 m-0">
+                  Expand Record List to view details.
+                </p>
+              ) : !selectedEntry ? (
                 <p className="text-slate-600 dark:text-slate-400 m-0">
                   Select a record item to view and edit details.
                 </p>
@@ -1450,7 +1491,7 @@ export default function Records() {
                                     <div>
                                       Total cost:{' '}
                                       {typeof extracted?.totalCost === 'number'
-                                        ? `$${extracted.totalCost.toFixed(2)}`
+                                        ? formatCurrency(extracted.totalCost)
                                         : 'n/a'}
                                     </div>
                                     <div>

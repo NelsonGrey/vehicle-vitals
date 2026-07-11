@@ -33,6 +33,12 @@ const TIER_LABELS: Record<GarageCompletenessTier, string> = {
   champion: 'Champion',
 };
 
+const TIER_FLAGS: Record<GarageCompletenessTier, string> = {
+  rookie: '🏁',
+  pro: '🏎️',
+  champion: '🏆',
+};
+
 function tierForPercent(percent: number): GarageCompletenessTier {
   if (percent >= 90) return 'champion';
   if (percent >= 50) return 'pro';
@@ -43,6 +49,12 @@ export function getGarageCompletenessTierLabel(
   tier: GarageCompletenessTier
 ): string {
   return TIER_LABELS[tier];
+}
+
+export function getGarageCompletenessTierFlag(
+  tier: GarageCompletenessTier
+): string {
+  return TIER_FLAGS[tier];
 }
 
 export function computeGarageCompleteness(

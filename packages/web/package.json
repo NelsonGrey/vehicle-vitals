@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "test:emulator": "firebase emulators:exec --only firestore,functions,hosting,dataconnect --project vehicle-vitals-dev 'npm run test'",
+    "test:emulator": "firebase emulators:exec --only firestore,functions,hosting --project vehicle-vitals-dev 'npm run test'",
     "test:uat": "playwright test",
     "test:uat:chromium": "playwright test --project=chromium tests/uat.spec.ts",
     "test:uat:firefox": "playwright test --project=firefox tests/uat.spec.ts",

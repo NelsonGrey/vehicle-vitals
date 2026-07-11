@@ -76,10 +76,11 @@ describe('MaintenanceAlerts – push notification opt-in', () => {
     window.Notification.permission = 'granted';
     getVehicle.mockResolvedValue({ fcmToken: 'existing-token-abc' });
     renderPage();
-    await waitFor(() => screen.getByText('Push Notifications'));
-    expect(
-      screen.getByText(/push notifications are enabled for this browser/i)
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText(/push notifications are enabled for this browser/i)
+      ).toBeInTheDocument();
+    });
   });
 
   it('calls requestNotificationPermission and saves token on Enable click', async () => {

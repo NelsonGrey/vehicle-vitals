@@ -1,4 +1,5 @@
 // Manufacturer maintenance schedules data
+// Hand-ported to packages/mobile/lib/models/maintenance_schedule.dart - keep both in sync.
 export const manufacturerSchedules = {
   // Toyota schedules
   'Toyota': {

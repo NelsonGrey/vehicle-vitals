@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { coerceFirestoreTimestamp } from '../shared/firestoreTimestamp';
 import { formatFileDisplay } from '../shared/fileUtils';
 import { getMaintenanceEntries, getVehicles } from '../shared/firestoreService';
 import { buildDocumentSummary } from '../utils/documentAnalysisSummary';
@@ -115,31 +116,17 @@ function resolveVehiclePlate(vehicle: any): string | undefined {
  */
 function resolveMaintenanceDate(entry: FirestoreMaintenanceEntry): string {
   // Priority 1: Use entry.date if it exists (the actual service date)
-  if (entry.date) {
-    // If it's a Firestore Timestamp object with toDate method
-    if (entry.date?.toDate && typeof entry.date.toDate === 'function') {
-      try {
-        return entry.date.toDate().toISOString();
-      } catch {
-        // Fall through if conversion fails
-      }
-    }
-    // If it's already an ISO string or parseable date string
-    if (typeof entry.date === 'string') {
-      const parsed = new Date(entry.date);
-      if (!isNaN(parsed.getTime())) {
-        return parsed.toISOString();
-      }
-    }
+  const dateFromEntry = entry.date
+    ? coerceFirestoreTimestamp(entry.date)
+    : null;
+  if (dateFromEntry) {
+    return dateFromEntry.toISOString();
   }
 
   // Priority 2: Fall back to createdAt timestamp
-  if (entry.createdAt?.toDate && typeof entry.createdAt.toDate === 'function') {
-    try {
-      return entry.createdAt.toDate().toISOString();
-    } catch {
-      // Fall through if conversion fails
-    }
+  const dateFromCreatedAt = coerceFirestoreTimestamp(entry.createdAt);
+  if (dateFromCreatedAt) {
+    return dateFromCreatedAt.toISOString();
   }
 
   // Priority 3: Last resort - use current time (should not happen in practice)

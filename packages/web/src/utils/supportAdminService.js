@@ -5,6 +5,7 @@ import {
   getOrInitializeLegacyFirebaseApp,
   hasLegacyFirebaseModules,
 } from '../shared/firebaseLegacy';
+import { coerceFirestoreTimestamp } from '../shared/firestoreTimestamp';
 
 const generateIdempotencyKey = () => {
   if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
@@ -222,20 +223,8 @@ export async function applyRetentionPolicy({
 }
 
 function toMillis(value) {
-  if (!value) {
-    return 0;
-  }
-
-  if (typeof value.toMillis === 'function') {
-    return value.toMillis();
-  }
-
-  if (typeof value.toDate === 'function') {
-    return value.toDate().getTime();
-  }
-
-  const parsed = Date.parse(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  const date = coerceFirestoreTimestamp(value);
+  return date ? date.getTime() : 0;
 }
 
 function mapFinanceDraft(docSnapshot, kind) {

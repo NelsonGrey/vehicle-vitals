@@ -1,4 +1,5 @@
 // Manufacturer maintenance schedules data
+// Hand-ported from packages/shared/src/maintenanceSchedules.js - keep both in sync.
 class MaintenanceItem {
   final String id;
   final int interval; // miles

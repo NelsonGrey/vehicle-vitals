@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { coerceFirestoreTimestamp } from '../shared/firestoreTimestamp';
 import { useFeatureFlag } from '../shared/useMonetization';
 import {
   createApiAccessKey,
@@ -24,26 +25,12 @@ function formatTimestamp(value: unknown): string {
     return '—';
   }
 
-  if (typeof value === 'string') {
-    const parsed = Date.parse(value);
-    return Number.isFinite(parsed) ? new Date(parsed).toLocaleString() : value;
+  const date = coerceFirestoreTimestamp(value);
+  if (date) {
+    return date.toLocaleString();
   }
 
-  if (typeof value === 'object' && value !== null) {
-    const record = value as Record<string, unknown>;
-    const seconds =
-      typeof record.seconds === 'number'
-        ? record.seconds
-        : typeof record._seconds === 'number'
-          ? record._seconds
-          : null;
-
-    if (seconds !== null) {
-      return new Date(seconds * 1000).toLocaleString();
-    }
-  }
-
-  return '—';
+  return typeof value === 'string' ? value : '—';
 }
 
 export default function ApiAutomation() {

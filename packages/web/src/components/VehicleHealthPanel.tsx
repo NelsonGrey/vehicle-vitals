@@ -33,8 +33,13 @@ interface Props {
   hasPlanning12mo: boolean;
   hasPlanning36mo: boolean;
   loading?: boolean;
-  /** This vehicle's required-document completeness — drives forecast confidence. */
-  vehicleCompleteness?: { complete: number; required: number };
+  /** This vehicle's document completeness — drives forecast confidence. */
+  vehicleCompleteness?: {
+    complete: number;
+    required: number;
+    optionalComplete?: number;
+    optionalTotal?: number;
+  };
   /** Garage-wide completeness, shown as a small secondary tier chip. */
   garageCompleteness?: GarageCompletenessResult;
 }
@@ -189,9 +194,26 @@ export default function VehicleHealthPanel({
               />
             </div>
           )}
+          {!!vehicleCompleteness?.optionalTotal && (
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              +{vehicleCompleteness.optionalComplete ?? 0}/
+              {vehicleCompleteness.optionalTotal} optional records added
+            </div>
+          )}
           <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {snapshot.accuracyTip}
           </div>
+          <p className="mb-0 mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+            Required records (title, insurance, registration, etc.) are what
+            this forecast is based on — optional records add extra detail but
+            aren't scored.
+          </p>
+          <Link
+            to={`/app/records/${vehicle.vin}`}
+            className="mt-2 inline-block text-xs font-medium text-teal-700 hover:underline dark:text-teal-400"
+          >
+            View records →
+          </Link>
         </div>
       </div>
 

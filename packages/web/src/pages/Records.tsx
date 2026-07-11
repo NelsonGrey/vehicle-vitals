@@ -1252,20 +1252,12 @@ export default function Records() {
                 {filteredItems.map(entry => {
                   const isSelected = entry.key === selectedItemKey;
                   const fileCount = entry.item.files?.length || 0;
-                  const summaryFiles = (entry.item.files || [])
-                    .slice(-2)
-                    .reverse();
 
                   return (
                     <button
                       key={entry.key}
                       type="button"
-                      onClick={() =>
-                        setSelectedItemKey(current =>
-                          current === entry.key ? null : entry.key
-                        )
-                      }
-                      aria-expanded={isSelected}
+                      onClick={() => setSelectedItemKey(entry.key)}
                       className={`w-full text-left rounded-lg border p-3 transition-colors ${
                         isSelected
                           ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
@@ -1273,16 +1265,8 @@ export default function Records() {
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            aria-hidden="true"
-                            className={`shrink-0 text-slate-400 transition-transform ${isSelected ? 'rotate-90' : ''}`}
-                          >
-                            ▶
-                          </span>
-                          <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
-                            {entry.item.title}
-                          </div>
+                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
+                          {entry.item.title}
                         </div>
                         <span
                           className={`shrink-0 text-xs px-2 py-1 rounded-full ${statusClassMap[entry.item.status]}`}
@@ -1290,32 +1274,11 @@ export default function Records() {
                           {statusLabelMap[entry.item.status]}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 pl-5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
                         {entry.categoryTitle} •{' '}
                         {entry.item.required ? 'Required' : 'Optional'} •{' '}
                         {fileCount} file{fileCount === 1 ? '' : 's'}
                       </div>
-                      {isSelected && summaryFiles.length > 0 && (
-                        <div className="mt-2 ml-5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-2 space-y-1">
-                          {summaryFiles.map((file, summaryIndex) => (
-                            <div
-                              key={`${file.path || file.url || file.name || 'file'}-${summaryIndex}`}
-                              className="text-[11px] text-slate-600 dark:text-slate-300"
-                            >
-                              <span className="font-medium text-slate-700 dark:text-slate-200">
-                                {file.name || `Document ${summaryIndex + 1}`}:
-                              </span>{' '}
-                              <span>{getDocumentSummary(file)}</span>
-                            </div>
-                          ))}
-                          {fileCount > summaryFiles.length && (
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                              +{fileCount - summaryFiles.length} more document
-                              {fileCount - summaryFiles.length === 1 ? '' : 's'}
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </button>
                   );
                 })}

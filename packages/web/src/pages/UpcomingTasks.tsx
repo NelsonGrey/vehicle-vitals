@@ -158,13 +158,16 @@ export default function UpcomingTasks() {
       ? { planName: 'Premium', months: 36 }
       : { planName: 'Pro', months: 12 };
 
-  const estimateDueDateLabel = (milesUntilDue: number) => {
+  const estimateDueDate = (milesUntilDue: number) => {
     const safeDailyMiles = Math.max(1, effectiveDailyMiles);
     const dayEstimate = Math.max(1, Math.ceil(milesUntilDue / safeDailyMiles));
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + dayEstimate);
-    return dueDate.toLocaleDateString();
+    return dueDate;
   };
+
+  const estimateDueDateLabel = (milesUntilDue: number) =>
+    estimateDueDate(milesUntilDue).toLocaleDateString();
 
   useEffect(() => {
     const loadUpcomingTasks = async () => {
@@ -662,6 +665,40 @@ export default function UpcomingTasks() {
     return item.milesUntilDue > planningHorizonMiles;
   }).length;
 
+  type TimelineEntry =
+    | { kind: 'recommendation'; key: string; date: Date | null; item: UpcomingItem }
+    | { kind: 'reminder'; key: string; date: Date | null; item: ReminderItem };
+
+  const timelineEntries: TimelineEntry[] = [
+    ...visibleUpcomingItems.map(
+      (item): TimelineEntry => ({
+        kind: 'recommendation',
+        key: `rec-${item.vehicle.vin}-${item.serviceType}`,
+        date: estimateDueDate(item.milesUntilDue),
+        item,
+      })
+    ),
+    ...visibleReminders.map((reminder): TimelineEntry => {
+      const date =
+        typeof reminder.milesUntilDue === 'number'
+          ? estimateDueDate(reminder.milesUntilDue)
+          : reminder.snoozedUntil
+            ? new Date(reminder.snoozedUntil)
+            : null;
+      return {
+        kind: 'reminder',
+        key: `rem-${reminder.id}`,
+        date: date && !Number.isNaN(date.getTime()) ? date : null,
+        item: reminder,
+      };
+    }),
+  ].sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return a.date.getTime() - b.date.getTime();
+  });
+
   const toggleVehicleSelection = (vin: string) => {
     setSelectedVehicleVins(current =>
       current.includes(vin)
@@ -689,6 +726,50 @@ export default function UpcomingTasks() {
     if (milesUntilDue <= 1000) return 'Urgent';
     if (milesUntilDue <= 5000) return 'Soon';
     return 'Upcoming';
+  };
+
+  const getUrgencyDotColor = (milesUntilDue: number) => {
+    if (milesUntilDue <= 1000) return 'bg-danger-500';
+    if (milesUntilDue <= 5000) return 'bg-warning-500';
+    return 'bg-accent-500';
+  };
+
+  const getReminderStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'completed':
+        return {
+          label: 'Completed',
+          badgeClassName: 'bg-accent-100 text-accent-800',
+          cardClassName:
+            'text-accent-700 bg-accent-50 border-accent-200 dark:text-accent-200 dark:bg-accent-950/20 dark:border-accent-900/40',
+          dotColor: 'bg-accent-500',
+        };
+      case 'dismissed':
+        return {
+          label: 'Dismissed',
+          badgeClassName:
+            'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+          cardClassName:
+            'text-slate-600 bg-slate-50 border-slate-200 dark:text-slate-300 dark:bg-slate-900/40 dark:border-slate-700',
+          dotColor: 'bg-slate-400',
+        };
+      case 'snoozed':
+        return {
+          label: 'Snoozed',
+          badgeClassName: 'bg-warning-100 text-warning-800',
+          cardClassName:
+            'text-warning-700 bg-warning-50 border-warning-200 dark:text-warning-200 dark:bg-warning-950/20 dark:border-warning-900/40',
+          dotColor: 'bg-warning-500',
+        };
+      default:
+        return {
+          label: 'Active',
+          badgeClassName: 'bg-blue-100 text-blue-800',
+          cardClassName:
+            'text-slate-700 bg-white border-slate-200 dark:text-slate-200 dark:bg-slate-900 dark:border-slate-700',
+          dotColor: 'bg-blue-500',
+        };
+    }
   };
 
   if (loading) {
@@ -892,106 +973,9 @@ export default function UpcomingTasks() {
               </button>
             ))}
           </div>
-          <p className="mb-3 px-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mb-0 px-1 text-xs text-slate-500 dark:text-slate-400">
             {reminderFilterDescriptions[reminderFilter]}
           </p>
-
-          <div className="space-y-2 max-h-[70dvh] overflow-y-auto pr-1">
-            {visibleReminders.map(reminder => (
-              <div
-                key={reminder.id}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-3"
-              >
-                <div>
-                  <div className="font-medium text-slate-900 dark:text-slate-100">
-                    {reminder.title}
-                  </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                    VIN: {reminder.vin}
-                    {typeof reminder.nextDueMileage === 'number' &&
-                      ` • Due at ${reminder.nextDueMileage.toLocaleString()} miles`}
-                    {reminder.status === 'snoozed' &&
-                      reminder.snoozedUntil &&
-                      ` • Snoozed until ${formatDateLabel(reminder.snoozedUntil)}`}
-                    {reminder.status === 'completed' && ' • Completed'}
-                    {reminder.status === 'dismissed' && ' • Dismissed'}
-                    {reminder.deliveryStatus === 'sent' &&
-                      reminder.lastDeliveredAt &&
-                      ` • Email sent ${formatDateLabel(reminder.lastDeliveredAt)}`}
-                    {reminder.deliveryStatus === 'failed' &&
-                      ` • Delivery failed${
-                        reminder.lastDeliveryError
-                          ? `: ${reminder.lastDeliveryError}`
-                          : ''
-                      }`}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {reminder.status === 'dismissed' ? (
-                    <button
-                      onClick={() => void handleRestoreReminder(reminder)}
-                      disabled={actingReminderIds.has(reminder.id)}
-                      className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      Restore
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => void handleSendReminderNow(reminder)}
-                        disabled={
-                          reminder.status === 'completed' ||
-                          reminder.status === 'dismissed' ||
-                          actingReminderIds.has(reminder.id) ||
-                          sendingReminderIds.has(reminder.id)
-                        }
-                        className="px-3 py-1.5 border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {sendingReminderIds.has(reminder.id)
-                          ? 'Sending...'
-                          : 'Send Email Now'}
-                      </button>
-                      <button
-                        onClick={() => void handleSnoozeReminder(reminder)}
-                        disabled={
-                          reminder.status === 'completed' ||
-                          actingReminderIds.has(reminder.id)
-                        }
-                        className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        Snooze 14 Days
-                      </button>
-                      <button
-                        onClick={() => void handleCompleteReminder(reminder)}
-                        disabled={
-                          reminder.status === 'completed' ||
-                          actingReminderIds.has(reminder.id)
-                        }
-                        className="px-3 py-1.5 bg-slate-700 text-white rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        Complete
-                      </button>
-                      <button
-                        onClick={() => void handleDismissReminder(reminder)}
-                        disabled={
-                          reminder.status === 'completed' ||
-                          actingReminderIds.has(reminder.id)
-                        }
-                        className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        Dismiss
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-            {visibleReminders.length === 0 && (
-              <div className="rounded-md border border-dashed border-slate-300 dark:border-slate-600 p-3 text-sm text-slate-600 dark:text-slate-400">
-                No saved reminders match this filter yet.
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
@@ -1012,7 +996,7 @@ export default function UpcomingTasks() {
                 Saved reminders
               </p>
               <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                {savedReminders.length}
+                {visibleReminders.length}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
@@ -1045,7 +1029,7 @@ export default function UpcomingTasks() {
             </div>
           </div>
 
-          {visibleUpcomingItems.length === 0 ? (
+          {timelineEntries.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">✅</div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
@@ -1054,7 +1038,7 @@ export default function UpcomingTasks() {
               <p className="text-slate-600 dark:text-slate-400">
                 {alertsEnabled
                   ? showAllRecommendations
-                    ? 'No upcoming maintenance recommendations were found for the selected vehicles.'
+                    ? 'No upcoming maintenance recommendations or saved reminders were found for the selected vehicles.'
                     : 'No upcoming maintenance tasks fall inside your current reminder window.'
                   : 'Maintenance alerts are disabled in Profile settings.'}
               </p>
@@ -1081,15 +1065,16 @@ export default function UpcomingTasks() {
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
                   <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-                    Upcoming Maintenance Queue
+                    Upcoming Timeline
                   </h2>
                   <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
-                    {visibleUpcomingItems.length} recommendation
-                    {visibleUpcomingItems.length === 1 ? '' : 's'} in range
+                    {timelineEntries.length} item
+                    {timelineEntries.length === 1 ? '' : 's'} — recommendations
+                    and saved reminders, ordered by estimated due date
                   </p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Due dates are estimated from current mileage and your saved
-                    driving pace. Save reminders whenever you want a manual
+                    driving pace. Save a reminder whenever you want a manual
                     follow-up point, even if the task is still far out.
                   </p>
                   {!hasAiPredictions && (
@@ -1129,132 +1114,318 @@ export default function UpcomingTasks() {
                 </div>
               </div>
 
-              <div className="grid gap-4">
-                {visibleUpcomingItems.map((item, index) => (
-                  <div
-                    key={`${item.vehicle.vin}-${item.serviceType}-${index}`}
-                    className={`border rounded-lg p-6 ${getUrgencyColor(item.milesUntilDue)}`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2 flex-wrap">
-                          <h3 className="font-semibold text-lg m-0">
-                            {item.description}
-                          </h3>
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              item.milesUntilDue <= 1000
-                                ? 'bg-danger-100 text-danger-800'
-                                : item.milesUntilDue <= 5000
-                                  ? 'bg-warning-100 text-warning-800'
-                                  : 'bg-accent-100 text-accent-800'
-                            }`}
-                          >
-                            {getUrgencyLabel(item.milesUntilDue)}
-                          </span>
-                        </div>
+              <div className="relative">
+                <div className="absolute left-24 top-0 bottom-0 w-0.5 bg-slate-300 dark:bg-slate-600"></div>
 
-                        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          <span className="font-medium">
-                            {item.vehicle.year} {item.vehicle.make}{' '}
-                            {item.vehicle.model}
-                          </span>
-                          <span className="mx-2">•</span>
-                          <span>{item.frequency}</span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-300">
-                          <div>
-                            <span className="font-medium">Due at:</span>{' '}
-                            {item.nextDueMileage.toLocaleString()} miles
-                          </div>
-                          <div>
-                            <span className="font-medium">
-                              Miles until due:
-                            </span>{' '}
-                            {item.milesUntilDue.toLocaleString()}
-                          </div>
-                        </div>
-                        {hasAiPredictions && (
-                          <p className="mt-2 mb-0 text-sm text-indigo-800 dark:text-indigo-200">
-                            Predicted due date:{' '}
-                            {estimateDueDateLabel(item.milesUntilDue)}
-                          </p>
-                        )}
-                        {item.milesUntilDue > leadMilesThreshold ? (
-                          <p className="mt-3 mb-0 rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-900">
-                            Outside your current reminder window. You can still
-                            save it now if you want to track it early.
-                          </p>
-                        ) : null}
+                <div className="space-y-6">
+                  {timelineEntries.map(entry => (
+                    <div key={entry.key} className="relative flex items-start">
+                      <div className="w-20 shrink-0 pt-6 pr-2 text-right text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {entry.date ? entry.date.toLocaleDateString() : '—'}
                       </div>
 
-                      <div className="min-w-[14rem]">
-                        <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                          <button
-                            onClick={() => void handleSaveReminder(item)}
-                            disabled={
-                              savedReminderKeys.has(
-                                buildReminderKey(
-                                  item.vehicle.vin,
-                                  item.serviceType
-                                )
-                              ) ||
-                              savingReminderKeys.has(
-                                buildReminderKey(
-                                  item.vehicle.vin,
-                                  item.serviceType
-                                )
-                              )
-                            }
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      <div
+                        className={`shrink-0 w-4 h-4 rounded-full mt-6 ml-2 border-4 border-white dark:border-slate-800 ${
+                          entry.kind === 'recommendation'
+                            ? getUrgencyDotColor(entry.item.milesUntilDue)
+                            : getReminderStatusBadge(entry.item.status).dotColor
+                        }`}
+                      ></div>
+
+                      <div className="ml-8 flex-1">
+                        {entry.kind === 'recommendation' ? (
+                          <div
+                            className={`border rounded-lg p-6 ${getUrgencyColor(entry.item.milesUntilDue)}`}
                           >
-                            {savingReminderKeys.has(
-                              buildReminderKey(
-                                item.vehicle.vin,
-                                item.serviceType
-                              )
-                            )
-                              ? 'Saving...'
-                              : savedReminderKeys.has(
-                                    buildReminderKey(
-                                      item.vehicle.vin,
-                                      item.serviceType
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                  <h3 className="font-semibold text-lg m-0">
+                                    {entry.item.description}
+                                  </h3>
+                                  <span
+                                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                      entry.item.milesUntilDue <= 1000
+                                        ? 'bg-danger-100 text-danger-800'
+                                        : entry.item.milesUntilDue <= 5000
+                                          ? 'bg-warning-100 text-warning-800'
+                                          : 'bg-accent-100 text-accent-800'
+                                    }`}
+                                  >
+                                    {getUrgencyLabel(entry.item.milesUntilDue)}
+                                  </span>
+                                </div>
+
+                                <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                  <span className="font-medium">
+                                    {entry.item.vehicle.year}{' '}
+                                    {entry.item.vehicle.make}{' '}
+                                    {entry.item.vehicle.model}
+                                  </span>
+                                  <span className="mx-2">•</span>
+                                  <span>{entry.item.frequency}</span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                  <div>
+                                    <span className="font-medium">
+                                      Due at:
+                                    </span>{' '}
+                                    {entry.item.nextDueMileage.toLocaleString()}{' '}
+                                    miles
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">
+                                      Miles until due:
+                                    </span>{' '}
+                                    {entry.item.milesUntilDue.toLocaleString()}
+                                  </div>
+                                </div>
+                                {hasAiPredictions && (
+                                  <p className="mt-2 mb-0 text-sm text-indigo-800 dark:text-indigo-200">
+                                    Predicted due date:{' '}
+                                    {estimateDueDateLabel(
+                                      entry.item.milesUntilDue
+                                    )}
+                                  </p>
+                                )}
+                                {entry.item.milesUntilDue >
+                                leadMilesThreshold ? (
+                                  <p className="mt-3 mb-0 rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-900">
+                                    Outside your current reminder window. You
+                                    can still save it now if you want to track
+                                    it early.
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <div className="min-w-[14rem]">
+                                <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                                  <button
+                                    onClick={() =>
+                                      void handleSaveReminder(entry.item)
+                                    }
+                                    disabled={
+                                      savedReminderKeys.has(
+                                        buildReminderKey(
+                                          entry.item.vehicle.vin,
+                                          entry.item.serviceType
+                                        )
+                                      ) ||
+                                      savingReminderKeys.has(
+                                        buildReminderKey(
+                                          entry.item.vehicle.vin,
+                                          entry.item.serviceType
+                                        )
+                                      )
+                                    }
+                                    className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                  >
+                                    {savingReminderKeys.has(
+                                      buildReminderKey(
+                                        entry.item.vehicle.vin,
+                                        entry.item.serviceType
+                                      )
                                     )
-                                  )
-                                ? 'Reminder Saved'
-                                : item.milesUntilDue > leadMilesThreshold
-                                  ? 'Save Reminder Anyway'
-                                  : 'Save Reminder'}
-                          </button>
-                          <button
-                            onClick={() => void handleAddToCalendar(item)}
-                            disabled={savingCalendarKeys.has(
-                              buildReminderKey(
-                                item.vehicle.vin,
-                                item.serviceType
-                              )
-                            )}
-                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                      ? 'Saving...'
+                                      : savedReminderKeys.has(
+                                            buildReminderKey(
+                                              entry.item.vehicle.vin,
+                                              entry.item.serviceType
+                                            )
+                                          )
+                                        ? 'Reminder Saved'
+                                        : entry.item.milesUntilDue >
+                                            leadMilesThreshold
+                                          ? 'Save Reminder Anyway'
+                                          : 'Save Reminder'}
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      void handleAddToCalendar(entry.item)
+                                    }
+                                    disabled={savingCalendarKeys.has(
+                                      buildReminderKey(
+                                        entry.item.vehicle.vin,
+                                        entry.item.serviceType
+                                      )
+                                    )}
+                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                  >
+                                    {savingCalendarKeys.has(
+                                      buildReminderKey(
+                                        entry.item.vehicle.vin,
+                                        entry.item.serviceType
+                                      )
+                                    )
+                                      ? 'Adding...'
+                                      : 'Add to Calendar'}
+                                  </button>
+                                  <p className="m-0 text-xs text-slate-500 dark:text-slate-400 sm:text-right">
+                                    Save a reminder to keep this item tracked
+                                    after you leave this page.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={`border rounded-lg p-6 ${getReminderStatusBadge(entry.item.status).cardClassName}`}
                           >
-                            {savingCalendarKeys.has(
-                              buildReminderKey(
-                                item.vehicle.vin,
-                                item.serviceType
-                              )
-                            )
-                              ? 'Adding...'
-                              : 'Add to Calendar'}
-                          </button>
-                          <p className="m-0 text-xs text-slate-500 dark:text-slate-400 sm:text-right">
-                            Save a reminder first if you want the item to stay
-                            in your Reminder Center after you leave this page.
-                          </p>
-                        </div>
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                  <h3 className="font-semibold text-lg m-0">
+                                    {entry.item.title}
+                                  </h3>
+                                  <span
+                                    className={`px-2 py-1 text-xs font-medium rounded-full ${getReminderStatusBadge(entry.item.status).badgeClassName}`}
+                                  >
+                                    {
+                                      getReminderStatusBadge(entry.item.status)
+                                        .label
+                                    }
+                                  </span>
+                                </div>
+
+                                <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                  <span className="font-medium">
+                                    {vehicleLookup[entry.item.vin]
+                                      ? `${vehicleLookup[entry.item.vin].year} ${vehicleLookup[entry.item.vin].make} ${vehicleLookup[entry.item.vin].model}`
+                                      : `VIN ${entry.item.vin}`}
+                                  </span>
+                                </div>
+
+                                <div className="text-sm text-slate-700 dark:text-slate-300 space-y-1">
+                                  {typeof entry.item.nextDueMileage ===
+                                    'number' && (
+                                    <div>
+                                      <span className="font-medium">
+                                        Due at:
+                                      </span>{' '}
+                                      {entry.item.nextDueMileage.toLocaleString()}{' '}
+                                      miles
+                                    </div>
+                                  )}
+                                  {entry.item.status === 'snoozed' &&
+                                    entry.item.snoozedUntil && (
+                                      <div>
+                                        Snoozed until{' '}
+                                        {formatDateLabel(
+                                          entry.item.snoozedUntil
+                                        )}
+                                      </div>
+                                    )}
+                                  {entry.item.deliveryStatus === 'sent' &&
+                                    entry.item.lastDeliveredAt && (
+                                      <div>
+                                        Email sent{' '}
+                                        {formatDateLabel(
+                                          entry.item.lastDeliveredAt
+                                        )}
+                                      </div>
+                                    )}
+                                  {entry.item.deliveryStatus === 'failed' && (
+                                    <div className="text-danger-600 dark:text-danger-400">
+                                      Delivery failed
+                                      {entry.item.lastDeliveryError
+                                        ? `: ${entry.item.lastDeliveryError}`
+                                        : ''}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="min-w-[14rem]">
+                                <div className="flex flex-wrap items-stretch gap-2 sm:flex-col sm:items-end">
+                                  {entry.item.status === 'dismissed' ? (
+                                    <button
+                                      onClick={() =>
+                                        void handleRestoreReminder(entry.item)
+                                      }
+                                      disabled={actingReminderIds.has(
+                                        entry.item.id
+                                      )}
+                                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                      Restore
+                                    </button>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() =>
+                                          void handleSendReminderNow(
+                                            entry.item
+                                          )
+                                        }
+                                        disabled={
+                                          entry.item.status === 'completed' ||
+                                          entry.item.status === 'dismissed' ||
+                                          actingReminderIds.has(
+                                            entry.item.id
+                                          ) ||
+                                          sendingReminderIds.has(
+                                            entry.item.id
+                                          )
+                                        }
+                                        className="w-full px-3 py-1.5 border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                      >
+                                        {sendingReminderIds.has(entry.item.id)
+                                          ? 'Sending...'
+                                          : 'Send Email Now'}
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          void handleSnoozeReminder(entry.item)
+                                        }
+                                        disabled={
+                                          entry.item.status === 'completed' ||
+                                          actingReminderIds.has(entry.item.id)
+                                        }
+                                        className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                      >
+                                        Snooze 14 Days
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          void handleCompleteReminder(
+                                            entry.item
+                                          )
+                                        }
+                                        disabled={
+                                          entry.item.status === 'completed' ||
+                                          actingReminderIds.has(entry.item.id)
+                                        }
+                                        className="w-full px-3 py-1.5 bg-slate-700 text-white rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                      >
+                                        Complete
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          void handleDismissReminder(
+                                            entry.item
+                                          )
+                                        }
+                                        disabled={
+                                          entry.item.status === 'completed' ||
+                                          actingReminderIds.has(entry.item.id)
+                                        }
+                                        className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                      >
+                                        Dismiss
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
@@ -1266,11 +1437,15 @@ export default function UpcomingTasks() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-warning-200 rounded"></div>
-                    <span>Soon (≤5,000 miles)</span>
+                    <span>Soon (≤5,000 miles) / Snoozed reminder</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-accent-200 rounded"></div>
-                    <span>Upcoming (&gt;5,000 miles)</span>
+                    <span>Upcoming (&gt;5,000 miles) / Completed reminder</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-200"></div>
+                    <span>Active saved reminder</span>
                   </div>
                 </div>
               </div>

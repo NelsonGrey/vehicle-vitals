@@ -1055,10 +1055,13 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         page.getByRole('heading', { name: /^profile$/i })
       ).toBeVisible({ timeout: 15000 });
 
-      // Account & Security (its own page since the Profile split) exposes the
-      // signed-in user's UID, which the consolidation self-merge guard below needs.
-      await page.getByRole('link', { name: /account & security/i }).click();
-      await page.waitForURL(/\/app\/account$/, { timeout: 15000 });
+      // Account & Security (selected inline in the Profile detail panel)
+      // exposes the signed-in user's UID, which the consolidation
+      // self-merge guard below needs.
+      await page.getByRole('button', { name: /account & security/i }).click();
+      await expect(
+        page.getByRole('heading', { name: /^account & security$/i })
+      ).toBeVisible({ timeout: 15000 });
 
       const currentUid = await page.evaluate(() => {
         const cards = Array.from(document.querySelectorAll('div'));
@@ -1072,11 +1075,9 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         return '';
       });
 
-      await page.goto(`${BASE_URL}/app/profile`);
-      await page.getByRole('link', { name: /merge & share garage/i }).click();
-      await page.waitForURL(/\/app\/account-consolidation/, {
-        timeout: 15000,
-      });
+      await page
+        .getByRole('button', { name: /merge & share garage/i })
+        .click();
 
       await expect(
         page.getByRole('heading', { name: /account consolidation/i })
@@ -1100,48 +1101,43 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       ).toBeVisible();
     });
 
-    test('TC-PROFILE-003: Profile hub links navigate to each split settings page', async ({
+    test('TC-PROFILE-003: Profile menu selections populate the detail panel inline', async ({
       page,
     }) => {
       const destinations: Array<{
         link: RegExp;
-        urlPattern: RegExp;
         heading: RegExp;
       }> = [
         {
-          link: /^account & security$/i,
-          urlPattern: /\/app\/account$/,
+          link: /^account & security/i,
           heading: /^account & security$/i,
         },
         {
-          link: /^maintenance alerts$/i,
-          urlPattern: /\/app\/maintenance-alerts$/,
+          link: /^maintenance alerts/i,
           heading: /^maintenance alerts$/i,
         },
         {
-          link: /^merge & share garage$/i,
-          urlPattern: /\/app\/account-consolidation$/,
+          link: /^merge & share garage/i,
           heading: /^merge & share garage$/i,
         },
         {
-          link: /^data & privacy$/i,
-          urlPattern: /\/app\/data-privacy$/,
+          link: /^data & privacy/i,
           heading: /^data & privacy$/i,
         },
       ];
 
-      for (const destination of destinations) {
-        await page.goto(`${BASE_URL}/app/profile`);
-        await page.waitForURL(/\/app\/profile/, { timeout: 15000 });
+      await page.goto(`${BASE_URL}/app/profile`);
+      await page.waitForURL(/\/app\/profile/, { timeout: 15000 });
 
-        await page.getByRole('link', { name: destination.link }).click();
-        await page.waitForURL(destination.urlPattern, { timeout: 15000 });
+      for (const destination of destinations) {
+        await page.getByRole('button', { name: destination.link }).click();
         await expect(
           page.getByRole('heading', { name: destination.heading })
         ).toBeVisible({ timeout: 15000 });
 
-        await page.getByRole('link', { name: /^back$/i }).click();
-        await page.waitForURL(/\/app\/profile$/, { timeout: 15000 });
+        // Selecting a section populates the detail panel in place -- it
+        // must never navigate away from the Profile hub.
+        await expect(page).toHaveURL(/\/app\/profile$/);
       }
     });
   });

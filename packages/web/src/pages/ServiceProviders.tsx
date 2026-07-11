@@ -124,13 +124,10 @@ export default function ServiceProviders() {
   const [savingPreferredId, setSavingPreferredId] = useState<string | null>(
     null
   );
-  const [manualProviderName, setManualProviderName] = useState('');
-  const [manualProviderAddress, setManualProviderAddress] = useState('');
-  const [manualProviderType, setManualProviderType] =
-    useState<ProviderTypeFilter>('repair_shop');
 
   const [pastProviders, setPastProviders] = useState<PastProvider[]>([]);
   const [loadingPastProviders, setLoadingPastProviders] = useState(true);
+  const [activeTab, setActiveTab] = useState<'search' | 'preferred'>('search');
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -340,22 +337,6 @@ export default function ServiceProviders() {
     }
   };
 
-  const handleAddManualPreferredProvider = () => {
-    const name = manualProviderName.trim();
-    if (!name) {
-      setError('Enter a provider name to save it as preferred.');
-      return;
-    }
-    void addPreferredProvider({
-      id: `manual-${Date.now()}-${name.toLowerCase().replace(/\s+/g, '-')}`,
-      name,
-      type: manualProviderType,
-      address: manualProviderAddress.trim() || undefined,
-    });
-    setManualProviderName('');
-    setManualProviderAddress('');
-  };
-
   const locationSearchQuery = useMemo(
     () => buildLocationSearchQuery(normalizeAddress(homeAddress)),
     [homeAddress]
@@ -406,14 +387,33 @@ export default function ServiceProviders() {
     }
   };
 
+  const navItems: Array<{
+    key: 'search' | 'preferred';
+    title: string;
+    description: string;
+  }> = [
+    {
+      key: 'search',
+      title: 'Search',
+      description:
+        'Find nearby repair shops, dealerships, body shops, car washes, and detailers.',
+    },
+    {
+      key: 'preferred',
+      title: `Preferred${preferredProviders.length ? ` (${preferredProviders.length})` : ''}`,
+      description:
+        "Providers you've pinned, plus shops from your service history.",
+    },
+  ];
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-        Service Providers
+        Mechanics
       </h1>
       <p className="text-slate-600 dark:text-slate-300 mt-2 mb-6">
         Find nearby repair shops, dealerships, body shops, car washes, and
-        detailers using your saved address, radius, and preferences.
+        detailers, and keep track of the ones you trust.
       </p>
 
       {status && (
@@ -433,365 +433,388 @@ export default function ServiceProviders() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
-          <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-            Preferred Providers
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+          <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+            Menu
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
-            Pin providers you trust so they're easy to find next time.
-          </p>
-
-          {preferredProviders.length === 0 ? (
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
-              No preferred providers saved yet. Pin one from your search
-              results below, or add one manually.
-            </p>
-          ) : (
-            <div className="space-y-2 mb-4">
-              {preferredProviders.map(provider => (
-                <div
-                  key={provider.id}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3"
+          <div className="space-y-2">
+            {navItems.map(item => {
+              const isSelected = item.key === activeTab;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setActiveTab(item.key)}
+                  aria-current={isSelected}
+                  className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                    isSelected
+                      ? 'border-slate-500 bg-slate-100 dark:border-slate-300 dark:bg-slate-700'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70'
+                  }`}
                 >
-                  <div>
-                    <div className="font-medium text-slate-900 dark:text-slate-100">
-                      ★ {provider.name}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {providerTypeLabels[provider.type] || 'Service provider'}
-                      {provider.address ? ` • ${provider.address}` : ''}
-                    </div>
+                  <div className="font-medium text-slate-900 dark:text-slate-100">
+                    {item.title}
                   </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {item.description}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="lg:col-span-8 space-y-4">
+          {activeTab === 'search' ? (
+            <>
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
+                  Search Preferences
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+                  Save your home-area search settings here, then rerun the
+                  lookup any time you want a fresh nearby-provider list.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label className="text-sm text-slate-700 dark:text-slate-300">
+                    Street
+                    <input
+                      className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
+                      value={homeAddress.street1}
+                      onChange={event =>
+                        setHomeAddress(current => ({
+                          ...current,
+                          street1: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700 dark:text-slate-300">
+                    City
+                    <input
+                      className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
+                      value={homeAddress.city}
+                      onChange={event =>
+                        setHomeAddress(current => ({
+                          ...current,
+                          city: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700 dark:text-slate-300">
+                    State
+                    <input
+                      className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
+                      value={homeAddress.stateProvince}
+                      onChange={event =>
+                        setHomeAddress(current => ({
+                          ...current,
+                          stateProvince: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700 dark:text-slate-300">
+                    Radius (miles)
+                    <input
+                      type="number"
+                      min={5}
+                      max={100}
+                      className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
+                      value={preferredProviderRadiusMiles}
+                      onChange={event =>
+                        setPreferredProviderRadiusMiles(
+                          Math.max(
+                            5,
+                            Math.min(100, Number(event.target.value) || 25)
+                          )
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700 dark:text-slate-300">
+                    Provider Type
+                    <select
+                      className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
+                      value={preferredProviderType}
+                      onChange={event =>
+                        setPreferredProviderType(
+                          event.target.value as ProviderTypeFilter
+                        )
+                      }
+                    >
+                      <option value="all">All</option>
+                      <option value="repair_shop">Repair shops</option>
+                      <option value="dealership">Dealerships</option>
+                      <option value="body_shop">Body shops</option>
+                      <option value="car_wash">Car washes</option>
+                      <option value="detailer">Detailers</option>
+                    </select>
+                  </label>
+                  <label className="text-sm text-slate-700 dark:text-slate-300">
+                    Vehicle Make
+                    <select
+                      className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
+                      value={preferredVehicleMake}
+                      onChange={event =>
+                        setPreferredVehicleMake(event.target.value)
+                      }
+                      disabled={
+                        !garageMakes.length || !preferredProviderUseVehicleMake
+                      }
+                    >
+                      {!garageMakes.length && (
+                        <option value="">No saved makes</option>
+                      )}
+                      {garageMakes.map(make => (
+                        <option key={make} value={make}>
+                          {make}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <label className="inline-flex items-center gap-2 mt-4 text-sm text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={preferredProviderUseVehicleMake}
+                    onChange={event =>
+                      setPreferredProviderUseVehicleMake(event.target.checked)
+                    }
+                  />
+                  Prioritize my saved vehicle make for dealership results
+                </label>
+
+                <div className="mt-4">
                   <button
                     type="button"
-                    onClick={() => void removePreferredProvider(provider.id)}
-                    disabled={savingPreferredId === provider.id}
-                    className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
+                    onClick={() => void runLookup()}
+                    disabled={loading}
+                    className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-md disabled:opacity-60"
                   >
-                    Remove
+                    {loading ? 'Searching...' : 'Find Nearby Providers'}
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input
-              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm"
-              placeholder="Provider name"
-              value={manualProviderName}
-              onChange={event => setManualProviderName(event.target.value)}
-            />
-            <select
-              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm"
-              value={manualProviderType}
-              onChange={event =>
-                setManualProviderType(
-                  event.target.value as ProviderTypeFilter
-                )
-              }
-            >
-              <option value="repair_shop">Repair shop</option>
-              <option value="dealership">Dealership</option>
-              <option value="body_shop">Body shop</option>
-              <option value="car_wash">Car wash</option>
-              <option value="detailer">Detailer</option>
-            </select>
-            <input
-              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm sm:col-span-2"
-              placeholder="Address (optional)"
-              value={manualProviderAddress}
-              onChange={event => setManualProviderAddress(event.target.value)}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleAddManualPreferredProvider}
-            className="mt-2 px-3 py-2 text-sm rounded-md bg-slate-700 hover:bg-slate-800 text-white"
-          >
-            Save as Preferred
-          </button>
-        </div>
+                <p className="text-xs text-slate-500 mt-3 mb-0">
+                  Query: {locationSearchQuery || 'Enter address to search'}
+                </p>
+              </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
-          <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-            Providers You've Used
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
-            Built from the shop/mechanic name saved on maintenance records
-            across your garage.
-          </p>
-
-          {loadingPastProviders ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0">
-              Loading service history…
-            </p>
-          ) : pastProviders.length === 0 ? (
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
-              No past providers yet. Add a "Shop / mechanic name" the next
-              time you log a maintenance record.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {pastProviders.map(provider => {
-                const isPreferred = preferredProviders.some(
-                  p => p.name.toLowerCase() === provider.name.toLowerCase()
-                );
-                return (
-                  <div
-                    key={provider.name}
-                    className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3"
-                  >
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-slate-100">
-                        {provider.name}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {provider.serviceCount} service
-                        {provider.serviceCount === 1 ? '' : 's'}
-                        {provider.lastServiceDate
-                          ? ` • Last ${new Date(provider.lastServiceDate).toLocaleDateString()}`
-                          : ''}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void addPreferredProvider({
-                          id: `used-${provider.name.toLowerCase().replace(/\s+/g, '-')}`,
-                          name: provider.name,
-                          type: 'repair_shop',
-                        })
-                      }
-                      disabled={isPreferred}
-                      className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
-                    >
-                      {isPreferred ? 'Preferred' : 'Save as Preferred'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">
-        <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
-          Search Preferences
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
-          Save your home-area search settings here, then rerun the lookup any
-          time you want a fresh nearby-provider list.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label className="text-sm text-slate-700 dark:text-slate-300">
-            Street
-            <input
-              className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
-              value={homeAddress.street1}
-              onChange={event =>
-                setHomeAddress(current => ({
-                  ...current,
-                  street1: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="text-sm text-slate-700 dark:text-slate-300">
-            City
-            <input
-              className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
-              value={homeAddress.city}
-              onChange={event =>
-                setHomeAddress(current => ({
-                  ...current,
-                  city: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="text-sm text-slate-700 dark:text-slate-300">
-            State
-            <input
-              className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
-              value={homeAddress.stateProvince}
-              onChange={event =>
-                setHomeAddress(current => ({
-                  ...current,
-                  stateProvince: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="text-sm text-slate-700 dark:text-slate-300">
-            Radius (miles)
-            <input
-              type="number"
-              min={5}
-              max={100}
-              className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
-              value={preferredProviderRadiusMiles}
-              onChange={event =>
-                setPreferredProviderRadiusMiles(
-                  Math.max(5, Math.min(100, Number(event.target.value) || 25))
-                )
-              }
-            />
-          </label>
-          <label className="text-sm text-slate-700 dark:text-slate-300">
-            Provider Type
-            <select
-              className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
-              value={preferredProviderType}
-              onChange={event =>
-                setPreferredProviderType(
-                  event.target.value as ProviderTypeFilter
-                )
-              }
-            >
-              <option value="all">All</option>
-              <option value="repair_shop">Repair shops</option>
-              <option value="dealership">Dealerships</option>
-              <option value="body_shop">Body shops</option>
-              <option value="car_wash">Car washes</option>
-              <option value="detailer">Detailers</option>
-            </select>
-          </label>
-          <label className="text-sm text-slate-700 dark:text-slate-300">
-            Vehicle Make
-            <select
-              className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
-              value={preferredVehicleMake}
-              onChange={event => setPreferredVehicleMake(event.target.value)}
-              disabled={!garageMakes.length || !preferredProviderUseVehicleMake}
-            >
-              {!garageMakes.length && <option value="">No saved makes</option>}
-              {garageMakes.map(make => (
-                <option key={make} value={make}>
-                  {make}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <label className="inline-flex items-center gap-2 mt-4 text-sm text-slate-700 dark:text-slate-300">
-          <input
-            type="checkbox"
-            checked={preferredProviderUseVehicleMake}
-            onChange={event =>
-              setPreferredProviderUseVehicleMake(event.target.checked)
-            }
-          />
-          Prioritize my saved vehicle make for dealership results
-        </label>
-
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => void runLookup()}
-            disabled={loading}
-            className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-md disabled:opacity-60"
-          >
-            {loading ? 'Searching...' : 'Find Nearby Providers'}
-          </button>
-        </div>
-
-        <p className="text-xs text-slate-500 mt-3 mb-0">
-          Query: {locationSearchQuery || 'Enter address to search'}
-        </p>
-      </div>
-
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
-            Results
-          </h2>
-          <span className="text-xs text-slate-500 mb-4">
-            Source: {lookupSource}
-          </span>
-        </div>
-
-        {providers.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
-            No providers yet. Run a search to view local options.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {providers.map(provider => (
-              <article
-                key={provider.id}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-base m-0 text-slate-900 dark:text-slate-100">
-                      {provider.name}
-                    </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 mb-0">
-                      {provider.address}
-                    </p>
-                  </div>
-                  <span className="text-xs rounded-full px-2 py-1 bg-slate-100 dark:bg-slate-700">
-                    {providerTypeLabels[provider.type] || 'Service provider'}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
+                    Results
+                  </h2>
+                  <span className="text-xs text-slate-500 mb-4">
+                    Source: {lookupSource}
                   </span>
                 </div>
-                <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                  <p className="m-0">{provider.distanceMiles} miles away</p>
-                  {provider.rating ? (
-                    <p className="m-0">Rating: {provider.rating}</p>
-                  ) : null}
-                  {provider.phone ? (
-                    <p className="m-0">Phone: {provider.phone}</p>
-                  ) : null}
-                  {provider.specialties?.length ? (
-                    <p className="m-0">
-                      Specialties: {provider.specialties.join(', ')}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="mt-3 flex items-center gap-3">
-                  {provider.website ? (
-                    <a
-                      href={provider.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-teal-700 hover:text-teal-800"
-                    >
-                      Visit website
-                    </a>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void addPreferredProvider({
-                        id: provider.id,
-                        name: provider.name,
-                        type: provider.type,
-                        address: provider.address,
-                        phone: provider.phone,
-                        website: provider.website,
-                      })
-                    }
-                    disabled={
-                      savingPreferredId === provider.id ||
-                      preferredProviders.some(p => p.id === provider.id)
-                    }
-                    className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
-                  >
-                    {preferredProviders.some(p => p.id === provider.id)
-                      ? '★ Preferred'
-                      : '☆ Save as Preferred'}
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
+
+                {providers.length === 0 ? (
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
+                    No providers yet. Run a search to view local options.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {providers.map(provider => (
+                      <article
+                        key={provider.id}
+                        className="rounded-lg border border-slate-200 dark:border-slate-700 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-semibold text-base m-0 text-slate-900 dark:text-slate-100">
+                              {provider.name}
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 mb-0">
+                              {provider.address}
+                            </p>
+                          </div>
+                          <span className="text-xs rounded-full px-2 py-1 bg-slate-100 dark:bg-slate-700">
+                            {providerTypeLabels[provider.type] ||
+                              'Service provider'}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                          <p className="m-0">
+                            {provider.distanceMiles} miles away
+                          </p>
+                          {provider.rating ? (
+                            <p className="m-0">Rating: {provider.rating}</p>
+                          ) : null}
+                          {provider.phone ? (
+                            <p className="m-0">Phone: {provider.phone}</p>
+                          ) : null}
+                          {provider.specialties?.length ? (
+                            <p className="m-0">
+                              Specialties: {provider.specialties.join(', ')}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="mt-3 flex items-center gap-3">
+                          {provider.website ? (
+                            <a
+                              href={provider.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm text-teal-700 hover:text-teal-800"
+                            >
+                              Visit website
+                            </a>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void addPreferredProvider({
+                                id: provider.id,
+                                name: provider.name,
+                                type: provider.type,
+                                address: provider.address,
+                                phone: provider.phone,
+                                website: provider.website,
+                              })
+                            }
+                            disabled={
+                              savingPreferredId === provider.id ||
+                              preferredProviders.some(
+                                p => p.id === provider.id
+                              )
+                            }
+                            className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
+                          >
+                            {preferredProviders.some(
+                              p => p.id === provider.id
+                            )
+                              ? '★ Preferred'
+                              : '☆ Save as Preferred'}
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                  Preferred Providers
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+                  Pin providers you trust from search results or your service
+                  history so they're easy to find next time.
+                </p>
+
+                {preferredProviders.length === 0 ? (
+                  <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                    No preferred providers saved yet. Search for nearby
+                    providers or check your service history below to pin one.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {preferredProviders.map(provider => (
+                      <div
+                        key={provider.id}
+                        className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3"
+                      >
+                        <div>
+                          <div className="font-medium text-slate-900 dark:text-slate-100">
+                            ★ {provider.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {providerTypeLabels[provider.type] ||
+                              'Service provider'}
+                            {provider.address ? ` • ${provider.address}` : ''}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void removePreferredProvider(provider.id)
+                          }
+                          disabled={savingPreferredId === provider.id}
+                          className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                  Providers You've Used
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+                  Built from the shop/mechanic name saved on maintenance
+                  records across your garage.
+                </p>
+
+                {loadingPastProviders ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0">
+                    Loading service history…
+                  </p>
+                ) : pastProviders.length === 0 ? (
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
+                    No past providers yet. Add a "Shop / mechanic name" the
+                    next time you log a maintenance record.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {pastProviders.map(provider => {
+                      const isPreferred = preferredProviders.some(
+                        p =>
+                          p.name.toLowerCase() === provider.name.toLowerCase()
+                      );
+                      return (
+                        <div
+                          key={provider.name}
+                          className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3"
+                        >
+                          <div>
+                            <div className="font-medium text-slate-900 dark:text-slate-100">
+                              {provider.name}
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              {provider.serviceCount} service
+                              {provider.serviceCount === 1 ? '' : 's'}
+                              {provider.lastServiceDate
+                                ? ` • Last ${new Date(provider.lastServiceDate).toLocaleDateString()}`
+                                : ''}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void addPreferredProvider({
+                                id: `used-${provider.name.toLowerCase().replace(/\s+/g, '-')}`,
+                                name: provider.name,
+                                type: 'repair_shop',
+                              })
+                            }
+                            disabled={isPreferred}
+                            className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
+                          >
+                            {isPreferred ? 'Preferred' : 'Save as Preferred'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

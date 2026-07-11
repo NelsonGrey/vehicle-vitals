@@ -1,6 +1,6 @@
 project:
   name: vehicle-vitals
-  description: 'Vehicle management app with web and mobile clients, Firebase backend with Data Connect'
+  description: 'Vehicle management app with web and mobile clients, Firebase backend'
   owner: mnelson3
 
 targets:
@@ -55,8 +55,6 @@ targets:
     firestore:
       deploy_rules: true
       deploy_indexes: true
-    dataconnect:
-      enabled: true
 
   docker:
     enabled: false

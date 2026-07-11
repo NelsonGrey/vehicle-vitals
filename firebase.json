@@ -8,11 +8,6 @@
   "storage": {
     "rules": "firebase/storage.rules"
   },
-  "emulators": {
-    "dataconnect": {
-      "dataDir": "dataconnect/.dataconnect/pgliteData"
-    }
-  },
   "functions": [
     {
       "source": "packages/functions",

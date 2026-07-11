@@ -23,7 +23,6 @@
     "test:unit:all": "./scripts/run-unit-tests.sh",
     "test:uat:all": "./scripts/run-uat-tests.sh",
     "export:logo": "node scripts/export-logo.js",
-    "dataconnect:codegen": "node scripts/dataconnect-codegen.js",
     "install:all": "npm install",
     "install:clean": "./tools/clean.sh && ./tools/install.sh",
     "firebase:setup": "./tools/setup-firebase.sh",

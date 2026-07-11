@@ -57,7 +57,6 @@ Supporting packages: `packages/firebase-utils` (admin SDK helpers).
 | [docs/R1_COMPLETION_CHECKLIST.md](docs/R1_COMPLETION_CHECKLIST.md) | R1 gate evidence checklist |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Deployment guide for all environments |
 | [docs/PROD_SETUP_GUIDE.md](docs/PROD_SETUP_GUIDE.md) | Production secrets and environment setup |
-| [docs/DEPLOYMENT_STATUS.md](docs/DEPLOYMENT_STATUS.md) | Current environment status |
 
 **Developer reference**
 

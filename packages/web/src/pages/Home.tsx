@@ -84,6 +84,8 @@ function getPortfolioRequiredProgress(vehicle: Vehicle) {
   const categories = vehicle.documentPortfolio?.categories || [];
   let required = 0;
   let complete = 0;
+  let optionalTotal = 0;
+  let optionalComplete = 0;
 
   categories.forEach(category => {
     (category.items || []).forEach(item => {
@@ -92,11 +94,16 @@ function getPortfolioRequiredProgress(vehicle: Vehicle) {
         if (item.status === 'ready') {
           complete += 1;
         }
+      } else {
+        optionalTotal += 1;
+        if (item.status === 'ready') {
+          optionalComplete += 1;
+        }
       }
     });
   });
 
-  return { complete, required };
+  return { complete, required, optionalComplete, optionalTotal };
 }
 
 export default function Home() {
@@ -672,20 +679,29 @@ export default function Home() {
         ) : (
           <>
             {garageHealthSummary && (
-              <div
-                className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
-                  garageHealthSummary.attentionCount > 0
-                    ? 'bg-warning-50 text-warning-700 dark:bg-warning-950/30 dark:text-warning-200'
-                    : 'bg-accent-50 text-accent-700 dark:bg-accent-950/30 dark:text-accent-200'
-                }`}
-              >
-                <span aria-hidden="true">❤</span>
-                <span>
-                  Garage Health:{' '}
-                  {garageHealthSummary.attentionCount > 0
-                    ? `${garageHealthSummary.attentionCount} of ${garageHealthSummary.total} vehicle${garageHealthSummary.total === 1 ? '' : 's'} may need attention`
-                    : `all ${garageHealthSummary.total} vehicle${garageHealthSummary.total === 1 ? '' : 's'} looking good`}
-                </span>
+              <div className="mb-4">
+                <div
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
+                    garageHealthSummary.attentionCount > 0
+                      ? 'bg-warning-50 text-warning-700 dark:bg-warning-950/30 dark:text-warning-200'
+                      : 'bg-accent-50 text-accent-700 dark:bg-accent-950/30 dark:text-accent-200'
+                  }`}
+                >
+                  <span aria-hidden="true">❤</span>
+                  <span>
+                    Garage Health:{' '}
+                    {garageHealthSummary.attentionCount > 0
+                      ? `${garageHealthSummary.attentionCount} of ${garageHealthSummary.total} vehicle${garageHealthSummary.total === 1 ? '' : 's'} may need attention`
+                      : `all ${garageHealthSummary.total} vehicle${garageHealthSummary.total === 1 ? '' : 's'} looking good`}
+                  </span>
+                </div>
+                <p className="mb-0 mt-1 px-1 text-xs text-slate-500 dark:text-slate-400">
+                  Each score estimates remaining life on key maintenance items
+                  (oil, brakes, tires, fluids) from mileage and logged service
+                  history — a vehicle needs attention below a score of 80.
+                  Logging services as you do them is what keeps this accurate;
+                  select a vehicle below to see exactly what's due.
+                </p>
               </div>
             )}
             <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">

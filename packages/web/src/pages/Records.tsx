@@ -237,7 +237,6 @@ export default function Records() {
     'all' | 'required' | PortfolioItem['status']
   >('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [recordListExpanded, setRecordListExpanded] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -1209,13 +1208,13 @@ export default function Records() {
 
         {flattenedItems.length > 0 && (
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
-            <div className="lg:col-span-4">
-              <CollapsibleSection
-                title="Record List"
-                description="Search and filter this vehicle's document portfolio."
-                collapsed={!recordListExpanded}
-                onToggle={next => setRecordListExpanded(!next)}
-              >
+            <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+              <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-1 px-1">
+                Record List
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-3 px-1">
+                Search and filter this vehicle's document portfolio.
+              </p>
               <div className="mb-3 space-y-2">
                 <input
                   type="search"
@@ -1261,7 +1260,12 @@ export default function Records() {
                     <button
                       key={entry.key}
                       type="button"
-                      onClick={() => setSelectedItemKey(entry.key)}
+                      onClick={() =>
+                        setSelectedItemKey(current =>
+                          current === entry.key ? null : entry.key
+                        )
+                      }
+                      aria-expanded={isSelected}
                       className={`w-full text-left rounded-lg border p-3 transition-colors ${
                         isSelected
                           ? 'border-slate-500 bg-slate-100 dark:bg-slate-700'
@@ -1269,22 +1273,30 @@ export default function Records() {
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
-                          {entry.item.title}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            aria-hidden="true"
+                            className={`shrink-0 text-slate-400 transition-transform ${isSelected ? 'rotate-90' : ''}`}
+                          >
+                            ▶
+                          </span>
+                          <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
+                            {entry.item.title}
+                          </div>
                         </div>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${statusClassMap[entry.item.status]}`}
+                          className={`shrink-0 text-xs px-2 py-1 rounded-full ${statusClassMap[entry.item.status]}`}
                         >
                           {statusLabelMap[entry.item.status]}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 pl-5">
                         {entry.categoryTitle} •{' '}
                         {entry.item.required ? 'Required' : 'Optional'} •{' '}
                         {fileCount} file{fileCount === 1 ? '' : 's'}
                       </div>
-                      {summaryFiles.length > 0 && (
-                        <div className="mt-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-2 space-y-1">
+                      {isSelected && summaryFiles.length > 0 && (
+                        <div className="mt-2 ml-5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-2 space-y-1">
                           {summaryFiles.map((file, summaryIndex) => (
                             <div
                               key={`${file.path || file.url || file.name || 'file'}-${summaryIndex}`}
@@ -1313,15 +1325,10 @@ export default function Records() {
                   </div>
                 )}
               </div>
-              </CollapsibleSection>
             </div>
 
             <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              {!recordListExpanded ? (
-                <p className="text-slate-600 dark:text-slate-400 m-0">
-                  Expand Record List to view details.
-                </p>
-              ) : !selectedEntry ? (
+              {!selectedEntry ? (
                 <p className="text-slate-600 dark:text-slate-400 m-0">
                   Select a record item to view and edit details.
                 </p>

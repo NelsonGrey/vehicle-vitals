@@ -12,7 +12,7 @@ export function AccountSecurityContent() {
     reauthenticateWithGoogle,
     reauthenticateWithApple,
   } = useAuth();
-  const { authService, hasGoogle, hasApple, reauth } = useReauthentication({
+  const { hasGoogle, hasApple, reauth, updatePassword } = useReauthentication({
     user,
     reauthenticateWithGoogle,
     reauthenticateWithApple,
@@ -26,7 +26,7 @@ export function AccountSecurityContent() {
   const [busy, setBusy] = useState(false);
   const [linkingProvider, setLinkingProvider] = useState('');
 
-  if (!user || !authService) return null;
+  if (!user) return null;
 
   const providerLabels = (user.providerData || [])
     .map(provider => {
@@ -86,7 +86,7 @@ export function AccountSecurityContent() {
     setBusy(true);
     try {
       await reauth(currentPassword);
-      await authService.updatePassword(user, newPassword);
+      await updatePassword(user, newPassword);
       setStatus('Password updated successfully.');
       setCurrentPassword('');
       setNewPassword('');

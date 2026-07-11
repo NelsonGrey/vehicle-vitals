@@ -32,19 +32,11 @@ vi.mock('../src/shared/AuthContext', () => ({
   }),
 }));
 
-const MOCK_FIREBASE = {
-  auth: {
-    EmailAuthProvider: { credential: () => ({}) },
-    reauthenticateWithCredential: async () => {},
-    updatePassword: async () => {},
-    getAuth: () => ({}),
-  },
-  app: { getApp: () => ({}), initializeApp: () => ({}) },
-  firestore: {},
-  functions: {},
-  messaging: {},
-  storage: {},
-};
+vi.mock('firebase/auth', () => ({
+  EmailAuthProvider: { credential: vi.fn(() => ({})) },
+  reauthenticateWithCredential: vi.fn(async () => {}),
+  updatePassword: vi.fn(async () => {}),
+}));
 
 function renderPage() {
   return render(
@@ -60,12 +52,10 @@ describe('DataPrivacy', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    vi.stubGlobal('firebase', MOCK_FIREBASE);
     vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   afterEach(() => {
-    vi.stubGlobal('firebase', undefined);
     vi.restoreAllMocks();
     cleanup();
   });

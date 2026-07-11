@@ -1,65 +1,9 @@
-import { useEffect, useState } from 'react';
-
-interface AuthService {
-  EmailAuthProvider: {
-    credential: (email: string, password: string) => unknown;
-  };
-  reauthenticateWithCredential: (
-    user: unknown,
-    credential: unknown
-  ) => Promise<void>;
-  updatePassword: (user: unknown, newPassword: string) => Promise<void>;
-}
-
-declare global {
-  interface Window {
-    firebase: {
-      app: any;
-      auth: any;
-      firestore: any;
-      functions: any;
-      messaging: any;
-      storage: any;
-    };
-  }
-}
-
-const createFirebaseAuthService = async (): Promise<AuthService> => {
-  try {
-    const checkFirebase = () => {
-      return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max
-
-        const check = () => {
-          attempts++;
-          if (window.firebase && window.firebase.auth) {
-            resolve(window.firebase);
-          } else if (attempts >= maxAttempts) {
-            reject(new Error('Firebase SDKs failed to load within timeout'));
-          } else {
-            setTimeout(check, 100);
-          }
-        };
-        check();
-      });
-    };
-
-    const firebase = (await checkFirebase()) as typeof window.firebase;
-    return {
-      EmailAuthProvider: firebase.auth.EmailAuthProvider,
-      reauthenticateWithCredential: firebase.auth.reauthenticateWithCredential,
-      updatePassword: firebase.auth.updatePassword,
-    };
-  } catch (error) {
-    console.warn('Firebase auth not available:', error);
-    return {
-      EmailAuthProvider: { credential: () => ({}) },
-      reauthenticateWithCredential: async () => {},
-      updatePassword: async () => {},
-    };
-  }
-};
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword as firebaseUpdatePassword,
+  type User,
+} from 'firebase/auth';
 
 interface UseReauthenticationArgs {
   user: { email?: string | null } | null;
@@ -74,18 +18,18 @@ interface UseReauthenticationArgs {
  * at call time rather than sharing one field across pages -- that coupling
  * (typing a password to change it also silently populating the account
  * deletion confirmation field) was a real bug in the unsplit page.
+ *
+ * Uses the modular `firebase/auth` SDK directly. An earlier version polled
+ * a `window.firebase` compat global for up to 5s before falling back to a
+ * no-op stub -- that global is never set anywhere in this app, so every
+ * mount silently burned the full 5s timeout (and password changes/exports
+ * silently no-op'd once it fell back).
  */
 export function useReauthentication({
   user,
   reauthenticateWithGoogle,
   reauthenticateWithApple,
 }: UseReauthenticationArgs) {
-  const [authService, setAuthService] = useState<AuthService | null>(null);
-
-  useEffect(() => {
-    createFirebaseAuthService().then(setAuthService);
-  }, []);
-
   const providerIds = (
     (user as { providerData?: Array<{ providerId: string }> } | null)
       ?.providerData || []
@@ -112,15 +56,13 @@ export function useReauthentication({
     if (!user?.email) {
       throw new Error('User email is required for reauthentication');
     }
-    if (!authService) {
-      throw new Error('Authentication service is still loading');
-    }
-    const cred = authService.EmailAuthProvider.credential(
-      user.email,
-      currentPassword
-    );
-    await authService.reauthenticateWithCredential(user, cred);
+    const cred = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user as User, cred);
   };
 
-  return { authService, hasGoogle, hasApple, hasPassword, reauth };
+  const updatePassword = async (targetUser: User, newPassword: string) => {
+    await firebaseUpdatePassword(targetUser, newPassword);
+  };
+
+  return { hasGoogle, hasApple, hasPassword, reauth, updatePassword };
 }

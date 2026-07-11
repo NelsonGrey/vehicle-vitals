@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { useReauthentication } from '../shared/useReauthentication';
 
-export default function AccountSecurity() {
+export function AccountSecurityContent() {
   const {
     user,
     signOut,
@@ -101,27 +101,7 @@ export default function AccountSecurity() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-            Account &amp; Security
-          </h1>
-          <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
-            Signed in as{' '}
-            <strong className="text-slate-900 dark:text-slate-100">
-              {user.email}
-            </strong>
-          </p>
-        </div>
-        <Link
-          to="/app/profile"
-          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
-        >
-          Back
-        </Link>
-      </div>
-
+    <div>
       {status && (
         <div
           className="bg-accent-50 border border-accent-200 text-accent-700 px-4 py-3 rounded-lg mb-6"
@@ -271,6 +251,36 @@ export default function AccountSecurity() {
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+export default function AccountSecurity() {
+  const { user } = useAuth();
+  if (!user) return null;
+
+  return (
+    <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
+            Account &amp; Security
+          </h1>
+          <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
+            Signed in as{' '}
+            <strong className="text-slate-900 dark:text-slate-100">
+              {user.email}
+            </strong>
+          </p>
+        </div>
+        <Link
+          to="/app/profile"
+          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
+        >
+          Back
+        </Link>
+      </div>
+      <AccountSecurityContent />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import {
   type HouseholdGarageStatus,
 } from '../utils/householdGarageService';
 
-export default function AccountConsolidation() {
+export function AccountConsolidationContent() {
   const { user, requestAccountConsolidation, consolidateAccountData } =
     useAuth();
   const [status, setStatus] = useState('');
@@ -190,19 +190,7 @@ export default function AccountConsolidation() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-          Merge &amp; Share Garage
-        </h1>
-        <Link
-          to="/app/profile"
-          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
-        >
-          Back
-        </Link>
-      </div>
-
+    <div>
       {status && (
         <div
           className="bg-accent-50 border border-accent-200 text-accent-700 px-4 py-3 rounded-lg mb-6"
@@ -400,6 +388,25 @@ export default function AccountConsolidation() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export default function AccountConsolidation() {
+  return (
+    <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
+          Merge &amp; Share Garage
+        </h1>
+        <Link
+          to="/app/profile"
+          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
+        >
+          Back
+        </Link>
+      </div>
+      <AccountConsolidationContent />
     </div>
   );
 }

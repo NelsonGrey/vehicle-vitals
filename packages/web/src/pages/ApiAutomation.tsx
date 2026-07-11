@@ -33,7 +33,7 @@ function formatTimestamp(value: unknown): string {
   return typeof value === 'string' ? value : '—';
 }
 
-export default function ApiAutomation() {
+export function ApiAutomationContent() {
   const { user } = useAuth();
   const hasApiAccess = useFeatureFlag('api_access');
   const hasZapierIntegration = useFeatureFlag('zapier_integration');
@@ -158,19 +158,7 @@ export default function ApiAutomation() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-          API &amp; Automation
-        </h1>
-        <Link
-          to="/app/profile"
-          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
-        >
-          Back
-        </Link>
-      </div>
-
+    <div>
       {status && (
         <div
           className="bg-accent-50 border border-accent-200 text-accent-700 px-4 py-3 rounded-lg mb-6"
@@ -331,6 +319,25 @@ export default function ApiAutomation() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+export default function ApiAutomation() {
+  return (
+    <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
+          API &amp; Automation
+        </h1>
+        <Link
+          to="/app/profile"
+          className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"
+        >
+          Back
+        </Link>
+      </div>
+      <ApiAutomationContent />
     </div>
   );
 }

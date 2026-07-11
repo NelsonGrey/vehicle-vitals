@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import { computeVehicleHealthSnapshot } from '@vehicle-vitals/shared';
 import type { UserTier } from '../shared/featureFlags';
 import { formatCurrencyRange } from '../utils/currency';
+import {
+  getGarageCompletenessTierFlag,
+  getGarageCompletenessTierLabel,
+  type GarageCompletenessResult,
+} from '../utils/garageCompleteness';
 import GaugeDial from './charts/GaugeDial';
 
 interface MaintenanceEntry {
@@ -28,6 +33,10 @@ interface Props {
   hasPlanning12mo: boolean;
   hasPlanning36mo: boolean;
   loading?: boolean;
+  /** This vehicle's required-document completeness — drives forecast confidence. */
+  vehicleCompleteness?: { complete: number; required: number };
+  /** Garage-wide completeness, shown as a small secondary tier chip. */
+  garageCompleteness?: GarageCompletenessResult;
 }
 
 function formatPercent(value?: number | null) {
@@ -76,6 +85,8 @@ export default function VehicleHealthPanel({
   hasPlanning12mo,
   hasPlanning36mo,
   loading = false,
+  vehicleCompleteness,
+  garageCompleteness,
 }: Props) {
   const snapshot = computeVehicleHealthSnapshot(vehicle, maintenanceEntries);
   const visibleComponents =
@@ -105,15 +116,21 @@ export default function VehicleHealthPanel({
     <section className="mb-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+          <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
             Vehicle Health
+            {garageCompleteness && garageCompleteness.requiredTotal > 0 && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium normal-case tracking-normal text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                {getGarageCompletenessTierFlag(garageCompleteness.tier)}{' '}
+                {getGarageCompletenessTierLabel(garageCompleteness.tier)} garage
+              </span>
+            )}
           </p>
           <h4 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
             Remaining-life forecast
           </h4>
           <p className="mb-0 mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-            Estimated from mileage and recorded service history. Keep your data
-            current to improve forecast accuracy.
+            Estimated from mileage and recorded service history. Keep this
+            vehicle's records current to improve forecast accuracy.
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
@@ -152,9 +169,27 @@ export default function VehicleHealthPanel({
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Accuracy Tip
+            Record Completeness
           </div>
-          <div className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+          <div className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
+            {vehicleCompleteness && vehicleCompleteness.required > 0
+              ? `${vehicleCompleteness.complete}/${vehicleCompleteness.required} required`
+              : 'No required records yet'}
+          </div>
+          {vehicleCompleteness && vehicleCompleteness.required > 0 && (
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+              <div
+                className="h-full rounded-full bg-accent-500"
+                style={{
+                  width: `${Math.round(
+                    (vehicleCompleteness.complete / vehicleCompleteness.required) *
+                      100
+                  )}%`,
+                }}
+              />
+            </div>
+          )}
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {snapshot.accuracyTip}
           </div>
         </div>

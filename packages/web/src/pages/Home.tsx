@@ -8,7 +8,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { CachedImage } from '../components/CachedImage';
-import GarageCompletenessBadge from '../components/GarageCompletenessBadge';
 import VehicleHealthPanel from '../components/VehicleHealthPanel';
 import { VehicleListItem } from '../components/VehicleListItem';
 import { useAuth } from '../shared/AuthContext';
@@ -925,8 +924,6 @@ export default function Home() {
                           )}
                         </div>
 
-                        <GarageCompletenessBadge result={garageCompleteness} />
-
                         <VehicleHealthPanel
                           vehicle={selectedVehicle}
                           maintenanceEntries={healthEntries}
@@ -934,6 +931,8 @@ export default function Home() {
                           hasPlanning12mo={hasPlanning12mo}
                           hasPlanning36mo={hasPlanning36mo}
                           loading={isLoadingHealth}
+                          vehicleCompleteness={portfolioProgress}
+                          garageCompleteness={garageCompleteness}
                         />
 
                         {/* Upcoming Maintenance */}

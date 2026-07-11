@@ -5694,68 +5694,6 @@ export const applyRetentionPolicyCallable = onCall(async request => {
   }
 });
 
-export const recordSupportActionCallable = onCall(async request => {
-  const actorUid = request.auth?.uid;
-  if (!actorUid) {
-    throw new HttpsError('unauthenticated', 'Missing auth context');
-  }
-
-  requireSuperAdmin(request);
-
-  const orgId = (request.data?.orgId || '').toString().trim();
-  const targetUid = (request.data?.targetUid || '').toString().trim();
-  const action = (request.data?.action || '').toString().trim();
-  const notes = (request.data?.notes || '').toString().trim();
-  const idempotencyKey = (request.data?.idempotencyKey || '').toString();
-
-  if (!orgId || !targetUid || !action) {
-    throw new HttpsError(
-      'invalid-argument',
-      'orgId, targetUid, and action are required'
-    );
-  }
-
-  const reservation = await reserveIdempotencyKey({
-    uid: actorUid,
-    operation: 'recordSupportAction',
-    idempotencyKey,
-  });
-  if (reservation.isReplay) {
-    return reservation.result;
-  }
-
-  try {
-    await writeAuditEvent({
-      orgId,
-      actorUid,
-      action: `support.${action}`,
-      targetType: 'user',
-      targetId: targetUid,
-      details: { notes },
-    });
-
-    const result = {
-      success: true,
-      orgId,
-      targetUid,
-      action,
-    };
-
-    await completeIdempotencyKey(
-      reservation,
-      result as unknown as Record<string, unknown>
-    );
-
-    return result;
-  } catch (error) {
-    await markIdempotencyFailed(
-      reservation,
-      error instanceof Error ? error.message : 'unknown_error'
-    );
-    throw error;
-  }
-});
-
 export const getSupportAccessContextCallable = onCall(async request => {
   if (!request.auth?.uid) {
     throw new HttpsError('unauthenticated', 'Missing auth context');

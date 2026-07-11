@@ -130,6 +130,8 @@ export default function UpcomingTasks() {
   const [vehicleLookup, setVehicleLookup] = useState<Record<string, Vehicle>>(
     {}
   );
+  const [vehicleList, setVehicleList] = useState<Vehicle[]>([]);
+  const [selectedVehicleVins, setSelectedVehicleVins] = useState<string[]>([]);
 
   const buildReminderKey = (vin: string, serviceType?: string) =>
     `${vin}:${serviceType || 'maintenance'}`;
@@ -186,14 +188,27 @@ export default function UpcomingTasks() {
 
         const vehicles = await getVehicles();
         const nextVehicleLookup: Record<string, Vehicle> = {};
+        const nextVehicleList: Vehicle[] = [];
         vehicles.forEach(vehicle => {
-          nextVehicleLookup[vehicle.vin] = {
+          const summary = {
             vin: vehicle.vin,
             make: vehicle.make,
             model: vehicle.model,
             year: vehicle.year,
             mileage: vehicle.mileage,
           };
+          nextVehicleLookup[vehicle.vin] = summary;
+          nextVehicleList.push(summary);
+        });
+        setVehicleList(nextVehicleList);
+        setSelectedVehicleVins(current => {
+          if (selectedVin) {
+            return [selectedVin];
+          }
+          if (current.length > 0) {
+            return current;
+          }
+          return nextVehicleList.map(vehicle => vehicle.vin);
         });
 
         const allUpcoming: UpcomingItem[] = [];
@@ -596,8 +611,14 @@ export default function UpcomingTasks() {
     ).length,
   } as const;
 
+  const selectedVehicleVinSet = new Set(
+    selectedVehicleVins.map(vin => vin.toUpperCase())
+  );
+  const isVehicleSelected = (vin: string) =>
+    selectedVehicleVinSet.has(vin.toUpperCase());
+
   const visibleReminders = savedReminders.filter(reminder => {
-    if (selectedVin && reminder.vin.toUpperCase() !== selectedVin) {
+    if (!isVehicleSelected(reminder.vin)) {
       return false;
     }
 
@@ -607,7 +628,7 @@ export default function UpcomingTasks() {
 
   const visibleUpcomingItems = alertsEnabled
     ? upcomingItems.filter(item => {
-        if (selectedVin && item.vehicle.vin.toUpperCase() !== selectedVin) {
+        if (!isVehicleSelected(item.vehicle.vin)) {
           return false;
         }
 
@@ -623,7 +644,7 @@ export default function UpcomingTasks() {
 
   const selectedVehicle = selectedVin ? vehicleLookup[selectedVin] : undefined;
   const recommendationsOutsideWindow = upcomingItems.filter(item => {
-    if (selectedVin && item.vehicle.vin.toUpperCase() !== selectedVin) {
+    if (!isVehicleSelected(item.vehicle.vin)) {
       return false;
     }
 
@@ -634,12 +655,28 @@ export default function UpcomingTasks() {
   }).length;
 
   const recommendationsBeyondPlanWindow = upcomingItems.filter(item => {
-    if (selectedVin && item.vehicle.vin.toUpperCase() !== selectedVin) {
+    if (!isVehicleSelected(item.vehicle.vin)) {
       return false;
     }
 
     return item.milesUntilDue > planningHorizonMiles;
   }).length;
+
+  const toggleVehicleSelection = (vin: string) => {
+    setSelectedVehicleVins(current =>
+      current.includes(vin)
+        ? current.filter(selectedVin => selectedVin !== vin)
+        : [...current, vin]
+    );
+  };
+
+  const selectAllVehicles = () => {
+    setSelectedVehicleVins(vehicleList.map(vehicle => vehicle.vin));
+  };
+
+  const clearVehicleSelection = () => {
+    setSelectedVehicleVins([]);
+  };
 
   const getUrgencyColor = (milesUntilDue: number) => {
     if (milesUntilDue <= 1000) return 'text-danger-600 bg-danger-50 border-danger-200';
@@ -710,6 +747,50 @@ export default function UpcomingTasks() {
             time and average daily driving. You can still reveal everything and
             save a reminder early when you want more manual control.
           </p>
+
+          {vehicleList.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2 px-1">
+                Vehicles
+              </p>
+              <div className="flex flex-wrap gap-2 mb-2 px-1">
+                <button
+                  type="button"
+                  onClick={selectAllVehicles}
+                  className="px-2.5 py-1 text-xs rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                >
+                  All Vehicles
+                </button>
+                <button
+                  type="button"
+                  onClick={clearVehicleSelection}
+                  className="px-2.5 py-1 text-xs rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-1 px-1 pr-2">
+                {vehicleList.map(vehicle => {
+                  const selected = selectedVehicleVins.includes(vehicle.vin);
+                  return (
+                    <button
+                      key={vehicle.vin}
+                      type="button"
+                      onClick={() => toggleVehicleSelection(vehicle.vin)}
+                      className={`w-full text-left px-2.5 py-2 text-xs rounded-lg border transition-colors ${
+                        selected
+                          ? 'border-slate-700 bg-slate-100 dark:border-slate-300 dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {!hasAdvancedReminders && (
             <div className="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
               Advanced reminder timing controls are available on Pro and Premium
@@ -914,6 +995,9 @@ export default function UpcomingTasks() {
         </div>
 
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Detail
+          </p>
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
               <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">

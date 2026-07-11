@@ -18,6 +18,8 @@ import {
   getMaintenanceEntries,
 } from '../shared/firestoreService';
 import { buildDocumentSummary } from '../utils/documentAnalysisSummary';
+import { formatCurrencyCompact } from '../utils/currency';
+import WheelBreakdownChart from './charts/WheelBreakdownChart';
 
 // ─── types ─────────────────────────────────────────────────────────────────
 
@@ -80,10 +82,7 @@ interface CostBreakdown {
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
-function formatCurrency(n: number): string {
-  if (n >= 1000) return `$${(n / 1000).toFixed(1)}k`;
-  return `$${n.toFixed(0)}`;
-}
+const formatCurrency = formatCurrencyCompact;
 
 function monthsBetween(dateA: string, dateB: string): number {
   const a = new Date(dateA);
@@ -222,16 +221,15 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
   // ── category breakdown for bar chart ────────────────────────────────────
 
   const breakdown: CostBreakdown[] = [
-    { label: 'Purchase', amount: purchasePrice, color: 'bg-blue-500' },
-    { label: 'Financing', amount: loanPaidTotal, color: 'bg-indigo-400' },
-    { label: 'Service', amount: maintTotal, color: 'bg-accent-500' },
-    { label: 'Insurance', amount: insuranceAnnual, color: 'bg-warning-400' },
-    { label: 'Fuel', amount: fuelTotal, color: 'bg-warning-400' },
-    { label: 'Registration', amount: registrationTotal, color: 'bg-slate-400' },
-    { label: 'Inspection', amount: inspectionTotal, color: 'bg-purple-400' },
+    { label: 'Purchase', amount: purchasePrice, color: '#3b82f6' },
+    { label: 'Financing', amount: loanPaidTotal, color: '#818cf8' },
+    { label: 'Service', amount: maintTotal, color: '#22c55e' },
+    { label: 'Insurance', amount: insuranceAnnual, color: '#f59e0b' },
+    { label: 'Fuel', amount: fuelTotal, color: '#fbbf24' },
+    { label: 'Registration', amount: registrationTotal, color: '#94a3b8' },
+    { label: 'Inspection', amount: inspectionTotal, color: '#a78bfa' },
   ].filter(c => c.amount > 0);
 
-  const maxAmount = Math.max(...breakdown.map(c => c.amount), 1);
   const monthlyAvg = hasData ? totalCOO / elapsedMonths : 0;
 
   const documentInsights = analyses
@@ -302,30 +300,18 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
         />
       </div>
 
-      {/* ── cost breakdown bar chart ── */}
+      {/* ── cost breakdown wheel chart ── */}
       {breakdown.length > 0 && (
         <div>
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
             Cost Breakdown
           </p>
-          <div className="space-y-1.5">
-            {breakdown.map(b => (
-              <div key={b.label} className="flex items-center gap-2">
-                <span className="w-20 text-xs text-slate-600 dark:text-slate-400 truncate">
-                  {b.label}
-                </span>
-                <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${b.color}`}
-                    style={{ width: `${(b.amount / maxAmount) * 100}%` }}
-                  />
-                </div>
-                <span className="w-12 text-right text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {formatCurrency(b.amount)}
-                </span>
-              </div>
-            ))}
-          </div>
+          <WheelBreakdownChart
+            segments={breakdown}
+            formatAmount={formatCurrency}
+            centerValue={formatCurrency(totalCOO)}
+            centerLabel="Total"
+          />
         </div>
       )}
 

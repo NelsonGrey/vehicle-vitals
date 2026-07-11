@@ -93,6 +93,7 @@ const BASE_INSIGHTS = {
   estimatedValueRealized: 3000,
   estimatedPaidToDate: 5106,
   upcomingPaymentDates: ['6/1/2026'],
+  maintenanceBreakdown: [{ label: 'Oil Change', amount: 250 }],
 };
 
 function renderRecords() {

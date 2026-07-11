@@ -4,10 +4,11 @@ import {
   computeVehicleHealthSnapshot,
   getUpcomingMaintenance,
 } from '@vehicle-vitals/shared';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
 import { CachedImage } from '../components/CachedImage';
+import GarageCompletenessBadge from '../components/GarageCompletenessBadge';
 import VehicleHealthPanel from '../components/VehicleHealthPanel';
 import { VehicleListItem } from '../components/VehicleListItem';
 import { useAuth } from '../shared/AuthContext';
@@ -23,6 +24,7 @@ import {
   updateVehicle,
 } from '../shared/firestoreService';
 import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
+import { computeGarageCompleteness } from '../utils/garageCompleteness';
 import { getHouseholdGarageStatus } from '../utils/householdGarageService';
 import {
   buildPersistedVinInsights,
@@ -129,6 +131,10 @@ export default function Home() {
   // the list.
   const MAX_HEALTH_BADGE_FETCHES = 50;
   const healthFetchInFlightRef = useRef<Set<string>>(new Set());
+  const garageCompleteness = useMemo(
+    () => computeGarageCompleteness(vehicles),
+    [vehicles]
+  );
 
   const applyVehiclePage = useCallback(
     (
@@ -918,6 +924,8 @@ export default function Home() {
                             </span>
                           )}
                         </div>
+
+                        <GarageCompletenessBadge result={garageCompleteness} />
 
                         <VehicleHealthPanel
                           vehicle={selectedVehicle}

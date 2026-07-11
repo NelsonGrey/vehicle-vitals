@@ -6,6 +6,9 @@ interface CollapsibleSectionProps {
   description?: string;
   headerRight?: ReactNode;
   defaultCollapsed?: boolean;
+  /** Controlled mode: when provided (with onToggle), overrides internal state. */
+  collapsed?: boolean;
+  onToggle?: (collapsed: boolean) => void;
   children: ReactNode;
 }
 
@@ -14,9 +17,20 @@ export default function CollapsibleSection({
   description,
   headerRight,
   defaultCollapsed = false,
+  collapsed: collapsedProp,
+  onToggle,
   children,
 }: CollapsibleSectionProps) {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
+  const collapsed = collapsedProp ?? internalCollapsed;
+  const setCollapsed = (updater: (current: boolean) => boolean) => {
+    const next = updater(collapsed);
+    if (onToggle) {
+      onToggle(next);
+    } else {
+      setInternalCollapsed(next);
+    }
+  };
 
   return (
     <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">

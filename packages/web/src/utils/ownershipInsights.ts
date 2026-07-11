@@ -35,7 +35,15 @@ export type OwnershipInsights = {
   estimatedValueRealized?: number;
   estimatedPaidToDate?: number;
   upcomingPaymentDates: string[];
+  maintenanceBreakdown: Array<{ label: string; amount: number }>;
 };
+
+function formatServiceTypeLabel(raw: string): string {
+  if (!raw) return 'Other';
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
 
 function parseAmount(value: unknown): number | undefined {
   if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) {
@@ -133,6 +141,22 @@ export function computeOwnershipInsights(
     .sort()
     .reverse()[0];
 
+  const maintenanceByType = new Map<string, number>();
+  for (const file of maintenanceFiles) {
+    const amount = parseAmount(file.analysis?.extracted?.totalCost);
+    if (!amount) continue;
+    const label = formatServiceTypeLabel(
+      file.analysis?.extracted?.serviceType ||
+        file.analysis?.extracted?.documentCategory ||
+        ''
+    );
+    maintenanceByType.set(label, (maintenanceByType.get(label) || 0) + amount);
+  }
+  const maintenanceBreakdown = Array.from(
+    maintenanceByType,
+    ([label, amount]) => ({ label, amount })
+  ).sort((a, b) => b.amount - a.amount);
+
   const financeFiles = analyzedFiles.filter(isFinanceDocument);
   const monthlyPayments = financeFiles
     .map(file => {
@@ -223,5 +247,6 @@ export function computeOwnershipInsights(
       estimatedMonthlyPayment && estimatedMonthlyPayment > 0
         ? buildUpcomingPaymentDates()
         : [],
+    maintenanceBreakdown,
   };
 }

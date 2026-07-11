@@ -818,7 +818,7 @@ export default function UpcomingTasks() {
         </div>
       )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
           <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
             Reminder Center
@@ -978,7 +978,7 @@ export default function UpcomingTasks() {
           </p>
         </div>
 
-        <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Detail
           </p>

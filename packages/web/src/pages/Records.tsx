@@ -1208,7 +1208,7 @@ export default function Records() {
         )}
 
         {flattenedItems.length > 0 && (
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
             <div className="lg:col-span-4">
               <CollapsibleSection
                 title="Record List"
@@ -1316,7 +1316,7 @@ export default function Records() {
               </CollapsibleSection>
             </div>
 
-            <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
               {!recordListExpanded ? (
                 <p className="text-slate-600 dark:text-slate-400 m-0">
                   Expand Record List to view details.

@@ -465,7 +465,7 @@ export default function ServiceProviders() {
           </div>
         </div>
 
-        <div className="lg:col-span-8 space-y-4">
+        <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto space-y-4">
           {activeTab === 'search' ? (
             <>
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">

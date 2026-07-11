@@ -421,7 +421,6 @@ console.log(shouldShowAd('header', 'premium')); // Should be false
 - **Subscription Schema**: `packages/web/src/shared/subscriptionService.ts` (comments)
 - **Ad Placements Config**: `packages/web/src/shared/adPlacements.ts`
 - **Strategy & Rationale**: `docs/MONETIZATION_STRATEGY.md`
-- **Phase 1 Status**: `docs/PHASE1_IMPLEMENTATION_STATUS.md`
 - **Implementation Roadmap**: `docs/MONETIZATION_IMPLEMENTATION.md`
 
 ---

@@ -208,14 +208,26 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
   let inspectionTotal = 0;
   let registrationTotal = 0;
 
+  let nonUsdSkipped = 0;
+
   for (const a of analyses) {
     // Files attached to a logged Maintenance entry already contribute to
-    // maintTotal via that entry's own `cost` field — classifying them here
-    // too would double-count the same service.
+    // maintTotal via that entry's own `cost` field — classifying them too
+    // would double-count the same service.
     if (a.isMaintenanceAttachment) continue;
 
     const cost = a.extracted?.totalCost ?? 0;
     if (!(cost > 0)) continue;
+
+    // This app doesn't do currency conversion — summing a non-USD amount
+    // as if it were USD would silently misstate every total it touches.
+    // Better to exclude it (and say so) than pretend a mixed-currency sum
+    // is meaningful.
+    const currency = a.extracted?.currency;
+    if (currency && currency !== 'USD') {
+      nonUsdSkipped += 1;
+      continue;
+    }
 
     // Classify by the portfolio item the user actually filed the document
     // under, not by guessing from the storage path/filename — a keyword
@@ -282,9 +294,15 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
   // loanMonthly/insuranceAnnual are checked directly (not just via
   // totalCOO) because a detected-but-unprorated financing payment
   // contributes 0 to totalCOO when purchase date is unknown — that's still
-  // real data worth surfacing (with a note), not an empty state.
+  // real data worth surfacing (with a note), not an empty state. Same for
+  // nonUsdSkipped — an excluded non-USD document is real data too, just
+  // not one this app can safely total.
   const hasData =
-    totalCOO > 0 || maintTotal > 0 || loanMonthly > 0 || insuranceAnnual > 0;
+    totalCOO > 0 ||
+    maintTotal > 0 ||
+    loanMonthly > 0 ||
+    insuranceAnnual > 0 ||
+    nonUsdSkipped > 0;
 
   // ── category breakdown for bar chart ────────────────────────────────────
 
@@ -375,6 +393,14 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
         <p className="text-xs text-warning-700 dark:text-warning-400">
           Add this vehicle's purchase date to include financing paid to date
           and a full multi-year insurance estimate in these totals.
+        </p>
+      )}
+
+      {nonUsdSkipped > 0 && (
+        <p className="text-xs text-warning-700 dark:text-warning-400">
+          {nonUsdSkipped} document{nonUsdSkipped === 1 ? '' : 's'} in a
+          non-USD currency {nonUsdSkipped === 1 ? 'was' : 'were'} excluded
+          from these totals — this app doesn't convert currencies.
         </p>
       )}
 

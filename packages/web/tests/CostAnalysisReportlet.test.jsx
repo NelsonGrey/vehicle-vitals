@@ -206,4 +206,49 @@ describe('CostAnalysisReportlet cost classification', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('Financing')).not.toBeInTheDocument();
   });
+
+  it('excludes a non-USD document from totals instead of summing mismatched currencies', async () => {
+    getMaintenanceEntries.mockResolvedValue([]);
+    getAttachmentAnalyses.mockResolvedValue([
+      {
+        storagePath: 'vehicles/VIN001/records/registration/fee.pdf',
+        extracted: {
+          documentCategory: 'receipt',
+          totalCost: 300,
+          currency: 'EUR',
+        },
+      },
+    ]);
+
+    const vehicle = {
+      ...VEHICLE,
+      documentPortfolio: {
+        categories: [
+          {
+            key: 'ownership',
+            items: [
+              {
+                id: 'registration',
+                files: [
+                  { path: 'vehicles/VIN001/records/registration/fee.pdf' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    render(<CostAnalysisReportlet vehicle={vehicle} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/non-USD currency/i)
+      ).toBeInTheDocument();
+    });
+
+    // Regression: a non-USD amount was previously summed as if it were
+    // USD — the $300 EUR figure must not appear anywhere in the totals.
+    expect(screen.queryByText('$300.0')).not.toBeInTheDocument();
+  });
 });

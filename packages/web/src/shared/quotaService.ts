@@ -1,6 +1,6 @@
 /**
  * Quota Service
- * Manages and enforces tier-based quotas (uploads, AI analyses, etc.)
+ * Read-only view of tier-based quota usage (uploads, AI analyses, etc.).
  *
  * Firestore schema:
  * users/{userId}/quotas/{month}
@@ -12,11 +12,16 @@
  *   aiAnalysesLimit: 5,
  *   resetDate: timestamp
  * }
+ *
+ * Quota documents are created and incremented server-side (see
+ * packages/functions/src/quota.provider.ts) — Firestore rules block client
+ * writes to this collection (firebase/firestore.rules), since a modified
+ * client could otherwise grant itself unlimited quota by editing its own
+ * document. This module only reads.
  */
 
-import { Timestamp, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import type { UserTier } from './featureFlags';
-import { getQuotaLimit } from './featureFlags';
 import { db } from './firebaseConfig';
 
 export type QuotaType =
@@ -56,46 +61,19 @@ function getQuotaDocRef(
 }
 
 /**
- * Initialize quota document for current month
+ * Fallback reset date (next month) for display purposes when no quota
+ * document exists yet (i.e. no usage recorded this month so far).
  */
-export async function initializeMonthlyQuota(
-  userId: string,
-  tier: UserTier
-): Promise<void> {
-  const monthKey = getCurrentMonthKey();
-  const quotaRef = getQuotaDocRef(userId, monthKey);
-
-  // Check if already initialized
-  const existingQuota = await getDoc(quotaRef);
-  if (existingQuota.exists()) {
-    return; // Already initialized
-  }
-
-  // Calculate reset date (next month, same day)
+function defaultResetDate(): Date {
   const nextMonth = new Date();
   nextMonth.setMonth(nextMonth.getMonth() + 1);
-
-  const quotaData = {
-    month: monthKey,
-    tier,
-    receiptsUploaded: 0,
-    receiptsLimit: getQuotaLimit('receiptUpload', tier) || 10,
-    aiAnalysesUsed: 0,
-    aiAnalysesLimit: getQuotaLimit('ai_analysis', tier) || 0,
-    customIntegrationsCalled: 0,
-    customIntegrationsLimit: getQuotaLimit('customIntegration', tier) || 0,
-    apiCallsUsed: 0,
-    apiCallsLimit: getQuotaLimit('apiCalls', tier) || 0,
-    resetDate: Timestamp.fromDate(nextMonth),
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  };
-
-  await setDoc(quotaRef, quotaData);
+  return nextMonth;
 }
 
 /**
- * Check current quota usage for a quota type
+ * Check current quota usage for a quota type. Read-only — if no quota
+ * document exists yet for this month, that means zero usage so far (the
+ * server creates the document on first use), not an error.
  */
 export async function getQuotaUsage(
   userId: string,
@@ -105,16 +83,9 @@ export async function getQuotaUsage(
   const monthKey = getCurrentMonthKey();
   const quotaRef = getQuotaDocRef(userId, monthKey);
 
-  let quotaDoc = await getDoc(quotaRef);
-
-  // If quota document doesn't exist, initialize it
-  if (!quotaDoc.exists()) {
-    await initializeMonthlyQuota(userId, tier);
-    quotaDoc = await getDoc(quotaRef);
-  }
-
+  const quotaDoc = await getDoc(quotaRef);
   const data = quotaDoc.data() || {};
-  const resetDate = data.resetDate?.toDate() || new Date();
+  const resetDate = data.resetDate?.toDate() || defaultResetDate();
 
   // Map quota type to field names
   let used = 0;
@@ -168,40 +139,6 @@ export async function hasQuotaAvailable(
 
   const usage = await getQuotaUsage(userId, quotaType, tier);
   return usage.remainingInCycle > 0;
-}
-
-/**
- * Increment quota usage
- * Should only be called by backend/Cloud Functions
- */
-export async function incrementQuotaUsage(
-  userId: string,
-  quotaType: QuotaType,
-  amount: number = 1
-): Promise<void> {
-  const monthKey = getCurrentMonthKey();
-  const quotaRef = getQuotaDocRef(userId, monthKey);
-
-  const fieldMap: Record<QuotaType, string> = {
-    receiptsUpload: 'receiptsUploaded',
-    aiAnalysis: 'aiAnalysesUsed',
-    customIntegration: 'customIntegrationsCalled',
-    apiCalls: 'apiCallsUsed',
-  };
-
-  const fieldName = fieldMap[quotaType];
-
-  try {
-    const currentUsage = (await getDoc(quotaRef)).data()?.[fieldName] || 0;
-
-    await updateDoc(quotaRef, {
-      [fieldName]: currentUsage + amount,
-      updatedAt: Timestamp.now(),
-    });
-  } catch (error) {
-    console.error(`Error incrementing quota ${quotaType}:`, error);
-    throw error;
-  }
 }
 
 /**

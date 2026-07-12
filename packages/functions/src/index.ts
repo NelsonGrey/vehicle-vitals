@@ -30,6 +30,7 @@ import {
 } from './integration.cache';
 import { getIntegrationConfig } from './integrations.config';
 import { lookupOwnerManuals } from './manuals.provider';
+import { consumeQuota } from './quota.provider';
 import { enforceRateLimit, requireAuthenticatedUser } from './request.guards';
 import { buildMaintenancePlan } from './schedule.provider';
 import { lookupWarrantySummary } from './warranty.provider';
@@ -1732,6 +1733,12 @@ async function upsertAttachmentAnalysis(params: {
   // separate caller to validate against — the object path itself is the
   // source of truth — so it omits this.
   requireCallerMembership?: boolean;
+  // True for analyzeAttachmentTextCallable (a user explicitly asked for
+  // analysis and can be told "no" outright). False/omitted for the storage
+  // finalize trigger, which can't reject an upload that already
+  // happened — it degrades to heuristic-only analysis instead and marks
+  // the result as quota-skipped.
+  throwOnQuotaExceeded?: boolean;
 }) {
   const {
     uid,
@@ -1744,6 +1751,7 @@ async function upsertAttachmentAnalysis(params: {
     forceOcrText,
     skipGemini,
     requireCallerMembership,
+    throwOnQuotaExceeded,
   } = params;
 
   const pathContext = parseAttachmentPath(objectPath);
@@ -1797,11 +1805,37 @@ async function upsertAttachmentAnalysis(params: {
     'image/gif',
   ];
   const mimeForGemini = (contentType || '').toLowerCase();
-  const canUseGemini =
+  let canUseGemini =
     !skipGemini &&
     !forceOcrText &&
     effectiveBucket &&
     (geminiEnabledMimes.includes(mimeForGemini) || mimeForGemini === '');
+
+  // Quota is per-user (see quota.provider.ts); org-owned garages have no
+  // per-user quota concept today, so org-scoped attachments are exempt
+  // rather than silently blocked against a nonexistent quota.
+  let quotaExceeded = false;
+  if (canUseGemini && pathContext.ownerType === 'user') {
+    const entitlements = await resolveEffectiveEntitlements(uid);
+    const quota = await consumeQuota(uid, entitlements.tier, 'aiAnalysis');
+    if (!quota.allowed) {
+      quotaExceeded = true;
+      canUseGemini = false;
+      logger.warn('AI analysis quota exceeded', {
+        uid,
+        tier: entitlements.tier,
+        used: quota.used,
+        limit: quota.limit,
+      });
+      if (throwOnQuotaExceeded) {
+        throw new HttpsError(
+          'resource-exhausted',
+          `AI analysis quota exceeded for this month (${quota.used}/${quota.limit}). ` +
+            'Upgrade your plan or wait for next month\'s reset.'
+        );
+      }
+    }
+  }
 
   if (canUseGemini && effectiveBucket) {
     logger.info('Running Gemini analysis', { objectPath, contentType });
@@ -1839,6 +1873,7 @@ async function upsertAttachmentAnalysis(params: {
     extracted,
     confidence,
     sourceText,
+    skipped: quotaExceeded ? 'quota_exceeded' : null,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     processedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
@@ -1987,6 +2022,7 @@ export const analyzeAttachmentTextCallable = onCall(
       contentType: (contentType || '').trim() || null,
       forceOcrText: normalizedText || undefined,
       requireCallerMembership: true,
+      throwOnQuotaExceeded: true,
     });
 
     return {

@@ -74,9 +74,27 @@ service cloud.firestore {
       allow read: if false; // No public reads for privacy
     }
 
-    // Authenticated user data - users can only access their own data
+    // Authenticated user data - users can only access their own data.
+    // quotas/ and subscription/ are carved out of write access below: they
+    // are server-computed (AI-analysis usage limits, premium tier/billing
+    // state) and must never be directly writable by the client SDK — a
+    // modified client could otherwise grant itself unlimited quota or a
+    // premium tier by editing its own document. Read access is unaffected
+    // so the UI can still display current usage/tier.
     match /users/{userId}/{document=**} {
-      allow read, write: if isSelf(userId);
+      allow read: if isSelf(userId);
+      allow write: if isSelf(userId)
+        && !(document.size() > 0 && document[0] in ['quotas', 'subscription']);
+    }
+
+    match /users/{userId}/quotas/{month} {
+      allow read: if isSelf(userId);
+      allow write: if false; // Managed via Cloud Functions
+    }
+
+    match /users/{userId}/subscription/{document} {
+      allow read: if isSelf(userId);
+      allow write: if false; // Managed via Cloud Functions
     }
 
     // Organization-scoped enterprise model

@@ -1,16 +1,13 @@
 /**
  * Subscription Service
- * Manages user subscription state, tier, and status
- * Syncs with Firestore and provides reactive hooks
+ * Read-only view of user subscription state, tier, and status. Tier
+ * changes are managed server-side (Cloud Functions) — Firestore rules
+ * block client writes to users/{uid}/subscription/** (firebase/firestore.rules),
+ * since a modified client could otherwise grant itself a premium tier by
+ * editing its own document.
  */
 
-import {
-  doc,
-  getDoc,
-  onSnapshot,
-  Timestamp,
-  updateDoc,
-} from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import type { UserTier } from './featureFlags';
 import { db } from './firebaseConfig';
 
@@ -181,29 +178,6 @@ export function getDaysUntilRenewal(sub: SubscriptionData): number {
   const daysMs = renewalDate.getTime() - now.getTime();
 
   return Math.ceil(daysMs / (1000 * 60 * 60 * 24));
-}
-
-/**
- * Update subscription tier (backend-only, called by Cloud Functions)
- * @internal - For backend use only, not to be called from client
- */
-export async function updateSubscriptionTier(
-  userId: string,
-  tier: UserTier,
-  metadata: Partial<SubscriptionData>
-): Promise<void> {
-  try {
-    const subDocRef = doc(db, 'users', userId, 'subscription', 'current');
-
-    await updateDoc(subDocRef, {
-      tier,
-      ...metadata,
-      updatedAt: Timestamp.now(),
-    });
-  } catch (error) {
-    console.error('Error updating subscription tier:', error);
-    throw error;
-  }
 }
 
 /**

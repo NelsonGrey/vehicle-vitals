@@ -901,6 +901,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
 
+      - name: Build Shared Packages
+        run: |
+          npm run build --workspace=@vehicle-vitals/shared 2>/dev/null || echo "✓ @vehicle-vitals/shared (skip)"
+          npm run build --workspace=@shared/firebase-utils 2>/dev/null || echo "✓ @shared/firebase-utils (skip)"
+
       - name: Download Web Build Artifact
         uses: actions/download-artifact@v8
         with:

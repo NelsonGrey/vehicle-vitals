@@ -13,6 +13,18 @@
     "./types": {
       "types": "./dist/types.d.ts",
       "import": "./dist/types.js"
+    },
+    "./vehicleHealth": {
+      "types": "./dist/vehicleHealth.d.ts",
+      "import": "./dist/vehicleHealth.js"
+    },
+    "./maintenanceSchedules": {
+      "types": "./dist/maintenanceSchedules.d.ts",
+      "import": "./dist/maintenanceSchedules.js"
+    },
+    "./vehiclePortfolio": {
+      "types": "./dist/vehiclePortfolio.d.ts",
+      "import": "./dist/vehiclePortfolio.js"
     }
   },
   "scripts": {

@@ -2,6 +2,8 @@
   "name": "functions",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
+    "vendor:shared": "node scripts/vendor-shared.js",
+    "prebuild": "npm run vendor:shared",
     "build": "tsc",
     "test": "npm run build && FIREBASE_CONFIG='{\"projectId\":\"vehicle-vitals-dev\",\"storageBucket\":\"vehicle-vitals-dev.firebasestorage.app\",\"locationId\":\"us-central1\"}' GCLOUD_PROJECT=vehicle-vitals-dev node --test test/**/*.test.js",
     "seed:demo-data": "node scripts/seed-demo-data.js",
@@ -19,6 +21,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "@google-cloud/vertexai": "^1.12.0",
+    "@vehicle-vitals/shared": "file:./vendor/vehicle-vitals-shared",
     "firebase-admin": "^13.10.0",
     "firebase-functions": "^7.2.5",
     "nodemailer": "^9.0.3"

@@ -39,6 +39,40 @@ void main() {
     expect(maintenance.updatedAt, DateTime.parse('2025-12-19'));
   });
 
+  test('Maintenance flags a missing date as unknown instead of silently '
+      'fabricating "now"', () {
+    // Regression: a missing/malformed date silently defaulted to
+    // DateTime.now() with no way for callers (notably
+    // VehicleHealthCalculator) to tell the difference from a genuinely
+    // recent service — producing a fabricated "serviced today, high
+    // confidence" forecast from data that was never actually there.
+    final missing = Maintenance.fromMap({'title': 'Oil change'}, 'entry-4');
+    expect(missing.hasKnownDate, isFalse);
+
+    final malformed = Maintenance.fromMap({
+      'title': 'Oil change',
+      'date': 'not-a-date',
+    }, 'entry-5');
+    expect(malformed.hasKnownDate, isFalse);
+
+    final known = Maintenance.fromMap({
+      'title': 'Oil change',
+      'date': '2025-12-19',
+    }, 'entry-6');
+    expect(known.hasKnownDate, isTrue);
+  });
+
+  test(
+    'Maintenance.copyWith marks the date known when a new date is supplied',
+    () {
+      final entry = Maintenance.fromMap({'title': 'Oil change'}, 'entry-7');
+      expect(entry.hasKnownDate, isFalse);
+
+      final updated = entry.copyWith(date: DateTime.utc(2026, 1, 1));
+      expect(updated.hasKnownDate, isTrue);
+    },
+  );
+
   test('Maintenance defaults performedBy and coverage when missing', () {
     final maintenance = Maintenance.fromMap({
       'title': 'Oil change',

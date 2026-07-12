@@ -140,9 +140,11 @@ export const getMaintenanceItems = (make, model) => {
   }));
 };
 
-// Calculate next due date based on current mileage
+// Calculate next due mileage based on current mileage. The next due point is
+// the next unvisited multiple of the interval strictly above currentMileage
+// — e.g. interval 10000 at currentMileage 25000 is due at 30000, not 40000.
 export const calculateNextDue = (currentMileage, interval) => {
-  const nextMileage = Math.ceil(currentMileage / interval) * interval + interval;
+  const nextMileage = (Math.floor(currentMileage / interval) + 1) * interval;
   return nextMileage;
 };
 

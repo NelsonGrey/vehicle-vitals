@@ -21,14 +21,15 @@ function toIsoDate(d: Date): string {
 }
 
 /**
- * Compute next due mileage for an interval.
+ * Compute next due mileage for an interval — the next unvisited multiple of
+ * intervalMiles strictly above currentMileage (e.g. interval 10000 at
+ * currentMileage 25000 is due at 30000, not 40000).
  * @param {number} currentMileage Current mileage
  * @param {number} intervalMiles Service interval
  * @return {number} Next due mileage
  */
 function nextMileage(currentMileage: number, intervalMiles: number): number {
-  const rounded = Math.ceil(currentMileage / intervalMiles) * intervalMiles;
-  return rounded + intervalMiles;
+  return (Math.floor(currentMileage / intervalMiles) + 1) * intervalMiles;
 }
 
 /**

@@ -248,22 +248,43 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
     }
   }
 
-  // Elapsed months since purchase
+  // Elapsed months since purchase. Previously defaulted to a fabricated 24
+  // when purchaseDate was missing — now null, so financing/monthly-average
+  // figures that depend on ownership duration are omitted rather than
+  // silently built on a made-up number.
   const purchaseDate = vehicle.purchaseDate ?? '';
   const nowStr = new Date().toISOString().slice(0, 10);
-  const elapsedMonths = purchaseDate ? monthsBetween(purchaseDate, nowStr) : 24;
+  const elapsedMonths = purchaseDate
+    ? monthsBetween(purchaseDate, nowStr)
+    : null;
+  const missingPurchaseDate = !purchaseDate;
 
-  const loanPaidTotal = loanMonthly * elapsedMonths;
+  const loanPaidTotal = elapsedMonths != null ? loanMonthly * elapsedMonths : 0;
+  // Insurance is captured as a single annual premium — prorate by years
+  // owned so it contributes to a CUMULATIVE total the same way maintenance/
+  // fuel/registration do, instead of counting one year's premium as the
+  // full lifetime insurance cost regardless of how long the vehicle's been
+  // owned. Without a known ownership duration, fall back to the single
+  // premium as-is rather than guessing.
+  const insuranceCumulative =
+    elapsedMonths != null
+      ? Number(((insuranceAnnual * elapsedMonths) / 12).toFixed(2))
+      : insuranceAnnual;
   const totalCOO =
     purchasePrice +
     maintTotal +
-    insuranceAnnual +
+    insuranceCumulative +
     loanPaidTotal +
     fuelTotal +
     inspectionTotal +
     registrationTotal;
 
-  const hasData = totalCOO > 0 || maintTotal > 0;
+  // loanMonthly/insuranceAnnual are checked directly (not just via
+  // totalCOO) because a detected-but-unprorated financing payment
+  // contributes 0 to totalCOO when purchase date is unknown — that's still
+  // real data worth surfacing (with a note), not an empty state.
+  const hasData =
+    totalCOO > 0 || maintTotal > 0 || loanMonthly > 0 || insuranceAnnual > 0;
 
   // ── category breakdown for bar chart ────────────────────────────────────
 
@@ -271,13 +292,16 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
     { label: 'Purchase', amount: purchasePrice, color: '#3b82f6' },
     { label: 'Financing', amount: loanPaidTotal, color: '#818cf8' },
     { label: 'Service', amount: maintTotal, color: '#22c55e' },
-    { label: 'Insurance', amount: insuranceAnnual, color: '#f59e0b' },
+    { label: 'Insurance', amount: insuranceCumulative, color: '#f59e0b' },
     { label: 'Fuel', amount: fuelTotal, color: '#fbbf24' },
     { label: 'Registration', amount: registrationTotal, color: '#94a3b8' },
     { label: 'Inspection', amount: inspectionTotal, color: '#a78bfa' },
   ].filter(c => c.amount > 0);
 
-  const monthlyAvg = hasData ? totalCOO / elapsedMonths : 0;
+  // Can't average cost-per-month without knowing how many months the
+  // vehicle's actually been owned.
+  const monthlyAvg =
+    hasData && elapsedMonths != null ? totalCOO / elapsedMonths : null;
 
   const documentInsights = analyses
     .filter(a => a.extracted || a.sourceText)
@@ -330,12 +354,12 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
         <StatCard
           label="Total Cost of Ownership"
           value={formatCurrency(totalCOO)}
-          sub={`${elapsedMonths} months`}
+          sub={elapsedMonths != null ? `${elapsedMonths} months` : 'excl. financing'}
           accent="text-blue-600 dark:text-blue-400"
         />
         <StatCard
           label="Monthly Average"
-          value={formatCurrency(monthlyAvg)}
+          value={monthlyAvg != null ? formatCurrency(monthlyAvg) : 'Add purchase date'}
           sub="/month"
           accent="text-accent-600 dark:text-accent-400"
         />
@@ -346,6 +370,13 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
           accent="text-warning-600 dark:text-warning-400"
         />
       </div>
+
+      {missingPurchaseDate && (loanMonthly > 0 || insuranceAnnual > 0) && (
+        <p className="text-xs text-warning-700 dark:text-warning-400">
+          Add this vehicle's purchase date to include financing paid to date
+          and a full multi-year insurance estimate in these totals.
+        </p>
+      )}
 
       {/* ── cost breakdown wheel chart ── */}
       {breakdown.length > 0 && (

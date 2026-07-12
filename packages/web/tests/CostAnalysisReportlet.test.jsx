@@ -6,6 +6,7 @@ import {
   getAttachmentAnalyses,
   getMaintenanceEntries,
 } from '../src/shared/firestoreService';
+import { formatCurrencyCompact } from '../src/utils/currency';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getAttachmentAnalyses: vi.fn(),
@@ -113,5 +114,96 @@ describe('CostAnalysisReportlet cost classification', () => {
     // by also summing the attachment's independently-extracted totalCost.
     expect(screen.getAllByText('$45.0').length).toBeGreaterThan(0);
     expect(screen.queryByText('$90.0')).not.toBeInTheDocument();
+  });
+
+  it('prorates insurance by years owned instead of counting one premium as the full ownership cost', async () => {
+    getMaintenanceEntries.mockResolvedValue([]);
+    getAttachmentAnalyses.mockResolvedValue([
+      {
+        storagePath: 'vehicles/VIN001/records/insurance/card.pdf',
+        extracted: { documentCategory: 'document', totalCost: 1200 },
+      },
+    ]);
+
+    const vehicle = {
+      ...VEHICLE,
+      // Several years in the past regardless of when this test runs, so
+      // proration is unambiguously more than a single year's premium.
+      purchaseDate: '2020-01-01',
+      documentPortfolio: {
+        categories: [
+          {
+            key: 'ownership',
+            items: [
+              {
+                id: 'insurance',
+                files: [
+                  { path: 'vehicles/VIN001/records/insurance/card.pdf' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    render(<CostAnalysisReportlet vehicle={vehicle} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Total Cost of Ownership')).toBeInTheDocument();
+    });
+
+    // Regression: a single year's insurance premium was previously added
+    // once into the cumulative total regardless of how many years had
+    // actually elapsed since purchase.
+    expect(
+      screen.queryByText(formatCurrencyCompact(1200))
+    ).not.toBeInTheDocument();
+  });
+
+  it('omits financing and monthly average, and shows a note, when purchase date is unknown', async () => {
+    getMaintenanceEntries.mockResolvedValue([]);
+    getAttachmentAnalyses.mockResolvedValue([
+      {
+        storagePath: 'vehicles/VIN001/records/loan/contract.pdf',
+        extracted: { documentCategory: 'document', totalCost: 450 },
+      },
+    ]);
+
+    const vehicle = {
+      ...VEHICLE,
+      purchaseDate: undefined,
+      documentPortfolio: {
+        categories: [
+          {
+            key: 'finance',
+            items: [
+              {
+                id: 'loan_or_lease',
+                files: [
+                  { path: 'vehicles/VIN001/records/loan/contract.pdf' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    render(<CostAnalysisReportlet vehicle={vehicle} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Total Cost of Ownership')).toBeInTheDocument();
+    });
+
+    // Regression: a missing purchase date previously defaulted to a
+    // fabricated 24 months, silently baking a made-up number into
+    // "Financing" and "Monthly Average" instead of surfacing that the data
+    // needed to compute them isn't available.
+    expect(screen.getByText('Add purchase date')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Add this vehicle's purchase date/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Financing')).not.toBeInTheDocument();
   });
 });

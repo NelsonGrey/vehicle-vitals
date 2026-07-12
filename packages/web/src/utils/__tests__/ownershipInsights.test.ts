@@ -40,6 +40,46 @@ describe('ownershipInsights', () => {
     expect(insights.upcomingPaymentDates).toHaveLength(6);
   });
 
+  it('uses the actual purchase date, not model year, for loan tenure on a used vehicle', () => {
+    // Regression: a used vehicle's loan tenure was computed from its model
+    // year, not when it was actually purchased/financed — a 10-year-old
+    // model bought (and financed) 3 months ago would previously be treated
+    // as having 10 years of payments behind it, overstating
+    // estimatedPaidToDate up to the full loan principal (falsely showing
+    // the loan as paid off).
+    const currentYear = new Date().getFullYear();
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    const categories = [
+      {
+        key: 'finance',
+        items: [
+          {
+            files: [
+              {
+                analysis: {
+                  extracted: { documentCategory: 'document', totalCost: 20000 },
+                  sourceText: 'Lender payment of $425.50 monthly due on the 1st.',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const insights = computeOwnershipInsights(categories, {
+      year: currentYear - 10,
+      purchaseDate: threeMonthsAgo.toISOString().slice(0, 10),
+    });
+
+    expect(insights.estimatedPrincipal).toBe(20000);
+    // 3 months of $425.50 payments, nowhere near the full principal.
+    expect(insights.estimatedPaidToDate).toBeLessThan(2000);
+    expect(insights.estimatedPaidToDate).not.toBe(20000);
+  });
+
   it('aggregates maintenance spend and keeps the latest service date', () => {
     const categories = [
       {

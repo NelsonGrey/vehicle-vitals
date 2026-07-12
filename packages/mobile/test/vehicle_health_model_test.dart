@@ -39,7 +39,13 @@ void main() {
       );
 
       expect(snapshot.vehicleLabel, '2022 Toyota Camry');
-      expect(snapshot.overallHealthScore, greaterThan(0));
+      // This fixture only logs oil + tire rotation history, so the other
+      // four components (brakes, battery, tire replacement, wipers) anchor
+      // from a 2+ year old purchase date with no service record — most of
+      // them are genuinely overdue by real interval math, and the score
+      // can now legitimately reach the true floor of 0 (previously
+      // artificially floored at 12 regardless of actual severity).
+      expect(snapshot.overallHealthScore, greaterThanOrEqualTo(0));
       expect(
         snapshot.accuracyTip,
         contains('Keep mileage and service entries current'),
@@ -151,6 +157,150 @@ void main() {
       );
       expect(oil.confidence, isNot('high'));
     });
+
+    test(
+      'scores a severely overdue vehicle lower than a moderately overdue '
+      'one, instead of the same floor',
+      () {
+        // Regression: overdue components were penalized twice — once by
+        // zeroing their contribution to the score average, and again by a
+        // flat per-item subtraction — which bottomed every
+        // heavily-neglected vehicle out at the same floor score regardless
+        // of how overdue it actually was.
+        final now = DateTime.utc(2026, 6, 12);
+        DateTime daysAgo(int days) => now.subtract(Duration(days: days));
+
+        final vehicle = Vehicle(
+          vin: 'VIN010',
+          make: 'Toyota',
+          model: 'Camry',
+          year: 2022,
+          mileage: 0,
+          purchaseDate: '2020-01-01',
+        );
+
+        List<Maintenance> buildMaintenance(int oilDaysAgo) => [
+          Maintenance(
+            id: 'g1',
+            title: 'Tire rotation',
+            date: daysAgo(5),
+            createdAt: daysAgo(5),
+            updatedAt: daysAgo(5),
+          ),
+          Maintenance(
+            id: 'g2',
+            title: 'Tires replaced',
+            date: daysAgo(5),
+            createdAt: daysAgo(5),
+            updatedAt: daysAgo(5),
+          ),
+          Maintenance(
+            id: 'g3',
+            title: 'Brake pad replacement',
+            date: daysAgo(5),
+            createdAt: daysAgo(5),
+            updatedAt: daysAgo(5),
+          ),
+          Maintenance(
+            id: 'g4',
+            title: 'Battery replacement',
+            date: daysAgo(5),
+            createdAt: daysAgo(5),
+            updatedAt: daysAgo(5),
+          ),
+          Maintenance(
+            id: 'g5',
+            title: 'Wiper blade replacement',
+            date: daysAgo(5),
+            createdAt: daysAgo(5),
+            updatedAt: daysAgo(5),
+          ),
+          Maintenance(
+            id: 'oil',
+            title: 'Oil change',
+            date: daysAgo(oilDaysAgo),
+            createdAt: daysAgo(oilDaysAgo),
+            updatedAt: daysAgo(oilDaysAgo),
+          ),
+        ];
+
+        final moderatelyOverdue = VehicleHealthCalculator.buildSnapshot(
+          vehicle,
+          buildMaintenance(200),
+          now: now,
+        );
+        final severelyOverdue = VehicleHealthCalculator.buildSnapshot(
+          vehicle,
+          buildMaintenance(2000),
+          now: now,
+        );
+
+        final moderateOil = moderatelyOverdue.components.firstWhere(
+          (c) => c.label == 'Oil',
+        );
+        final severeOil = severelyOverdue.components.firstWhere(
+          (c) => c.label == 'Oil',
+        );
+        expect(moderateOil.status, 'overdue');
+        expect(severeOil.status, 'overdue');
+
+        expect(
+          severelyOverdue.overallHealthScore,
+          lessThan(moderatelyOverdue.overallHealthScore),
+        );
+      },
+    );
+
+    test(
+      'countOccurrencesInWindow counts multiple recurrences of oil '
+      '(180-day interval) within a 36-month window',
+      () {
+        // Regression: 12/36-month spend forecasts previously counted a
+        // recurring item's cost only once per window, undercounting oil
+        // (which recurs roughly every 6 months) by ~6x over 36 months.
+        final occurrences = VehicleHealthCalculator.countOccurrencesInWindow(
+          remainingDays: 10,
+          intervalDays: 180,
+          remainingMiles: null,
+          intervalMiles: null,
+          horizonDays: 1080,
+          horizonMiles: 32400,
+        );
+        expect(occurrences, 6);
+      },
+    );
+
+    test(
+      'countOccurrencesInWindow returns zero when nothing is due within '
+      'the window',
+      () {
+        final occurrences = VehicleHealthCalculator.countOccurrencesInWindow(
+          remainingDays: 2000,
+          intervalDays: 1460,
+          remainingMiles: 60000,
+          intervalMiles: 50000,
+          horizonDays: 1080,
+          horizonMiles: 32400,
+        );
+        expect(occurrences, 0);
+      },
+    );
+
+    test(
+      'countOccurrencesInWindow takes the larger of the days-based and '
+      'miles-based occurrence counts',
+      () {
+        final occurrences = VehicleHealthCalculator.countOccurrencesInWindow(
+          remainingDays: 900,
+          intervalDays: 1460,
+          remainingMiles: 100,
+          intervalMiles: 1000,
+          horizonDays: 1080,
+          horizonMiles: 6000,
+        );
+        expect(occurrences, 6);
+      },
+    );
 
     test('still anchors on real brake, battery, and oil service work', () {
       final vehicle = Vehicle(

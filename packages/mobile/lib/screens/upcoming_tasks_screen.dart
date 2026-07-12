@@ -184,8 +184,15 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
     return 'Upcoming';
   }
 
+  // 35 mi/day matches web's "Average driving" default (packages/web/src
+  // /pages/UpcomingTasks.tsx's effectiveDailyMiles) — previously this used
+  // a separate, undocumented 100 mi/day assumption, so the same vehicle
+  // could show a meaningfully different predicted due date on mobile vs.
+  // web. Keep these two constants in sync.
+  static const int _milesPerDay = 35;
+
   DateTime _estimateDueDate(int milesUntilDue) {
-    final dayOffset = (milesUntilDue / 100).ceil().clamp(1, 180);
+    final dayOffset = (milesUntilDue / _milesPerDay).ceil().clamp(1, 180);
     return DateTime.now().add(Duration(days: dayOffset));
   }
 

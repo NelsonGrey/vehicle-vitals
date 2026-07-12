@@ -46,7 +46,11 @@ function estimateDueDate(
 ): string {
   const now = new Date();
   const milesRemaining = Math.max(0, nextDueMileage - currentMileage);
-  const milesPerMonth = 1000;
+  // 35 mi/day (1050/month) matches web's "Average driving" default
+  // (packages/web/src/pages/UpcomingTasks.tsx's effectiveDailyMiles) and
+  // mobile's upcoming_tasks_screen.dart — previously this used a separate,
+  // undocumented ~33 mi/day assumption. Keep these three in sync.
+  const milesPerMonth = 1050;
   const monthOffset = Math.max(
     1,
     Math.min(intervalMonths, Math.ceil(milesRemaining / milesPerMonth))

@@ -171,6 +171,47 @@ class VehicleHealthCalculator {
   static DateTime _addDays(DateTime date, int days) =>
       date.add(Duration(days: days));
 
+  /// How many times a component recurs within a forecast window, given how
+  /// soon it's next due and how often it repeats. Occurrence count is
+  /// derived independently from the days-based and miles-based clocks
+  /// (whichever the component uses), taking the larger of the two — a
+  /// component due via either clock is priced for how often that clock
+  /// actually recurs within the window, not just whether it's due at least
+  /// once. Mirrors countOccurrencesInWindow in
+  /// packages/shared/src/vehicleHealth.js.
+  static int countOccurrencesInWindow({
+    required int? remainingDays,
+    required int? intervalDays,
+    required int? remainingMiles,
+    required int? intervalMiles,
+    required int horizonDays,
+    required int horizonMiles,
+  }) {
+    var occurrences = 0;
+
+    if (remainingDays != null &&
+        intervalDays != null &&
+        intervalDays > 0 &&
+        remainingDays <= horizonDays) {
+      occurrences = math.max(
+        occurrences,
+        1 + ((horizonDays - remainingDays) / intervalDays).floor(),
+      );
+    }
+
+    if (remainingMiles != null &&
+        intervalMiles != null &&
+        intervalMiles > 0 &&
+        remainingMiles <= horizonMiles) {
+      occurrences = math.max(
+        occurrences,
+        1 + ((horizonMiles - remainingMiles) / intervalMiles).floor(),
+      );
+    }
+
+    return occurrences;
+  }
+
   static double _clampD(double value, double min, double max) =>
       value < min ? min : (value > max ? max : value);
 
@@ -457,21 +498,20 @@ class VehicleHealthCalculator {
       );
     }
 
+    // Overdue severity is reflected once, by letting remainingPercent go
+    // negative (down to its own -0.5 floor) in the average — not by also
+    // subtracting a flat per-item penalty on top, which previously
+    // double-counted overdue/soon items and bottomed every
+    // heavily-neglected vehicle out at the same floor score regardless of
+    // how overdue it actually was.
     final weightedPercent = components.fold<double>(
       0,
-      (sum, component) => sum + (component.remainingPercent ?? 0.4).clamp(0, 1),
+      (sum, component) =>
+          sum + (component.remainingPercent ?? 0.4).clamp(-0.5, 1),
     );
     var overallHealthScore = ((weightedPercent / components.length) * 100)
         .round();
-    final overdueCount = components
-        .where((component) => component.status == 'overdue')
-        .length;
-    final soonCount = components
-        .where((component) => component.status == 'service soon')
-        .length;
-    overallHealthScore -= overdueCount * 18;
-    overallHealthScore -= soonCount * 8;
-    overallHealthScore = overallHealthScore.clamp(12, 99);
+    overallHealthScore = overallHealthScore.clamp(0, 100);
 
     final rankedByUrgency = [...components]
       ..sort((a, b) {
@@ -484,20 +524,29 @@ class VehicleHealthCalculator {
         return aMiles.compareTo(bMiles);
       });
 
+    final specByLabel = {for (final spec in _kComponents) spec.label: spec};
+
+    // Recurring items (oil, rotation, wipers) recur multiple times within a
+    // long window — a 36-month oil forecast should price in ~6 changes, not
+    // 1.
     ({int low, int high}) spendInWindow(int months) {
       final horizonDays = months * 30;
       final horizonMiles = milesPerMonth * months;
       var low = 0;
       var high = 0;
       for (final component in rankedByUrgency) {
-        final dueInWindow =
-            (component.remainingDays != null &&
-                component.remainingDays! <= horizonDays) ||
-            (component.remainingMiles != null &&
-                component.remainingMiles! <= horizonMiles);
-        if (!dueInWindow) continue;
-        low += component.costLow;
-        high += component.costHigh;
+        final spec = specByLabel[component.label];
+        final occurrences = countOccurrencesInWindow(
+          remainingDays: component.remainingDays,
+          intervalDays: spec?.intervalDays,
+          remainingMiles: component.remainingMiles,
+          intervalMiles: spec?.intervalMiles,
+          horizonDays: horizonDays,
+          horizonMiles: horizonMiles,
+        );
+        if (occurrences == 0) continue;
+        low += component.costLow * occurrences;
+        high += component.costHigh * occurrences;
       }
       return (low: low, high: high);
     }

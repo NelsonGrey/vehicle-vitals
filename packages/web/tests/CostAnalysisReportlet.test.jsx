@@ -112,8 +112,8 @@ describe('CostAnalysisReportlet cost classification', () => {
 
     // $45 logged once via the entry's own cost field — not doubled to $90
     // by also summing the attachment's independently-extracted totalCost.
-    expect(screen.getAllByText('$45.0').length).toBeGreaterThan(0);
-    expect(screen.queryByText('$90.0')).not.toBeInTheDocument();
+    expect(screen.getAllByText('$45.00').length).toBeGreaterThan(0);
+    expect(screen.queryByText('$90.00')).not.toBeInTheDocument();
   });
 
   it('prorates insurance by years owned instead of counting one premium as the full ownership cost', async () => {
@@ -249,6 +249,6 @@ describe('CostAnalysisReportlet cost classification', () => {
 
     // Regression: a non-USD amount was previously summed as if it were
     // USD — the $300 EUR figure must not appear anywhere in the totals.
-    expect(screen.queryByText('$300.0')).not.toBeInTheDocument();
+    expect(screen.queryByText('$300.00')).not.toBeInTheDocument();
   });
 });

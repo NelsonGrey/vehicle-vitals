@@ -1645,8 +1645,29 @@ export function buildAttachmentAnalysis(
 
   // Gemini analysis earns a base confidence bonus
   const geminiBonus = gemini ? 0.3 : 0;
+
+  // The signals above only measure how many fields got POPULATED, not
+  // whether they're correct — a document could get every field wrong and
+  // still score maximum confidence as long as something landed in each
+  // slot. When both extraction paths (Gemini and the regex heuristic)
+  // independently arrive at the same cost, that agreement is real evidence
+  // of correctness; when they meaningfully disagree, that's real evidence
+  // one of them is wrong, and confidence should reflect it either way.
+  let costAgreementAdjustment = 0;
+  if (
+    typeof validatedGeminiCost === 'number' &&
+    typeof validatedHeuristicCost === 'number'
+  ) {
+    const diff = Math.abs(validatedGeminiCost - validatedHeuristicCost);
+    const tolerance = Math.max(5, validatedHeuristicCost * 0.15);
+    costAgreementAdjustment = diff <= tolerance ? 0.1 : -0.15;
+  }
+
   const confidence = Math.min(
-    0.25 + geminiBonus + confidenceSignals * 0.1,
+    Math.max(
+      0.25 + geminiBonus + confidenceSignals * 0.1 + costAgreementAdjustment,
+      0.05
+    ),
     0.95
   );
 

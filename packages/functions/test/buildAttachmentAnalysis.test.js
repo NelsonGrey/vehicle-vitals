@@ -52,3 +52,33 @@ test('rejects a negative Gemini-extracted totalCost', () => {
 
   assert.equal(extracted.totalCost, undefined);
 });
+
+test('reports higher confidence when Gemini and the heuristic path agree on cost than when they disagree', () => {
+  // Regression: confidence previously measured only how many fields got
+  // populated, not whether they're correct — a document could get the
+  // wrong cost and still score maximum confidence as long as SOME number
+  // landed in the totalCost slot. Independent agreement between the AI and
+  // regex extraction paths is real evidence of correctness; disagreement
+  // is real evidence one of them is wrong.
+  const metadata = { ocrText: 'Total: $89.99' };
+
+  const agree = buildAttachmentAnalysis(
+    'vehicles/VIN1/records/service/receipt.pdf',
+    'application/pdf',
+    metadata,
+    { documentCategory: 'invoice', totalCost: 89.99 }
+  );
+  const disagree = buildAttachmentAnalysis(
+    'vehicles/VIN1/records/service/receipt.pdf',
+    'application/pdf',
+    metadata,
+    { documentCategory: 'invoice', totalCost: 500 }
+  );
+
+  assert.ok(
+    agree.confidence > disagree.confidence,
+    `expected agreement confidence (${agree.confidence}) to exceed disagreement confidence (${disagree.confidence})`
+  );
+  assert.ok(agree.confidence <= 0.95);
+  assert.ok(disagree.confidence >= 0.05);
+});

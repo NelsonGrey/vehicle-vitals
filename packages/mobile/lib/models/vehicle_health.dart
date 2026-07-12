@@ -45,6 +45,12 @@ class VehicleHealthSnapshot {
   final int estimatedSpend36mHigh;
   final bool missingServiceHistory;
   final int lowConfidenceCount;
+  // Mirrors overallConfidenceScore/overallConfidenceBand in
+  // packages/shared/src/vehicleHealth.js, consumed there by web's headline
+  // gauge sublabel ("{band} confidence"). Previously absent here, so mobile
+  // had no equivalent overall trust signal.
+  final double overallConfidenceScore;
+  final String overallConfidenceBand;
 
   VehicleHealthSnapshot({
     required this.vin,
@@ -62,6 +68,8 @@ class VehicleHealthSnapshot {
     required this.estimatedSpend36mHigh,
     required this.missingServiceHistory,
     required this.lowConfidenceCount,
+    required this.overallConfidenceScore,
+    required this.overallConfidenceBand,
   });
 }
 
@@ -164,8 +172,14 @@ class VehicleHealthCalculator {
     return parsed ?? 0;
   }
 
+  // Rounds rather than floors (Duration.inDays truncates toward zero), to
+  // match packages/shared/src/vehicleHealth.js's Math.round — otherwise the
+  // same two timestamps can produce an off-by-one-day divergence in
+  // elapsed/remaining days (and therefore status/confidence) between web
+  // and mobile for the same vehicle.
   static int _daysBetween(DateTime start, DateTime end) {
-    return math.max(0, end.difference(start).inDays);
+    final ms = end.difference(start).inMilliseconds;
+    return math.max(0, (ms / 86400000).round());
   }
 
   static DateTime _addDays(DateTime date, int days) =>
@@ -416,6 +430,7 @@ class VehicleHealthCalculator {
     final milesPerDay = math.max(1, (milesPerMonth / 30).round());
 
     final components = <VehicleHealthComponent>[];
+    final confidenceScores = <double>[];
 
     for (final spec in _kComponents) {
       final anchor = _buildAnchor(spec.id, vehicle, maintenance);
@@ -479,6 +494,7 @@ class VehicleHealthCalculator {
       if (milesPerMonth != _defaultMonthlyMiles) {
         confidenceScore = _clampD(confidenceScore + 0.05, 0, 0.95);
       }
+      confidenceScores.add(confidenceScore);
 
       final status = _statusFromPercent(remainingPercent);
 
@@ -512,6 +528,10 @@ class VehicleHealthCalculator {
     var overallHealthScore = ((weightedPercent / components.length) * 100)
         .round();
     overallHealthScore = overallHealthScore.clamp(0, 100);
+
+    final overallConfidenceScore =
+        confidenceScores.reduce((a, b) => a + b) / confidenceScores.length;
+    final overallConfidenceBand = _confidenceBand(overallConfidenceScore);
 
     final rankedByUrgency = [...components]
       ..sort((a, b) {
@@ -582,6 +602,8 @@ class VehicleHealthCalculator {
       estimatedSpend36mHigh: spend36m.high,
       missingServiceHistory: missingServiceHistory,
       lowConfidenceCount: lowConfidenceCount,
+      overallConfidenceScore: overallConfidenceScore,
+      overallConfidenceBand: overallConfidenceBand,
     );
   }
 }

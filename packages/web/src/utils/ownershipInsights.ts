@@ -27,6 +27,11 @@ export type OwnershipInsightCategory = {
 
 export type OwnershipInsightVehicle = {
   year: string | number;
+  // When available, used instead of model year to compute how long a loan
+  // has likely been running — a used vehicle bought years after its model
+  // year would otherwise have its loan tenure (and therefore paid-to-date)
+  // overstated by assuming financing began the moment the car was built.
+  purchaseDate?: string;
 } | null;
 
 export type OwnershipInsights = {
@@ -219,9 +224,24 @@ export function computeOwnershipInsights(
       ? Number((estimatedPrincipal - estimatedCurrentValue).toFixed(2))
       : undefined;
 
-  const ageMonths = Number.isFinite(vehicleYear)
-    ? Math.max(0, (new Date().getFullYear() - vehicleYear) * 12)
-    : 0;
+  // Loan tenure is based on the actual purchase date when known — model
+  // year is a reasonable proxy for a vehicle bought new, but overstates how
+  // long a loan has run for a used vehicle bought years after its model
+  // year, which in turn overstates estimatedPaidToDate toward the
+  // principal (or "paid off") for a loan that may have only just started.
+  const purchaseDate = vehicle?.purchaseDate
+    ? new Date(vehicle.purchaseDate)
+    : null;
+  const ageMonths =
+    purchaseDate && !Number.isNaN(purchaseDate.getTime())
+      ? Math.max(
+          0,
+          (new Date().getFullYear() - purchaseDate.getFullYear()) * 12 +
+            (new Date().getMonth() - purchaseDate.getMonth())
+        )
+      : Number.isFinite(vehicleYear)
+        ? Math.max(0, (new Date().getFullYear() - vehicleYear) * 12)
+        : 0;
 
   const estimatedPaidToDate =
     estimatedPrincipal && estimatedMonthlyPayment

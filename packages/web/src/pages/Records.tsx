@@ -81,6 +81,7 @@ type VehicleRecord = {
   year: string | number;
   make: string;
   model: string;
+  purchaseDate?: string;
   documentPortfolio?: {
     categories?: PortfolioCategory[];
   };

@@ -82,6 +82,47 @@ function hasAnyToken(text, tokens) {
   return tokens.some(token => text.includes(token));
 }
 
+// How many times a component recurs within a forecast window, given how
+// soon it's next due and how often it repeats. Occurrence count is derived
+// independently from the days-based and miles-based clocks (whichever the
+// component uses), taking the larger of the two — a component due via
+// either clock is priced for how often that clock actually recurs within
+// the window, not just whether it's due at least once.
+export function countOccurrencesInWindow({
+  remainingDays,
+  intervalDays,
+  remainingMiles,
+  intervalMiles,
+  horizonDays,
+  horizonMiles,
+}) {
+  let occurrences = 0;
+
+  if (
+    typeof remainingDays === 'number' &&
+    intervalDays &&
+    remainingDays <= horizonDays
+  ) {
+    occurrences = Math.max(
+      occurrences,
+      1 + Math.floor((horizonDays - remainingDays) / intervalDays)
+    );
+  }
+
+  if (
+    typeof remainingMiles === 'number' &&
+    intervalMiles &&
+    remainingMiles <= horizonMiles
+  ) {
+    occurrences = Math.max(
+      occurrences,
+      1 + Math.floor((horizonMiles - remainingMiles) / intervalMiles)
+    );
+  }
+
+  return occurrences;
+}
+
 export function inferHealthComponentIds(entry) {
   const text = normalizeText(
     entry?.serviceType,
@@ -356,20 +397,19 @@ export function computeVehicleHealthSnapshot(vehicle, maintenanceEntries = [], o
     };
   });
 
+  // Overdue severity is reflected once, by letting remainingLifePercent go
+  // negative (down to its own -0.5 floor) in the average — not by also
+  // subtracting a flat per-item penalty on top, which previously
+  // double-counted overdue/soon items and bottomed every heavily-neglected
+  // vehicle out at the same floor score regardless of how overdue it
+  // actually was.
   const weightedPercent = components.reduce((sum, component) => {
     const percent = component.remainingLifePercent ?? 0.4;
-    return sum + clamp(percent, 0, 1);
+    return sum + clamp(percent, -0.5, 1);
   }, 0);
 
   let overallHealthScore = Math.round((weightedPercent / components.length) * 100);
-  const overdueCount = components.filter(component => component.status === 'overdue').length;
-  const soonCount = components.filter(
-    component => component.status === 'service_soon'
-  ).length;
-
-  overallHealthScore -= overdueCount * 18;
-  overallHealthScore -= soonCount * 8;
-  overallHealthScore = clamp(overallHealthScore, 12, 99);
+  overallHealthScore = clamp(overallHealthScore, 0, 100);
 
   const overallConfidenceScore =
     components.reduce((sum, component) => sum + component.confidenceScore, 0) /
@@ -384,24 +424,38 @@ export function computeVehicleHealthSnapshot(vehicle, maintenanceEntries = [], o
     return aMiles - bMiles;
   });
 
+  const intervalsByComponentId = new Map(
+    VEHICLE_HEALTH_COMPONENTS.map(component => [
+      component.id,
+      { intervalDays: component.intervalDays, intervalMiles: component.intervalMiles },
+    ])
+  );
+
+  // Recurring items (oil, rotation, wipers) recur multiple times within a
+  // long window — a 36-month oil forecast should price in ~6 changes, not
+  // 1.
   const spendInWindow = months => {
     const horizonDays = months * 30;
     const horizonMiles = milesPerMonth * months;
     return rankedByUrgency.reduce(
       (totals, component) => {
-        const dueInWindow =
-          (typeof component.remainingDays === 'number' &&
-            component.remainingDays <= horizonDays) ||
-          (typeof component.remainingMiles === 'number' &&
-            component.remainingMiles <= horizonMiles);
+        const intervals = intervalsByComponentId.get(component.componentId) || {};
+        const occurrences = countOccurrencesInWindow({
+          remainingDays: component.remainingDays,
+          intervalDays: intervals.intervalDays,
+          remainingMiles: component.remainingMiles,
+          intervalMiles: intervals.intervalMiles,
+          horizonDays,
+          horizonMiles,
+        });
 
-        if (!dueInWindow) {
+        if (occurrences === 0) {
           return totals;
         }
 
         return {
-          low: totals.low + (component.estimatedCostLow || 0),
-          high: totals.high + (component.estimatedCostHigh || 0),
+          low: totals.low + (component.estimatedCostLow || 0) * occurrences,
+          high: totals.high + (component.estimatedCostHigh || 0) * occurrences,
         };
       },
       { low: 0, high: 0 }

@@ -39,6 +39,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   String _calendarTarget = 'google';
   bool _loading = true;
   final CalendarService _calendarService = CalendarService();
+  // Vehicles whose make/model has no manufacturer interval data at all, so
+  // MaintenanceSchedule.getUpcomingMaintenance silently returns []. Tracked
+  // separately so the empty state can say "we don't have data for this
+  // vehicle" instead of the indistinguishable "all caught up, well
+  // maintained."
+  List<Vehicle> _unsupportedVehicles = [];
 
   String _buildReminderKey(String vin, String serviceType) =>
       '$vin:$serviceType';
@@ -93,8 +99,16 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       final allUpcoming = <Map<String, dynamic>>[];
       final nextSavedReminders = <Map<String, dynamic>>[];
       final nextSavedReminderKeys = <String>{};
+      final nextUnsupportedVehicles = <Vehicle>[];
 
       for (final vehicle in vehicles) {
+        if (MaintenanceSchedule.getMaintenanceSchedule(
+              vehicle.make,
+              vehicle.model,
+            ) ==
+            null) {
+          nextUnsupportedVehicles.add(vehicle);
+        }
         final reminders = await firestoreService.getReminders(vehicle.vin);
         for (final reminder in reminders) {
           final serviceType = (reminder['serviceType'] ?? 'maintenance')
@@ -134,6 +148,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
             ? normalizedTargets
             : _calendarTargets;
         _calendarTarget = selectedCalendarTarget;
+        _unsupportedVehicles = nextUnsupportedVehicles;
         _loading = false;
       });
     } catch (e) {
@@ -574,6 +589,24 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
               ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
             ),
           ),
+          if (_unsupportedVehicles.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                "We don't have manufacturer maintenance data for "
+                '${_unsupportedVehicles.map((v) => '${v.year} ${v.make} ${v.model}').join(', ')}, '
+                "so this isn't a confirmed clean bill of health for "
+                '${_unsupportedVehicles.length == 1 ? 'it' : 'them'} — log '
+                'your own service history to get personalized reminders.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

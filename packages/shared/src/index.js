@@ -161,6 +161,7 @@ export { serverTimestamp } from 'firebase/firestore';
 // Maintenance schedules
 export {
   getUpcomingMaintenance,
+  getMaintenanceSchedule,
   manufacturerSchedules,
 } from './maintenanceSchedules.js';
 export {

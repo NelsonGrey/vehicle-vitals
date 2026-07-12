@@ -114,6 +114,7 @@ interface ReminderSweepDependencies {
     vehicle: Vehicle,
     maintenanceItems: MaintenanceItem[]
   ) => Promise<void>;
+  markReminderSent: (userId: string, vin: string) => Promise<void>;
 }
 
 interface ReminderScheduleRunDependencies {
@@ -1351,18 +1352,52 @@ function inferServiceType(fileName: string): string | undefined {
   return match?.label;
 }
 
-function extractCost(value: string): number | undefined {
-  const text = value.toLowerCase();
-  const explicit =
-    text.match(
-      /(?:total|amount|invoice|paid|cost)\D{0,8}(\d{1,5}(?:[.,]\d{2})?)/i
-    ) || text.match(/\$(\d{1,5}(?:[.,]\d{2})?)/);
-  if (!explicit) return undefined;
-
-  const normalized = explicit[1].replace(',', '.');
+function parseCostAmount(raw: string): number | undefined {
+  // Strip thousands separators (1,234.56 -> 1234.56) without misreading a
+  // decimal comma as one — only a comma immediately followed by exactly
+  // three digits (and not itself part of a longer digit run) is a
+  // thousands separator.
+  const normalized = raw.replace(/,(\d{3})(?!\d)/g, '$1');
   const parsed = Number(normalized);
   if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
   return Number(parsed.toFixed(2));
+}
+
+export function extractCost(value: string): number | undefined {
+  const text = value.toLowerCase();
+
+  // Prefer an explicit grand-total-style label — "total" but not
+  // "subtotal" — since a receipt's subtotal (pre-tax) is not what was
+  // actually paid. A document can carry more than one such label (e.g.
+  // "Total: $450.00 ... Total Due: $486.00" once tax is added); take the
+  // largest, since the final total is never smaller than an earlier
+  // partial one.
+  const totalMatches = [
+    ...text.matchAll(
+      /(?<!sub)(?:total|amount due|balance due|amount paid|paid)\D{0,8}(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g
+    ),
+  ]
+    .map(match => parseCostAmount(match[1]))
+    .filter((amount): amount is number => typeof amount === 'number');
+
+  if (totalMatches.length > 0) {
+    return Math.max(...totalMatches);
+  }
+
+  // No total-style label matched — fall back to the largest bare dollar
+  // amount on the document. The actual total is rarely the smallest number
+  // printed (unlike a per-item price, a discount, or a "you saved $X" line).
+  const bareMatches = [
+    ...text.matchAll(/\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g),
+  ]
+    .map(match => parseCostAmount(match[1]))
+    .filter((amount): amount is number => typeof amount === 'number');
+
+  if (bareMatches.length > 0) {
+    return Math.max(...bareMatches);
+  }
+
+  return undefined;
 }
 
 function extractMileage(value: string): number | undefined {
@@ -1515,7 +1550,22 @@ Rules:
   }
 }
 
-function buildAttachmentAnalysis(
+// Upper sanity bound for a single extracted document cost. Generous enough
+// for a major repair (engine/transmission swap on a luxury vehicle), but
+// well below typical vehicle purchase prices — a guardrail against a
+// misread/hallucinated AI extraction (or a heuristic regex match on an
+// unrelated large number) silently inflating downstream spend totals, the
+// same failure mode that inflated a real user's "maintenance spend
+// captured" figure by $100,000+.
+const MAX_PLAUSIBLE_SERVICE_COST = 25000;
+
+function parseValidCost(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  if (value <= 0 || value > MAX_PLAUSIBLE_SERVICE_COST) return undefined;
+  return value;
+}
+
+export function buildAttachmentAnalysis(
   objectName: string,
   mimeType: string | undefined,
   customMetadata: Record<string, string> | undefined,
@@ -1555,14 +1605,30 @@ function buildAttachmentAnalysis(
     'other',
   ];
 
+  // Gemini's totalCost is trusted only after passing the same sanity checks
+  // the heuristic path already applies to itself — the prompt asks it to
+  // "use the grand total," but nothing enforces that, and an unvalidated
+  // number (wrong line item, hallucination, OCR misread) flows straight
+  // into every downstream spend calculation otherwise.
+  const validatedGeminiCost = parseValidCost(gemini?.totalCost);
+  if (
+    typeof gemini?.totalCost === 'number' &&
+    validatedGeminiCost === undefined
+  ) {
+    logger.warn('Gemini totalCost rejected as implausible', {
+      objectName,
+      totalCost: gemini.totalCost,
+    });
+  }
+  const validatedHeuristicCost = parseValidCost(heuristicCost);
+
   const extracted = compactDefined({
     documentCategory:
       geminiCategory && validCategories.includes(geminiCategory)
         ? geminiCategory
         : heuristicCategory,
     serviceType: gemini?.serviceType || heuristicServiceType,
-    totalCost:
-      typeof gemini?.totalCost === 'number' ? gemini.totalCost : heuristicCost,
+    totalCost: validatedGeminiCost ?? validatedHeuristicCost,
     currency: gemini?.currency || 'USD',
     serviceDate: gemini?.serviceDate || heuristicDate,
     mileage:
@@ -2578,6 +2644,37 @@ export async function runMaintenanceReminderSchedule(
  * @param {ReminderSweepDependencies} dependencies Optional injected deps
  * @return {Promise<ReminderSweepSummary>} Sweep counts for observability/tests
  */
+// Minimum gap between reminder emails/pushes for the same vehicle. Without
+// this, a vehicle whose upcoming-maintenance condition stays true (e.g. no
+// oil change logged) gets a fresh email and push notification every single
+// day the cron runs, indefinitely.
+const REMINDER_COOLDOWN_DAYS = 7;
+
+function isWithinReminderCooldown(
+  vehicle: Vehicle & { lastMaintenanceReminderSentAt?: string }
+): boolean {
+  const last = vehicle.lastMaintenanceReminderSentAt;
+  if (!last) return false;
+  const lastSent = new Date(last);
+  if (Number.isNaN(lastSent.getTime())) return false;
+  const cooldownEnd = new Date(lastSent.getTime());
+  cooldownEnd.setDate(cooldownEnd.getDate() + REMINDER_COOLDOWN_DAYS);
+  return new Date() < cooldownEnd;
+}
+
+async function markVehicleReminderSent(
+  userId: string,
+  vin: string
+): Promise<void> {
+  await admin
+    .firestore()
+    .doc(`users/${userId}/vehicles/${vin}`)
+    .set(
+      { lastMaintenanceReminderSentAt: new Date().toISOString() },
+      { merge: true }
+    );
+}
+
 export async function runMaintenanceReminderSweep(
   dependencies?: Partial<ReminderSweepDependencies>
 ): Promise<ReminderSweepSummary> {
@@ -2590,6 +2687,8 @@ export async function runMaintenanceReminderSweep(
     dependencies?.sendReminderEmail || sendReminderEmail;
   const deliverPushNotification =
     dependencies?.sendPushNotification || sendPushNotification;
+  const markReminderSent =
+    dependencies?.markReminderSent || markVehicleReminderSent;
 
   const users = await queryDocuments('users');
 
@@ -2638,10 +2737,17 @@ export async function runMaintenanceReminderSweep(
         continue;
       }
 
+      if (isWithinReminderCooldown(vehicle)) {
+        continue;
+      }
+
+      let deliveredAny = false;
+
       if (canSendEmail) {
         try {
           await deliverReminderEmail(user.email, vehicle, upcomingMaintenance);
           remindersSent += 1;
+          deliveredAny = true;
         } catch (error) {
           reminderFailures += 1;
           logger.error('Reminder email delivery failed', {
@@ -2661,12 +2767,27 @@ export async function runMaintenanceReminderSweep(
             upcomingMaintenance
           );
           pushSent += 1;
+          deliveredAny = true;
         } catch (pushError) {
           pushFailures += 1;
           logger.warn('Push notification delivery failed', {
             userId,
             vin: vehicle.vin,
             pushError,
+          });
+        }
+      }
+
+      if (deliveredAny) {
+        try {
+          await markReminderSent(userId, vehicle.vin);
+        } catch (markError) {
+          // Non-fatal — worst case the vehicle gets reminded again before
+          // the cooldown would otherwise have elapsed.
+          logger.warn('Failed to record reminder cooldown state', {
+            userId,
+            vin: vehicle.vin,
+            markError,
           });
         }
       }
@@ -2698,7 +2819,66 @@ async function getUpcomingMaintenance(
     `users/${vehicle.uid || 'unknown'}/vehicles/${vehicle.vin}/maintenance`
   );
 
-  return deriveUpcomingMaintenanceItems(maintenanceEntries, daysAhead);
+  const historyBasedItems = deriveUpcomingMaintenanceItems(
+    maintenanceEntries,
+    daysAhead
+  );
+  const mileageBasedItems = deriveMileageBasedMaintenanceItems(
+    vehicle.mileage,
+    daysAhead
+  );
+
+  // Merge without duplicating a service type both paths already agree is
+  // due — e.g. don't email "Oil Change" twice because the history check and
+  // the mileage check both flagged it.
+  const seenTitles = new Set(historyBasedItems.map(item => item.title));
+  const merged = [...historyBasedItems];
+  for (const item of mileageBasedItems) {
+    if (!seenTitles.has(item.title)) {
+      merged.push(item);
+      seenTitles.add(item.title);
+    }
+  }
+  return merged;
+}
+
+const MILEAGE_MAINTENANCE_LABELS: Record<string, string> = {
+  oil_change: 'Oil Change',
+  tire_rotation: 'Tire Rotation',
+  brake_inspection: 'Brake Inspection',
+};
+
+/**
+ * Build upcoming maintenance reminders from current mileage alone, using
+ * the same schedule engine as the Maintenance Plan endpoint
+ * (buildMaintenancePlan). Unlike deriveUpcomingMaintenanceItems, this has no
+ * concept of service history — it projects on the assumed interval grid —
+ * but it covers tire rotation and brake inspection in addition to oil, and
+ * scales with the vehicle's actual mileage rather than a fixed calendar
+ * window that ignores mileage entirely.
+ * @param {number} currentMileage Vehicle's current odometer reading
+ * @param {number} daysAhead Number of days to look ahead for reminders
+ * @return {MaintenanceItem[]} Array of upcoming maintenance items
+ */
+export function deriveMileageBasedMaintenanceItems(
+  currentMileage: number,
+  daysAhead = 30
+): MaintenanceItem[] {
+  if (!Number.isFinite(currentMileage) || currentMileage <= 0) {
+    return [];
+  }
+
+  const plan = buildMaintenancePlan(currentMileage);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + Math.max(1, daysAhead));
+
+  return plan.items
+    .filter(item => new Date(item.nextDueDate) <= cutoff)
+    .map(item => ({
+      title: MILEAGE_MAINTENANCE_LABELS[item.serviceType] || item.serviceType,
+      dueDate: item.nextDueDate,
+      type: 'preventive',
+    }));
 }
 
 /**

@@ -8,7 +8,10 @@ import {
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
+import {
+  getMaintenanceSchedule,
+  getUpcomingMaintenance,
+} from '@vehicle-vitals/shared';
 import UpcomingTasks from '../src/pages/UpcomingTasks';
 import {
   completeReminder,
@@ -39,6 +42,9 @@ vi.mock('../src/shared/firestoreService', () => ({
 
 vi.mock('@vehicle-vitals/shared', () => ({
   getUpcomingMaintenance: vi.fn(() => []),
+  // Default to "schedule data exists" so existing tests' vehicles aren't
+  // treated as unsupported make/models.
+  getMaintenanceSchedule: vi.fn(() => ({ oilChange: {} })),
 }));
 
 vi.mock('../src/utils/calendarService', () => ({
@@ -178,6 +184,25 @@ describe('UpcomingTasks reminder actions', () => {
     await waitFor(() => {
       expect(screen.getByText('All caught up!')).toBeInTheDocument();
     });
+    expect(
+      screen.queryByText(/don't have manufacturer maintenance data/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('distinguishes "no manufacturer data" from a genuine clean bill of health', async () => {
+    // Regression: an uncovered make/model silently returned an empty
+    // upcoming-maintenance list, rendering identically to "we checked and
+    // everything's fine" — indistinguishable from an actual clean result.
+    getReminders.mockResolvedValue([]);
+    getMaintenanceSchedule.mockReturnValue(null);
+    renderUpcomingTasks();
+
+    await waitFor(() => {
+      expect(screen.getByText('All caught up!')).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(/don't have manufacturer maintenance data/i)
+    ).toBeInTheDocument();
   });
 
   it('filter buttons change which reminders are visible', async () => {

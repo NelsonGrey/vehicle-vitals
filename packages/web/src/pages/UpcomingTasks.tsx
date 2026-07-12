@@ -1,4 +1,7 @@
-import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
+import {
+  getMaintenanceSchedule,
+  getUpcomingMaintenance,
+} from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -132,6 +135,13 @@ export default function UpcomingTasks() {
   );
   const [vehicleList, setVehicleList] = useState<Vehicle[]>([]);
   const [selectedVehicleVins, setSelectedVehicleVins] = useState<string[]>([]);
+  // Vehicles whose make/model has no manufacturer interval data at all, so
+  // getUpcomingMaintenance silently returns []. Tracked separately so the
+  // empty state can say "we don't have data for this vehicle" instead of
+  // the indistinguishable "all caught up, well maintained."
+  const [unsupportedVehicles, setUnsupportedVehicles] = useState<Vehicle[]>(
+    []
+  );
 
   const buildReminderKey = (vin: string, serviceType?: string) =>
     `${vin}:${serviceType || 'maintenance'}`;
@@ -217,9 +227,19 @@ export default function UpcomingTasks() {
         const allUpcoming: UpcomingItem[] = [];
         const nextSavedReminders: ReminderItem[] = [];
         const nextSavedReminderKeys = new Set<string>();
+        const nextUnsupportedVehicles: Vehicle[] = [];
 
         for (const vehicle of vehicles) {
           const currentMileage = parseInt(vehicle.mileage || '0') || 0;
+          if (!getMaintenanceSchedule(vehicle.make, vehicle.model)) {
+            nextUnsupportedVehicles.push({
+              vin: vehicle.vin,
+              make: vehicle.make,
+              model: vehicle.model,
+              year: vehicle.year,
+              mileage: vehicle.mileage,
+            });
+          }
           const reminders = await getReminders(vehicle.vin);
 
           reminders.forEach(
@@ -292,6 +312,7 @@ export default function UpcomingTasks() {
         setSavedReminders(nextSavedReminders);
         setSavedReminderKeys(nextSavedReminderKeys);
         setVehicleLookup(nextVehicleLookup);
+        setUnsupportedVehicles(nextUnsupportedVehicles);
       } catch (error) {
         console.error('Error loading upcoming tasks:', error);
       } finally {
@@ -355,13 +376,17 @@ export default function UpcomingTasks() {
     const actionKey = buildReminderKey(item.vehicle.vin, item.serviceType);
     setSavingCalendarKeys(prev => new Set(prev).add(actionKey));
     try {
-      const dueDate = new Date();
       const milesUntilDue = Number(item.milesUntilDue || 0);
-      const dayOffset = Math.max(
-        1,
-        Math.min(180, Math.ceil(milesUntilDue / 100))
-      );
-      dueDate.setDate(dueDate.getDate() + dayOffset);
+      // Reuse the same daily-mileage assumption as the "Predicted due date"
+      // shown elsewhere on this page — a separate hardcoded 100 mi/day
+      // constant here previously produced a visibly different calendar
+      // date than the prediction shown two lines above the button.
+      const dueDate = estimateDueDate(milesUntilDue);
+      const maxDueDate = new Date();
+      maxDueDate.setDate(maxDueDate.getDate() + 180);
+      if (dueDate > maxDueDate) {
+        dueDate.setTime(maxDueDate.getTime());
+      }
 
       const startAt = dueDate.toISOString();
       const endAt = new Date(dueDate.getTime() + 60 * 60 * 1000).toISOString();
@@ -1042,6 +1067,17 @@ export default function UpcomingTasks() {
                     : 'No upcoming maintenance tasks fall inside your current reminder window.'
                   : 'Maintenance alerts are disabled in Profile settings.'}
               </p>
+              {unsupportedVehicles.length > 0 && (
+                <p className="mt-2 text-sm text-warning-700 dark:text-warning-400 max-w-md mx-auto">
+                  We don't have manufacturer maintenance data for{' '}
+                  {unsupportedVehicles
+                    .map(v => `${v.year} ${v.make} ${v.model}`)
+                    .join(', ')}
+                  , so this isn't a confirmed clean bill of health for{' '}
+                  {unsupportedVehicles.length === 1 ? 'it' : 'them'} — log
+                  your own service history to get personalized reminders.
+                </p>
+              )}
               {alertsEnabled && !showAllRecommendations ? (
                 <div className="mt-4 flex flex-wrap justify-center gap-3">
                   <button

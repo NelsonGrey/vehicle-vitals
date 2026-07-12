@@ -2,8 +2,11 @@
  * Garage-wide document completeness — a lightweight, subtle gamification
  * signal for "how complete has the user filled in their vehicle documents."
  * Computed entirely from data already loaded for the vehicle list (no extra
- * fetches), mirroring the required/ready aggregation Home.tsx already does
- * per-vehicle in getPortfolioRequiredProgress.
+ * fetches). The per-vehicle required/ready reduction this builds on
+ * (computeVehiclePortfolioProgress) is also what Home.tsx uses directly for
+ * its own per-vehicle "N/M required complete" display — previously that was
+ * a second, independent copy of the same reduction living in Home.tsx
+ * itself.
  */
 
 export type GarageCompletenessTier = 'rookie' | 'pro' | 'champion';
@@ -15,6 +18,46 @@ export interface GarageCompletenessVehicle {
       items?: Array<{ required?: boolean; status?: string }>;
     }>;
   };
+}
+
+export interface VehiclePortfolioProgress {
+  required: number;
+  complete: number;
+  optionalTotal: number;
+  optionalComplete: number;
+  hasAnyProgress: boolean;
+}
+
+export function computeVehiclePortfolioProgress(
+  vehicle: GarageCompletenessVehicle
+): VehiclePortfolioProgress {
+  const categories = vehicle.documentPortfolio?.categories || [];
+  let required = 0;
+  let complete = 0;
+  let optionalTotal = 0;
+  let optionalComplete = 0;
+  let hasAnyProgress = false;
+
+  for (const category of categories) {
+    for (const item of category.items || []) {
+      if (item.required) {
+        required += 1;
+        if (item.status === 'ready') {
+          complete += 1;
+        }
+      } else {
+        optionalTotal += 1;
+        if (item.status === 'ready') {
+          optionalComplete += 1;
+        }
+      }
+      if (item.status && item.status !== 'missing') {
+        hasAnyProgress = true;
+      }
+    }
+  }
+
+  return { required, complete, optionalTotal, optionalComplete, hasAnyProgress };
 }
 
 export interface GarageCompletenessResult {
@@ -66,32 +109,15 @@ export function computeGarageCompleteness(
   let vehiclesNotStarted = 0;
 
   for (const vehicle of vehicles) {
-    const categories = vehicle.documentPortfolio?.categories || [];
-    let vehicleRequired = 0;
-    let vehicleComplete = 0;
-    let hasAnyProgress = false;
+    const progress = computeVehiclePortfolioProgress(vehicle);
 
-    for (const category of categories) {
-      for (const item of category.items || []) {
-        if (item.required) {
-          vehicleRequired += 1;
-          if (item.status === 'ready') {
-            vehicleComplete += 1;
-          }
-        }
-        if (item.status && item.status !== 'missing') {
-          hasAnyProgress = true;
-        }
-      }
-    }
+    requiredTotal += progress.required;
+    requiredComplete += progress.complete;
 
-    requiredTotal += vehicleRequired;
-    requiredComplete += vehicleComplete;
-
-    if (vehicleRequired > 0 && vehicleComplete === vehicleRequired) {
+    if (progress.required > 0 && progress.complete === progress.required) {
       vehiclesFullyComplete += 1;
     }
-    if (!hasAnyProgress) {
+    if (!progress.hasAnyProgress) {
       vehiclesNotStarted += 1;
     }
   }

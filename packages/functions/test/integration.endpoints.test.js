@@ -4,7 +4,7 @@ const { createHmac } = require('crypto');
 const {
   getOwnerManuals,
   getWarrantySummary,
-  getMaintenancePlan,
+  getMaintenancePlanCallable,
   sendMaintenanceReminder,
   createCalendarEvent,
   createCalendarEventCallable,
@@ -232,23 +232,17 @@ test('getWarrantySummary returns 501 when provider is not configured', async () 
   );
 });
 
-test('getMaintenancePlan returns 401 when auth is required and token missing', async () => {
-  process.env.INTEGRATION_AUTH_REQUIRED = 'true';
-  process.env.INTEGRATION_RATE_LIMIT_ENABLED = 'false';
-
-  const req = {
-    method: 'GET',
-    headers: {},
-    query: { vin: '1HGCM82633A123456', currentMileage: '40000' },
-    ip: '198.51.100.19',
-  };
-  const res = makeResponse();
-
-  await getMaintenancePlan(req, res);
-
-  assert.equal(res.state.statusCode, 401);
-  assert.equal(res.state.body.success, false);
-  assert.equal(res.state.body.error, 'Missing Bearer token');
+test('getMaintenancePlanCallable rejects with unauthenticated when there is no auth context', async () => {
+  await assert.rejects(
+    () =>
+      getMaintenancePlanCallable.run({
+        data: { vin: '1HGCM82633A123456', currentMileage: 40000 },
+      }),
+    err => {
+      assert.equal(err.code, 'unauthenticated');
+      return true;
+    }
+  );
 });
 
 test('createCalendarEvent returns 503 when calendar feature disabled', async () => {
@@ -447,28 +441,40 @@ test('getWarrantySummary returns 200 with normalized warranty payload', async ()
   assert.equal(res.state.body.warranty.coverages.length, 3);
 });
 
-test('getMaintenancePlan returns 200 with normalized plan payload', async () => {
-  process.env.INTEGRATION_AUTH_REQUIRED = 'false';
-  process.env.INTEGRATION_RATE_LIMIT_ENABLED = 'false';
+test('getMaintenancePlanCallable returns a normalized plan payload for an uncovered make/model', async () => {
   process.env.MAINTENANCE_PLAN_ENABLED = 'true';
   process.env.SCHEDULE_PROVIDER = 'schedule_primary';
 
-  const req = {
-    method: 'GET',
-    headers: baseHeaders(),
-    query: { vin: '1HGCM82633A123456', currentMileage: '42100' },
-    ip: '198.51.100.23',
-  };
-  const res = makeResponse();
+  const result = await getMaintenancePlanCallable.run({
+    auth: { uid: 'smoke-user' },
+    data: { vin: '1HGCM82633A123456', currentMileage: 42100 },
+  });
 
-  await getMaintenancePlan(req, res);
+  assert.equal(result.success, true);
+  assert.equal(result.provider, 'schedule_primary');
+  assert.equal(result.plan.strategy, 'static_schedule_v1');
+  assert.equal(result.plan.modelSpecific, false);
+  assert.equal(Array.isArray(result.plan.items), true);
+  assert.equal(result.plan.items.length, 3);
+});
 
-  assert.equal(res.state.statusCode, 200);
-  assert.equal(res.state.body.success, true);
-  assert.equal(res.state.body.provider, 'schedule_primary');
-  assert.equal(res.state.body.plan.strategy, 'static_schedule_v1');
-  assert.equal(Array.isArray(res.state.body.plan.items), true);
-  assert.equal(res.state.body.plan.items.length, 3);
+test('getMaintenancePlanCallable returns manufacturer-specific intervals for a covered make/model', async () => {
+  process.env.MAINTENANCE_PLAN_ENABLED = 'true';
+  process.env.SCHEDULE_PROVIDER = 'schedule_primary';
+
+  const result = await getMaintenancePlanCallable.run({
+    auth: { uid: 'smoke-user' },
+    data: {
+      vin: '1HGCM82633A123456',
+      currentMileage: 42100,
+      make: 'Honda',
+      model: 'Civic',
+    },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.plan.modelSpecific, true);
+  assert.equal(result.plan.strategy, 'manufacturer_schedule_v1');
 });
 
 test('createCalendarEvent returns 200 with ICS event payload', async () => {

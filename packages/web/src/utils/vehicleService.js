@@ -124,6 +124,37 @@ export async function getVehicleInsights(vin) {
   return result.data;
 }
 
+// Fetches the maintenance plan (manufacturer-specific intervals when this
+// app has them on file for the vehicle's make/model, a generic template
+// otherwise — see packages/functions/src/schedule.provider.ts) from the
+// server, replacing the local-only getMaintenanceSchedule/
+// getUpcomingMaintenance from @vehicle-vitals/shared, which only ever
+// covered a hardcoded 6 vehicles and had no fallback for anything else.
+export async function getMaintenancePlan(vin, currentMileage, make, model) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const getMaintenancePlanCallable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'getMaintenancePlanCallable'
+  );
+  const result = await getMaintenancePlanCallable({
+    vin,
+    currentMileage,
+    make,
+    model,
+  });
+
+  if (!result.data.success) {
+    throw new Error(result.data.error || 'Failed to fetch maintenance plan');
+  }
+
+  return result.data.plan;
+}
+
 export function buildPersistedVinInsights(insights) {
   const vinProfile = insights?.free?.vinProfile || {};
   const recalls = insights?.free?.recalls || {};

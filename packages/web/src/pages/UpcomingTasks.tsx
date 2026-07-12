@@ -1,7 +1,3 @@
-import {
-  getMaintenanceSchedule,
-  getUpcomingMaintenance,
-} from '@vehicle-vitals/shared';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -17,16 +13,12 @@ import {
 } from '../shared/firestoreService';
 import { useFeatureFlag } from '../shared/useMonetization';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
+import {
+  formatServiceTypeLabel,
+  type MaintenancePlanItem,
+} from '../utils/maintenancePlan';
 import { sendReminderDeliveryEmail } from '../utils/reminderDeliveryService';
-
-interface UpcomingMaintenanceItem {
-  id: string;
-  description: string;
-  frequency: string;
-  interval: number;
-  nextDueMileage: number;
-  milesUntilDue: number;
-}
+import { getMaintenancePlan } from '../utils/vehicleService';
 
 interface Vehicle {
   vin: string;
@@ -135,10 +127,12 @@ export default function UpcomingTasks() {
   );
   const [vehicleList, setVehicleList] = useState<Vehicle[]>([]);
   const [selectedVehicleVins, setSelectedVehicleVins] = useState<string[]>([]);
-  // Vehicles whose make/model has no manufacturer interval data at all, so
-  // getUpcomingMaintenance silently returns []. Tracked separately so the
-  // empty state can say "we don't have data for this vehicle" instead of
-  // the indistinguishable "all caught up, well maintained."
+  // Vehicles whose make/model has no manufacturer interval data on file
+  // (getMaintenancePlanCallable's plan.modelSpecific is false, so the
+  // items shown are a generic estimate, not real manufacturer data).
+  // Tracked separately so the empty state can say "we don't have
+  // manufacturer data for this vehicle" instead of the indistinguishable
+  // "all caught up, well maintained."
   const [unsupportedVehicles, setUnsupportedVehicles] = useState<Vehicle[]>(
     []
   );
@@ -231,7 +225,22 @@ export default function UpcomingTasks() {
 
         for (const vehicle of vehicles) {
           const currentMileage = parseInt(vehicle.mileage || '0') || 0;
-          if (!getMaintenanceSchedule(vehicle.make, vehicle.model)) {
+
+          let plan: { modelSpecific: boolean; items: MaintenancePlanItem[] } | null =
+            null;
+          if (currentMileage > 0) {
+            try {
+              plan = await getMaintenancePlan(
+                vehicle.vin,
+                currentMileage,
+                vehicle.make,
+                vehicle.model
+              );
+            } catch (error) {
+              console.warn('Unable to load maintenance plan', vehicle.vin, error);
+            }
+          }
+          if (!plan?.modelSpecific) {
             nextUnsupportedVehicles.push({
               vin: vehicle.vin,
               make: vehicle.make,
@@ -280,21 +289,17 @@ export default function UpcomingTasks() {
             }
           );
 
-          const upcoming = getUpcomingMaintenance(
-            vehicle.make,
-            vehicle.model,
-            currentMileage
-          );
+          const upcoming = plan?.items ?? [];
 
           allUpcoming.push(
-            ...upcoming.map((item: UpcomingMaintenanceItem) => ({
-              id: item.id,
-              serviceType: item.id,
-              description: item.description,
-              frequency: item.frequency,
-              interval: item.interval,
+            ...upcoming.map((item: MaintenancePlanItem) => ({
+              id: item.serviceType,
+              serviceType: item.serviceType,
+              description: formatServiceTypeLabel(item.serviceType),
+              frequency: `Every ${item.intervalMiles.toLocaleString()} miles or ${item.intervalMonths} months`,
+              interval: item.intervalMiles,
               nextDueMileage: item.nextDueMileage,
-              milesUntilDue: item.milesUntilDue,
+              milesUntilDue: Math.max(0, item.nextDueMileage - currentMileage),
               vehicle: {
                 vin: vehicle.vin,
                 make: vehicle.make,

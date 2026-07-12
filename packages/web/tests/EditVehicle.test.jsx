@@ -48,6 +48,13 @@ vi.mock('../src/utils/calendarService', () => ({
 
 vi.mock('../src/utils/vehicleService', () => ({
   lookupVin: (...args) => mockLookupVin(...args),
+  getMaintenancePlan: vi.fn(() =>
+    Promise.resolve({
+      strategy: 'static_schedule_v1',
+      modelSpecific: false,
+      items: [],
+    })
+  ),
 }));
 
 vi.mock('../src/utils/vehicleTransferService', () => ({
@@ -56,10 +63,6 @@ vi.mock('../src/utils/vehicleTransferService', () => ({
 
 vi.mock('../src/utils/vehiclePhotoService', () => ({
   findVehiclePhotoFromWeb: (...args) => mockFindVehiclePhotoFromWeb(...args),
-}));
-
-vi.mock('@vehicle-vitals/shared', () => ({
-  getUpcomingMaintenance: vi.fn(() => []),
 }));
 
 vi.mock('react-router-dom', async () => {

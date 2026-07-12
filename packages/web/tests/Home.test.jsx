@@ -2,13 +2,13 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import Home from '../src/pages/Home';
 import {
   getMaintenanceEntries,
   getVehicles,
 } from '../src/shared/firestoreService';
 import { getHouseholdGarageStatus } from '../src/utils/householdGarageService';
+import { getMaintenancePlan } from '../src/utils/vehicleService';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getVehicles: vi.fn(),
@@ -20,6 +20,13 @@ vi.mock('../src/shared/firestoreService', () => ({
 vi.mock('../src/utils/vehicleService', () => ({
   getVehicleInsights: vi.fn(),
   buildPersistedVinInsights: vi.fn(),
+  getMaintenancePlan: vi.fn(() =>
+    Promise.resolve({
+      strategy: 'static_schedule_v1',
+      modelSpecific: true,
+      items: [],
+    })
+  ),
 }));
 
 vi.mock('../src/utils/householdGarageService', () => ({
@@ -27,7 +34,6 @@ vi.mock('../src/utils/householdGarageService', () => ({
 }));
 
 vi.mock('@vehicle-vitals/shared', () => ({
-  getUpcomingMaintenance: vi.fn(() => []),
   computeVehicleHealthSnapshot: vi.fn(() => ({
     overallHealthScore: 74,
     overallConfidenceBand: 'medium',
@@ -101,6 +107,18 @@ const TOYOTA = {
   vehicleStatus: 'active',
 };
 
+// Mirrors getMaintenancePlanCallable's response shape. Home.tsx derives
+// milesUntilDue itself (nextDueMileage - vehicle.mileage) and formats the
+// description from serviceType, so tests configure nextDueMileage relative
+// to TOYOTA's 30000 mileage rather than milesUntilDue directly.
+function mockPlan(items) {
+  return Promise.resolve({
+    strategy: 'static_schedule_v1',
+    modelSpecific: true,
+    items,
+  });
+}
+
 function renderHome() {
   return render(
     <MemoryRouter
@@ -120,15 +138,15 @@ describe('Home – smart maintenance alert badges', () => {
       hasMore: false,
     });
     getMaintenanceEntries.mockResolvedValue([]);
-    getUpcomingMaintenance.mockReturnValue([]);
+    getMaintenancePlan.mockReturnValue(mockPlan([]));
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it('shows no maintenance badge when getUpcomingMaintenance returns empty', async () => {
-    getUpcomingMaintenance.mockReturnValue([]);
+  it('shows no maintenance badge when the maintenance plan has no items', async () => {
+    getMaintenancePlan.mockReturnValue(mockPlan([]));
     renderHome();
     await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
     expect(screen.queryByText(/maintenance due/i)).toBeNull();
@@ -136,14 +154,17 @@ describe('Home – smart maintenance alert badges', () => {
   });
 
   it('shows no badge when all items are beyond 5000 miles away', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oilChange',
-        description: 'Oil change',
-        milesUntilDue: 8000,
-        nextDueMileage: 38000,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 38000,
+          nextDueDate: '2026-12-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => screen.getAllByText('2022 Toyota Camry'));
     expect(screen.queryByText(/maintenance due/i)).toBeNull();
@@ -151,48 +172,58 @@ describe('Home – smart maintenance alert badges', () => {
   });
 
   it('shows "Service due soon" badge when closest item is in 1001–5000 miles', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'tireRotation',
-        description: 'Tire rotation',
-        milesUntilDue: 2500,
-        nextDueMileage: 32500,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'tire_rotation',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 32500,
+          nextDueDate: '2026-09-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => screen.getByText(/service due soon/i));
     expect(screen.getByText(/service due soon/i)).toBeInTheDocument();
   });
 
   it('shows "Maintenance due!" badge when closest item is ≤1000 miles away', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oilChange',
-        description: 'Oil and filter change',
-        milesUntilDue: 500,
-        nextDueMileage: 30500,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30500,
+          nextDueDate: '2026-08-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => screen.getByText(/maintenance due/i));
     expect(screen.getByText(/maintenance due/i)).toBeInTheDocument();
   });
 
   it('"Maintenance due!" takes priority over "Service due soon" when mixed', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oilChange',
-        description: 'Oil and filter change',
-        milesUntilDue: 400,
-        nextDueMileage: 30400,
-      },
-      {
-        id: 'tireRotation',
-        description: 'Tire rotation',
-        milesUntilDue: 3000,
-        nextDueMileage: 33000,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30400,
+          nextDueDate: '2026-08-01',
+        },
+        {
+          serviceType: 'tire_rotation',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 33000,
+          nextDueDate: '2026-09-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => screen.getByText(/maintenance due/i));
     expect(screen.getByText(/maintenance due/i)).toBeInTheDocument();
@@ -200,63 +231,76 @@ describe('Home – smart maintenance alert badges', () => {
   });
 
   it('detail panel shows "Upcoming Maintenance" section with item descriptions', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oilChange',
-        description: 'Oil and filter change',
-        milesUntilDue: 800,
-        nextDueMileage: 30800,
-      },
-      {
-        id: 'tireRotation',
-        description: 'Tire rotation',
-        milesUntilDue: 2500,
-        nextDueMileage: 32500,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30800,
+          nextDueDate: '2026-08-01',
+        },
+        {
+          serviceType: 'tire_rotation',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 32500,
+          nextDueDate: '2026-09-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => screen.getByText('Upcoming Maintenance'));
-    expect(screen.getByText('Oil and filter change')).toBeInTheDocument();
-    expect(screen.getByText('Tire rotation')).toBeInTheDocument();
+    expect(screen.getByText('Oil Change')).toBeInTheDocument();
+    expect(screen.getByText('Tire Rotation')).toBeInTheDocument();
   });
 
   it('detail panel shows mileage remaining for each maintenance item', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oilChange',
-        description: 'Oil and filter change',
-        milesUntilDue: 800,
-        nextDueMileage: 30800,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30800,
+          nextDueDate: '2026-08-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => expect(screen.getAllByText('800 mi').length).toBeGreaterThan(0));
     expect(screen.getAllByText('800 mi').length).toBeGreaterThan(0);
   });
 
   it('detail panel shows "Due now" for an overdue item (milesUntilDue ≤ 0)', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oilChange',
-        description: 'Oil and filter change',
-        milesUntilDue: 0,
-        nextDueMileage: 30000,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30000,
+          nextDueDate: '2026-07-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => screen.getByText('Due now'));
     expect(screen.getByText('Due now')).toBeInTheDocument();
   });
 
   it('detail panel has a "View all →" link to /app/upcoming', async () => {
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oilChange',
-        description: 'Oil and filter change',
-        milesUntilDue: 600,
-        nextDueMileage: 30600,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30600,
+          nextDueDate: '2026-08-01',
+        },
+      ])
+    );
     renderHome();
     await waitFor(() => screen.getByText('View all →'));
     const link = screen.getByText('View all →').closest('a');
@@ -322,7 +366,7 @@ describe('Home – zero-vehicle onboarding', () => {
     vi.clearAllMocks();
     getVehicles.mockResolvedValue({ data: [], lastDoc: null, hasMore: false });
     getMaintenanceEntries.mockResolvedValue([]);
-    getUpcomingMaintenance.mockReturnValue([]);
+    getMaintenancePlan.mockReturnValue(mockPlan([]));
   });
 
   afterEach(() => {
@@ -378,7 +422,7 @@ describe('Home – household garage badge', () => {
       hasMore: false,
     });
     getMaintenanceEntries.mockResolvedValue([]);
-    getUpcomingMaintenance.mockReturnValue([]);
+    getMaintenancePlan.mockReturnValue(mockPlan([]));
   });
 
   afterEach(() => {

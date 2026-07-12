@@ -6,11 +6,11 @@ import '../components/app_bottom_nav.dart';
 import '../components/app_logo.dart';
 import '../components/vehicle_health_widgets.dart';
 import '../models/maintenance.dart';
-import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../models/vehicle_health.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
@@ -30,8 +30,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _searchTerm = '';
   final _firestoreService = FirestoreService();
+  final MaintenancePlanService _maintenancePlanService =
+      MaintenancePlanService();
   final Map<String, List<Maintenance>> _maintenanceEntriesByVin = {};
   final Set<String> _fetchingVins = {};
+  final Map<String, MaintenancePlan> _maintenancePlanByVin = {};
+  final Set<String> _fetchingPlanVins = {};
 
   Future<void> _ensureHealthDataFor(List<Vehicle> vehicles) async {
     final missing = vehicles
@@ -54,6 +58,43 @@ class _HomeScreenState extends State<HomeScreen> {
       for (var i = 0; i < missing.length; i++) {
         _maintenanceEntriesByVin[missing[i]] = results[i];
         _fetchingVins.remove(missing[i]);
+      }
+    });
+  }
+
+  Future<void> _ensureMaintenancePlansFor(List<Vehicle> vehicles) async {
+    final missing = vehicles
+        .take(_kMaxHealthBadgeFetches)
+        .where(
+          (vehicle) =>
+              vehicle.mileage > 0 &&
+              !_maintenancePlanByVin.containsKey(vehicle.vin) &&
+              !_fetchingPlanVins.contains(vehicle.vin),
+        )
+        .toList();
+    if (missing.isEmpty) return;
+
+    _fetchingPlanVins.addAll(missing.map((vehicle) => vehicle.vin));
+    final results = await Future.wait(
+      missing.map(
+        (vehicle) => _maintenancePlanService
+            .getMaintenancePlan(
+              vin: vehicle.vin,
+              currentMileage: vehicle.mileage,
+              make: vehicle.make,
+              model: vehicle.model,
+            )
+            .catchError(
+              (_) =>
+                  const MaintenancePlan(modelSpecific: false, items: []),
+            ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      for (var i = 0; i < missing.length; i++) {
+        _maintenancePlanByVin[missing[i].vin] = results[i];
+        _fetchingPlanVins.remove(missing[i].vin);
       }
     });
   }
@@ -97,14 +138,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget? _maintenanceUrgencyChip(Vehicle vehicle, ColorScheme colorScheme) {
-    final items = MaintenanceSchedule.getUpcomingMaintenance(
-      vehicle.make,
-      vehicle.model,
-      vehicle.mileage,
-      vehicle.mileage + 10000,
+    final plan = _maintenancePlanByVin[vehicle.vin];
+    if (plan == null) return null;
+    final dueSoon =
+        plan.items
+            .where((item) => item.nextDueMileage - vehicle.mileage <= 10000)
+            .toList()
+          ..sort(
+            (a, b) => a.nextDueMileage.compareTo(b.nextDueMileage),
+          );
+    if (dueSoon.isEmpty) return null;
+    final miles = (dueSoon.first.nextDueMileage - vehicle.mileage).clamp(
+      0,
+      1 << 30,
     );
-    if (items.isEmpty) return null;
-    final miles = items.first['milesUntilDue'] as int;
     if (miles > 5000) return null;
     final isUrgent = miles <= 1000;
     final urgencyColor = isUrgent ? colorScheme.error : colorScheme.tertiary;
@@ -200,9 +247,10 @@ class _HomeScreenState extends State<HomeScreen> {
               .where((vehicle) => _isStored(vehicle))
               .toList();
 
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _ensureHealthDataFor(filtered),
-          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _ensureHealthDataFor(filtered);
+            _ensureMaintenancePlansFor(filtered);
+          });
 
           final healthSnapshots = filtered
               .map(_healthSnapshotFor)

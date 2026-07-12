@@ -7,10 +7,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../components/app_bottom_nav.dart';
 import '../components/vehicle_health_widgets.dart';
 import '../models/maintenance.dart';
-import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../models/vehicle_health.dart';
 import '../services/firestore_service.dart';
+import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
@@ -30,6 +30,9 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   String? _error;
   Vehicle? _vehicle;
   VehicleHealthSnapshot? _healthSnapshot;
+  MaintenancePlan? _maintenancePlan;
+  final MaintenancePlanService _maintenancePlanService =
+      MaintenancePlanService();
 
   @override
   void initState() {
@@ -51,12 +54,28 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       ]);
       final vehicle = results[0] as Vehicle?;
       final entries = results[1] as List<Maintenance>;
+
+      MaintenancePlan? plan;
+      if (vehicle != null && vehicle.mileage > 0) {
+        try {
+          plan = await _maintenancePlanService.getMaintenancePlan(
+            vin: vehicle.vin,
+            currentMileage: vehicle.mileage,
+            make: vehicle.make,
+            model: vehicle.model,
+          );
+        } catch (_) {
+          // Leave plan null; the maintenance section just won't render.
+        }
+      }
+
       if (!mounted) return;
       setState(() {
         _vehicle = vehicle;
         _healthSnapshot = vehicle == null
             ? null
             : VehicleHealthCalculator.resolveSnapshot(vehicle, entries);
+        _maintenancePlan = plan;
         _loading = false;
       });
     } catch (e) {
@@ -277,12 +296,19 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     Vehicle vehicle,
     ColorScheme colorScheme,
   ) {
-    final items = MaintenanceSchedule.getUpcomingMaintenance(
-      vehicle.make,
-      vehicle.model,
-      vehicle.mileage,
-      vehicle.mileage + 10000,
-    ).take(3).toList();
+    final plan = _maintenancePlan;
+    if (plan == null) return const SizedBox.shrink();
+    final items =
+        (plan.items
+              .where(
+                (item) => item.nextDueMileage - vehicle.mileage <= 10000,
+              )
+              .toList()
+            ..sort(
+              (a, b) => a.nextDueMileage.compareTo(b.nextDueMileage),
+            ))
+        .take(3)
+        .toList();
     if (items.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +333,10 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         ),
         const SizedBox(height: 6),
         ...items.map((item) {
-          final miles = item['milesUntilDue'] as int;
+          final miles = (item.nextDueMileage - vehicle.mileage).clamp(
+            0,
+            1 << 30,
+          );
           final isUrgent = miles <= 1000;
           final isSoon = miles <= 5000;
           final dotColor = isUrgent
@@ -335,7 +364,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                 ),
                 Expanded(
                   child: Text(
-                    item['description'] as String,
+                    formatServiceTypeLabel(item.serviceType),
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),

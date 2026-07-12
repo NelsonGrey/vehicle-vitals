@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import '../components/ad_banner.dart';
 import '../components/app_bottom_nav.dart';
 import '../models/maintenance.dart';
-import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../services/calendar_service.dart';
 import '../services/data_export_service.dart';
 import '../services/firestore_service.dart';
+import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 import 'maintenance_detail_screen.dart';
@@ -56,6 +56,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   Vehicle? _vehicle;
   bool _loading = true;
   bool _loadingVehicle = true;
+  MaintenancePlan? _maintenancePlan;
+  final MaintenancePlanService _maintenancePlanService =
+      MaintenancePlanService();
 
   @override
   void initState() {
@@ -78,9 +81,26 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     try {
       final firestoreService = context.read<FirestoreService>();
       final vehicle = await firestoreService.getVehicle(widget.vin);
+
+      MaintenancePlan? plan;
+      if (vehicle != null && vehicle.mileage > 0) {
+        try {
+          plan = await _maintenancePlanService.getMaintenancePlan(
+            vin: vehicle.vin,
+            currentMileage: vehicle.mileage,
+            make: vehicle.make,
+            model: vehicle.model,
+          );
+        } catch (_) {
+          // Leave plan null; the recommended-maintenance card just won't
+          // render its schedule list.
+        }
+      }
+
       if (!mounted) return;
       setState(() {
         _vehicle = vehicle;
+        _maintenancePlan = plan;
         _loadingVehicle = false;
       });
     } catch (e) {
@@ -457,33 +477,58 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
-                        final schedules =
-                            MaintenanceSchedule.getUpcomingMaintenance(
-                              _vehicle!.make,
-                              _vehicle!.model,
-                              _vehicle!.mileage,
-                            );
-                        if (schedules.isEmpty) {
+                        final plan = _maintenancePlan;
+                        if (plan == null || plan.items.isEmpty) {
                           return const Text(
-                            'No manufacturer schedules available for this vehicle.',
+                            'No maintenance schedule available for this vehicle.',
                             style: TextStyle(
                               fontStyle: FontStyle.italic,
                               color: Colors.grey,
                             ),
                           );
                         }
+                        final mileage = _vehicle!.mileage;
+                        final schedules = [...plan.items]
+                          ..sort(
+                            (a, b) =>
+                                a.nextDueMileage.compareTo(b.nextDueMileage),
+                          );
                         return Column(
-                          children: schedules.take(3).map((schedule) {
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(Icons.build, size: 20),
-                              title: Text(schedule['description']),
-                              subtitle: Text(
-                                'Due: ${schedule['nextDueMileage']} miles (${schedule['milesUntilDue']} miles)',
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!plan.modelSpecific)
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  'No manufacturer data for this vehicle — showing a generic estimate.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                               ),
-                              trailing: Text(schedule['frequency']),
-                            );
-                          }).toList(),
+                            ...schedules.take(3).map((schedule) {
+                              final milesUntilDue =
+                                  (schedule.nextDueMileage - mileage).clamp(
+                                    0,
+                                    1 << 30,
+                                  );
+                              return ListTile(
+                                dense: true,
+                                leading: const Icon(Icons.build, size: 20),
+                                title: Text(
+                                  formatServiceTypeLabel(schedule.serviceType),
+                                ),
+                                subtitle: Text(
+                                  'Due: ${schedule.nextDueMileage} miles ($milesUntilDue miles)',
+                                ),
+                                trailing: Text(
+                                  'Every ${schedule.intervalMiles} mi',
+                                ),
+                              );
+                            }),
+                          ],
                         );
                       },
                     ),

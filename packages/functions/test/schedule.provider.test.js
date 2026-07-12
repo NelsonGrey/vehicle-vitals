@@ -21,3 +21,37 @@ test('buildMaintenancePlan advances a full interval when currentMileage lands ex
   const oil = plan.items.find(item => item.serviceType === 'oil_change');
   assert.equal(oil.nextDueMileage, 15000);
 });
+
+test('buildMaintenancePlan uses manufacturer-specific intervals when make/model is covered', () => {
+  const plan = buildMaintenancePlan(25000, 'Honda', 'Civic');
+  assert.equal(plan.modelSpecific, true);
+  assert.equal(plan.strategy, 'manufacturer_schedule_v1');
+
+  // Honda Civic's real interval is 7,500 mi for oil/tire, not the generic
+  // template's 5,000 mi — confirms the manufacturer table is actually
+  // being used, not silently falling back to generic.
+  const oil = plan.items.find(item => item.serviceType === 'oil_change');
+  assert.equal(oil.intervalMiles, 7500);
+  assert.equal(oil.nextDueMileage, 30000);
+
+  const brake = plan.items.find(item => item.serviceType === 'brake_inspection');
+  assert.equal(brake.intervalMiles, 15000); // Civic-specific, not the generic 10,000
+});
+
+test('buildMaintenancePlan is case/whitespace-insensitive when matching make/model', () => {
+  const plan = buildMaintenancePlan(25000, ' TOYOTA ', ' camry ');
+  assert.equal(plan.modelSpecific, true);
+});
+
+test('buildMaintenancePlan falls back to the generic template for an uncovered make/model', () => {
+  const plan = buildMaintenancePlan(25000, 'Tesla', 'Model 3');
+  assert.equal(plan.modelSpecific, false);
+  assert.equal(plan.strategy, 'static_schedule_v1');
+  const oil = plan.items.find(item => item.serviceType === 'oil_change');
+  assert.equal(oil.intervalMiles, 5000);
+});
+
+test('buildMaintenancePlan falls back to the generic template when make/model is omitted', () => {
+  const plan = buildMaintenancePlan(25000);
+  assert.equal(plan.modelSpecific, false);
+});

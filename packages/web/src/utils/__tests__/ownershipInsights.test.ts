@@ -6,13 +6,14 @@ describe('ownershipInsights', () => {
     const currentYear = new Date().getFullYear();
     const categories = [
       {
+        key: 'finance',
         items: [
           {
             files: [
               {
                 analysis: {
                   extracted: {
-                    documentCategory: 'loan contract',
+                    documentCategory: 'document',
                     totalCost: 20000,
                   },
                   sourceText:
@@ -42,13 +43,14 @@ describe('ownershipInsights', () => {
   it('aggregates maintenance spend and keeps the latest service date', () => {
     const categories = [
       {
+        key: 'maintenance',
         items: [
           {
             files: [
               {
                 analysis: {
                   extracted: {
-                    documentCategory: 'service invoice',
+                    documentCategory: 'invoice',
                     serviceType: 'Oil change',
                     totalCost: 89.99,
                     serviceDate: '2026-01-15',
@@ -58,7 +60,7 @@ describe('ownershipInsights', () => {
               {
                 analysis: {
                   extracted: {
-                    documentCategory: 'repair receipt',
+                    documentCategory: 'receipt',
                     serviceType: 'Brake service',
                     totalCost: 410.01,
                     serviceDate: '2026-03-01',
@@ -84,13 +86,14 @@ describe('ownershipInsights', () => {
   it('does not fabricate finance projections without finance evidence', () => {
     const categories = [
       {
+        key: 'ownership',
         items: [
           {
             files: [
               {
                 analysis: {
                   extracted: {
-                    documentCategory: 'registration',
+                    documentCategory: 'document',
                     totalCost: 125,
                   },
                   sourceText: 'Renewal completed for annual registration.',
@@ -109,5 +112,58 @@ describe('ownershipInsights', () => {
     expect(insights.estimatedPrincipal).toBeUndefined();
     expect(insights.estimatedCurrentValue).toBeUndefined();
     expect(insights.upcomingPaymentDates).toEqual([]);
+  });
+
+  it('excludes the vehicle purchase price (Bill of Sale) from maintenance spend even though the AI tags it a "receipt"', () => {
+    const categories = [
+      {
+        key: 'ownership',
+        items: [
+          {
+            files: [
+              {
+                analysis: {
+                  extracted: {
+                    // Same generic tag a real maintenance receipt gets —
+                    // this is the exact ambiguity that caused a $100k+
+                    // vehicle purchase price to be counted as "maintenance
+                    // spend captured" for a real user's vehicle.
+                    documentCategory: 'receipt',
+                    totalCost: 108000,
+                    serviceDate: '2025-06-01',
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        key: 'maintenance',
+        items: [
+          {
+            files: [
+              {
+                analysis: {
+                  extracted: {
+                    documentCategory: 'receipt',
+                    serviceType: 'Oil change',
+                    totalCost: 75,
+                    serviceDate: '2026-01-15',
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const insights = computeOwnershipInsights(categories, { year: 2025 });
+
+    expect(insights.analyzedDocumentCount).toBe(2);
+    expect(insights.maintenanceDocsCount).toBe(1);
+    expect(insights.maintenanceTotalCost).toBe(75);
+    expect(insights.latestServiceDate).toBe('2026-01-15');
   });
 });

@@ -32,8 +32,8 @@ function makeFinanceFile(opts = {}) {
   };
 }
 
-function wrapFiles(files) {
-  return [{ items: [{ files }] }];
+function wrapFiles(files, key = 'maintenance') {
+  return [{ key, items: [{ files }] }];
 }
 
 const VEHICLE_2020 = { year: 2020 };
@@ -72,7 +72,10 @@ describe('computeOwnershipInsights', () => {
 
   it('counts finance documents', () => {
     const files = [makeFinanceFile({ totalCost: 450 })];
-    const result = computeOwnershipInsights(wrapFiles(files), VEHICLE_2020);
+    const result = computeOwnershipInsights(
+      wrapFiles(files, 'finance'),
+      VEHICLE_2020
+    );
     expect(result.financeDocsCount).toBe(1);
   });
 
@@ -100,7 +103,7 @@ describe('computeOwnershipInsights', () => {
       sourceText: 'Monthly payment $350/mo due on the 1st of each month.',
     });
     const result = computeOwnershipInsights(
-      wrapFiles([financeFile]),
+      wrapFiles([financeFile], 'finance'),
       VEHICLE_2020
     );
     expect(result.upcomingPaymentDates).toHaveLength(6);
@@ -108,12 +111,17 @@ describe('computeOwnershipInsights', () => {
 
   it('handles multiple categories and items', () => {
     const categories = [
-      { items: [{ files: [makeMaintenanceFile({ totalCost: 80 })] }] },
       {
-        items: [
-          { files: [makeMaintenanceFile({ totalCost: 120 })] },
-          { files: [makeFinanceFile()] },
-        ],
+        key: 'maintenance',
+        items: [{ files: [makeMaintenanceFile({ totalCost: 80 })] }],
+      },
+      {
+        key: 'maintenance',
+        items: [{ files: [makeMaintenanceFile({ totalCost: 120 })] }],
+      },
+      {
+        key: 'finance',
+        items: [{ files: [makeFinanceFile()] }],
       },
     ];
     const result = computeOwnershipInsights(categories, VEHICLE_2020);
@@ -121,5 +129,31 @@ describe('computeOwnershipInsights', () => {
     expect(result.maintenanceDocsCount).toBe(2);
     expect(result.financeDocsCount).toBe(1);
     expect(result.maintenanceTotalCost).toBe(200);
+  });
+
+  it('excludes a Bill of Sale filed under Ownership from maintenance spend, even though it is tagged as a generic "receipt"', () => {
+    const categories = [
+      {
+        key: 'ownership',
+        items: [
+          {
+            files: [
+              makeMaintenanceFile({
+                documentCategory: 'receipt',
+                serviceType: undefined,
+                totalCost: 108000,
+              }),
+            ],
+          },
+        ],
+      },
+      {
+        key: 'maintenance',
+        items: [{ files: [makeMaintenanceFile({ totalCost: 75 })] }],
+      },
+    ];
+    const result = computeOwnershipInsights(categories, VEHICLE_2020);
+    expect(result.maintenanceDocsCount).toBe(1);
+    expect(result.maintenanceTotalCost).toBe(75);
   });
 });

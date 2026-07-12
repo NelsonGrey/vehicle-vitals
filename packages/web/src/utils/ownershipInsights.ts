@@ -13,6 +13,13 @@ export type OwnershipInsightFile = {
 };
 
 export type OwnershipInsightCategory = {
+  // Portfolio category key (e.g. 'maintenance', 'finance', 'ownership') —
+  // the authoritative signal for what a document is FOR. The AI-assigned
+  // documentCategory on each file is only a generic receipt/invoice/image/
+  // document/other classification of the paper itself, not its subject, so
+  // e.g. a Bill of Sale filed under "ownership" can still come back tagged
+  // "receipt" — it must not be confused with a maintenance receipt.
+  key?: string;
   items: Array<{
     files?: OwnershipInsightFile[];
   }>;
@@ -75,22 +82,19 @@ function extractMonthlyPaymentFromText(
   return amount;
 }
 
-function isFinanceDocument(file: OwnershipInsightFile) {
-  const category = file.analysis?.extracted?.documentCategory || '';
-  const summary = file.analysis?.sourceText || '';
-
-  return /(loan|lease|finance|payment|contract|lender|apr)/i.test(
-    `${category} ${summary}`
-  );
+// Classification is based on which portfolio category (Ownership, Finance,
+// Maintenance, Reference) the user actually filed the document under, not
+// a keyword guess against the AI's generic per-file documentCategory/
+// serviceType — that field is deliberately coarse ("receipt" | "invoice" |
+// "image" | "document" | "other") and says nothing about subject matter, so
+// a keyword match would (and did) count a vehicle's Bill of Sale as
+// "maintenance spend" just because it's a "receipt".
+function isFinanceDocument(categoryKey: string | undefined) {
+  return categoryKey === 'finance';
 }
 
-function isMaintenanceDocument(file: OwnershipInsightFile) {
-  const category = file.analysis?.extracted?.documentCategory || '';
-  const serviceType = file.analysis?.extracted?.serviceType || '';
-
-  return /(service|maintenance|repair|invoice|receipt|oil|brake|tire)/i.test(
-    `${category} ${serviceType}`
-  );
+function isMaintenanceDocument(categoryKey: string | undefined) {
+  return categoryKey === 'maintenance';
 }
 
 function estimateDepreciationFactor(vehicleYear: number): number {
@@ -125,12 +129,19 @@ export function computeOwnershipInsights(
   categories: OwnershipInsightCategory[],
   vehicle: OwnershipInsightVehicle
 ): OwnershipInsights {
-  const files = categories.flatMap(category =>
-    category.items.flatMap(item => item.files || [])
+  const filesWithCategory = categories.flatMap(category =>
+    category.items.flatMap(item =>
+      (item.files || []).map(file => ({ file, categoryKey: category.key }))
+    )
   );
-  const analyzedFiles = files.filter(file => file.analysis?.extracted);
+  const analyzedEntries = filesWithCategory.filter(
+    entry => entry.file.analysis?.extracted
+  );
+  const analyzedFiles = analyzedEntries.map(entry => entry.file);
 
-  const maintenanceFiles = analyzedFiles.filter(isMaintenanceDocument);
+  const maintenanceFiles = analyzedEntries
+    .filter(entry => isMaintenanceDocument(entry.categoryKey))
+    .map(entry => entry.file);
   const maintenanceCosts = maintenanceFiles
     .map(file => parseAmount(file.analysis?.extracted?.totalCost))
     .filter((value): value is number => typeof value === 'number');
@@ -157,7 +168,9 @@ export function computeOwnershipInsights(
     ([label, amount]) => ({ label, amount })
   ).sort((a, b) => b.amount - a.amount);
 
-  const financeFiles = analyzedFiles.filter(isFinanceDocument);
+  const financeFiles = analyzedEntries
+    .filter(entry => isFinanceDocument(entry.categoryKey))
+    .map(entry => entry.file);
   const monthlyPayments = financeFiles
     .map(file => {
       const extractedCost = parseAmount(file.analysis?.extracted?.totalCost);

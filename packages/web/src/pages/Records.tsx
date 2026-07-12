@@ -879,6 +879,10 @@ export default function Records() {
                     ? ` • Latest ${new Date(insights.latestServiceDate).toLocaleDateString()}`
                     : ''}
                 </div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                  From docs filed under Maintenance and Repair only —
+                  purchase price and finance documents are excluded.
+                </div>
               </div>
 
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">

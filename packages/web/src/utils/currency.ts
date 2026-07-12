@@ -94,12 +94,19 @@ export function formatCurrency(
 }
 
 /**
- * Formats a monetary amount compactly, e.g. "$1.2k" for large values,
- * otherwise the same as formatCurrency with no decimal places.
+ * Formats a monetary amount compactly, e.g. "$1.2k" for large values.
+ * Below $1,000, compact notation has nothing useful to abbreviate — using
+ * it anyway capped precision at 1 decimal digit and dropped trailing
+ * zeros, rendering $12.40 as $12.4. Amounts under $1,000 use standard
+ * two-decimal currency formatting instead.
  */
 export function formatCurrencyCompact(amount: number | undefined | null): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) {
     return 'Unknown';
+  }
+
+  if (Math.abs(amount) < 1000) {
+    return formatCurrency(amount);
   }
 
   const { locale, currency } = getCurrencyContext();
@@ -112,8 +119,7 @@ export function formatCurrencyCompact(amount: number | undefined | null): string
       maximumFractionDigits: 1,
     }).format(amount);
   } catch {
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}k`;
-    return `$${amount.toFixed(0)}`;
+    return `$${(amount / 1000).toFixed(1)}k`;
   }
 }
 

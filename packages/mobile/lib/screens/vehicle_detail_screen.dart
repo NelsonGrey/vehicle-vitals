@@ -12,6 +12,7 @@ import '../models/vehicle.dart';
 import '../models/vehicle_health.dart';
 import '../services/firestore_service.dart';
 import '../services/premium_service.dart';
+import '../theme/design_tokens.dart';
 
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
@@ -123,13 +124,19 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
   Widget _buildHealthSection(BuildContext context, ColorScheme colorScheme) {
     final snapshot = _healthSnapshot;
-    if (snapshot == null) return const SizedBox.shrink();
+    final vehicle = _vehicle;
+    if (snapshot == null || vehicle == null) return const SizedBox.shrink();
 
     final tier = context.watch<PremiumService>().subscriptionTier;
     final visibleComponents = tier == 'free'
         ? snapshot.components.take(3).toList()
         : snapshot.components;
     final hiddenCount = snapshot.components.length - visibleComponents.length;
+
+    final requiredTotal = vehicle.requiredPortfolioItemCount;
+    final requiredComplete = vehicle.completedRequiredPortfolioItemCount;
+    final optionalTotal = vehicle.optionalPortfolioItemCount;
+    final optionalComplete = vehicle.completedOptionalPortfolioItemCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,10 +155,91 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             HealthScoreBadge(score: snapshot.overallHealthScore),
           ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          snapshot.accuracyTip,
-          style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+        const SizedBox(height: 10),
+        // Record Completeness — folded into Health (not a separate score)
+        // so it reads as "why the forecast confidence is what it is"
+        // rather than a second, competing garage metric. Mirrors the same
+        // merge on packages/web's VehicleHealthPanel.
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'RECORD COMPLETENESS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                requiredTotal > 0
+                    ? '$requiredComplete/$requiredTotal required'
+                    : 'No required records yet',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (requiredTotal > 0) ...[
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: requiredComplete / requiredTotal,
+                    minHeight: 6,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    color: AppDesignTokens.success,
+                  ),
+                ),
+              ],
+              if (optionalTotal > 0) ...[
+                const SizedBox(height: 6),
+                Text(
+                  '+$optionalComplete/$optionalTotal optional records added',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                snapshot.accuracyTip,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Required records (title, insurance, registration, etc.) '
+                "are what this forecast is based on — optional records add "
+                "extra detail but aren't scored.",
+                style: TextStyle(fontSize: 11, color: colorScheme.outline),
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () => context.push('/app/records/${vehicle.vin}'),
+                child: Text(
+                  'View records →',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         if (snapshot.nextLikelyService != null) ...[
           const SizedBox(height: 6),

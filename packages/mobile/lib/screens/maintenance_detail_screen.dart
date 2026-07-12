@@ -44,6 +44,7 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
+  final _providerNameController = TextEditingController();
   String _performedBy = 'mechanic';
   String _coverage = 'parts_and_labor';
   Maintenance? _entry;
@@ -61,6 +62,7 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     _titleController.dispose();
     _notesController.dispose();
     _costController.dispose();
+    _providerNameController.dispose();
     super.dispose();
   }
 
@@ -80,6 +82,7 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
           _notesController.text = entry.notes;
           _costController.text = entry.cost.toString();
           _performedBy = entry.performedBy;
+          _providerNameController.text = entry.providerName;
           _coverage = entry.coverage;
           _selectedDate = entry.date;
           _loading = false;
@@ -132,6 +135,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
         notes: _notesController.text.trim(),
         cost: cost,
         performedBy: _performedBy,
+        providerName: _performedBy == 'self'
+            ? ''
+            : _providerNameController.text.trim(),
         coverage: _coverage,
         date: _selectedDate,
         updatedAt: DateTime.now(),
@@ -288,6 +294,17 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                             setState(() => _performedBy = value);
                           },
                         ),
+                        if (_performedBy != 'self') ...[
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _providerNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Shop / mechanic name',
+                              hintText: 'e.g. Downtown Auto Repair',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
                           initialValue: _coverage,
@@ -325,7 +342,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '${_performedByLabel(_performedBy)} • ${_coverageLabel(_coverage)}',
+                    _providerNameController.text.trim().isNotEmpty
+                        ? '${_performedByLabel(_performedBy)} (${_providerNameController.text.trim()}) • ${_coverageLabel(_coverage)}'
+                        : '${_performedByLabel(_performedBy)} • ${_coverageLabel(_coverage)}',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 16),

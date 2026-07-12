@@ -47,6 +47,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
+  final _providerNameController = TextEditingController();
   String _performedBy = 'mechanic';
   String _coverage = 'parts_and_labor';
   final DataExportService _exportService = DataExportService();
@@ -68,6 +69,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     _titleController.dispose();
     _notesController.dispose();
     _costController.dispose();
+    _providerNameController.dispose();
     super.dispose();
   }
 
@@ -139,6 +141,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           notes: _notesController.text.trim(),
           cost: cost ?? 0.0,
           performedBy: _performedBy,
+          providerName: _performedBy == 'self'
+              ? ''
+              : _providerNameController.text.trim(),
           coverage: _coverage,
           date: DateTime.now(),
           createdAt: DateTime.now(),
@@ -149,6 +154,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       _titleController.clear();
       _notesController.clear();
       _costController.clear();
+      _providerNameController.clear();
       _performedBy = 'mechanic';
       _coverage = 'parts_and_labor';
 
@@ -375,6 +381,17 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                             setState(() => _performedBy = value);
                           },
                         ),
+                        if (_performedBy != 'self') ...[
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _providerNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Shop / mechanic name',
+                              hintText: 'e.g. Downtown Auto Repair',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
                           initialValue: _coverage,
@@ -502,7 +519,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                             children: [
                               if (entry.notes.isNotEmpty) Text(entry.notes),
                               Text(
-                                '${_performedByLabel(entry.performedBy)} • ${_coverageLabel(entry.coverage)}',
+                                entry.providerName.isNotEmpty
+                                    ? '${_performedByLabel(entry.performedBy)} (${entry.providerName}) • ${_coverageLabel(entry.coverage)}'
+                                    : '${_performedByLabel(entry.performedBy)} • ${_coverageLabel(entry.coverage)}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],

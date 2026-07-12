@@ -689,6 +689,66 @@ class _OwnershipInsightsPanel extends StatelessWidget {
               '${insights.latestServiceDate != null ? ' • Latest ${insights.latestServiceDate}' : ''}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (insights.maintenanceBreakdown.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                'SPEND BY SERVICE TYPE',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...insights.maintenanceBreakdown.map((entry) {
+                final fraction = insights.maintenanceTotalCost > 0
+                    ? (entry.amount / insights.maintenanceTotalCost).clamp(
+                        0.0,
+                        1.0,
+                      )
+                    : 0.0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 90,
+                        child: Text(
+                          entry.label,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: fraction,
+                            minHeight: 6,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 56,
+                        child: Text(
+                          '\$${entry.amount.toStringAsFixed(0)}',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
             const SizedBox(height: 8),
             Text(
               insights.estimatedMonthlyPayment != null

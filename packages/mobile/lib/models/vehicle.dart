@@ -35,6 +35,13 @@ class Vehicle {
   final Map<String, dynamic>? documentPortfolio;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  // Server-precomputed health forecast (see
+  // packages/functions/src/vehicleHealth.provider.ts) — read-only,
+  // deliberately excluded from toMap() since the client never writes it;
+  // the Firestore trigger recomputes it whenever the vehicle or its
+  // maintenance history changes. See VehicleHealthCalculator.resolveSnapshot
+  // for the freshness check + local-fallback logic that consumes this.
+  final Map<String, dynamic>? vehicleHealthSnapshot;
 
   Vehicle({
     required this.vin,
@@ -66,6 +73,7 @@ class Vehicle {
     this.documentPortfolio,
     this.createdAt,
     this.updatedAt,
+    this.vehicleHealthSnapshot,
   });
 
   factory Vehicle.fromMap(Map<String, dynamic> map) {
@@ -107,6 +115,9 @@ class Vehicle {
           : null,
       createdAt: map['createdAt']?.toDate(),
       updatedAt: map['updatedAt']?.toDate(),
+      vehicleHealthSnapshot: map['vehicleHealthSnapshot'] is Map
+          ? Map<String, dynamic>.from(map['vehicleHealthSnapshot'] as Map)
+          : null,
     );
   }
 
@@ -182,6 +193,7 @@ class Vehicle {
     Map<String, dynamic>? documentPortfolio,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Map<String, dynamic>? vehicleHealthSnapshot,
   }) {
     return Vehicle(
       vin: vin ?? this.vin,
@@ -213,6 +225,8 @@ class Vehicle {
       documentPortfolio: documentPortfolio ?? this.documentPortfolio,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      vehicleHealthSnapshot:
+          vehicleHealthSnapshot ?? this.vehicleHealthSnapshot,
     );
   }
 

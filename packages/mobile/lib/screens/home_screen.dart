@@ -243,16 +243,33 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 6),
                         Expanded(
-                          child: Text(
-                            attentionCount > 0
-                                ? 'Garage Health: $attentionCount of ${healthSnapshots.length} vehicle${healthSnapshots.length == 1 ? '' : 's'} may need attention'
-                                : 'Garage Health: all ${healthSnapshots.length} vehicle${healthSnapshots.length == 1 ? '' : 's'} looking good',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: attentionCount > 0
-                                  ? colorScheme.tertiary
-                                  : AppDesignTokens.success,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                attentionCount > 0
+                                    ? 'Garage Health: $attentionCount of ${healthSnapshots.length} vehicle${healthSnapshots.length == 1 ? '' : 's'} may need attention'
+                                    : 'Garage Health: all ${healthSnapshots.length} vehicle${healthSnapshots.length == 1 ? '' : 's'} looking good',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: attentionCount > 0
+                                      ? colorScheme.tertiary
+                                      : AppDesignTokens.success,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Estimates remaining life on key maintenance '
+                                'items (oil, brakes, tires, fluids) from '
+                                'mileage and logged service history — a '
+                                'vehicle needs attention below a score of '
+                                '80. Log services to keep this accurate.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],

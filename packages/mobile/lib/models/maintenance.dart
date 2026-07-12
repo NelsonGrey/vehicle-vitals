@@ -21,6 +21,11 @@ class Maintenance {
   final String mileage;
   final double cost;
   final String performedBy;
+  // Shop/mechanic name for entries where performedBy != 'self'. Mirrors
+  // packages/web's maintenance entry providerName field so "who serviced
+  // this" is consistent across platforms and feeds the Mechanics screen's
+  // "Providers You've Used" list on both.
+  final String providerName;
   final String coverage;
   final DateTime date;
   final DateTime createdAt;
@@ -33,6 +38,7 @@ class Maintenance {
     this.mileage = '',
     this.cost = 0.0,
     this.performedBy = 'mechanic',
+    this.providerName = '',
     this.coverage = 'parts_and_labor',
     required this.date,
     required this.createdAt,
@@ -47,6 +53,7 @@ class Maintenance {
       mileage: (map['mileage'] ?? '').toString(),
       cost: (map['cost'] ?? 0.0).toDouble(),
       performedBy: (map['performedBy'] ?? 'mechanic').toString(),
+      providerName: (map['providerName'] ?? '').toString(),
       coverage: (map['coverage'] ?? 'parts_and_labor').toString(),
       date: _parseDate(map['date']),
       createdAt: _parseDate(map['createdAt']),
@@ -61,6 +68,7 @@ class Maintenance {
       'mileage': mileage,
       'cost': cost,
       'performedBy': performedBy,
+      'providerName': providerName,
       'coverage': coverage,
       'date': date,
       'createdAt': createdAt,
@@ -75,6 +83,7 @@ class Maintenance {
     String? mileage,
     double? cost,
     String? performedBy,
+    String? providerName,
     String? coverage,
     DateTime? date,
     DateTime? createdAt,
@@ -87,6 +96,7 @@ class Maintenance {
       mileage: mileage ?? this.mileage,
       cost: cost ?? this.cost,
       performedBy: performedBy ?? this.performedBy,
+      providerName: providerName ?? this.providerName,
       coverage: coverage ?? this.coverage,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,

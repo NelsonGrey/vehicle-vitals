@@ -249,4 +249,41 @@ class Vehicle {
 
     return count;
   }
+
+  // Mirrors web's optionalTotal/optionalComplete on getPortfolioRequiredProgress
+  // — surfaced alongside the required count so "how complete are my records"
+  // isn't understated by only counting required items.
+  int get optionalPortfolioItemCount {
+    final categories = (documentPortfolio?['categories'] as List?) ?? [];
+    var count = 0;
+
+    for (final category in categories) {
+      final items = (category is Map ? category['items'] as List? : null) ?? [];
+      for (final item in items) {
+        if (item is Map && item['required'] != true) {
+          count += 1;
+        }
+      }
+    }
+
+    return count;
+  }
+
+  int get completedOptionalPortfolioItemCount {
+    final categories = (documentPortfolio?['categories'] as List?) ?? [];
+    var count = 0;
+
+    for (final category in categories) {
+      final items = (category is Map ? category['items'] as List? : null) ?? [];
+      for (final item in items) {
+        if (item is Map &&
+            item['required'] != true &&
+            item['status'] == 'ready') {
+          count += 1;
+        }
+      }
+    }
+
+    return count;
+  }
 }

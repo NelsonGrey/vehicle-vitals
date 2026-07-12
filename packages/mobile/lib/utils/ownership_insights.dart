@@ -1,6 +1,13 @@
 // Mobile port of packages/web/src/utils/ownershipInsights.ts, trimmed to the
 // concepts practical at mobile depth (no payment-calendar projection).
 
+class MaintenanceBreakdownEntry {
+  const MaintenanceBreakdownEntry({required this.label, required this.amount});
+
+  final String label;
+  final double amount;
+}
+
 class OwnershipInsights {
   const OwnershipInsights({
     required this.analyzedDocumentCount,
@@ -12,6 +19,7 @@ class OwnershipInsights {
     this.estimatedMonthlyPayment,
     this.estimatedCurrentValue,
     this.estimatedValueRealized,
+    this.maintenanceBreakdown = const [],
   });
 
   final int analyzedDocumentCount;
@@ -23,6 +31,10 @@ class OwnershipInsights {
   final double? estimatedMonthlyPayment;
   final double? estimatedCurrentValue;
   final double? estimatedValueRealized;
+  // Maintenance spend grouped by service type — mirrors
+  // packages/web/src/utils/ownershipInsights.ts's maintenanceBreakdown,
+  // sorted highest-spend first.
+  final List<MaintenanceBreakdownEntry> maintenanceBreakdown;
 
   bool get hasAnyInsight => analyzedDocumentCount > 0;
 }
@@ -67,6 +79,15 @@ double? _extractMonthlyPaymentFromText(String? sourceText) {
   return amount;
 }
 
+String _formatServiceTypeLabel(String raw) {
+  if (raw.isEmpty) return 'Other';
+  final spaced = raw.replaceAll('_', ' ');
+  return spaced.replaceAllMapped(
+    RegExp(r'\b\w'),
+    (match) => match.group(0)!.toUpperCase(),
+  );
+}
+
 double _estimateDepreciationFactor(int vehicleYear) {
   final currentYear = DateTime.now().year;
   final age = (currentYear - vehicleYear).clamp(0, 1000000);
@@ -96,6 +117,7 @@ OwnershipInsights computeOwnershipInsights(
   var financeCount = 0;
   final monthlyPayments = <double>[];
   final principalCandidates = <double>[];
+  final maintenanceByType = <String, double>{};
 
   for (final file in analyzed) {
     final analysis = file['analysis'] as Map<String, dynamic>;
@@ -108,7 +130,13 @@ OwnershipInsights computeOwnershipInsights(
     if (_isMaintenanceDocument(extracted, category)) {
       maintenanceCount += 1;
       final cost = _parseAmount(extracted['totalCost']);
-      if (cost != null) maintenanceCosts.add(cost);
+      if (cost != null) {
+        maintenanceCosts.add(cost);
+        final label = _formatServiceTypeLabel(
+          (extracted['serviceType'] ?? category).toString(),
+        );
+        maintenanceByType[label] = (maintenanceByType[label] ?? 0) + cost;
+      }
       final serviceDate = extracted['serviceDate'];
       if (serviceDate is String && serviceDate.isNotEmpty) {
         serviceDates.add(serviceDate);
@@ -162,9 +190,19 @@ OwnershipInsights computeOwnershipInsights(
         )
       : null;
 
+  final maintenanceBreakdown =
+      maintenanceByType.entries
+          .map(
+            (entry) =>
+                MaintenanceBreakdownEntry(label: entry.key, amount: entry.value),
+          )
+          .toList()
+        ..sort((a, b) => b.amount.compareTo(a.amount));
+
   return OwnershipInsights(
     analyzedDocumentCount: analyzed.length,
     maintenanceDocsCount: maintenanceCount,
+    maintenanceBreakdown: maintenanceBreakdown,
     maintenanceTotalCost: maintenanceCosts.fold(0.0, (a, b) => a + b),
     maintenanceAverageCost: maintenanceCosts.isNotEmpty
         ? double.parse(

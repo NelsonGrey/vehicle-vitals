@@ -5991,3 +5991,16 @@ export const searchSupportUsersCallable = onCall(async request => {
     results,
   };
 });
+
+export {
+  onUserVehicleHealthInputsChanged,
+  onUserVehicleMaintenanceChanged,
+  onOrgVehicleHealthInputsChanged,
+  onOrgVehicleMaintenanceChanged,
+  getVehicleHealthSnapshotCallable,
+} from './vehicleHealth.provider';
+
+export {
+  onUserVehicleCreatedPortfolioSelfHeal,
+  onOrgVehicleCreatedPortfolioSelfHeal,
+} from './vehiclePortfolio.provider';

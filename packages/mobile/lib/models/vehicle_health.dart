@@ -606,4 +606,110 @@ class VehicleHealthCalculator {
       overallConfidenceBand: overallConfidenceBand,
     );
   }
+
+  static int _serverInt(dynamic value, [int fallback = 0]) {
+    if (value is int) return value;
+    if (value is num) return value.round();
+    return fallback;
+  }
+
+  static double _serverDouble(dynamic value, [double fallback = 0]) {
+    if (value is num) return value.toDouble();
+    return fallback;
+  }
+
+  /// Parses a server-precomputed snapshot (see
+  /// packages/functions/src/vehicleHealth.provider.ts, which calls the
+  /// same computeVehicleHealthSnapshot algorithm this file otherwise
+  /// hand-ports) into the same VehicleHealthSnapshot shape buildSnapshot
+  /// produces, so callers don't need to know which source it came from.
+  /// Status strings are normalized (service_soon -> service soon) since
+  /// the server mirrors packages/shared/src/vehicleHealth.js's
+  /// underscore-separated status values.
+  static VehicleHealthSnapshot _fromServerMap(
+    Map<String, dynamic> map,
+    Vehicle vehicle,
+  ) {
+    final rawComponents = (map['components'] as List?) ?? [];
+    final components = rawComponents.map((raw) {
+      final c = Map<String, dynamic>.from(raw as Map);
+      final confidenceScore = _serverDouble(c['confidenceScore'], 0.35);
+      final dueDateRaw = c['estimatedDueDate'];
+      return VehicleHealthComponent(
+        label: (c['label'] ?? '').toString(),
+        status: (c['status'] ?? 'good').toString().replaceAll('_', ' '),
+        confidence: _confidenceBand(confidenceScore),
+        remainingPercent: c['remainingLifePercent'] is num
+            ? (c['remainingLifePercent'] as num).toDouble()
+            : null,
+        remainingMiles: c['remainingMiles'] is num
+            ? (c['remainingMiles'] as num).round()
+            : null,
+        remainingDays: c['remainingDays'] is num
+            ? (c['remainingDays'] as num).round()
+            : null,
+        estimatedDueMileage: c['estimatedDueMileage'] is num
+            ? (c['estimatedDueMileage'] as num).round()
+            : null,
+        estimatedDueDate: dueDateRaw is String
+            ? DateTime.tryParse(dueDateRaw)
+            : null,
+        costLow: _serverInt(c['estimatedCostLow']),
+        costHigh: _serverInt(c['estimatedCostHigh']),
+      );
+    }).toList();
+
+    final overallConfidenceScore = _serverDouble(
+      map['overallConfidenceScore'],
+      0.35,
+    );
+
+    return VehicleHealthSnapshot(
+      vin: (map['vin'] ?? vehicle.vin).toString(),
+      vehicleLabel: '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+      overallHealthScore: _serverInt(map['overallHealthScore'], 50),
+      accuracyTip: (map['accuracyTip'] ?? '').toString(),
+      components: components,
+      nextLikelyService: map['nextLikelyService']?.toString(),
+      estimatedMilesPerMonth: _serverInt(map['estimatedMilesPerMonth'], 900),
+      estimatedSpend90dLow: _serverInt(map['estimatedSpend90dLow']),
+      estimatedSpend90dHigh: _serverInt(map['estimatedSpend90dHigh']),
+      estimatedSpend12mLow: _serverInt(map['estimatedSpend12mLow']),
+      estimatedSpend12mHigh: _serverInt(map['estimatedSpend12mHigh']),
+      estimatedSpend36mLow: _serverInt(map['estimatedSpend36mLow']),
+      estimatedSpend36mHigh: _serverInt(map['estimatedSpend36mHigh']),
+      missingServiceHistory: map['missingServiceHistory'] == true,
+      lowConfidenceCount: _serverInt(map['lowConfidenceCount']),
+      overallConfidenceScore: overallConfidenceScore,
+      overallConfidenceBand: _confidenceBand(overallConfidenceScore),
+    );
+  }
+
+  /// Reads the server-precomputed snapshot when it exists and is fresh
+  /// relative to the vehicle's current mileage/maintenance-entry count,
+  /// falling back to buildSnapshot (the same computation, run locally) —
+  /// mirrors packages/web/src/utils/vehicleHealthSnapshot.ts's
+  /// resolveVehicleHealthSnapshot. A missing, stale, or malformed
+  /// snapshot degrades to today's always-worked local computation rather
+  /// than showing wrong or missing data, which also covers a brand-new
+  /// vehicle whose first trigger run hasn't landed yet and an offline
+  /// edit that hasn't synced.
+  static VehicleHealthSnapshot resolveSnapshot(
+    Vehicle vehicle,
+    List<Maintenance> maintenance, {
+    DateTime? now,
+  }) {
+    final versionKey = '${vehicle.mileage}:${maintenance.length}';
+    final raw = vehicle.vehicleHealthSnapshot;
+    if (raw != null &&
+        raw['computedFromVersion'] == versionKey &&
+        raw['components'] is List) {
+      try {
+        return _fromServerMap(raw, vehicle);
+      } catch (_) {
+        // Malformed server data — fall through to local computation.
+      }
+    }
+    return buildSnapshot(vehicle, maintenance, now: now);
+  }
 }

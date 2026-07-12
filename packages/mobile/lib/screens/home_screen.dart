@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
   VehicleHealthSnapshot? _healthSnapshotFor(Vehicle vehicle) {
     final entries = _maintenanceEntriesByVin[vehicle.vin];
     if (entries == null) return null;
-    return VehicleHealthCalculator.buildSnapshot(vehicle, entries);
+    return VehicleHealthCalculator.resolveSnapshot(vehicle, entries);
   }
 
   bool _isStored(Vehicle vehicle) => vehicle.vehicleStatus == 'stored';

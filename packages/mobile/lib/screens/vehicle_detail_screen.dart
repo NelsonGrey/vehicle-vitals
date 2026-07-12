@@ -56,7 +56,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         _vehicle = vehicle;
         _healthSnapshot = vehicle == null
             ? null
-            : VehicleHealthCalculator.buildSnapshot(vehicle, entries);
+            : VehicleHealthCalculator.resolveSnapshot(vehicle, entries);
         _loading = false;
       });
     } catch (e) {

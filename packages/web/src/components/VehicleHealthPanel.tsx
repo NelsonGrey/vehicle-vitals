@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 
-import { computeVehicleHealthSnapshot } from '@vehicle-vitals/shared';
 import type { UserTier } from '../shared/featureFlags';
 import { formatCurrencyRange } from '../utils/currency';
 import {
@@ -8,6 +7,7 @@ import {
   getGarageCompletenessTierLabel,
   type GarageCompletenessResult,
 } from '../utils/garageCompleteness';
+import { resolveVehicleHealthSnapshot } from '../utils/vehicleHealthSnapshot';
 import GaugeDial from './charts/GaugeDial';
 
 interface MaintenanceEntry {
@@ -24,6 +24,7 @@ interface VehicleInfo {
   vin: string;
   mileage?: string;
   purchaseDate?: string;
+  vehicleHealthSnapshot?: unknown;
 }
 
 interface Props {
@@ -93,7 +94,7 @@ export default function VehicleHealthPanel({
   vehicleCompleteness,
   garageCompleteness,
 }: Props) {
-  const snapshot = computeVehicleHealthSnapshot(vehicle, maintenanceEntries);
+  const snapshot = resolveVehicleHealthSnapshot(vehicle, maintenanceEntries);
   const visibleComponents =
     tier === 'free' ? snapshot.components.slice(0, 3) : snapshot.components.slice(0, 6);
   const hiddenCount = Math.max(0, snapshot.components.length - visibleComponents.length);

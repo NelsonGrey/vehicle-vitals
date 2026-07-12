@@ -12,6 +12,7 @@ import VehicleHealthPanel from '../components/VehicleHealthPanel';
 import { VehicleListItem } from '../components/VehicleListItem';
 import { useAuth } from '../shared/AuthContext';
 import { bobDemoVehicleCount, seedBobDemo } from '../shared/devSeed';
+import { resolveVehicleHealthSnapshot } from '../utils/vehicleHealthSnapshot';
 import {
   isDemonstrationEnvironment,
   showDemoSeedControls,
@@ -393,7 +394,7 @@ export default function Home() {
   for (const vehicle of filteredVehicles) {
     const entries = maintenanceEntriesByVin[vehicle.vin];
     if (!entries) continue;
-    healthSnapshotByVin[vehicle.vin] = computeVehicleHealthSnapshot(
+    healthSnapshotByVin[vehicle.vin] = resolveVehicleHealthSnapshot(
       vehicle,
       entries
     );

@@ -334,4 +334,133 @@ void main() {
       expect(brake.confidence, 'high');
     });
   });
+
+  group('VehicleHealthCalculator.resolveSnapshot', () {
+    test('uses the server snapshot when it matches the current version', () {
+      final vehicle = Vehicle(
+        vin: 'VIN005',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2021,
+        mileage: 40000,
+        vehicleHealthSnapshot: {
+          'vin': 'VIN005',
+          'computedFromVersion': '40000:0',
+          'overallHealthScore': 7, // implausible-by-local-math sentinel
+          'accuracyTip': 'from server',
+          'components': <Map<String, dynamic>>[],
+          'estimatedMilesPerMonth': 900,
+          'estimatedSpend90dLow': 0,
+          'estimatedSpend90dHigh': 0,
+          'estimatedSpend12mLow': 0,
+          'estimatedSpend12mHigh': 0,
+          'estimatedSpend36mLow': 0,
+          'estimatedSpend36mHigh': 0,
+          'missingServiceHistory': true,
+          'lowConfidenceCount': 0,
+          'overallConfidenceScore': 0.35,
+        },
+      );
+
+      final snapshot = VehicleHealthCalculator.resolveSnapshot(vehicle, []);
+
+      expect(snapshot.overallHealthScore, 7);
+      expect(snapshot.accuracyTip, 'from server');
+    });
+
+    test('normalizes underscore status strings from the server to match local spelling', () {
+      final vehicle = Vehicle(
+        vin: 'VIN006',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2021,
+        mileage: 40000,
+        vehicleHealthSnapshot: {
+          'computedFromVersion': '40000:0',
+          'overallHealthScore': 30,
+          'accuracyTip': '',
+          'components': [
+            {
+              'label': 'Oil',
+              'status': 'service_soon',
+              'confidenceScore': 0.5,
+              'estimatedCostLow': 70,
+              'estimatedCostHigh': 140,
+            },
+          ],
+          'estimatedMilesPerMonth': 900,
+          'overallConfidenceScore': 0.5,
+        },
+      );
+
+      final snapshot = VehicleHealthCalculator.resolveSnapshot(vehicle, []);
+      expect(snapshot.components.first.status, 'service soon');
+    });
+
+    test('falls back to local computation when there is no server snapshot', () {
+      final vehicle = Vehicle(
+        vin: 'VIN007',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2021,
+        mileage: 5000,
+      );
+
+      final snapshot = VehicleHealthCalculator.resolveSnapshot(
+        vehicle,
+        [],
+        now: DateTime.utc(2026, 6, 12),
+      );
+
+      final localSnapshot = VehicleHealthCalculator.buildSnapshot(
+        vehicle,
+        [],
+        now: DateTime.utc(2026, 6, 12),
+      );
+      expect(snapshot.overallHealthScore, localSnapshot.overallHealthScore);
+    });
+
+    test('falls back to local computation when the server snapshot is stale', () {
+      final vehicle = Vehicle(
+        vin: 'VIN008',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2021,
+        mileage: 90000, // current mileage differs from the stale snapshot's version
+        vehicleHealthSnapshot: {
+          'computedFromVersion': '5000:0', // stale — computed at a much lower mileage
+          'overallHealthScore': 999, // implausible sentinel to prove it was NOT used
+          'components': <Map<String, dynamic>>[],
+        },
+      );
+
+      final snapshot = VehicleHealthCalculator.resolveSnapshot(
+        vehicle,
+        [],
+        now: DateTime.utc(2026, 6, 12),
+      );
+      expect(snapshot.overallHealthScore, isNot(999));
+    });
+
+    test('falls back to local computation when the server snapshot is malformed', () {
+      final vehicle = Vehicle(
+        vin: 'VIN009',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2021,
+        mileage: 12000,
+        vehicleHealthSnapshot: {
+          'computedFromVersion': '12000:0',
+          // no 'components' key at all
+        },
+      );
+
+      final snapshot = VehicleHealthCalculator.resolveSnapshot(
+        vehicle,
+        [],
+        now: DateTime.utc(2026, 6, 12),
+      );
+      expect(snapshot.components, isNotEmpty);
+    });
+  });
 }

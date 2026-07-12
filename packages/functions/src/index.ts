@@ -2882,7 +2882,9 @@ async function getUpcomingMaintenance(
   );
   const mileageBasedItems = deriveMileageBasedMaintenanceItems(
     vehicle.mileage,
-    daysAhead
+    daysAhead,
+    vehicle.make,
+    vehicle.model
   );
 
   // Merge without duplicating a service type both paths already agree is
@@ -2903,29 +2905,37 @@ const MILEAGE_MAINTENANCE_LABELS: Record<string, string> = {
   oil_change: 'Oil Change',
   tire_rotation: 'Tire Rotation',
   brake_inspection: 'Brake Inspection',
+  transmission_service: 'Transmission Service',
+  air_filter: 'Air Filter Replacement',
 };
 
 /**
  * Build upcoming maintenance reminders from current mileage alone, using
  * the same schedule engine as the Maintenance Plan endpoint
- * (buildMaintenancePlan). Unlike deriveUpcomingMaintenanceItems, this has no
- * concept of service history — it projects on the assumed interval grid —
- * but it covers tire rotation and brake inspection in addition to oil, and
+ * (buildMaintenancePlan) — manufacturer-specific intervals when this app
+ * has them on file for the vehicle's make/model, a generic template
+ * otherwise. Unlike deriveUpcomingMaintenanceItems, this has no concept
+ * of service history — it projects on the assumed interval grid — but it
+ * covers tire rotation and brake inspection in addition to oil, and
  * scales with the vehicle's actual mileage rather than a fixed calendar
  * window that ignores mileage entirely.
  * @param {number} currentMileage Vehicle's current odometer reading
  * @param {number} daysAhead Number of days to look ahead for reminders
+ * @param {string} [make] Vehicle make
+ * @param {string} [model] Vehicle model
  * @return {MaintenanceItem[]} Array of upcoming maintenance items
  */
 export function deriveMileageBasedMaintenanceItems(
   currentMileage: number,
-  daysAhead = 30
+  daysAhead = 30,
+  make?: string,
+  model?: string
 ): MaintenanceItem[] {
   if (!Number.isFinite(currentMileage) || currentMileage <= 0) {
     return [];
   }
 
-  const plan = buildMaintenancePlan(currentMileage);
+  const plan = buildMaintenancePlan(currentMileage, make, model);
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() + Math.max(1, daysAhead));
 
@@ -3256,76 +3266,71 @@ export const getWarrantySummary = onRequest(
   }
 );
 
-export const getMaintenancePlan = onRequest(
-  { cors: true },
-  async (request, response) => {
-    try {
-      if (!enforceRateLimit(request, response, 'getMaintenancePlan')) {
-        return;
-      }
-
-      const uid = await requireAuthenticatedUser(request, response);
-      if (!uid) return;
-
-      if (request.method !== 'GET') {
-        response.status(405).json({ error: 'Method not allowed' });
-        return;
-      }
-
-      const vin = ((request.query.vin as string) || '').trim().toUpperCase();
-      const currentMileage = Number(request.query.currentMileage ?? '');
-
-      if (!vin || vin.length !== 17) {
-        response.status(400).json({ error: 'Valid 17-character VIN required' });
-        return;
-      }
-
-      if (!Number.isFinite(currentMileage) || currentMileage < 0) {
-        response
-          .status(400)
-          .json({ error: 'Valid currentMileage is required' });
-        return;
-      }
-
-      const config = getIntegrationConfig();
-      if (!config.features.maintenancePlanEnabled) {
-        response.status(503).json({
-          success: false,
-          error: 'Maintenance plan feature is disabled',
-          provider: config.providers.schedule,
-          vin,
-          plan: null,
-        });
-        return;
-      }
-
-      if (config.providers.schedule !== 'schedule_primary') {
-        response.status(501).json({
-          success: false,
-          error: 'Maintenance schedule provider integration not implemented',
-          provider: config.providers.schedule,
-          vin,
-          plan: null,
-        });
-        return;
-      }
-
-      const plan = buildMaintenancePlan(currentMileage);
-      response.json({
-        success: true,
-        provider: config.providers.schedule,
-        vin,
-        plan,
-      });
-    } catch (error) {
-      logger.error('Maintenance plan error:', error);
-      response.status(500).json({
-        success: false,
-        error: 'Failed to build maintenance plan',
-      });
-    }
+// onCall (not onRequest) for consistency with the rest of the callable
+// surface — auth is handled by the callable wrapper itself (request.auth),
+// same as analyzeAttachmentTextCallable/getVehicleInsightsCallable. No
+// prior client called the onRequest version this replaced (confirmed: zero
+// references anywhere in packages/web or packages/mobile), so this is a
+// straight replacement, not an addition alongside it.
+export const getMaintenancePlanCallable = onCall(async request => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Missing auth context');
   }
-);
+
+  const { vin, currentMileage, make, model } =
+    (request.data as {
+      vin?: string;
+      currentMileage?: number;
+      make?: string;
+      model?: string;
+    }) ?? {};
+
+  const normalizedVin = (vin || '').trim().toUpperCase();
+  if (!normalizedVin || normalizedVin.length !== 17) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Valid 17-character VIN required'
+    );
+  }
+
+  const mileage = Number(currentMileage);
+  if (!Number.isFinite(mileage) || mileage < 0) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Valid currentMileage is required'
+    );
+  }
+
+  const config = getIntegrationConfig();
+  if (!config.features.maintenancePlanEnabled) {
+    return {
+      success: false,
+      error: 'Maintenance plan feature is disabled',
+      provider: config.providers.schedule,
+      vin: normalizedVin,
+      plan: null,
+    };
+  }
+
+  if (config.providers.schedule !== 'schedule_primary') {
+    return {
+      success: false,
+      error: 'Maintenance schedule provider integration not implemented',
+      provider: config.providers.schedule,
+      vin: normalizedVin,
+      plan: null,
+    };
+  }
+
+  const plan = buildMaintenancePlan(mileage, make, model);
+  return {
+    success: true,
+    provider: config.providers.schedule,
+    vin: normalizedVin,
+    plan,
+  };
+});
 
 export const createCalendarEvent = onRequest(
   { cors: true },

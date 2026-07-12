@@ -8,10 +8,6 @@ import {
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  getMaintenanceSchedule,
-  getUpcomingMaintenance,
-} from '@vehicle-vitals/shared';
 import UpcomingTasks from '../src/pages/UpcomingTasks';
 import {
   completeReminder,
@@ -24,6 +20,7 @@ import {
   snoozeReminder,
 } from '../src/shared/firestoreService';
 import { createMaintenanceCalendarEvent } from '../src/utils/calendarService';
+import { getMaintenancePlan } from '../src/utils/vehicleService';
 import { sendReminderDeliveryEmail } from '../src/utils/reminderDeliveryService';
 
 const mockUseFeatureFlag = vi.fn(() => true);
@@ -40,11 +37,16 @@ vi.mock('../src/shared/firestoreService', () => ({
   markReminderDelivery: vi.fn(),
 }));
 
-vi.mock('@vehicle-vitals/shared', () => ({
-  getUpcomingMaintenance: vi.fn(() => []),
-  // Default to "schedule data exists" so existing tests' vehicles aren't
-  // treated as unsupported make/models.
-  getMaintenanceSchedule: vi.fn(() => ({ oilChange: {} })),
+vi.mock('../src/utils/vehicleService', () => ({
+  // Default to "modelSpecific data exists" so existing tests' vehicles
+  // aren't treated as unsupported make/models.
+  getMaintenancePlan: vi.fn(() =>
+    Promise.resolve({
+      strategy: 'manufacturer_schedule_v1',
+      modelSpecific: true,
+      items: [],
+    })
+  ),
 }));
 
 vi.mock('../src/utils/calendarService', () => ({
@@ -81,6 +83,17 @@ const DISMISSED_REMINDER = {
   status: 'dismissed',
 };
 
+// Mirrors getMaintenancePlanCallable's response shape. UpcomingTasks.tsx
+// derives milesUntilDue itself (nextDueMileage - currentMileage) and
+// formats the description from serviceType.
+function mockPlan(items, modelSpecific = true) {
+  return Promise.resolve({
+    strategy: modelSpecific ? 'manufacturer_schedule_v1' : 'static_schedule_v1',
+    modelSpecific,
+    items,
+  });
+}
+
 const renderUpcomingTasks = (initialEntries = ['/app/upcoming']) =>
   render(
     <MemoryRouter
@@ -108,7 +121,7 @@ describe('UpcomingTasks reminder actions', () => {
       actionUrl: 'https://calendar.example/event',
     });
     sendReminderDeliveryEmail.mockResolvedValue({ success: true });
-    getUpcomingMaintenance.mockReturnValue([]);
+    getMaintenancePlan.mockReturnValue(mockPlan([]));
   });
 
   afterEach(() => {
@@ -194,7 +207,7 @@ describe('UpcomingTasks reminder actions', () => {
     // upcoming-maintenance list, rendering identically to "we checked and
     // everything's fine" — indistinguishable from an actual clean result.
     getReminders.mockResolvedValue([]);
-    getMaintenanceSchedule.mockReturnValue(null);
+    getMaintenancePlan.mockReturnValue(mockPlan([], false));
     renderUpcomingTasks();
 
     await waitFor(() => {
@@ -224,27 +237,28 @@ describe('UpcomingTasks reminder actions', () => {
 
   it('creates calendar event for an upcoming item', async () => {
     getReminders.mockResolvedValue([]);
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oil_change',
-        description: 'Oil and filter change',
-        frequency: 'Every 5,000 miles',
-        interval: 5000,
-        nextDueMileage: 35000,
-        milesUntilDue: 400,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30400,
+          nextDueDate: '2026-08-01',
+        },
+      ])
+    );
 
     renderUpcomingTasks();
 
-    await waitFor(() => screen.getByText('Oil and filter change'));
+    await waitFor(() => screen.getByText('Oil Change'));
     fireEvent.click(screen.getByRole('button', { name: 'Add to Calendar' }));
 
     await waitFor(() => {
       expect(createMaintenanceCalendarEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           vehicleVin: 'VIN001',
-          title: 'Oil and filter change',
+          title: 'Oil Change',
           target: 'google',
         })
       );
@@ -353,16 +367,17 @@ describe('UpcomingTasks reminder actions', () => {
 
   it('shows predicted due date when ai predictions feature is enabled', async () => {
     getReminders.mockResolvedValue([]);
-    getUpcomingMaintenance.mockReturnValue([
-      {
-        id: 'oil_change',
-        description: 'Oil and filter change',
-        frequency: 'Every 5,000 miles',
-        interval: 5000,
-        nextDueMileage: 35000,
-        milesUntilDue: 400,
-      },
-    ]);
+    getMaintenancePlan.mockReturnValue(
+      mockPlan([
+        {
+          serviceType: 'oil_change',
+          intervalMiles: 5000,
+          intervalMonths: 6,
+          nextDueMileage: 30400,
+          nextDueDate: '2026-08-01',
+        },
+      ])
+    );
 
     renderUpcomingTasks();
 

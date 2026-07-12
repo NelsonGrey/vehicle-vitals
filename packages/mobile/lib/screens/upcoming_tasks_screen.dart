@@ -8,11 +8,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../components/app_bottom_nav.dart';
-import '../models/maintenance_schedule.dart';
 import '../models/vehicle.dart';
 import '../services/calendar_service.dart';
 import '../services/feature_flags_service.dart';
 import '../services/firestore_service.dart';
+import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 import '../theme/tailwind_utilities.dart';
@@ -39,9 +39,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   String _calendarTarget = 'google';
   bool _loading = true;
   final CalendarService _calendarService = CalendarService();
-  // Vehicles whose make/model has no manufacturer interval data at all, so
-  // MaintenanceSchedule.getUpcomingMaintenance silently returns []. Tracked
-  // separately so the empty state can say "we don't have data for this
+  final MaintenancePlanService _maintenancePlanService =
+      MaintenancePlanService();
+  // Vehicles whose make/model has no manufacturer interval data on file
+  // (MaintenancePlan.modelSpecific is false, so the items shown are a
+  // generic estimate, not real manufacturer data). Tracked separately so
+  // the empty state can say "we don't have manufacturer data for this
   // vehicle" instead of the indistinguishable "all caught up, well
   // maintained."
   List<Vehicle> _unsupportedVehicles = [];
@@ -102,13 +105,24 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       final nextUnsupportedVehicles = <Vehicle>[];
 
       for (final vehicle in vehicles) {
-        if (MaintenanceSchedule.getMaintenanceSchedule(
-              vehicle.make,
-              vehicle.model,
-            ) ==
-            null) {
+        final currentMileage = vehicle.mileage;
+        MaintenancePlan? plan;
+        if (currentMileage > 0) {
+          try {
+            plan = await _maintenancePlanService.getMaintenancePlan(
+              vin: vehicle.vin,
+              currentMileage: currentMileage,
+              make: vehicle.make,
+              model: vehicle.model,
+            );
+          } catch (_) {
+            // Leave plan null; treated as unsupported below.
+          }
+        }
+        if (plan == null || !plan.modelSpecific) {
           nextUnsupportedVehicles.add(vehicle);
         }
+
         final reminders = await firestoreService.getReminders(vehicle.vin);
         for (final reminder in reminders) {
           final serviceType = (reminder['serviceType'] ?? 'maintenance')
@@ -122,12 +136,23 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
           }
         }
 
-        final currentMileage = vehicle.mileage;
-        final upcoming = MaintenanceSchedule.getUpcomingMaintenance(
-          vehicle.make,
-          vehicle.model,
-          currentMileage,
-        );
+        final upcoming = (plan?.items ?? const <MaintenancePlanItem>[]).map((
+          item,
+        ) {
+          final milesUntilDue = (item.nextDueMileage - currentMileage).clamp(
+            0,
+            1 << 30,
+          );
+          return {
+            'id': item.serviceType,
+            'description': formatServiceTypeLabel(item.serviceType),
+            'frequency':
+                'Every ${item.intervalMiles} miles or ${item.intervalMonths} months',
+            'interval': item.intervalMiles,
+            'nextDueMileage': item.nextDueMileage,
+            'milesUntilDue': milesUntilDue,
+          };
+        });
 
         for (final item in upcoming) {
           allUpcoming.add({...item, 'vehicle': vehicle});
@@ -645,12 +670,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         : hasPlanning12mo
         ? 12
         : 3;
-    // NOTE: this indicator is informational only — MaintenanceSchedule
-    // .getUpcomingMaintenance() is not yet wired to a tier-based mileage
-    // cutoff (it always uses its 50,000-mile default), so the queue below
-    // is not actually clipped to this horizon. TODO: wire maxMileage to
-    // this horizon once product confirms the desired mileage-per-month
-    // assumption for mobile (web derives it from preferredDailyMiles).
+    // NOTE: this indicator is informational only — the server-side
+    // maintenance plan (MaintenancePlanService.getMaintenancePlan) is not
+    // yet wired to a tier-based mileage cutoff, so the queue below is not
+    // actually clipped to this horizon. TODO: wire a horizon cutoff once
+    // product confirms the desired mileage-per-month assumption for
+    // mobile (web derives it from preferredDailyMiles).
     final planningHorizonUpgrade = hasPlanning36mo
         ? null
         : hasPlanning12mo

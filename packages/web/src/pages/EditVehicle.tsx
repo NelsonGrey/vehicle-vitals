@@ -1,6 +1,5 @@
 // -----------------------------
 // File: web/pages/EditVehicle.jsx
-import { getUpcomingMaintenance } from '@vehicle-vitals/shared';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import UpgradeModal from '../components/UpgradeModal';
@@ -30,8 +29,12 @@ import {
 } from '../shared/useMonetization';
 import { analyzeAttachmentText } from '../utils/attachmentAnalysisService';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
+import {
+  formatServiceTypeLabel,
+  type MaintenancePlanItem,
+} from '../utils/maintenancePlan';
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
-import { lookupVin } from '../utils/vehicleService';
+import { getMaintenancePlan, lookupVin } from '../utils/vehicleService';
 import { transferVehicle } from '../utils/vehicleTransferService';
 import {
   detectVehicleIdentifierType,
@@ -1018,6 +1021,9 @@ function MaintenanceList({
     }>,
   });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [upcomingMaintenancePlan, setUpcomingMaintenancePlan] = useState<{
+    items: MaintenancePlanItem[];
+  } | null>(null);
   const [calendarTarget, setCalendarTarget] = useState<
     'google' | 'apple' | 'ics'
   >('google');
@@ -1128,6 +1134,25 @@ function MaintenanceList({
     };
     load();
   }, [vin]);
+
+  useEffect(() => {
+    if (!vehicle?.make || !vehicle?.model || !vehicle?.mileage) {
+      setUpcomingMaintenancePlan(null);
+      return;
+    }
+    let isActive = true;
+    getMaintenancePlan(vin, vehicle.mileage, vehicle.make, vehicle.model)
+      .then(plan => {
+        if (isActive) setUpcomingMaintenancePlan(plan);
+      })
+      .catch(error => {
+        console.warn('Unable to load maintenance plan', vin, error);
+        if (isActive) setUpcomingMaintenancePlan(null);
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [vin, vehicle?.make, vehicle?.model, vehicle?.mileage]);
 
   useEffect(() => {
     if (!prefill) return;
@@ -1505,9 +1530,18 @@ function MaintenanceList({
     }
   };
 
-  const upcomingMaintenance = vehicle
-    ? getUpcomingMaintenance(vehicle.make, vehicle.model, vehicle.mileage)
-    : [];
+  const currentMileageForPlan = parseInt(vehicle?.mileage || '0', 10) || 0;
+  const upcomingMaintenance: Array<{
+    description: string;
+    nextDueMileage: number;
+    milesUntilDue: number;
+  }> = (upcomingMaintenancePlan?.items ?? []).map(
+    (item: MaintenancePlanItem) => ({
+      description: formatServiceTypeLabel(item.serviceType),
+      nextDueMileage: item.nextDueMileage,
+      milesUntilDue: Math.max(0, item.nextDueMileage - currentMileageForPlan),
+    })
+  );
   const hasPendingAttachmentAnalysis = form.attachments.some(
     attachment =>
       attachment.analysisStatus === 'uploading' ||

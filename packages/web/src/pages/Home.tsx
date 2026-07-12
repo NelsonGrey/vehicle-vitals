@@ -1,9 +1,6 @@
 // -----------------------------
 // File: web/pages/Home.jsx
-import {
-  computeVehicleHealthSnapshot,
-  getUpcomingMaintenance,
-} from '@vehicle-vitals/shared';
+import { computeVehicleHealthSnapshot } from '@vehicle-vitals/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CostAnalysisReportlet from '../components/CostAnalysisReportlet';
@@ -24,10 +21,18 @@ import {
   updateVehicle,
 } from '../shared/firestoreService';
 import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
-import { computeGarageCompleteness } from '../utils/garageCompleteness';
+import {
+  computeGarageCompleteness,
+  computeVehiclePortfolioProgress,
+} from '../utils/garageCompleteness';
 import { getHouseholdGarageStatus } from '../utils/householdGarageService';
 import {
+  formatServiceTypeLabel,
+  type MaintenancePlanItem,
+} from '../utils/maintenancePlan';
+import {
   buildPersistedVinInsights,
+  getMaintenancePlan,
   getVehicleInsights,
 } from '../utils/vehicleService';
 
@@ -79,32 +84,6 @@ interface VehicleAlert {
 
 function getVehicleStatus(vehicle: Vehicle): 'active' | 'stored' {
   return vehicle.vehicleStatus === 'stored' ? 'stored' : 'active';
-}
-
-function getPortfolioRequiredProgress(vehicle: Vehicle) {
-  const categories = vehicle.documentPortfolio?.categories || [];
-  let required = 0;
-  let complete = 0;
-  let optionalTotal = 0;
-  let optionalComplete = 0;
-
-  categories.forEach(category => {
-    (category.items || []).forEach(item => {
-      if (item.required) {
-        required += 1;
-        if (item.status === 'ready') {
-          complete += 1;
-        }
-      } else {
-        optionalTotal += 1;
-        if (item.status === 'ready') {
-          optionalComplete += 1;
-        }
-      }
-    });
-  });
-
-  return { complete, required, optionalComplete, optionalTotal };
 }
 
 export default function Home() {
@@ -263,28 +242,51 @@ export default function Home() {
 
   useEffect(() => {
     if (vehicles.length === 0) return;
-    const alerts: Record<string, VehicleAlert> = {};
-    for (const v of vehicles) {
-      const mileage = parseInt(v.mileage || '0', 10);
-      if (!mileage || !v.make || !v.model) continue;
-      const items = getUpcomingMaintenance(
-        v.make,
-        v.model,
-        mileage,
-        mileage + 10000
-      ) as UpcomingItem[];
-      if (items.length === 0) continue;
-      let level: AlertLevel = null;
-      for (const item of items) {
-        if (item.milesUntilDue <= 1000) {
-          level = 'urgent';
-          break;
-        }
-        if (item.milesUntilDue <= 5000) level = 'soon';
-      }
-      alerts[v.vin] = { level, items: items.slice(0, 3) };
-    }
-    setVehicleAlerts(alerts);
+    let isActive = true;
+
+    const loadAlerts = async () => {
+      const alerts: Record<string, VehicleAlert> = {};
+      await Promise.all(
+        vehicles.map(async v => {
+          const mileage = parseInt(v.mileage || '0', 10);
+          if (!mileage || !v.make || !v.model) return;
+
+          let plan: { items: MaintenancePlanItem[] } | null = null;
+          try {
+            plan = await getMaintenancePlan(v.vin, mileage, v.make, v.model);
+          } catch (error) {
+            console.warn('Unable to load maintenance plan for alerts', v.vin, error);
+            return;
+          }
+
+          const items: UpcomingItem[] = (plan?.items ?? [])
+            .filter(item => item.nextDueMileage - mileage <= 10000)
+            .map(item => ({
+              id: item.serviceType,
+              description: formatServiceTypeLabel(item.serviceType),
+              milesUntilDue: Math.max(0, item.nextDueMileage - mileage),
+              nextDueMileage: item.nextDueMileage,
+            }));
+          if (items.length === 0) return;
+
+          let level: AlertLevel = null;
+          for (const item of items) {
+            if (item.milesUntilDue <= 1000) {
+              level = 'urgent';
+              break;
+            }
+            if (item.milesUntilDue <= 5000) level = 'soon';
+          }
+          alerts[v.vin] = { level, items: items.slice(0, 3) };
+        })
+      );
+      if (isActive) setVehicleAlerts(alerts);
+    };
+
+    void loadAlerts();
+    return () => {
+      isActive = false;
+    };
   }, [vehicles]);
 
   useEffect(() => {
@@ -749,7 +751,7 @@ export default function Home() {
                         {section.items.map((v, index) => {
                           const isSelected = v.vin === selectedVin;
                           const portfolioProgress =
-                            getPortfolioRequiredProgress(v);
+                            computeVehiclePortfolioProgress(v);
                           return (() => {
                             const vinText = String(v.vin ?? '').trim();
                             const makeText = String(v.make ?? '').trim();
@@ -852,7 +854,7 @@ export default function Home() {
                     }
 
                     const portfolioProgress =
-                      getPortfolioRequiredProgress(selectedVehicle);
+                      computeVehiclePortfolioProgress(selectedVehicle);
                     const healthEntries =
                       maintenanceEntriesByVin[selectedVehicle.vin] ?? [];
                     const isLoadingHealth =

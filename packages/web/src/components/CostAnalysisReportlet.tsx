@@ -60,6 +60,17 @@ interface AttachmentAnalysis {
   };
   confidence?: number;
   sourceText?: string;
+  // Portfolio category/item this file was filed under (e.g. 'ownership' /
+  // 'bill_of_sale'), attached client-side once fetched. Undefined when the
+  // file came from a logged Maintenance entry's attachments instead of the
+  // document portfolio — see isMaintenanceAttachment.
+  categoryKey?: string;
+  itemId?: string;
+  // True when this analysis belongs to a file attached directly to a logged
+  // Maintenance entry. That entry's cost already contributes to maintTotal
+  // via its own `cost` field, so these are excluded from cost-bucket
+  // classification below to avoid double-counting the same service twice.
+  isMaintenanceAttachment?: boolean;
 }
 
 interface VehicleInfo {
@@ -113,38 +124,60 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
       try {
         const maint = (await getMaintenanceEntries(vehicle.vin)) ?? [];
 
-        // Collect storage paths from both document portfolio files and maintenance attachments.
-        const portfolioPaths = (
+        // Collect storage paths from both document portfolio files and
+        // maintenance attachments, keeping track of which portfolio
+        // category/item each portfolio file was actually filed under — the
+        // authoritative signal for what a document is FOR (a Bill of Sale
+        // filed under Ownership vs. a receipt filed under Maintenance),
+        // rather than guessing from keywords in the storage path/filename.
+        const portfolioMeta = new Map<
+          string,
+          { categoryKey?: string; itemId?: string }
+        >();
+        (
           (vehicle.documentPortfolio?.categories ?? []) as Array<{
+            key?: string;
             items?: Array<{
+              id?: string;
               files?: Array<{ path?: string; url?: string }>;
             }>;
           }>
-        ).flatMap(cat =>
-          (cat.items ?? []).flatMap(item =>
-            (item.files ?? []).flatMap(file => {
-              if (file.path) return [file.path];
-              if (file.url) return [file.url];
-              return [];
-            })
-          )
-        );
+        ).forEach(cat => {
+          (cat.items ?? []).forEach(item => {
+            (item.files ?? []).forEach(file => {
+              const path = file.path || file.url;
+              if (path) {
+                portfolioMeta.set(path, { categoryKey: cat.key, itemId: item.id });
+              }
+            });
+          });
+        });
 
-        const maintenancePaths = maint.flatMap(entry =>
-          (entry.attachments ?? []).flatMap(attachment => {
-            if (attachment.path) return [attachment.path];
-            if (attachment.url) return [attachment.url];
-            return [];
-          })
-        );
+        const maintenancePaths = new Set<string>();
+        maint.forEach(entry => {
+          (entry.attachments ?? []).forEach(attachment => {
+            const path = attachment.path || attachment.url;
+            if (path) maintenancePaths.add(path);
+          });
+        });
 
         const allPaths = Array.from(
-          new Set([...portfolioPaths, ...maintenancePaths])
+          new Set([...portfolioMeta.keys(), ...maintenancePaths])
         );
 
         let fetchedAnalyses: AttachmentAnalysis[] = [];
         if (allPaths.length > 0) {
-          fetchedAnalyses = await getAttachmentAnalyses(vehicle.vin, allPaths);
+          const raw = await getAttachmentAnalyses(vehicle.vin, allPaths);
+          fetchedAnalyses = raw.map(a => {
+            const path = a.storagePath || a.path || a.url || '';
+            const meta = portfolioMeta.get(path);
+            return {
+              ...a,
+              categoryKey: meta?.categoryKey,
+              itemId: meta?.itemId,
+              isMaintenanceAttachment: !meta && maintenancePaths.has(path),
+            };
+          });
         }
 
         if (!cancelled) {
@@ -176,28 +209,42 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
   let registrationTotal = 0;
 
   for (const a of analyses) {
-    const cost = a.extracted?.totalCost ?? 0;
-    const cat = a.extracted?.documentCategory ?? '';
-    const type = a.extracted?.serviceType?.toLowerCase() ?? '';
-    const filePath = a.storagePath ?? '';
+    // Files attached to a logged Maintenance entry already contribute to
+    // maintTotal via that entry's own `cost` field — classifying them here
+    // too would double-count the same service.
+    if (a.isMaintenanceAttachment) continue;
 
-    if (filePath.includes('bill_of_sale') || type.includes('bill')) {
-      purchasePrice = Math.max(purchasePrice, cost);
-    } else if (
-      filePath.includes('insurance') ||
-      filePath.includes('insurance_card')
-    ) {
-      insuranceAnnual = Math.max(insuranceAnnual, cost);
-    } else if (filePath.includes('loan') || filePath.includes('payment')) {
-      if (cost > 0 && cost < 2000) loanMonthly = Math.max(loanMonthly, cost);
-    } else if (filePath.includes('fuel')) {
-      fuelTotal += cost;
-    } else if (filePath.includes('inspection')) {
-      inspectionTotal += cost;
-    } else if (filePath.includes('registration')) {
-      registrationTotal += cost;
-    } else if (cat === 'invoice' || cat === 'receipt') {
-      // Falls through to maintenance total already counted
+    const cost = a.extracted?.totalCost ?? 0;
+    if (!(cost > 0)) continue;
+
+    // Classify by the portfolio item the user actually filed the document
+    // under, not by guessing from the storage path/filename — a keyword
+    // guess is exactly the bug class that inflated another total in this
+    // app by $100,000+ (see ownershipInsights.ts).
+    switch (a.itemId) {
+      case 'bill_of_sale':
+        purchasePrice = Math.max(purchasePrice, cost);
+        break;
+      case 'insurance':
+        insuranceAnnual = Math.max(insuranceAnnual, cost);
+        break;
+      case 'loan_or_lease':
+      case 'payment_history':
+        if (cost < 2000) loanMonthly = Math.max(loanMonthly, cost);
+        break;
+      case 'registration':
+      case 'tax_receipts':
+        registrationTotal += cost;
+        break;
+      case 'inspection_reports':
+        inspectionTotal += cost;
+        break;
+      default:
+        // title, warranty_records, service_history/repair_invoices (already
+        // reflected via Records' Ownership Insights maintenance spend),
+        // reference docs, or a file outside the standard portfolio — not
+        // part of this cost breakdown.
+        break;
     }
   }
 

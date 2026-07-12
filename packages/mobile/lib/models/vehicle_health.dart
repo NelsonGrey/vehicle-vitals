@@ -179,7 +179,29 @@ class VehicleHealthCalculator {
     final text = '${entry.title} ${entry.notes}'.toLowerCase();
     final ids = <String>[];
 
-    if (RegExp(r'oil|filter change|lubrication').hasMatch(text)) {
+    // Each of oil/brake/battery requires both a component term AND a
+    // service-action term, the same way tire_replacement already does below
+    // — a bare mention of the component ("brake noise inspection, no work
+    // performed", "checked battery terminals, still good") must not reset
+    // the forecast to "just serviced," or the app confidently reports a
+    // safety-relevant component (brakes) as freshly done when nothing was
+    // actually replaced.
+    final hasServiceAction =
+        text.contains('replace') ||
+        text.contains('replacement') ||
+        text.contains('replaced') ||
+        text.contains('install') ||
+        text.contains('installed') ||
+        text.contains('change') ||
+        text.contains('changed') ||
+        text.contains('service') ||
+        text.contains('serviced') ||
+        text.contains('flush') ||
+        text.contains('flushed');
+
+    final hasOilTerm = text.contains('oil');
+    if ((hasOilTerm && hasServiceAction) ||
+        RegExp(r'filter change|lubrication').hasMatch(text)) {
       ids.add('oil_change');
     }
     if (RegExp(
@@ -197,10 +219,20 @@ class VehicleHealthCalculator {
     if (hasTireTerm && hasTireReplacementAction) {
       ids.add('tire_replacement');
     }
-    if (RegExp(r'brake|brake pad|rotor|caliper').hasMatch(text)) {
+    final hasBrakeTerm =
+        text.contains('brake') ||
+        text.contains('brakes') ||
+        text.contains('rotor') ||
+        text.contains('rotors') ||
+        text.contains('caliper') ||
+        text.contains('calipers');
+    final hasBrakeServiceAction =
+        hasServiceAction || text.contains('pad') || text.contains('pads');
+    if (hasBrakeTerm && hasBrakeServiceAction) {
       ids.add('brake_service');
     }
-    if (text.contains('battery')) {
+    final hasBatteryServiceAction = hasServiceAction || text.contains('new');
+    if (text.contains('battery') && hasBatteryServiceAction) {
       ids.add('battery_replacement');
     }
     if (RegExp(r'wiper|windshield blade|washer blade').hasMatch(text)) {
@@ -267,20 +299,30 @@ class VehicleHealthCalculator {
     Vehicle vehicle,
     List<Maintenance> maintenance,
   ) {
+    // Entries with a fabricated date (see Maintenance.hasKnownDate) sort as
+    // if very old, mirroring the JS implementation's `new Date(entry.date ||
+    // 0)` — otherwise a record with an unknown date would default to
+    // DateTime.now() and wrongly win "most recent" against a genuinely
+    // dated real record.
+    final epoch = DateTime.fromMillisecondsSinceEpoch(0);
     final matching =
         maintenance
             .where((entry) => _inferComponentIds(entry).contains(componentId))
             .toList()
-          ..sort((a, b) => b.date.compareTo(a.date));
+          ..sort((a, b) {
+            final aDate = a.hasKnownDate ? a.date : epoch;
+            final bDate = b.hasKnownDate ? b.date : epoch;
+            return bDate.compareTo(aDate);
+          });
 
     if (matching.isNotEmpty) {
       final entry = matching.first;
       final parsedMileage = _parseMileage(entry.mileage);
       return _Anchor(
         source: 'record',
-        date: entry.date,
+        date: entry.hasKnownDate ? entry.date : null,
         mileage: parsedMileage > 0 ? parsedMileage : null,
-        hasDate: true,
+        hasDate: entry.hasKnownDate,
         hasMileage: parsedMileage > 0,
       );
     }

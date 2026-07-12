@@ -28,6 +28,45 @@ describe('inferHealthComponentIds', () => {
       })
     ).toContain('tire_replacement');
   });
+
+  it('does not treat a brake inspection with no work performed as a completed brake service', () => {
+    // Regression: a bare "brake" mention was resetting the brake-wear
+    // forecast to "just serviced" even when no work was actually done —
+    // a safety-relevant false reassurance.
+    expect(
+      inferHealthComponentIds({
+        title: 'Brake noise inspection, no work performed',
+      })
+    ).not.toContain('brake_service');
+  });
+
+  it('does not treat a battery check as a completed battery replacement', () => {
+    expect(
+      inferHealthComponentIds({
+        notes: 'Checked battery terminals, still good',
+      })
+    ).not.toContain('battery_replacement');
+  });
+
+  it('does not treat an oil level check as a completed oil change', () => {
+    expect(
+      inferHealthComponentIds({
+        notes: 'Checked oil level, still fine',
+      })
+    ).not.toContain('oil_change');
+  });
+
+  it('still matches real brake, battery, and oil service work', () => {
+    expect(
+      inferHealthComponentIds({ title: 'Brake pad replacement' })
+    ).toContain('brake_service');
+    expect(
+      inferHealthComponentIds({ title: 'Battery replacement' })
+    ).toContain('battery_replacement');
+    expect(inferHealthComponentIds({ title: 'Oil change' })).toContain(
+      'oil_change'
+    );
+  });
 });
 
 describe('computeVehicleHealthSnapshot', () => {

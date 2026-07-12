@@ -91,9 +91,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # Development files
+# Note: *.test.js/*.spec.js were previously ignored here too, but that
+# blanket-matched real committed unit tests under packages/functions/test/
+# (plain JS, unlike web/mobile's .test.ts/.test.tsx) — silently excluding
+# them from git and therefore from CI. Scratch test scripts should use the
+# test-*.js / mock-*.js prefixes below instead.
 *.dev.js
-*.test.js
-*.spec.js
 test-*.js
 mock-*.js
 

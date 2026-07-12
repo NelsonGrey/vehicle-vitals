@@ -92,7 +92,29 @@ export function inferHealthComponentIds(entry) {
 
   const ids = [];
 
-  if (/oil|filter change|lubrication/.test(text)) {
+  // Each of oil/brake/battery requires both a component term AND a
+  // service-action term, the same way tire_replacement already does below —
+  // a bare mention of the component ("brake noise inspection, no work
+  // performed", "checked battery terminals, still good") must not reset the
+  // forecast to "just serviced," or the app confidently reports a
+  // safety-relevant component (brakes) as freshly done when nothing was
+  // actually replaced.
+  const hasServiceAction = hasAnyToken(text, [
+    'replace',
+    'replacement',
+    'replaced',
+    'install',
+    'installed',
+    'change',
+    'changed',
+    'service',
+    'serviced',
+    'flush',
+    'flushed',
+  ]);
+
+  const hasOilTerm = hasAnyToken(text, ['oil']);
+  if ((hasOilTerm && hasServiceAction) || /filter change|lubrication/.test(text)) {
     ids.push('oil_change');
   }
   if (/tire rotation|rotate tires|rotate tire|rotated tires|rotated tire/.test(text)) {
@@ -109,10 +131,21 @@ export function inferHealthComponentIds(entry) {
   if (hasTireTerm && hasTireReplacementAction) {
     ids.push('tire_replacement');
   }
-  if (/brake|brake pad|rotor|caliper/.test(text)) {
+  const hasBrakeTerm = hasAnyToken(text, [
+    'brake',
+    'brakes',
+    'rotor',
+    'rotors',
+    'caliper',
+    'calipers',
+  ]);
+  const hasBrakeServiceAction =
+    hasServiceAction || hasAnyToken(text, ['pad', 'pads']);
+  if (hasBrakeTerm && hasBrakeServiceAction) {
     ids.push('brake_service');
   }
-  if (/battery/.test(text)) {
+  const hasBatteryServiceAction = hasServiceAction || hasAnyToken(text, ['new']);
+  if (text.includes('battery') && hasBatteryServiceAction) {
     ids.push('battery_replacement');
   }
   if (/wiper|windshield blade|washer blade/.test(text)) {

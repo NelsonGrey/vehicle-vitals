@@ -90,6 +90,29 @@ class _RecordsScreenState extends State<RecordsScreen> {
     return paths;
   }
 
+  // Portfolio category key (e.g. 'maintenance', 'finance', 'ownership') each
+  // file path was filed under — needed so ownership-insight spend
+  // classification reflects where the user filed the document, not the AI's
+  // generic per-file documentCategory tag (see ownership_insights.dart).
+  Map<String, String> _pathCategoryKeys() {
+    final result = <String, String>{};
+    for (final category in _categories) {
+      final categoryMap = Map<String, dynamic>.from(category as Map);
+      final categoryKey = (categoryMap['key'] ?? '').toString();
+      final items = (categoryMap['items'] as List?) ?? [];
+      for (final item in items) {
+        final itemMap = Map<String, dynamic>.from(item as Map);
+        final files = (itemMap['files'] as List?) ?? [];
+        for (final file in files) {
+          final fileMap = Map<String, dynamic>.from(file as Map);
+          final path = (fileMap['path'] ?? '').toString();
+          if (path.isNotEmpty) result[path] = categoryKey;
+        }
+      }
+    }
+    return result;
+  }
+
   Future<void> _refreshAnalyses(List<String> paths) async {
     if (paths.isEmpty) return;
     try {
@@ -503,11 +526,16 @@ class _RecordsScreenState extends State<RecordsScreen> {
       (count, files) => count + files.length,
     );
 
+    final pathCategoryKeys = _pathCategoryKeys();
     final allFiles = <Map<String, dynamic>>[];
     for (final path in _allFilePaths()) {
       final analysis = _analysisByPath[path];
       if (analysis != null) {
-        allFiles.add({'path': path, 'analysis': analysis});
+        allFiles.add({
+          'path': path,
+          'analysis': analysis,
+          'categoryKey': pathCategoryKeys[path],
+        });
       }
     }
     final insights = computeOwnershipInsights(
@@ -688,6 +716,15 @@ class _OwnershipInsightsPanel extends StatelessWidget {
               ' • Avg \$${insights.maintenanceAverageCost.toStringAsFixed(2)}'
               '${insights.latestServiceDate != null ? ' • Latest ${insights.latestServiceDate}' : ''}',
               style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'From docs filed under Maintenance and Repair only — purchase '
+              'price and finance documents are excluded.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             if (insights.maintenanceBreakdown.isNotEmpty) ...[
               const SizedBox(height: 10),

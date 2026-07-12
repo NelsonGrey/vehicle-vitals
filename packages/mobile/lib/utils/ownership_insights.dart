@@ -39,16 +39,6 @@ class OwnershipInsights {
   bool get hasAnyInsight => analyzedDocumentCount > 0;
 }
 
-final RegExp _maintenanceKeywords = RegExp(
-  r'(service|maintenance|repair|invoice|receipt|oil|brake|tire)',
-  caseSensitive: false,
-);
-
-final RegExp _financeKeywords = RegExp(
-  r'(loan|lease|finance|payment|contract|lender|apr)',
-  caseSensitive: false,
-);
-
 final RegExp _monthlyPaymentText = RegExp(
   r'\$\s*([0-9]{2,5}(?:\.[0-9]{2})?)\s*(?:/\s*)?(?:mo|month|monthly)',
   caseSensitive: false,
@@ -61,14 +51,17 @@ double? _parseAmount(dynamic value) {
   return null;
 }
 
-bool _isMaintenanceDocument(Map<String, dynamic> extracted, String category) {
-  final serviceType = (extracted['serviceType'] ?? '').toString();
-  return _maintenanceKeywords.hasMatch('$category $serviceType');
-}
+// Classification is based on which portfolio category (Ownership, Finance,
+// Maintenance, Reference) the user actually filed the document under, not
+// a keyword guess against the AI's generic per-file documentCategory/
+// serviceType — that field is deliberately coarse ("receipt" | "invoice" |
+// "image" | "document" | "other") and says nothing about subject matter, so
+// a keyword match would (and did) count a vehicle's Bill of Sale as
+// "maintenance spend" just because it's a "receipt". Mirrors the same fix
+// in packages/web/src/utils/ownershipInsights.ts.
+bool _isMaintenanceDocument(String? categoryKey) => categoryKey == 'maintenance';
 
-bool _isFinanceDocument(String category, String sourceText) {
-  return _financeKeywords.hasMatch('$category $sourceText');
-}
+bool _isFinanceDocument(String? categoryKey) => categoryKey == 'finance';
 
 double? _extractMonthlyPaymentFromText(String? sourceText) {
   if (sourceText == null || sourceText.isEmpty) return null;
@@ -101,7 +94,10 @@ double _estimateDepreciationFactor(int vehicleYear) {
 /// [files] is a flattened list of file maps, each optionally carrying an
 /// `analysis` map with `extracted`, `confidence`, and `sourceText` (the same
 /// shape returned by FirestoreService.getAttachmentAnalyses, merged in by the
-/// caller).
+/// caller), plus a `categoryKey` string (the portfolio category — e.g.
+/// 'maintenance', 'finance', 'ownership' — the file was filed under) used to
+/// classify maintenance/finance spend structurally rather than by guessing
+/// from the AI's generic per-file documentCategory tag.
 OwnershipInsights computeOwnershipInsights(
   List<Map<String, dynamic>> files, {
   int? vehicleYear,
@@ -126,8 +122,9 @@ OwnershipInsights computeOwnershipInsights(
     );
     final category = (extracted['documentCategory'] ?? '').toString();
     final sourceText = (analysis['sourceText'] ?? '').toString();
+    final categoryKey = file['categoryKey'] as String?;
 
-    if (_isMaintenanceDocument(extracted, category)) {
+    if (_isMaintenanceDocument(categoryKey)) {
       maintenanceCount += 1;
       final cost = _parseAmount(extracted['totalCost']);
       if (cost != null) {
@@ -143,7 +140,7 @@ OwnershipInsights computeOwnershipInsights(
       }
     }
 
-    if (_isFinanceDocument(category, sourceText)) {
+    if (_isFinanceDocument(categoryKey)) {
       financeCount += 1;
       final cost = _parseAmount(extracted['totalCost']);
       if (cost != null && cost <= 2000) {

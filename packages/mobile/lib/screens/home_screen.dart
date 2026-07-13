@@ -223,7 +223,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Garage')),
+      appBar: AppBar(
+        title: const Text('Garage'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.storefront_outlined),
+            tooltip: 'Shops & Services',
+            onPressed: () => context.push('/app/service-providers'),
+          ),
+        ],
+      ),
       body: StreamBuilder<List<Vehicle>>(
         stream: firestoreService.getVehiclesStream(),
         builder: (context, snapshot) {

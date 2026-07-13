@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/safe_back_button.dart';
@@ -299,9 +300,18 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                           TextField(
                             controller: _providerNameController,
                             decoration: const InputDecoration(
-                              labelText: 'Shop / mechanic name',
+                              labelText: 'Shop or professional',
                               hintText: 'e.g. Downtown Auto Repair',
                               border: OutlineInputBorder(),
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () =>
+                                  context.push('/app/service-providers'),
+                              icon: const Icon(Icons.storefront_outlined),
+                              label: const Text('Find shops & services'),
                             ),
                           ),
                         ],

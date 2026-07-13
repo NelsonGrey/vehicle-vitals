@@ -8,7 +8,10 @@ import StackedVLogo from './StackedVLogo';
 // Getting Started and Product Tour are evaluation-stage content — useful
 // for prospects, redundant once signed in (Getting Started already lives
 // in the authenticated app nav below; Product Tour has nothing left to
-// evaluate). Pricing stays for subscription management either way.
+// evaluate), so the Product nav only renders for signed-out visitors.
+// Pricing lives in the Support/legal group instead — it's useful
+// regardless of auth state, and grouping it there avoids a lone one-link
+// "Product" nav once Getting Started/Product Tour drop away on sign-in.
 interface FooterLink {
   label: string;
   to: string;
@@ -21,15 +24,11 @@ const publicProductLinks: FooterLink[] = [
     to: '/getting-started',
     capabilityId: 'getting_started',
   },
-  { label: 'Pricing', to: '/subscription' },
   { label: 'Product Tour', to: '/product-tour' },
 ];
 
-const authenticatedProductLinks: FooterLink[] = [
-  { label: 'Pricing', to: '/subscription' },
-];
-
 const supportLinks = [
+  { label: 'Pricing', to: '/subscription' },
   { label: 'Help', to: '/help' },
   { label: 'Support', to: '/support' },
   { label: 'Privacy', to: '/privacy' },
@@ -88,12 +87,12 @@ export default function SiteFooter() {
           </Link>
 
           <div className="footer-primary-links flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:gap-x-10 sm:gap-y-4 lg:flex-nowrap lg:items-center lg:gap-x-5">
-            <nav
-              aria-label="Product"
-              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
-            >
-              {(user ? authenticatedProductLinks : publicProductLinks).map(
-                link => (
+            {!user && (
+              <nav
+                aria-label="Product"
+                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
+              >
+                {publicProductLinks.map(link => (
                   <Link
                     key={link.to}
                     to={link.to}
@@ -108,9 +107,9 @@ export default function SiteFooter() {
                   >
                     {link.label}
                   </Link>
-                )
-              )}
-            </nav>
+                ))}
+              </nav>
+            )}
 
             {!user ? (
               <nav

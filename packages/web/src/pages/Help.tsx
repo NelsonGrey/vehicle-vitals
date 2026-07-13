@@ -140,7 +140,13 @@ function filterFaqItems(items: FaqItem[], query: string) {
   }
 
   return items.filter(item => {
-    const haystack = [item.question, ...item.answers].join(' ').toLowerCase();
+    const haystack = [
+      item.question,
+      ...item.answers,
+      ...(item.legacyTerms ?? []),
+    ]
+      .join(' ')
+      .toLowerCase();
     return haystack.includes(normalizedQuery);
   });
 }

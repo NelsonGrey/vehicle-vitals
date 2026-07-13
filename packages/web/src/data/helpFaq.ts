@@ -1,6 +1,9 @@
 export type FaqItem = {
   question: string;
   answers: string[];
+  /** Retired display terms (e.g. "Timeline", "Mechanic") kept searchable so
+   * users who still think in the old vocabulary can find the right answer. */
+  legacyTerms?: string[];
 };
 
 export const websiteFaq: FaqItem[] = [
@@ -37,7 +40,7 @@ export const websiteFaq: FaqItem[] = [
       'Enter the vehicle ID and use lookup for faster setup.',
       'If the lookup misses details, fill the remaining Year/Make/Model fields by hand before saving.',
       'Add mileage and save.',
-      'The vehicle appears in Garage and is available to Records, Upcoming, and Timeline features.',
+      'The vehicle appears in Garage and is available to Records, Maintenance Plan, and Service History.',
     ],
   },
   {
@@ -78,7 +81,7 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'It shows service items that may be coming due soon based on known schedules and mileage.',
       'The labels help you see what needs attention first.',
-      'Use View all to open the full Upcoming Tasks page.',
+      'Use View all to open the full Maintenance Plan.',
     ],
   },
   {
@@ -103,18 +106,19 @@ export const websiteFaq: FaqItem[] = [
     question: 'How do reminders work from Records?',
     answers: [
       'Records can create reminder entries tied to service type and due context.',
-      'Saved reminders appear in Upcoming Tasks.',
+      'Saved reminders appear in Maintenance Plan.',
       'You can complete, snooze, dismiss, or reopen reminders from task management views.',
     ],
   },
   {
-    question: 'How do I use Upcoming Tasks?',
+    question: 'How do I use Maintenance Plan?',
     answers: [
-      'Open Upcoming from navigation.',
+      'Open Maintenance Plan from navigation.',
       'Review tasks sorted by urgency.',
       'By default, the list focuses on work estimated to be due inside your saved reminder window. Use Show all recommendations if you want the full list.',
       'For each task, save reminder state and choose an action such as Send Email Now, Complete, Snooze, Dismiss, or Reopen where available.',
     ],
+    legacyTerms: ['Upcoming Tasks', 'Upcoming'],
   },
   {
     question: 'Can I add maintenance tasks to my calendar from the website?',
@@ -125,34 +129,37 @@ export const websiteFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'What does Timeline Dashboard show?',
+    question: 'What does Service History show?',
     answers: [
-      'Timeline gives chronological service and ownership history.',
+      'Service History gives a chronological view of completed service and ownership events.',
       'Use it to verify completed work, ordering of events, and long-term lifecycle trends.',
     ],
+    legacyTerms: ['Timeline'],
   },
   {
-    question: 'How do I find nearby mechanics?',
+    question: 'How do I find nearby shops and services?',
     answers: [
-      'Open Mechanics.',
+      'Open Shops & Services.',
       'Enter location context and search criteria.',
-      'Use filtering options where available to narrow mechanic type and results.',
+      'Use the business-type filter to narrow the results.',
     ],
+    legacyTerms: ['Mechanic', 'Mechanics', 'Service Providers'],
   },
   {
     question: 'How do profile preferences affect reminders?',
     answers: [
-      'Profile settings include reminder lead-time and usage assumptions (for example average driving patterns) that control how early Upcoming Tasks starts surfacing service work.',
+      'Account settings include reminder lead-time and usage assumptions (for example average driving patterns) that control how early Maintenance Plan starts surfacing service work.',
       'These values influence when reminder windows appear.',
-      'Save profile preferences to apply changes.',
+      'Save account preferences to apply changes.',
     ],
+    legacyTerms: ['Profile'],
   },
   {
-    question: 'Can I store location and mechanic preferences?',
+    question: 'Can I store location and shop preferences?',
     answers: [
       'Yes.',
-      'Profile supports location fields and mechanic search preferences.',
-      'These settings are used by nearby mechanic lookup and recommendation behavior.',
+      'Account supports location fields and nearby-search preferences.',
+      'These settings are used by Shops & Services search behavior.',
     ],
   },
   {
@@ -277,26 +284,28 @@ export const iosFaq: FaqItem[] = [
     ],
   },
   {
-    question: 'How do I use Upcoming Tasks on iOS?',
+    question: 'How do I use Maintenance Plan on iOS?',
     answers: [
-      'Open Upcoming from app navigation.',
+      'Open Maintenance Plan from app navigation.',
       'Review tasks sorted by urgency.',
       'Save reminders and use actions like complete/snooze/dismiss/reopen where shown.',
     ],
+    legacyTerms: ['Upcoming Tasks', 'Upcoming'],
   },
   {
     question: 'How do I add a maintenance event to calendar on iOS?',
     answers: [
-      'In Upcoming or related maintenance flows, choose Add to Calendar.',
+      'In Maintenance Plan or related maintenance flows, choose Add to Calendar.',
       'The app creates an event via calendar integration service and confirms success/failure.',
     ],
   },
   {
-    question: 'What does Timeline Dashboard do on iOS?',
+    question: 'What does Service History do on iOS?',
     answers: [
-      'Timeline shows maintenance events in chronological order.',
+      'Service History shows maintenance events in chronological order.',
       'Use it to trace ownership and service history over time.',
     ],
+    legacyTerms: ['Timeline'],
   },
   {
     question: 'Where do I configure reminder and calendar preferences on iOS?',
@@ -316,16 +325,18 @@ export const iosFaq: FaqItem[] = [
   {
     question: 'How do I view account details and sign out on iOS?',
     answers: [
-      'Open Profile/Account screen from app menu.',
+      'Open Account from the app navigation.',
       'Use Sign Out action when needed.',
     ],
+    legacyTerms: ['Profile'],
   },
   {
-    question: 'How do I find mechanics on iOS?',
+    question: 'How do I find shops and services on iOS?',
     answers: [
-      'Open Mechanics from app routes.',
-      'Search using your location and mechanic options.',
+      'Open Shops & Services from Settings.',
+      'Search using your location and business-type options.',
     ],
+    legacyTerms: ['Mechanic', 'Mechanics', 'Service Providers'],
   },
   {
     question: 'What is the Premium screen for on iOS?',
@@ -380,7 +391,7 @@ export const troubleshootingFaq: FaqItem[] = [
     question: 'Reminder actions appear delayed. Is this normal?',
     answers: [
       'Small propagation delays can occur after save/complete/snooze operations.',
-      'Refresh Upcoming view and re-open the task list.',
+      'Refresh Maintenance Plan and re-open the task list.',
     ],
   },
   {

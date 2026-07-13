@@ -9,6 +9,8 @@ const mockNavigate = vi.fn();
 const mockChangeSubscriptionTier = vi.fn();
 const mockCreateSubscriptionCheckoutSession = vi.fn();
 const mockTrackPaymentInitiated = vi.fn();
+const mockTrackPaymentCompleted = vi.fn();
+const mockTrackPurchase = vi.fn();
 let mockSubscription = null;
 let mockTier = 'free';
 let mockIsLoading = false;
@@ -30,8 +32,17 @@ vi.mock('../src/shared/entitlementsService', () => ({
 
 vi.mock('../src/shared/adAnalytics', () => ({
   trackPaymentInitiated: (...args) => mockTrackPaymentInitiated(...args),
+  trackPaymentCompleted: (...args) => mockTrackPaymentCompleted(...args),
   trackSubscriptionPageView: vi.fn(),
 }));
+
+vi.mock('../src/shared/marketingAnalytics', async () => {
+  const actual = await vi.importActual('../src/shared/marketingAnalytics');
+  return {
+    ...actual,
+    trackPurchase: (...args) => mockTrackPurchase(...args),
+  };
+});
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -45,6 +56,7 @@ describe('SubscriptionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('alert', vi.fn());
+    sessionStorage.clear();
     mockSubscription = null;
     mockTier = 'free';
     mockIsLoading = false;
@@ -159,6 +171,47 @@ describe('SubscriptionPage', () => {
         /checkout completed\. your subscription is being finalized\./i
       )
     ).toBeInTheDocument();
+  });
+
+  it('fires purchase and payment-completed events when a pending checkout was persisted before redirect', () => {
+    sessionStorage.setItem(
+      'vv_pending_checkout',
+      JSON.stringify({ tier: 'pro', billingPeriod: 'monthly', amount: 2.99 })
+    );
+
+    render(
+      <MemoryRouter
+        initialEntries={['/app/subscription?checkout=success']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <SubscriptionPage />
+      </MemoryRouter>
+    );
+
+    expect(mockTrackPurchase).toHaveBeenCalledWith('pro', 'monthly', 2.99);
+    expect(mockTrackPaymentCompleted).toHaveBeenCalledWith(
+      'pro',
+      2.99,
+      'USD',
+      'monthly'
+    );
+    // Consumed, not just read — a refresh of the success page shouldn't
+    // double-fire the purchase event.
+    expect(sessionStorage.getItem('vv_pending_checkout')).toBeNull();
+  });
+
+  it('does not fire a purchase event on a success redirect with no pending checkout recorded', () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/app/subscription?checkout=success']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <SubscriptionPage />
+      </MemoryRouter>
+    );
+
+    expect(mockTrackPurchase).not.toHaveBeenCalled();
+    expect(mockTrackPaymentCompleted).not.toHaveBeenCalled();
   });
 
   it('shows a cancellation banner when checkout query indicates cancelled', () => {

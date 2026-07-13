@@ -193,6 +193,29 @@ export function trackBeginCheckout(
   dispatch('begin_checkout', { plan_tier: planTier, billing_period: billingPeriod });
 }
 
+/**
+ * GA4's standard ecommerce 'purchase' event — required for GA4 revenue
+ * reporting and for importing subscription conversions into Google Ads.
+ * Fire once, on confirmed return from a successful Stripe Checkout
+ * redirect (see SubscriptionPage's pending-checkout handoff); there's no
+ * Stripe session/invoice ID available client-side here to dedupe against,
+ * so the synthetic transaction_id below is best-effort, not authoritative.
+ */
+export function trackPurchase(
+  planTier: string,
+  billingPeriod: 'monthly' | 'annual',
+  value: number,
+  currency = 'USD'
+): void {
+  dispatch('purchase', {
+    transaction_id: `${planTier}_${billingPeriod}_${Date.now()}`,
+    value,
+    currency,
+    plan_tier: planTier,
+    billing_period: billingPeriod,
+  });
+}
+
 export function trackContactSalesClick(ctaLocation: string): void {
   dispatch('contact_sales_click', { cta_location: ctaLocation });
 }

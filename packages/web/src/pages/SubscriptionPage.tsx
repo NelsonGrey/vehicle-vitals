@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import PageSEO from '../components/PageSEO';
 import {
+  trackPaymentCompleted,
   trackPaymentInitiated,
   trackSubscriptionPageView,
 } from '../shared/adAnalytics';
@@ -10,6 +11,7 @@ import {
   trackPricingBillingToggle,
   trackPricingPageView,
   trackPricingPlanClick,
+  trackPurchase,
 } from '../shared/marketingAnalytics';
 import { ROUTE_SEO } from '../shared/seoMeta';
 import {
@@ -30,6 +32,39 @@ import {
 } from '../shared/subscriptionService';
 import { useSubscription } from '../shared/useMonetization';
 import { personaPages } from '../data/personas';
+
+// Stripe's success_url here carries only `?checkout=success` (no session ID),
+// so the plan/price picked before the full-page redirect to Checkout has to
+// be handed to ourselves across that redirect some other way. sessionStorage
+// survives it; consuming (not just reading) it on return means a page
+// refresh on the success page won't re-fire the purchase event.
+const PENDING_CHECKOUT_KEY = 'vv_pending_checkout';
+
+interface PendingCheckout {
+  tier: UserTier;
+  billingPeriod: 'monthly' | 'annual';
+  amount: number;
+}
+
+function persistPendingCheckout(checkout: PendingCheckout): void {
+  try {
+    sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(checkout));
+  } catch {
+    // sessionStorage unavailable (private mode, storage full) — the
+    // purchase event just won't fire on return; non-fatal.
+  }
+}
+
+function consumePendingCheckout(): PendingCheckout | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+    return JSON.parse(raw) as PendingCheckout;
+  } catch {
+    return null;
+  }
+}
 
 const featureOrder = [
   'vehicle_limit',
@@ -179,6 +214,19 @@ export default function SubscriptionPage() {
     const status = (searchParams.get('checkout') || '').toLowerCase();
     return status === 'success' || status === 'cancelled' ? status : '';
   }, [location.search]);
+
+  useEffect(() => {
+    if (checkoutStatus !== 'success') return;
+    const pending = consumePendingCheckout();
+    if (!pending) return;
+    trackPurchase(pending.tier, pending.billingPeriod, pending.amount);
+    trackPaymentCompleted(
+      pending.tier,
+      pending.amount,
+      'USD',
+      pending.billingPeriod
+    );
+  }, [checkoutStatus]);
 
   if (isLoading) {
     return (
@@ -427,6 +475,14 @@ export default function SubscriptionPage() {
                         checkoutResult.mode === 'redirect' &&
                         checkoutResult.checkoutUrl
                       ) {
+                        persistPendingCheckout({
+                          tier: planTier,
+                          billingPeriod,
+                          amount:
+                            billingPeriod === 'annual'
+                              ? getTierPricing(planTier).annualPrice
+                              : getTierPricing(planTier).monthlyPrice,
+                        });
                         window.location.href = checkoutResult.checkoutUrl;
                         return;
                       }

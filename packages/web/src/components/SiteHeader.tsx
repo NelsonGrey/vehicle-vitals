@@ -64,7 +64,8 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                       onClick={() =>
                         trackHeaderNavClick(
                           capability.fullLabel,
-                          capability.webRoute
+                          capability.webRoute,
+                          capability.analyticsId
                         )
                       }
                     >

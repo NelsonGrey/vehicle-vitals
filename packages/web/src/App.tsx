@@ -37,6 +37,26 @@ replayStoredConsent();
 // Capture UTM params from the landing URL before any navigation occurs.
 captureUtmParams();
 
+// Every path below only ever renders a <Navigate replace /> — visiting one
+// briefly sets `location.pathname` to the legacy path before the redirect
+// lands, so AppAnalytics skips firing page_view for these to avoid a
+// spurious extra pageview alongside the one for the real destination.
+// (edit-vehicle/:vin is deliberately excluded: it's a redirect only under
+// marketingOnlyMode, and a real protected page otherwise.)
+const LEGACY_REDIRECT_PATHS = new Set([
+  '/start-steps',
+  '/everyday-screens',
+  '/short-video-tours',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/add-vehicle',
+  '/providers',
+  '/profile',
+  '/timeline',
+  '/upcoming',
+]);
+
 // Component to handle logging and analytics
 function AppAnalytics() {
   const { user } = useAuth();
@@ -73,6 +93,7 @@ function AppAnalytics() {
     });
 
     const id = setTimeout(() => {
+      if (LEGACY_REDIRECT_PATHS.has(location.pathname)) return;
       analytics.trackEvent('page_view', {
         page_path: location.pathname,
         page_search: location.search,

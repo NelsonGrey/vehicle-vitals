@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
+import { trackOnboardingStepAction } from '../shared/marketingAnalytics';
 // Header and footer provided by Layout
 
 const quickLookSteps = [
   {
+    stepId: 'add_vehicle',
     title: '1) Add your vehicle',
     description:
       'Enter your vehicle ID and basic details. We can help fill in common fields for you.',
@@ -14,6 +16,7 @@ const quickLookSteps = [
     to: '/vin-lookup-demo',
   },
   {
+    stepId: 'track_service_and_costs',
     title: '2) Track service and costs',
     description:
       'Save oil changes, repairs, and costs so your history stays organized and easy to find.',
@@ -22,6 +25,7 @@ const quickLookSteps = [
     to: '/maintenance-planning-demo',
   },
   {
+    stepId: 'stay_on_top_of_whats_next',
     title: '3) Stay on top of what is next',
     description:
       'Get simple reminders for upcoming service so you can plan ahead.',
@@ -134,6 +138,9 @@ export default function Instructions() {
                 </p>
                 <Link
                   to={item.to}
+                  onClick={() =>
+                    trackOnboardingStepAction(item.stepId, item.ctaLabel)
+                  }
                   className="mt-4 inline-flex w-fit items-center rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
                 >
                   {item.ctaLabel}

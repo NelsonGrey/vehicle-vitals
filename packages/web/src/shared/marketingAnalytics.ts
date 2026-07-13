@@ -199,10 +199,40 @@ export function trackContactSalesClick(ctaLocation: string): void {
 
 // ─── Navigation events ────────────────────────────────────────────────────────
 
-export function trackHeaderNavClick(label: string, destination: string): void {
-  dispatch('header_nav_click', { cta_label: label, destination });
+export function trackHeaderNavClick(
+  label: string,
+  destination: string,
+  capabilityId?: string
+): void {
+  dispatch('header_nav_click', {
+    cta_label: label,
+    destination,
+    ...(capabilityId && { capability_id: capabilityId }),
+  });
 }
 
-export function trackFooterNavClick(label: string, destination: string): void {
-  dispatch('footer_nav_click', { cta_label: label, destination });
+export function trackFooterNavClick(
+  label: string,
+  destination: string,
+  capabilityId?: string
+): void {
+  dispatch('footer_nav_click', {
+    cta_label: label,
+    destination,
+    ...(capabilityId && { capability_id: capabilityId }),
+  });
+}
+
+export function trackHelpSearch(query: string, resultCount: number): void {
+  dispatch('help_search', { query, result_count: resultCount });
+}
+
+export function trackOnboardingStepAction(
+  stepId: string,
+  actionLabel: string
+): void {
+  dispatch('onboarding_step_action', {
+    step_id: stepId,
+    cta_label: actionLabel,
+  });
 }

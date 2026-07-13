@@ -16,8 +16,9 @@ import '../theme/design_tokens.dart';
 
 /// Cap on how many vehicles get a fetched health badge per Home load. Health
 /// data is a "reasonable effort" feature on the garage list: large
-/// enterprise-tier garages (up to 250 vehicles) shouldn't trigger hundreds of
-/// parallel maintenance-entry fetches just to render the list.
+/// enterprise-tier garages (contract-defined vehicle limits) shouldn't
+/// trigger hundreds of parallel maintenance-entry fetches just to render
+/// the list.
 const int _kMaxHealthBadgeFetches = 50;
 
 class HomeScreen extends StatefulWidget {

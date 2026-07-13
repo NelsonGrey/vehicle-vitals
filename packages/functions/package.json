@@ -8,6 +8,7 @@
     "test": "npm run build && FIREBASE_CONFIG='{\"projectId\":\"vehicle-vitals-dev\",\"storageBucket\":\"vehicle-vitals-dev.firebasestorage.app\",\"locationId\":\"us-central1\"}' GCLOUD_PROJECT=vehicle-vitals-dev node --test test/**/*.test.js",
     "seed:demo-data": "node scripts/seed-demo-data.js",
     "purge:demo-data": "node scripts/purge-demo-data.js",
+    "backfill:vehicle-derived-fields": "npm run build && node scripts/backfill-vehicle-derived-fields.js",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",

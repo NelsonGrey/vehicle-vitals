@@ -75,7 +75,7 @@ class FeatureFlagsService {
       case premiumTier:
         return 25;
       case enterpriseTier:
-        return 250;
+        return 999999; // Enterprise uses contract-defined limits, matching web/server
       case freeTier:
       default:
         return 2;

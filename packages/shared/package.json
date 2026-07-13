@@ -29,6 +29,14 @@
     "./ownershipInsights": {
       "types": "./dist/ownershipInsights.d.ts",
       "import": "./dist/ownershipInsights.js"
+    },
+    "./vinValidation": {
+      "types": "./dist/vinValidation.d.ts",
+      "import": "./dist/vinValidation.js"
+    },
+    "./documentAnalysisSummary": {
+      "types": "./dist/documentAnalysisSummary.d.ts",
+      "import": "./dist/documentAnalysisSummary.js"
     }
   },
   "scripts": {

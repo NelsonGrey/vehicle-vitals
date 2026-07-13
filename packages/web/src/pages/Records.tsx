@@ -26,7 +26,7 @@ import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import {
   buildDocumentSummary,
   getSourceSnippet,
-} from '../utils/documentAnalysisSummary';
+} from '@vehicle-vitals/shared/documentAnalysisSummary';
 import { formatCurrency as formatCurrencyUtil } from '../utils/currency';
 import { computeOwnershipInsights } from '@vehicle-vitals/shared/ownershipInsights';
 

@@ -43,7 +43,7 @@ export type OwnershipInsightVehicle = {
   // When available, used instead of model year to compute how long a loan
   // has likely been running — a used vehicle bought years after its model
   // year would otherwise have its loan tenure (and therefore paid-to-date)
-  // overstated by assuming financing began the moment the car was built.
+  // overstated by assuming financing began the moment the vehicle was built.
   purchaseDate?: string;
 } | null;
 

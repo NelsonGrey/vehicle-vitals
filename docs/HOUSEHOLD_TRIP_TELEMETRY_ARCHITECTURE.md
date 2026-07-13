@@ -56,7 +56,7 @@ Instead:
 3. canonical trip is assigned to one vehicle with a confidence score
 4. mileage and analytics derive from canonical trips only
 
-This avoids duplicate trips when two people in the same car record the same
+This avoids duplicate trips when two people in the same vehicle record the same
 journey.
 
 ## Firestore Shape
@@ -290,7 +290,7 @@ Every correction should leave an audit trail.
 
 The system must explicitly handle:
 
-- two household members in the same car on the same trip
+- two household members in the same vehicle on the same trip
 - two household vehicles leaving the same home at nearly the same time
 - one user carrying two phones
 - a user forgetting to switch the selected vehicle

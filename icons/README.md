@@ -41,7 +41,7 @@ Navigate to `packages/mobile/android/app/src/main/res/mipmap-*/` directories.
 
 ## Icon Design Guidelines
 
-- **Size**: Source icon should be at least 1024x1024 pixels
+- **Size**: Source icon should be 4096x4096 pixels for the canonical master; 1024x1024 is the minimum acceptable source size
 - **Format**: PNG with transparency (for overlays), or solid background
 - **Padding**: Include ~10% padding around main icon content for better visibility
 - **Colors**: Match the Vehicle Vitals dark slate and cyan/teal brand system (`#020617`, `#06b6d4`, `#14b8a6`, `#fffaf3`)

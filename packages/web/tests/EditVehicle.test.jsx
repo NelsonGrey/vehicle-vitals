@@ -255,7 +255,7 @@ describe('EditVehicle page', () => {
       year: '2021',
       recallsCount: 1,
       recallsSource: 'NHTSA',
-      vehicleType: 'Passenger Car',
+      vehicleType: 'Passenger Vehicle',
       bodyClass: 'Sedan',
       fuelType: 'Gasoline',
       engineType: 'I4',

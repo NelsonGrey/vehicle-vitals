@@ -9,9 +9,9 @@
 
 ## SCENE 1: HOOK [0:00–0:10]
 
-**[VISUAL: Quick cuts of car problems — flat tire, check engine light, confused person looking at paperwork]**
+**[VISUAL: Quick cuts of vehicle problems — flat tire, check engine light, confused person looking at paperwork]**
 
-**On-Screen Text:** "The Average Car Owner Spends $1,600+ on Maintenance..."
+**On-Screen Text:** "The Average Vehicle Owner Spends $1,600+ on Maintenance..."
 
 **[CUT TO: Empty wallet]**
 
@@ -214,7 +214,7 @@
 
 5. **[Screenshot: providers.png]** "Find Trusted Shops"
 
-**Voice-Over:** "Vehicle Vitals is designed for anyone who owns or manages vehicles. Whether it's one car or a fleet, one person or a team — Vehicle Vitals brings clarity, saves money, and eliminates stress."
+**Voice-Over:** "Vehicle Vitals is designed for anyone who owns or manages vehicles. Whether it's one vehicle or a fleet, one person or a team — Vehicle Vitals brings clarity, saves money, and eliminates stress."
 
 ---
 

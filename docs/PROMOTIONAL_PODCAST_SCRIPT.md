@@ -10,7 +10,7 @@
 
 **Host:** Hey everyone, welcome back to [Podcast Name]. I'm [Host Name], and today we're talking about something that affects millions of people but almost nobody does well — managing vehicle maintenance.
 
-Think about it: When's the last time you _actually_ knew what maintenance your car needed? Or how much you've spent on repairs over the years? Or worse — when's the last time you got blindsided by an unexpected $1,000 repair that could have been prevented?
+Think about it: When's the last time you _actually_ knew what maintenance your vehicle needed? Or how much you've spent on repairs over the years? Or worse — when's the last time you got blindsided by an unexpected $1,000 repair that could have been prevented?
 
 Yeah. We've all been there.
 
@@ -22,14 +22,14 @@ Today, I want to introduce you to a solution that's changing the game for vehicl
 
 ## THE PROBLEM [0:45–2:15]
 
-**Host:** Let me paint a picture. Sarah, a busy professional with three cars, has a problem. She doesn't know:
+**Host:** Let me paint a picture. Sarah, a busy professional with three vehicles, has a problem. She doesn't know:
 
 - _What maintenance is actually due_ on each vehicle
-- _How much she's spent_ on repairs across all her cars
+- _How much she's spent_ on repairs across all her vehicles
 - _Where her records are_ when she needs them for insurance claims or resale
 - _How to find a trustworthy mechanic_ near her that specializes in her vehicle's make
 
-So she does what most of us do: she googles "car repair near me," hopes for the best, and crosses her fingers that she's not getting ripped off.
+So she does what most of us do: she googles "vehicle repair near me," hopes for the best, and crosses her fingers that she's not getting ripped off.
 
 Then there's Marcus, who manages a small delivery fleet of 12 vehicles. He's juggling:
 
@@ -56,7 +56,7 @@ Let me walk you through what this actually looks like in practice.
 
 ### The Garage – Your Command Center
 
-When you first log in, you land in your **Garage**. This is where all your vehicles live. You can add as many as you want — cars, trucks, SUVs, motorcycles, whatever you've got.
+When you first log in, you land in your **Garage**. This is where all your vehicles live. You can add as many as you want — sedans, SUVs, motorcycles, vans, whatever you've got.
 
 For each vehicle, Vehicle Vitals shows you:
 
@@ -77,7 +77,7 @@ You can see:
 - **Notes and details** from each service
 - **Filters** to focus on the past, future, or all events
 
-Want to know what you spent on your truck last year? One filter. Want to see all upcoming services for all three of your vehicles? Another filter.
+Want to know what you spent on your vehicle last year? One filter. Want to see all upcoming services for all three of your vehicles? Another filter.
 
 ### Proactive Reminders – Never Miss Critical Maintenance
 
@@ -85,7 +85,7 @@ Then there's the **Reminder Center**. This is the feature that actually saves yo
 
 Vehicle Vitals learns your driving habits and predicts when you'll hit maintenance milestones. Then it alerts you _before_ something fails — typically 14 days in advance.
 
-Got a high-mileage truck that needs a transmission fluid flush? You'll get a reminder when you're 400 miles away from that service. Battery wearing out? You'll know before it dies in your driveway.
+Got a high-mileage vehicle that needs a transmission fluid flush? You'll get a reminder when you're 400 miles away from that service. Battery wearing out? You'll know before it dies in your driveway.
 
 For fleet managers like Marcus, this is invaluable. It means fewer breakdowns, better uptime, and predictable maintenance budgets.
 
@@ -135,7 +135,7 @@ You're not wondering if you forgot an important service. You're not scrambling t
 All your vehicle information is in one place. No more digging through email, texts, or file folders.
 
 **🚗 Scale for Fleets**
-If you manage multiple vehicles — whether it's a family with three cars or a business with a dozen vehicles — you can see all of them at once, spot trends, and manage maintenance budgets intelligently.
+If you manage multiple vehicles — whether it's a family with three vehicles or a business with a dozen vehicles — you can see all of them at once, spot trends, and manage maintenance budgets intelligently.
 
 ---
 
@@ -155,7 +155,7 @@ It integrates with your existing records — you can upload documents, photos, i
 
 Head over to **[www.vehicle-vitals.com](http://www.vehicle-vitals.com)** to sign up. The first 30 days are free, so you can see exactly how it works for your vehicles.
 
-Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or you take your vehicles to the shop, Vehicle Vitals makes vehicle ownership smarter, cheaper, and way less stressful.
+Whether you've got one vehicle or a fleet, whether you're a weekly hands-on maintainer or you take your vehicles to the shop, Vehicle Vitals makes vehicle ownership smarter, cheaper, and way less stressful.
 
 **[MUSIC RISES]**
 
@@ -173,11 +173,11 @@ Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or
 
 ### 30-Second Radio Spot
 
-> Tired of guessing when your car needs maintenance? Or tracking repair costs across a notebook and three email threads? **Vehicle Vitals** is a cloud platform that organizes everything — maintenance schedules, service records, repair costs, and nearby mechanics. See your true cost of vehicle ownership. Get proactive reminders before repairs fail. Never lose a receipt again. **Vehicle Vitals — smarter vehicle ownership.** Visit vehicle-vitals.com today.
+> Tired of guessing when your vehicle needs maintenance? Or tracking repair costs across a notebook and three email threads? **Vehicle Vitals** is a cloud platform that organizes everything — maintenance schedules, service records, repair costs, and nearby mechanics. See your true cost of vehicle ownership. Get proactive reminders before repairs fail. Never lose a receipt again. **Vehicle Vitals — smarter vehicle ownership.** Visit vehicle-vitals.com today.
 
 ### 60-Second YouTube Pre-Roll
 
-> [VISUAL: Screenshots of landing page, garage page] Ever wonder how much you're _really_ spending on your vehicle? [VISUAL: Cost breakdown chart] **Vehicle Vitals** is your personal vehicle assistant. Add your cars, upload service records, and the platform does the rest. See your maintenance timeline, get reminders before service is due, and find trusted mechanics near you. [VISUAL: Timeline page] For fleet managers, it means fewer breakdowns and smarter budgeting. [VISUAL: Profile, records pages] One place for everything — costs, records, reminders, and peace of mind. **Get started free at vehicle-vitals.com.**
+> [VISUAL: Screenshots of landing page, garage page] Ever wonder how much you're _really_ spending on your vehicle? [VISUAL: Cost breakdown chart] **Vehicle Vitals** is your personal vehicle assistant. Add your vehicles, upload service records, and the platform does the rest. See your maintenance timeline, get reminders before service is due, and find trusted mechanics near you. [VISUAL: Timeline page] For fleet managers, it means fewer breakdowns and smarter budgeting. [VISUAL: Profile, records pages] One place for everything — costs, records, reminders, and peace of mind. **Get started free at vehicle-vitals.com.**
 
 ### Social Media Teasers
 
@@ -193,7 +193,7 @@ Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or
 
 **Instagram Caption:**
 
-> We spent an average of $1,600+ on car maintenance last year... and had no idea. 💸
+> We spent an average of $1,600+ on vehicle maintenance last year... and had no idea. 💸
 >
 > Here's what we wish we'd had:
 >
@@ -221,7 +221,7 @@ Whether you've got one car or a fleet, whether you're a weekly DIY maintainer or
 ## Suggested Production Notes
 
 - **Music Recommendations:** Upbeat, modern tech/startup vibes (not corporate, not cheesy)
-- **Host Tone:** Knowledgeable but conversational — like talking to a smart friend, not a used car salesman
+- **Host Tone:** Knowledgeable but conversational — like talking to a smart friend, not a pushy vehicle salesperson
 - **Pacing:** Slightly slower than normal speech to ensure clarity
 - **Optional Sound Effects:** Soft notification ping when talking about reminders; satisfying "success" sound when describing solution
 - **Video Companion:** Use actual screenshots from docs/screenshots/ folder to illustrate each feature

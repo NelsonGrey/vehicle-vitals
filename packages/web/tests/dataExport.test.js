@@ -206,7 +206,7 @@ describe('dataExport', () => {
       const vehicle = {
         vin: 'TESTVIN123',
         make: 'Test',
-        model: 'Car',
+        model: 'Vehicle',
         year: 2020,
       };
 
@@ -227,7 +227,7 @@ describe('dataExport', () => {
       const vehicle = {
         vin: 'TESTVIN123',
         make: 'Test',
-        model: 'Car',
+        model: 'Vehicle',
         year: 2020,
       };
 
@@ -336,7 +336,7 @@ describe('dataExport', () => {
         const vehicle = {
           vin: 'TESTVIN123',
           make: 'Test',
-          model: 'Car',
+          model: 'Vehicle',
           year: 2020,
         };
 
@@ -356,7 +356,7 @@ describe('dataExport', () => {
         const vehicle = {
           vin: 'TESTVIN123',
           make: 'Test',
-          model: 'Car',
+          model: 'Vehicle',
           year: 2020,
         };
 

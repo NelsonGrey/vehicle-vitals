@@ -48,11 +48,13 @@ describe('Landing media surfaces', () => {
       screen.getByRole('heading', { name: /Product proof for the story/i })
     ).toBeInTheDocument();
 
-    expect(screen.getByText(/Responsible owner/i)).toBeInTheDocument();
-    expect(screen.getByText(/Household garage/i)).toBeInTheDocument();
-    expect(screen.getByText(/New driver or new owner/i)).toBeInTheDocument();
-    expect(screen.getByText(/DIY maintainer/i)).toBeInTheDocument();
-    expect(screen.getByText(/Light fleet/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Ownership records/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Shared garage/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Guided setup/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hands-on maintenance/i).length).toBeGreaterThan(
+      0
+    );
+    expect(screen.getAllByText(/Work vehicles/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Pro is the best fit/i)).toBeInTheDocument();
     expect(screen.getByText(/Forecast and automate/i)).toBeInTheDocument();
 

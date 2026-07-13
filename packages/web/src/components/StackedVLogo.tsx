@@ -11,10 +11,9 @@ interface StackedVLogoProps {
   gaugeColor?: string;
 }
 
-// The mark is a simplified crop of the master icon (roof + gauge only,
-// dropping the road/document/checkmark detail that turns to mush at nav
-// sizes) -- it isn't square. This is its fixed source aspect ratio.
-const MARK_ASPECT_RATIO = 569 / 340;
+// The nav mark uses the simplified square small-size icon so header/footer
+// usage stays legible without carrying the full app-icon detail.
+const MARK_ASPECT_RATIO = 1;
 
 export default function StackedVLogo({
   size = 32,
@@ -34,11 +33,11 @@ export default function StackedVLogo({
   // stuck in cache, rendered distorted once forced into the current square
   // dimensions. Bumping this query param forces a fresh fetch for everyone.
   const logoSrc = isLightMark
-    ? '/assets/vehicle-vitals-header-mark-light.png?v=2026-07-09b'
-    : '/assets/vehicle-vitals-header-mark.png?v=2026-07-09b';
+    ? '/assets/vehicle-vitals-header-mark-light.png?v=2026-07-12-sm'
+    : '/assets/vehicle-vitals-header-mark.png?v=2026-07-12-sm';
 
   const compactFontSize = Math.max(14, Math.round(size * 0.3));
-  const compactLetterSpacing = +(compactFontSize * -0.025).toFixed(2);
+  const compactLetterSpacing = 0;
 
   const wordmark = (
     <div

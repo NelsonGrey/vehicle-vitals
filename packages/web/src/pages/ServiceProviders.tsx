@@ -56,7 +56,7 @@ const providerTypeLabels: Record<ProviderTypeFilter, string> = {
   repair_shop: 'Repair shop',
   dealership: 'Dealership',
   body_shop: 'Body shop',
-  car_wash: 'Car wash',
+  car_wash: 'Vehicle wash',
   detailer: 'Detailer',
 };
 
@@ -396,7 +396,7 @@ export default function ServiceProviders() {
       key: 'search',
       title: 'Search',
       description:
-        'Find nearby repair shops, dealerships, body shops, car washes, and detailers.',
+        'Find nearby repair shops, dealerships, body shops, vehicle washes, and detailers.',
     },
     {
       key: 'preferred',
@@ -412,7 +412,7 @@ export default function ServiceProviders() {
         Mechanics
       </h1>
       <p className="text-slate-600 dark:text-slate-300 mt-2 mb-6">
-        Find nearby repair shops, dealerships, body shops, car washes, and
+        Find nearby repair shops, dealerships, body shops, vehicle washes, and
         detailers, and keep track of the ones you trust.
       </p>
 
@@ -550,7 +550,7 @@ export default function ServiceProviders() {
                       <option value="repair_shop">Repair shops</option>
                       <option value="dealership">Dealerships</option>
                       <option value="body_shop">Body shops</option>
-                      <option value="car_wash">Car washes</option>
+                      <option value="car_wash">Vehicle washes</option>
                       <option value="detailer">Detailers</option>
                     </select>
                   </label>

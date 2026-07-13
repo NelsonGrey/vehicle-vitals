@@ -40,7 +40,7 @@ HTTP endpoint that looks up VINs using the NHTSA Vehicle Information API.
     "driveType": "FWD",
     "transmissionStyle": "Automatic",
     "trim": "EX",
-    "vehicleType": "PASSENGER CAR"
+    "vehicleType": "PASSENGER VEHICLE"
   }
 }
 ```

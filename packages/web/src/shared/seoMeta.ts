@@ -90,7 +90,7 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   '/': {
     title: `${SITE_NAME} — One garage for every vehicle record, reminder, and repair cost`,
     description:
-      'Track maintenance history, stay ahead of upcoming service, and keep proof of ownership ready. Free to start — scales from one car to household fleets.',
+      'Track maintenance history, stay ahead of upcoming service, and keep proof of ownership ready. Free to start — scales from one vehicle to household fleets.',
     canonical: `${APP_URL}/`,
     ogType: 'website',
     ogImage: DEFAULT_OG_IMAGE,
@@ -179,15 +179,15 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
 
 const personaDescriptions: Record<string, string> = {
   owners:
-    'Keep one car reliable and documented. Track service history, stay on top of what\'s due, and have credible records ready for resale, warranty, or insurance.',
+    'Keep every service record ready when it matters. Track history, stay on top of what is due, and keep credible proof ready for resale, warranty, or insurance.',
   households:
-    'Coordinate every vehicle in the family from one shared garage. Manage upcoming work, share records, and keep everyone aligned without the text threads.',
+    'Coordinate every vehicle in one shared garage. Manage upcoming work, share records, and keep everyone aligned without the text threads.',
   'new-drivers':
-    'Build confidence with plain-language maintenance guidance. Capture each service, learn what matters, and start good ownership habits from day one.',
+    'Know what to track from day one. Capture each service, learn what matters, and start good ownership habits with plain-language guidance.',
   'diy-maintainers':
     'Document the work you do yourself. Tie parts, costs, and labor notes to each job so self-performed maintenance still builds vehicle value.',
   'light-fleets':
-    'Replace vehicle spreadsheets with operating visibility. Track maintenance readiness, costs, and vendor context across your work vehicles.',
+    'Keep business vehicles ready, documented, and accountable. Track maintenance readiness, costs, and vendor context across your work vehicles.',
 };
 
 export function getPersonaSeoMeta(personaId: string): SeoMeta {

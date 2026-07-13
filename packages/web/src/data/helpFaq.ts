@@ -33,7 +33,7 @@ export const websiteFaq: FaqItem[] = [
     question: 'How do I add my first vehicle?',
     answers: [
       'Go to Garage and select Add Vehicle.',
-      'Choose the vehicle type (for example car, truck, motorcycle, RV, boat, trailer, or other).',
+      'Choose the vehicle type (for example passenger vehicle, commercial vehicle, motorcycle, RV, boat, trailer, or other).',
       'Enter the vehicle ID and use lookup for faster setup.',
       'If the lookup misses details, fill the remaining Year/Make/Model fields by hand before saving.',
       'Add mileage and save.',
@@ -232,7 +232,7 @@ export const iosFaq: FaqItem[] = [
     question: 'How do I add a vehicle on iOS?',
     answers: [
       'From Garage, tap Add Vehicle.',
-      'Select the vehicle type (car, truck, motorcycle, RV, boat, trailer, or other).',
+      'Select the vehicle type (passenger vehicle, commercial vehicle, motorcycle, RV, boat, trailer, or other).',
       'Enter a vehicle ID (VIN/HIN/Serial), then use lookup if it is a VIN, or fill fields manually.',
       'Provide mileage and save.',
       'If subscription limits are reached, app guidance routes to Premium or Support flows.',

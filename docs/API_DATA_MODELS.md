@@ -914,7 +914,7 @@ GET https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/1HGBH41JXMN109186?format=j
     },
     {
       "Variable": "VehicleType",
-      "Value": "PASSENGER CAR"
+      "Value": "PASSENGER VEHICLE"
     }
     // ... 132 more fields
   ]

@@ -27,9 +27,9 @@ export interface PersonaPageContent {
 export const personaPages: PersonaPageContent[] = [
   {
     id: 'owners',
-    navLabel: 'For Owners',
-    label: 'Responsible owner',
-    title: 'Keep one car reliable and documented',
+    navLabel: 'Ownership Records',
+    label: 'Ownership records',
+    title: 'Keep every service record ready when it matters',
     headline:
       'A clean record for every service visit, receipt, reminder, and repair decision.',
     pain: 'Receipts, service dates, warranty proof, and shop recommendations get scattered across email, glove boxes, and memory.',
@@ -56,15 +56,15 @@ export const personaPages: PersonaPageContent[] = [
   },
   {
     id: 'households',
-    navLabel: 'For Households',
-    label: 'Household garage',
-    title: 'Coordinate every vehicle in the family',
+    navLabel: 'Shared Garage',
+    label: 'Shared garage',
+    title: 'Coordinate every vehicle in one shared garage',
     headline:
       'One shared view for drivers, vehicles, upcoming work, and ownership costs.',
-    pain: 'Multiple cars, drivers, and service schedules turn into text threads, missed handoffs, and duplicate shop follow-up.',
+    pain: 'Multiple vehicles, drivers, and service schedules turn into text threads, missed handoffs, and duplicate shop follow-up.',
     outcome:
       'Use one garage view to track vehicles, upcoming work, service costs, and shared history.',
-    plan: 'Pro is the best fit for households that need reminders, exports, calendar sync, and shared planning depth.',
+    plan: 'Pro is the best fit for shared garages that need reminders, exports, calendar sync, and shared planning depth.',
     recommendedPlan: 'Pro',
     image: '/images/features/garage-vehicles.png',
     ctaLabel: 'See garage overview',
@@ -85,9 +85,9 @@ export const personaPages: PersonaPageContent[] = [
   },
   {
     id: 'new-drivers',
-    navLabel: 'New Drivers',
-    label: 'New driver or new owner',
-    title: 'Build confidence with plain-language maintenance guidance',
+    navLabel: 'Guided Setup',
+    label: 'Guided setup',
+    title: 'Know what to track from day one',
     headline:
       'A practical way to understand what happened, what matters, and what to ask next.',
     pain: 'New owners and drivers often know a vehicle needs care, but not which records matter, what a fair next step is, or how to talk with a shop.',
@@ -104,7 +104,7 @@ export const personaPages: PersonaPageContent[] = [
     benefits: [
       'Turn confusing service paperwork into an understandable vehicle history.',
       'Learn what questions to ask before approving work.',
-      'Create good maintenance habits from the first car or first ownership year.',
+      'Create good maintenance habits from the first vehicle or first ownership year.',
     ],
     workflows: [
       'Start with VIN lookup and a basic vehicle profile.',
@@ -114,15 +114,15 @@ export const personaPages: PersonaPageContent[] = [
   },
   {
     id: 'diy-maintainers',
-    navLabel: 'DIY',
-    label: 'DIY maintainer',
+    navLabel: 'Hands-On Maintenance',
+    label: 'Hands-on maintenance',
     title: 'Document the work you do yourself',
     headline:
       'Parts, labor notes, intervals, photos, and receipts organized like a professional service history.',
-    pain: 'DIY maintenance can save money, but the proof often lives in parts orders, notebooks, and memory instead of a record buyers or mechanics can trust.',
+    pain: 'Hands-on maintenance can save money, but the proof often lives in parts orders, notebooks, and memory instead of a record buyers or mechanics can trust.',
     outcome:
       'Capture parts, costs, service intervals, and project notes so self-performed work still builds vehicle value.',
-    plan: 'Pro fits active DIY tracking. Premium adds longer planning, ad-free work sessions, and automation for power users.',
+    plan: 'Pro fits active hands-on tracking. Premium adds longer planning, ad-free work sessions, and automation for power users.',
     recommendedPlan: 'Pro to Premium',
     image: '/images/features/records.png',
     ctaLabel: 'See record keeping',
@@ -136,16 +136,16 @@ export const personaPages: PersonaPageContent[] = [
       'Show credible proof of self-performed maintenance when selling or diagnosing.',
     ],
     workflows: [
-      'Log DIY work with parts, cost, mileage, and notes.',
+      'Log hands-on work with parts, cost, mileage, and notes.',
       'Review intervals before the next weekend project.',
       'Export a clean maintenance history when proof matters.',
     ],
   },
   {
     id: 'light-fleets',
-    navLabel: 'Light Fleets',
-    label: 'Light fleet',
-    title: 'Replace vehicle spreadsheets with operating visibility',
+    navLabel: 'Work Vehicles',
+    label: 'Work vehicles',
+    title: 'Keep business vehicles ready, documented, and accountable',
     headline:
       'Maintenance readiness, cost history, vendor context, and reporting for work vehicles.',
     pain: 'Downtime, vendor follow-up, driver handoffs, and cost reporting are hard to manage across work vehicles.',

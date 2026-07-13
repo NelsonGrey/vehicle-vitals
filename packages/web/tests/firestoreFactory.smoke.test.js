@@ -67,7 +67,7 @@ describe('firestoreServiceFactory smoke', () => {
       ..._defaultVehicle,
       vin,
       make: 'Test',
-      model: 'Car',
+      model: 'Vehicle',
       year: '2025',
     };
 
@@ -80,7 +80,7 @@ describe('firestoreServiceFactory smoke', () => {
     expect(data).toMatchObject({
       vin,
       make: 'Test',
-      model: 'Car',
+      model: 'Vehicle',
       year: '2025',
     });
     expect(data.updatedAt).toBeDefined();

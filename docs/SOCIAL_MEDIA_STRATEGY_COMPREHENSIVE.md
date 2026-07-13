@@ -46,7 +46,7 @@ The strategy is split into:
 ### 3.1 Core Audience Segments
 
 1. Individual owners (1 to 3 vehicles).
-2. Enthusiasts and DIY maintainers.
+2. Enthusiasts and hands-on maintainers.
 3. Small business operators with light fleets.
 4. Fleet managers with 5 to 100 vehicles.
 5. Service and operations decision-makers in SMBs.
@@ -276,7 +276,7 @@ Revenue Quality:
 
 ### Audience Focus
 
-1. DIY-minded owners.
+1. Hands-on maintainers.
 2. Fleet operators searching for tools.
 3. Buyers comparing software options.
 

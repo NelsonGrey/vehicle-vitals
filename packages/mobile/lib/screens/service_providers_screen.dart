@@ -414,7 +414,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
                             ),
                             DropdownMenuItem(
                               value: 'car_wash',
-                              child: Text('Car washes'),
+                              child: Text('Vehicle washes'),
                             ),
                             DropdownMenuItem(
                               value: 'detailer',

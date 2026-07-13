@@ -14,7 +14,7 @@
       "driveType": "FWD",
       "transmissionStyle": "CVT",
       "trim": "EX-L",
-      "vehicleType": "Passenger Car",
+      "vehicleType": "Passenger Vehicle",
       "maintenance": [
         {
           "id": "maint-oil-2026-01",
@@ -54,7 +54,7 @@
       "driveType": "RWD",
       "transmissionStyle": "Automatic",
       "trim": "GT Premium",
-      "vehicleType": "Passenger Car",
+      "vehicleType": "Passenger Vehicle",
       "maintenance": [
         {
           "id": "maint-tires-2026-02",

@@ -1,7 +1,7 @@
 /**
  * GaugeDial — a dependency-free SVG speedometer-style gauge for a single
  * 0-100 value. Used anywhere the app previously showed a plain progress bar
- * or a bare percentage/score, to carry the app's car-racing visual theme.
+ * or a bare percentage/score, to carry the app's motorsport visual theme.
  */
 
 const SIZE_CONFIG = {

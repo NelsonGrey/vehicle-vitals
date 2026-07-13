@@ -99,9 +99,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 16),
                       ListTile(
                         leading: const Icon(Icons.build_circle),
-                        title: const Text('Mechanics'),
+                        title: const Text('Shops & Services'),
                         subtitle: const Text(
-                          'Find nearby mechanics and dealerships',
+                          'Find nearby businesses and save places you trust',
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/service-providers'),
@@ -124,8 +124,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.timeline),
-                        title: const Text('Timeline Dashboard'),
-                        subtitle: const Text('View maintenance history stream'),
+                        title: const Text('Service History'),
+                        subtitle: const Text('Review completed maintenance'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/timeline'),
                       ),

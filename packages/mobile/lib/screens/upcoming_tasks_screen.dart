@@ -569,7 +569,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Upcoming Tasks')),
+        appBar: AppBar(title: const Text('Maintenance Plan')),
         body: const Center(child: CircularProgressIndicator()),
         bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       );
@@ -577,11 +577,11 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Upcoming Tasks'),
+        title: const Text('Maintenance Plan'),
         actions: [
           IconButton(
             icon: const Icon(Icons.timeline),
-            tooltip: 'Timeline',
+            tooltip: 'Service History',
             onPressed: () => context.push('/app/timeline'),
           ),
           IconButton(

@@ -34,11 +34,11 @@ class AppBottomNav extends StatelessWidget {
           icon: Icon(Icons.directions_car),
           label: 'Garage',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.upcoming), label: 'Upcoming'),
-        BottomNavigationBarItem(icon: Icon(Icons.timeline), label: 'Timeline'),
+        BottomNavigationBarItem(icon: Icon(Icons.upcoming), label: 'Plan'),
+        BottomNavigationBarItem(icon: Icon(Icons.timeline), label: 'History'),
         BottomNavigationBarItem(
           icon: Icon(Icons.account_circle),
-          label: 'Profile',
+          label: 'Account',
         ),
       ],
     );

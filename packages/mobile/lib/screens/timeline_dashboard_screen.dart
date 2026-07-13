@@ -108,7 +108,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
 
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Timeline Dashboard')),
+        appBar: AppBar(title: const Text('Service History')),
         body: const Center(child: CircularProgressIndicator()),
         bottomNavigationBar: const AppBottomNav(currentIndex: 2),
       );
@@ -116,7 +116,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
 
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Timeline Dashboard')),
+        appBar: AppBar(title: const Text('Service History')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -130,7 +130,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Unable to load timeline: $_error',
+                  'Unable to load service history: $_error',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -148,7 +148,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Timeline Dashboard'),
+        title: const Text('Service History'),
         actions: [
           IconButton(onPressed: _loadTimeline, icon: const Icon(Icons.refresh)),
         ],
@@ -159,7 +159,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Timeline Summary',
+              'Service History Summary',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
@@ -175,7 +175,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _SummaryCard(
-                    title: 'Timeline Events',
+                    title: 'Service Records',
                     value: filteredEvents.length.toString(),
                     icon: Icons.timeline,
                   ),

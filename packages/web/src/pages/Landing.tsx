@@ -6,7 +6,10 @@ import PageSEO from '../components/PageSEO';
 import SiteFooter from '../components/SiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import { personaPages } from '../data/personas';
-import { trackMarketingPageView, trackSignupStart } from '../shared/marketingAnalytics';
+import {
+  trackMarketingPageView,
+  trackSignupStart,
+} from '../shared/marketingAnalytics';
 import { ROUTE_SEO } from '../shared/seoMeta';
 
 const proofPoints = [
@@ -95,8 +98,8 @@ export default function Landing() {
                   </h1>
                   <p className="mt-4 max-w-2xl text-base text-slate-100/90 sm:text-lg">
                     Track service history, plan upcoming work, and prove what
-                    was done across personal vehicles, shared household vehicles,
-                    and light business fleets.
+                    was done across personal vehicles, shared household
+                    vehicles, and light business fleets.
                   </p>
                   <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Link
@@ -131,8 +134,8 @@ export default function Landing() {
                   <div className="rounded-xl bg-white/12 px-4 py-3 ring-1 ring-white/20">
                     <p className="font-semibold">Scale by garage</p>
                     <p className="mt-1 text-slate-100/80">
-                      Move from first vehicles to hands-on projects, shared garages, and
-                      teams.
+                      Move from first vehicles to hands-on projects, shared
+                      garages, and teams.
                     </p>
                   </div>
                 </div>
@@ -259,7 +262,7 @@ export default function Landing() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                   <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
                     3-step onboarding guide
@@ -269,40 +272,25 @@ export default function Landing() {
                     learning the whole product at once.
                   </p>
                   <Link
-                    to="/start-steps"
+                    to="/getting-started"
                     className="mt-4 inline-flex items-center rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-950 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
                   >
-                    Open steps page
+                    Open getting started
                   </Link>
                 </article>
                 <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                   <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
-                    Screen gallery
+                    Product tour
                   </h3>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                    See common web screens for records, timelines, providers,
-                    and garage management.
+                    Explore core workflows with short videos and product screens
+                    organized around the same capability story.
                   </p>
                   <Link
-                    to="/everyday-screens"
+                    to="/product-tour"
                     className="mt-4 inline-flex items-center rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-950 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
                   >
-                    Open screens page
-                  </Link>
-                </article>
-                <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                  <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
-                    Video tour library
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                    Watch short product tours for onboarding, service tracking,
-                    and web-to-mobile continuity.
-                  </p>
-                  <Link
-                    to="/short-video-tours"
-                    className="mt-4 inline-flex items-center rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-950 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
-                  >
-                    Open video tours
+                    Open product tour
                   </Link>
                 </article>
               </div>

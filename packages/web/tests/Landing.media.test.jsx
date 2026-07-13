@@ -76,13 +76,13 @@ describe('Landing media surfaces', () => {
       screen.getAllByRole('link', { name: /Read use case/i })[0]
     ).toHaveAttribute('href', '/personas/owners');
     expect(
-      screen.getByRole('link', { name: /Open steps page/i })
-    ).toHaveAttribute('href', '/start-steps');
+      screen.getByRole('link', { name: /Open getting started/i })
+    ).toHaveAttribute('href', '/getting-started');
     expect(
-      screen.getByRole('link', { name: /Open screens page/i })
-    ).toHaveAttribute('href', '/everyday-screens');
+      screen.queryByRole('link', { name: /Open screens page/i })
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /Open video tours/i })
-    ).toHaveAttribute('href', '/short-video-tours');
+      screen.getByRole('link', { name: /Open product tour/i })
+    ).toHaveAttribute('href', '/product-tour');
   });
 });

@@ -530,7 +530,7 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
       expect(shellMetrics.sponsoredInsideMain).toBe(false);
     });
 
-    test('TC-UI-007: Marketing media sections are moved to dedicated pages', async ({
+    test('TC-UI-007: Marketing media sections consolidate into Getting Started and Product Tour', async ({
       page,
     }) => {
       await page.goto(BASE_URL);
@@ -552,36 +552,21 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
             node.textContent?.includes('Product proof for the story')
           ) !== undefined;
-        const hasStepsLink =
+        const hasGettingStartedLink =
           Array.from(document.querySelectorAll('a')).find(link =>
-            link.getAttribute('href')?.includes('/start-steps')
+            link.getAttribute('href')?.includes('/getting-started')
           ) !== undefined;
-        const hasScreensLink =
+        const hasProductTourLink =
           Array.from(document.querySelectorAll('a')).find(link =>
-            link.getAttribute('href')?.includes('/everyday-screens')
-          ) !== undefined;
-        const hasVideosLink =
-          Array.from(document.querySelectorAll('a')).find(link =>
-            link.getAttribute('href')?.includes('/short-video-tours')
-          ) !== undefined;
-        const hasScreensHeadingOnLanding =
-          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Everyday screens you will use')
-          ) !== undefined;
-        const hasShortVideosHeadingOnLanding =
-          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Short video tours')
+            link.getAttribute('href')?.includes('/product-tour')
           ) !== undefined;
 
         return {
           hasPersonaHeading,
           hasPlanHeading,
           hasProofHeading,
-          hasStepsLink,
-          hasScreensLink,
-          hasVideosLink,
-          hasScreensHeadingOnLanding,
-          hasShortVideosHeadingOnLanding,
+          hasGettingStartedLink,
+          hasProductTourLink,
         };
       });
 
@@ -592,18 +577,17 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
 
       expect(landingMediaMetrics.hasPlanHeading).toBe(true);
       expect(landingMediaMetrics.hasProofHeading).toBe(true);
-      expect(landingMediaMetrics.hasStepsLink).toBe(true);
-      expect(landingMediaMetrics.hasScreensLink).toBe(true);
-      expect(landingMediaMetrics.hasVideosLink).toBe(true);
-      expect(landingMediaMetrics.hasScreensHeadingOnLanding).toBe(false);
-      expect(landingMediaMetrics.hasShortVideosHeadingOnLanding).toBe(false);
+      expect(landingMediaMetrics.hasGettingStartedLink).toBe(true);
+      expect(landingMediaMetrics.hasProductTourLink).toBe(true);
 
+      // Legacy URLs redirect (replace semantics) to their canonical pages.
       await page.goto(`${BASE_URL}/start-steps`);
+      await expect(page).toHaveURL(`${BASE_URL}/getting-started`);
 
-      const startStepsPageMetrics = await page.evaluate(() => {
-        const hasStartStepsHeading =
-          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Start in 3 simple steps')
+      const gettingStartedPageMetrics = await page.evaluate(() => {
+        const hasGettingStartedHeading =
+          Array.from(document.querySelectorAll('h1')).find(node =>
+            node.textContent?.includes('Getting Started')
           ) !== undefined;
         const stepCards = Array.from(
           document.querySelectorAll('article')
@@ -616,44 +600,33 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         const reminderLink = Array.from(document.querySelectorAll('a')).find(
           link => link.textContent?.includes('See reminders demo')
         );
+        const hasShopsAndServicesStep =
+          Array.from(document.querySelectorAll('a')).find(
+            link => link.getAttribute('href') === '/app/providers'
+          ) !== undefined;
 
         return {
-          hasStartStepsHeading,
+          hasGettingStartedHeading,
           stepCards,
           reminderHref: reminderLink?.getAttribute('href'),
+          hasShopsAndServicesStep,
         };
       });
 
       await page.goto(`${BASE_URL}/everyday-screens`);
-
-      const screensPageMetrics = await page.evaluate(() => {
-        const hasScreensHeading =
-          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Everyday screens you will use')
-          ) !== undefined;
-        const screenshotCards = document.querySelectorAll(
-          'section article img[alt*="application screenshot"]'
-        ).length;
-        const publicDemoLinks = Array.from(document.querySelectorAll('a'))
-          .filter(link =>
-            link.textContent?.includes('Open the public demo for')
-          )
-          .map(link => link.getAttribute('href'));
-
-        return {
-          hasScreensHeading,
-          screenshotCards,
-          publicDemoLinks,
-        };
-      });
+      await expect(page).toHaveURL(`${BASE_URL}/product-tour`);
 
       await page.goto(`${BASE_URL}/short-video-tours`);
+      await expect(page).toHaveURL(`${BASE_URL}/product-tour`);
 
-      const videosPageMetrics = await page.evaluate(() => {
-        const hasShortVideosHeading =
-          Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Short video tours')
+      const productTourPageMetrics = await page.evaluate(() => {
+        const hasProductTourHeading =
+          Array.from(document.querySelectorAll('h1')).find(node =>
+            node.textContent?.includes('Product Tour')
           ) !== undefined;
+        const screenshotCards = document.querySelectorAll(
+          'section article img[alt*="product screen"]'
+        ).length;
         const videoCards = Array.from(
           document.querySelectorAll('article')
         ).filter(
@@ -669,34 +642,35 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
             node.textContent?.includes('Playable demo') ||
             node.textContent?.includes('Poster preview')
         ).length;
+        const hasMergedEverydayScreens =
+          Array.from(document.querySelectorAll('h3')).find(
+            node =>
+              node.textContent?.includes('Vehicle details') ||
+              node.textContent?.includes('Add vehicle screen')
+          ) !== undefined;
 
         return {
-          hasShortVideosHeading,
+          hasProductTourHeading,
+          screenshotCards,
           videoCards,
           playableOrPosterLabels,
+          hasMergedEverydayScreens,
         };
       });
 
-      expect(screensPageMetrics.hasScreensHeading).toBe(true);
-      expect(screensPageMetrics.screenshotCards).toBeGreaterThanOrEqual(6);
-      expect(screensPageMetrics.publicDemoLinks).toEqual(
-        expect.arrayContaining([
-          '/cross-platform-access-demo',
-          '/ownership-history-demo',
-          '/vin-lookup-demo',
-          '/maintenance-planning-demo',
-        ])
-      );
-      expect(videosPageMetrics.hasShortVideosHeading).toBe(true);
-      expect(videosPageMetrics.videoCards).toBeGreaterThanOrEqual(3);
-      expect(videosPageMetrics.playableOrPosterLabels).toBeGreaterThanOrEqual(
-        3
-      );
-      expect(startStepsPageMetrics.hasStartStepsHeading).toBe(true);
-      expect(startStepsPageMetrics.stepCards).toBeGreaterThanOrEqual(3);
-      expect(startStepsPageMetrics.reminderHref).toBe(
+      expect(productTourPageMetrics.hasProductTourHeading).toBe(true);
+      expect(productTourPageMetrics.screenshotCards).toBeGreaterThanOrEqual(8);
+      expect(productTourPageMetrics.hasMergedEverydayScreens).toBe(true);
+      expect(productTourPageMetrics.videoCards).toBeGreaterThanOrEqual(3);
+      expect(
+        productTourPageMetrics.playableOrPosterLabels
+      ).toBeGreaterThanOrEqual(3);
+      expect(gettingStartedPageMetrics.hasGettingStartedHeading).toBe(true);
+      expect(gettingStartedPageMetrics.stepCards).toBeGreaterThanOrEqual(3);
+      expect(gettingStartedPageMetrics.reminderHref).toBe(
         '/help#maintenance-history-and-reminders'
       );
+      expect(gettingStartedPageMetrics.hasShopsAndServicesStep).toBe(true);
     });
 
     test('TC-UI-008: Help clearly separates product overview from how-to guidance', async ({

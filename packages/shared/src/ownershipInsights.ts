@@ -1,3 +1,16 @@
+// Canonical ownership/cost-insights engine. Previously duplicated between
+// packages/web/src/utils/ownershipInsights.ts and
+// packages/mobile/lib/utils/ownership_insights.dart, with real drift risk
+// (depreciation curves, loan-payment/principal inference) — moved here so
+// web imports the single canonical copy directly. Mobile keeps its own
+// Dart port (Dart can't import a JS/TS package), parity-tested against
+// this file via shared fixtures rather than kept in sync by hand alone.
+//
+// This module is pure — it operates entirely on data the caller already
+// has loaded (no Firestore reads, no network calls) — so it stays a
+// regular importable module rather than a Cloud Function callable, which
+// would add network latency to a page that currently renders instantly.
+
 export type OwnershipInsightFile = {
   analysis?: {
     extracted?: {
@@ -52,9 +65,7 @@ export type OwnershipInsights = {
 
 function formatServiceTypeLabel(raw: string): string {
   if (!raw) return 'Other';
-  return raw
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
+  return raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function parseAmount(value: unknown): number | undefined {

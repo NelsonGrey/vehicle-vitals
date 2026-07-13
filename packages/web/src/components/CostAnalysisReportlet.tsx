@@ -17,7 +17,7 @@ import {
   getAttachmentAnalyses,
   getMaintenanceEntries,
 } from '../shared/firestoreService';
-import { buildDocumentSummary } from '../utils/documentAnalysisSummary';
+import { buildDocumentSummary } from '@vehicle-vitals/shared/documentAnalysisSummary';
 import { formatCurrencyCompact } from '../utils/currency';
 import WheelBreakdownChart from './charts/WheelBreakdownChart';
 

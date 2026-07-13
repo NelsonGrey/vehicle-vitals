@@ -4,7 +4,7 @@ import {
   getVinLookupValidationError,
   hasValidHinFormat,
   hasValidVinChecksum,
-} from '../src/utils/vinValidation';
+} from '../src/vinValidation.js';
 
 describe('vinValidation', () => {
   it('accepts a VIN with valid checksum', () => {

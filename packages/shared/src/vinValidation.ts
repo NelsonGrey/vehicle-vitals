@@ -1,3 +1,10 @@
+// Canonical VIN/HIN identifier validation (ISO 3779 check-digit algorithm).
+// Previously duplicated byte-for-byte between packages/web and
+// packages/functions — moved here as the single source. Kept as an
+// isomorphic module rather than a callable: this needs to run at
+// keystroke speed for instant form feedback, and a network round-trip
+// here would be actively harmful, not just unnecessary latency.
+
 const VIN_TRANSLITERATION: Record<string, number> = {
   A: 1,
   B: 2,

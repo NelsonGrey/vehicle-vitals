@@ -37,7 +37,11 @@ dependencies:
   firebase_auth: ^6.5.4
   firebase_crashlytics: ^5.2.4
   cloud_firestore: ^6.6.0
-  cloud_functions: ^6.3.3
+  # Pinned below 6.3.4: that release (published 2026-07-13) imports a
+  # `FirebasePlugin` type from firebase_core_platform_interface that no
+  # longer exists there (renamed to FirebasePluginPlatform), breaking
+  # compilation. Unpin once a fixed cloud_functions patch ships.
+  cloud_functions: ">=6.3.3 <6.3.4"
   firebase_messaging: ^16.4.1
   firebase_storage: ^13.4.3
 

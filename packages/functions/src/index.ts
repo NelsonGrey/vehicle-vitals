@@ -2040,7 +2040,7 @@ async function lookupVinData(vinInput: string) {
     throw new Error('Valid 17-character VIN required');
   }
 
-  if (!hasValidVinChecksum(vin)) {
+  if (!(await hasValidVinChecksum(vin))) {
     throw new Error('Valid VIN checksum required');
   }
 
@@ -2105,7 +2105,7 @@ async function lookupNhtsaRecalls(vinInput: string) {
     throw new Error('Valid 17-character VIN required');
   }
 
-  if (!hasValidVinChecksum(vin)) {
+  if (!(await hasValidVinChecksum(vin))) {
     throw new Error('Valid VIN checksum required');
   }
 
@@ -2142,59 +2142,11 @@ function hashToSeed(value: string): number {
   return hash;
 }
 
-const VIN_TRANSLITERATION: Record<string, number> = {
-  A: 1,
-  B: 2,
-  C: 3,
-  D: 4,
-  E: 5,
-  F: 6,
-  G: 7,
-  H: 8,
-  J: 1,
-  K: 2,
-  L: 3,
-  M: 4,
-  N: 5,
-  P: 7,
-  R: 9,
-  S: 2,
-  T: 3,
-  U: 4,
-  V: 5,
-  W: 6,
-  X: 7,
-  Y: 8,
-  Z: 9,
-};
-
-const VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
-
-function hasValidVinChecksum(vinInput: string): boolean {
-  const vin = vinInput.trim().toUpperCase();
-
-  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
-    return false;
-  }
-
-  let sum = 0;
-  for (let i = 0; i < vin.length; i += 1) {
-    const char = vin[i];
-    const parsedNumeric = Number(char);
-    const numericValue = Number.isFinite(parsedNumeric)
-      ? parsedNumeric
-      : VIN_TRANSLITERATION[char];
-
-    if (numericValue === undefined) {
-      return false;
-    }
-
-    sum += numericValue * VIN_WEIGHTS[i];
-  }
-
-  const remainder = sum % 11;
-  const expectedCheckDigit = remainder === 10 ? 'X' : String(remainder);
-  return vin[8] === expectedCheckDigit;
+async function hasValidVinChecksum(vinInput: string): Promise<boolean> {
+  const { hasValidVinChecksum: checkVinChecksum } = await import(
+    "@vehicle-vitals/shared/vinValidation"
+  );
+  return checkVinChecksum(vinInput);
 }
 
 function deterministicShuffle<T>(items: T[], seed: number): T[] {
@@ -2303,7 +2255,7 @@ function buildLocalServiceProviders(
       type: 'car_wash',
       name: 'Sparkle Tunnel Wash',
       distanceMiles: Math.max(1, Math.min(radiusMiles, 2.2)),
-      address: `250 Clean Car Ln, ${normalizedLocation}`,
+      address: `250 Clean Vehicle Ln, ${normalizedLocation}`,
       phone: '+1-555-0410',
       website: 'https://example.com/wash/1',
       rating: 4.3,
@@ -2355,7 +2307,7 @@ export const vinLookup = onRequest(
         response.status(400).json({ error: 'Valid 17-character VIN required' });
         return;
       }
-      if (!hasValidVinChecksum(normalizedVin)) {
+      if (!(await hasValidVinChecksum(normalizedVin))) {
         response.status(400).json({ error: 'Valid VIN checksum required' });
         return;
       }
@@ -2386,7 +2338,7 @@ export const vinLookupCallable = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Valid 17-character VIN required');
   }
 
-  if (!hasValidVinChecksum(normalizedVin)) {
+  if (!(await hasValidVinChecksum(normalizedVin))) {
     throw new HttpsError('invalid-argument', 'Valid VIN checksum required');
   }
 
@@ -2413,7 +2365,7 @@ export const getVehicleInsightsCallable = onCall(async request => {
   }
 
   const normalizedVin = vin.trim().toUpperCase();
-  if (!hasValidVinChecksum(normalizedVin)) {
+  if (!(await hasValidVinChecksum(normalizedVin))) {
     throw new HttpsError('invalid-argument', 'Valid VIN checksum required');
   }
 

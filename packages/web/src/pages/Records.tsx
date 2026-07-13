@@ -28,7 +28,7 @@ import {
   getSourceSnippet,
 } from '../utils/documentAnalysisSummary';
 import { formatCurrency as formatCurrencyUtil } from '../utils/currency';
-import { computeOwnershipInsights } from '../utils/ownershipInsights';
+import { computeOwnershipInsights } from '@vehicle-vitals/shared/ownershipInsights';
 
 type AnalysisData = {
   path?: string;

@@ -19,7 +19,7 @@ import {
   snoozeReminder,
   updateVehicle,
 } from '../src/shared/firestoreService';
-import { computeOwnershipInsights } from '../src/utils/ownershipInsights';
+import { computeOwnershipInsights } from '@vehicle-vitals/shared/ownershipInsights';
 
 vi.mock('../src/shared/firestoreService', () => ({
   addReminder: vi.fn(),
@@ -47,7 +47,7 @@ vi.mock('../src/utils/calendarService', () => ({
   createMaintenanceCalendarEvent: vi.fn(),
 }));
 
-vi.mock('../src/utils/ownershipInsights', () => ({
+vi.mock('@vehicle-vitals/shared/ownershipInsights', () => ({
   computeOwnershipInsights: vi.fn(),
 }));
 

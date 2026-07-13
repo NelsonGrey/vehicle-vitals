@@ -16,7 +16,7 @@ vi.mock('../src/shared/fileUtils', () => ({
   formatFileDisplay: () => ({ icon: '📄' }),
 }));
 
-vi.mock('../src/utils/documentAnalysisSummary', () => ({
+vi.mock('@vehicle-vitals/shared/documentAnalysisSummary', () => ({
   buildDocumentSummary: (extracted, sourceText) =>
     extracted?.serviceType || sourceText || 'No analysis summary available yet',
 }));

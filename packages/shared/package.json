@@ -25,6 +25,10 @@
     "./vehiclePortfolio": {
       "types": "./dist/vehiclePortfolio.d.ts",
       "import": "./dist/vehiclePortfolio.js"
+    },
+    "./ownershipInsights": {
+      "types": "./dist/ownershipInsights.d.ts",
+      "import": "./dist/ownershipInsights.js"
     }
   },
   "scripts": {

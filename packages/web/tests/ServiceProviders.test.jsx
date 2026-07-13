@@ -83,10 +83,10 @@ describe('ServiceProviders', () => {
   it('renders page heading and key form controls', async () => {
     render(<ServiceProviders />);
 
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Shops & Services'));
     expect(screen.getByText('Search Preferences')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /^find nearby$/i })
     ).toBeInTheDocument();
   });
 
@@ -121,10 +121,10 @@ describe('ServiceProviders', () => {
 
   it('shows validation error when required address fields are absent', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Shops & Services'));
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /^find nearby$/i })
     );
 
     await waitFor(() =>
@@ -135,7 +135,7 @@ describe('ServiceProviders', () => {
 
   it('calls getLocalServiceProviders with form values and renders results', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Shops & Services'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '99 Oak Blvd' },
@@ -148,7 +148,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /^find nearby$/i })
     );
 
     await waitFor(() =>
@@ -166,7 +166,7 @@ describe('ServiceProviders', () => {
 
   it('persists preferences via updateVehicle after a successful lookup', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Shops & Services'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '1 Maple Dr' },
@@ -179,7 +179,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /^find nearby$/i })
     );
 
     await waitFor(() =>
@@ -197,7 +197,7 @@ describe('ServiceProviders', () => {
     getLocalServiceProviders.mockRejectedValue(new Error('Network timeout'));
 
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Shops & Services'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '5 Pine Ave' },
@@ -210,7 +210,7 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /^find nearby$/i })
     );
 
     await waitFor(() => screen.getByText(/network timeout/i));
@@ -239,7 +239,7 @@ describe('ServiceProviders', () => {
 
   it('shows success status after providers load', async () => {
     render(<ServiceProviders />);
-    await waitFor(() => screen.getByText('Mechanics'));
+    await waitFor(() => screen.getByText('Shops & Services'));
 
     fireEvent.change(screen.getByLabelText(/^street$/i), {
       target: { value: '7 Birch Ln' },
@@ -252,10 +252,10 @@ describe('ServiceProviders', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /find nearby providers/i })
+      screen.getByRole('button', { name: /^find nearby$/i })
     );
 
-    await waitFor(() => screen.getByText(/nearby providers updated/i));
+    await waitFor(() => screen.getByText(/nearby results updated/i));
   });
 
   it('auto-loads nearby providers when a valid saved address exists', async () => {
@@ -285,7 +285,7 @@ describe('ServiceProviders', () => {
 
     expect(
       await screen.findByText(
-        /loaded nearby providers from your saved preferences/i
+        /loaded nearby shops and services from your saved preferences/i
       )
     ).toBeInTheDocument();
   });

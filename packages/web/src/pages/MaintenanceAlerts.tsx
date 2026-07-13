@@ -157,8 +157,8 @@ export function MaintenanceAlertsContent() {
           should appear before service is due.
         </p>
         <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-          Upcoming Tasks uses these settings to decide which services appear now
-          and how far in advance to surface them. Higher values show work
+          Maintenance Plan uses these settings to decide which services appear
+          now and how far in advance to surface them. Higher values show work
           earlier; lower values keep the queue focused on near-term needs.
         </div>
 

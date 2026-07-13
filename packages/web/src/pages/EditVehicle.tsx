@@ -1872,7 +1872,7 @@ function MaintenanceList({
                     htmlFor="providerName"
                     className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200"
                   >
-                    Shop / mechanic name
+                    Shop or professional
                   </label>
                   <input
                     id="providerName"
@@ -1880,11 +1880,11 @@ function MaintenanceList({
                     placeholder="e.g. Downtown Auto Repair"
                     value={form.providerName}
                     onChange={handleChange}
-                    aria-label="Shop or mechanic name"
+                    aria-label="Shop or professional"
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
                   />
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Shown on the Mechanics page under "Providers You've Used."
+                    Shown in Shops &amp; Services under "Places You've Used."
                   </p>
                 </div>
               )}

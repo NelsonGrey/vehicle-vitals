@@ -108,7 +108,7 @@ describe('TimelineDashboard page', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: /maintenance timeline/i })
+        screen.getByRole('heading', { name: /^service history$/i })
       ).toBeInTheDocument();
       expect(screen.getAllByText(/oil change/i).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/brake service/i).length).toBeGreaterThan(0);

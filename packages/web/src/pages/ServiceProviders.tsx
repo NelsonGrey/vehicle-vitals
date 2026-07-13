@@ -8,12 +8,7 @@ import {
 import { getLocalServiceProviders } from '../utils/localServiceProviders';
 
 type ProviderTypeFilter =
-  | 'all'
-  | 'repair_shop'
-  | 'dealership'
-  | 'body_shop'
-  | 'car_wash'
-  | 'detailer';
+  'all' | 'repair_shop' | 'dealership' | 'body_shop' | 'car_wash' | 'detailer';
 
 type HomeAddress = {
   street1: string;
@@ -52,7 +47,7 @@ type PastProvider = {
 };
 
 const providerTypeLabels: Record<ProviderTypeFilter, string> = {
-  all: 'All provider types',
+  all: 'All businesses',
   repair_shop: 'Repair shop',
   dealership: 'Dealership',
   body_shop: 'Body shop',
@@ -82,7 +77,7 @@ function normalizeAddress(address: HomeAddress): HomeAddress {
 
 function validateAddress(address: HomeAddress): string {
   if (!address.street1 || !address.city || !address.stateProvince) {
-    return 'Street, city, and state are required to find nearby providers.';
+    return 'Street, city, and state are required to search nearby.';
   }
   return '';
 }
@@ -236,12 +231,14 @@ export default function ServiceProviders() {
 
         setProviders(result.providers || []);
         setLookupSource(result.source || 'unknown');
-        setStatus('Loaded nearby providers from your saved preferences.');
+        setStatus(
+          'Loaded nearby shops and services from your saved preferences.'
+        );
       } catch (loadError) {
         setError(
           loadError instanceof Error
             ? loadError.message
-            : 'Failed to load provider preferences'
+            : 'Failed to load search preferences'
         );
       } finally {
         setLoading(false);
@@ -311,7 +308,7 @@ export default function ServiceProviders() {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : 'Failed to save preferred providers'
+          : 'Failed to save this place'
       );
     }
   };
@@ -329,9 +326,7 @@ export default function ServiceProviders() {
   const removePreferredProvider = async (id: string) => {
     setSavingPreferredId(id);
     try {
-      await savePreferredProviders(
-        preferredProviders.filter(p => p.id !== id)
-      );
+      await savePreferredProviders(preferredProviders.filter(p => p.id !== id));
     } finally {
       setSavingPreferredId(null);
     }
@@ -366,7 +361,7 @@ export default function ServiceProviders() {
 
       setProviders(result.providers || []);
       setLookupSource(result.source || 'unknown');
-      setStatus('Nearby providers updated.');
+      setStatus('Nearby results updated.');
 
       await updateVehicle('preferences', {
         homeAddress: normalizedAddress,
@@ -380,7 +375,7 @@ export default function ServiceProviders() {
       setError(
         lookupError instanceof Error
           ? lookupError.message
-          : 'Failed to find nearby providers'
+          : 'Nearby search failed'
       );
     } finally {
       setLoading(false);
@@ -400,16 +395,16 @@ export default function ServiceProviders() {
     },
     {
       key: 'preferred',
-      title: `Preferred${preferredProviders.length ? ` (${preferredProviders.length})` : ''}`,
+      title: `Saved${preferredProviders.length ? ` (${preferredProviders.length})` : ''}`,
       description:
-        "Providers you've pinned, plus shops from your service history.",
+        "Places you've saved, plus businesses from your service history.",
     },
   ];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-        Mechanics
+        Shops &amp; Services
       </h1>
       <p className="text-slate-600 dark:text-slate-300 mt-2 mb-6">
         Find nearby repair shops, dealerships, body shops, vehicle washes, and
@@ -474,7 +469,7 @@ export default function ServiceProviders() {
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
                   Save your home-area search settings here, then rerun the
-                  lookup any time you want a fresh nearby-provider list.
+                  search any time you want fresh local results.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -536,7 +531,7 @@ export default function ServiceProviders() {
                     />
                   </label>
                   <label className="text-sm text-slate-700 dark:text-slate-300">
-                    Provider Type
+                    Business Type
                     <select
                       className="w-full mt-1 rounded-md border border-slate-300 px-3 py-2 bg-white dark:bg-slate-700"
                       value={preferredProviderType}
@@ -596,7 +591,7 @@ export default function ServiceProviders() {
                     disabled={loading}
                     className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-md disabled:opacity-60"
                   >
-                    {loading ? 'Searching...' : 'Find Nearby Providers'}
+                    {loading ? 'Searching...' : 'Find Nearby'}
                   </button>
                 </div>
 
@@ -617,7 +612,7 @@ export default function ServiceProviders() {
 
                 {providers.length === 0 ? (
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
-                    No providers yet. Run a search to view local options.
+                    No results yet. Run a search to view local options.
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -637,7 +632,7 @@ export default function ServiceProviders() {
                           </div>
                           <span className="text-xs rounded-full px-2 py-1 bg-slate-100 dark:bg-slate-700">
                             {providerTypeLabels[provider.type] ||
-                              'Service provider'}
+                              'Vehicle service'}
                           </span>
                         </div>
                         <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -681,17 +676,13 @@ export default function ServiceProviders() {
                             }
                             disabled={
                               savingPreferredId === provider.id ||
-                              preferredProviders.some(
-                                p => p.id === provider.id
-                              )
+                              preferredProviders.some(p => p.id === provider.id)
                             }
                             className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
                           >
-                            {preferredProviders.some(
-                              p => p.id === provider.id
-                            )
-                              ? '★ Preferred'
-                              : '☆ Save as Preferred'}
+                            {preferredProviders.some(p => p.id === provider.id)
+                              ? '★ Saved'
+                              : '☆ Save Place'}
                           </button>
                         </div>
                       </article>
@@ -704,17 +695,17 @@ export default function ServiceProviders() {
             <>
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                 <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-                  Preferred Providers
+                  Saved Places
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
-                  Pin providers you trust from search results or your service
-                  history so they're easy to find next time.
+                  Save businesses you trust from search results or your service
+                  history so they are easy to find next time.
                 </p>
 
                 {preferredProviders.length === 0 ? (
                   <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
-                    No preferred providers saved yet. Search for nearby
-                    providers or check your service history below to pin one.
+                    No places saved yet. Search nearby or check your service
+                    history below to save one.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -729,7 +720,7 @@ export default function ServiceProviders() {
                           </div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             {providerTypeLabels[provider.type] ||
-                              'Service provider'}
+                              'Vehicle service'}
                             {provider.address ? ` • ${provider.address}` : ''}
                           </div>
                         </div>
@@ -751,11 +742,11 @@ export default function ServiceProviders() {
 
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                 <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-                  Providers You've Used
+                  Places You&apos;ve Used
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
-                  Built from the shop/mechanic name saved on maintenance
-                  records across your garage.
+                  Built from the shop/mechanic name saved on maintenance records
+                  across your garage.
                 </p>
 
                 {loadingPastProviders ? (
@@ -764,7 +755,7 @@ export default function ServiceProviders() {
                   </p>
                 ) : pastProviders.length === 0 ? (
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
-                    No past providers yet. Add a "Shop / mechanic name" the
+                    No past businesses yet. Add a "Shop or professional" the
                     next time you log a maintenance record.
                   </p>
                 ) : (
@@ -803,7 +794,7 @@ export default function ServiceProviders() {
                             disabled={isPreferred}
                             className="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-60"
                           >
-                            {isPreferred ? 'Preferred' : 'Save as Preferred'}
+                            {isPreferred ? 'Saved' : 'Save Place'}
                           </button>
                         </div>
                       );

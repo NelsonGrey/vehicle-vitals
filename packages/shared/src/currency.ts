@@ -2,7 +2,13 @@
  * Locale-aware currency formatting. Currency code is inferred from the
  * browser's locale region subtag (e.g. `en-GB` → GBP) since the app does not
  * collect an explicit country/currency preference. Falls back to USD/en-US
- * whenever detection is unavailable (SSR, unsupported Intl, unknown region).
+ * whenever detection is unavailable (SSR, unsupported Intl, unknown region,
+ * or a non-browser runtime like Node/Cloud Functions).
+ *
+ * Kept isomorphic (no Firebase/browser-only imports) so it can be shared by
+ * every consumer that formats a monetary amount — packages/web's own
+ * components plus this package's own documentAnalysisSummary.ts — instead
+ * of each hand-rolling its own currency string.
  */
 
 const REGION_CURRENCY: Record<string, string> = {
@@ -42,8 +48,12 @@ const DEFAULT_LOCALE = 'en-US';
 const DEFAULT_CURRENCY = 'USD';
 
 function detectLocale(): string {
-  if (typeof navigator !== 'undefined' && navigator.language) {
-    return navigator.language;
+  // Accessed via globalThis (rather than the bare `navigator` identifier)
+  // since this package's tsconfig has no "DOM" lib — it needs to type-check
+  // in a plain Node context (e.g. Cloud Functions) too, not just browsers.
+  const nav = (globalThis as { navigator?: { language?: string } }).navigator;
+  if (nav?.language) {
+    return nav.language;
   }
   return DEFAULT_LOCALE;
 }

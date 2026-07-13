@@ -15,20 +15,18 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://vehicle-vitals.com/start-steps</loc>
+    <loc>https://vehicle-vitals.com/getting-started</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://vehicle-vitals.com/everyday-screens</loc>
+    <loc>https://vehicle-vitals.com/product-tour</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-  <url>
-    <loc>https://vehicle-vitals.com/short-video-tours</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <!-- /start-steps, /everyday-screens, /short-video-tours now redirect to
+       the canonical URLs above; kept out of the sitemap since search
+       engines should index the destination, not the redirect. -->
 
   <!-- Persona pages -->
   <url>

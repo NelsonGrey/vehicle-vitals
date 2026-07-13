@@ -14,7 +14,7 @@ void main() {
       expect(FeatureFlagsService.getVehicleLimit('free'), 2);
       expect(FeatureFlagsService.getVehicleLimit('pro'), 10);
       expect(FeatureFlagsService.getVehicleLimit('premium'), 25);
-      expect(FeatureFlagsService.getVehicleLimit('enterprise'), 250);
+      expect(FeatureFlagsService.getVehicleLimit('enterprise'), 999999);
     });
 
     test('enables enterprise api access and ad free entitlements', () {

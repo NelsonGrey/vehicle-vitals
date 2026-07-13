@@ -1,5 +1,7 @@
 // Header and footer provided by Layout
 import { useState } from 'react';
+import PageSEO from '../components/PageSEO';
+import { ROUTE_SEO } from '../shared/seoMeta';
 import {
   SUPPORT_REQUEST_TOPICS,
   submitSupportRequest,
@@ -37,6 +39,7 @@ export default function Support() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5 sm:space-y-6">
+      <PageSEO meta={ROUTE_SEO['/support']} />
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <h1 className="font-serif font-bold text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-4">
           Support

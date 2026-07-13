@@ -37,6 +37,15 @@ describe('Support', () => {
     expect(document.querySelector('a[href^="mailto:"]')).toBeNull();
   });
 
+  it('sets the document title and canonical URL via PageSEO', () => {
+    render(<Support />);
+    expect(document.title).toMatch(/Support/i);
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      expect.stringContaining('/support')
+    );
+  });
+
   it('renders all form fields with the expected topics', () => {
     render(<Support />);
     expect(screen.getByLabelText('Name')).toBeInTheDocument();

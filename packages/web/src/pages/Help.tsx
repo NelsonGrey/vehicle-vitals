@@ -8,6 +8,8 @@ import {
 } from '../data/helpFaq';
 import { useFeatureFlag } from '../shared/useMonetization';
 import { trackHelpSearch } from '../shared/marketingAnalytics';
+import PageSEO from '../components/PageSEO';
+import { ROUTE_SEO } from '../shared/seoMeta';
 // Header and footer provided by Layout
 
 const helpTopics = [
@@ -232,6 +234,7 @@ export default function Help() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5 sm:space-y-6">
+      <PageSEO meta={ROUTE_SEO['/help']} />
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <div className="grid gap-5 lg:grid-cols-[1.4fr_0.9fr] lg:items-start">
           <div>

@@ -43,9 +43,9 @@ export default function CollapsibleSection({
         <div className="flex items-start gap-2">
           <span
             aria-hidden="true"
-            className={`mt-1 text-slate-400 transition-transform ${collapsed ? '' : 'rotate-90'}`}
+            className="mt-0.5 w-4 text-center text-xl leading-none text-slate-400"
           >
-            ▶
+            {collapsed ? '+' : '−'}
           </span>
           <div>
             <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-1">

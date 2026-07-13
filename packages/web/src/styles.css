@@ -124,6 +124,17 @@ body {
   }
 }
 
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .footer-primary-links {
+    column-gap: 0.875rem;
+  }
+
+  .footer-primary-links nav {
+    column-gap: 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
 /* Page chrome layout */
 .page-content {
   padding-top: var(--header-h);

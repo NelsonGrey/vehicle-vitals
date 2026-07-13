@@ -41,7 +41,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               className="inline-flex no-underline text-current"
             >
               <StackedVLogo
-                size={42}
+                size={52}
                 compact
                 showText
                 color={overlay ? '#ffffff' : 'currentColor'}
@@ -96,12 +96,6 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                       {persona.navLabel}
                     </Link>
                   ))}
-                  <Link to="/subscription" className={linkClass} onClick={() => trackHeaderNavClick('Pricing', '/subscription')}>
-                    Pricing
-                  </Link>
-                  <Link to="/short-video-tours" className={linkClass} onClick={() => trackHeaderNavClick('Product Tour', '/short-video-tours')}>
-                    Product Tour
-                  </Link>
                 </>
               )}
             </div>

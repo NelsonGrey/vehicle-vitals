@@ -1,30 +1,36 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
-import { AUTH_NAV_CAPABILITIES, PRODUCT_TOUR_LINK } from '../data/capabilities';
+import {
+  AUTH_NAV_CAPABILITIES_WITHOUT_GETTING_STARTED,
+  CAPABILITIES_BY_ID,
+  PRODUCT_TOUR_LINK,
+} from '../data/capabilities';
 import { personaPages } from '../data/personas';
 import { trackFooterNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
 
-// Getting Started and Product Tour are evaluation-stage content — useful
-// for prospects, redundant once signed in (Getting Started already lives
-// in the authenticated app nav below; Product Tour has nothing left to
-// evaluate), so the Product nav only renders for signed-out visitors.
-// Pricing lives in the Support/legal group instead — it's useful
-// regardless of auth state, and grouping it there avoids a lone one-link
-// "Product" nav once Getting Started/Product Tour drop away on sign-in.
 interface FooterLink {
   label: string;
   to: string;
   capabilityId?: string;
 }
 
-const publicProductLinks: FooterLink[] = [
+// Getting Started and Product Tour are both "learn about the product"
+// content rather than an app task, so they're paired together and styled
+// distinctly (teal, vs. the slate used by every other footer link) on both
+// the signed-out (marketing) and signed-in (app) sides — always shown,
+// unlike the persona/App nav below which switches on auth state.
+const learnMoreLinks: FooterLink[] = [
   {
-    label: 'Getting Started',
-    to: '/getting-started',
-    capabilityId: 'getting_started',
+    label: CAPABILITIES_BY_ID.getting_started.fullLabel,
+    to: CAPABILITIES_BY_ID.getting_started.webRoute,
+    capabilityId: CAPABILITIES_BY_ID.getting_started.analyticsId,
   },
-  { label: 'Product Tour', to: '/product-tour' },
+  {
+    label: PRODUCT_TOUR_LINK.label,
+    to: PRODUCT_TOUR_LINK.to,
+    capabilityId: PRODUCT_TOUR_LINK.analyticsId,
+  },
 ];
 
 const supportLinks = [
@@ -87,29 +93,23 @@ export default function SiteFooter() {
           </Link>
 
           <div className="footer-primary-links flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:gap-x-10 sm:gap-y-4 lg:flex-nowrap lg:items-center lg:gap-x-5">
-            {!user && (
-              <nav
-                aria-label="Product"
-                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
-              >
-                {publicProductLinks.map(link => (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className="whitespace-nowrap transition-colors hover:text-white"
-                    onClick={() =>
-                      trackFooterNavClick(
-                        link.label,
-                        link.to,
-                        link.capabilityId
-                      )
-                    }
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-            )}
+            <nav
+              aria-label="Learn more"
+              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-teal-300 lg:flex-nowrap"
+            >
+              {learnMoreLinks.map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="whitespace-nowrap transition-colors hover:text-teal-100"
+                  onClick={() =>
+                    trackFooterNavClick(link.label, link.to, link.capabilityId)
+                  }
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
             {!user ? (
               <nav
@@ -134,35 +134,24 @@ export default function SiteFooter() {
                 aria-label="App"
                 className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
               >
-                {AUTH_NAV_CAPABILITIES.map(capability => (
-                  <Link
-                    key={capability.id}
-                    to={capability.webRoute}
-                    className="whitespace-nowrap transition-colors hover:text-white"
-                    onClick={() =>
-                      trackFooterNavClick(
-                        capability.fullLabel,
-                        capability.webRoute,
-                        capability.analyticsId
-                      )
-                    }
-                  >
-                    {capability.fullLabel}
-                  </Link>
-                ))}
-                <Link
-                  to={PRODUCT_TOUR_LINK.to}
-                  className="whitespace-nowrap transition-colors hover:text-white"
-                  onClick={() =>
-                    trackFooterNavClick(
-                      PRODUCT_TOUR_LINK.label,
-                      PRODUCT_TOUR_LINK.to,
-                      PRODUCT_TOUR_LINK.analyticsId
-                    )
-                  }
-                >
-                  {PRODUCT_TOUR_LINK.label}
-                </Link>
+                {AUTH_NAV_CAPABILITIES_WITHOUT_GETTING_STARTED.map(
+                  capability => (
+                    <Link
+                      key={capability.id}
+                      to={capability.webRoute}
+                      className="whitespace-nowrap transition-colors hover:text-white"
+                      onClick={() =>
+                        trackFooterNavClick(
+                          capability.fullLabel,
+                          capability.webRoute,
+                          capability.analyticsId
+                        )
+                      }
+                    >
+                      {capability.fullLabel}
+                    </Link>
+                  )
+                )}
               </nav>
             )}
 

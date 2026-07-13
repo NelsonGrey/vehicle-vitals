@@ -2,7 +2,11 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { isDemonstrationEnvironment } from '../shared/environment';
-import { AUTH_NAV_CAPABILITIES, PRODUCT_TOUR_LINK } from '../data/capabilities';
+import {
+  AUTH_NAV_CAPABILITIES_WITHOUT_GETTING_STARTED,
+  CAPABILITIES_BY_ID,
+  PRODUCT_TOUR_LINK,
+} from '../data/capabilities';
 import { personaPages } from '../data/personas';
 import { trackHeaderNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
@@ -56,35 +60,52 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1">
               {isLoggedIn ? (
                 <>
-                  {AUTH_NAV_CAPABILITIES.map(capability => (
+                  <div className="flex items-center gap-x-3 mr-4">
                     <Link
-                      key={capability.id}
-                      to={capability.webRoute}
+                      to={CAPABILITIES_BY_ID.getting_started.webRoute}
                       className={linkClass}
                       onClick={() =>
                         trackHeaderNavClick(
-                          capability.fullLabel,
-                          capability.webRoute,
-                          capability.analyticsId
+                          CAPABILITIES_BY_ID.getting_started.fullLabel,
+                          CAPABILITIES_BY_ID.getting_started.webRoute,
+                          CAPABILITIES_BY_ID.getting_started.analyticsId
                         )
                       }
                     >
-                      {capability.fullLabel}
+                      {CAPABILITIES_BY_ID.getting_started.fullLabel}
                     </Link>
-                  ))}
-                  <Link
-                    to={PRODUCT_TOUR_LINK.to}
-                    className={linkClass}
-                    onClick={() =>
-                      trackHeaderNavClick(
-                        PRODUCT_TOUR_LINK.label,
-                        PRODUCT_TOUR_LINK.to,
-                        PRODUCT_TOUR_LINK.analyticsId
-                      )
-                    }
-                  >
-                    {PRODUCT_TOUR_LINK.label}
-                  </Link>
+                    <Link
+                      to={PRODUCT_TOUR_LINK.to}
+                      className={linkClass}
+                      onClick={() =>
+                        trackHeaderNavClick(
+                          PRODUCT_TOUR_LINK.label,
+                          PRODUCT_TOUR_LINK.to,
+                          PRODUCT_TOUR_LINK.analyticsId
+                        )
+                      }
+                    >
+                      {PRODUCT_TOUR_LINK.label}
+                    </Link>
+                  </div>
+                  {AUTH_NAV_CAPABILITIES_WITHOUT_GETTING_STARTED.map(
+                    capability => (
+                      <Link
+                        key={capability.id}
+                        to={capability.webRoute}
+                        className={linkClass}
+                        onClick={() =>
+                          trackHeaderNavClick(
+                            capability.fullLabel,
+                            capability.webRoute,
+                            capability.analyticsId
+                          )
+                        }
+                      >
+                        {capability.fullLabel}
+                      </Link>
+                    )
+                  )}
                   {supportAccess?.isSuperAdmin && (
                     <Link to="/app/admin" className={linkClass}>
                       Admin

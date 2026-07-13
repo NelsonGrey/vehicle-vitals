@@ -174,7 +174,7 @@ describe('SiteHeader', () => {
     expect(authState.signOut).toHaveBeenCalledTimes(1);
   });
 
-  it('orders authenticated nav by capability, with Account last, then Product Tour', () => {
+  it('pairs Getting Started with Product Tour ahead of the capability links, with Account last', () => {
     authState.user = { uid: 'user-1', isAnonymous: false };
 
     renderHeader();
@@ -182,12 +182,12 @@ describe('SiteHeader', () => {
     const header = screen.getByRole('banner');
     const expectedOrder = [
       'Getting Started',
+      'Product Tour',
       'Garage',
       'Service History',
       'Maintenance Plan',
       'Shops & Services',
       'Account',
-      'Product Tour',
     ];
     const links = expectedOrder.map(name =>
       within(header).getByRole('link', {
@@ -201,5 +201,13 @@ describe('SiteHeader', () => {
           Node.DOCUMENT_POSITION_FOLLOWING
       ).toBeGreaterThan(0);
     }
+
+    // The pair sits in its own margined wrapper so it reads as visually
+    // separated from the capability links, without breaking the flex-wrap
+    // layout the rest of the nav relies on at narrow widths.
+    const gettingStartedLink = within(header).getByRole('link', {
+      name: /^Getting Started$/i,
+    });
+    expect(gettingStartedLink.parentElement.className).toMatch(/mr-4/);
   });
 });

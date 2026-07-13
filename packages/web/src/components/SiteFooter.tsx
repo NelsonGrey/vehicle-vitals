@@ -1,23 +1,21 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { AUTH_NAV_CAPABILITIES } from '../data/capabilities';
 import { personaPages } from '../data/personas';
 import { trackFooterNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
 
-const productLinks = [
-  { label: 'How It Works', to: '/start-steps' },
+// Getting Started and Product Tour are evaluation-stage content — useful
+// for prospects, redundant once signed in (Getting Started already lives
+// in the authenticated app nav below; Product Tour has nothing left to
+// evaluate). Pricing stays for subscription management either way.
+const publicProductLinks = [
+  { label: 'Getting Started', to: '/getting-started' },
   { label: 'Pricing', to: '/subscription' },
   { label: 'Product Tour', to: '/short-video-tours' },
-  { label: 'Screens', to: '/everyday-screens' },
 ];
 
-const appNavLinks = [
-  { label: 'Garage', to: '/app' },
-  { label: 'Profile', to: '/app/profile' },
-  { label: 'Timeline', to: '/app/timeline' },
-  { label: 'Upcoming', to: '/app/upcoming' },
-  { label: 'Mechanics', to: '/app/providers' },
-];
+const authenticatedProductLinks = [{ label: 'Pricing', to: '/subscription' }];
 
 const supportLinks = [
   { label: 'Help', to: '/help' },
@@ -82,16 +80,18 @@ export default function SiteFooter() {
               aria-label="Product"
               className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
             >
-              {productLinks.map(link => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className="whitespace-nowrap transition-colors hover:text-white"
-                  onClick={() => trackFooterNavClick(link.label, link.to)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {(user ? authenticatedProductLinks : publicProductLinks).map(
+                link => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="whitespace-nowrap transition-colors hover:text-white"
+                    onClick={() => trackFooterNavClick(link.label, link.to)}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
             </nav>
 
             {!user ? (
@@ -104,7 +104,9 @@ export default function SiteFooter() {
                     key={persona.id}
                     to={persona.path}
                     className="whitespace-nowrap transition-colors hover:text-white"
-                    onClick={() => trackFooterNavClick(persona.navLabel, persona.path)}
+                    onClick={() =>
+                      trackFooterNavClick(persona.navLabel, persona.path)
+                    }
                   >
                     {persona.navLabel}
                   </Link>
@@ -115,14 +117,19 @@ export default function SiteFooter() {
                 aria-label="App"
                 className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
               >
-                {appNavLinks.map(link => (
+                {AUTH_NAV_CAPABILITIES.map(capability => (
                   <Link
-                    key={link.to}
-                    to={link.to}
+                    key={capability.id}
+                    to={capability.webRoute}
                     className="whitespace-nowrap transition-colors hover:text-white"
-                    onClick={() => trackFooterNavClick(link.label, link.to)}
+                    onClick={() =>
+                      trackFooterNavClick(
+                        capability.fullLabel,
+                        capability.webRoute
+                      )
+                    }
                   >
-                    {link.label}
+                    {capability.fullLabel}
                   </Link>
                 ))}
               </nav>
@@ -147,7 +154,9 @@ export default function SiteFooter() {
         </div>
 
         <div className="mt-3 flex flex-col gap-2 border-t border-slate-700 pt-3 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Vehicle Vitals. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} Vehicle Vitals. All rights reserved.
+          </p>
           <div className="flex items-center gap-3">
             {SOCIAL_LINKS.map(({ label, href, icon }) => (
               <a

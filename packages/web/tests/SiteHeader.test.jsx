@@ -144,13 +144,13 @@ describe('SiteHeader', () => {
     expect(garageLink).toBeVisible();
     expect(gettingStartedLink).toBeVisible();
     expect(
-      within(header).getByRole('link', { name: /^Profile$/i })
+      within(header).getByRole('link', { name: /^Account$/i })
     ).toBeVisible();
     expect(
-      within(header).getByRole('link', { name: /^Timeline$/i })
+      within(header).getByRole('link', { name: /^Service History$/i })
     ).toBeVisible();
     expect(
-      within(header).getByRole('link', { name: /^Upcoming$/i })
+      within(header).getByRole('link', { name: /^Maintenance Plan$/i })
     ).toBeVisible();
 
     // Getting Started should appear before app workspace links.
@@ -166,5 +166,33 @@ describe('SiteHeader', () => {
 
     fireEvent.click(signOutButton);
     expect(authState.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('orders authenticated nav by capability, with Account last', () => {
+    authState.user = { uid: 'user-1', isAnonymous: false };
+
+    renderHeader();
+
+    const header = screen.getByRole('banner');
+    const expectedOrder = [
+      'Getting Started',
+      'Garage',
+      'Service History',
+      'Maintenance Plan',
+      'Shops & Services',
+      'Account',
+    ];
+    const links = expectedOrder.map(name =>
+      within(header).getByRole('link', {
+        name: new RegExp(`^${name}$`, 'i'),
+      })
+    );
+
+    for (let i = 0; i < links.length - 1; i += 1) {
+      expect(
+        links[i].compareDocumentPosition(links[i + 1]) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeGreaterThan(0);
+    }
   });
 });

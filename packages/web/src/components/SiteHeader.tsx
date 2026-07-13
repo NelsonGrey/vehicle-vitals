@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { isDemonstrationEnvironment } from '../shared/environment';
+import { AUTH_NAV_CAPABILITIES } from '../data/capabilities';
 import { personaPages } from '../data/personas';
 import { trackHeaderNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
@@ -55,24 +56,21 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-1">
               {isLoggedIn ? (
                 <>
-                  <Link to="/getting-started" className={linkClass} onClick={() => trackHeaderNavClick('Getting Started', '/getting-started')}>
-                    Getting Started
-                  </Link>
-                  <Link to="/app" className={linkClass} onClick={() => trackHeaderNavClick('Garage', '/app')}>
-                    Garage
-                  </Link>
-                  <Link to="/app/profile" className={linkClass} onClick={() => trackHeaderNavClick('Profile', '/app/profile')}>
-                    Profile
-                  </Link>
-                  <Link to="/app/timeline" className={linkClass} onClick={() => trackHeaderNavClick('Timeline', '/app/timeline')}>
-                    Timeline
-                  </Link>
-                  <Link to="/app/upcoming" className={linkClass} onClick={() => trackHeaderNavClick('Upcoming', '/app/upcoming')}>
-                    Upcoming
-                  </Link>
-                  <Link to="/app/providers" className={linkClass} onClick={() => trackHeaderNavClick('Mechanics', '/app/providers')}>
-                    Mechanics
-                  </Link>
+                  {AUTH_NAV_CAPABILITIES.map(capability => (
+                    <Link
+                      key={capability.id}
+                      to={capability.webRoute}
+                      className={linkClass}
+                      onClick={() =>
+                        trackHeaderNavClick(
+                          capability.fullLabel,
+                          capability.webRoute
+                        )
+                      }
+                    >
+                      {capability.fullLabel}
+                    </Link>
+                  ))}
                   {supportAccess?.isSuperAdmin && (
                     <Link to="/app/admin" className={linkClass}>
                       Admin
@@ -91,7 +89,9 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                       key={persona.id}
                       to={persona.path}
                       className={linkClass}
-                      onClick={() => trackHeaderNavClick(persona.navLabel, persona.path)}
+                      onClick={() =>
+                        trackHeaderNavClick(persona.navLabel, persona.path)
+                      }
                     >
                       {persona.navLabel}
                     </Link>

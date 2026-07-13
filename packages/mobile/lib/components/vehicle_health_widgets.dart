@@ -2,6 +2,25 @@ import 'package:flutter/material.dart';
 
 import '../models/vehicle_health.dart';
 import '../theme/design_tokens.dart';
+import '../utils/number_format.dart';
+
+/// Mirrors packages/web/src/components/VehicleHealthPanel.tsx's formatDue —
+/// an overdue component (remainingDays <= 0) must read "Now", not a raw
+/// negative mileage/day count.
+String _formatDue(VehicleHealthComponent component) {
+  if (component.remainingDays != null && component.remainingDays! <= 0) {
+    return 'Now';
+  }
+  if (component.remainingMiles != null) {
+    final miles = component.remainingMiles!;
+    return '${formatWithCommas(miles < 0 ? 0 : miles)} mi';
+  }
+  if (component.remainingDays != null) {
+    final days = component.remainingDays!;
+    return '${days < 0 ? 0 : days} days';
+  }
+  return 'Estimate only';
+}
 
 /// Health score badge, shared between the Home garage list (compact) and
 /// the Vehicle Detail full breakdown (regular).
@@ -15,10 +34,13 @@ class HealthScoreBadge extends StatelessWidget {
   final int score;
   final bool compact;
 
+  // Thresholds match packages/web/src/components/charts/GaugeDial.tsx's
+  // zoneColor (<40 red, <70 amber, >=70 green) — the same overallHealthScore
+  // value must map to the same severity color on both platforms.
   static Color colorFor(BuildContext context, int score) {
     final colorScheme = Theme.of(context).colorScheme;
-    if (score >= 80) return AppDesignTokens.success;
-    if (score >= 50) return colorScheme.tertiary;
+    if (score >= 70) return AppDesignTokens.success;
+    if (score >= 40) return colorScheme.tertiary;
     return colorScheme.error;
   }
 
@@ -104,17 +126,10 @@ class HealthComponentCard extends StatelessWidget {
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 6),
-              Text(
-                component.remainingMiles != null
-                    ? '${component.remainingMiles} mi'
-                    : component.remainingDays != null
-                    ? '${component.remainingDays} days'
-                    : 'Estimate only',
-                style: const TextStyle(fontSize: 12),
-              ),
+              Text(_formatDue(component), style: const TextStyle(fontSize: 12)),
               const SizedBox(height: 4),
               Text(
-                '\$${component.costLow}-\$${component.costHigh}',
+                formatCurrencyRange(component.costLow, component.costHigh),
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 4),

@@ -10,6 +10,7 @@ import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/record_storage_service.dart';
 import '../theme/design_tokens.dart';
+import '../utils/number_format.dart';
 import '../utils/ownership_insights.dart';
 import 'record_category_screen.dart';
 
@@ -708,12 +709,12 @@ class _OwnershipInsightsPanel extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Maintenance spend captured: \$${insights.maintenanceTotalCost.toStringAsFixed(2)}',
+              'Maintenance spend captured: ${formatCurrencyAmount(insights.maintenanceTotalCost)}',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             Text(
               '${insights.maintenanceDocsCount} doc${insights.maintenanceDocsCount == 1 ? '' : 's'}'
-              ' • Avg \$${insights.maintenanceAverageCost.toStringAsFixed(2)}'
+              ' • Avg ${formatCurrencyAmount(insights.maintenanceAverageCost)}'
               '${insights.latestServiceDate != null ? ' • Latest ${insights.latestServiceDate}' : ''}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -773,7 +774,7 @@ class _OwnershipInsightsPanel extends StatelessWidget {
                       SizedBox(
                         width: 56,
                         child: Text(
-                          '\$${entry.amount.toStringAsFixed(0)}',
+                          formatCurrencyAmount(entry.amount),
                           textAlign: TextAlign.right,
                           style: const TextStyle(
                             fontSize: 12,
@@ -789,7 +790,7 @@ class _OwnershipInsightsPanel extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               insights.estimatedMonthlyPayment != null
-                  ? 'Estimated monthly payment: \$${insights.estimatedMonthlyPayment!.toStringAsFixed(2)}'
+                  ? 'Estimated monthly payment: ${formatCurrencyAmount(insights.estimatedMonthlyPayment!)}'
                   : 'Estimated monthly payment: add finance docs',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
@@ -800,12 +801,12 @@ class _OwnershipInsightsPanel extends StatelessWidget {
             if (insights.estimatedValueRealized != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Estimated value realized: \$${insights.estimatedValueRealized!.toStringAsFixed(2)}',
+                'Estimated value realized: ${formatCurrencyAmount(insights.estimatedValueRealized!)}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               if (insights.estimatedCurrentValue != null)
                 Text(
-                  'Est. current value \$${insights.estimatedCurrentValue!.toStringAsFixed(2)}',
+                  'Est. current value ${formatCurrencyAmount(insights.estimatedCurrentValue!)}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
             ],

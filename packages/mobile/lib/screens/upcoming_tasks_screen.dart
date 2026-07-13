@@ -16,6 +16,7 @@ import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 import '../theme/tailwind_utilities.dart';
+import '../utils/number_format.dart';
 import 'maintenance_list_screen.dart';
 
 class UpcomingTasksScreen extends StatefulWidget {
@@ -147,7 +148,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
             'id': item.serviceType,
             'description': formatServiceTypeLabel(item.serviceType),
             'frequency':
-                'Every ${item.intervalMiles} miles or ${item.intervalMonths} months',
+                'Every ${formatWithCommas(item.intervalMiles)} miles or ${item.intervalMonths} months',
             'interval': item.intervalMiles,
             'nextDueMileage': item.nextDueMileage,
             'milesUntilDue': milesUntilDue,
@@ -878,7 +879,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Due at: ${(item['nextDueMileage'] as int).toStringAsFixed(0)} miles',
+                            'Due at: ${formatWithCommas(item['nextDueMileage'] as int)} miles',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: Theme.of(context)
@@ -889,7 +890,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
                                 ),
                           ),
                           Text(
-                            'Miles until due: ${milesUntilDue.toStringAsFixed(0)}',
+                            'Miles until due: ${formatWithCommas(milesUntilDue)}',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: Theme.of(context)

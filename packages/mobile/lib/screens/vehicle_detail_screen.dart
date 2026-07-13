@@ -13,6 +13,7 @@ import '../services/firestore_service.dart';
 import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
+import '../utils/number_format.dart';
 
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
@@ -269,7 +270,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         ],
         const SizedBox(height: 4),
         Text(
-          'Estimated 12-month spend: \$${snapshot.estimatedSpend12mLow}-\$${snapshot.estimatedSpend12mHigh}',
+          'Estimated 12-month spend: ${formatCurrencyRange(snapshot.estimatedSpend12mLow, snapshot.estimatedSpend12mHigh)}',
           style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 12),

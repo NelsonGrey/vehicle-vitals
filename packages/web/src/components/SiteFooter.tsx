@@ -12,7 +12,7 @@ import StackedVLogo from './StackedVLogo';
 const publicProductLinks = [
   { label: 'Getting Started', to: '/getting-started' },
   { label: 'Pricing', to: '/subscription' },
-  { label: 'Product Tour', to: '/short-video-tours' },
+  { label: 'Product Tour', to: '/product-tour' },
 ];
 
 const authenticatedProductLinks = [{ label: 'Pricing', to: '/subscription' }];

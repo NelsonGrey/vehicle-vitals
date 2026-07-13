@@ -42,7 +42,7 @@ describe('SiteFooter', () => {
     ).toHaveAttribute('href', '/subscription');
     expect(
       within(footer).getByRole('link', { name: /Product Tour/i })
-    ).toHaveAttribute('href', '/short-video-tours');
+    ).toHaveAttribute('href', '/product-tour');
     expect(
       within(footer).queryByRole('link', { name: /^Screens$/i })
     ).not.toBeInTheDocument();

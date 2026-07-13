@@ -120,19 +120,11 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
     ogType: 'website',
   },
 
-  '/everyday-screens': {
-    title: `Product Screens — ${SITE_NAME}`,
+  '/product-tour': {
+    title: `Product Tour — ${SITE_NAME}`,
     description:
-      'A look at the Vehicle Vitals garage, timeline, upcoming tasks, and records screens. See what the app looks like before you sign up.',
-    canonical: `${APP_URL}/everyday-screens`,
-    ogType: 'website',
-  },
-
-  '/short-video-tours': {
-    title: `Product Tours — ${SITE_NAME}`,
-    description:
-      'Short video walkthroughs of Vehicle Vitals features: VIN lookup, maintenance planning, ownership history, and cross-platform access.',
-    canonical: `${APP_URL}/short-video-tours`,
+      'Short video walkthroughs and screen-by-screen tours of Vehicle Vitals: Garage, service records, Service History, Maintenance Plan, and Shops & Services.',
+    canonical: `${APP_URL}/product-tour`,
     ogType: 'website',
   },
 

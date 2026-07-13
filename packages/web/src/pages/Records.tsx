@@ -27,7 +27,7 @@ import {
   buildDocumentSummary,
   getSourceSnippet,
 } from '@vehicle-vitals/shared/documentAnalysisSummary';
-import { formatCurrency as formatCurrencyUtil } from '../utils/currency';
+import { formatCurrency as formatCurrencyUtil } from '@vehicle-vitals/shared/currency';
 import { computeOwnershipInsights } from '@vehicle-vitals/shared/ownershipInsights';
 
 type AnalysisData = {

@@ -18,7 +18,7 @@ import {
   getMaintenanceEntries,
 } from '../shared/firestoreService';
 import { buildDocumentSummary } from '@vehicle-vitals/shared/documentAnalysisSummary';
-import { formatCurrencyCompact } from '../utils/currency';
+import { formatCurrencyCompact } from '@vehicle-vitals/shared/currency';
 import WheelBreakdownChart from './charts/WheelBreakdownChart';
 
 // ─── types ─────────────────────────────────────────────────────────────────

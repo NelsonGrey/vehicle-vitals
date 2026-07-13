@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import type { UserTier } from '../shared/featureFlags';
-import { formatCurrencyRange } from '../utils/currency';
+import { formatCurrencyRange } from '@vehicle-vitals/shared/currency';
 import {
   getGarageCompletenessTierFlag,
   getGarageCompletenessTierLabel,

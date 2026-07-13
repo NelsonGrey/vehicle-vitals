@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatCurrency, formatCurrencyCompact } from '../currency';
+import { formatCurrency, formatCurrencyCompact } from '../src/currency.js';
 
 describe('formatCurrencyCompact', () => {
   afterEach(() => {

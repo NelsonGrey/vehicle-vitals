@@ -1,3 +1,5 @@
+import { formatCurrency } from './currency.js';
+
 export interface DocumentExtracted {
   documentCategory?: string;
   serviceType?: string;
@@ -34,7 +36,7 @@ export function buildDocumentSummary(
     details.push(extracted.serviceType);
   }
   if (typeof extracted.totalCost === 'number') {
-    details.push(`$${extracted.totalCost.toFixed(2)}`);
+    details.push(formatCurrency(extracted.totalCost));
   }
   if (extracted.serviceDate) {
     details.push(extracted.serviceDate);

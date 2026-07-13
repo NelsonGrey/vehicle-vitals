@@ -6,7 +6,7 @@ import {
   getAttachmentAnalyses,
   getMaintenanceEntries,
 } from '../src/shared/firestoreService';
-import { formatCurrencyCompact } from '../src/utils/currency';
+import { formatCurrencyCompact } from '@vehicle-vitals/shared/currency';
 
 vi.mock('../src/shared/firestoreService', () => ({
   getAttachmentAnalyses: vi.fn(),

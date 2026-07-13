@@ -362,7 +362,7 @@ export default function TimelineDashboard() {
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 m-0">
-            Maintenance Timeline
+            Service History
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
             Review completed work across the garage in reverse chronological
@@ -374,7 +374,7 @@ export default function TimelineDashboard() {
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
         <div className="lg:col-span-4 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4">
-            Timeline Summary
+            Service History Summary
           </h2>
 
           <div className="space-y-3 mb-4">

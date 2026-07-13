@@ -29,8 +29,7 @@ export default function Profile() {
     {
       key: 'alerts',
       title: 'Maintenance Alerts',
-      description:
-        'Reminder timing, driving distance, and push notifications.',
+      description: 'Reminder timing, driving distance, and push notifications.',
       Content: MaintenanceAlertsContent,
     },
     {
@@ -68,7 +67,7 @@ export default function Profile() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="mb-6">
         <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-          Profile
+          Account
         </h1>
         <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
           Signed in as{' '}

@@ -133,9 +133,7 @@ export default function UpcomingTasks() {
   // Tracked separately so the empty state can say "we don't have
   // manufacturer data for this vehicle" instead of the indistinguishable
   // "all caught up, well maintained."
-  const [unsupportedVehicles, setUnsupportedVehicles] = useState<Vehicle[]>(
-    []
-  );
+  const [unsupportedVehicles, setUnsupportedVehicles] = useState<Vehicle[]>([]);
 
   const buildReminderKey = (vin: string, serviceType?: string) =>
     `${vin}:${serviceType || 'maintenance'}`;
@@ -226,8 +224,10 @@ export default function UpcomingTasks() {
         for (const vehicle of vehicles) {
           const currentMileage = parseInt(vehicle.mileage || '0') || 0;
 
-          let plan: { modelSpecific: boolean; items: MaintenancePlanItem[] } | null =
-            null;
+          let plan: {
+            modelSpecific: boolean;
+            items: MaintenancePlanItem[];
+          } | null = null;
           if (currentMileage > 0) {
             try {
               plan = await getMaintenancePlan(
@@ -237,7 +237,11 @@ export default function UpcomingTasks() {
                 vehicle.model
               );
             } catch (error) {
-              console.warn('Unable to load maintenance plan', vehicle.vin, error);
+              console.warn(
+                'Unable to load maintenance plan',
+                vehicle.vin,
+                error
+              );
             }
           }
           if (!plan?.modelSpecific) {
@@ -330,7 +334,7 @@ export default function UpcomingTasks() {
 
   const handleSaveReminder = async (item: UpcomingItem) => {
     if (!alertsEnabled) {
-      alert('Maintenance alerts are disabled in Profile settings.');
+      alert('Maintenance alerts are disabled in Account settings.');
       return;
     }
 
@@ -696,18 +700,21 @@ export default function UpcomingTasks() {
   }).length;
 
   type TimelineEntry =
-    | { kind: 'recommendation'; key: string; date: Date | null; item: UpcomingItem }
+    | {
+        kind: 'recommendation';
+        key: string;
+        date: Date | null;
+        item: UpcomingItem;
+      }
     | { kind: 'reminder'; key: string; date: Date | null; item: ReminderItem };
 
   const timelineEntries: TimelineEntry[] = [
-    ...visibleUpcomingItems.map(
-      (item): TimelineEntry => ({
-        kind: 'recommendation',
-        key: `rec-${item.vehicle.vin}-${item.serviceType}`,
-        date: estimateDueDate(item.milesUntilDue),
-        item,
-      })
-    ),
+    ...visibleUpcomingItems.map((item): TimelineEntry => ({
+      kind: 'recommendation',
+      key: `rec-${item.vehicle.vin}-${item.serviceType}`,
+      date: estimateDueDate(item.milesUntilDue),
+      item,
+    })),
     ...visibleReminders.map((reminder): TimelineEntry => {
       const date =
         typeof reminder.milesUntilDue === 'number'
@@ -746,7 +753,8 @@ export default function UpcomingTasks() {
   };
 
   const getUrgencyColor = (milesUntilDue: number) => {
-    if (milesUntilDue <= 1000) return 'text-danger-600 bg-danger-50 border-danger-200';
+    if (milesUntilDue <= 1000)
+      return 'text-danger-600 bg-danger-50 border-danger-200';
     if (milesUntilDue <= 5000)
       return 'text-warning-600 bg-warning-50 border-warning-200';
     return 'text-accent-600 bg-accent-50 border-accent-200';
@@ -818,7 +826,7 @@ export default function UpcomingTasks() {
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0 mb-2">
-            Upcoming Tasks
+            Maintenance Plan
           </h1>
           <p className="text-slate-600 dark:text-slate-400 m-0">
             Stay ahead of maintenance with upcoming service recommendations for
@@ -851,7 +859,7 @@ export default function UpcomingTasks() {
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
           <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
-            Reminder Center
+            Planning Center
           </h2>
           <p className="mb-3 px-1 text-sm text-slate-600 dark:text-slate-400">
             This page estimates when service should surface based on your lead
@@ -928,8 +936,9 @@ export default function UpcomingTasks() {
           </div>
           {planningHorizonUpgrade && (
             <div className="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
-              You're seeing the next <strong>{planningHorizonMonths} months</strong>{' '}
-              of maintenance planning.{' '}
+              You're seeing the next{' '}
+              <strong>{planningHorizonMonths} months</strong> of maintenance
+              planning.{' '}
               <Link to="/app/subscription" className="font-medium underline">
                 Upgrade to {planningHorizonUpgrade.planName}
               </Link>{' '}
@@ -1044,18 +1053,19 @@ export default function UpcomingTasks() {
               <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 {recommendationsBeyondPlanWindow}
               </p>
-              {planningHorizonUpgrade && recommendationsBeyondPlanWindow > 0 && (
-                <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Past your {planningHorizonMonths}-month horizon.{' '}
-                  <Link
-                    to="/app/subscription"
-                    className="font-medium underline"
-                  >
-                    Upgrade
-                  </Link>{' '}
-                  to see further ahead.
-                </p>
-              )}
+              {planningHorizonUpgrade &&
+                recommendationsBeyondPlanWindow > 0 && (
+                  <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Past your {planningHorizonMonths}-month horizon.{' '}
+                    <Link
+                      to="/app/subscription"
+                      className="font-medium underline"
+                    >
+                      Upgrade
+                    </Link>{' '}
+                    to see further ahead.
+                  </p>
+                )}
             </div>
           </div>
 
@@ -1070,7 +1080,7 @@ export default function UpcomingTasks() {
                   ? showAllRecommendations
                     ? 'No upcoming maintenance recommendations or saved reminders were found for the selected vehicles.'
                     : 'No upcoming maintenance tasks fall inside your current reminder window.'
-                  : 'Maintenance alerts are disabled in Profile settings.'}
+                  : 'Maintenance alerts are disabled in Account settings.'}
               </p>
               {unsupportedVehicles.length > 0 && (
                 <p className="mt-2 text-sm text-warning-700 dark:text-warning-400 max-w-md mx-auto">
@@ -1079,8 +1089,8 @@ export default function UpcomingTasks() {
                     .map(v => `${v.year} ${v.make} ${v.model}`)
                     .join(', ')}
                   , so this isn't a confirmed clean bill of health for{' '}
-                  {unsupportedVehicles.length === 1 ? 'it' : 'them'} — log
-                  your own service history to get personalized reminders.
+                  {unsupportedVehicles.length === 1 ? 'it' : 'them'} — log your
+                  own service history to get personalized reminders.
                 </p>
               )}
               {alertsEnabled && !showAllRecommendations ? (
@@ -1209,9 +1219,7 @@ export default function UpcomingTasks() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-300">
                                   <div>
-                                    <span className="font-medium">
-                                      Due at:
-                                    </span>{' '}
+                                    <span className="font-medium">Due at:</span>{' '}
                                     {entry.item.nextDueMileage.toLocaleString()}{' '}
                                     miles
                                   </div>
@@ -1396,9 +1404,7 @@ export default function UpcomingTasks() {
                                     <>
                                       <button
                                         onClick={() =>
-                                          void handleSendReminderNow(
-                                            entry.item
-                                          )
+                                          void handleSendReminderNow(entry.item)
                                         }
                                         disabled={
                                           entry.item.status === 'completed' ||
@@ -1406,9 +1412,7 @@ export default function UpcomingTasks() {
                                           actingReminderIds.has(
                                             entry.item.id
                                           ) ||
-                                          sendingReminderIds.has(
-                                            entry.item.id
-                                          )
+                                          sendingReminderIds.has(entry.item.id)
                                         }
                                         className="w-full px-3 py-1.5 border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                       >
@@ -1444,9 +1448,7 @@ export default function UpcomingTasks() {
                                       </button>
                                       <button
                                         onClick={() =>
-                                          void handleDismissReminder(
-                                            entry.item
-                                          )
+                                          void handleDismissReminder(entry.item)
                                         }
                                         disabled={
                                           entry.item.status === 'completed' ||

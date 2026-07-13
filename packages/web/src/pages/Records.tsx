@@ -659,7 +659,7 @@ export default function Records() {
           },
         }));
       }
-      setInsightActionMessage('Reminder saved to Upcoming Tasks.');
+      setInsightActionMessage('Reminder saved to Maintenance Plan.');
     } catch (error) {
       console.error('Failed to save insight reminder', error);
       setInsightActionMessage('Failed to save reminder.');
@@ -881,8 +881,8 @@ export default function Records() {
                     : ''}
                 </div>
                 <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-                  From docs filed under Maintenance and Repair only —
-                  purchase price and finance documents are excluded.
+                  From docs filed under Maintenance and Repair only — purchase
+                  price and finance documents are excluded.
                 </div>
               </div>
 
@@ -923,11 +923,14 @@ export default function Records() {
                   Maintenance Spend Breakdown
                 </div>
                 <WheelBreakdownChart
-                  segments={(insights.maintenanceBreakdown || []).map((entry, index) => ({
-                    label: entry.label,
-                    amount: entry.amount,
-                    color: SPEND_WHEEL_COLORS[index % SPEND_WHEEL_COLORS.length],
-                  }))}
+                  segments={(insights.maintenanceBreakdown || []).map(
+                    (entry, index) => ({
+                      label: entry.label,
+                      amount: entry.amount,
+                      color:
+                        SPEND_WHEEL_COLORS[index % SPEND_WHEEL_COLORS.length],
+                    })
+                  )}
                   formatAmount={formatCurrency}
                   centerValue={formatCurrency(insights.maintenanceTotalCost)}
                   centerLabel="Total spend"
@@ -1090,7 +1093,7 @@ export default function Records() {
                         to={`/app/upcoming?vin=${encodeURIComponent(vehicle.vin)}`}
                         className="text-xs text-slate-700 dark:text-slate-200 no-underline border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1"
                       >
-                        Open Upcoming Tasks
+                        Open Maintenance Plan
                       </Link>
                     </div>
 

@@ -19,8 +19,21 @@ String _performedByLabel(String value) {
   switch (value) {
     case 'self':
       return 'Self-service';
+    case 'repair_shop':
+      return 'Repair shop';
+    case 'dealership':
+      return 'Dealership';
+    case 'body_shop':
+      return 'Body shop';
+    case 'car_wash':
+      return 'Car wash';
+    case 'detailer':
+      return 'Detailer';
+    // Retired categories, kept for entries recorded before this taxonomy
+    // shipped — new entries never write these.
     case 'business':
       return 'Business-maintained';
+    case 'mechanic':
     default:
       return 'Mechanic';
   }
@@ -49,7 +62,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
   final _providerNameController = TextEditingController();
-  String _performedBy = 'mechanic';
+  String _performedBy = 'repair_shop';
   String _coverage = 'parts_and_labor';
   final DataExportService _exportService = DataExportService();
   final CalendarService _calendarService = CalendarService();
@@ -176,7 +189,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       _notesController.clear();
       _costController.clear();
       _providerNameController.clear();
-      _performedBy = 'mechanic';
+      _performedBy = 'repair_shop';
       _coverage = 'parts_and_labor';
 
       await _loadEntries();
@@ -389,12 +402,24 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                               child: Text('Self-service'),
                             ),
                             DropdownMenuItem(
-                              value: 'mechanic',
-                              child: Text('Mechanic'),
+                              value: 'repair_shop',
+                              child: Text('Repair shop'),
                             ),
                             DropdownMenuItem(
-                              value: 'business',
-                              child: Text('Business-maintained'),
+                              value: 'dealership',
+                              child: Text('Dealership'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'body_shop',
+                              child: Text('Body shop'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'car_wash',
+                              child: Text('Car wash'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'detailer',
+                              child: Text('Detailer'),
                             ),
                           ],
                           onChanged: (value) {

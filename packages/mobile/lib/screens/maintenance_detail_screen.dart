@@ -10,11 +10,48 @@ String _performedByLabel(String value) {
   switch (value) {
     case 'self':
       return 'Self-service';
+    case 'repair_shop':
+      return 'Repair shop';
+    case 'dealership':
+      return 'Dealership';
+    case 'body_shop':
+      return 'Body shop';
+    case 'car_wash':
+      return 'Car wash';
+    case 'detailer':
+      return 'Detailer';
+    // Retired categories, kept for entries recorded before this taxonomy
+    // shipped — new entries never write these.
     case 'business':
       return 'Business-maintained';
+    case 'mechanic':
     default:
       return 'Mechanic';
   }
+}
+
+// A DropdownButtonFormField requires its current value to appear in `items`.
+// Entries saved before this taxonomy shipped may still carry a retired
+// 'mechanic'/'business' value, so it's appended here (labeled as legacy)
+// only when that's the value actually loaded — new entries never see it.
+List<DropdownMenuItem<String>> _performedByItems(String currentValue) {
+  final items = <DropdownMenuItem<String>>[
+    const DropdownMenuItem(value: 'self', child: Text('Self-service')),
+    const DropdownMenuItem(value: 'repair_shop', child: Text('Repair shop')),
+    const DropdownMenuItem(value: 'dealership', child: Text('Dealership')),
+    const DropdownMenuItem(value: 'body_shop', child: Text('Body shop')),
+    const DropdownMenuItem(value: 'car_wash', child: Text('Car wash')),
+    const DropdownMenuItem(value: 'detailer', child: Text('Detailer')),
+  ];
+  if (currentValue == 'mechanic' || currentValue == 'business') {
+    items.add(
+      DropdownMenuItem(
+        value: currentValue,
+        child: Text('${_performedByLabel(currentValue)} (legacy)'),
+      ),
+    );
+  }
+  return items;
 }
 
 String _coverageLabel(String value) {
@@ -46,7 +83,7 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
   final _providerNameController = TextEditingController();
-  String _performedBy = 'mechanic';
+  String _performedBy = 'repair_shop';
   String _coverage = 'parts_and_labor';
   Maintenance? _entry;
   bool _loading = true;
@@ -276,20 +313,7 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                             labelText: 'Who did it',
                             border: OutlineInputBorder(),
                           ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'self',
-                              child: Text('Self-service'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'mechanic',
-                              child: Text('Mechanic'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'business',
-                              child: Text('Business-maintained'),
-                            ),
-                          ],
+                          items: _performedByItems(_performedBy),
                           onChanged: (value) {
                             if (value == null) return;
                             setState(() => _performedBy = value);

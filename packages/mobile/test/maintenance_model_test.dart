@@ -20,8 +20,8 @@ void main() {
       expect(maintenance.toMap()['performedBy'], 'self');
       expect(maintenance.toMap()['coverage'], 'parts_only');
 
-      final updated = maintenance.copyWith(performedBy: 'business');
-      expect(updated.performedBy, 'business');
+      final updated = maintenance.copyWith(performedBy: 'dealership');
+      expect(updated.performedBy, 'dealership');
       expect(updated.coverage, 'parts_only');
     },
   );
@@ -83,7 +83,32 @@ void main() {
       'updatedAt': DateTime.utc(2024, 5, 1),
     }, 'entry-2');
 
-    expect(maintenance.performedBy, 'mechanic');
+    expect(maintenance.performedBy, 'repair_shop');
     expect(maintenance.coverage, 'parts_and_labor');
   });
+
+  test(
+    'Maintenance round-trips retired performedBy values from records saved '
+    'before the repair_shop/dealership/body_shop/car_wash/detailer taxonomy '
+    'shipped (no backfill migration — old records keep their stored value)',
+    () {
+      final legacyMechanic = Maintenance.fromMap({
+        'title': 'Oil change',
+        'performedBy': 'mechanic',
+        'date': DateTime.utc(2024, 1, 1),
+        'createdAt': DateTime.utc(2024, 1, 1),
+        'updatedAt': DateTime.utc(2024, 1, 1),
+      }, 'entry-legacy-1');
+      expect(legacyMechanic.performedBy, 'mechanic');
+
+      final legacyBusiness = Maintenance.fromMap({
+        'title': 'Fleet service',
+        'performedBy': 'business',
+        'date': DateTime.utc(2024, 1, 1),
+        'createdAt': DateTime.utc(2024, 1, 1),
+        'updatedAt': DateTime.utc(2024, 1, 1),
+      }, 'entry-legacy-2');
+      expect(legacyBusiness.performedBy, 'business');
+    },
+  );
 }

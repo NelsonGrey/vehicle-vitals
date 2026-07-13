@@ -27,7 +27,7 @@
  * @property {string} mileage
  * @property {number} [cost]
  * @property {string} provider
- * @property {'self'|'mechanic'|'business'} [performedBy]
+ * @property {'self'|'repair_shop'|'dealership'|'body_shop'|'car_wash'|'detailer'|'mechanic'|'business'} [performedBy] - 'mechanic'/'business' are retired categories still present on existing records; new entries never write these.
  * @property {'parts_only'|'parts_and_labor'} [coverage]
  * @property {string} notes
  */
@@ -104,7 +104,7 @@ export const defaultMaintenanceRecord = {
   mileage: '',
   cost: undefined,
   provider: '',
-  performedBy: 'mechanic',
+  performedBy: 'repair_shop',
   coverage: 'parts_and_labor',
   notes: '',
 };

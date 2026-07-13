@@ -15,6 +15,15 @@ function renderHelp() {
 }
 
 describe('Help page', () => {
+  it('sets the document title and canonical URL via PageSEO', () => {
+    renderHelp();
+    expect(document.title).toMatch(/Help Center/i);
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      expect.stringContaining('/help')
+    );
+  });
+
   it('keeps reminder help public and omits the support skip link', () => {
     render(
       <MemoryRouter

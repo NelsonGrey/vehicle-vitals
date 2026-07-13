@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom';
+import PageSEO from '../components/PageSEO';
+import { ROUTE_SEO } from '../shared/seoMeta';
 // Header and footer provided by Layout
 
 export default function Terms() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8">
+      <PageSEO meta={ROUTE_SEO['/terms']} />
       <article className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <h1 className="font-serif text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-2">
           Terms of Use

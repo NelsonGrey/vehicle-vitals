@@ -15,6 +15,10 @@
     "./vehiclePortfolio": {
       "types": "./dist/vehiclePortfolio.d.ts",
       "import": "./dist/vehiclePortfolio.js"
+    },
+    "./vinValidation": {
+      "types": "./dist/vinValidation.d.ts",
+      "import": "./dist/vinValidation.js"
     }
   }
 }

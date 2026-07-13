@@ -31,7 +31,12 @@ const VENDOR_DIST = path.join(
 // Keep in sync with the subpaths declared in
 // packages/functions/vendor/vehicle-vitals-shared/package.json and
 // packages/shared/package.json's own exports map.
-const MODULES = ['vehicleHealth', 'maintenanceSchedules', 'vehiclePortfolio'];
+const MODULES = [
+  'vehicleHealth',
+  'maintenanceSchedules',
+  'vehiclePortfolio',
+  'vinValidation',
+];
 const EXTENSIONS = ['.js', '.d.ts', '.js.map', '.d.ts.map'];
 
 function main() {

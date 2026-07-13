@@ -21,7 +21,7 @@ import { buildPersistedVinInsights, lookupVin } from '../utils/vehicleService';
 import {
   detectVehicleIdentifierType,
   getVinLookupValidationError,
-} from '../utils/vinValidation';
+} from '@vehicle-vitals/shared/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
   'ATVs / UTVs',
@@ -31,7 +31,7 @@ const VEHICLE_TYPE_OPTIONS = [
   'RVs',
   'SUVs',
   'Trailers',
-  'Trucks',
+  'Commercial Vehicles',
   'Vans',
   'Other',
 ].sort((a, b) => a.localeCompare(b));

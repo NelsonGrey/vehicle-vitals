@@ -39,11 +39,11 @@ import { transferVehicle } from '../utils/vehicleTransferService';
 import {
   detectVehicleIdentifierType,
   getVinLookupValidationError,
-} from '../utils/vinValidation';
+} from '@vehicle-vitals/shared/vinValidation';
 
 const VEHICLE_TYPE_OPTIONS = [
-  'Car',
-  'Truck',
+  'Passenger Vehicle',
+  'Commercial Vehicle',
   'Motorcycle',
   'Recreational Vehicle (RV)',
   'Boat',

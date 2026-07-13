@@ -4,7 +4,7 @@ import { coerceFirestoreTimestamp } from '../shared/firestoreTimestamp';
 import { formatFileDisplay } from '../shared/fileUtils';
 import { getMaintenanceEntries, getVehicles } from '../shared/firestoreService';
 import { formatCurrency } from '../utils/currency';
-import { buildDocumentSummary } from '../utils/documentAnalysisSummary';
+import { buildDocumentSummary } from '@vehicle-vitals/shared/documentAnalysisSummary';
 
 interface Vehicle {
   vin: string;

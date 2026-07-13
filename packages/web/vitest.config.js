@@ -12,10 +12,10 @@ export default defineConfig({
     alias: {
       react: path.resolve(__dirname, '../../node_modules/react'),
       'react-dom': path.resolve(__dirname, '../../node_modules/react-dom'),
-      '@vehicle-vitals/shared': path.resolve(
-        __dirname,
-        '../shared/src/index.js'
-      ),
+      // Directory alias (not a specific file) so subpath imports like
+      // '@vehicle-vitals/shared/ownershipInsights' resolve too, matching
+      // vite.config.js's production/dev resolution.
+      '@vehicle-vitals/shared': path.resolve(__dirname, '../shared/src'),
       shared: path.resolve(__dirname, '../shared/src'),
     },
   },

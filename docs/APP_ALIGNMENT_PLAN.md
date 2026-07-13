@@ -45,7 +45,7 @@ The marketing site establishes the vision — persona-driven messaging, dark-and
 
 - 3-step onboarding: Add vehicle → Track service and costs → Stay on top of what's next
 - VIN Lookup — look up and auto-populate vehicle profile
-- Maintenance Planning — schedule, reminders, upcoming tasks
+- Maintenance Plan — schedule, reminders, upcoming tasks
 - Ownership History — timeline, document portfolio, export
 - Cross-Platform Access — same account on web and iOS
 
@@ -84,11 +84,18 @@ A top-level nav link is not the right fix — the route requires a VIN, so linki
 
 **Change**: Add the tagline as a subtitle below the tier name in the `UpgradeModal` component and on the `SubscriptionPage` tier cards. The taglines are already established in the marketing copy and should be consistent end-to-end.
 
-### 5. Getting Started page routing (Low priority)
+### 5. Getting Started page routing — resolved
 
-**Gap**: The `/getting-started` page is currently linked from the authenticated header nav as "Getting Started" for logged-in users. But `/getting-started` is a marketing/help page, not an in-app experience. This creates a jarring context switch for authenticated users.
-
-**Change**: For logged-in users, the "Getting Started" header nav link should route to the in-app onboarding flow (change 1 above) or to the Help center (`/help`), not to the marketing guide page. Remove it from the authenticated header nav once the in-app onboarding surface exists.
+This item proposed routing the authenticated header's "Getting Started" link
+away from `/getting-started` toward an in-app-only surface. The capability
+and information-architecture refactor
+(`docs/CAPABILITY_ARCHITECTURE_REFACTOR_PROMPT.md`) resolved this
+differently: `getting_started` is a first-class capability in the canonical
+nav model (`packages/web/src/data/capabilities.ts`), intentionally shown in
+both the public and authenticated header/footer nav, and `/getting-started`
+now serves both audiences (it absorbed the former `/start-steps` content, so
+it already contains the concrete in-app setup steps this item asked for).
+No further routing change is needed here.
 
 ### 6. Visual accent color alignment (Low priority / phased)
 
@@ -211,7 +218,7 @@ Both web app and iOS app route to a Support form (name/email/topic/message) rath
 | 8 | Web | Tier taglines in upgrade modal and subscription page |
 | 9 | iOS | Reminder preference controls parity |
 | 10 | iOS | Planning horizon indicator |
-| 11 | Web | Getting Started link routing for authenticated users |
+| 11 | Web | ~~Getting Started link routing for authenticated users~~ — resolved by the capability refactor, see item 5 |
 | 12 | iOS | API key management surface |
 | 13 | iOS | Account consolidation prompt |
 | 14 | Web | Persona-aware first-use messaging |
@@ -223,7 +230,7 @@ Items 1–5 should be addressed before or alongside R1 launch (web-only free tie
 
 ## What does NOT need to change
 
-- The authenticated app's overall page structure (Garage, Timeline, Upcoming, Mechanics, Profile) is sound and does not need restructuring.
+- The authenticated app's overall page structure (Garage, Service History, Maintenance Plan, Shops & Services, Account) is sound and does not need restructuring.
 - The existing Firestore data model supports all of these changes — no schema migrations are required.
 - The subscription/entitlement backend is already implemented; these are UI alignment changes only.
 - The marketing site's dark-slate-950 aesthetic is correct for marketing pages. The authenticated app can remain lighter — the key alignment is accent color and copy voice, not a dark-mode-everywhere mandate.

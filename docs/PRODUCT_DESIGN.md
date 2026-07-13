@@ -747,6 +747,93 @@ Budget & Insights
 
 ---
 
+## 🧭 Capability Vocabulary
+
+The sketch above predates the capability and information-architecture
+refactor (`docs/CAPABILITY_ARCHITECTURE_REFACTOR_PROMPT.md`) and is kept as
+historical context, not a literal current map. The canonical vocabulary
+below is what web and mobile navigation, analytics, and Help are actually
+built against today.
+
+### Canonical capabilities
+
+| Capability ID | Full label | Compact label (mobile) | Web route | Mobile route |
+|---|---|---|---|---|
+| `getting_started` | Getting Started | Getting Started | `/getting-started` | *(no single screen — onboarding entry point)* |
+| `garage` | Garage | Garage | `/app` | `/app` |
+| `service_history` | Service History | History | `/app/timeline` | `/app/timeline` |
+| `maintenance_plan` | Maintenance Plan | Plan | `/app/upcoming` | `/app/upcoming` |
+| `shops_services` | Shops & Services | Shops & Services | `/app/providers` | `/app/service-providers` |
+| `account` | Account | Account | `/app/profile` | `/app/profile` |
+
+Defined once per platform — `packages/web/src/data/capabilities.ts` (TS) and
+`packages/mobile/lib/data/capabilities.dart` (Dart) — deliberately as two
+parallel plain-literal definitions rather than a single generated artifact,
+kept in sync by a contract test
+(`packages/web/src/data/__tests__/capabilities.contract.test.ts`) that reads
+the Dart file as text and asserts a 1:1 match against the TS array.
+
+### Public vs. authenticated navigation
+
+- **Logged-out (public) nav**: persona links (Ownership Records, Shared
+  Garage, Guided Setup, Hands-On Maintenance, Work Vehicles) plus Login/Sign
+  Up. Pricing and Product Tour live in the footer, not the header.
+- **Authenticated nav** (header and footer): every capability with
+  `surfaces.authNav: true`, in `order` — Getting Started, Garage, Service
+  History, Maintenance Plan, Shops & Services, Account. Getting Started and
+  Product Tour are evaluation-stage content and are hidden from the
+  authenticated footer's Product group (only Pricing remains there) since an
+  authenticated user has nothing left to "evaluate" — Getting Started is
+  still reachable from the authenticated nav itself.
+- **Mobile bottom nav** stays at exactly 4 items (Garage, History, Plan,
+  Account — `surfaces.mobileBottomNav: true`). Shops & Services and Getting
+  Started are deliberately *not* bottom-nav items; they're reached through
+  contextual entry points instead (Garage app bar, Settings, and the
+  maintenance add/edit flow for Shops & Services; the onboarding flow and
+  header/footer links for Getting Started).
+
+### Terminology boundary: display language vs. stable identifiers
+
+The capability vocabulary is a **presentation-layer** rename. It never
+touches persisted data, backend contracts, or existing route paths — only
+what's rendered on screen. Identifiers that stay internal, unchanged, and
+must never be renamed to match display copy:
+
+- Firestore field `preferredProviders`
+- Callable `getLocalServiceProvidersCallable`
+- Mobile class `LocalProvidersService`
+- Persisted enum value `performedBy: 'mechanic'` (union: `'self' | 'mechanic' | 'business'`)
+- Every existing route path (legacy paths redirect via `<Navigate replace />` rather than being renamed)
+
+Help content follows the same boundary: FAQ entries use current display
+language, but retired terms (Timeline, Upcoming Tasks, Mechanic, Profile,
+Service Providers) are kept searchable via a `legacyTerms` field so users
+who still think in the old vocabulary can find the right answer, without
+those terms reappearing as display copy.
+
+### Getting Started completion model
+
+The spec's 6 onboarding milestones are shipped as **static/contextual copy
+only** — no new persisted per-milestone completion state, no feature flag.
+Two milestones (account created, first vehicle added) already have a live,
+Firestore-derived signal; the rest (including "reviewed Service History")
+have no live-derivable signal anywhere in the data model today. Building a
+partial checklist — some steps checkmarked live, others permanently
+unchecked — would be more confusing than a plain static list. The existing
+single `onboarding_completed_$uid` boolean (SharedPreferences) remains the
+only persisted onboarding state.
+
+### Mobile analytics: explicitly deferred
+
+Mobile has no analytics infrastructure today (no `firebase_analytics`
+dependency, no event-logging wrapper, no `logEvent` calls anywhere in
+`packages/mobile`). The web-side `capability_id` analytics dimension added
+alongside this vocabulary is web-only; adding mobile analytics is a
+separate, larger initiative to be scoped on its own rather than a
+side-effect of a navigation rename.
+
+---
+
 ## 🎯 Feature Prioritization
 
 | Feature                    | Impact   | Effort    | Priority | Delivery Status               |

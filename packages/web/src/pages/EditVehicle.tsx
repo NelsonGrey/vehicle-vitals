@@ -124,7 +124,17 @@ interface MaintenanceEntry {
   notes: string;
   cost: string;
   date: string;
-  performedBy?: 'self' | 'mechanic' | 'business';
+  performedBy?:
+    | 'self'
+    | 'repair_shop'
+    | 'dealership'
+    | 'body_shop'
+    | 'car_wash'
+    | 'detailer'
+    // Retired categories — still present on existing records; new entries
+    // never write these.
+    | 'mechanic'
+    | 'business';
   providerName?: string;
   coverage?: 'parts_only' | 'parts_and_labor';
   attachments?: Array<{
@@ -148,8 +158,21 @@ function formatPerformedBy(value?: string) {
   switch (value) {
     case 'self':
       return 'Self-service';
+    case 'repair_shop':
+      return 'Repair shop';
+    case 'dealership':
+      return 'Dealership';
+    case 'body_shop':
+      return 'Body shop';
+    case 'car_wash':
+      return 'Car wash';
+    case 'detailer':
+      return 'Detailer';
+    // Retired categories, kept for entries recorded before this taxonomy
+    // shipped — new entries never write these.
     case 'business':
       return 'Business-maintained';
+    case 'mechanic':
     default:
       return 'Mechanic';
   }
@@ -998,7 +1021,7 @@ function MaintenanceList({
     title: '',
     notes: '',
     cost: '',
-    performedBy: 'mechanic',
+    performedBy: 'repair_shop',
     providerName: '',
     coverage: 'parts_and_labor',
     attachments: [] as Array<{
@@ -1520,7 +1543,7 @@ function MaintenanceList({
         title: '',
         notes: '',
         cost: '',
-        performedBy: 'mechanic',
+        performedBy: 'repair_shop',
         providerName: '',
         coverage: 'parts_and_labor',
         attachments: [],
@@ -1843,8 +1866,11 @@ function MaintenanceList({
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
                 >
                   <option value="self">Self-service</option>
-                  <option value="mechanic">Mechanic</option>
-                  <option value="business">Business-maintained</option>
+                  <option value="repair_shop">Repair shop</option>
+                  <option value="dealership">Dealership</option>
+                  <option value="body_shop">Body shop</option>
+                  <option value="car_wash">Car wash</option>
+                  <option value="detailer">Detailer</option>
                 </select>
               </div>
               <div>

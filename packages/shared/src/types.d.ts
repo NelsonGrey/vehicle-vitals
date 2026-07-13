@@ -26,7 +26,16 @@ export interface MaintenanceRecord {
   mileage: string;
   cost?: number;
   provider: string;
-  performedBy?: 'self' | 'mechanic' | 'business';
+  performedBy?:
+    | 'self'
+    | 'repair_shop'
+    | 'dealership'
+    | 'body_shop'
+    | 'car_wash'
+    | 'detailer'
+    /** @deprecated Retired categories — still present on existing records; new entries never write these. */
+    | 'mechanic'
+    | 'business';
   coverage?: 'parts_only' | 'parts_and_labor';
   notes: string;
 }

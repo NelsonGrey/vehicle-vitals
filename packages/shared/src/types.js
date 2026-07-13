@@ -31,7 +31,7 @@ export const defaultMaintenanceRecord = {
   mileage: '',
   cost: undefined,
   provider: '',
-  performedBy: 'mechanic',
+  performedBy: 'repair_shop',
   coverage: 'parts_and_labor',
   notes: '',
 };

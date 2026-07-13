@@ -141,6 +141,12 @@ describe('SiteHeader', () => {
       within(header).queryByRole('link', { name: /Help & How-To/i })
     ).not.toBeInTheDocument();
 
+    // Product Tour is marketing content, not a capability, but stays
+    // available for continuity once signed in.
+    expect(
+      within(header).getByRole('link', { name: /Product Tour/i })
+    ).toHaveAttribute('href', '/product-tour');
+
     expect(garageLink).toBeVisible();
     expect(gettingStartedLink).toBeVisible();
     expect(
@@ -168,7 +174,7 @@ describe('SiteHeader', () => {
     expect(authState.signOut).toHaveBeenCalledTimes(1);
   });
 
-  it('orders authenticated nav by capability, with Account last', () => {
+  it('orders authenticated nav by capability, with Account last, then Product Tour', () => {
     authState.user = { uid: 'user-1', isAnonymous: false };
 
     renderHeader();
@@ -181,6 +187,7 @@ describe('SiteHeader', () => {
       'Maintenance Plan',
       'Shops & Services',
       'Account',
+      'Product Tour',
     ];
     const links = expectedOrder.map(name =>
       within(header).getByRole('link', {

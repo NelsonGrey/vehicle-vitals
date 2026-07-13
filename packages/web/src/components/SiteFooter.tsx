@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
-import { AUTH_NAV_CAPABILITIES } from '../data/capabilities';
+import { AUTH_NAV_CAPABILITIES, PRODUCT_TOUR_LINK } from '../data/capabilities';
 import { personaPages } from '../data/personas';
 import { trackFooterNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
@@ -150,6 +150,19 @@ export default function SiteFooter() {
                     {capability.fullLabel}
                   </Link>
                 ))}
+                <Link
+                  to={PRODUCT_TOUR_LINK.to}
+                  className="whitespace-nowrap transition-colors hover:text-white"
+                  onClick={() =>
+                    trackFooterNavClick(
+                      PRODUCT_TOUR_LINK.label,
+                      PRODUCT_TOUR_LINK.to,
+                      PRODUCT_TOUR_LINK.analyticsId
+                    )
+                  }
+                >
+                  {PRODUCT_TOUR_LINK.label}
+                </Link>
               </nav>
             )}
 

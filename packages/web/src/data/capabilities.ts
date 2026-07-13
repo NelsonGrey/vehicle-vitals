@@ -153,3 +153,14 @@ export const CAPABILITIES_BY_ID: Record<CapabilityId, Capability> =
 export const AUTH_NAV_CAPABILITIES: Capability[] = CAPABILITIES.filter(
   capability => capability.surfaces.authNav
 ).sort((a, b) => a.order - b.order);
+
+// Product Tour is marketing/evaluation content, not a capability (no
+// mobile screen, no task the user performs) — it deliberately isn't part
+// of CAPABILITIES. But it's shown in the authenticated header and footer
+// too, for continuity with the public site, so it's defined once here
+// rather than hardcoded independently in both places.
+export const PRODUCT_TOUR_LINK = {
+  label: 'Product Tour',
+  to: '/product-tour',
+  analyticsId: 'product_tour',
+};

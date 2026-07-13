@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { isDemonstrationEnvironment } from '../shared/environment';
-import { AUTH_NAV_CAPABILITIES } from '../data/capabilities';
+import { AUTH_NAV_CAPABILITIES, PRODUCT_TOUR_LINK } from '../data/capabilities';
 import { personaPages } from '../data/personas';
 import { trackHeaderNavClick } from '../shared/marketingAnalytics';
 import StackedVLogo from './StackedVLogo';
@@ -72,6 +72,19 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                       {capability.fullLabel}
                     </Link>
                   ))}
+                  <Link
+                    to={PRODUCT_TOUR_LINK.to}
+                    className={linkClass}
+                    onClick={() =>
+                      trackHeaderNavClick(
+                        PRODUCT_TOUR_LINK.label,
+                        PRODUCT_TOUR_LINK.to,
+                        PRODUCT_TOUR_LINK.analyticsId
+                      )
+                    }
+                  >
+                    {PRODUCT_TOUR_LINK.label}
+                  </Link>
                   {supportAccess?.isSuperAdmin && (
                     <Link to="/app/admin" className={linkClass}>
                       Admin

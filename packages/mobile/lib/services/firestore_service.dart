@@ -341,7 +341,7 @@ List<Maintenance> _demoMaintenance(String vin) {
       title: 'Tire rotation and pressure check',
       mileage: vin.startsWith('1F') ? '40550' : '15020',
       cost: 29.99,
-      performedBy: 'diy',
+      performedBy: 'self',
       coverage: 'labor_only',
       notes: 'Rotated tires and corrected pressure before road trip.',
       date: now.subtract(const Duration(days: 84)),

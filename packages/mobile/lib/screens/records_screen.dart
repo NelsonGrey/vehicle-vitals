@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/app_bottom_nav.dart';
+import '../components/plus_minus_expansion_tile.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/record_storage_service.dart';
@@ -694,7 +695,7 @@ class _OwnershipInsightsPanel extends StatelessWidget {
     return Card(
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
+        child: PlusMinusExpansionTile(
           leading: const Icon(Icons.insights, size: 18),
           title: Text(
             'Ownership Insights',

@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../components/plus_minus_expansion_tile.dart';
 import '../theme/design_tokens.dart';
 import '../utils/document_analysis_summary.dart';
 import '../utils/number_format.dart';
@@ -426,7 +427,7 @@ class _FileAttachmentTile extends StatelessWidget {
             if (hasExtractedFields)
               Padding(
                 padding: const EdgeInsets.only(left: 4, top: 4),
-                child: ExpansionTile(
+                child: PlusMinusExpansionTile(
                   tilePadding: EdgeInsets.zero,
                   title: const Text(
                     'Analysis details',

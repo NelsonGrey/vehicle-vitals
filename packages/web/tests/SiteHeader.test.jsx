@@ -75,11 +75,11 @@ describe('SiteHeader', () => {
       within(header).getByRole('link', { name: /Work Vehicles/i })
     ).toHaveAttribute('href', '/personas/light-fleets');
     expect(
-      within(header).getByRole('link', { name: /Pricing/i })
-    ).toHaveAttribute('href', '/subscription');
+      within(header).queryByRole('link', { name: /Pricing/i })
+    ).not.toBeInTheDocument();
     expect(
-      within(header).getByRole('link', { name: /Product Tour/i })
-    ).toBeVisible();
+      within(header).queryByRole('link', { name: /Product Tour/i })
+    ).not.toBeInTheDocument();
     expect(
       within(header).queryByRole('link', { name: /Subscriptions/i })
     ).not.toBeInTheDocument();

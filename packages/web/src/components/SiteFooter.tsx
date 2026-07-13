@@ -61,7 +61,7 @@ export default function SiteFooter() {
   return (
     <footer className="shrink-0 border-t border-slate-700 bg-slate-950 text-white">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <Link
             to="/"
             aria-label="Go to home"
@@ -77,16 +77,16 @@ export default function SiteFooter() {
             />
           </Link>
 
-          <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:gap-x-10 sm:gap-y-4">
+          <div className="footer-primary-links flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:gap-x-10 sm:gap-y-4 lg:flex-nowrap lg:items-center lg:gap-x-5">
             <nav
               aria-label="Product"
-              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
+              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
             >
               {productLinks.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="transition-colors hover:text-white"
+                  className="whitespace-nowrap transition-colors hover:text-white"
                   onClick={() => trackFooterNavClick(link.label, link.to)}
                 >
                   {link.label}
@@ -97,13 +97,13 @@ export default function SiteFooter() {
             {!user ? (
               <nav
                 aria-label="Personas"
-                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
+                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
               >
                 {personaPages.map(persona => (
                   <Link
                     key={persona.id}
                     to={persona.path}
-                    className="transition-colors hover:text-white"
+                    className="whitespace-nowrap transition-colors hover:text-white"
                     onClick={() => trackFooterNavClick(persona.navLabel, persona.path)}
                   >
                     {persona.navLabel}
@@ -113,13 +113,13 @@ export default function SiteFooter() {
             ) : (
               <nav
                 aria-label="App"
-                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300"
+                className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300 lg:flex-nowrap"
               >
                 {appNavLinks.map(link => (
                   <Link
                     key={link.to}
                     to={link.to}
-                    className="transition-colors hover:text-white"
+                    className="whitespace-nowrap transition-colors hover:text-white"
                     onClick={() => trackFooterNavClick(link.label, link.to)}
                   >
                     {link.label}
@@ -130,13 +130,13 @@ export default function SiteFooter() {
 
             <nav
               aria-label="Support and legal"
-              className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400"
+              className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400 lg:flex-nowrap"
             >
               {supportLinks.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="transition-colors hover:text-white"
+                  className="whitespace-nowrap transition-colors hover:text-white"
                   onClick={() => trackFooterNavClick(link.label, link.to)}
                 >
                   {link.label}

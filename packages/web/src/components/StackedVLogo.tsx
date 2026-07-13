@@ -44,7 +44,7 @@ export default function StackedVLogo({
       className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`}
       style={{ color: wordmarkColor }}
     >
-      {compact ? 'Vehicle Vitals' : <>VEHICLE<br />VITALS</>}
+      {compact ? 'VEHICLE VITALS' : <>VEHICLE<br />VITALS</>}
     </div>
   );
 

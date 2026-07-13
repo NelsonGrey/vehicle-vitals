@@ -155,8 +155,9 @@ function FaqList({ items }: { items: FaqItem[] }) {
             <span>
               {index + 1}. {item.question}
             </span>
-            <span className="text-slate-500 group-open:rotate-45 transition-transform">
-              +
+            <span className="text-lg leading-none text-slate-500" aria-hidden="true">
+              <span className="group-open:hidden">+</span>
+              <span className="hidden group-open:inline">−</span>
             </span>
           </summary>
           <div className="mt-3 space-y-2">

@@ -9,13 +9,25 @@ import StackedVLogo from './StackedVLogo';
 // for prospects, redundant once signed in (Getting Started already lives
 // in the authenticated app nav below; Product Tour has nothing left to
 // evaluate). Pricing stays for subscription management either way.
-const publicProductLinks = [
-  { label: 'Getting Started', to: '/getting-started' },
+interface FooterLink {
+  label: string;
+  to: string;
+  capabilityId?: string;
+}
+
+const publicProductLinks: FooterLink[] = [
+  {
+    label: 'Getting Started',
+    to: '/getting-started',
+    capabilityId: 'getting_started',
+  },
   { label: 'Pricing', to: '/subscription' },
   { label: 'Product Tour', to: '/product-tour' },
 ];
 
-const authenticatedProductLinks = [{ label: 'Pricing', to: '/subscription' }];
+const authenticatedProductLinks: FooterLink[] = [
+  { label: 'Pricing', to: '/subscription' },
+];
 
 const supportLinks = [
   { label: 'Help', to: '/help' },
@@ -86,7 +98,13 @@ export default function SiteFooter() {
                     key={link.to}
                     to={link.to}
                     className="whitespace-nowrap transition-colors hover:text-white"
-                    onClick={() => trackFooterNavClick(link.label, link.to)}
+                    onClick={() =>
+                      trackFooterNavClick(
+                        link.label,
+                        link.to,
+                        link.capabilityId
+                      )
+                    }
                   >
                     {link.label}
                   </Link>
@@ -125,7 +143,8 @@ export default function SiteFooter() {
                     onClick={() =>
                       trackFooterNavClick(
                         capability.fullLabel,
-                        capability.webRoute
+                        capability.webRoute,
+                        capability.analyticsId
                       )
                     }
                   >

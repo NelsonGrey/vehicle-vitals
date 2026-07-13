@@ -7,33 +7,39 @@ import {
   type FaqItem,
 } from '../data/helpFaq';
 import { useFeatureFlag } from '../shared/useMonetization';
+import { trackHelpSearch } from '../shared/marketingAnalytics';
 // Header and footer provided by Layout
 
 const helpTopics = [
   {
-    title: 'Account and sign-in',
+    id: 'account-billing-and-sync',
+    title: 'Account, billing, and sync',
     details:
-      'Use the login and forgot password flows to recover access. If your email changed, contact support for account assistance.',
+      'Manage sign-in, subscription, privacy, notification, and web-to-mobile account questions.',
   },
   {
-    title: 'Adding or changing a vehicle',
+    id: 'garage-and-vehicles',
+    title: 'Garage and vehicles',
     details:
       'Add a vehicle from the Garage, use the lookup for faster setup, and fill in any missing details before saving.',
   },
   {
-    title: 'Maintenance history and reminders',
+    id: 'service-records-and-history',
+    title: 'Service records and history',
     details:
-      'Save services with date, mileage, notes, and cost. Use Timeline and Upcoming to stay ahead of work that is coming up.',
+      'Save completed work with date, mileage, notes, and cost, then review it in Service History.',
   },
   {
-    title: 'Subscriptions and billing',
+    id: 'maintenance-history-and-reminders',
+    title: 'Maintenance plan and reminders',
     details:
-      'Open Subscriptions to compare options and manage billing from your profile and billing screens.',
+      'Use Maintenance Plan to review upcoming work and adjust reminder timing to match your driving.',
   },
   {
-    title: 'Mobile sync and notifications',
+    id: 'shops-and-services',
+    title: 'Shops and services',
     details:
-      'Web and mobile use the same account. Keep app notifications on to get reminder and schedule alerts.',
+      'Find nearby businesses, save places you trust, and connect maintenance records with places you have used.',
   },
 ];
 
@@ -48,7 +54,7 @@ const quickActions = [
   {
     title: 'Fix reminder timing',
     details:
-      'Review the public reminder guidance when Upcoming Tasks is showing too much, too little, or not when you expect.',
+      'Review the reminder guidance when Maintenance Plan is showing too much, too little, or not when you expect.',
     to: '/help#maintenance-history-and-reminders',
     ctaLabel: 'Open reminder preferences',
   },
@@ -99,7 +105,7 @@ const glossaryTerms = [
     meaning: 'Where you save service history, notes, costs, and attachments.',
   },
   {
-    term: 'Upcoming Tasks',
+    term: 'Maintenance Plan',
     meaning:
       'A list of service items that may be due soon, based on your vehicle history and settings.',
   },
@@ -139,10 +145,6 @@ function filterFaqItems(items: FaqItem[], query: string) {
   });
 }
 
-function createSectionId(title: string) {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-}
-
 function FaqList({ items }: { items: FaqItem[] }) {
   return (
     <div className="space-y-3">
@@ -155,7 +157,10 @@ function FaqList({ items }: { items: FaqItem[] }) {
             <span>
               {index + 1}. {item.question}
             </span>
-            <span className="text-lg leading-none text-slate-500" aria-hidden="true">
+            <span
+              className="text-lg leading-none text-slate-500"
+              aria-hidden="true"
+            >
               <span className="group-open:hidden">+</span>
               <span className="hidden group-open:inline">−</span>
             </span>
@@ -210,6 +215,15 @@ export default function Help() {
     targetElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [location.hash]);
 
+  // Debounced so we log the settled query, not every keystroke.
+  useEffect(() => {
+    if (!faqQuery.trim()) return;
+    const id = setTimeout(() => {
+      trackHelpSearch(faqQuery.trim(), totalFaqMatches);
+    }, 500);
+    return () => clearTimeout(id);
+  }, [faqQuery, totalFaqMatches]);
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5 sm:space-y-6">
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
@@ -261,48 +275,10 @@ export default function Help() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
-          Product overview vs. Help
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 p-4">
-            <h3 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Use Product Overview for
-            </h3>
-            <p className="m-0 mt-2 text-slate-700 dark:text-slate-300">
-              Learning what the app does, who it helps, and whether it fits your
-              needs.
-            </p>
-            <Link
-              to="/"
-              className="mt-3 inline-flex items-center text-sm font-medium text-teal-700 underline dark:text-teal-300"
-            >
-              Go to product overview
-            </Link>
-          </article>
-          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 p-4">
-            <h3 className="m-0 text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Use Help for
-            </h3>
-            <p className="m-0 mt-2 text-slate-700 dark:text-slate-300">
-              Step-by-step setup, daily tasks, troubleshooting, and Support
-              access.
-            </p>
-            <Link
-              to="/getting-started"
-              className="mt-3 inline-flex items-center text-sm font-medium text-teal-700 underline dark:text-teal-300"
-            >
-              Open setup steps
-            </Link>
-          </article>
-        </div>
-      </section>
-
-      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-1">
-              Quick help
+              Common tasks
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
               Pick the most likely next step without reading the full FAQ.
@@ -334,15 +310,11 @@ export default function Help() {
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-4">
-          Popular Topics
+          Help by capability
         </h2>
         <div className="space-y-4">
           {helpTopics.map(topic => (
-            <article
-              key={topic.title}
-              id={createSectionId(topic.title)}
-              tabIndex={-1}
-            >
+            <article key={topic.title} id={topic.id} tabIndex={-1}>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
                 {topic.title}
               </h3>
@@ -357,7 +329,7 @@ export default function Help() {
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm space-y-6">
         <div>
           <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-2">
-            More answers
+            Search all answers
           </h2>
           <p className="text-slate-700 dark:text-slate-300">
             Search across website, iOS, and troubleshooting answers when you
@@ -378,7 +350,7 @@ export default function Help() {
             type="search"
             value={faqQuery}
             onChange={event => setFaqQuery(event.target.value)}
-            placeholder="Search for reminders, vehicle ID, mechanics, billing, iOS..."
+            placeholder="Search for reminders, vehicle ID, shops, billing, iOS..."
             className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-slate-100"
           />
           <p className="mt-2 mb-0 text-xs text-slate-500 dark:text-slate-400">
@@ -418,7 +390,7 @@ export default function Help() {
         {faqQuery.trim() && totalFaqMatches === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-600 dark:text-slate-400">
             No answers matched that search. Try a broader term like vehicle ID,
-            reminders, mechanics, billing, or account.
+            reminders, shops, billing, or account.
           </div>
         ) : null}
 
@@ -473,8 +445,8 @@ export default function Help() {
           Need more help?
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">
-          If you still need help, visit Support and include your browser or
-          app version plus a short description of what happened.
+          If you still need help, visit Support and include your browser or app
+          version plus a short description of what happened.
         </p>
         <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
           {hasPhoneSupport ? (

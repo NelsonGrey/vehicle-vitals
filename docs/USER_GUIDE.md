@@ -61,11 +61,10 @@ When you first visit Vehicle Vitals, you'll see the landing page with an overvie
 
 Click **Get Started** or **Sign In** in the header to proceed to the sign-in page.
 
-The landing page now links to three focused preview pages:
+The landing page now links to two focused preview pages:
 
-- **Start in 3 simple steps** (`/start-steps`) for onboarding flow highlights
-- **Everyday screens you will use** (`/everyday-screens`) for screenshot gallery browsing
-- **Short video tours** (`/short-video-tours`) for media walkthroughs
+- **Getting Started** (`/getting-started`) for onboarding flow highlights and setup steps
+- **Product Tour** (`/product-tour`) for the screenshot gallery and video walkthroughs
 
 ### Sign In
 

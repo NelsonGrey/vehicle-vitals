@@ -33,7 +33,7 @@ Coverage objective for this update:
 - Footer `Help` remains available as the primary always-on navigation entry for help content.
 - Site shell is centered and width-limited to `1280px` (`max-w-7xl`).
 - Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
-- Landing page links users to dedicated preview routes (`/start-steps`, `/everyday-screens`, `/short-video-tours`) instead of rendering all media-heavy sections inline.
+- Landing page links users to dedicated preview routes (`/getting-started`, `/product-tour`) instead of rendering all media-heavy sections inline. (Formerly `/start-steps`, `/everyday-screens`, and `/short-video-tours` — those paths now redirect to the two canonical routes above.)
 - Dedicated screenshot and video routes render real app capability media and preserve fallback behavior.
 - Help and Getting Started routes preserve clear purpose boundaries, including explicit context labeling and walkthrough video/fallback states.
 

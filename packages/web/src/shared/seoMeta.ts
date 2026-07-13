@@ -112,11 +112,11 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
     },
   },
 
-  '/start-steps': {
-    title: `How It Works — ${SITE_NAME}`,
+  '/getting-started': {
+    title: `Getting Started — ${SITE_NAME}`,
     description:
       'Start in three simple steps: add your vehicle, track service and costs, stay on top of what\'s next. See how Vehicle Vitals turns scattered receipts into a trusted ownership record.',
-    canonical: `${APP_URL}/start-steps`,
+    canonical: `${APP_URL}/getting-started`,
     ogType: 'website',
   },
 

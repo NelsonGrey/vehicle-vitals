@@ -157,7 +157,6 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const FeatureDemo = lazy(() => import('./pages/FeatureDemo'));
 const Instructions = lazy(() => import('./pages/Instructions'));
 const Help = lazy(() => import('./pages/Help'));
-const StartSteps = lazy(() => import('./pages/StartSteps'));
 const EverydayScreens = lazy(() => import('./pages/EverydayScreens'));
 const ShortVideoTours = lazy(() => import('./pages/ShortVideoTours'));
 const Support = lazy(() => import('./pages/Support'));
@@ -305,7 +304,7 @@ function App() {
                       'See how service history supports long-term ownership.',
                     ]}
                     appRoute="/app/upcoming"
-                    appCtaLabel="Open Upcoming Tasks"
+                    appCtaLabel="Open Maintenance Plan"
                   />
                 }
               />
@@ -337,7 +336,7 @@ function App() {
                       'See where records are maintained behind secure access.',
                     ]}
                     appRoute="/app/timeline"
-                    appCtaLabel="Open Timeline View"
+                    appCtaLabel="Open Service History"
                   />
                 }
               />
@@ -345,7 +344,10 @@ function App() {
               <Route path="instructions" element={<Instructions />} />
               <Route path="getting-started" element={<Instructions />} />
               <Route path="help" element={<Help />} />
-              <Route path="start-steps" element={<StartSteps />} />
+              <Route
+                path="start-steps"
+                element={<Navigate to="/getting-started" replace />}
+              />
               <Route path="everyday-screens" element={<EverydayScreens />} />
               <Route path="short-video-tours" element={<ShortVideoTours />} />
               <Route path="support" element={<Support />} />

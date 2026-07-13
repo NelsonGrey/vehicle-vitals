@@ -406,11 +406,13 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
           hasHelpHowTo: marketingLinks.includes('Help & How-To'),
           hasGettingStarted: marketingLinks.includes('Getting Started'),
           hasVinLookup: marketingLinks.includes('VIN Lookup'),
-          hasOwners: marketingLinks.includes('For Owners'),
-          hasHouseholds: marketingLinks.includes('For Households'),
-          hasNewDrivers: marketingLinks.includes('New Drivers'),
-          hasDiy: marketingLinks.includes('DIY'),
-          hasLightFleets: marketingLinks.includes('Light Fleets'),
+          hasOwnershipRecords: marketingLinks.includes('Ownership Records'),
+          hasSharedGarage: marketingLinks.includes('Shared Garage'),
+          hasGuidedSetup: marketingLinks.includes('Guided Setup'),
+          hasHandsOnMaintenance: marketingLinks.includes(
+            'Hands-On Maintenance'
+          ),
+          hasWorkVehicles: marketingLinks.includes('Work Vehicles'),
           hasPricing: marketingLinks.includes('Pricing'),
           hasProductTour: marketingLinks.includes('Product Tour'),
         };
@@ -427,18 +429,20 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Deployment target is still on legacy marketing navigation labels.'
       );
 
-      expect(marketingNavMetrics.firstLink).toBe('For Owners');
+      expect(marketingNavMetrics.firstLink).toBe('Ownership Records');
       expect(marketingNavMetrics.hasProductOverview).toBe(false);
       expect(marketingNavMetrics.hasHelpHowTo).toBe(false);
       expect(marketingNavMetrics.hasGettingStarted).toBe(false);
       expect(marketingNavMetrics.hasVinLookup).toBe(false);
-      expect(marketingNavMetrics.hasOwners).toBe(true);
-      expect(marketingNavMetrics.hasHouseholds).toBe(true);
-      expect(marketingNavMetrics.hasNewDrivers).toBe(true);
-      expect(marketingNavMetrics.hasDiy).toBe(true);
-      expect(marketingNavMetrics.hasLightFleets).toBe(true);
-      expect(marketingNavMetrics.hasPricing).toBe(true);
-      expect(marketingNavMetrics.hasProductTour).toBe(true);
+      expect(marketingNavMetrics.hasOwnershipRecords).toBe(true);
+      expect(marketingNavMetrics.hasSharedGarage).toBe(true);
+      expect(marketingNavMetrics.hasGuidedSetup).toBe(true);
+      expect(marketingNavMetrics.hasHandsOnMaintenance).toBe(true);
+      expect(marketingNavMetrics.hasWorkVehicles).toBe(true);
+      // Pricing/Product Tour live in the footer and authenticated header,
+      // not the logged-out persona nav row this test inspects.
+      expect(marketingNavMetrics.hasPricing).toBe(false);
+      expect(marketingNavMetrics.hasProductTour).toBe(false);
     });
 
     test('TC-UI-011: Authenticated app header hides Product Overview and Help context links', async ({
@@ -822,14 +826,13 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         'Marketing header is not directly visible in this deployment target.'
       );
 
+      // Logged-out header shows persona nav (not Pricing/Product Tour —
+      // those live in the footer and authenticated header, not here).
       await expect(
-        header.getByRole('link', { name: /For Owners/i })
+        header.getByRole('link', { name: /Ownership Records/i })
       ).toBeVisible();
       await expect(
-        header.getByRole('link', { name: /Pricing/i })
-      ).toBeVisible();
-      await expect(
-        header.getByRole('link', { name: /Product Tour/i })
+        header.getByRole('link', { name: /Shared Garage/i })
       ).toBeVisible();
 
       await expect(
@@ -874,10 +877,10 @@ test.describe('Vehicle Vitals - User Acceptance Testing', () => {
         header.getByRole('link', { name: /^Garage$/i })
       ).toBeVisible();
       await expect(
-        header.getByRole('link', { name: /^Timeline$/i })
+        header.getByRole('link', { name: /^Service History$/i })
       ).toBeVisible();
       await expect(
-        header.getByRole('link', { name: /^Upcoming$/i })
+        header.getByRole('link', { name: /^Maintenance Plan$/i })
       ).toBeVisible();
 
       const hasLegacyContextLinks =

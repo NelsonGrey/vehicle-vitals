@@ -108,7 +108,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Unable to load mechanic preferences: $error';
+        _error = 'Unable to load shop preferences: $error';
       });
     }
   }
@@ -162,9 +162,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
     }
   }
 
-  Future<void> _savePreferredProviders(
-    List<Map<String, dynamic>> next,
-  ) async {
+  Future<void> _savePreferredProviders(List<Map<String, dynamic>> next) async {
     setState(() => _preferredProviders = next);
     try {
       await context.read<FirestoreService>().updatePreferences({
@@ -172,7 +170,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
       });
     } catch (error) {
       if (!mounted) return;
-      setState(() => _error = 'Failed to save preferred mechanics: $error');
+      setState(() => _error = 'Failed to save this place: $error');
     }
   }
 
@@ -249,13 +247,13 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
           result['providers'] as List? ?? const <Map<String, dynamic>>[],
         );
         _status =
-            'Found ${_providers.length} mechanic(s) from ${(result['source'] ?? 'unknown').toString()}.';
+            'Found ${_providers.length} nearby result(s) from ${(result['source'] ?? 'unknown').toString()}.';
       });
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _providers = const [];
-        _error = 'Mechanic lookup failed: $error';
+        _error = 'Nearby search failed: $error';
       });
     } finally {
       if (mounted) {
@@ -280,15 +278,15 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mechanics'),
+        title: const Text('Shops & Services'),
         bottom: TabBar(
           controller: _tabController,
           tabs: [
             const Tab(text: 'Search'),
             Tab(
               text: _preferredProviders.isEmpty
-                  ? 'Preferred'
-                  : 'Preferred (${_preferredProviders.length})',
+                  ? 'Saved'
+                  : 'Saved (${_preferredProviders.length})',
             ),
           ],
         ),
@@ -323,197 +321,170 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
             ),
           ),
         Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Search Preferences',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _street1Controller,
-                          decoration: const InputDecoration(
-                            labelText: 'Street',
-                          ),
-                        ),
-                        TextField(
-                          controller: _street2Controller,
-                          decoration: const InputDecoration(
-                            labelText: 'Street 2 (optional)',
-                          ),
-                        ),
-                        TextField(
-                          controller: _cityController,
-                          decoration: const InputDecoration(labelText: 'City'),
-                        ),
-                        TextField(
-                          controller: _stateController,
-                          decoration: const InputDecoration(
-                            labelText: 'State/Province',
-                          ),
-                        ),
-                        TextField(
-                          controller: _postalCodeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Postal Code',
-                          ),
-                        ),
-                        TextField(
-                          controller: _countryController,
-                          decoration: const InputDecoration(
-                            labelText: 'Country',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Search radius: $_preferredProviderRadiusMiles miles',
-                        ),
-                        Slider(
-                          value: _preferredProviderRadiusMiles.toDouble(),
-                          min: 5,
-                          max: 100,
-                          divisions: 95,
-                          label: '$_preferredProviderRadiusMiles miles',
-                          onChanged: _searching
-                              ? null
-                              : (value) {
-                                  setState(() {
-                                    _preferredProviderRadiusMiles = value
-                                        .round();
-                                  });
-                                },
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          initialValue: _preferredProviderType,
-                          decoration: const InputDecoration(
-                            labelText: 'Mechanic type',
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'all',
-                              child: Text('All providers'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'repair_shop',
-                              child: Text('Repair shops'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'dealership',
-                              child: Text('Dealerships'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'body_shop',
-                              child: Text('Body shops'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'car_wash',
-                              child: Text('Vehicle washes'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'detailer',
-                              child: Text('Detailers'),
-                            ),
-                          ],
-                          onChanged: _searching
-                              ? null
-                              : (value) {
-                                  if (value == null) return;
-                                  setState(() {
-                                    _preferredProviderType = value;
-                                  });
-                                },
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: _searching ? null : _runLookup,
-                          icon: _searching
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.search),
-                          label: const Text('Find Nearby Mechanics'),
-                        ),
-                      ],
-                    ),
-                  ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Search Preferences',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
-                ..._providers.map((provider) {
-                  final name = (provider['name'] ?? 'Unnamed mechanic')
-                      .toString();
-                  final providerType =
-                      (provider['type'] ??
-                              provider['providerType'] ??
-                              'provider')
-                          .toString();
-                  final distanceMiles = (provider['distanceMiles'] as num?)
-                      ?.toStringAsFixed(1);
-                  final id = (provider['id'] ?? name).toString();
-                  final isPreferred = _preferredProviders.any(
-                    (p) => p['id'] == id,
-                  );
-
-                  return Card(
-                    child: ListTile(
-                      title: Text(name),
-                      subtitle: Text(
-                        [
-                          _formatAddress(provider),
-                          providerType.replaceAll('_', ' '),
-                          if (distanceMiles != null) '$distanceMiles mi away',
-                        ].where((value) => value.isNotEmpty).join(' • '),
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(
-                          isPreferred ? Icons.star : Icons.star_border,
-                          color: isPreferred
-                              ? Theme.of(context).colorScheme.primary
-                              : null,
-                        ),
-                        tooltip: isPreferred
-                            ? 'Preferred mechanic'
-                            : 'Save as preferred',
-                        onPressed: _savingPreferredId == id || isPreferred
-                            ? null
-                            : () => _addPreferredProvider({
-                                'id': id,
-                                'name': name,
-                                'type': providerType,
-                                'address': _formatAddress(provider),
-                                'phone': (provider['phone'] ?? '').toString(),
-                                'website': (provider['website'] ?? '')
-                                    .toString(),
-                              }),
-                      ),
+                TextField(
+                  controller: _street1Controller,
+                  decoration: const InputDecoration(labelText: 'Street'),
+                ),
+                TextField(
+                  controller: _street2Controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Street 2 (optional)',
+                  ),
+                ),
+                TextField(
+                  controller: _cityController,
+                  decoration: const InputDecoration(labelText: 'City'),
+                ),
+                TextField(
+                  controller: _stateController,
+                  decoration: const InputDecoration(
+                    labelText: 'State/Province',
+                  ),
+                ),
+                TextField(
+                  controller: _postalCodeController,
+                  decoration: const InputDecoration(labelText: 'Postal Code'),
+                ),
+                TextField(
+                  controller: _countryController,
+                  decoration: const InputDecoration(labelText: 'Country'),
+                ),
+                const SizedBox(height: 12),
+                Text('Search radius: $_preferredProviderRadiusMiles miles'),
+                Slider(
+                  value: _preferredProviderRadiusMiles.toDouble(),
+                  min: 5,
+                  max: 100,
+                  divisions: 95,
+                  label: '$_preferredProviderRadiusMiles miles',
+                  onChanged: _searching
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _preferredProviderRadiusMiles = value.round();
+                          });
+                        },
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: _preferredProviderType,
+                  decoration: const InputDecoration(labelText: 'Business type'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'all',
+                      child: Text('All businesses'),
                     ),
-                  );
-                }),
+                    DropdownMenuItem(
+                      value: 'repair_shop',
+                      child: Text('Repair shops'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'dealership',
+                      child: Text('Dealerships'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'body_shop',
+                      child: Text('Body shops'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'car_wash',
+                      child: Text('Vehicle washes'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'detailer',
+                      child: Text('Detailers'),
+                    ),
+                  ],
+                  onChanged: _searching
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _preferredProviderType = value;
+                          });
+                        },
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _searching ? null : _runLookup,
+                  icon: _searching
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.search),
+                  label: const Text('Find Nearby'),
+                ),
               ],
-            );
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ..._providers.map((provider) {
+          final name = (provider['name'] ?? 'Unnamed business').toString();
+          final providerType =
+              (provider['type'] ?? provider['providerType'] ?? 'provider')
+                  .toString();
+          final distanceMiles = (provider['distanceMiles'] as num?)
+              ?.toStringAsFixed(1);
+          final id = (provider['id'] ?? name).toString();
+          final isPreferred = _preferredProviders.any((p) => p['id'] == id);
+
+          return Card(
+            child: ListTile(
+              title: Text(name),
+              subtitle: Text(
+                [
+                  _formatAddress(provider),
+                  providerType.replaceAll('_', ' '),
+                  if (distanceMiles != null) '$distanceMiles mi away',
+                ].where((value) => value.isNotEmpty).join(' • '),
+              ),
+              trailing: IconButton(
+                icon: Icon(
+                  isPreferred ? Icons.star : Icons.star_border,
+                  color: isPreferred
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                ),
+                tooltip: isPreferred ? 'Saved place' : 'Save this place',
+                onPressed: _savingPreferredId == id || isPreferred
+                    ? null
+                    : () => _addPreferredProvider({
+                        'id': id,
+                        'name': name,
+                        'type': providerType,
+                        'address': _formatAddress(provider),
+                        'phone': (provider['phone'] ?? '').toString(),
+                        'website': (provider['website'] ?? '').toString(),
+                      }),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
   }
 
   Widget _buildPreferredTab(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          'Preferred Mechanics',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('Saved Places', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
         Text(
-          "Pin mechanics you trust from search results or your service "
+          'Save businesses you trust from search results or your service '
           'history so they\'re easy to find next time.',
           style: TextStyle(color: Colors.grey[600], fontSize: 13),
         ),
@@ -521,12 +492,12 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
         if (_preferredProviders.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('No preferred mechanics saved yet.'),
+            child: Text('No places saved yet.'),
           )
         else
           ..._preferredProviders.map((provider) {
             final id = (provider['id'] ?? '').toString();
-            final name = (provider['name'] ?? 'Unnamed mechanic').toString();
+            final name = (provider['name'] ?? 'Unnamed business').toString();
             final type = (provider['type'] ?? '').toString();
             final address = (provider['address'] ?? '').toString();
 
@@ -555,12 +526,12 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
           }),
         const SizedBox(height: 24),
         Text(
-          "Mechanics You've Used",
+          "Places You've Used",
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 4),
         Text(
-          'Built from the shop/mechanic name saved on maintenance records '
+          'Built from the shop or professional saved on maintenance records '
           'across your garage.',
           style: TextStyle(color: Colors.grey[600], fontSize: 13),
         ),
@@ -574,7 +545,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'No past mechanics yet. Add a shop/mechanic name the next '
+              'No past businesses yet. Add a shop or professional the next '
               'time you log a maintenance entry.',
             ),
           )
@@ -598,9 +569,10 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
                     ? const Icon(Icons.star, color: Colors.grey)
                     : IconButton(
                         icon: const Icon(Icons.star_border),
-                        tooltip: 'Save as preferred',
+                        tooltip: 'Save this place',
                         onPressed: () => _addPreferredProvider({
-                          'id': 'used-${name.toLowerCase().replaceAll(RegExp(r'\s+'), '-')}',
+                          'id':
+                              'used-${name.toLowerCase().replaceAll(RegExp(r'\s+'), '-')}',
                           'name': name,
                           'type': 'repair_shop',
                         }),

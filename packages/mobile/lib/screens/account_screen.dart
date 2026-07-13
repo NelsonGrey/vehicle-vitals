@@ -125,7 +125,7 @@ class _AccountScreenState extends State<AccountScreen> {
     final appleLinked = user?.providerIds.contains('apple.com') ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: const Text('Account')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -139,7 +139,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Profile Overview',
+                        'Account Overview',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 12),
@@ -293,7 +293,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         leading: const Icon(Icons.settings_outlined),
                         title: const Text('Settings'),
                         subtitle: const Text(
-                          'Preferences, Mechanics, Premium, and more',
+                          'Preferences, Shops & Services, Premium, and more',
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/settings'),

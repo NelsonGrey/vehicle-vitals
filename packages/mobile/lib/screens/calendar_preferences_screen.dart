@@ -340,7 +340,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
 
               // Information text
               const Text(
-                'Use Upcoming Tasks to create calendar events with your selected target.',
+                'Use Maintenance Plan to create calendar events with your selected target.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),

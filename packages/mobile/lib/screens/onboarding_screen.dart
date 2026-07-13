@@ -85,7 +85,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final hasVehicle = _firstVehicleVin != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Setup your workspace')),
+      appBar: AppBar(title: const Text('Getting Started')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -95,7 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Complete these setup steps now, or finish them later from Profile and Settings.',
+            'Complete these setup steps now, or finish them later from Account and Settings.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -139,13 +139,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           _PrimaryStepCard(
             stepNumber: 3,
             icon: Icons.event_available,
-            title: 'Review upcoming maintenance',
+            title: 'Review your Maintenance Plan',
             subtitle:
                 'See what\'s due soon across your garage so nothing sneaks up on you.',
             actions: [
               _StepAction(
-                label: 'View upcoming',
+                label: 'View Maintenance Plan',
                 onTap: () => context.push('/app/upcoming'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _PrimaryStepCard(
+            stepNumber: 4,
+            icon: Icons.history,
+            title: 'Review your Service History',
+            subtitle:
+                'See completed work in one place once records start coming in.',
+            actions: [
+              _StepAction(
+                label: 'View Service History',
+                onTap: () => context.push('/app/timeline'),
               ),
             ],
           ),
@@ -166,6 +180,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   subtitle:
                       'Tune lead time and daily mileage assumptions to match how you use your vehicles.',
                   onTap: () => context.push('/app/reminder-preferences'),
+                ),
+                const Divider(height: 1),
+                _SecondaryStepTile(
+                  icon: Icons.storefront_outlined,
+                  title: 'Find shops & services',
+                  subtitle:
+                      'Search and save nearby shops and services for when you need them.',
+                  onTap: () => context.push('/app/service-providers'),
                 ),
                 const Divider(height: 1),
                 _SecondaryStepTile(

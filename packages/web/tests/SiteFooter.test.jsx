@@ -30,16 +30,13 @@ describe('SiteFooter', () => {
 
     const footer = screen.getByRole('contentinfo');
 
-    // Product nav always present
+    // Product nav present when signed out, evaluation-stage content only
     expect(
       within(footer).getByRole('navigation', { name: /Product/i })
     ).toBeVisible();
     expect(
       within(footer).getByRole('link', { name: /Getting Started/i })
     ).toHaveAttribute('href', '/getting-started');
-    expect(
-      within(footer).getByRole('link', { name: /Pricing/i })
-    ).toHaveAttribute('href', '/subscription');
     expect(
       within(footer).getByRole('link', { name: /Product Tour/i })
     ).toHaveAttribute('href', '/product-tour');
@@ -52,10 +49,15 @@ describe('SiteFooter', () => {
       within(footer).getByRole('navigation', { name: /Personas/i })
     ).toBeVisible();
 
-    // Support nav always present; Contact renamed Support
+    // Support nav always present, and includes Pricing so it isn't a lone
+    // one-link "Product" group once Getting Started/Product Tour drop away
+    // on sign-in
     expect(
       within(footer).getByRole('navigation', { name: /Support and legal/i })
     ).toBeVisible();
+    expect(
+      within(footer).getByRole('link', { name: /Pricing/i })
+    ).toHaveAttribute('href', '/subscription');
     expect(within(footer).getByRole('link', { name: /^Help$/i })).toBeVisible();
     expect(
       within(footer).getByRole('link', { name: /^Support$/i })
@@ -88,30 +90,23 @@ describe('SiteFooter', () => {
 
     const footer = screen.getByRole('contentinfo');
 
-    // Product and support still present
+    // Regression: signed-in users previously saw evaluation-stage content
+    // (Getting Started, Product Tour) mixed into a Product nav alongside
+    // their real app-task nav, and once those two links were removed, the
+    // Product nav was left with only Pricing — a lone, oddly-placed group
+    // floating between the marketing and app sides. The Product nav is now
+    // entirely absent once signed in; Pricing lives in Support/legal
+    // instead (asserted below), and Getting Started comes from the App nav.
     expect(
-      within(footer).getByRole('navigation', { name: /Product/i })
-    ).toBeVisible();
+      within(footer).queryByRole('navigation', { name: /Product/i })
+    ).not.toBeInTheDocument();
+
     expect(
       within(footer).getByRole('navigation', { name: /Support and legal/i })
     ).toBeVisible();
-
-    // Regression: signed-in users previously saw evaluation-stage content
-    // (Getting Started, Product Tour) mixed into the Product nav alongside
-    // their real app-task nav. Only Pricing (useful for subscription
-    // management) should remain in the Product group once authenticated —
-    // Getting Started now comes from the App nav group instead (asserted
-    // below), and Product Tour has nothing left to evaluate once signed in.
-    const productNav = within(footer).getByRole('navigation', {
-      name: /Product/i,
-    });
     expect(
-      within(productNav).getByRole('link', { name: /Pricing/i })
+      within(footer).getByRole('link', { name: /Pricing/i })
     ).toHaveAttribute('href', '/subscription');
-    expect(
-      within(productNav).queryByRole('link', { name: /Product Tour/i })
-    ).not.toBeInTheDocument();
-    expect(within(productNav).getAllByRole('link')).toHaveLength(1);
 
     // Persona nav absent; app nav present
     expect(

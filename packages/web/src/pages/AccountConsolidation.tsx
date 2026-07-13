@@ -327,7 +327,7 @@ export function AccountConsolidationContent() {
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-4">
         <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
-          Household Garage
+          Shared Garage
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
           Share one garage with your household so everyone sees the same
@@ -341,7 +341,7 @@ export function AccountConsolidationContent() {
         ) : householdStatus?.orgType === 'household' ? (
           <div className="rounded-lg border border-accent-300 dark:border-accent-700 bg-accent-50 dark:bg-accent-950/30 px-4 py-3 space-y-1">
             <p className="text-sm text-accent-900 dark:text-accent-200 m-0">
-              <strong>{householdStatus.name || 'Household Garage'}</strong> is a
+              <strong>{householdStatus.name || 'Shared Garage'}</strong> is a
               shared household garage.
             </p>
             <p className="text-xs text-accent-800 dark:text-accent-300 m-0">
@@ -362,7 +362,7 @@ export function AccountConsolidationContent() {
                 htmlFor="householdName"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
               >
-                Household garage name
+                Shared garage name
               </label>
               <input
                 id="householdName"
@@ -383,7 +383,7 @@ export function AccountConsolidationContent() {
               disabled={householdBusy || !householdName.trim()}
               className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
             >
-              {householdBusy ? 'Creating…' : 'Create Household Garage'}
+              {householdBusy ? 'Creating…' : 'Create Shared Garage'}
             </button>
           </div>
         )}

@@ -118,7 +118,7 @@ You now have a **complete promotional toolkit** for Vehicle Vitals. Here's what'
 **Suggested Blog Topics:**
 
 - "Why You're Overspending on Maintenance"
-- "The 7 Vehicle Records Every Car Owner Needs"
+- "The 7 Records Every Vehicle Owner Needs"
 - "How to Calculate Your True Cost of Vehicle Ownership"
 - "Preventive Maintenance: Save 5x on Repairs"
 - "The Complete Fleet Manager's Guide to Maintenance Tracking"

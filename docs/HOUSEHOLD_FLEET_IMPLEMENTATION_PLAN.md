@@ -15,7 +15,7 @@ codebase — REQUIREMENTS.md's Feature Traceability Baseline is explicit:
 | Capability | Callable | Notes |
 | --- | --- | --- |
 | Personal org bootstrap | `bootstrapEnterpriseContextCallable` | Every user gets an org of `type: 'personal'` on first touch. |
-| Promote to household | `promotePersonalGarageToHouseholdCallable` | Org-owner only. Renames org, sets `garageStorageMode`, copies existing vehicles in. **Web UI shipped** (Profile → Household Garage, see below). |
+| Promote to household | `promotePersonalGarageToHouseholdCallable` | Org-owner only. Renames org, sets `garageStorageMode`, copies existing vehicles in. **Web UI shipped** (Profile -> Shared Garage, see below). |
 | Change storage mode | `setGarageStorageModeCallable` | Org-owner only. Switches `user_scoped` / `dual_write` / `org_scoped`. |
 | List members | `getOrganizationMembersCallable` | Any member can list `orgs/{orgId}/members`. |
 | Change a member's role | `setOrganizationMemberRoleCallable` | Org-owner/admin only. Assigns one of 5 fixed roles. |
@@ -48,7 +48,7 @@ role exists anywhere in `packages/shared`, `packages/functions`, or
 
 | Workflow | Data | Screen |
 | --- | --- | --- |
-| Owner names and creates a shared garage | `orgs/{orgId}.name`, `.type = 'household'`, `.garageStorageMode` | **Shipped**: Web Profile → "Household Garage" card (`promotePersonalGarageToHouseholdCallable`) |
+| Owner names and creates a shared garage | `orgs/{orgId}.name`, `.type = 'household'`, `.garageStorageMode` | **Shipped**: Web Profile -> "Shared Garage" card (`promotePersonalGarageToHouseholdCallable`) |
 | Owner sees current household status | same org doc | **Shipped**: same card, read via `bootstrapEnterpriseContextCallable` |
 | Owner invites a household member by email | *(missing)* `inviteOrgMemberCallable` + `orgInvites/{inviteId}` doc + accept-invite flow | *(missing)* Profile → "Invite a member" form; accept-invite landing page |
 | Member sees they're part of a household and whose garage it is | `users/{uid}/orgMemberships/{orgId}` (exists), org name (exists) | *(missing)* Household banner/indicator in web Home and iOS Home |
@@ -85,7 +85,7 @@ different data model.
 ## This round's shipped slice
 
 Prompt 5 in this work batch already shipped the Household MVP's first two
-rows above: the web Profile "Household Garage" card lets an owner name and
+rows above: the web Profile "Shared Garage" card lets an owner name and
 promote their personal garage to a household garage, see current org
 type/storage mode, and understand that vehicles are copied in — with the
 invite gap explicitly called out as a TODO in the UI copy itself rather than

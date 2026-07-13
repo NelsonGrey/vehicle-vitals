@@ -53,7 +53,7 @@ Do not make dongle or telemetry access a prerequisite for the first release.
 Later enrichment path:
 
 - optional `OBD-II dongle` integration
-- optional OEM connected-car integrations
+- optional OEM connected-vehicle integrations
 - optional telemetry-assisted confidence boosts
 
 Phase-1 rule:

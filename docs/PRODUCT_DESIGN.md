@@ -22,13 +22,13 @@ This document describes product vision, persona definitions, tier structure, UX 
 
 **Tagline**: "One garage for every vehicle record, reminder, and repair cost."
 
-**Positioning**: Vehicle Vitals is a cross-platform vehicle management platform that lets owners track service history, plan upcoming maintenance, and build a credible ownership record — across personal cars, shared household vehicles, and light business fleets.
+**Positioning**: Vehicle Vitals is a cross-platform vehicle management platform that lets owners track service history, plan upcoming maintenance, and build a credible ownership record — across personal vehicles, shared household vehicles, and light business fleets.
 
 **Core value propositions**:
 
 - **Proof when you need it**: Maintenance history for resale conversations, warranty claims, insurance discussions, and mechanic visits. A clean record makes every ownership moment more confident.
 - **Fewer missed service moments**: Visibility into upcoming work before it becomes urgent or expensive. Planning beats reacting.
-- **Plans that grow with the garage**: The same product works from a first car to a household fleet to a light business — tiered to match the level of coordination needed.
+- **Plans that grow with the garage**: The same product works from a first vehicle to a household fleet to a light business — tiered to match the level of coordination needed.
 
 ---
 
@@ -38,11 +38,11 @@ Vehicle Vitals serves five core personas. Each has a distinct pain point, outcom
 
 | ID | Nav label | Title | Pain | Outcome | Tier path |
 |---|---|---|---|---|---|
-| `owners` | For Owners | Responsible owner | Records scattered; no clear service history | Keep one car reliable and documented | Free → Pro |
-| `households` | For Households | Household garage | Multiple vehicles, multiple drivers, no coordination | Coordinate every vehicle in the family | Pro |
-| `new-drivers` | New Drivers | New driver / new owner | Unfamiliar with maintenance; uncertain what to do next | Build confidence with plain-language guidance | Free → Pro |
-| `diy-maintainers` | DIY | DIY maintainer | No good way to document self-performed work | Document the work you do yourself, with receipts | Pro → Premium |
-| `light-fleets` | Light Fleets | Light fleet | Vehicle spreadsheets; no operating visibility | Replace spreadsheets with real fleet visibility | Premium → Enterprise |
+| `owners` | Ownership Records | Ownership records | Records scattered; no clear service history | Keep every service record ready when it matters | Free → Pro |
+| `households` | Shared Garage | Shared garage | Multiple vehicles, multiple drivers, no coordination | Coordinate every vehicle in one shared garage | Pro |
+| `new-drivers` | Guided Setup | Guided setup | Unfamiliar with maintenance; uncertain what to do next | Know what to track from day one | Free → Pro |
+| `diy-maintainers` | Hands-On Maintenance | Hands-on maintenance | No good way to document self-performed work | Document the work you do yourself, with receipts | Pro → Premium |
+| `light-fleets` | Work Vehicles | Work vehicles | Vehicle spreadsheets; no operating visibility | Keep business vehicles ready, documented, and accountable | Premium → Enterprise |
 
 Persona detail pages live at `/personas/:id`. Each page shows the pain/outcome narrative, a 3-step workflow, a recommended plan path, and a link to the relevant feature demo.
 
@@ -89,10 +89,10 @@ Legend:
 
 | Tier | Price | Vehicles | Tagline | Primary audience |
 |---|---|---|---|---|
-| **Free** | Free | 2 | Learn and document | First-time users, single-car owners exploring the product |
-| **Pro** | $2.99/month | 10 | Plan and coordinate | Households, active owners who want planning and calendar sync |
-| **Premium** | $6.99/month | 25 | Forecast and automate | DIY maintainers, power users who want AI, exports, and API access |
-| **Enterprise** | Custom | 25+ | Govern and integrate | Light fleets and business operators who need policy controls and integrations |
+| **Free** | Free | 2 | Learn and document | First-time users, single-vehicle owners exploring the product |
+| **Pro** | $2.99/month | 10 | Plan and coordinate | Shared garages and active owners who want planning and calendar sync |
+| **Premium** | $6.99/month | 25 | Forecast and automate | Hands-on maintainers, power users who want AI, exports, and API access |
+| **Enterprise** | Custom | 25+ | Govern and integrate | Work vehicle operators and business users who need policy controls and integrations |
 
 ### Feature Comparison
 
@@ -238,9 +238,9 @@ See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for detailed ad 
 
 ---
 
-### Tertiary User: "Young Car Owner"
+### Tertiary User: "Young Vehicle Owner"
 
-**Scenario**: First car, learning maintenance responsibility
+**Scenario**: First vehicle, learning maintenance responsibility
 
 1. Opens app, unsure what "O2 sensor" means
 2. Views maintenance details with plain-language explanations
@@ -620,7 +620,7 @@ Oil Change: $35-55 (avg from community)
 
 **Apple-Specific Features**:
 
-- HomeKit integration (future: car status on Apple HomeKit)
+- HomeKit integration (future: vehicle status on Apple HomeKit)
 - Siri Shortcuts (view maintenance status via voice)
 - Apple Wallet (vehicle registration, insurance card)
 - iCloud sync (across user's devices)
@@ -770,7 +770,7 @@ Budget & Insights
 
 ### Pre-Launch
 
-- ✅ Beta testing with target users (responsible car owners)
+- ✅ Beta testing with target users (responsible vehicle owners)
 - ✅ VIN lookup accuracy validation (edge cases, older vehicles)
 - ✅ Cross-platform testing (iOS, Android, web)
 - ✅ App Store/Play Store listings and screenshots

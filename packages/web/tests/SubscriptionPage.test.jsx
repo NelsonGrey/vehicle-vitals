@@ -81,11 +81,11 @@ describe('SubscriptionPage', () => {
         name: /pricing for every kind of garage/i,
       })
     ).toBeInTheDocument();
-    expect(screen.getByText(/^responsible owner$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^household garage$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^new driver or new owner$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^diy maintainer$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^light fleet$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^ownership records$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^shared garage$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^guided setup$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^hands-on maintenance$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^work vehicles$/i)).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Free' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Pro' })).toBeInTheDocument();

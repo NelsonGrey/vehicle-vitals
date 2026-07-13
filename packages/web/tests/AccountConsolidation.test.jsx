@@ -67,9 +67,9 @@ describe('AccountConsolidation – household garage', () => {
 
     renderPage();
 
-    await waitFor(() => screen.getByLabelText(/household garage name/i));
+    await waitFor(() => screen.getByLabelText(/shared garage name/i));
     expect(
-      screen.getByRole('button', { name: /create household garage/i })
+      screen.getByRole('button', { name: /create shared garage/i })
     ).toBeDisabled();
   });
 
@@ -91,12 +91,12 @@ describe('AccountConsolidation – household garage', () => {
 
     renderPage();
 
-    const nameInput = await screen.findByLabelText(/household garage name/i);
+    const nameInput = await screen.findByLabelText(/shared garage name/i);
     fireEvent.change(nameInput, {
       target: { value: 'The Nelson Household' },
     });
     fireEvent.click(
-      screen.getByRole('button', { name: /create household garage/i })
+      screen.getByRole('button', { name: /create shared garage/i })
     );
 
     await waitFor(() =>
@@ -126,7 +126,7 @@ describe('AccountConsolidation – household garage', () => {
       screen.getByText(/inviting additional members.*not yet available/i)
     ).toBeInTheDocument();
     expect(
-      screen.queryByLabelText(/household garage name/i)
+      screen.queryByLabelText(/shared garage name/i)
     ).not.toBeInTheDocument();
   });
 });

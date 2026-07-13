@@ -47,6 +47,83 @@ body {
   min-height: 100vh;
 }
 
+/* Compact desktop density
+ *
+ * Width-only breakpoints treat a 1366x768 laptop like a large desktop. These
+ * height-aware rules preserve the mobile scale while fitting more of the site
+ * into short laptop viewports. Browser zoom and user font preferences continue
+ * to work because the adjustments remain rem-based.
+ */
+@media (min-width: 900px) and (max-height: 900px) {
+  html {
+    font-size: 15px;
+  }
+
+  .site-header-frame {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .site-nav-shell {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+  }
+
+  .site-main-content {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .marketing-page-section {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .marketing-hero-content {
+    gap: 1.25rem;
+    padding: 1.75rem 2rem;
+  }
+
+  .marketing-hero-logo {
+    width: 7rem;
+    height: 7rem;
+  }
+
+  .marketing-section {
+    margin-top: 1.75rem;
+  }
+
+  .marketing-content-stack {
+    gap: 1.25rem;
+  }
+
+  .marketing-pricing-page {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+@media (min-width: 900px) and (max-height: 760px) {
+  html {
+    font-size: 14px;
+  }
+
+  .marketing-page-section {
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+  }
+
+  .marketing-hero-content {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .marketing-hero-logo {
+    width: 6rem;
+    height: 6rem;
+  }
+}
+
 /* Page chrome layout */
 .page-content {
   padding-top: var(--header-h);

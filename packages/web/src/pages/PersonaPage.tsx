@@ -27,7 +27,7 @@ export default function PersonaPage() {
   const relatedPersonas = personaPages.filter(item => item.id !== persona.id);
 
   return (
-    <div className="space-y-8">
+    <div className="marketing-content-stack space-y-8">
       <PageSEO meta={meta} />
 
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">
@@ -37,7 +37,7 @@ export default function PersonaPage() {
           className="absolute inset-0 h-full w-full object-cover opacity-45"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/75 to-slate-900/50" />
-        <div className="relative grid gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-12 lg:py-14">
+        <div className="marketing-hero-content relative grid gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-12 lg:py-14">
           <div>
             <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase text-slate-100 ring-1 ring-white/30">
               {persona.label}

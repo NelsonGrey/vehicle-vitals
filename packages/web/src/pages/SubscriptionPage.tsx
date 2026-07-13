@@ -71,11 +71,11 @@ const planPositioning: Record<
     audience: 'Plan and coordinate',
     capacity: 'Capacity: up to 10 vehicles',
     promise:
-      'Turn maintenance into a coordinated plan with better reminders, calendar sync, exports, and household-ready workflows.',
+      'Turn maintenance into a coordinated plan with better reminders, calendar sync, exports, and shared-garage-ready workflows.',
     highlights: [
       'Advanced reminders and 12-month maintenance planning',
       'Calendar sync plus PDF and Excel exports',
-      'Good fit for households and active DIY maintainers',
+      'Good fit for shared garages and hands-on maintenance',
     ],
   },
   premium: {
@@ -86,7 +86,7 @@ const planPositioning: Record<
     highlights: [
       '36-month forecasts and AI predictions',
       'Cloud sync, API access, and automation options',
-      'Good fit for power users, serious DIY tracking, and light operations',
+      'Good fit for power users, hands-on maintenance, and work vehicles',
     ],
   },
   enterprise: {
@@ -133,7 +133,7 @@ const pricingDimensions = [
   {
     label: 'Coordination',
     free: 'Personal use',
-    pro: 'Household and DIY workflows',
+    pro: 'Shared garage and hands-on workflows',
     premium: 'Power-user automation',
     enterprise: 'Team controls and governance',
   },
@@ -193,7 +193,7 @@ export default function SubscriptionPage() {
   const tiers: UserTier[] = ['free', 'pro', 'premium', 'enterprise'];
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-5 py-6">
+    <div className="marketing-pricing-page mx-auto w-full max-w-7xl px-5 py-6">
       <PageSEO meta={ROUTE_SEO['/subscription']} />
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">

@@ -2,17 +2,17 @@
 
 One garage for every vehicle record, reminder, and repair cost.
 
-Vehicle Vitals is a cross-platform vehicle management application — web (React) and iOS (Flutter) — backed by Firebase. It lets owners track service history, plan upcoming maintenance, and build a credible ownership record across personal cars, shared household vehicles, and light business fleets.
+Vehicle Vitals is a cross-platform vehicle management application — web (React) and iOS (Flutter) — backed by Firebase. It lets owners track service history, plan upcoming maintenance, and build a credible ownership record across personal vehicles, shared household vehicles, and light business fleets.
 
 ## Who it's for
 
 | Persona | Need | Recommended tier |
 |---|---|---|
-| **Responsible owner** | Keep one car reliable and documented | Free → Pro |
-| **Household garage** | Coordinate every vehicle in the family | Pro |
-| **New driver / new owner** | Build confidence with plain-language maintenance guidance | Free → Pro |
-| **DIY maintainer** | Document the work you do yourself | Pro → Premium |
-| **Light fleet** | Replace vehicle spreadsheets with operating visibility | Premium → Enterprise |
+| **Ownership Records** | Keep every service record ready when it matters | Free → Pro |
+| **Shared Garage** | Coordinate every vehicle in one shared garage | Pro |
+| **Guided Setup** | Know what to track from day one | Free → Pro |
+| **Hands-On Maintenance** | Document the work you do yourself | Pro → Premium |
+| **Work Vehicles** | Keep business vehicles ready, documented, and accountable | Premium → Enterprise |
 
 ## Subscription tiers
 

@@ -468,12 +468,12 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
     nextDueByDate: '2026-06-12',
     annualMileageEstimate: 16800,
     fuelType: 'Gasoline',
-    nickname: 'Work Truck',
+    nickname: 'Work Vehicle',
     maintenance: [
       {
         title: 'Oil + Filter Service',
         serviceType: 'oil_change',
-        provider: 'Blue Ridge Truck Center',
+        provider: 'Blue Ridge Vehicle Center',
         date: '2024-04-15',
         mileage: '30120',
         cost: 118.25,
@@ -482,7 +482,7 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
       {
         title: 'Transmission Fluid Service',
         serviceType: 'transmission_service',
-        provider: 'Blue Ridge Truck Center',
+        provider: 'Blue Ridge Vehicle Center',
         date: '2025-02-03',
         mileage: '41910',
         cost: 289.0,
@@ -530,7 +530,7 @@ const BOB_DEMO_VEHICLES: DemoVehicleSeed[] = [
     nextDueByDate: '2026-07-02',
     annualMileageEstimate: 9800,
     fuelType: 'Premium Gasoline',
-    nickname: 'Weekend Car',
+    nickname: 'Weekend Vehicle',
     maintenance: [
       {
         title: 'Annual Service Inspection',

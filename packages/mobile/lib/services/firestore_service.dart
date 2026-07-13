@@ -275,7 +275,7 @@ final List<Vehicle> _demoVehicles = [
     year: 2022,
     mileage: 44520,
     trim: 'Lariat',
-    vehicleType: 'Truck',
+    vehicleType: 'Commercial Vehicle',
     engineType: '3.5L EcoBoost',
     fuelType: 'Gasoline',
     driveType: '4WD',

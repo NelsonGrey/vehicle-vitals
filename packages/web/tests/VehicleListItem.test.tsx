@@ -14,7 +14,7 @@ describe('VehicleListItem Component', () => {
     model: 'Civic',
     year: '2020',
     mileage: '50000',
-    photoUrl: 'https://example.com/car.jpg',
+    photoUrl: 'https://example.com/vehicle.jpg',
     vehicleStatus: 'active' as const,
   };
 

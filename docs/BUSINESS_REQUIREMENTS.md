@@ -47,9 +47,9 @@ Implication for business planning:
 
 ### Total Addressable Market (TAM)
 
-**Global Vehicle Population**: ~1.4 billion vehicles (cars, light trucks, motorcycles)
+**Global Vehicle Population**: ~1.4 billion vehicles (passenger vehicles, commercial vehicles, motorcycles)
 
-**Vehicle Owner Market Addressable**: 500M+ car owners in developed markets (US, EU, Japan, Canada, Australia, South Korea)
+**Vehicle Owner Market Addressable**: 500M+ vehicle owners in developed markets (US, EU, Japan, Canada, Australia, South Korea)
 
 **TAM Calculation**:
 
@@ -596,15 +596,15 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 
 ### Launch Phase (Month 1-3)
 
-**Target Audience**: Early adopters, tech-forward vehicle owners, car maintenance enthusiasts
+**Target Audience**: Early adopters, tech-forward vehicle owners, vehicle maintenance enthusiasts
 
 **Channels**:
 
-1. **Organic**: Subreddits (r/cars, r/AutoDetailing, r/Cartalk), forums, tech blogs
+1. **Organic**: Vehicle ownership subreddits, detailing communities, forums, tech blogs
 2. **Influencer**: 20-50K followers in automotive/tech space (YouTube, TikTok)
 3. **PR**: Press releases to automotive tech publications, "Best Apps" features
 4. **Product Hunt**: Launch with active community engagement
-5. **App Store Optimization (ASO)**: Targeted keywords (maintenance, vehicle tracker, car app)
+5. **App Store Optimization (ASO)**: Targeted keywords (maintenance, vehicle tracker, vehicle app)
 
 **Message**: "Finally, a simple way to track your vehicle maintenance and never miss an important service"
 
@@ -616,7 +616,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 
 **Expanded Channels**:
 
-1. **Partnerships**: Mechanic networks, dealership co-marketing, car manufacturers
+1. **Partnerships**: Mechanic networks, dealership co-marketing, vehicle manufacturers
 2. **Paid**: YouTube pre-roll (automotive content), Facebook (35-55 age target), Google Ads
 3. **Content Marketing**: SEO blog posts ("When to change transmission fluid", "Maintenance costs by vehicle")
 4. **Referral Program**: $10 credit for referrer + referee
@@ -795,7 +795,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 
 **Decision**: Include fleet management within primary product
 
-- **Rationale**: Fleet customers (property managers, delivery, car rental) have 5-10x higher LTV
+- **Rationale**: Fleet customers (property managers, delivery, vehicle rental) have 5-10x higher LTV
 - **Trade-off**: More complex UX, requires clear separation from consumer tier
 
 ### Decision 4: Self-Hosted Infrastructure (Vehicle Vitals CI/CD)

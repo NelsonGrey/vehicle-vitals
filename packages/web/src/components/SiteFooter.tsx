@@ -68,7 +68,7 @@ export default function SiteFooter() {
             className="inline-flex no-underline text-white shrink-0"
           >
             <StackedVLogo
-              size={33}
+              size={28}
               showText={false}
               color="#ffffff"
               accent="#14b8a6"

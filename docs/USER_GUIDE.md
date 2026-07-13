@@ -24,7 +24,7 @@
 
 Vehicle Vitals is a secure, cloud-based vehicle management platform. With it you can:
 
-- **Track your entire fleet** — cars, trucks, SUVs — in one place
+- **Track your entire fleet** — sedans, SUVs, motorcycles, vans, and more — in one place
 - **Log and analyze maintenance costs** across all vehicles
 - **See your full maintenance timeline** in reverse chronological order
 - **Receive proactive reminders** before service is due

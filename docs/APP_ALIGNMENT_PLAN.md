@@ -20,11 +20,11 @@ The marketing site establishes the vision — persona-driven messaging, dark-and
 
 | Persona | Title | Tier path |
 |---|---|---|
-| Responsible owner | Keep one car reliable and documented | Free → Pro |
-| Household garage | Coordinate every vehicle in the family | Pro |
-| New driver / new owner | Build confidence with plain-language guidance | Free → Pro |
-| DIY maintainer | Document the work you do yourself | Pro → Premium |
-| Light fleet | Replace vehicle spreadsheets with operating visibility | Premium → Enterprise |
+| Ownership Records | Keep every service record ready when it matters | Free → Pro |
+| Shared Garage | Coordinate every vehicle in one shared garage | Pro |
+| Guided Setup | Know what to track from day one | Free → Pro |
+| Hands-On Maintenance | Document the work you do yourself | Pro → Premium |
+| Work Vehicles | Keep business vehicles ready, documented, and accountable | Premium → Enterprise |
 
 ### Four tiers
 
@@ -39,7 +39,7 @@ The marketing site establishes the vision — persona-driven messaging, dark-and
 
 1. **Proof when you need it** — maintenance history for resale, warranty, insurance, and mechanic conversations
 2. **Fewer missed service moments** — visibility into upcoming work before it becomes urgent
-3. **Plans that grow with the garage** — same product from first car to household to light fleet
+3. **Plans that grow with the garage** — same product from first vehicle to household to light fleet
 
 ### Key product surfaces (as marketed)
 
@@ -144,7 +144,7 @@ This can be an onboarding carousel shown only on first launch (`hasCompletedOnbo
 
 **Change**: Build iOS service provider finder to match web capability:
 - Location-based search with configurable radius
-- Provider type filtering (repair shops, dealerships, body shops, car washes)
+- Provider type filtering (repair shops, dealerships, body shops, vehicle washes)
 - Vehicle make matching for dealer results
 - Surface via bottom nav or profile screen (currently accessible only through Profile on iOS)
 

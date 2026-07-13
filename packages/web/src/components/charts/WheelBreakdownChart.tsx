@@ -2,7 +2,7 @@
  * WheelBreakdownChart — a dependency-free SVG donut styled like a wheel
  * (tread-segment dividers, hub center) for category breakdowns, e.g. cost by
  * service type. Replaces plain CSS bar breakdowns to carry the app's
- * car-racing visual theme.
+ * motorsport visual theme.
  */
 
 export interface WheelBreakdownSegment {

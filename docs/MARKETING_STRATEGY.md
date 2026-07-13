@@ -33,7 +33,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 | Segment                 | Pain Point                                    | Benefit                           | Messaging                                      |
 | ----------------------- | --------------------------------------------- | --------------------------------- | ---------------------------------------------- |
-| **Individual Owners**   | Don't know true costs; scattered records      | Financial clarity + peace of mind | "Know what you're spending on your car"        |
+| **Individual Owners**   | Don't know true costs; scattered records      | Financial clarity + peace of mind | "Know what you're spending on your vehicle"        |
 | **Fleet Managers**      | Maintenance coordination chaos; uptime issues | Efficiency + predictability       | "Reduce breakdowns. Eliminate admin overhead." |
 | **Small Business**      | Hidden operational costs; repair surprises    | Budget predictability             | "Smarter vehicle economics."                   |
 | **Tech-Forward Buyers** | Tired of manual processes                     | Modern, cloud-based solution      | "Vehicle management, finally modernized."      |
@@ -105,7 +105,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 #### YouTube SEO Keywords
 
 - "vehicle maintenance tracking"
-- "car maintenance app"
+- "vehicle maintenance app"
 - "fleet management software"
 - "vehicle cost tracking"
 - "maintenance reminder app"
@@ -115,7 +115,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 **TikTok / Instagram / YouTube Shorts (Sample):**
 
-> "I spent $1,600+ on car maintenance last year and had no idea where it was going. 😤
+> "I spent $1,600+ on vehicle maintenance last year and had no idea where it was going. 😤
 >
 > Enter Vehicle Vitals: 📱
 > ✅ See your true cost of ownership
@@ -179,14 +179,14 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 | Week | Blog Post                                | Social Promo             | Video                 |
 | ---- | ---------------------------------------- | ------------------------ | --------------------- |
 | 1    | "Why You're Overspending on Maintenance" | Launch announcement      | 3:20 full walkthrough |
-| 2    | "The 7 Records Every Car Owner Needs"    | Blog excerpt + CTA       | YouTube Shorts #1     |
+| 2    | "The 7 Records Every Vehicle Owner Needs"    | Blog excerpt + CTA       | YouTube Shorts #1     |
 | 3    | "How to Find Trustworthy Mechanics"      | Tie to service providers | LinkedIn video        |
 | 4    | "Fleet Manager's Guide to Cost Control"  | LinkedIn article         | TikTok short          |
 | ...  | ...                                      | ...                      | ...                   |
 
 #### SEO Keywords to Target
 
-- Primary: "vehicle maintenance tracker," "fleet maintenance software," "car maintenance app"
+- Primary: "vehicle maintenance tracker," "fleet maintenance software," "vehicle maintenance app"
 - Secondary: "cost of vehicle ownership," "maintenance reminder," "service schedule tracker"
 - Long-tail: "how to track vehicle maintenance," "best fleet management app," "automotive record keeping"
 
@@ -202,7 +202,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 #### Google Ads (Search)
 
-**Keywords:** "vehicle maintenance app," "fleet management software," "maintenance tracker," "car cost tracker"
+**Keywords:** "vehicle maintenance app," "fleet management software," "maintenance tracker," "vehicle cost tracker"
 
 **Ad Copy Sample:**
 
@@ -219,7 +219,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 **Audience:** Vehicle owners, fleet managers, small business owners  
 **Age:** 25–65  
-**Interests:** Cars, maintenance, small business, finance
+**Interests:** Vehicles, maintenance, small business, finance
 
 **Creative Variations:**
 
@@ -281,7 +281,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 #### Sample Email Copy
 
-**Subject:** "The $1,600 Surprise Most Car Owners Miss"
+**Subject:** "The $1,600 Surprise Most Vehicle Owners Miss"
 
 > Hi Sarah,
 >
@@ -314,7 +314,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 - **Small Business Podcasts:** Guest appearances, ad placements
 - **Mechanic Networks:** Integration partnerships, referral programs
 - **Fleet Management Associations:** Industry partnerships
-- **Car Insurance Companies:** Co-marketing, integrations
+- **Vehicle Insurance Companies:** Co-marketing, integrations
 
 #### PR Strategy
 

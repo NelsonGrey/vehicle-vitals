@@ -175,7 +175,7 @@ describe('AddVehicle page', () => {
       driveType: 'FWD',
       transmissionStyle: 'Automatic',
       trim: 'LE',
-      vehicleType: 'Passenger Car',
+      vehicleType: 'Passenger Vehicle',
       recallsItems: [],
       vinProfile: {},
       rawInsights: { source: 'mock' },

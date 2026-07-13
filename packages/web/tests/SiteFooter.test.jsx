@@ -30,16 +30,23 @@ describe('SiteFooter', () => {
 
     const footer = screen.getByRole('contentinfo');
 
-    // Product nav present when signed out, evaluation-stage content only
-    expect(
-      within(footer).getByRole('navigation', { name: /Product/i })
-    ).toBeVisible();
-    expect(
-      within(footer).getByRole('link', { name: /Getting Started/i })
-    ).toHaveAttribute('href', '/getting-started');
-    expect(
-      within(footer).getByRole('link', { name: /Product Tour/i })
-    ).toHaveAttribute('href', '/product-tour');
+    // Getting Started and Product Tour are paired together and styled
+    // distinctly (teal) from every other footer link, always present
+    // regardless of auth state.
+    const learnMoreNav = within(footer).getByRole('navigation', {
+      name: /Learn more/i,
+    });
+    expect(learnMoreNav).toBeVisible();
+    const gettingStartedLink = within(learnMoreNav).getByRole('link', {
+      name: /Getting Started/i,
+    });
+    const productTourLink = within(learnMoreNav).getByRole('link', {
+      name: /Product Tour/i,
+    });
+    expect(gettingStartedLink).toHaveAttribute('href', '/getting-started');
+    expect(productTourLink).toHaveAttribute('href', '/product-tour');
+    expect(gettingStartedLink.className).toMatch(/text-teal-100/);
+    expect(learnMoreNav.className).toMatch(/text-teal-300/);
     expect(
       within(footer).queryByRole('link', { name: /^Screens$/i })
     ).not.toBeInTheDocument();
@@ -94,12 +101,23 @@ describe('SiteFooter', () => {
     // (Getting Started, Product Tour) mixed into a Product nav alongside
     // their real app-task nav, and once those two links were removed, the
     // Product nav was left with only Pricing — a lone, oddly-placed group
-    // floating between the marketing and app sides. The Product nav is now
-    // entirely absent once signed in; Pricing lives in Support/legal
-    // instead (asserted below), and Getting Started comes from the App nav.
+    // floating between the marketing and app sides. Pricing now lives in
+    // Support/legal (asserted below); Getting Started and Product Tour are
+    // paired in their own "Learn more" nav, present regardless of auth state.
     expect(
-      within(footer).queryByRole('navigation', { name: /Product/i })
+      within(footer).queryByRole('navigation', { name: /^Product$/i })
     ).not.toBeInTheDocument();
+
+    const learnMoreNav = within(footer).getByRole('navigation', {
+      name: /Learn more/i,
+    });
+    expect(learnMoreNav).toBeVisible();
+    expect(
+      within(learnMoreNav).getByRole('link', { name: /Getting Started/i })
+    ).toHaveAttribute('href', '/getting-started');
+    expect(
+      within(learnMoreNav).getByRole('link', { name: /Product Tour/i })
+    ).toHaveAttribute('href', '/product-tour');
 
     expect(
       within(footer).getByRole('navigation', { name: /Support and legal/i })
@@ -112,38 +130,32 @@ describe('SiteFooter', () => {
     expect(
       within(footer).queryByRole('navigation', { name: /Personas/i })
     ).not.toBeInTheDocument();
-    expect(
-      within(footer).getByRole('navigation', { name: /App/i })
-    ).toBeVisible();
+    const appNav = within(footer).getByRole('navigation', { name: /^App$/i });
+    expect(appNav).toBeVisible();
 
-    // App nav links present with correct routes
+    // App nav links present with correct routes, and no longer includes
+    // Getting Started or Product Tour — those moved to the Learn more nav.
     expect(
-      within(footer).getByRole('link', { name: /^Garage$/i })
+      within(appNav).getByRole('link', { name: /^Garage$/i })
     ).toHaveAttribute('href', '/app');
     expect(
-      within(footer).getByRole('link', { name: /^Account$/i })
+      within(appNav).getByRole('link', { name: /^Account$/i })
     ).toHaveAttribute('href', '/app/profile');
     expect(
-      within(footer).getByRole('link', { name: /^Service History$/i })
+      within(appNav).getByRole('link', { name: /^Service History$/i })
     ).toHaveAttribute('href', '/app/timeline');
     expect(
-      within(footer).getByRole('link', { name: /^Maintenance Plan$/i })
+      within(appNav).getByRole('link', { name: /^Maintenance Plan$/i })
     ).toHaveAttribute('href', '/app/upcoming');
     expect(
-      within(footer).getByRole('link', { name: /^Shops & Services$/i })
+      within(appNav).getByRole('link', { name: /^Shops & Services$/i })
     ).toHaveAttribute('href', '/app/providers');
-
-    // Getting Started is available in both the header and footer.
     expect(
-      within(footer).getByRole('link', { name: /Getting Started/i })
-    ).toHaveAttribute('href', '/getting-started');
-
-    // Product Tour is marketing content, not a capability, but stays
-    // available in the App nav for continuity once signed in.
-    const appNav = within(footer).getByRole('navigation', { name: /App/i });
+      within(appNav).queryByRole('link', { name: /Getting Started/i })
+    ).not.toBeInTheDocument();
     expect(
-      within(appNav).getByRole('link', { name: /Product Tour/i })
-    ).toHaveAttribute('href', '/product-tour');
+      within(appNav).queryByRole('link', { name: /Product Tour/i })
+    ).not.toBeInTheDocument();
   });
 
   it('renders brand link and does not include email contact links', () => {

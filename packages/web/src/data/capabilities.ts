@@ -164,3 +164,12 @@ export const PRODUCT_TOUR_LINK = {
   to: '/product-tour',
   analyticsId: 'product_tour',
 };
+
+/**
+ * Getting Started is paired with Product Tour (both header and footer) as
+ * a visually distinct "learn more" duo, placed ahead of the task-oriented
+ * capability links rather than sorted in among them — so this is the rest
+ * of AUTH_NAV_CAPABILITIES with Getting Started pulled out.
+ */
+export const AUTH_NAV_CAPABILITIES_WITHOUT_GETTING_STARTED: Capability[] =
+  AUTH_NAV_CAPABILITIES.filter(capability => capability.id !== 'getting_started');

@@ -19,11 +19,11 @@ void main() {
       'totalCost': 79.99,
       'serviceDate': '2026-02-01',
       'mileage': 32000,
-    }, null);
+    }, null, locale: 'en-US');
 
     expect(
       summary,
-      'Service Receipt: Oil change • \$79.99 • 2026-02-01 • 32000 mi',
+      'Service Receipt: Oil change • \$79.99 • 2026-02-01 • 32,000 mi',
     );
   });
 

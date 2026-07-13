@@ -1,4 +1,6 @@
-// Mobile port of packages/web/src/utils/documentAnalysisSummary.ts.
+// Mobile port of packages/shared/src/documentAnalysisSummary.ts.
+
+import 'number_format.dart';
 
 String getSourceSnippet(String? sourceText, {int maxLength = 240}) {
   if (sourceText == null || sourceText.isEmpty) return '';
@@ -21,8 +23,9 @@ String _titleCase(String value) {
 
 String buildDocumentSummary(
   Map<String, dynamic>? extracted,
-  String? sourceText,
-) {
+  String? sourceText, {
+  String? locale,
+}) {
   if (extracted == null) {
     final snippet = getSourceSnippet(sourceText, maxLength: 120);
     return snippet.isNotEmpty ? snippet : 'No analysis summary available yet';
@@ -40,7 +43,7 @@ String buildDocumentSummary(
   }
   final totalCost = extracted['totalCost'];
   if (totalCost is num) {
-    details.add('\$${totalCost.toStringAsFixed(2)}');
+    details.add(formatCurrencyAmount(totalCost, locale: locale));
   }
   final serviceDate = extracted['serviceDate'];
   if (serviceDate is String && serviceDate.isNotEmpty) {
@@ -48,7 +51,7 @@ String buildDocumentSummary(
   }
   final mileage = extracted['mileage'];
   if (mileage is num) {
-    details.add('${mileage.toStringAsFixed(0)} mi');
+    details.add('${formatWithCommas(mileage, locale: locale)} mi');
   }
 
   if (details.isNotEmpty) {

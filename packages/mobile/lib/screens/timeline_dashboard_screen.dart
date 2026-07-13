@@ -5,6 +5,7 @@ import '../components/app_bottom_nav.dart';
 import '../models/maintenance.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
+import '../utils/number_format.dart';
 
 class TimelineDashboardScreen extends StatefulWidget {
   const TimelineDashboardScreen({super.key});
@@ -183,7 +184,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
                 Expanded(
                   child: _SummaryCard(
                     title: 'Total Cost',
-                    value: '\$${filteredCost.toStringAsFixed(2)}',
+                    value: formatCurrencyAmount(filteredCost),
                     icon: Icons.attach_money,
                   ),
                 ),
@@ -258,7 +259,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
                             ),
                             trailing: event.entry.cost > 0
                                 ? Text(
-                                    '\$${event.entry.cost.toStringAsFixed(2)}',
+                                    formatCurrencyAmount(event.entry.cost),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                     ),

@@ -12,6 +12,7 @@ import '../services/firestore_service.dart';
 import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
+import '../utils/number_format.dart';
 import 'maintenance_detail_screen.dart';
 
 String _performedByLabel(String value) {
@@ -574,7 +575,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Cost: \$${entry.cost.toStringAsFixed(2)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}',
+                                'Cost: ${formatCurrencyAmount(entry.cost)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],

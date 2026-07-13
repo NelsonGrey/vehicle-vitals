@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/design_tokens.dart';
 import '../utils/document_analysis_summary.dart';
+import '../utils/number_format.dart';
 
 /// Detail view for a single document item (pushed from
 /// RecordCategoryScreen). Portfolio state still lives in RecordsScreen's
@@ -449,7 +450,9 @@ class _FileAttachmentTile extends StatelessWidget {
                           _AnalysisDetailRow(
                             'Total cost',
                             extracted['totalCost'] is num
-                                ? '\$${(extracted['totalCost'] as num).toStringAsFixed(2)}'
+                                ? formatCurrencyAmount(
+                                    extracted['totalCost'] as num,
+                                  )
                                 : 'n/a',
                           ),
                           _AnalysisDetailRow(
@@ -459,7 +462,7 @@ class _FileAttachmentTile extends StatelessWidget {
                           _AnalysisDetailRow(
                             'Mileage',
                             extracted['mileage'] is num
-                                ? '${(extracted['mileage'] as num).toStringAsFixed(0)} mi'
+                                ? '${formatWithCommas(extracted['mileage'] as num)} mi'
                                 : 'n/a',
                           ),
                         ],

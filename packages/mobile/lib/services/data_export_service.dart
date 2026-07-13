@@ -9,6 +9,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
+import '../utils/number_format.dart';
+
 class DataExportService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -206,7 +208,7 @@ class DataExportService {
                       (entry['title'] ?? '').toString(),
                       (entry['performedBy'] ?? '').toString(),
                       (entry['coverage'] ?? '').toString(),
-                      '\$${((entry['cost'] ?? 0) as num).toStringAsFixed(2)}',
+                      formatCurrencyAmount((entry['cost'] ?? 0) as num),
                       (entry['notes'] ?? '').toString(),
                     ],
                   )
@@ -276,7 +278,7 @@ class DataExportService {
                         (entry['title'] ?? '').toString(),
                         (entry['performedBy'] ?? '').toString(),
                         (entry['coverage'] ?? '').toString(),
-                        '\$${((entry['cost'] ?? 0) as num).toStringAsFixed(2)}',
+                        formatCurrencyAmount((entry['cost'] ?? 0) as num),
                         (entry['notes'] ?? '').toString(),
                       ],
                     )

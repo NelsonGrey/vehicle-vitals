@@ -137,6 +137,13 @@ describe('SiteFooter', () => {
     expect(
       within(footer).getByRole('link', { name: /Getting Started/i })
     ).toHaveAttribute('href', '/getting-started');
+
+    // Product Tour is marketing content, not a capability, but stays
+    // available in the App nav for continuity once signed in.
+    const appNav = within(footer).getByRole('navigation', { name: /App/i });
+    expect(
+      within(appNav).getByRole('link', { name: /Product Tour/i })
+    ).toHaveAttribute('href', '/product-tour');
   });
 
   it('renders brand link and does not include email contact links', () => {

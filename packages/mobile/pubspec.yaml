@@ -33,17 +33,27 @@ dependencies:
     sdk: flutter
 
   # Firebase dependencies
+  #
+  # A coordinated FlutterFire release published within the last ~24h bumped
+  # each of these plugins' own dependency constraint to
+  # firebase_core_platform_interface ^7.1.0 (which renamed `FirebasePlugin`
+  # to `FirebasePluginPlatform`), but shipped source code that still
+  # references the old `FirebasePlugin` name -- a broken release, not a
+  # version-skew issue on our end. Every affected plugin is pinned below its
+  # broken version below; unpin each once a fixed patch ships.
   firebase_core: ^4.1.1
-  firebase_auth: ^6.5.4
-  firebase_crashlytics: ^5.2.4
-  cloud_firestore: ^6.6.0
-  # Pinned below 6.3.4: that release (published 2026-07-13) imports a
-  # `FirebasePlugin` type from firebase_core_platform_interface that no
-  # longer exists there (renamed to FirebasePluginPlatform), breaking
-  # compilation. Unpin once a fixed cloud_functions patch ships.
+  # Pinned below 6.5.5 (published ~11h ago): see note above.
+  firebase_auth: ">=6.5.4 <6.5.5"
+  # Pinned below 5.2.5: see note above.
+  firebase_crashlytics: ">=5.2.4 <5.2.5"
+  # Pinned below 6.7.0 (published ~11h ago): see note above.
+  cloud_firestore: ">=6.6.0 <6.7.0"
+  # Pinned below 6.3.4 (published 2026-07-13): see note above.
   cloud_functions: ">=6.3.3 <6.3.4"
-  firebase_messaging: ^16.4.1
-  firebase_storage: ^13.4.3
+  # Pinned below 16.4.2: see note above.
+  firebase_messaging: ">=16.4.1 <16.4.2"
+  # Pinned below 13.4.4: see note above.
+  firebase_storage: ">=13.4.3 <13.4.4"
 
   # Navigation
   go_router: ^17.3.0

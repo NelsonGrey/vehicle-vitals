@@ -37,13 +37,15 @@ import { personaPages } from '../data/personas';
 // so the plan/price picked before the full-page redirect to Checkout has to
 // be handed to ourselves across that redirect some other way. sessionStorage
 // survives it; consuming (not just reading) it on return means a page
-// refresh on the success page won't re-fire the purchase event.
+// refresh on the success page won't re-fire the purchase event. Only tier
+// and billing period are persisted — price is a static lookup
+// (getTierPricing), recomputed on return rather than stored, so nothing
+// resembling a payment amount ever sits in sessionStorage.
 const PENDING_CHECKOUT_KEY = 'vv_pending_checkout';
 
 interface PendingCheckout {
   tier: UserTier;
   billingPeriod: 'monthly' | 'annual';
-  amount: number;
 }
 
 function persistPendingCheckout(checkout: PendingCheckout): void {
@@ -219,13 +221,12 @@ export default function SubscriptionPage() {
     if (checkoutStatus !== 'success') return;
     const pending = consumePendingCheckout();
     if (!pending) return;
-    trackPurchase(pending.tier, pending.billingPeriod, pending.amount);
-    trackPaymentCompleted(
-      pending.tier,
-      pending.amount,
-      'USD',
-      pending.billingPeriod
-    );
+    const amount =
+      pending.billingPeriod === 'annual'
+        ? getTierPricing(pending.tier).annualPrice
+        : getTierPricing(pending.tier).monthlyPrice;
+    trackPurchase(pending.tier, pending.billingPeriod, amount);
+    trackPaymentCompleted(pending.tier, amount, 'USD', pending.billingPeriod);
   }, [checkoutStatus]);
 
   if (isLoading) {
@@ -478,10 +479,6 @@ export default function SubscriptionPage() {
                         persistPendingCheckout({
                           tier: planTier,
                           billingPeriod,
-                          amount:
-                            billingPeriod === 'annual'
-                              ? getTierPricing(planTier).annualPrice
-                              : getTierPricing(planTier).monthlyPrice,
                         });
                         window.location.href = checkoutResult.checkoutUrl;
                         return;

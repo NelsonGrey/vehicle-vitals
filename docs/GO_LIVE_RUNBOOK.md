@@ -1,6 +1,6 @@
 # Vehicle Vitals Go Live Runbook
 
-Last updated: July 9, 2026
+Last updated: July 14, 2026
 Current decision: NO-GO
 Release manager: Mark Nelson (interim)
 
@@ -35,7 +35,46 @@ Out of scope unless explicitly re-approved:
 
 ## Current Readiness Summary
 
-As of July 9, 2026, Vehicle Vitals is not ready for market launch.
+As of July 14, 2026, Vehicle Vitals is not ready for market launch.
+
+**Since the July 9 snapshot**: a large capability/information-architecture
+refactor (centralized nav metadata, `/getting-started` and `/product-tour`
+route consolidation, SEO/analytics fixes, mobile Shops & Services
+discoverability, `performedBy` taxonomy expansion) landed on `develop` and
+has now been promoted to `staging` — `develop` and `staging` trees are
+confirmed byte-identical again (last diverged after PR #124 on July 9; this
+promotion needed 3 rounds due to squash-merge history-loss conflicts, see
+Phase 6 note below). Two new issues were found and closed during this
+promotion:
+
+- **A broken same-day FlutterFire release** (`firebase_auth` 6.5.5,
+  `firebase_crashlytics` 5.2.5, `cloud_firestore` 6.7.0, `firebase_messaging`
+  16.4.2, `firebase_storage` 13.4.4 — all published within ~24h of each
+  other) each bumped their own `firebase_core_platform_interface` constraint
+  to `^7.1.0` (which renamed `FirebasePlugin` to `FirebasePluginPlatform`)
+  without updating their own source to match, breaking every real
+  `flutter build ios` archive. Invisible to `flutter analyze`/`flutter test`
+  (neither compiles third-party package internals) — only surfaced via the
+  staging rehearsal's actual iOS build step, which doesn't run on regular
+  `develop` pushes. Fixed by pinning all 5 below their broken versions
+  (`pubspec.yaml`); verified with a real local `flutter build ios
+  --no-codesign --release`.
+- **A new CodeQL alert** (`js/clear-text-storage-of-sensitive-data`, #40)
+  on the new Stripe checkout purchase-tracking code — flagged
+  `sessionStorage.setItem()` storing subscription tier/billing-period data
+  ahead of Stripe's redirect. Reduced by no longer persisting the price
+  `amount` (recomputed from tier+billingPeriod on return instead); the
+  remaining flag on `tier`/`billingPeriod` is assessed as a false positive
+  (no PII or credentials involved — CodeQL's heuristic appears to treat any
+  billing-shaped identifier as sensitive) pending your explicit sign-off to
+  dismiss it, matching this repo's precedent for documented false-positive
+  dismissals. Two older warnings (#38/#39, `js/incomplete-url-substring-
+  sanitization` on `useReauthentication.ts`) were assessed the same way —
+  `providerIds.includes('google.com'/'apple.com')` is exact array
+  membership against Firebase's literal provider-ID constants, not a
+  substring URL check. #39 is dismissed; #38 awaits your explicit
+  confirmation (a permission gate requires you to name the alert directly,
+  not just approve a multiple-choice).
 
 The local engineering gate remains materially improved: web type-check, web
 lint, web unit tests, production web build, and CI's Quality Gate (unit tests
@@ -139,11 +178,12 @@ subscription launch may proceed until every P0 item is closed.
 | P0-06 | Open                   | R1 Gate 2 is still incomplete                            | Latest build and launch evidence is PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`, `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`); acceptance/backend artifacts remain PARTIAL/BLOCKED (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`, `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) | Gate 2 acceptance and backend evidence are PASS with artifacts under `artifacts/smoke/`.                                                                             |
 | P0-07 | Closed                 | Open high-severity CodeQL alert                          | CodeQL run for `ce6d530` succeeded and GitHub code scanning reports 0 open alerts                                                                                                                                                  | Alert is fixed and closed by CodeQL, dismissed with documented false-positive rationale, or accepted by risk owner before launch.                                     |
 | P0-08 | Closed                 | Dependabot PR queue is unstable                          | #115 (root-npm bump) merged July 9 — required fixing a `vite` override it introduced (see P0-09 evidence). 0 open PRs, 0 Dependabot security alerts. | ✅ Done. Monitor for new PRs through release freeze. |
-| P0-09 | Closed                 | Branch promotion path is stale/diverged                  | develop→staging promoted via PR #123, merged July 9 (first success since #117 on July 6; #103 and #120 both died without merging along the way — #120 specifically due to a `vite` override conflict from #115, fixed by @copilot in #121/#122). `develop`/`staging` trees confirmed identical via `git diff`. `staging`→`main` is next (20 ahead / 605 behind) but not attempted yet — deliberately holding until Gate 2/P0-11 are further along. | ✅ Done for develop→staging. Re-open for staging→main when ready to promote to production. |
+| P0-09 | Closed                 | Branch promotion path is stale/diverged                  | develop→staging re-promoted July 14 (PRs #128/#130/#132) after 339 commits accumulated since the July 9 promotion — required 3 rounds of isolated-worktree conflict resolution (`-X theirs`, tree verified byte-identical to `develop` each time) due to squash-merge history-loss, not real independent staging changes. Staging rehearsal fully green including Build iOS App/TestFlight and Deploy Firebase. `staging`→`main` is next (20 ahead / 608 behind) but not attempted yet — deliberately holding until Gate 2/P0-11 are further along. | ✅ Done for develop→staging. Re-open for staging→main when ready to promote to production. |
 | P0-10 | Closed locally         | Active deployment docs reference obsolete workflow names | `docs/DEPLOY.md` and `docs/PROD_SETUP_GUIDE.md` now reference `master-pipeline.yml`; pipeline deploy targets include Firestore, Storage, Functions, and Hosting                                                                    | Docs name `master-pipeline.yml`, correct workflow inputs, and correct deploy targets.                                                                                |
 | P0-11 | Open — new detail      | Subscription launch is not production-proven             | Dev/staging Stripe Sandboxes are fully wired (product catalog created, all 8 required secrets present) — confirmed July 9. **`vehicle-vitals-prod` has 0 of 8 required Stripe secrets** (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, checkout URLs, 4x price IDs) — a Functions deploy touching Stripe would hard-fail in prod today, the same failure mode as the now-closed P0-13. No live Stripe checkout/webhook/portal evidence captured in any environment. RevenueCat/IAP proof also outstanding. | Paid launch evidence proves checkout, webhooks, entitlement reconciliation, quota enforcement, failed-payment recovery, refunds/cancellations, and support handling — or launch copy explicitly defers paid tiers (Phase 4, Option A/B). If paid launch proceeds: live-mode Stripe secrets must exist in `vehicle-vitals-prod` before any Stripe-touching deploy, not just before "go-live" — this would block staging→production promotion entirely, not just paid checkout. |
 | P0-12 | Partially open         | Release governance docs need final signoff               | This runbook is now current as of July 9; production release brief, R1 checklist, requirements, release scope, and next-features execution plan have not been re-synchronized this session                                          | `PROJECT_PLAN`, `PRODUCTION_RELEASE_BRIEF`, `R1_COMPLETION_CHECKLIST`, and this runbook are synchronized and signed off.                                             |
 | P0-13 | Closed                 | Email delivery provider was scaffolded (SendGrid) but never configured, silently blocking every Functions deploy in all 3 Firebase projects | Migrated to Google Workspace SMTP (commit `4dd5ad6`); `WORKSPACE_SMTP_USER`/`WORKSPACE_SMTP_APP_PASSWORD` secrets created in `vehicle-vitals-dev`, `-staging`, and `-prod`; Deploy Firebase has succeeded repeatedly since (e.g. run `29034124504`) | ✅ Done. Functions deploy is unblocked in all three environments. |
+| P0-14 | Closed (new)           | A coordinated broken FlutterFire release (5 plugins, published within ~24h of each other) broke every real iOS archive build | `firebase_auth`/`firebase_crashlytics`/`cloud_firestore`/`firebase_messaging`/`firebase_storage` each bumped their own `firebase_core_platform_interface` constraint to `^7.1.0` without updating source for the `FirebasePlugin`→`FirebasePluginPlatform` rename. Pinned all 5 below their broken versions in `pubspec.yaml`; verified with a real local `flutter build ios --no-codesign --release` and the staging rehearsal's Build iOS App job. | ✅ Done. Only surfaces on a real iOS archive (staging/production triggers), not `flutter analyze`/`flutter test` — worth a periodic staging-rehearsal-style check even between promotions if a similar dependency wave recurs. |
 
 ## P1 Market Readiness Gaps
 
@@ -806,52 +846,56 @@ After each readiness state change, update these files as needed:
 
 ## Immediate Next Execution Order
 
-As of July 9, 2026 (updated after the Google Workspace email migration, a
-stale-UAT-test fix, and reopening branch promotion).
+As of July 14, 2026 (updated after the capability/information-architecture
+refactor landed and was promoted, a broken FlutterFire release was found and
+fixed, and a new CodeQL alert was triaged).
 
 **Completed this session:**
-- ✅ P0-13 Closed: migrated email delivery off never-configured SendGrid onto
-  Google Workspace SMTP (commit `4dd5ad6`); secrets created in all 3 Firebase
-  projects; this was silently blocking every Functions deploy
-- ✅ Fixed stale `TC-PROFILE-002` UAT test that was intermittently failing
-  Quality Gate (asserted a removed "Consolidate Accounts" button)
-- ✅ Web unit tests grew to 399 (from 378), all passing; web type-check and
-  lint re-verified clean
-- ✅ CodeQL (0 open) and Dependabot security alerts (0 open) re-verified
-- ✅ Runbook fully refreshed with July 9 evidence (this update)
-- ✅ Verified Stripe Sandbox setup (P0-11 detail): dev/staging fully wired
-  (product catalog + all 8 required secrets), `vehicle-vitals-prod` has none
-  of the 8 — added as a concrete blocker distinct from "no checkout evidence".
-- ⚠️ Branch promotion PR #120 (develop→staging) hit a `npm ci` failure caused
-  by PR #115 (Dependabot) adding a `vite` override that conflicted with the
-  web workspace's own version pin. Mark asked @copilot to resolve; it fixed
-  the issue in PRs #121 and #122 (merged to `develop`), and #120 was closed
-  as stale in the process rather than merged.
-- ✅ **PR #123 merged** (develop→staging), first successful branch promotion
-  since PR #117 on July 6 — #103 and #120 both died without merging. Merging
-  required a one-time, ~90-second disable/re-enable of `staging`'s
-  `enforce_admins` protection (confirmed re-enabled immediately after) since
-  even the admin-bypass merge is blocked while it's on and Mark cannot
-  approve his own PR (GitHub disallows self-approval). Post-merge, `develop`
-  and `staging` trees are confirmed identical via `git diff` (the "265
-  ahead" commit-graph count is a normal squash-merge artifact, not real
-  drift).
-- ✅ **Staging rehearsal (Phase 7) complete** — first full green staging run:
-  Quality Gate ✅, Build Web App ✅, **Build iOS App ✅ (19m46s, signed +
-  uploaded to TestFlight)** — first iOS build exercised since July 2 — Deploy
-  Firebase ✅ (first time the Workspace SMTP secrets were exercised in the
-  `vehicle-vitals-staging` project). Run `29047983380`.
-- ⚠️ Along the way: branch promotion PR #120 hit a `npm ci` failure caused by
-  PR #115 (Dependabot) adding a `vite` override that conflicted with the web
-  workspace's own version pin. Mark asked @copilot to resolve; it fixed the
-  issue in PRs #121 and #122 (merged to `develop`), and #120 was closed as
-  stale in the process rather than merged — PR #123 superseded both #103 and
-  #120.
+- ✅ Capability/information-architecture refactor (nav metadata, route
+  consolidation, SEO fixes, analytics `capability_id`, mobile Shops &
+  Services discoverability, `performedBy` taxonomy) fully landed on
+  `develop` — every commit's own push-triggered CI green.
+- ✅ SEO: wired `PageSEO` into `Help`/`Support`/`Privacy`/`Terms` (previously
+  dead config — no canonical tags, meta, or JSON-LD ever reached those
+  pages); fixed `sitemap.xml` to list `/support` instead of the legacy
+  `/contact`.
+- ✅ Analytics: added a real `purchase`/conversion event on confirmed Stripe
+  checkout return — the funnel previously stopped measuring at
+  `begin_checkout`.
+- ✅ **P0-09 re-closed**: develop→staging re-promoted (PRs #128/#130/#132)
+  after 339 commits accumulated since July 9. `develop`/`staging` trees
+  confirmed byte-identical again. Required 3 rounds of isolated-worktree
+  conflict resolution (squash-merge history-loss, not real staging drift)
+  and 3 temporary `enforce_admins` disable/re-enable cycles (each
+  user-approved, each confirmed re-enabled immediately after) since Mark
+  can't approve his own PR and `staging` requires 1 review.
+- ✅ **P0-14 (new, closed)**: found and fixed a coordinated broken
+  FlutterFire release (5 plugins, same-day publishes) that broke every real
+  iOS archive build — invisible to `flutter analyze`/`flutter test`, only
+  surfaced via the staging rehearsal's actual `Build iOS App` step. See P0
+  table above for detail.
+- ✅ **Staging rehearsal fully green** including Build iOS App (signed +
+  TestFlight upload) and Deploy Firebase — run confirms the FlutterFire fix
+  actually resolved the iOS build.
+- ⚠️ **New CodeQL alert #40** (`js/clear-text-storage-of-sensitive-data`)
+  surfaced from this session's own purchase-event code; reduced (removed
+  the `amount` field from sessionStorage) but not eliminated — the
+  remaining flag on `tier`/`billingPeriod` is assessed as a false positive,
+  same as pre-existing alerts #38/#39. #39 dismissed; #38 and #40 await your
+  explicit sign-off to dismiss (a permission gate requires naming the exact
+  alert, not just approving a summary).
+- ✅ Runbook fully refreshed with July 14 evidence (this update).
 
 **Remaining — requires your action:**
 
-1. ~~Review and merge PR #123~~ — ✅ Done. ~~Run staging rehearsal~~ — ✅ Done,
-   full green including iOS build/TestFlight upload (see above).
+0. **Confirm CodeQL alert dismissals**: say "dismiss CodeQL alert #38 as a
+   false positive" (and #40, once you've reviewed the reasoning above) if
+   you agree with the assessment — I can't dismiss security-tool findings
+   without you naming them explicitly.
+
+1. ~~Review and merge staging promotion PRs~~ — ✅ Done. ~~Run staging
+   rehearsal~~ — ✅ Done, full green including iOS build/TestFlight upload
+   (see above).
 
 2. **Close R1 Gate 2** (P0-06) — CRITICAL BLOCKER, still open since June 15:
    - Enable Developer Mode on HADES and trust the host Mac.
@@ -881,8 +925,8 @@ stale-UAT-test fix, and reopening branch promotion).
 
 3. **Manual smoke-test** `vehicle-vitals-staging.web.app` — CI green doesn't
    substitute for a human actually clicking through the deployed staging
-   site once after a promotion this large (265 squash-commits worth of
-   change since the last one).
+   site once after a promotion this large (339 squash-commits worth of
+   change since the last one, per this update).
 
 4. **Apply branch protection** to `develop` and `main` (P1 gap, unchanged):
    - See Phase 3 checklist for the `gh api` command template.

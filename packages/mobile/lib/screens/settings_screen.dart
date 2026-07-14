@@ -122,13 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/offline-settings'),
                       ),
-                      ListTile(
-                        leading: const Icon(Icons.timeline),
-                        title: const Text('Service History'),
-                        subtitle: const Text('Review completed maintenance'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/timeline'),
-                      ),
                     ],
                   ),
                 ),

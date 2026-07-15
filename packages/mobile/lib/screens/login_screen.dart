@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_logo.dart';
-import '../components/inline_ad_section.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -99,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Sign in to Vehicle Vitals',
+                  'Sign in to Vehicle-Vitals',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
@@ -112,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Center(child: AppLogo(size: 48, showText: false)),
+                  child: Center(child: AppLogo(size: 72, showText: false, full: true)),
                 ),
 
                 Card(
@@ -191,8 +190,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const InlineAdSection(placement: MobileAdPlacement.inlineAuth),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => context.go('/auth/signup'),

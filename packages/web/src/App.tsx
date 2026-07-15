@@ -128,7 +128,7 @@ function AppNotificationBridge() {
     let isActive = true;
 
     void subscribeToForegroundMessages(payload => {
-      const notificationTitle = payload.notification?.title || 'Vehicle Vitals';
+      const notificationTitle = payload.notification?.title || 'Vehicle-Vitals';
       const notificationBody =
         payload.notification?.body || 'You have a maintenance reminder.';
       const destination = buildReminderNotificationPath(payload.data);
@@ -191,11 +191,6 @@ const AddVehicle = lazy(() => import('./pages/AddVehicle'));
 const EditVehicle = lazy(() => import('./pages/EditVehicle'));
 const Records = lazy(() => import('./pages/Records'));
 const Profile = lazy(() => import('./pages/Profile'));
-const AccountSecurity = lazy(() => import('./pages/AccountSecurity'));
-const MaintenanceAlerts = lazy(() => import('./pages/MaintenanceAlerts'));
-const AccountConsolidation = lazy(() => import('./pages/AccountConsolidation'));
-const ApiAutomation = lazy(() => import('./pages/ApiAutomation'));
-const DataPrivacy = lazy(() => import('./pages/DataPrivacy'));
 const ServiceProviders = lazy(() => import('./pages/ServiceProviders'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
@@ -438,17 +433,30 @@ function App() {
                     <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
                     <Route path="records/:vin" element={<Records />} />
                     <Route path="profile" element={<Profile />} />
-                    <Route path="account" element={<AccountSecurity />} />
+                    {/* Orphaned since the Profile-hub refactor (see
+                        docs/CAPABILITY_ARCHITECTURE_REFACTOR_PROMPT.md)
+                        consolidated these into Profile tabs — redirect any
+                        stale bookmarks/links instead of leaving a dead end. */}
+                    <Route
+                      path="account"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
                     <Route
                       path="maintenance-alerts"
-                      element={<MaintenanceAlerts />}
+                      element={<Navigate to="/app/profile" replace />}
                     />
                     <Route
                       path="account-consolidation"
-                      element={<AccountConsolidation />}
+                      element={<Navigate to="/app/profile" replace />}
                     />
-                    <Route path="api-automation" element={<ApiAutomation />} />
-                    <Route path="data-privacy" element={<DataPrivacy />} />
+                    <Route
+                      path="api-automation"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
+                    <Route
+                      path="data-privacy"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
                     <Route path="subscription" element={<SubscriptionPage />} />
                     <Route path="providers" element={<ServiceProviders />} />
                     <Route path="timeline" element={<TimelineDashboard />} />

@@ -39,16 +39,14 @@ export default function Profile() {
         'Consolidate a split account or convert to a household garage.',
       Content: AccountConsolidationContent,
     },
-    ...(hasApiAccess
-      ? [
-          {
-            key: 'api',
-            title: 'API & Automation',
-            description: 'API keys and Zapier webhook configuration.',
-            Content: ApiAutomationContent,
-          },
-        ]
-      : []),
+    {
+      key: 'api',
+      title: 'API & Automation',
+      description: hasApiAccess
+        ? 'API keys and Zapier webhook configuration.'
+        : 'API keys and Zapier webhook configuration (Premium).',
+      Content: ApiAutomationContent,
+    },
     {
       key: 'privacy',
       title: 'Data & Privacy',

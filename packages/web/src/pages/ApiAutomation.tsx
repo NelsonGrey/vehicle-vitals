@@ -177,9 +177,23 @@ export function ApiAutomationContent() {
       )}
 
       {!hasApiAccess ? (
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          API access is not enabled for this account.
-        </p>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-3">
+          <p className="text-sm text-slate-700 dark:text-slate-300 m-0">
+            Connect your garage to Zapier, IFTTT, or your own tools with a
+            REST API key — automate reminders, sync service records, and
+            build custom integrations.
+          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+            API access and Zapier integration are included with Premium and
+            Enterprise plans.
+          </p>
+          <Link
+            to="/app/subscription"
+            className="inline-block bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 no-underline"
+          >
+            Upgrade to Premium
+          </Link>
+        </div>
       ) : (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-5">
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">

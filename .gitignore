@@ -315,6 +315,15 @@ packages/mobile/.bundle/
 packages/mobile/vendor/
 packages/mobile/Gemfile.lock
 
+# Screenshot capture and design-exploration output — regenerable via the
+# commands in docs/SCREENSHOT_AND_TUTORIAL_MEDIA_INVENTORY.md; final assets
+# get copied into their real tracked location (e.g. packages/*/assets,
+# packages/web/public) instead of living here.
+output/playwright/
+artifacts/asc-screenshots/
+artifacts/logo-preview/
+artifacts/logo-preview-color-bleed-archive/
+
 # Secrets
 .act-secrets/
 

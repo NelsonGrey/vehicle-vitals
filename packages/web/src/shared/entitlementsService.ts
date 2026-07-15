@@ -191,6 +191,21 @@ export async function getSubscriptionPricing(): Promise<StripeSubscriptionPricin
   return result.data.pricing as StripeSubscriptionPricing;
 }
 
+export async function createBillingPortalSession(): Promise<string> {
+  const firebaseService = await createFirebaseService();
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'createBillingPortalSessionCallable'
+  );
+
+  const result = await callable({});
+  if (!result.data?.success || !result.data?.portalUrl) {
+    throw new Error('Failed to create billing portal session');
+  }
+
+  return (result.data.portalUrl || '').toString();
+}
+
 export async function createSubscriptionCheckoutSession(
   targetTier: Extract<UserTier, 'pro' | 'premium'>,
   billingPeriod: BillingPeriod

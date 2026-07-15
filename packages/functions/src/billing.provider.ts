@@ -181,6 +181,56 @@ export async function getStripeSubscriptionPricing(): Promise<StripeSubscription
   };
 }
 
+export interface StripeBillingPortalSessionInput {
+  stripeCustomerId: string;
+  returnUrl: string;
+}
+
+export interface StripeBillingPortalSessionResult {
+  sessionId: string;
+  portalUrl: string;
+}
+
+export async function createStripeBillingPortalSession(
+  input: StripeBillingPortalSessionInput
+): Promise<StripeBillingPortalSessionResult> {
+  const secretKey = requireStripeSecretKey();
+
+  const form = new URLSearchParams();
+  form.set("customer", input.stripeCustomerId);
+  form.set("return_url", input.returnUrl);
+
+  const response = await fetch(
+    "https://api.stripe.com/v1/billing_portal/sessions",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${secretKey}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: form.toString(),
+    }
+  );
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = (
+      payload?.error?.message ||
+      "Stripe billing portal session creation failed"
+    ).toString();
+    throw new Error(`Stripe billing portal error (${response.status}): ${message}`);
+  }
+
+  const sessionId = (payload?.id || "").toString();
+  const portalUrl = (payload?.url || "").toString();
+
+  if (!sessionId || !portalUrl) {
+    throw new Error("Stripe billing portal response missing id or url");
+  }
+
+  return {sessionId, portalUrl};
+}
+
 export interface IapProductSpec {
   tier: "pro" | "premium";
   billingPeriod: "monthly" | "annual";

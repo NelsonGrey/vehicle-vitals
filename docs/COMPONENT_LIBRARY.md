@@ -1,4 +1,4 @@
-# Vehicle Vitals - Component Library
+# Vehicle-Vitals - Component Library
 
 **Version**: 1.0  
 **Last Updated**: February 16, 2026  
@@ -20,7 +20,7 @@
 
 ## Overview
 
-This document provides a comprehensive reference for all reusable UI components in the Vehicle Vitals application, covering both the web (React + TypeScript) and mobile (Flutter + Dart) platforms.
+This document provides a comprehensive reference for all reusable UI components in the Vehicle-Vitals application, covering both the web (React + TypeScript) and mobile (Flutter + Dart) platforms.
 
 ### Component Philosophy
 

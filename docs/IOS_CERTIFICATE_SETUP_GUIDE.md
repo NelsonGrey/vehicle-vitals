@@ -88,7 +88,7 @@ CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN_HERE@github.com/mnelson3/vehicle-vi
 2. **Create API Key**
    - Click "+" to create new key
    - Choose "Admin" role
-   - Name: "Vehicle Vitals CI"
+   - Name: "Vehicle-Vitals CI"
    - Download the `.p8` file
 
 3. **Extract Key Details**
@@ -235,7 +235,7 @@ platform :ios do
     build_beta_channel
 
     upload_to_beta_channel(
-      ipa: "../build/ios/ipa/Vehicle Vitals.ipa",
+      ipa: "../build/ios/ipa/Vehicle-Vitals.ipa",
       skip_waiting_for_build_processing: true
     )
   end

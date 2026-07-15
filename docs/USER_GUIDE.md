@@ -1,4 +1,4 @@
-# Vehicle Vitals — User Guide
+# Vehicle-Vitals — User Guide
 
 > **Your complete reference for managing vehicle maintenance, tracking costs, and staying ahead of service schedules.**
 
@@ -22,7 +22,7 @@
 
 ## 1. Getting Started
 
-Vehicle Vitals is a secure, cloud-based vehicle management platform. With it you can:
+Vehicle-Vitals is a secure, cloud-based vehicle management platform. With it you can:
 
 - **Track your entire fleet** — sedans, SUVs, motorcycles, vans, and more — in one place
 - **Log and analyze maintenance costs** across all vehicles
@@ -33,7 +33,7 @@ Vehicle Vitals is a secure, cloud-based vehicle management platform. With it you
 
 ### Supported Platforms
 
-Vehicle Vitals is available on the web and on iOS at launch. You can use either interface or both, and the core functionality is the same across them.
+Vehicle-Vitals is available on the web and on iOS at launch. You can use either interface or both, and the core functionality is the same across them.
 
 The web app works in any modern browser (Chrome, Safari, Edge, Firefox). The iOS app gives you the same full experience on your phone.
 
@@ -55,7 +55,7 @@ The navigation bar at the top of every page provides quick access to all section
 
 ### Landing Page
 
-When you first visit Vehicle Vitals, you'll see the landing page with an overview of features.
+When you first visit Vehicle-Vitals, you'll see the landing page with an overview of features.
 
 ![Landing page hero with feature highlights](./screenshots/landing.png)
 
@@ -199,7 +199,7 @@ From the Garage detail panel, click **View Records**.
 
 ### Required Record Types
 
-Vehicle Vitals tracks **7 required record categories** per vehicle:
+Vehicle-Vitals tracks **7 required record categories** per vehicle:
 
 | Category            | What to Upload                      |
 | ------------------- | ----------------------------------- |
@@ -227,7 +227,7 @@ At the top of the Records page, the **Ownership Insights** panel extracts financ
 
 The Timeline gives you a bird's-eye view of all service events across your entire garage, in reverse chronological order.
 
-Vehicle Vitals supports three maintenance user types: self-service owners, mechanic-managed service, and business-maintained fleets. It also supports parts-only receipts, so you can record work even when labor was not billed or no paper invoice exists for the labor portion.
+Vehicle-Vitals supports three maintenance user types: self-service owners, mechanic-managed service, and business-maintained fleets. It also supports parts-only receipts, so you can record work even when labor was not billed or no paper invoice exists for the labor portion.
 
 For the full maintenance scenario matrix, see [Maintenance User Cases and Types](./MAINTENANCE_USER_CASES.md).
 
@@ -390,7 +390,7 @@ A: Yes. There is no limit to the number of vehicles you can add to your Garage.
 A: PDF files are recommended for all record uploads. Each record category can have multiple attachments.
 
 **Q: How does VIN Lookup work?**
-A: When you enter a VIN and click "VIN Lookup," Vehicle Vitals queries the NHTSA (National Highway Traffic Safety Administration) database to retrieve the official make, model, and year.
+A: When you enter a VIN and click "VIN Lookup," Vehicle-Vitals queries the NHTSA (National Highway Traffic Safety Administration) database to retrieve the official make, model, and year.
 
 **Q: How are cost totals calculated?**
 A: Costs are extracted from uploaded service invoices and repair records using document intelligence. The more records you upload, the more accurate your cost-of-ownership data becomes.

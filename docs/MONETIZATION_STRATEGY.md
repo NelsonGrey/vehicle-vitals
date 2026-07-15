@@ -1,4 +1,4 @@
-# Vehicle Vitals - Monetization Strategy
+# Vehicle-Vitals - Monetization Strategy
 
 **Version**: 1.0  
 **Last Updated**: May 13, 2026  
@@ -9,7 +9,7 @@
 
 ## 📋 Executive Summary
 
-Vehicle Vitals will adopt a **freemium subscription model** with **contextual advertising** to achieve financial sustainability while maintaining strong user experience and retention. This dual-revenue approach balances three objectives:
+Vehicle-Vitals will adopt a **freemium subscription model** with **contextual advertising** to achieve financial sustainability while maintaining strong user experience and retention. This dual-revenue approach balances three objectives:
 
 1. **Free tier accessibility** - acquire users at scale with minimal barriers
 2. **Premium monetization** - convert power users through value-add features

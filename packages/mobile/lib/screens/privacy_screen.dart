@@ -24,7 +24,7 @@ class PrivacyScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Vehicle Vitals collects and stores:\n'
+              'Vehicle-Vitals collects and stores:\n'
               '• Vehicle information (make, model, year, VIN, mileage)\n'
               '• Maintenance records and associated data\n'
               '• Account information (email address)\n'

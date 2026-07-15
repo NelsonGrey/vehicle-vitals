@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Safe Commit Script for Vehicle Vitals
+# Safe Commit Script for Vehicle-Vitals
 # Provides multiple commit types with cost-effective CI/CD integration
 # Allows testing commits without triggering expensive GitHub Actions
 
@@ -22,7 +22,7 @@ NC='\033[0m'
 DEFAULT_BRANCH="develop"
 PRODUCTION_BRANCHES=("main" "staging")
 
-echo -e "${BLUE}🚗 Vehicle Vitals - Safe Commit Script${NC}"
+echo -e "${BLUE}🚗 Vehicle-Vitals - Safe Commit Script${NC}"
 echo -e "${BLUE}======================================${NC}"
 
 # Check if we're on a safe branch

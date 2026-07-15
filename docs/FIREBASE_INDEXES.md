@@ -1,6 +1,6 @@
 # Firebase Firestore Composite Indexes
 
-This document describes the composite indexes required for optimized Firestore queries in the Vehicle Vitals application.
+This document describes the composite indexes required for optimized Firestore queries in the Vehicle-Vitals application.
 
 ## Required Composite Indexes
 

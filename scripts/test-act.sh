@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Act Workflow Testing Script for Vehicle Vitals
+# Act Workflow Testing Script for Vehicle-Vitals
 # Test GitHub Actions workflows locally with act to avoid consuming Actions minutes
 
 set -e
@@ -15,7 +15,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}🚗 Vehicle Vitals - Act Workflow Testing${NC}"
+echo -e "${BLUE}🚗 Vehicle-Vitals - Act Workflow Testing${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 cd "$PROJECT_ROOT"

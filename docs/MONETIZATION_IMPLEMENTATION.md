@@ -9,7 +9,7 @@
 
 ## Overview
 
-This document tracks the implementation of the Vehicle Vitals monetization strategy in phases. See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for complete strategy.
+This document tracks the implementation of the Vehicle-Vitals monetization strategy in phases. See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for complete strategy.
 
 **Phase 1 Objective**: Build foundational infrastructure for ad system, subscription tiers, feature gating, and checkout/reconciliation plumbing
 **Target Completion**: Month 3  

@@ -1,4 +1,4 @@
-# Vehicle Vitals - Troubleshooting Guide
+# Vehicle-Vitals - Troubleshooting Guide
 
 **Version**: 1.0  
 **Last Updated**: February 16, 2026  
@@ -807,8 +807,8 @@ npm uninstall unused-package
 **Troubleshooting Steps**:
 
 1. **Check camera permission**:
-   - iOS: Settings > Vehicle Vitals > Camera
-   - Android: Settings > Apps > Vehicle Vitals > Permissions > Camera
+   - iOS: Settings > Vehicle-Vitals > Camera
+   - Android: Settings > Apps > Vehicle-Vitals > Permissions > Camera
 
 2. **Verify VIN format**:
    - VIN must be Code39 or Code128 barcode

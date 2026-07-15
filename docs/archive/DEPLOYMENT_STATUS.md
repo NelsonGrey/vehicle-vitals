@@ -1,4 +1,4 @@
-# Vehicle Vitals - Deployment Status
+# Vehicle-Vitals - Deployment Status
 
 Last updated: May 29, 2026 (cross-platform identity recovery and account consolidation)
 Primary production project: `vehicle-vitals-prod`
@@ -141,7 +141,7 @@ Progress evaluation completed:
 - Header navigation now surfaces `Getting Started` as the first nav item for both:
   - logged-out marketing navigation
   - logged-in application navigation
-- Marketing header no longer includes a separate `Home` link; the Vehicle Vitals logo remains the home path.
+- Marketing header no longer includes a separate `Home` link; the Vehicle-Vitals logo remains the home path.
 - Footer navigation no longer duplicates `Getting Started`.
 
 Automation updates delivered:

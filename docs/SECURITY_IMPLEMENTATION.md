@@ -1,4 +1,4 @@
-# Vehicle Vitals - Security Implementation Guide
+# Vehicle-Vitals - Security Implementation Guide
 
 **Version**: 1.0  
 **Last Updated**: February 16, 2026  
@@ -27,7 +27,7 @@
 
 ### Security Principles
 
-Vehicle Vitals follows these core security principles:
+Vehicle-Vitals follows these core security principles:
 
 1. **Defense in Depth**: Multiple layers of security (authentication, authorization, validation)
 2. **Least Privilege**: Users can only access their own data

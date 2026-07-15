@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Vehicle Vitals Deployment Script
+# Vehicle-Vitals Deployment Script
 # Usage: ./deploy.sh [environment]
 # Environments: production, staging, development, demonstration
 
@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ENVIRONMENT=${1:-production}
 
-echo "🚀 Deploying Vehicle Vitals to $ENVIRONMENT environment"
+echo "🚀 Deploying Vehicle-Vitals to $ENVIRONMENT environment"
 
 # Validate environment
 case $ENVIRONMENT in

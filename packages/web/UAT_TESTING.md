@@ -1,8 +1,8 @@
-# Vehicle Vitals - User Acceptance Testing (UAT)
+# Vehicle-Vitals - User Acceptance Testing (UAT)
 
 ## Overview
 
-This document describes the automated UAT suite for the Vehicle Vitals web application. The suite uses **Playwright** to perform end-to-end testing of all major features and user workflows.
+This document describes the automated UAT suite for the Vehicle-Vitals web application. The suite uses **Playwright** to perform end-to-end testing of all major features and user workflows.
 
 ## Quick Start
 

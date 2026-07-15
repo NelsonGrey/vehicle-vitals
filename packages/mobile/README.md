@@ -1,6 +1,6 @@
-# Vehicle Vitals - Flutter Mobile App
+# Vehicle-Vitals - Flutter Mobile App
 
-This is the Flutter version of the Vehicle Vitals mobile app, converted from React Native. It provides the same functionality as the React Native version with native Flutter performance and UI.
+This is the Flutter version of the Vehicle-Vitals mobile app, converted from React Native. It provides the same functionality as the React Native version with native Flutter performance and UI.
 
 ## Features
 

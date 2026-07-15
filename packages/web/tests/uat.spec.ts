@@ -1,5 +1,5 @@
 /**
- * Vehicle Vitals - User Acceptance Testing (UAT) Script
+ * Vehicle-Vitals - User Acceptance Testing (UAT) Script
  *
  * Comprehensive end-to-end tests covering all major features:
  * - User Authentication (Sign Up, Login, Password Reset)
@@ -25,7 +25,7 @@ const TEST_PASSWORD = 'TestPassword123!@#';
 const TEST_VEHICLE_MAKE = 'Toyota';
 const TEST_VEHICLE_MODEL = 'Camry';
 
-test.describe('Vehicle Vitals - User Acceptance Testing', () => {
+test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
   const isAuthUiAvailable = async (
     page: import('@playwright/test').Page
   ): Promise<boolean> => {

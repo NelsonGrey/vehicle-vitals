@@ -1,13 +1,13 @@
-# Vehicle Vitals — Marketing Assets Overview
+# Vehicle-Vitals — Marketing Assets Overview
 
 **Date Created:** May 8, 2026  
-**Purpose:** Quick reference guide to all promotional materials created for Vehicle Vitals
+**Purpose:** Quick reference guide to all promotional materials created for Vehicle-Vitals
 
 ---
 
 ## 📋 Quick Start
 
-You now have a **complete promotional toolkit** for Vehicle Vitals. Here's what's included and how to use it:
+You now have a **complete promotional toolkit** for Vehicle-Vitals. Here's what's included and how to use it:
 
 ### Files Created
 

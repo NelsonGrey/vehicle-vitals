@@ -246,7 +246,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       ListTile(
                         leading: const Icon(Icons.help_outline),
                         title: const Text('Help'),
-                        subtitle: const Text('Tips for using Vehicle Vitals'),
+                        subtitle: const Text('Tips for using Vehicle-Vitals'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/instructions'),
                       ),

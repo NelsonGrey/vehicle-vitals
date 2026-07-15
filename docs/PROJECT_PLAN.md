@@ -1,4 +1,4 @@
-# Vehicle Vitals - Master Project Plan
+# Vehicle-Vitals - Master Project Plan
 
 Last updated: May 28, 2026
 Planning horizon: 8 weeks (rebaseline v2)

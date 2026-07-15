@@ -89,7 +89,7 @@ export default function Landing() {
                       className="marketing-hero-logo h-30 w-30 rounded-2xl shadow-lg ring-1 ring-white/20 sm:h-40 sm:w-40"
                     />
                     <span className="text-sm font-semibold uppercase tracking-wide text-slate-100">
-                      Vehicle Vitals
+                      Vehicle-Vitals
                     </span>
                   </div>
                   <h1 className="mt-4 max-w-3xl font-serif text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">

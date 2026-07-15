@@ -1,6 +1,6 @@
 # @vehicle-vitals/functions
 
-Firebase Cloud Functions for Vehicle Vitals backend services.
+Firebase Cloud Functions for Vehicle-Vitals backend services.
 
 ## Features
 

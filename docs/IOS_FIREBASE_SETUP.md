@@ -1,4 +1,4 @@
-# Firebase iOS Configuration for Vehicle Vitals
+# Firebase iOS Configuration for Vehicle-Vitals
 
 ## ✅ iOS Firebase Setup Complete
 

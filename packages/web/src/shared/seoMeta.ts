@@ -11,7 +11,7 @@ import { personaPages } from '../data/personas';
 // Set VITE_APP_URL=https://vehicle-vitals.com in your production .env
 const APP_URL = (import.meta.env.VITE_APP_URL || 'https://vehicle-vitals.com').replace(/\/$/, '');
 
-const SITE_NAME = 'Vehicle Vitals';
+const SITE_NAME = 'Vehicle-Vitals';
 
 const DEFAULT_OG_IMAGE = `${APP_URL}/android-chrome-512x512.png`;
 
@@ -115,7 +115,7 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   '/getting-started': {
     title: `Getting Started — ${SITE_NAME}`,
     description:
-      'Start in three simple steps: add your vehicle, track service and costs, stay on top of what\'s next. See how Vehicle Vitals turns scattered receipts into a trusted ownership record.',
+      'Start in three simple steps: add your vehicle, track service and costs, stay on top of what\'s next. See how Vehicle-Vitals turns scattered receipts into a trusted ownership record.',
     canonical: `${APP_URL}/getting-started`,
     ogType: 'website',
   },
@@ -123,7 +123,7 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   '/product-tour': {
     title: `Product Tour — ${SITE_NAME}`,
     description:
-      'Short video walkthroughs and screen-by-screen tours of Vehicle Vitals: Garage, service records, Service History, Maintenance Plan, and Shops & Services.',
+      'Short video walkthroughs and screen-by-screen tours of Vehicle-Vitals: Garage, service records, Service History, Maintenance Plan, and Shops & Services.',
     canonical: `${APP_URL}/product-tour`,
     ogType: 'website',
   },
@@ -131,14 +131,14 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   '/help': {
     title: `Help Center — ${SITE_NAME}`,
     description:
-      'Answers to common questions about Vehicle Vitals: adding vehicles, logging records, managing reminders, exporting data, and account settings.',
+      'Answers to common questions about Vehicle-Vitals: adding vehicles, logging records, managing reminders, exporting data, and account settings.',
     canonical: `${APP_URL}/help`,
     ogType: 'website',
   },
 
   '/support': {
     title: `Support — ${SITE_NAME}`,
-    description: 'Get help with Vehicle Vitals. Contact our support team for questions, billing, or technical issues.',
+    description: 'Get help with Vehicle-Vitals. Contact our support team for questions, billing, or technical issues.',
     canonical: `${APP_URL}/support`,
     ogType: 'website',
   },
@@ -147,21 +147,21 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   // converge on the new path.
   '/contact': {
     title: `Support — ${SITE_NAME}`,
-    description: 'Get help with Vehicle Vitals. Contact our support team for questions, billing, or technical issues.',
+    description: 'Get help with Vehicle-Vitals. Contact our support team for questions, billing, or technical issues.',
     canonical: `${APP_URL}/support`,
     ogType: 'website',
   },
 
   '/privacy': {
     title: `Privacy Policy — ${SITE_NAME}`,
-    description: 'How Vehicle Vitals collects, uses, and protects your data.',
+    description: 'How Vehicle-Vitals collects, uses, and protects your data.',
     canonical: `${APP_URL}/privacy`,
     ogType: 'website',
   },
 
   '/terms': {
     title: `Terms of Service — ${SITE_NAME}`,
-    description: 'Terms and conditions for using Vehicle Vitals.',
+    description: 'Terms and conditions for using Vehicle-Vitals.',
     canonical: `${APP_URL}/terms`,
     ogType: 'website',
   },

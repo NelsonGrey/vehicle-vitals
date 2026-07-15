@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Firebase Setup Script for Vehicle Vitals
-echo "🔥 Firebase Setup for Vehicle Vitals"
+# Firebase Setup Script for Vehicle-Vitals
+echo "🔥 Firebase Setup for Vehicle-Vitals"
 echo "======================================"
 echo ""
 
-echo "This script will help you set up Firebase for the Vehicle Vitals project."
+echo "This script will help you set up Firebase for the Vehicle-Vitals project."
 echo ""
 
 echo "📋 Prerequisites:"
@@ -34,7 +34,7 @@ echo "3️⃣ Get Web App Configuration:"
 echo "   • In Firebase Console > Project Settings > General"
 echo "   • Scroll to 'Your apps' section"
 echo "   • Click 'Add app' > Web"
-echo "   • Register app as 'Vehicle Vitals Web'"
+echo "   • Register app as 'Vehicle-Vitals Web'"
 echo "   • Copy the config object"
 echo ""
 

@@ -1,8 +1,8 @@
-# Vehicle Vitals - Complete Production Environment Setup Guide
+# Vehicle-Vitals - Complete Production Environment Setup Guide
 
 ## Overview
 
-This guide will help you set up all required GitHub secrets for production deployment of Vehicle Vitals.
+This guide will help you set up all required GitHub secrets for production deployment of Vehicle-Vitals.
 
 ## Required GitHub Secrets
 

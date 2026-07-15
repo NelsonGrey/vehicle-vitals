@@ -1,4 +1,4 @@
-# Act CLI Testing Guide for Vehicle Vitals
+# Act CLI Testing Guide for Vehicle-Vitals
 
 ## 🎭 Testing Workflows Locally with Act
 

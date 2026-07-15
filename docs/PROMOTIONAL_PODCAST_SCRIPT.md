@@ -1,4 +1,4 @@
-# Vehicle Vitals — Promotional Podcast Script
+# Vehicle-Vitals — Promotional Podcast Script
 
 **Duration:** ~8 minutes | **Tone:** Conversational, expert, solution-focused
 
@@ -16,7 +16,7 @@ Yeah. We've all been there.
 
 **[MUSIC SOFTENS]**
 
-Today, I want to introduce you to a solution that's changing the game for vehicle owners and fleet managers alike. It's called **Vehicle Vitals**, and it's kind of like having a personal mechanic and financial advisor _combined_ — except it actually fits in your pocket.
+Today, I want to introduce you to a solution that's changing the game for vehicle owners and fleet managers alike. It's called **Vehicle-Vitals**, and it's kind of like having a personal mechanic and financial advisor _combined_ — except it actually fits in your pocket.
 
 ---
 
@@ -46,9 +46,9 @@ Both Sarah and Marcus are intelligent, capable people. But they're stuck managin
 
 ## THE SOLUTION [2:15–4:30]
 
-**Host:** Here's where Vehicle Vitals comes in.
+**Host:** Here's where Vehicle-Vitals comes in.
 
-**Vehicle Vitals is a cloud-based platform** that brings everything you need to manage your vehicle — or your entire fleet — into one beautifully simple interface. Think of it as the operating system for your vehicles.
+**Vehicle-Vitals is a cloud-based platform** that brings everything you need to manage your vehicle — or your entire fleet — into one beautifully simple interface. Think of it as the operating system for your vehicles.
 
 **[MUSIC SHIFTS — MORE CONFIDENT TONE]**
 
@@ -58,7 +58,7 @@ Let me walk you through what this actually looks like in practice.
 
 When you first log in, you land in your **Garage**. This is where all your vehicles live. You can add as many as you want — sedans, SUVs, motorcycles, vans, whatever you've got.
 
-For each vehicle, Vehicle Vitals shows you:
+For each vehicle, Vehicle-Vitals shows you:
 
 - **Cost of Ownership at a glance** — total spend, monthly average, what you're actually paying
 - **Service spending breakdown** — how much you've spent on oil changes, batteries, brakes, transmission work — everything
@@ -68,7 +68,7 @@ Sarah can see all three of her vehicles and instantly understand her true automo
 
 ### The Timeline – See Everything That Matters
 
-But here's where it gets powerful. Vehicle Vitals has a **Maintenance Timeline** — think of it like a personal event calendar, except all the events are your vehicle services.
+But here's where it gets powerful. Vehicle-Vitals has a **Maintenance Timeline** — think of it like a personal event calendar, except all the events are your vehicle services.
 
 You can see:
 
@@ -83,7 +83,7 @@ Want to know what you spent on your vehicle last year? One filter. Want to see a
 
 Then there's the **Reminder Center**. This is the feature that actually saves you money.
 
-Vehicle Vitals learns your driving habits and predicts when you'll hit maintenance milestones. Then it alerts you _before_ something fails — typically 14 days in advance.
+Vehicle-Vitals learns your driving habits and predicts when you'll hit maintenance milestones. Then it alerts you _before_ something fails — typically 14 days in advance.
 
 Got a high-mileage vehicle that needs a transmission fluid flush? You'll get a reminder when you're 400 miles away from that service. Battery wearing out? You'll know before it dies in your driveway.
 
@@ -93,7 +93,7 @@ For fleet managers like Marcus, this is invaluable. It means fewer breakdowns, b
 
 Now, let's talk about **Vehicle Records**. This is where documents live.
 
-Vehicle Vitals requires you to organize 7 categories of documents:
+Vehicle-Vitals requires you to organize 7 categories of documents:
 
 - Bill of Sale
 - Loan or Lease Agreement
@@ -105,11 +105,11 @@ Vehicle Vitals requires you to organize 7 categories of documents:
 
 Why? Because when you're selling your vehicle, refinancing, filing an insurance claim, or just need proof of service — these documents matter. And they should be _organized and accessible_, not buried in your email or filing cabinet.
 
-Vehicle Vitals uses document intelligence to extract data from your invoices and service records. So when you upload a repair invoice, the system automatically captures the cost, service date, and details. Your records build up into a comprehensive ownership history.
+Vehicle-Vitals uses document intelligence to extract data from your invoices and service records. So when you upload a repair invoice, the system automatically captures the cost, service date, and details. Your records build up into a comprehensive ownership history.
 
 ### Finding Trusted Mechanics – No More Guessing
 
-And because maintenance is only as good as the shop doing the work, Vehicle Vitals includes **Service Provider Search**.
+And because maintenance is only as good as the shop doing the work, Vehicle-Vitals includes **Service Provider Search**.
 
 Tell it your location and vehicle make, and it finds nearby dealerships and repair shops. No more searching Google and hoping for honest reviews. You've got a curated list, and you can filter by specialization.
 
@@ -129,7 +129,7 @@ You're not reacting to breakdowns anymore. You're proactive. You catch issues be
 When you sell your vehicle, you can show a complete, documented service history. That's worth money. Buyers trust vehicles with documented maintenance.
 
 **🚗 Less Stress**
-You're not wondering if you forgot an important service. You're not scrambling to find documents. You're not guessing whether you got ripped off at the shop. Vehicle Vitals handles all of it.
+You're not wondering if you forgot an important service. You're not scrambling to find documents. You're not guessing whether you got ripped off at the shop. Vehicle-Vitals handles all of it.
 
 **🚗 Time Savings**
 All your vehicle information is in one place. No more digging through email, texts, or file folders.
@@ -141,7 +141,7 @@ If you manage multiple vehicles — whether it's a family with three vehicles or
 
 ## THE PLATFORM [6:45–7:30]
 
-**Host:** Now, here's the best part: Vehicle Vitals launches with both a web app and an iOS app, so you can use whichever interface fits your workflow — or both. It works across your phone, tablet, or computer with the same core functionality everywhere.
+**Host:** Now, here's the best part: Vehicle-Vitals launches with both a web app and an iOS app, so you can use whichever interface fits your workflow — or both. It works across your phone, tablet, or computer with the same core functionality everywhere.
 
 You sign up, add your vehicles, start uploading records and maintenance history. The more you use it, the smarter it gets. After a few months, you've got a complete picture of your vehicle finances and maintenance history.
 
@@ -151,15 +151,15 @@ It integrates with your existing records — you can upload documents, photos, i
 
 ## CALL TO ACTION [7:30–8:00]
 
-**Host:** If you're tired of managing vehicle maintenance the old way — with sticky notes, spreadsheets, and crossed fingers — **Vehicle Vitals** is worth checking out.
+**Host:** If you're tired of managing vehicle maintenance the old way — with sticky notes, spreadsheets, and crossed fingers — **Vehicle-Vitals** is worth checking out.
 
 Head over to **[www.vehicle-vitals.com](http://www.vehicle-vitals.com)** to sign up. The first 30 days are free, so you can see exactly how it works for your vehicles.
 
-Whether you've got one vehicle or a fleet, whether you're a weekly hands-on maintainer or you take your vehicles to the shop, Vehicle Vitals makes vehicle ownership smarter, cheaper, and way less stressful.
+Whether you've got one vehicle or a fleet, whether you're a weekly hands-on maintainer or you take your vehicles to the shop, Vehicle-Vitals makes vehicle ownership smarter, cheaper, and way less stressful.
 
 **[MUSIC RISES]**
 
-**Host:** That's Vehicle Vitals. Thanks for listening, and drive safe out there.
+**Host:** That's Vehicle-Vitals. Thanks for listening, and drive safe out there.
 
 **[MUSIC FADES OUT]**
 
@@ -173,11 +173,11 @@ Whether you've got one vehicle or a fleet, whether you're a weekly hands-on main
 
 ### 30-Second Radio Spot
 
-> Tired of guessing when your vehicle needs maintenance? Or tracking repair costs across a notebook and three email threads? **Vehicle Vitals** is a cloud platform that organizes everything — maintenance schedules, service records, repair costs, and nearby mechanics. See your true cost of vehicle ownership. Get proactive reminders before repairs fail. Never lose a receipt again. **Vehicle Vitals — smarter vehicle ownership.** Visit vehicle-vitals.com today.
+> Tired of guessing when your vehicle needs maintenance? Or tracking repair costs across a notebook and three email threads? **Vehicle-Vitals** is a cloud platform that organizes everything — maintenance schedules, service records, repair costs, and nearby mechanics. See your true cost of vehicle ownership. Get proactive reminders before repairs fail. Never lose a receipt again. **Vehicle-Vitals — smarter vehicle ownership.** Visit vehicle-vitals.com today.
 
 ### 60-Second YouTube Pre-Roll
 
-> [VISUAL: Screenshots of landing page, garage page] Ever wonder how much you're _really_ spending on your vehicle? [VISUAL: Cost breakdown chart] **Vehicle Vitals** is your personal vehicle assistant. Add your vehicles, upload service records, and the platform does the rest. See your maintenance timeline, get reminders before service is due, and find trusted mechanics near you. [VISUAL: Timeline page] For fleet managers, it means fewer breakdowns and smarter budgeting. [VISUAL: Profile, records pages] One place for everything — costs, records, reminders, and peace of mind. **Get started free at vehicle-vitals.com.**
+> [VISUAL: Screenshots of landing page, garage page] Ever wonder how much you're _really_ spending on your vehicle? [VISUAL: Cost breakdown chart] **Vehicle-Vitals** is your personal vehicle assistant. Add your vehicles, upload service records, and the platform does the rest. See your maintenance timeline, get reminders before service is due, and find trusted mechanics near you. [VISUAL: Timeline page] For fleet managers, it means fewer breakdowns and smarter budgeting. [VISUAL: Profile, records pages] One place for everything — costs, records, reminders, and peace of mind. **Get started free at vehicle-vitals.com.**
 
 ### Social Media Teasers
 
@@ -185,7 +185,7 @@ Whether you've got one vehicle or a fleet, whether you're a weekly hands-on main
 
 > Before: Scattered receipts, forgotten maintenance, surprise $2K repairs 📋
 >
-> After: Vehicle Vitals — your complete vehicle operating system 🚗
+> After: Vehicle-Vitals — your complete vehicle operating system 🚗
 >
 > See your true cost of ownership. Track maintenance. Never miss a service.
 >
@@ -202,7 +202,7 @@ Whether you've got one vehicle or a fleet, whether you're a weekly hands-on main
 > - ✅ Smart reminders before failures
 > - ✅ Organized records for insurance, resale, everything
 >
-> That's Vehicle Vitals. Free for 30 days. vehicle-vitals.com 🚗
+> That's Vehicle-Vitals. Free for 30 days. vehicle-vitals.com 🚗
 
 ---
 
@@ -212,7 +212,7 @@ Whether you've got one vehicle or a fleet, whether you're a weekly hands-on main
 - **Preventive Medicine:** Just like health, vehicle preventive maintenance saves 5x more than reactive repairs
 - **Hidden Costs:** Most people don't know their true cost of vehicle ownership until resale
 - **Peace of Mind:** Organized records = confidence when dealing with mechanics and insurance
-- **Fleet Efficiency:** For small businesses, Vehicle Vitals means uptime, lower downtime costs, better customer service
+- **Fleet Efficiency:** For small businesses, Vehicle-Vitals means uptime, lower downtime costs, better customer service
 - **Document Intelligence:** The platform doesn't just store receipts — it _extracts and organizes_ data for analysis
 - **Accessibility:** Works on any device, any browser — designed for real people with busy lives
 

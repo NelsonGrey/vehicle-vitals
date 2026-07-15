@@ -5,7 +5,7 @@ Status: Proposed for implementation
 
 ## Why this exists
 
-Vehicle Vitals currently proves record-keeping value, but it does not yet make subscription value visually obvious within the first few seconds of landing on the dashboard.
+Vehicle-Vitals currently proves record-keeping value, but it does not yet make subscription value visually obvious within the first few seconds of landing on the dashboard.
 
 The new `Vehicle Health` dashboard shifts the product from:
 

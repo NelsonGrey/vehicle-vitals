@@ -1,7 +1,7 @@
 project:
   name: vehicle-vitals
   description: 'Vehicle management app with web and mobile clients, Firebase backend'
-  owner: mnelson3
+  owner: NelsonGrey
 
 targets:
   ios:

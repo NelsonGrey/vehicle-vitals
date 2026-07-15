@@ -39,7 +39,7 @@ const SAY_VOICE = process.env.VV_NARRATION_VOICE || 'Samantha';
 const SAY_RATE = process.env.VV_NARRATION_RATE || '170';
 
 const narrationText =
-  'In Vehicle Vitals, start from the VIN Lookup demo page, navigate features from the header, and open authentication to continue. ' +
+  'In Vehicle-Vitals, start from the VIN Lookup demo page, navigate features from the header, and open authentication to continue. ' +
   'Fill your email and password, then return to VIN lookup to review the walkthrough lane and supporting content.';
 
 function run(bin, args, options = {}) {

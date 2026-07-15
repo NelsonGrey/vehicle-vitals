@@ -1,4 +1,4 @@
-# iOS Certificate Setup Summary - Vehicle Vitals
+# iOS Certificate Setup Summary - Vehicle-Vitals
 
 > **Status**: Archived summary. Legacy beta-distribution references are not part of the current active pipeline.
 
@@ -12,7 +12,7 @@
 
 ### 2. Fastlane Configuration Updated
 
-- **Matchfile**: Configured for Vehicle Vitals certificates repository
+- **Matchfile**: Configured for Vehicle-Vitals certificates repository
 - **Appfile**: Updated with correct app identifier (`com.vehiclevitals.app.ios`)
 - **Fastfile**: Added certificate management lanes:
   - `sync_signing` - Sync certificates from repo
@@ -29,7 +29,7 @@
 
 ### 4. Documentation Updated
 
-- **Guide**: `docs/IOS_CERTIFICATE_SETUP_GUIDE.md` updated for Vehicle Vitals
+- **Guide**: `docs/IOS_CERTIFICATE_SETUP_GUIDE.md` updated for Vehicle-Vitals
 - **Workflow**: `.github/workflows/ios-distribution.yml` updated for Fastlane Match
 
 ## 🔑 Next Steps (Manual Actions Required)
@@ -44,7 +44,7 @@
 
 1. Go to: https://appstoreconnect.apple.com → Users and Access → Keys
 2. Create new API key with "Admin" role
-3. Name: "Vehicle Vitals CI"
+3. Name: "Vehicle-Vitals CI"
 4. Download the `.p8` file
 5. Note the Key ID and Issuer ID
 
@@ -143,5 +143,5 @@ If you encounter issues:
 ---
 
 **Generated**: $(date)
-**Project**: Vehicle Vitals
+**Project**: Vehicle-Vitals
 **Certificate Repository**: https://github.com/mnelson3/vehicle-vitals-certificates

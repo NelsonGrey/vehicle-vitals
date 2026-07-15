@@ -11,7 +11,7 @@ The marketing site establishes the vision — persona-driven messaging, dark-and
 ## What the marketing site now promises
 
 ### Identity
-- Product name: Vehicle Vitals
+- Product name: Vehicle-Vitals
 - Tagline: "One garage for every vehicle record, reminder, and repair cost"
 - Visual identity: dark slate-950 background, teal accent (#14b8a6), white text, Inter sans + Playfair Display serif headings
 - Support: support@vehicle-vitals.com / sales@vehicle-vitals.com

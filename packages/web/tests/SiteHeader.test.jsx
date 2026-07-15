@@ -28,7 +28,7 @@ vi.mock('../src/shared/marketingAnalytics', () => ({
 }));
 
 vi.mock('../src/components/StackedVLogo', () => ({
-  default: () => <div data-testid="stacked-logo">Vehicle Vitals</div>,
+  default: () => <div data-testid="stacked-logo">Vehicle-Vitals</div>,
 }));
 
 function renderHeader() {

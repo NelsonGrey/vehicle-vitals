@@ -1,4 +1,4 @@
-# Vehicle Vitals Go Live Runbook
+# Vehicle-Vitals Go Live Runbook
 
 Last updated: July 14, 2026
 Current decision: NO-GO
@@ -6,7 +6,7 @@ Release manager: Mark Nelson (interim)
 
 ## Purpose
 
-This document is the executable go-live checklist for Vehicle Vitals. It turns
+This document is the executable go-live checklist for Vehicle-Vitals. It turns
 the current documentation, code, configuration, CI, security posture, product
 scope, monetization, and operations state into a sequence that can be completed
 and signed off.
@@ -35,7 +35,7 @@ Out of scope unless explicitly re-approved:
 
 ## Current Readiness Summary
 
-As of July 14, 2026, Vehicle Vitals is not ready for market launch.
+As of July 14, 2026, Vehicle-Vitals is not ready for market launch.
 
 **Since the July 9 snapshot**: a large capability/information-architecture
 refactor (centralized nav metadata, `/getting-started` and `/product-tour`

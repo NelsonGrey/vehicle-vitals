@@ -87,7 +87,7 @@ describe('SiteFooter', () => {
 
     // Copyright
     expect(
-      within(footer).getByText(/© \d{4} Vehicle Vitals/)
+      within(footer).getByText(/© \d{4} Vehicle-Vitals/)
     ).toBeInTheDocument();
   });
 

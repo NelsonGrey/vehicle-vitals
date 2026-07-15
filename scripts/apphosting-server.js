@@ -126,5 +126,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Vehicle Vitals App Hosting server listening on ${HOST}:${PORT}`);
+  console.log(`Vehicle-Vitals App Hosting server listening on ${HOST}:${PORT}`);
 });

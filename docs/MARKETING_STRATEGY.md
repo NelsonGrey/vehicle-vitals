@@ -1,4 +1,4 @@
-# Vehicle Vitals — Marketing Strategy & Launch Toolkit
+# Vehicle-Vitals — Marketing Strategy & Launch Toolkit
 
 **Document Type:** Marketing Strategy & Execution Guide  
 **Last Updated:** May 8, 2026  
@@ -8,9 +8,9 @@
 
 ## Overview
 
-This document outlines a comprehensive marketing strategy for Vehicle Vitals, leveraging the promotional assets created (podcast script, video script, user guide with screenshots, and feature documentation).
+This document outlines a comprehensive marketing strategy for Vehicle-Vitals, leveraging the promotional assets created (podcast script, video script, user guide with screenshots, and feature documentation).
 
-**Goal:** Establish Vehicle Vitals as the go-to vehicle management platform for individual owners and fleet managers through educational, benefit-driven content.
+**Goal:** Establish Vehicle-Vitals as the go-to vehicle management platform for individual owners and fleet managers through educational, benefit-driven content.
 
 ---
 
@@ -18,7 +18,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 ### Value Proposition
 
-**Vehicle Vitals is the operating system for your vehicles — giving you complete visibility into costs, maintenance schedules, and services.**
+**Vehicle-Vitals is the operating system for your vehicles — giving you complete visibility into costs, maintenance schedules, and services.**
 
 ### Key Benefits
 
@@ -117,7 +117,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 > "I spent $1,600+ on vehicle maintenance last year and had no idea where it was going. 😤
 >
-> Enter Vehicle Vitals: 📱
+> Enter Vehicle-Vitals: 📱
 > ✅ See your true cost of ownership
 > ✅ Get reminders before repairs fail
 > ✅ Organize all your records
@@ -131,7 +131,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 > "Fleet managers: How do you reduce breakdowns while cutting maintenance admin time by half?
 >
-> Vehicle Vitals gives you real-time visibility into:
+> Vehicle-Vitals gives you real-time visibility into:
 > • Maintenance schedules across all vehicles
 > • Predictive alerts before failures
 > • Cost tracking & budget forecasting
@@ -206,7 +206,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 **Ad Copy Sample:**
 
-> **Vehicle Vitals – Smart Vehicle Management**
+> **Vehicle-Vitals – Smart Vehicle Management**
 > Know your true cost of ownership. Track maintenance. Get proactive reminders.
 > Free 30-day trial. No credit card required.
 > vehicle-vitals.com
@@ -287,7 +287,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 >
 > You probably spend $1,600+ every year on vehicle maintenance. But here's the kicker: most people have _no idea_ where that money goes.
 >
-> That's where Vehicle Vitals comes in.
+> That's where Vehicle-Vitals comes in.
 >
 > With one simple dashboard, you can see:
 >
@@ -302,7 +302,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 >
 > No credit card required. Takes 60 seconds to set up.
 >
-> -Vehicle Vitals Team
+> -Vehicle-Vitals Team
 
 ---
 
@@ -318,7 +318,7 @@ This document outlines a comprehensive marketing strategy for Vehicle Vitals, le
 
 #### PR Strategy
 
-- **Press Release:** "Vehicle Vitals Launches to Help Americans Track $1.6T Annual Automotive Spending"
+- **Press Release:** "Vehicle-Vitals Launches to Help Americans Track $1.6T Annual Automotive Spending"
 - **Media Outreach:** Automotive journalists, small business media, tech outlets
 - **Thought Leadership:** Publish data insights on vehicle ownership costs
 - **Award Submissions:** Best fleet management app, most innovative automotive tech

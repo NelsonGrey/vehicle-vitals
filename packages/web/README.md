@@ -1,6 +1,6 @@
 # @vehicle-vitals/web
 
-React web application for Vehicle Vitals.
+React web application for Vehicle-Vitals.
 
 ## Features
 

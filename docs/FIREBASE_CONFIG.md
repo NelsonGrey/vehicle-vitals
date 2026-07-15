@@ -1,6 +1,6 @@
 # Firebase Configuration Strategy
 
-This document clarifies the Firebase configuration patterns used across the Vehicle Vitals monorepo.
+This document clarifies the Firebase configuration patterns used across the Vehicle-Vitals monorepo.
 
 ## Configuration Files Overview
 

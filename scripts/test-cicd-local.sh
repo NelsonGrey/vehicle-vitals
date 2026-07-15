@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Local CI/CD Testing Script for Vehicle Vitals
+# Local CI/CD Testing Script for Vehicle-Vitals
 # This script allows testing deployment workflows locally without consuming GitHub Actions minutes
 
 set -e
@@ -20,7 +20,7 @@ ENVIRONMENT="${1:-development}"
 DRY_RUN="${2:-true}"
 WORKFLOW="${3:-master-pipeline}"
 
-echo -e "${BLUE}🚗 Vehicle Vitals - Local CI/CD Testing Script${NC}"
+echo -e "${BLUE}🚗 Vehicle-Vitals - Local CI/CD Testing Script${NC}"
 echo -e "${BLUE}===============================================${NC}"
 echo "Environment: $ENVIRONMENT"
 echo "Dry Run: $DRY_RUN"

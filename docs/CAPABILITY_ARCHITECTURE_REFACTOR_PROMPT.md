@@ -1,4 +1,4 @@
-# Vehicle Vitals Capability Architecture Refactor Prompt
+# Vehicle-Vitals Capability Architecture Refactor Prompt
 
 ## Role and objective
 

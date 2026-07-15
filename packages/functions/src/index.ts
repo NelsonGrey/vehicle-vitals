@@ -4162,7 +4162,11 @@ export const getSubscriptionPricingCallable = onCall(
 
 export const createBillingPortalSessionCallable = onCall(
   {
-    secrets: ['STRIPE_SECRET_KEY', 'STRIPE_PORTAL_RETURN_URL'],
+    secrets: [
+      'STRIPE_SECRET_KEY',
+      'STRIPE_PORTAL_RETURN_URL',
+      'STRIPE_PORTAL_CONFIGURATION_ID',
+    ],
   },
   async request => {
     const uid = request.auth?.uid;
@@ -4204,9 +4208,23 @@ export const createBillingPortalSessionCallable = onCall(
       );
     }
 
+    // Optional: pins this account's Vehicle-Vitals-specific portal
+    // configuration. This account also runs Wishlist Wizard as a separate
+    // product with its own configuration, so Vehicle-Vitals must not rely
+    // on whichever configuration Stripe has marked "default" once both
+    // exist. Left blank (e.g. in dev/staging until a test-mode equivalent
+    // configuration exists there), Stripe falls back to its own default,
+    // matching pre-existing behavior.
+    const configurationId = (
+      process.env.STRIPE_PORTAL_CONFIGURATION_ID || ''
+    )
+      .toString()
+      .trim();
+
     const portalSession = await createStripeBillingPortalSession({
       stripeCustomerId,
       returnUrl,
+      configurationId: configurationId || undefined,
     });
 
     const orgId = await ensurePersonalOrganization(uid);

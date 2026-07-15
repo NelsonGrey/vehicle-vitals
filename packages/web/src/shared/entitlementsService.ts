@@ -165,6 +165,32 @@ export async function changeSubscriptionTier(
   return result.data.entitlements as EffectiveEntitlements;
 }
 
+export interface StripeTierPrice {
+  amount: number;
+  currency: string;
+  interval: 'month' | 'year';
+}
+
+export interface StripeSubscriptionPricing {
+  pro: { monthly: StripeTierPrice | null; annual: StripeTierPrice | null };
+  premium: { monthly: StripeTierPrice | null; annual: StripeTierPrice | null };
+}
+
+export async function getSubscriptionPricing(): Promise<StripeSubscriptionPricing> {
+  const firebaseService = await createFirebaseService();
+  const callable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'getSubscriptionPricingCallable'
+  );
+
+  const result = await callable({});
+  if (!result.data?.success || !result.data?.pricing) {
+    throw new Error('Failed to fetch live subscription pricing');
+  }
+
+  return result.data.pricing as StripeSubscriptionPricing;
+}
+
 export async function createSubscriptionCheckoutSession(
   targetTier: Extract<UserTier, 'pro' | 'premium'>,
   billingPeriod: BillingPeriod

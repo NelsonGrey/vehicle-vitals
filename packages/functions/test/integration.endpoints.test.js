@@ -14,6 +14,7 @@ const {
   getEffectiveEntitlementsCallable,
   createApiAccessKeyCallable,
   createSubscriptionCheckoutSessionCallable,
+  getSubscriptionPricingCallable,
   listApiAccessKeysCallable,
   revokeApiAccessKeyCallable,
   getZapierWebhookConfigCallable,
@@ -873,7 +874,7 @@ test('verifyPremiumPurchase rejects without auth context', async () => {
     () =>
       verifyPremiumPurchase.run({
         data: {
-          productId: 'premium_ad_free',
+          productId: 'PREMIUM_iOS_MONTH',
           verificationData: 'receipt-token',
         },
       }),
@@ -903,13 +904,31 @@ test('verifyPremiumPurchase rejects unsupported product id', async () => {
   );
 });
 
+test('verifyPremiumPurchase rejects the retired premium_ad_free product id', async () => {
+  await assert.rejects(
+    () =>
+      verifyPremiumPurchase.run({
+        auth: { uid: 'premium-user-legacy' },
+        data: {
+          productId: 'premium_ad_free',
+          verificationData: 'receipt-token',
+        },
+      }),
+    error => {
+      assert.equal(error.code, 'invalid-argument');
+      assert.equal(error.message, 'Unsupported premium productId');
+      return true;
+    }
+  );
+});
+
 test('verifyPremiumPurchase rejects missing verification data', async () => {
   await assert.rejects(
     () =>
       verifyPremiumPurchase.run({
         auth: { uid: 'premium-user' },
         data: {
-          productId: 'premium_ad_free',
+          productId: 'PREMIUM_iOS_MONTH',
           verificationData: ' ',
         },
       }),
@@ -924,12 +943,12 @@ test('verifyPremiumPurchase rejects missing verification data', async () => {
   );
 });
 
-test('verifyPremiumPurchase returns provisional entitlement payload', async () => {
+test('verifyPremiumPurchase returns provisional entitlement payload for a Pro purchase', async () => {
   process.env.PREMIUM_VERIFICATION_REQUIRED = 'false';
   const result = await verifyPremiumPurchase.run({
     auth: { uid: 'premium-user' },
     data: {
-      productId: 'premium_ad_free',
+      productId: 'PRO_iOS_MONTH',
       purchaseId: 'purchase-123',
       verificationData: 'server-receipt-token',
       source: 'app_store',
@@ -938,6 +957,28 @@ test('verifyPremiumPurchase returns provisional entitlement payload', async () =
 
   assert.equal(result.success, true);
   assert.equal(result.entitlement.premium, true);
+  assert.equal(result.entitlement.tier, 'pro');
+  assert.equal(result.entitlement.billingPeriod, 'monthly');
+  assert.equal(result.entitlement.verified, false);
+  assert.equal(result.entitlement.verificationState, 'provisional');
+});
+
+test('verifyPremiumPurchase returns provisional entitlement payload for a Premium purchase', async () => {
+  process.env.PREMIUM_VERIFICATION_REQUIRED = 'false';
+  const result = await verifyPremiumPurchase.run({
+    auth: { uid: 'premium-user-2' },
+    data: {
+      productId: 'PREMIUM_iOS_ANNUAL',
+      purchaseId: 'purchase-124',
+      verificationData: 'server-receipt-token-2',
+      source: 'app_store',
+    },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.entitlement.premium, true);
+  assert.equal(result.entitlement.tier, 'premium');
+  assert.equal(result.entitlement.billingPeriod, 'annual');
   assert.equal(result.entitlement.verified, false);
   assert.equal(result.entitlement.verificationState, 'provisional');
 });
@@ -951,7 +992,7 @@ test('verifyPremiumPurchase rejects in strict mode when verification is not poss
       verifyPremiumPurchase.run({
         auth: { uid: 'premium-user-strict' },
         data: {
-          productId: 'premium_ad_free',
+          productId: 'PRO_iOS_MONTH',
           purchaseId: 'purchase-strict',
           verificationData: 'server-receipt-token',
           source: 'app_store',
@@ -976,7 +1017,7 @@ test('verifyPremiumPurchase returns verified entitlement in strict mode with val
       return {
         status: 0,
         receipt: {
-          in_app: [{ product_id: 'premium_ad_free' }],
+          in_app: [{ product_id: 'PRO_iOS_ANNUAL' }],
         },
       };
     },
@@ -986,7 +1027,7 @@ test('verifyPremiumPurchase returns verified entitlement in strict mode with val
     const result = await verifyPremiumPurchase.run({
       auth: { uid: 'premium-user-verified' },
       data: {
-        productId: 'premium_ad_free',
+        productId: 'PRO_iOS_ANNUAL',
         purchaseId: 'purchase-verified',
         verificationData: 'valid-apple-receipt',
         source: 'app_store',
@@ -995,6 +1036,8 @@ test('verifyPremiumPurchase returns verified entitlement in strict mode with val
 
     assert.equal(result.success, true);
     assert.equal(result.entitlement.premium, true);
+    assert.equal(result.entitlement.tier, 'pro');
+    assert.equal(result.entitlement.billingPeriod, 'annual');
     assert.equal(result.entitlement.verified, true);
     assert.equal(result.entitlement.verificationState, 'verified');
   } finally {
@@ -1030,7 +1073,7 @@ test('verifyPremiumPurchase returns verified entitlement in strict mode with val
     const result = await verifyPremiumPurchase.run({
       auth: { uid: 'premium-user-play-verified' },
       data: {
-        productId: 'premium_ad_free',
+        productId: 'PREMIUM_iOS_MONTH',
         purchaseId: 'purchase-play-verified',
         verificationData: 'play-token-verified',
         source: 'play_store',
@@ -1039,6 +1082,8 @@ test('verifyPremiumPurchase returns verified entitlement in strict mode with val
 
     assert.equal(result.success, true);
     assert.equal(result.entitlement.premium, true);
+    assert.equal(result.entitlement.tier, 'premium');
+    assert.equal(result.entitlement.billingPeriod, 'monthly');
     assert.equal(result.entitlement.verified, true);
     assert.equal(result.entitlement.verificationState, 'verified');
   } finally {
@@ -1074,7 +1119,7 @@ test('verifyPremiumPurchase treats google_play source alias as Play Store', asyn
     const result = await verifyPremiumPurchase.run({
       auth: { uid: 'premium-user-google-play-alias' },
       data: {
-        productId: 'premium_ad_free',
+        productId: 'PRO_iOS_MONTH',
         purchaseId: 'purchase-google-play-alias',
         verificationData: 'play-token-google-play-alias',
         source: 'google_play',
@@ -1119,7 +1164,7 @@ test('verifyPremiumPurchase rejects in strict mode when Play verification fails'
         verifyPremiumPurchase.run({
           auth: { uid: 'premium-user-play-reject' },
           data: {
-            productId: 'premium_ad_free',
+            productId: 'PRO_iOS_MONTH',
             purchaseId: 'purchase-play-reject',
             verificationData: 'play-token-reject',
             source: 'play_store',
@@ -1157,7 +1202,7 @@ test('verifyPremiumPurchase blocks replay across different users', async () => {
   const first = await verifyPremiumPurchase.run({
     auth: { uid: 'premium-user-a' },
     data: {
-      productId: 'premium_ad_free',
+      productId: 'PREMIUM_iOS_MONTH',
       purchaseId: 'purchase-a',
       verificationData: receipt,
       source: 'play_store',
@@ -1171,7 +1216,7 @@ test('verifyPremiumPurchase blocks replay across different users', async () => {
       verifyPremiumPurchase.run({
         auth: { uid: 'premium-user-b' },
         data: {
-          productId: 'premium_ad_free',
+          productId: 'PREMIUM_iOS_MONTH',
           purchaseId: 'purchase-b',
           verificationData: receipt,
           source: 'play_store',
@@ -1196,7 +1241,7 @@ test('getPremiumEntitlement returns active provisional entitlement after verific
   await verifyPremiumPurchase.run({
     auth: { uid },
     data: {
-      productId: 'premium_ad_free',
+      productId: 'PREMIUM_iOS_MONTH',
       purchaseId: 'purchase-entitlement',
       verificationData: `entitlement-receipt-${Date.now()}`,
       source: 'unknown_store',
@@ -1207,9 +1252,11 @@ test('getPremiumEntitlement returns active provisional entitlement after verific
 
   assert.equal(entitlement.success, true);
   assert.equal(entitlement.entitlement.premium, true);
+  assert.equal(entitlement.entitlement.tier, 'premium');
+  assert.equal(entitlement.entitlement.billingPeriod, 'monthly');
   assert.equal(entitlement.entitlement.verified, false);
   assert.equal(entitlement.entitlement.verificationState, 'provisional');
-  assert.equal(entitlement.entitlement.productId, 'premium_ad_free');
+  assert.equal(entitlement.entitlement.productId, 'PREMIUM_iOS_MONTH');
 });
 
 test('createSubscriptionCheckoutSessionCallable rejects without auth context', async () => {
@@ -1349,6 +1396,118 @@ test('createSubscriptionCheckoutSessionCallable uses Stripe API when secret key 
       delete process.env.STRIPE_CHECKOUT_CANCEL_URL;
     } else {
       process.env.STRIPE_CHECKOUT_CANCEL_URL = previousCancelUrl;
+    }
+  }
+});
+
+test('getSubscriptionPricingCallable rejects without auth context', async () => {
+  await assert.rejects(
+    () => getSubscriptionPricingCallable.run({ data: {} }),
+    error => {
+      assert.equal(error.code, 'unauthenticated');
+      return true;
+    }
+  );
+});
+
+test('getSubscriptionPricingCallable fetches live prices from Stripe', async () => {
+  const uid = `pricing-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousStripeKey = process.env.STRIPE_SECRET_KEY;
+  const previousProMonthly = process.env.STRIPE_PRICE_ID_PRO_MONTHLY;
+  const previousProAnnual = process.env.STRIPE_PRICE_ID_PRO_ANNUAL;
+  const previousPremiumMonthly = process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY;
+  const previousPremiumAnnual = process.env.STRIPE_PRICE_ID_PREMIUM_ANNUAL;
+  const originalFetchForStripe = global.fetch;
+
+  process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
+  process.env.STRIPE_PRICE_ID_PRO_MONTHLY = 'price_pro_monthly_test';
+  process.env.STRIPE_PRICE_ID_PRO_ANNUAL = 'price_pro_annual_test';
+  process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY = 'price_premium_monthly_test';
+  process.env.STRIPE_PRICE_ID_PREMIUM_ANNUAL = 'price_premium_annual_test';
+
+  const pricesByPriceId = {
+    price_pro_monthly_test: {
+      unit_amount: 299,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+    },
+    price_pro_annual_test: {
+      unit_amount: 2999,
+      currency: 'usd',
+      recurring: { interval: 'year' },
+    },
+    price_premium_monthly_test: {
+      unit_amount: 699,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+    },
+    price_premium_annual_test: {
+      unit_amount: 6999,
+      currency: 'usd',
+      recurring: { interval: 'year' },
+    },
+  };
+
+  global.fetch = async url => {
+    const match = String(url).match(/\/v1\/prices\/(.+)$/);
+    const priceId = match ? decodeURIComponent(match[1]) : '';
+    const price = pricesByPriceId[priceId];
+    if (!price) {
+      throw new Error(`Unexpected fetch URL in pricing test: ${url}`);
+    }
+
+    return {
+      ok: true,
+      async json() {
+        return price;
+      },
+    };
+  };
+
+  try {
+    const result = await getSubscriptionPricingCallable.run({
+      auth: { uid, token: { email } },
+      data: {},
+    });
+
+    assert.equal(result.success, true);
+    assert.deepEqual(result.pricing.pro.monthly, {
+      amount: 2.99,
+      currency: 'usd',
+      interval: 'month',
+    });
+    assert.deepEqual(result.pricing.premium.annual, {
+      amount: 69.99,
+      currency: 'usd',
+      interval: 'year',
+    });
+  } finally {
+    global.fetch = originalFetchForStripe;
+    if (typeof previousStripeKey === 'undefined') {
+      delete process.env.STRIPE_SECRET_KEY;
+    } else {
+      process.env.STRIPE_SECRET_KEY = previousStripeKey;
+    }
+    if (typeof previousProMonthly === 'undefined') {
+      delete process.env.STRIPE_PRICE_ID_PRO_MONTHLY;
+    } else {
+      process.env.STRIPE_PRICE_ID_PRO_MONTHLY = previousProMonthly;
+    }
+    if (typeof previousProAnnual === 'undefined') {
+      delete process.env.STRIPE_PRICE_ID_PRO_ANNUAL;
+    } else {
+      process.env.STRIPE_PRICE_ID_PRO_ANNUAL = previousProAnnual;
+    }
+    if (typeof previousPremiumMonthly === 'undefined') {
+      delete process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY;
+    } else {
+      process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY = previousPremiumMonthly;
+    }
+    if (typeof previousPremiumAnnual === 'undefined') {
+      delete process.env.STRIPE_PRICE_ID_PREMIUM_ANNUAL;
+    } else {
+      process.env.STRIPE_PRICE_ID_PREMIUM_ANNUAL = previousPremiumAnnual;
     }
   }
 });
@@ -1716,6 +1875,82 @@ test('stripeSubscriptionWebhook downgrades and revokes premium on customer.subsc
   }
 });
 
+test('stripeSubscriptionWebhook does not clear a genuine IAP entitlement on an unrelated cancellation', async () => {
+  const uid = `stripe-cancel-iap-${Date.now()}`;
+  const email = `${uid}@example.com`;
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'stripe-webhook-test-secret';
+  process.env.PREMIUM_VERIFICATION_REQUIRED = 'false';
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email } },
+  });
+
+  // A real IAP purchase, independent of the Stripe subscription this
+  // webhook event pretends to cancel.
+  await verifyPremiumPurchase.run({
+    auth: { uid },
+    data: {
+      productId: 'PREMIUM_iOS_MONTH',
+      purchaseId: `purchase-${uid}`,
+      verificationData: `receipt-${uid}`,
+      source: 'app_store',
+    },
+  });
+
+  const eventPayload = {
+    id: `evt_cancel_iap_${Date.now()}`,
+    type: 'customer.subscription.deleted',
+    data: {
+      object: {
+        id: `sub_cancel_iap_${Date.now()}`,
+        customer: `cus_cancel_iap_${Date.now()}`,
+        current_period_end: Math.floor(Date.now() / 1000) + 3600,
+        metadata: {
+          uid,
+        },
+      },
+    },
+  };
+
+  const req = {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(),
+      'stripe-signature': buildStripeSignature(
+        eventPayload,
+        'stripe-webhook-test-secret'
+      ),
+    },
+    body: eventPayload,
+    rawBody: Buffer.from(JSON.stringify(eventPayload)),
+    ip: '198.51.100.35',
+  };
+  const res = makeResponse();
+
+  try {
+    await stripeSubscriptionWebhook(req, res);
+    assert.equal(res.state.statusCode, 200);
+    assert.equal(res.state.body.success, true);
+
+    const admin = require('firebase-admin');
+    const premiumSnap = await admin
+      .firestore()
+      .doc(`users/${uid}/entitlements/premium`)
+      .get();
+
+    assert.equal(premiumSnap.data().active, true);
+    assert.equal(premiumSnap.data().verificationProvider, 'app_store');
+    assert.equal(premiumSnap.data().tier, 'premium');
+  } finally {
+    if (typeof previousSecret === 'undefined') {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    } else {
+      process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+});
+
 test('stripeSubscriptionWebhook preserves trialing status from customer.subscription.updated', async () => {
   const uid = `stripe-trialing-${Date.now()}`;
   const email = `${uid}@example.com`;
@@ -1939,9 +2174,9 @@ test('bootstrapEnterpriseContextCallable returns org and entitlements for authen
   assert.equal(result.entitlements.vehicleLimit, 2);
 });
 
-test('getEffectiveEntitlementsCallable returns premium tier when premium entitlement is active', async () => {
+test('getEffectiveEntitlementsCallable returns pro tier when a Pro IAP entitlement is active', async () => {
   process.env.PREMIUM_VERIFICATION_REQUIRED = 'false';
-  const uid = `enterprise-entitlement-${Date.now()}`;
+  const uid = `enterprise-entitlement-pro-${Date.now()}`;
 
   await bootstrapEnterpriseContextCallable.run({
     auth: { uid, token: { email: `${uid}@example.com` } },
@@ -1950,7 +2185,35 @@ test('getEffectiveEntitlementsCallable returns premium tier when premium entitle
   await verifyPremiumPurchase.run({
     auth: { uid },
     data: {
-      productId: 'premium_ad_free',
+      productId: 'PRO_iOS_MONTH',
+      purchaseId: `purchase-${uid}`,
+      verificationData: `receipt-${uid}`,
+      source: 'unknown_store',
+    },
+  });
+
+  const entitlements = await getEffectiveEntitlementsCallable.run({
+    auth: { uid, token: { email: `${uid}@example.com` } },
+  });
+
+  assert.equal(entitlements.success, true);
+  assert.equal(entitlements.entitlements.tier, 'pro');
+  assert.equal(entitlements.entitlements.vehicleLimit, 10);
+  assert.equal(entitlements.entitlements.features.ad_free, false);
+});
+
+test('getEffectiveEntitlementsCallable returns premium tier when a Premium IAP entitlement is active', async () => {
+  process.env.PREMIUM_VERIFICATION_REQUIRED = 'false';
+  const uid = `enterprise-entitlement-premium-${Date.now()}`;
+
+  await bootstrapEnterpriseContextCallable.run({
+    auth: { uid, token: { email: `${uid}@example.com` } },
+  });
+
+  await verifyPremiumPurchase.run({
+    auth: { uid },
+    data: {
+      productId: 'PREMIUM_iOS_MONTH',
       purchaseId: `purchase-${uid}`,
       verificationData: `receipt-${uid}`,
       source: 'unknown_store',
@@ -1998,6 +2261,45 @@ const runFirestoreIntegration =
     assert.equal(entitlements.entitlements.vehicleLimit, 999999);
     assert.equal(entitlements.entitlements.features.ad_free, true);
     assert.equal(entitlements.entitlements.features.api_access, true);
+  }
+);
+
+(runFirestoreIntegration ? test : test.skip)(
+  'getEffectiveEntitlementsCallable does not let an active Pro IAP purchase downgrade an enterprise org tier',
+  async () => {
+    process.env.PREMIUM_VERIFICATION_REQUIRED = 'false';
+    const uid = `enterprise-pro-iap-${Date.now()}`;
+    const context = await bootstrapEnterpriseContextCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+    });
+
+    const admin = require('firebase-admin');
+    await admin.firestore().doc(`orgs/${context.orgId}`).set(
+      {
+        planTier: 'enterprise',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await verifyPremiumPurchase.run({
+      auth: { uid },
+      data: {
+        productId: 'PRO_iOS_MONTH',
+        purchaseId: `purchase-${uid}`,
+        verificationData: `receipt-${uid}`,
+        source: 'unknown_store',
+      },
+    });
+
+    const entitlements = await getEffectiveEntitlementsCallable.run({
+      auth: { uid, token: { email: `${uid}@example.com` } },
+      data: { orgId: context.orgId },
+    });
+
+    assert.equal(entitlements.success, true);
+    assert.equal(entitlements.entitlements.tier, 'enterprise');
+    assert.equal(entitlements.entitlements.vehicleLimit, 999999);
   }
 );
 

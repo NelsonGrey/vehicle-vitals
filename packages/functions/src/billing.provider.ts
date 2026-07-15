@@ -117,6 +117,85 @@ export async function createStripeCheckoutSession(
   };
 }
 
+export interface StripeTierPrice {
+  amount: number;
+  currency: string;
+  interval: "month" | "year";
+}
+
+export interface StripeSubscriptionPricing {
+  pro: { monthly: StripeTierPrice | null; annual: StripeTierPrice | null };
+  premium: { monthly: StripeTierPrice | null; annual: StripeTierPrice | null };
+}
+
+async function fetchStripePrice(
+  secretKey: string,
+  priceId: string
+): Promise<StripeTierPrice | null> {
+  if (!priceId) {
+    return null;
+  }
+
+  const response = await fetch(
+    `https://api.stripe.com/v1/prices/${encodeURIComponent(priceId)}`,
+    {
+      headers: {Authorization: `Bearer ${secretKey}`},
+    }
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = await response.json().catch(() => null);
+  const unitAmount = payload?.unit_amount;
+  const interval = payload?.recurring?.interval;
+  if (
+    typeof unitAmount !== "number" ||
+    (interval !== "month" && interval !== "year")
+  ) {
+    return null;
+  }
+
+  return {
+    amount: unitAmount / 100,
+    currency: (payload?.currency || "usd").toString(),
+    interval,
+  };
+}
+
+export async function getStripeSubscriptionPricing(): Promise<StripeSubscriptionPricing> {
+  const secretKey = requireStripeSecretKey();
+
+  const [proMonthly, proAnnual, premiumMonthly, premiumAnnual] =
+    await Promise.all([
+      fetchStripePrice(secretKey, getStripePriceId("pro", "monthly")),
+      fetchStripePrice(secretKey, getStripePriceId("pro", "annual")),
+      fetchStripePrice(secretKey, getStripePriceId("premium", "monthly")),
+      fetchStripePrice(secretKey, getStripePriceId("premium", "annual")),
+    ]);
+
+  return {
+    pro: {monthly: proMonthly, annual: proAnnual},
+    premium: {monthly: premiumMonthly, annual: premiumAnnual},
+  };
+}
+
+export interface IapProductSpec {
+  tier: "pro" | "premium";
+  billingPeriod: "monthly" | "annual";
+}
+
+// Apple requires the developer to choose these product-id strings when
+// creating each subscription in App Store Connect (unlike Stripe, which
+// generates its own price ids) — these must match ASC exactly.
+export const IAP_PRODUCT_CATALOG: Record<string, IapProductSpec> = {
+  PRO_iOS_MONTH: {tier: "pro", billingPeriod: "monthly"},
+  PRO_iOS_ANNUAL: {tier: "pro", billingPeriod: "annual"},
+  PREMIUM_iOS_MONTH: {tier: "premium", billingPeriod: "monthly"},
+  PREMIUM_iOS_ANNUAL: {tier: "premium", billingPeriod: "annual"},
+};
+
 export async function verifyBillingPurchase(
   input: BillingPurchaseVerificationInput
 ): Promise<BillingVerificationResult> {
@@ -124,7 +203,7 @@ export async function verifyBillingPurchase(
 
   // Current implementation delegates to premium receipt verification.
   // The abstraction allows future Stripe/enterprise invoice providers.
-  if (input.productId === "premium_ad_free") {
+  if (IAP_PRODUCT_CATALOG[input.productId]) {
     const verification = await verifyPremiumReceipt({
       productId: input.productId,
       source: normalizedSource,

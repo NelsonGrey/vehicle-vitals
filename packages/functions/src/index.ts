@@ -16,6 +16,8 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
 import {
   createStripeCheckoutSession,
+  getStripeSubscriptionPricing,
+  IAP_PRODUCT_CATALOG,
   verifyBillingPurchase,
 } from './billing.provider';
 import {
@@ -153,6 +155,8 @@ interface SupportUserSummary {
   vehicleCount: number;
   premiumActive: boolean;
   premiumVerified: boolean;
+  iapTier: string;
+  iapProductId: string;
   vehicleLimit: number;
 }
 
@@ -464,14 +468,15 @@ async function resolveEffectiveEntitlements(
 
   const subscriptionTier = normalizeTier(subscriptionSnap.data()?.tier);
   const premiumActive = premiumSnap.data()?.active === true;
+  const iapTier = normalizeTier(premiumSnap.data()?.tier);
   const orgTier = normalizeTier(orgSnap.data()?.planTier);
 
   let effectiveTier = subscriptionTier;
   if (tierRank(orgTier) > tierRank(effectiveTier)) {
     effectiveTier = orgTier;
   }
-  if (premiumActive) {
-    effectiveTier = 'premium';
+  if (premiumActive && tierRank(iapTier) > tierRank(effectiveTier)) {
+    effectiveTier = iapTier;
   }
 
   return {
@@ -844,6 +849,8 @@ async function applySubscriptionTierState(params: {
         premiumEntitlementRef,
         {
           active: true,
+          tier: 'premium',
+          billingPeriod: params.billingPeriod,
           verified: false,
           verificationState: (
             params.verificationState || 'simulated_checkout'
@@ -1072,6 +1079,8 @@ const buildSupportUserSummary = async (
     vehicleCount,
     premiumActive: entitlement.active === true,
     premiumVerified: entitlement.verified === true,
+    iapTier: (entitlement.tier || '').toString(),
+    iapProductId: (entitlement.productId || '').toString(),
     vehicleLimit:
       tier === 'enterprise'
         ? 999999
@@ -2577,7 +2586,7 @@ export const sendMaintenanceReminder = onRequest(
           <p>Please schedule these services soon to keep your vehicle ` +
           `in optimal condition.</p>
           <br>
-          <p>Vehicle Vitals Team</p>
+          <p>Vehicle-Vitals Team</p>
         `,
         text: `
           Vehicle Maintenance Reminder
@@ -2592,7 +2601,7 @@ export const sendMaintenanceReminder = onRequest(
           Please schedule these services soon to keep your vehicle
           in optimal condition.
 
-          Vehicle Vitals Team
+          Vehicle-Vitals Team
         `,
       };
 
@@ -2992,7 +3001,7 @@ async function sendReminderEmail(
         optimal condition.
         </p>
         <br>
-        <p>Vehicle Vitals Team</p>
+        <p>Vehicle-Vitals Team</p>
       `,
     text: `
       Vehicle Maintenance Reminder
@@ -3007,7 +3016,7 @@ async function sendReminderEmail(
       Please schedule these services soon to keep your vehicle in
       optimal condition.
 
-      Vehicle Vitals Team
+      Vehicle-Vitals Team
     `,
   };
 
@@ -3434,7 +3443,9 @@ export const verifyPremiumPurchase = onCall(async request => {
     orgId?: string;
   }) ?? {};
 
-  if (productId !== 'premium_ad_free') {
+  const normalizedProductId = (productId || '').toString();
+  const productSpec = IAP_PRODUCT_CATALOG[normalizedProductId];
+  if (!productSpec) {
     throw new HttpsError('invalid-argument', 'Unsupported premium productId');
   }
 
@@ -3461,7 +3472,7 @@ export const verifyPremiumPurchase = onCall(async request => {
 
   try {
     const verification = await verifyBillingPurchase({
-      productId,
+      productId: normalizedProductId,
       source: purchaseSource,
       receipt,
     });
@@ -3499,7 +3510,7 @@ export const verifyPremiumPurchase = onCall(async request => {
         receiptRef,
         {
           uid,
-          productId,
+          productId: normalizedProductId,
           source: purchaseSource,
           purchaseId: (purchaseId || '').toString(),
           receiptHash,
@@ -3516,7 +3527,9 @@ export const verifyPremiumPurchase = onCall(async request => {
         entitlementRef,
         {
           active: true,
-          productId,
+          tier: productSpec.tier,
+          billingPeriod: productSpec.billingPeriod,
+          productId: normalizedProductId,
           source: purchaseSource,
           purchaseId: (purchaseId || '').toString(),
           receiptHash,
@@ -3538,7 +3551,7 @@ export const verifyPremiumPurchase = onCall(async request => {
       targetType: 'entitlement',
       targetId: 'premium',
       details: {
-        productId,
+        productId: normalizedProductId,
         source: purchaseSource,
         verificationState: verification.verificationState,
       },
@@ -3548,6 +3561,8 @@ export const verifyPremiumPurchase = onCall(async request => {
       success: true,
       entitlement: {
         premium: true,
+        tier: productSpec.tier,
+        billingPeriod: productSpec.billingPeriod,
         verified: verification.verified,
         verificationState: verification.verificationState,
       },
@@ -3584,6 +3599,8 @@ export const getPremiumEntitlement = onCall(async request => {
     success: true,
     entitlement: {
       premium: data.active === true,
+      tier: normalizeTier(data.tier),
+      billingPeriod: (data.billingPeriod || '').toString(),
       verified: data.verified === true,
       verificationState: (data.verificationState || 'none').toString(),
       productId: (data.productId || '').toString(),
@@ -4122,6 +4139,26 @@ export const createSubscriptionCheckoutSessionCallable = onCall(
   }
 );
 
+export const getSubscriptionPricingCallable = onCall(
+  {
+    secrets: [
+      'STRIPE_SECRET_KEY',
+      'STRIPE_PRICE_ID_PRO_MONTHLY',
+      'STRIPE_PRICE_ID_PRO_ANNUAL',
+      'STRIPE_PRICE_ID_PREMIUM_MONTHLY',
+      'STRIPE_PRICE_ID_PREMIUM_ANNUAL',
+    ],
+  },
+  async request => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Missing auth context');
+    }
+
+    const pricing = await getStripeSubscriptionPricing();
+    return { success: true, pricing };
+  }
+);
+
 export const createApiAccessKeyCallable = onCall(async request => {
   const uid = request.auth?.uid;
   if (!uid) {
@@ -4524,14 +4561,14 @@ export const requestAccountConsolidationCallable = onCall(
 
   await sendEmail({
     to: sourceEmail,
-    subject: 'Confirm account consolidation — Vehicle Vitals',
+    subject: 'Confirm account consolidation — Vehicle-Vitals',
     text:
-      `A Vehicle Vitals account is requesting to merge this account's ` +
+      `A Vehicle-Vitals account is requesting to merge this account's ` +
       `data into it. If this was you, enter this code to confirm: ${code}\n\n` +
       `This code expires in 15 minutes. If you did not request this, ` +
       `you can safely ignore this email.`,
     html:
-      `<p>A Vehicle Vitals account is requesting to merge this account's ` +
+      `<p>A Vehicle-Vitals account is requesting to merge this account's ` +
       `data into it.</p><p>If this was you, enter this code to confirm:</p>` +
       `<p style="font-size:24px;font-weight:bold;">${code}</p>` +
       `<p>This code expires in 15 minutes. If you did not request this, ` +
@@ -4864,14 +4901,23 @@ export const consolidateAccountDataCallable = onCall(async request => {
 
     const sourcePremiumActive = sourcePremiumSnap.data()?.active === true;
     const primaryPremiumActive = primaryPremiumSnap.data()?.active === true;
+    const sourceIapTier = normalizeTier(sourcePremiumSnap.data()?.tier);
+    const primaryIapTier = normalizeTier(primaryPremiumSnap.data()?.tier);
 
-    if (sourcePremiumActive && !primaryPremiumActive) {
+    if (
+      sourcePremiumActive &&
+      (!primaryPremiumActive || tierRank(sourceIapTier) > tierRank(primaryIapTier))
+    ) {
       const sourcePremiumData = sourcePremiumSnap.data() || {};
       await db.doc(`users/${primaryUid}/entitlements/premium`).set(
         {
           active: true,
+          tier: sourcePremiumData.tier || null,
+          billingPeriod: sourcePremiumData.billingPeriod || null,
+          productId: sourcePremiumData.productId || null,
           verified: sourcePremiumData.verified || false,
           verificationState: sourcePremiumData.verificationState || 'migrated',
+          verificationProvider: sourcePremiumData.verificationProvider || null,
           migratedFrom: sourceUid,
           migratedAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -5285,15 +5331,29 @@ export const stripeSubscriptionWebhook = onRequest(
             { merge: true }
           );
 
-        await admin.firestore().doc(`users/${uid}/entitlements/premium`).set(
-          {
-            active: false,
-            verified: false,
-            verificationState: 'revoked_by_webhook_cancellation',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
+        const entitlementRef = admin
+          .firestore()
+          .doc(`users/${uid}/entitlements/premium`);
+        const entitlementSnap = await entitlementRef.get();
+        const entitlementProvider = entitlementSnap.data()?.verificationProvider;
+        // A genuine Apple/Google-verified IAP entitlement must survive an
+        // unrelated Stripe cancellation — only skip the clear in that case.
+        // Anything else (no entitlement doc yet, or the Stripe mirror's own
+        // 'subscription_settlement' marker) is safe to clear as before.
+        if (
+          entitlementProvider !== 'app_store' &&
+          entitlementProvider !== 'play_store'
+        ) {
+          await entitlementRef.set(
+            {
+              active: false,
+              verified: false,
+              verificationState: 'revoked_by_webhook_cancellation',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
 
         reconciliationResult = {
           eventType,

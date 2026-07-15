@@ -13,11 +13,19 @@ class AppLogo extends StatelessWidget {
     this.showText = true,
     this.isLight = false,
     this.wordmarkColor,
+    this.full = false,
   });
 
   final double size;
   final bool compact;
   final bool showText;
+
+  /// Uses the complete square app icon (roof, gauge, road, and document
+  /// badge) instead of the cropped header/footer nav mark. The nav mark
+  /// is deliberately cropped for tight header/footer space (see below);
+  /// full-screen contexts like login/signup have room to show the whole
+  /// icon and shouldn't look cut off.
+  final bool full;
 
   /// Selects the light-background vs. dark-background mark variant.
   /// Explicit on mobile rather than sniffing a color string, since Dart
@@ -33,10 +41,12 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = size * _markAspectRatio;
-    final assetPath = isLight
-        ? 'assets/branding/vehicle-vitals-header-mark-light.png'
-        : 'assets/branding/vehicle-vitals-header-mark.png';
+    final assetPath = full
+        ? 'assets/branding/vehicle-vitals-icon-full.png'
+        : isLight
+            ? 'assets/branding/vehicle-vitals-header-mark-light.png'
+            : 'assets/branding/vehicle-vitals-header-mark.png';
+    final width = full ? size : size * _markAspectRatio;
 
     final mark = Image.asset(
       assetPath,
@@ -54,7 +64,7 @@ class AppLogo extends StatelessWidget {
 
     final wordmark = compact
         ? Text(
-            'Vehicle Vitals',
+            'Vehicle-Vitals',
             style: TextStyle(
               color: resolvedWordmarkColor,
               fontSize: compactFontSize,

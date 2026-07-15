@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_logo.dart';
-import '../components/inline_ad_section.dart';
 import '../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -114,7 +113,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Center(child: AppLogo(size: 48, showText: false)),
+                  child: Center(child: AppLogo(size: 72, showText: false, full: true)),
                 ),
 
                 Card(
@@ -224,8 +223,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const InlineAdSection(placement: MobileAdPlacement.inlineAuth),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => context.go('/auth/login'),

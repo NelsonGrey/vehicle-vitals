@@ -4162,7 +4162,7 @@ export const getSubscriptionPricingCallable = onCall(
 
 export const createBillingPortalSessionCallable = onCall(
   {
-    secrets: ['STRIPE_SECRET_KEY'],
+    secrets: ['STRIPE_SECRET_KEY', 'STRIPE_PORTAL_RETURN_URL'],
   },
   async request => {
     const uid = request.auth?.uid;
@@ -4187,18 +4187,20 @@ export const createBillingPortalSessionCallable = onCall(
       );
     }
 
-    const configuredAppBaseUrl = (process.env.APP_BASE_URL || '')
+    // Dedicated secret rather than APP_BASE_URL -- that generic var is
+    // referenced as a fallback in createSubscriptionCheckoutSessionCallable
+    // but was never actually configured in any environment (dev/staging/prod
+    // all rely on the dedicated STRIPE_CHECKOUT_SUCCESS_URL/_CANCEL_URL
+    // secrets instead, which take precedence there). Depending on it here
+    // would fail closed in every environment.
+    const returnUrl = (process.env.STRIPE_PORTAL_RETURN_URL || '')
       .toString()
-      .trim()
-      .replace(/\/$/, '');
-    const returnUrl = configuredAppBaseUrl
-      ? `${configuredAppBaseUrl}/app/subscription`
-      : '';
+      .trim();
 
     if (!returnUrl) {
       throw new HttpsError(
         'failed-precondition',
-        'App base URL is not configured'
+        'Stripe billing portal return URL is not configured'
       );
     }
 

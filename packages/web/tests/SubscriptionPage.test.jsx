@@ -28,6 +28,11 @@ vi.mock('../src/shared/entitlementsService', () => ({
   changeSubscriptionTier: (...args) => mockChangeSubscriptionTier(...args),
   createSubscriptionCheckoutSession: (...args) =>
     mockCreateSubscriptionCheckoutSession(...args),
+  // Rejecting (not just omitting) mirrors production behavior when the
+  // callable is unreachable: SubscriptionPage falls back to static
+  // TIER_PRICING rather than leaving prices blank.
+  getSubscriptionPricing: () =>
+    Promise.reject(new Error('getSubscriptionPricing not mocked in tests')),
 }));
 
 vi.mock('../src/shared/adAnalytics', () => ({

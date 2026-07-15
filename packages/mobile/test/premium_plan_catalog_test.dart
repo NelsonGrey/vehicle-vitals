@@ -19,7 +19,10 @@ void main() {
             child: PremiumPlanCatalog(
               currentTier: 'free',
               isLoading: false,
+              billingPeriod: 'monthly',
+              proPrice: r'$2.99/mo',
               premiumPrice: r'$4.99',
+              onChoosePro: () {},
               onChoosePremium: () {},
               onContactSales: () {},
             ),
@@ -49,7 +52,10 @@ void main() {
             child: PremiumPlanCatalog(
               currentTier: 'free',
               isLoading: false,
+              billingPeriod: 'monthly',
+              proPrice: r'$2.99/mo',
               premiumPrice: r'$4.99',
+              onChoosePro: () {},
               onChoosePremium: () {},
               onContactSales: () {
                 contactSalesTapped += 1;
@@ -71,6 +77,81 @@ void main() {
     expect(contactSalesTapped, 1);
   });
 
+  testWidgets('tapping choose pro invokes callback exactly once', (
+    WidgetTester tester,
+  ) async {
+    int proTapped = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: _testTheme,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PremiumPlanCatalog(
+              currentTier: 'free',
+              isLoading: false,
+              billingPeriod: 'monthly',
+              proPrice: r'$2.99/mo',
+              premiumPrice: r'$4.99',
+              onChoosePro: () {
+                proTapped += 1;
+              },
+              onChoosePremium: () {},
+              onContactSales: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final proButton = find.widgetWithText(ElevatedButton, 'Choose Pro');
+    expect(proButton, findsOneWidget);
+    expect(tester.widget<ElevatedButton>(proButton).onPressed, isNotNull);
+
+    await tester.tap(proButton);
+    await tester.pump();
+
+    expect(proTapped, 1);
+  });
+
+  testWidgets('tapping choose premium invokes callback exactly once', (
+    WidgetTester tester,
+  ) async {
+    int premiumTapped = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: _testTheme,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PremiumPlanCatalog(
+              currentTier: 'free',
+              isLoading: false,
+              billingPeriod: 'monthly',
+              proPrice: r'$2.99/mo',
+              premiumPrice: r'$4.99',
+              onChoosePro: () {},
+              onChoosePremium: () {
+                premiumTapped += 1;
+              },
+              onContactSales: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.widgetWithText(ElevatedButton, 'Choose Premium'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Choose Premium'));
+    await tester.pump();
+
+    expect(premiumTapped, 1);
+  });
+
   testWidgets('shows marketing taglines for all four tiers', (
     WidgetTester tester,
   ) async {
@@ -82,7 +163,10 @@ void main() {
             child: PremiumPlanCatalog(
               currentTier: 'free',
               isLoading: false,
+              billingPeriod: 'monthly',
+              proPrice: null,
               premiumPrice: null,
+              onChoosePro: () {},
               onChoosePremium: () {},
               onContactSales: () {},
             ),
@@ -98,7 +182,7 @@ void main() {
   });
 
   testWidgets(
-    'falls back to web-aligned pricing when no live product price is available',
+    'falls back to web-aligned monthly pricing when no live product price is available',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -108,7 +192,10 @@ void main() {
               child: PremiumPlanCatalog(
                 currentTier: 'free',
                 isLoading: false,
+                billingPeriod: 'monthly',
+                proPrice: null,
                 premiumPrice: null,
+                onChoosePro: () {},
                 onChoosePremium: () {},
                 onContactSales: () {},
               ),
@@ -123,6 +210,36 @@ void main() {
       expect(find.text(r'$6.99/mo'), findsOneWidget);
       expect(find.text(r'$5/mo'), findsNothing);
       expect(find.text(r'$4.99'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'falls back to web-aligned annual pricing when no live product price is available',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: PremiumPlanCatalog(
+                currentTier: 'free',
+                isLoading: false,
+                billingPeriod: 'annual',
+                proPrice: null,
+                premiumPrice: null,
+                onChoosePro: () {},
+                onChoosePremium: () {},
+                onContactSales: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(r'$29.99/yr'), findsOneWidget);
+      expect(find.text(r'$69.99/yr'), findsOneWidget);
+      expect(find.text(r'$2.99/mo'), findsNothing);
+      expect(find.text(r'$6.99/mo'), findsNothing);
     },
   );
 }

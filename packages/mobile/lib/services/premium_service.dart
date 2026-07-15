@@ -22,11 +22,37 @@ class ProductDetails {
   });
 }
 
+class _IapProductSpec {
+  final String tier;
+  final String billingPeriod;
+  const _IapProductSpec(this.tier, this.billingPeriod);
+}
+
 class PremiumService extends ChangeNotifier {
   static const String _premiumStatusKey = 'premium_status';
   static const String _subscriptionTierKey = 'subscription_tier';
   static const String _vehicleLimitKey = 'vehicle_limit';
-  static const String _premiumProductId = 'premium_ad_free';
+
+  // Apple requires choosing these product-id strings when creating each
+  // subscription in App Store Connect (unlike Stripe, which generates its
+  // own price ids) — must match ASC exactly. Mirrored server-side in
+  // packages/functions/src/billing.provider.ts's IAP_PRODUCT_CATALOG,
+  // which is the trusted source for tier/billingPeriod on verification.
+  static const Map<String, _IapProductSpec> _productCatalog = {
+    'PRO_iOS_MONTH': _IapProductSpec('pro', 'monthly'),
+    'PRO_iOS_ANNUAL': _IapProductSpec('pro', 'annual'),
+    'PREMIUM_iOS_MONTH': _IapProductSpec('premium', 'monthly'),
+    'PREMIUM_iOS_ANNUAL': _IapProductSpec('premium', 'annual'),
+  };
+
+  // Shown until the live StoreKit query resolves; matches the canonical
+  // prices in packages/web/src/shared/featureFlags.ts's TIER_PRICING.
+  static const Map<String, String> _placeholderPrices = {
+    'PRO_iOS_MONTH': '\$2.99/mo',
+    'PRO_iOS_ANNUAL': '\$29.99/yr',
+    'PREMIUM_iOS_MONTH': '\$6.99/mo',
+    'PREMIUM_iOS_ANNUAL': '\$69.99/yr',
+  };
 
   bool _isPremium = false;
   bool _isLoading = false;
@@ -38,9 +64,9 @@ class PremiumService extends ChangeNotifier {
       FeatureFlagsService.getFeaturesForTier(FeatureFlagsService.freeTier);
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
   final EntitlementsService _entitlementsService = EntitlementsService();
-  iap.ProductDetails? _storePremiumProduct;
+  final Map<String, iap.ProductDetails> _storeProducts = {};
+  final Map<String, ProductDetails> _products = {};
   StreamSubscription<List<iap.PurchaseDetails>>? _purchaseSubscription;
-  ProductDetails? _premiumProduct;
   String? _lastSyncedUid;
 
   bool get isPremium => _isPremium;
@@ -49,7 +75,21 @@ class PremiumService extends ChangeNotifier {
   int get vehicleLimit => _vehicleLimit;
   Map<String, bool> get featureEntitlements =>
       Map<String, bool>.from(_featureEntitlements);
-  ProductDetails? get premiumProduct => _premiumProduct;
+
+  ProductDetails? productFor(String tier, String billingPeriod) {
+    final productId = _productIdFor(tier, billingPeriod);
+    return productId == null ? null : _products[productId];
+  }
+
+  String? _productIdFor(String tier, String billingPeriod) {
+    for (final entry in _productCatalog.entries) {
+      if (entry.value.tier == tier &&
+          entry.value.billingPeriod == billingPeriod) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
 
   PremiumService() {
     _initialize();
@@ -102,12 +142,16 @@ class PremiumService extends ChangeNotifier {
       _subscriptionTier,
     );
 
-    _premiumProduct = ProductDetails(
-      id: _premiumProductId,
-      title: 'Premium Ad-Free',
-      description: 'Remove ads and unlock premium features',
-      price: '\$4.99',
-    );
+    for (final entry in _productCatalog.entries) {
+      _products[entry.key] = ProductDetails(
+        id: entry.key,
+        title: entry.value.tier == 'pro' ? 'Pro' : 'Premium Ad-Free',
+        description: entry.value.tier == 'pro'
+            ? 'Plan and coordinate'
+            : 'Remove ads and unlock premium features',
+        price: _placeholderPrices[entry.key]!,
+      );
+    }
     notifyListeners();
   }
 
@@ -170,16 +214,14 @@ class PremiumService extends ChangeNotifier {
       );
     } catch (error) {
       debugPrint('Entitlement resolution failed: $error');
-
-      // Keep mobile functional when entitlement callables are unavailable.
-      final fallbackTier = _isPremium
-          ? FeatureFlagsService.premiumTier
-          : FeatureFlagsService.freeTier;
-      await _saveEntitlements(
-        tier: fallbackTier,
-        vehicleLimit: FeatureFlagsService.getVehicleLimit(fallbackTier),
-        features: FeatureFlagsService.getFeaturesForTier(fallbackTier),
-      );
+      // Keep mobile functional when entitlement callables are unavailable —
+      // do nothing further. _subscriptionTier/_vehicleLimit/_featureEntitlements
+      // already hold the last-known-good values (loaded from SharedPreferences
+      // at startup, kept current by every prior successful _saveEntitlements
+      // call), so there's nothing to re-derive here. Re-deriving from the
+      // legacy premium-only _isPremium boolean would incorrectly collapse a
+      // Pro subscriber to free on a transient network error.
+      notifyListeners();
     }
   }
 
@@ -190,18 +232,26 @@ class PremiumService extends ChangeNotifier {
       return;
     }
 
-    final response = await iap.InAppPurchase.instance.queryProductDetails({
-      _premiumProductId,
-    });
+    final response = await iap.InAppPurchase.instance.queryProductDetails(
+      _productCatalog.keys.toSet(),
+    );
+
+    if (response.notFoundIDs.isNotEmpty) {
+      debugPrint(
+        'IAP products not found in App Store Connect: ${response.notFoundIDs}',
+      );
+    }
 
     if (response.productDetails.isNotEmpty) {
-      _storePremiumProduct = response.productDetails.first;
-      _premiumProduct = ProductDetails(
-        id: _storePremiumProduct!.id,
-        title: _storePremiumProduct!.title,
-        description: _storePremiumProduct!.description,
-        price: _storePremiumProduct!.price,
-      );
+      for (final storeProduct in response.productDetails) {
+        _storeProducts[storeProduct.id] = storeProduct;
+        _products[storeProduct.id] = ProductDetails(
+          id: storeProduct.id,
+          title: storeProduct.title,
+          description: storeProduct.description,
+          price: storeProduct.price,
+        );
+      }
       notifyListeners();
     }
 
@@ -220,7 +270,7 @@ class PremiumService extends ChangeNotifier {
     List<iap.PurchaseDetails> purchaseDetailsList,
   ) async {
     for (final purchaseDetails in purchaseDetailsList) {
-      if (purchaseDetails.productID != _premiumProductId) continue;
+      if (!_productCatalog.containsKey(purchaseDetails.productID)) continue;
 
       if (purchaseDetails.status == iap.PurchaseStatus.pending) {
         _isLoading = true;
@@ -331,17 +381,17 @@ class PremiumService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> purchasePremium() async {
-    if (_storePremiumProduct == null) {
-      throw Exception('Premium product is not available');
+  Future<void> purchase(String tier, String billingPeriod) async {
+    final productId = _productIdFor(tier, billingPeriod);
+    final product = productId == null ? null : _storeProducts[productId];
+    if (product == null) {
+      throw Exception('$tier ($billingPeriod) product is not available');
     }
 
     _isLoading = true;
     notifyListeners();
 
-    final purchaseParam = iap.PurchaseParam(
-      productDetails: _storePremiumProduct!,
-    );
+    final purchaseParam = iap.PurchaseParam(productDetails: product);
     final launched = await iap.InAppPurchase.instance.buyNonConsumable(
       purchaseParam: purchaseParam,
     );
@@ -349,7 +399,7 @@ class PremiumService extends ChangeNotifier {
     if (!launched) {
       _isLoading = false;
       notifyListeners();
-      throw Exception('Unable to start premium purchase');
+      throw Exception('Unable to start $tier purchase');
     }
   }
 

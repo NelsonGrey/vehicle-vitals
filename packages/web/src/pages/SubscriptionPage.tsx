@@ -17,13 +17,15 @@ import { ROUTE_SEO } from '../shared/seoMeta';
 import {
   changeSubscriptionTier,
   createSubscriptionCheckoutSession,
+  getSubscriptionPricing,
+  type StripeSubscriptionPricing,
 } from '../shared/entitlementsService';
 import {
   compareFeatures,
   FEATURE_FLAGS,
   getTierDisplayName,
   getTierPricing,
-  TIER_PRICING,
+  type TierPricing,
   type UserTier,
 } from '../shared/featureFlags';
 import {
@@ -190,6 +192,36 @@ const pricingDimensions = [
   },
 ];
 
+// Stripe is the source of truth for what a customer is actually charged
+// (see billing.provider.ts). TIER_PRICING is only the fallback shown before
+// this loads or if the fetch fails, so it can never silently diverge from
+// the real Stripe price the way a purely hardcoded display would.
+function buildLiveTierPricing(
+  tier: UserTier,
+  livePricing: StripeSubscriptionPricing | null
+): TierPricing {
+  const fallback = getTierPricing(tier);
+  if (tier !== 'pro' && tier !== 'premium') return fallback;
+
+  const monthly = livePricing?.[tier]?.monthly;
+  const annual = livePricing?.[tier]?.annual;
+  if (!monthly || !annual) return fallback;
+
+  const formatAmount = (amount: number) =>
+    Number.isInteger(amount) ? `$${amount}` : `$${amount.toFixed(2)}`;
+  const savings = Math.round(monthly.amount * 12 - annual.amount);
+
+  return {
+    tier,
+    monthlyPrice: monthly.amount,
+    annualPrice: annual.amount,
+    monthlyDisplayPrice: `${formatAmount(monthly.amount)}/month`,
+    annualDisplayPrice: `${formatAmount(annual.amount)}/year`,
+    annualSavings:
+      savings > 0 ? `Save $${savings} vs monthly` : fallback.annualSavings,
+  };
+}
+
 export default function SubscriptionPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -198,11 +230,28 @@ export default function SubscriptionPage() {
     'monthly'
   );
   const [isSubmittingTierChange, setIsSubmittingTierChange] = useState(false);
+  const [livePricing, setLivePricing] =
+    useState<StripeSubscriptionPricing | null>(null);
 
   useEffect(() => {
     trackSubscriptionPageView('direct_navigation', tier);
     trackPricingPageView();
   }, [tier]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSubscriptionPricing()
+      .then(pricing => {
+        if (!cancelled) setLivePricing(pricing);
+      })
+      .catch(error => {
+        // Non-fatal: TIER_PRICING fallback keeps the page fully functional.
+        console.warn('Falling back to static tier pricing:', error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const summary = useMemo(
     () => (subscription ? getSubscriptionSummary(subscription) : null),
@@ -221,13 +270,14 @@ export default function SubscriptionPage() {
     if (checkoutStatus !== 'success') return;
     const pending = consumePendingCheckout();
     if (!pending) return;
+    const pricing = buildLiveTierPricing(pending.tier, livePricing);
     const amount =
       pending.billingPeriod === 'annual'
-        ? getTierPricing(pending.tier).annualPrice
-        : getTierPricing(pending.tier).monthlyPrice;
+        ? pricing.annualPrice
+        : pricing.monthlyPrice;
     trackPurchase(pending.tier, pending.billingPeriod, amount);
     trackPaymentCompleted(pending.tier, amount, 'USD', pending.billingPeriod);
-  }, [checkoutStatus]);
+  }, [checkoutStatus, livePricing]);
 
   if (isLoading) {
     return (
@@ -352,7 +402,7 @@ export default function SubscriptionPage() {
 
       <div className="mt-5 grid gap-4 lg:grid-cols-4">
         {tiers.map(planTier => {
-          const pricing = getTierPricing(planTier);
+          const pricing = buildLiveTierPricing(planTier, livePricing);
           const isCurrent = isBillingRoute && tier === planTier;
           const positioning = planPositioning[planTier];
           const ctaText = isCurrent
@@ -654,9 +704,9 @@ export default function SubscriptionPage() {
       </div>
 
       <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-        Pricing source: {TIER_PRICING.pro.monthlyDisplayPrice} and{' '}
-        {TIER_PRICING.premium.monthlyDisplayPrice} from monetization feature
-        configuration.
+        Pricing source: {buildLiveTierPricing('pro', livePricing).monthlyDisplayPrice}{' '}
+        and {buildLiveTierPricing('premium', livePricing).monthlyDisplayPrice} from
+        monetization feature configuration.
       </p>
     </div>
   );

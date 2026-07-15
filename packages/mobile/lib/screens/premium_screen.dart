@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../services/feature_flags_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
@@ -13,18 +14,55 @@ class PremiumScreen extends StatefulWidget {
 }
 
 class _PremiumScreenState extends State<PremiumScreen> {
+  String _billingPeriod = 'monthly';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Subscriptions and Billing')),
       body: Consumer<PremiumService>(
         builder: (context, premiumService, child) {
-          if (premiumService.isPremium) {
+          if (premiumService.subscriptionTier != FeatureFlagsService.freeTier) {
             return _buildPremiumActiveView(premiumService);
           } else {
             return _buildPremiumPurchaseView(premiumService);
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildBillingPeriodToggle() {
+    Widget periodButton(String period, String label) {
+      final bool isSelected = _billingPeriod == period;
+      return Expanded(
+        child: TextButton(
+          onPressed: () => setState(() => _billingPeriod = period),
+          style: TextButton.styleFrom(
+            backgroundColor: isSelected
+                ? Theme.of(context).primaryColor
+                : Colors.transparent,
+            foregroundColor: isSelected ? Colors.white : Colors.black87,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(label),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          periodButton('monthly', 'Monthly'),
+          periodButton('annual', 'Annual'),
+        ],
       ),
     );
   }
@@ -55,7 +93,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Premium Active',
+                          '$tierLabel Active',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(color: AppDesignTokens.success),
                         ),
@@ -72,6 +110,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
             ),
           ),
           const SizedBox(height: 24),
+          _buildBillingPeriodToggle(),
+          const SizedBox(height: 16),
           _buildPlanCatalog(premiumService),
           const SizedBox(height: 24),
           Text(
@@ -136,6 +176,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
+          _buildBillingPeriodToggle(),
+          const SizedBox(height: 16),
           _buildPlanCatalog(premiumService),
           const SizedBox(height: 16),
           _buildFeatureComparisonTable(),
@@ -146,7 +188,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Payment is processed through in-app purchase for Premium. Enterprise subscriptions are handled through direct sales support.',
+            'Payment is processed through in-app purchase for Pro and Premium. Enterprise subscriptions are handled through direct sales support.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
@@ -159,8 +201,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
     return PremiumPlanCatalog(
       currentTier: premiumService.subscriptionTier,
       isLoading: premiumService.isLoading,
-      premiumPrice: premiumService.premiumProduct?.price,
-      onChoosePremium: () => _purchasePremium(premiumService),
+      billingPeriod: _billingPeriod,
+      proPrice: premiumService.productFor('pro', _billingPeriod)?.price,
+      premiumPrice: premiumService.productFor('premium', _billingPeriod)?.price,
+      onChoosePro: () => _purchase(premiumService, 'pro'),
+      onChoosePremium: () => _purchase(premiumService, 'premium'),
       onContactSales: () => context.push('/app/support'),
     );
   }
@@ -312,9 +357,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
     );
   }
 
-  Future<void> _purchasePremium(PremiumService premiumService) async {
+  Future<void> _purchase(PremiumService premiumService, String tier) async {
     try {
-      await premiumService.purchasePremium();
+      await premiumService.purchase(tier, _billingPeriod);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -356,14 +401,20 @@ class PremiumPlanCatalog extends StatelessWidget {
     super.key,
     required this.currentTier,
     required this.isLoading,
+    required this.billingPeriod,
+    required this.proPrice,
     required this.premiumPrice,
+    required this.onChoosePro,
     required this.onChoosePremium,
     required this.onContactSales,
   });
 
   final String currentTier;
   final bool isLoading;
+  final String billingPeriod;
+  final String? proPrice;
   final String? premiumPrice;
+  final VoidCallback onChoosePro;
   final VoidCallback onChoosePremium;
   final VoidCallback onContactSales;
 
@@ -392,10 +443,14 @@ class PremiumPlanCatalog extends StatelessWidget {
   Widget _buildPlanCard(String tier) {
     final bool isCurrent = currentTier == tier;
     final bool isEnterprise = tier == 'enterprise';
+    final bool isProTier = tier == 'pro';
     final bool isPremiumTier = tier == 'premium';
 
     final Color accentColor = isCurrent ? Colors.teal : Colors.blueGrey;
-    final String priceLabel = _tierPriceLabel(tier, premiumPrice);
+    final String priceLabel = _tierPriceLabel(
+      tier,
+      tier == 'pro' ? proPrice : premiumPrice,
+    );
 
     String buttonLabel;
     VoidCallback? onPressed;
@@ -406,6 +461,9 @@ class PremiumPlanCatalog extends StatelessWidget {
     } else if (isEnterprise) {
       buttonLabel = 'Contact Sales';
       onPressed = onContactSales;
+    } else if (isProTier) {
+      buttonLabel = 'Choose Pro';
+      onPressed = isLoading ? null : onChoosePro;
     } else if (isPremiumTier) {
       buttonLabel = 'Choose Premium';
       onPressed = isLoading ? null : onChoosePremium;
@@ -461,7 +519,7 @@ class PremiumPlanCatalog extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: onPressed,
-                child: isLoading && isPremiumTier
+                child: isLoading && (isProTier || isPremiumTier)
                     ? const SizedBox(
                         width: 16,
                         height: 16,
@@ -520,14 +578,26 @@ class PremiumPlanCatalog extends StatelessWidget {
     }
   }
 
-  String _tierPriceLabel(String tier, String? currentPremiumPrice) {
+  String _tierPriceLabel(String tier, String? livePrice) {
+    final bool isAnnual = billingPeriod == 'annual';
+    final String suffix = isAnnual ? '/yr' : '/mo';
+
+    // Matches the web TIER_PRICING constant (featureFlags.ts) until the
+    // live App Store price loads.
+    String fallbackFor(String monthly, String annual) =>
+        isAnnual ? annual : monthly;
+
     switch (tier) {
       case 'pro':
-        // No live App Store product is wired up for Pro; match the web
-        // TIER_PRICING constant (featureFlags.ts) until one is.
-        return '\$2.99/mo';
+        if (livePrice == null) return fallbackFor('\$2.99/mo', '\$29.99/yr');
+        return livePrice.contains('/mo') || livePrice.contains('/yr')
+            ? livePrice
+            : '$livePrice$suffix';
       case 'premium':
-        return currentPremiumPrice ?? '\$6.99/mo';
+        if (livePrice == null) return fallbackFor('\$6.99/mo', '\$69.99/yr');
+        return livePrice.contains('/mo') || livePrice.contains('/yr')
+            ? livePrice
+            : '$livePrice$suffix';
       case 'enterprise':
         return 'Contact sales';
       case 'free':

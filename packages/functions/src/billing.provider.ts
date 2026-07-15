@@ -184,6 +184,7 @@ export async function getStripeSubscriptionPricing(): Promise<StripeSubscription
 export interface StripeBillingPortalSessionInput {
   stripeCustomerId: string;
   returnUrl: string;
+  configurationId?: string;
 }
 
 export interface StripeBillingPortalSessionResult {
@@ -199,6 +200,14 @@ export async function createStripeBillingPortalSession(
   const form = new URLSearchParams();
   form.set("customer", input.stripeCustomerId);
   form.set("return_url", input.returnUrl);
+  // Pins this account's Vehicle-Vitals-specific portal configuration rather
+  // than relying on whichever configuration Stripe has marked "default" --
+  // this account also runs a separate Wishlist Wizard product with its own
+  // configuration/switchable-price allowlist, so an implicit default would
+  // silently break (or cross-contaminate) the moment that changes.
+  if (input.configurationId) {
+    form.set("configuration", input.configurationId);
+  }
 
   const response = await fetch(
     "https://api.stripe.com/v1/billing_portal/sessions",

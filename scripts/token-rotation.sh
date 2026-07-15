@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🔄 Vehicle Vitals - Token Rotation System
+# 🔄 Vehicle-Vitals - Token Rotation System
 # CRITICAL: Bash 3.2 compatible - NO associative arrays
 
 set -e

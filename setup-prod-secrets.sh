@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Vehicle Vitals - Complete Production Environment Setup
+# Vehicle-Vitals - Complete Production Environment Setup
 # This script sets up all required GitHub secrets for production deployment
 
 set -e
 
-echo "🚀 Setting up complete PROD environment for Vehicle Vitals..."
+echo "🚀 Setting up complete PROD environment for Vehicle-Vitals..."
 echo ""
 
 # Colors for output

@@ -231,7 +231,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       final event = await _calendarService.addMaintenanceToCalendar(
         vehicleVin: vehicle.vin,
         title: item['description'] as String,
-        description: 'Maintenance reminder from Vehicle Vitals',
+        description: 'Maintenance reminder from Vehicle-Vitals',
         dueDate: dueDate,
         vehicleInfo: '${vehicle.year} ${vehicle.make} ${vehicle.model}',
         target: _calendarTarget,
@@ -298,7 +298,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(icsFile.path)],
-          text: 'Calendar event from Vehicle Vitals',
+          text: 'Calendar event from Vehicle-Vitals',
         ),
       );
       return;

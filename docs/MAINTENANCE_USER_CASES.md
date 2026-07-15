@@ -1,4 +1,4 @@
-# Vehicle Vitals - Maintenance User Cases and Types
+# Vehicle-Vitals - Maintenance User Cases and Types
 
 **Purpose**: Define the supported maintenance users, record types, and feature expectations so the maintenance workflow stays complete across web, mobile, exports, and backend storage.
 

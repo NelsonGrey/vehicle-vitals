@@ -36,7 +36,7 @@ export default function Login() {
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-6">
       <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 text-center mb-2">
-        Sign in to Vehicle Vitals
+        Sign in to Vehicle-Vitals
       </h1>
       <p className="text-center text-slate-600 dark:text-slate-400 mb-6">
         Access your secure garage, timeline, and upcoming maintenance.

@@ -1,7 +1,7 @@
 {
   "name": "vehicle-vitals",
   "private": true,
-  "description": "Root workspace for Vehicle Vitals (web + mobile)",
+  "description": "Root workspace for Vehicle-Vitals (web + mobile)",
   "workspaces": [
     "packages/*"
   ],
@@ -40,7 +40,9 @@
     "openai:tts:validate": "node scripts/validate-openai-tts.js",
     "videos:generate:narrated": "node scripts/generate-narrated-feature-demos.js",
     "videos:generate:interactive": "node scripts/generate-interactive-feature-demos.js",
-    "videos:generate:interactive:vin": "node scripts/generate-interactive-vin-demo.js"
+    "videos:generate:interactive:vin": "node scripts/generate-interactive-vin-demo.js",
+    "screenshots:capture:web": "node scripts/capture-deliverable-screenshots.js",
+    "screenshots:capture:ios": "bash scripts/capture-ios-deliverable-screenshots.sh"
   },
   "devDependencies": {
     "@firebase/app-compat": "^0.5.14",

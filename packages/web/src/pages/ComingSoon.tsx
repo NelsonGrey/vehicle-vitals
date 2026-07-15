@@ -91,7 +91,7 @@ export default function ComingSoon() {
                 Coming Soon
               </div>
               <div className="text-lg max-w-7xl mx-auto text-slate-700 dark:text-slate-300 mb-8">
-                We&apos;re putting the finishing touches on Vehicle Vitals.
+                We&apos;re putting the finishing touches on Vehicle-Vitals.
                 Track your vehicle&apos;s story with confidence—on web and
                 mobile.
               </div>
@@ -177,14 +177,14 @@ export default function ComingSoon() {
                 Have a suggestion?
               </h3>
               <p className="text-slate-600 dark:text-slate-400 mb-6 text-center">
-                We&apos;re building Vehicle Vitals for vehicle owners like you.
+                We&apos;re building Vehicle-Vitals for vehicle owners like you.
                 What features would you love to see?
               </p>
               <form onSubmit={handleSuggestionSubmit} className="space-y-4">
                 <textarea
                   value={suggestion}
                   onChange={e => setSuggestion(e.target.value)}
-                  placeholder="Share your ideas for Vehicle Vitals..."
+                  placeholder="Share your ideas for Vehicle-Vitals..."
                   rows={4}
                   className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent dark:bg-slate-800 dark:text-white resize-none"
                   required

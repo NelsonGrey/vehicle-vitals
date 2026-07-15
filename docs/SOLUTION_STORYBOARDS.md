@@ -1,4 +1,4 @@
-# Vehicle Vitals Website Storyboards
+# Vehicle-Vitals Website Storyboards
 
 Last updated: May 20, 2026
 Purpose: Website-only storyboard deck with screenshot-first pages for workshop and print review.

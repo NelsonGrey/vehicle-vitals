@@ -7,7 +7,7 @@ describe('branding and disclosure controls', () => {
   it('renders the compact wordmark in uppercase', () => {
     render(<StackedVLogo compact size={52} />);
 
-    expect(screen.getByText('VEHICLE VITALS')).toBeInTheDocument();
+    expect(screen.getByText('VEHICLE-VITALS')).toBeInTheDocument();
   });
 
   it('uses plus and minus for collapsed and expanded content', () => {

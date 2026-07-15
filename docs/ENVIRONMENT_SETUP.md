@@ -1,6 +1,6 @@
 # Environment Setup Guide
 
-This guide explains how to set up and configure the three Firebase environments (Production, Staging, Development) for the Vehicle Vitals project.
+This guide explains how to set up and configure the three Firebase environments (Production, Staging, Development) for the Vehicle-Vitals project.
 
 ## Overview
 
@@ -22,7 +22,7 @@ The following Firebase projects have been set up:
 
 # Environment Setup Guide
 
-This guide explains how to set up and configure the three Firebase environments (Production, Staging, Development) for the Vehicle Vitals project. All environment configuration is stored securely in GitHub repository secrets.
+This guide explains how to set up and configure the three Firebase environments (Production, Staging, Development) for the Vehicle-Vitals project. All environment configuration is stored securely in GitHub repository secrets.
 
 ## Overview
 

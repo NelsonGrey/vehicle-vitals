@@ -1,4 +1,4 @@
-# Vehicle Vitals API Integration Roadmap
+# Vehicle-Vitals API Integration Roadmap
 
 **Version**: 1.0  
 **Last Updated**: March 10, 2026  
@@ -170,7 +170,7 @@ Request:
 {
   "vehicleVin": "1HGBH41JXMN109186",
   "title": "Oil Change",
-  "description": "Vehicle Vitals maintenance reminder",
+  "description": "Vehicle-Vitals maintenance reminder",
   "startAt": "2026-06-01T16:00:00Z",
   "endAt": "2026-06-01T17:00:00Z",
   "target": "ics"

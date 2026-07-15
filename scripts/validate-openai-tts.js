@@ -21,7 +21,7 @@ async function main() {
   const outputPath = path.join(outputDir, `validation.${DEFAULT_FORMAT}`);
   const input =
     process.env.VV_OPENAI_TTS_VALIDATE_TEXT ||
-    'Vehicle Vitals OpenAI speech validation succeeded.';
+    'Vehicle-Vitals OpenAI speech validation succeeded.';
 
   const result = await synthesizeSpeech({
     apiKey: process.env.OPENAI_API_KEY,

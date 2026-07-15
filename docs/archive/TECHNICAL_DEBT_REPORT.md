@@ -1,8 +1,8 @@
-# Vehicle Vitals - Technical Debt Analysis
+# Vehicle-Vitals - Technical Debt Analysis
 
 ## Executive Summary
 
-A comprehensive audit of the Vehicle Vitals codebase revealed significant technical debt across multiple areas. The project has accumulated unused dependencies, dead code, security vulnerabilities, and architectural inconsistencies that should be addressed before production deployment.
+A comprehensive audit of the Vehicle-Vitals codebase revealed significant technical debt across multiple areas. The project has accumulated unused dependencies, dead code, security vulnerabilities, and architectural inconsistencies that should be addressed before production deployment.
 
 ## Critical Issues (Address Immediately)
 
@@ -200,6 +200,6 @@ A comprehensive audit of the Vehicle Vitals codebase revealed significant techni
 **Audit Date**: October 19, 2025  
 **Last Updated**: December 2024  
 **Auditor**: GitHub Copilot  
-**Project**: Vehicle Vitals  
+**Project**: Vehicle-Vitals  
 **Status**: ✅ Technical debt resolved - production ready</content>
 <parameter name="filePath">/Users/marknelson/Circus/Repositories/vehicle-vitals/TECHNICAL_DEBT_REPORT.md

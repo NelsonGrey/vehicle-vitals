@@ -1,6 +1,6 @@
 # Demo Test Data Toolkit
 
-This toolkit provides repeatable, robust demo data load and unload workflows for Vehicle Vitals.
+This toolkit provides repeatable, robust demo data load and unload workflows for Vehicle-Vitals.
 
 ## Prerequisites
 

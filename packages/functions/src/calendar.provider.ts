@@ -56,7 +56,7 @@ export function buildIcsEvent(input: CalendarEventInput): {
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Vehicle Vitals//Maintenance//EN",
+    "PRODID:-//Vehicle-Vitals//Maintenance//EN",
     "BEGIN:VEVENT",
     `UID:${uid}`,
     `DTSTAMP:${toIcsTimestamp(new Date().toISOString())}`,

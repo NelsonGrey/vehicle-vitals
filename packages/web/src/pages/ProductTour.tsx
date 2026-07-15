@@ -85,7 +85,7 @@ export default function ProductTour() {
             Product Tour
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-            Explore the core Vehicle Vitals workflows through short videos and
+            Explore the core Vehicle-Vitals workflows through short videos and
             product screens.
           </p>
         </div>

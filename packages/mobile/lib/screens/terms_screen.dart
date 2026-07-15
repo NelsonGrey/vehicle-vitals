@@ -24,7 +24,7 @@ class TermsScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'By using Vehicle Vitals, you agree to these Terms of Service. If you do not agree to these terms, please do not use our service.',
+              'By using Vehicle-Vitals, you agree to these Terms of Service. If you do not agree to these terms, please do not use our service.',
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
@@ -34,7 +34,7 @@ class TermsScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Vehicle Vitals is a mobile and web application that helps users track vehicle information, maintenance records, and associated data.',
+              'Vehicle-Vitals is a mobile and web application that helps users track vehicle information, maintenance records, and associated data.',
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
@@ -58,7 +58,7 @@ class TermsScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Vehicle Vitals is provided "as is" without warranties. We are not liable for any damages arising from use of the service.',
+              'Vehicle-Vitals is provided "as is" without warranties. We are not liable for any damages arising from use of the service.',
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),

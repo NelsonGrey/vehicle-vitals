@@ -21,7 +21,7 @@ export default function Terms() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing or using Vehicle Vitals, you agree to be bound by
+              By accessing or using Vehicle-Vitals, you agree to be bound by
               these Terms of Use. If you do not agree, do not use the service.
             </p>
           </section>
@@ -31,7 +31,7 @@ export default function Terms() {
               2. Description of Service
             </h2>
             <p>
-              Vehicle Vitals provides tools to track vehicle information and
+              Vehicle-Vitals provides tools to track vehicle information and
               maintenance. Features may change over time.
             </p>
           </section>
@@ -79,7 +79,7 @@ export default function Terms() {
               6. Limitation of Liability
             </h2>
             <p>
-              To the maximum extent permitted by law, Vehicle Vitals is not
+              To the maximum extent permitted by law, Vehicle-Vitals is not
               liable for any indirect, incidental, or consequential damages
               arising from your use of the service.
             </p>

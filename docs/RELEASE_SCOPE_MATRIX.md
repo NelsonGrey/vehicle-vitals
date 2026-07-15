@@ -1,4 +1,4 @@
-# Vehicle Vitals - Release Scope Matrix
+# Vehicle-Vitals - Release Scope Matrix
 
 Last updated: June 15, 2026
 Source baseline: docs/REQUIREMENTS.md

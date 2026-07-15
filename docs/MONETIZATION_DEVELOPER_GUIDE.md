@@ -1,6 +1,6 @@
 # Monetization Implementation Guide
 
-**For**: Vehicle Vitals Engineering Team  
+**For**: Vehicle-Vitals Engineering Team  
 **Status**: Phase 1 Complete - Use This Guide for Integration  
 **Updated**: May 13, 2026
 

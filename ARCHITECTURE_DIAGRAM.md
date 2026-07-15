@@ -1,13 +1,13 @@
-# Vehicle Vitals Architecture Diagram
+# Vehicle-Vitals Architecture Diagram
 
 ## Overview
-Vehicle Vitals is a monorepo containing a vehicle management application with web and mobile clients, built with React, Flutter, and Firebase.
+Vehicle-Vitals is a monorepo containing a vehicle management application with web and mobile clients, built with React, Flutter, and Firebase.
 
 ## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Vehicle Vitals System                             │
+│                           Vehicle-Vitals System                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐   │

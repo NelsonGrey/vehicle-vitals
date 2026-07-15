@@ -41,7 +41,7 @@ messaging.onBackgroundMessage(payload => {
       : '/app/upcoming?source=push')
   );
 
-  const notificationTitle = payload.notification?.title || 'Vehicle Vitals';
+  const notificationTitle = payload.notification?.title || 'Vehicle-Vitals';
   const notificationOptions = {
     body: payload.notification?.body || 'You have a new notification',
     icon: '/firebase-logo.png',

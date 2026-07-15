@@ -1,4 +1,4 @@
-# Vehicle Vitals - API & Data Models Documentation
+# Vehicle-Vitals - API & Data Models Documentation
 
 **Version**: 1.0  
 **Last Updated**: February 16, 2026  
@@ -21,7 +21,7 @@
 
 ## Overview
 
-Vehicle Vitals uses a **Firebase-First Architecture** where:
+Vehicle-Vitals uses a **Firebase-First Architecture** where:
 
 - **Client apps** communicate directly with Firebase services (Auth, Firestore, Storage)
 - **Firebase Functions** handle server-side business logic (VIN lookup, scheduled tasks)

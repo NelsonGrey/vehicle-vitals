@@ -175,7 +175,7 @@ export default function SiteFooter() {
 
         <div className="mt-3 flex flex-col gap-2 border-t border-slate-700 pt-3 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} Vehicle Vitals. All rights reserved.
+            © {new Date().getFullYear()} Vehicle-Vitals. All rights reserved.
           </p>
           <div className="flex items-center gap-3">
             {SOCIAL_LINKS.map(({ label, href, icon }) => (

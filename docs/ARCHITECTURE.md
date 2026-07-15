@@ -1,4 +1,4 @@
-# Vehicle Vitals - Architecture Design Document
+# Vehicle-Vitals - Architecture Design Document
 
 **Version**: 1.2  
 **Last Updated**: June 11, 2026  
@@ -24,7 +24,7 @@
 
 ## Executive Summary
 
-Vehicle Vitals is a cross-platform vehicle management application built on a **Firebase-First Architecture**, enabling users to track vehicle information, maintenance history, and receive proactive notifications. The system consists of three primary applications:
+Vehicle-Vitals is a cross-platform vehicle management application built on a **Firebase-First Architecture**, enabling users to track vehicle information, maintenance history, and receive proactive notifications. The system consists of three primary applications:
 
 - **Web Application**: React 18 + Vite SPA hosted on Firebase Hosting
 - **Mobile Application**: Flutter app for iOS (active) with Android currently on hold

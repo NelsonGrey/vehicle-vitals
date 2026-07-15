@@ -1,4 +1,4 @@
-# 🧪 Vehicle Vitals UAT - Quick Reference
+# 🧪 Vehicle-Vitals UAT - Quick Reference
 
 ## Install & Run (30 seconds)
 

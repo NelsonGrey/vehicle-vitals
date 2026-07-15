@@ -1,4 +1,4 @@
-# Vehicle Vitals - Developer Guide
+# Vehicle-Vitals - Developer Guide
 
 **Version**: 1.0  
 **Last Updated**: May 22, 2026
@@ -24,11 +24,11 @@
 
 ## Welcome
 
-Welcome to the Vehicle Vitals development team! This guide will help you set up your development environment and understand the project structure, coding standards, and workflows.
+Welcome to the Vehicle-Vitals development team! This guide will help you set up your development environment and understand the project structure, coding standards, and workflows.
 
-### What is Vehicle Vitals?
+### What is Vehicle-Vitals?
 
-Vehicle Vitals is a cross-platform vehicle management application that helps users:
+Vehicle-Vitals is a cross-platform vehicle management application that helps users:
 
 - Track vehicle information and maintenance history
 - Look up VINs automatically using NHTSA API

@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🎯 Vehicle Vitals - Master Automation Controller
+# 🎯 Vehicle-Vitals - Master Automation Controller
 # Unified interface for all DevOps operations
 # Bash 3.2 compatible
 
@@ -405,7 +405,7 @@ create_env_template() {
     local environment="${1:-development}"
     local env_file=".env.automation.${environment}"
     cat > "$env_file" << 'TEMPLATE_EOF'
-# 🎯 Vehicle Vitals - Automation Configuration
+# 🎯 Vehicle-Vitals - Automation Configuration
 # Copy this template and fill in actual values
 
 # ==========================================
@@ -509,13 +509,13 @@ TEMPLATE_EOF
 
 # Show version
 show_version() {
-    echo "Vehicle Vitals Automation Controller v1.0.0"
+    echo "Vehicle-Vitals Automation Controller v1.0.0"
     echo "Bash 3.2 compatible"
 }
 
 # Show help
 show_help() {
-    echo "🎯 Vehicle Vitals - Master Automation Controller"
+    echo "🎯 Vehicle-Vitals - Master Automation Controller"
     echo "Unified interface for all DevOps operations"
     echo ""
     echo "Usage: $0 <command> [subcommand] [environment]"

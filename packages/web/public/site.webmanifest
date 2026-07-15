@@ -1,6 +1,6 @@
 {
-  "name": "Vehicle Vitals",
-  "short_name": "Vehicle Vitals",
+  "name": "Vehicle-Vitals",
+  "short_name": "Vehicle-Vitals",
   "theme_color": "#020617",
   "background_color": "#020617",
   "display": "standalone",

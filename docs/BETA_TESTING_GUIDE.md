@@ -1,4 +1,4 @@
-# Vehicle Vitals - Beta Testing Guide
+# Vehicle-Vitals - Beta Testing Guide
 
 > **Status**: Archived beta guide. Legacy mobile distribution channel instructions are currently on hold/inactive.
 
@@ -157,5 +157,5 @@ Track these during beta:
 ---
 
 **Beta Testing Coordinator**: Mark Nelson
-**Project**: Vehicle Vitals
+**Project**: Vehicle-Vitals
 **Date**: October 19, 2025

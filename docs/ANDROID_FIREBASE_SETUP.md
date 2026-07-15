@@ -1,6 +1,6 @@
-# Firebase Android Configuration for Vehicle Vitals
+# Firebase Android Configuration for Vehicle-Vitals
 
-> **Status**: On hold. Android development and deployment are currently paused for Vehicle Vitals.
+> **Status**: On hold. Android development and deployment are currently paused for Vehicle-Vitals.
 
 ## ⚠️ Android Firebase Setup Snapshot (Historical)
 
@@ -96,4 +96,4 @@ Android runtime validation is deferred until the Android track is resumed.
 - **✅ iOS**: Active
 - **⏸️ Android**: On hold
 
-**Vehicle Vitals currently targets web and iOS in active delivery workflows.**
+**Vehicle-Vitals currently targets web and iOS in active delivery workflows.**

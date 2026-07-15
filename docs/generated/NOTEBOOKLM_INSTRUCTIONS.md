@@ -8,7 +8,7 @@
 ## Step 2: Create Notebook
 
 1. Click "+New Notebook"
-2. Name it: "Vehicle Vitals Podcast"
+2. Name it: "Vehicle-Vitals Podcast"
 
 ## Step 3: Upload Script
 

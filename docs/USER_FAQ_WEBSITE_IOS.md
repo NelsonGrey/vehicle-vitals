@@ -1,9 +1,9 @@
-# Vehicle Vitals User FAQ (Website and iOS)
+# Vehicle-Vitals User FAQ (Website and iOS)
 
 Last updated: May 29, 2026
 Audience: End users (not developers)
 
-This FAQ explains how to perform common actions in Vehicle Vitals on both the website and iOS app.
+This FAQ explains how to perform common actions in Vehicle-Vitals on both the website and iOS app.
 
 ## Website FAQ
 
@@ -165,7 +165,7 @@ You should not need a manual backfill action for normal use.
 
 ### 27) Why do my vehicles appear on the website but not in the iOS app, or vice versa?
 
-Vehicles sync only when both apps are using the same Vehicle Vitals environment and the same account UID.
+Vehicles sync only when both apps are using the same Vehicle-Vitals environment and the same account UID.
 Using the same email with different sign-in methods can create separate accounts behind the scenes.
 If that happens, open Profile on the website and use Account Consolidation to merge the secondary account into your current one.
 

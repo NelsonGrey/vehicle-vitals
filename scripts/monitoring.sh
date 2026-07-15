@@ -1,5 +1,5 @@
 #!/bin/bash
-# 📊 Vehicle Vitals - Monitoring & Alerting System
+# 📊 Vehicle-Vitals - Monitoring & Alerting System
 # CRITICAL: Bash 3.2 compatible - NO associative arrays
 
 set -e
@@ -334,7 +334,7 @@ setup_monitoring() {
 
 # Main monitoring loop
 main() {
-    log_header "🚀 Vehicle Vitals - Monitoring & Alerting System"
+    log_header "🚀 Vehicle-Vitals - Monitoring & Alerting System"
 
     cd "$PROJECT_ROOT"
 

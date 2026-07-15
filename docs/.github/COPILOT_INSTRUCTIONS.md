@@ -1,9 +1,9 @@
 <!--
-Concise guidance for automated coding agents working on Vehicle Vitals.
+Concise guidance for automated coding agents working on Vehicle-Vitals.
 Only include repository-discoverable facts and file pointers; keep edits minimal and follow existing patterns.
 -->
 
-# Vehicle Vitals — Copilot instructions
+# Vehicle-Vitals — Copilot instructions
 
 Two frontends (web + mobile) share Firebase-backed utilities in `shared/`. Follow the existing data paths, auth checks, and service wiring.
 

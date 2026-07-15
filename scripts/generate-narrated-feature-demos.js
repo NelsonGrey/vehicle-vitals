@@ -60,7 +60,7 @@ const videoBlueprints = [
   {
     output: 'onboarding-walkthrough.mp4',
     narration:
-      'Welcome to Vehicle Vitals. Start on the marketing home page, then create your account and use the getting started workflow. From there, your garage becomes a live dashboard for every vehicle and task.',
+      'Welcome to Vehicle-Vitals. Start on the marketing home page, then create your account and use the getting started workflow. From there, your garage becomes a live dashboard for every vehicle and task.',
     scenes: [
       { image: 'landing.png', title: 'Marketing home', seconds: 4.5 },
       { image: 'signup.png', title: 'Create an account', seconds: 4.5 },
@@ -82,7 +82,7 @@ const videoBlueprints = [
   {
     output: 'cross-platform-continuity.mp4',
     narration:
-      'Vehicle Vitals keeps your data consistent across web and mobile. The same garage, tasks, and profile context follow you between screens so progress never gets lost.',
+      'Vehicle-Vitals keeps your data consistent across web and mobile. The same garage, tasks, and profile context follow you between screens so progress never gets lost.',
     scenes: [
       { image: 'ios-home.png', title: 'Mobile home', seconds: 4.5 },
       { image: 'garage-vehicles.png', title: 'Web garage', seconds: 4.5 },
@@ -161,7 +161,7 @@ const videoBlueprints = [
   {
     output: 'generic-feature-demo.mp4',
     narration:
-      'Vehicle Vitals combines onboarding, maintenance planning, ownership history, and profile controls into one experience. Each section is designed to reduce friction and improve long-term reliability.',
+      'Vehicle-Vitals combines onboarding, maintenance planning, ownership history, and profile controls into one experience. Each section is designed to reduce friction and improve long-term reliability.',
     scenes: [
       { image: 'landing.png', title: 'Marketing overview', seconds: 4.5 },
       { image: 'garage-vehicles.png', title: 'Garage overview', seconds: 4.5 },

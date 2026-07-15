@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Vehicle Vitals - Clean Installation Script
+# Vehicle-Vitals - Clean Installation Script
 # Use this script when npm install hangs or fails
 
-echo "🧹 Vehicle Vitals - Cleaning installation artifacts..."
+echo "🧹 Vehicle-Vitals - Cleaning installation artifacts..."
 
 # Kill any hanging npm processes
 echo "🔄 Stopping any running npm processes..."

@@ -1,4 +1,4 @@
-# Vehicle Vitals Comprehensive Social Media Strategy
+# Vehicle-Vitals Comprehensive Social Media Strategy
 
 **Version:** 1.0  
 **Date:** 2026-06-08  
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-This strategy establishes Vehicle Vitals as the trusted digital operating system for vehicle ownership and fleet reliability. It combines:
+This strategy establishes Vehicle-Vitals as the trusted digital operating system for vehicle ownership and fleet reliability. It combines:
 
 1. A unified brand footprint across all major social platforms.
 2. A channel-specific content and growth plan.
@@ -37,7 +37,7 @@ The strategy is split into:
 
 1. Build a consistent organic acquisition engine.
 2. Reach positive ROI on paid social campaigns.
-3. Establish Vehicle Vitals as a recognized brand in vehicle maintenance management.
+3. Establish Vehicle-Vitals as a recognized brand in vehicle maintenance management.
 
 ---
 
@@ -91,7 +91,7 @@ Reserve next:
 
 Use a single naming convention everywhere:
 
-1. Display Name: Vehicle Vitals
+1. Display Name: Vehicle-Vitals
 2. Primary handle target: @vehiclevitals
 3. Fallback options (in order):
    1. @vehiclevitalsapp
@@ -102,7 +102,7 @@ Use a single naming convention everywhere:
 
 Use a platform-adapted version of this core bio:
 
-"Vehicle Vitals helps drivers and fleets track maintenance, costs, and service history in one place. Start free at vehicle-vitals.com."
+"Vehicle-Vitals helps drivers and fleets track maintenance, costs, and service history in one place. Start free at vehicle-vitals.com."
 
 ### 4.4 Link Standard
 

@@ -1,4 +1,4 @@
-# Cost-Effective CI/CD Testing Strategy for Vehicle Vitals
+# Cost-Effective CI/CD Testing Strategy for Vehicle-Vitals
 
 ## 🎯 Overview
 

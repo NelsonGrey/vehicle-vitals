@@ -1,4 +1,4 @@
-# Vehicle Vitals - Production Release Brief
+# Vehicle-Vitals - Production Release Brief
 
 Last updated: June 15, 2026
 Release decision window: next go/no-go review after R1 Gate 2 and release-candidate CI evidence

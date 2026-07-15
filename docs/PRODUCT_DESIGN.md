@@ -1,4 +1,4 @@
-# Vehicle Vitals - Product Design & Feature Specifications
+# Vehicle-Vitals - Product Design & Feature Specifications
 
 **Version**: 1.2
 **Last Updated**: June 28, 2026
@@ -22,7 +22,7 @@ This document describes product vision, persona definitions, tier structure, UX 
 
 **Tagline**: "One garage for every vehicle record, reminder, and repair cost."
 
-**Positioning**: Vehicle Vitals is a cross-platform vehicle management platform that lets owners track service history, plan upcoming maintenance, and build a credible ownership record — across personal vehicles, shared household vehicles, and light business fleets.
+**Positioning**: Vehicle-Vitals is a cross-platform vehicle management platform that lets owners track service history, plan upcoming maintenance, and build a credible ownership record — across personal vehicles, shared household vehicles, and light business fleets.
 
 **Core value propositions**:
 
@@ -34,7 +34,7 @@ This document describes product vision, persona definitions, tier structure, UX 
 
 ## Personas
 
-Vehicle Vitals serves five core personas. Each has a distinct pain point, outcome, and recommended tier path.
+Vehicle-Vitals serves five core personas. Each has a distinct pain point, outcome, and recommended tier path.
 
 | ID | Nav label | Title | Pain | Outcome | Tier path |
 |---|---|---|---|---|---|

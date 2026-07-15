@@ -1,4 +1,4 @@
-# Vehicle Vitals — AI Podcast & Video Generation Guide
+# Vehicle-Vitals — AI Podcast & Video Generation Guide
 
 **Date:** May 8, 2026  
 **Purpose:** Generate podcast and video content using AI tools

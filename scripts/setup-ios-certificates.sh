@@ -1,9 +1,9 @@
 #!/bin/bash
-# Setup iOS Certificates for Vehicle Vitals using Fastlane Match
+# Setup iOS Certificates for Vehicle-Vitals using Fastlane Match
 
 set -e
 
-echo "🔐 Vehicle Vitals iOS Certificate Setup"
+echo "🔐 Vehicle-Vitals iOS Certificate Setup"
 echo "======================================="
 
 # Check prerequisites

@@ -1,6 +1,6 @@
-# Vehicle Vitals - Project Requirements and Delivery Status
+# Vehicle-Vitals - Project Requirements and Delivery Status
 
-Project overview: Vehicle Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
+Project overview: Vehicle-Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
 
 Last updated: June 11, 2026
 Project status: CORE IMPLEMENTED, R1 GATE 2 CLOSURE IN PROGRESS

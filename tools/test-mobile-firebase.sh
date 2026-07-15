@@ -63,5 +63,5 @@ else
 fi
 
 echo ""
-echo "🎉 Vehicle Vitals is ready for cross-platform development!"
+echo "🎉 Vehicle-Vitals is ready for cross-platform development!"
 echo "   All Firebase services are configured for Web, iOS, and Android."

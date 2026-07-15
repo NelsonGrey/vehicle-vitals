@@ -42,7 +42,7 @@ const videoPlans = [
     output: 'onboarding-walkthrough.mp4',
     route: '/',
     narration:
-      'Start on the Vehicle Vitals home page, open getting started guidance, then continue into sign up and sign in. This flow shows a clear path from first visit to active usage.',
+      'Start on the Vehicle-Vitals home page, open getting started guidance, then continue into sign up and sign in. This flow shows a clear path from first visit to active usage.',
     actions: [
       { type: 'wait', ms: 1000 },
       { type: 'clickLink', name: /Getting Started/i, wait: 900 },

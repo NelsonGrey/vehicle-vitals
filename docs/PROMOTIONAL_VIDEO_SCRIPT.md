@@ -1,4 +1,4 @@
-# Vehicle Vitals — Promotional Video Script
+# Vehicle-Vitals — Promotional Video Script
 
 **Format:** 2-minute YouTube/Social Media Promotional Video  
 **Aspect Ratio:** 16:9 (desktop) or 9:16 (mobile)  
@@ -27,13 +27,13 @@
 
 **[VISUAL: Screenshot of landing.png — full page]**
 
-**Voice-Over:** "Meet **Vehicle Vitals** — the operating system for your vehicles."
+**Voice-Over:** "Meet **Vehicle-Vitals** — the operating system for your vehicles."
 
 **[TEXT OVERLAY: "Add Vehicles" → "Track Costs" → "Get Reminders" → "Stay Organized"]**
 
 **Voice-Over:** "One platform. All your vehicle information. Complete visibility."
 
-**Voice-Over:** "At launch, you can use Vehicle Vitals on the web or on iOS, and both interfaces give you the same full experience."
+**Voice-Over:** "At launch, you can use Vehicle-Vitals on the web or on iOS, and both interfaces give you the same full experience."
 
 **[VISUAL: Smooth zoom into hero section of landing page]**
 
@@ -67,7 +67,7 @@
 
 **On-Screen Text:** "VIN Auto-Lookup"
 
-**Voice-Over:** "Vehicle Vitals can even look up your VIN to auto-fill details."
+**Voice-Over:** "Vehicle-Vitals can even look up your VIN to auto-fill details."
 
 ---
 
@@ -151,7 +151,7 @@
 
 **On-Screen Text:** "14-day Lead Time | Smart Predictions"
 
-**Voice-Over:** "Vehicle Vitals learns your driving patterns and predicts when you'll need service."
+**Voice-Over:** "Vehicle-Vitals learns your driving patterns and predicts when you'll need service."
 
 **[VISUAL: Animated notification sound effect + bell icon]**
 
@@ -175,7 +175,7 @@
 
 **On-Screen Text:** "Street | City | State | Radius | Provider Type | Vehicle Make"
 
-**Voice-Over:** "No more guessing. No more sketchy Google reviews. Vehicle Vitals helps you find trusted providers."
+**Voice-Over:** "No more guessing. No more sketchy Google reviews. Vehicle-Vitals helps you find trusted providers."
 
 ---
 
@@ -214,7 +214,7 @@
 
 5. **[Screenshot: providers.png]** "Find Trusted Shops"
 
-**Voice-Over:** "Vehicle Vitals is designed for anyone who owns or manages vehicles. Whether it's one vehicle or a fleet, one person or a team — Vehicle Vitals brings clarity, saves money, and eliminates stress."
+**Voice-Over:** "Vehicle-Vitals is designed for anyone who owns or manages vehicles. Whether it's one vehicle or a fleet, one person or a team — Vehicle-Vitals brings clarity, saves money, and eliminates stress."
 
 ---
 
@@ -252,20 +252,20 @@
 
 **[VISUAL: Quick montage of app screenshots fading in sequence]**
 
-**Voice-Over:** "Vehicle Vitals. Smarter ownership. Better visibility. Peace of mind."
+**Voice-Over:** "Vehicle-Vitals. Smarter ownership. Better visibility. Peace of mind."
 
 ---
 
 ## SCENE 14: CLOSING [3:15–3:20]
 
-**[VISUAL: Vehicle Vitals logo with tagline]**
+**[VISUAL: Vehicle-Vitals logo with tagline]**
 
-**On-Screen Text:** "Vehicle Vitals"  
+**On-Screen Text:** "Vehicle-Vitals"  
 **Tagline:** "The Operating System for Your Vehicles"
 
 **[VISUAL: Fade to brand colors]**
 
-**Voice-Over:** "Vehicle Vitals."
+**Voice-Over:** "Vehicle-Vitals."
 
 **[MUSIC CRESCENDOS AND FADES OUT]**
 
@@ -312,7 +312,7 @@
 
 ### Visual Style
 
-- **Color Palette:** Use brand colors from Vehicle Vitals (check branding guide if available)
+- **Color Palette:** Use brand colors from Vehicle-Vitals (check branding guide if available)
 - **Screenshots:** Use actual images from docs/screenshots/ folder
 - **Animations:** Smooth transitions between screenshots, subtle zoom/pan effects
 - **Text Overlays:** Clean, modern sans-serif font (e.g., Inter, Montserrat)
@@ -330,7 +330,7 @@
 
 - Use full video length (3:20)
 - Add YouTube cards / end screens for CTA
-- Optimize thumbnail: Show clean vehicle image + bold text "Vehicle Vitals"
+- Optimize thumbnail: Show clean vehicle image + bold text "Vehicle-Vitals"
 
 **TikTok / Instagram Reels / YouTube Shorts (9:16):**
 

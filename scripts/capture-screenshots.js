@@ -1,5 +1,5 @@
 /**
- * Screenshot capture script for Vehicle Vitals User Guide
+ * Screenshot capture script for Vehicle-Vitals User Guide
  * Usage: node scripts/capture-screenshots.js
  */
 

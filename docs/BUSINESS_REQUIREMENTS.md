@@ -1,4 +1,4 @@
-# Vehicle Vitals - Business Requirements & Strategic Analysis
+# Vehicle-Vitals - Business Requirements & Strategic Analysis
 
 **Version**: 1.2  
 **Last Updated**: May 27, 2026  
@@ -9,7 +9,7 @@
 
 ## 📋 Executive Summary
 
-**What**: Vehicle Vitals is a cross-platform vehicle management and maintenance tracking application enabling users to monitor vehicle health, track maintenance history, and receive proactive notifications.
+**What**: Vehicle-Vitals is a cross-platform vehicle management and maintenance tracking application enabling users to monitor vehicle health, track maintenance history, and receive proactive notifications.
 
 **Why**: The automotive aftermarket maintenance services market is worth $300B+ globally. Vehicle owners struggle with:
 
@@ -130,7 +130,7 @@ Implication for business planning:
 - Seeks reliable information (manufacturer websites, trusted mechanics)
 - Values convenience and time-saving
 
-**Motivations for Vehicle Vitals**:
+**Motivations for Vehicle-Vitals**:
 
 - Single source of truth for all vehicle records
 - Automatic reminders prevent missed maintenance
@@ -174,7 +174,7 @@ Implication for business planning:
 - Seeks efficiency and cost reduction
 - Regular system monitoring
 
-**Motivations for Vehicle Vitals**:
+**Motivations for Vehicle-Vitals**:
 
 - Centralized view of all vehicles in one place
 - Cost tracking and budgeting features
@@ -218,7 +218,7 @@ Implication for business planning:
 - Uses voice/chat for support
 - Motivated by gamification and social features
 
-**Motivations for Vehicle Vitals**:
+**Motivations for Vehicle-Vitals**:
 
 - Simple, intuitive mobile interface
 - Clear explanations of what maintenance means/costs
@@ -234,7 +234,7 @@ Implication for business planning:
 
 #### SBO-1: Market Entry & User Acquisition
 
-**Objective**: Establish Vehicle Vitals as the leading vehicle maintenance tracking solution
+**Objective**: Establish Vehicle-Vitals as the leading vehicle maintenance tracking solution
 
 - **Target**: 100K DAU by end of Year 1, 1M DAU by Year 3
 - **Timeline**: Year 1 (Month 1-12)
@@ -423,7 +423,7 @@ Implication for business planning:
 
 ### Revenue Model: Freemium + Advertising + Tiered Features
 
-Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertising** to generate sustainable revenue while maintaining user accessibility.
+Vehicle-Vitals adopts a **four-tier freemium model** with **contextual advertising** to generate sustainable revenue while maintaining user accessibility.
 
 #### Subscription Tiers
 
@@ -798,7 +798,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 - **Rationale**: Fleet customers (property managers, delivery, vehicle rental) have 5-10x higher LTV
 - **Trade-off**: More complex UX, requires clear separation from consumer tier
 
-### Decision 4: Self-Hosted Infrastructure (Vehicle Vitals CI/CD)
+### Decision 4: Self-Hosted Infrastructure (Vehicle-Vitals CI/CD)
 
 **Decision**: Use Firebase + GitHub Actions for zero-touch automation
 
@@ -829,7 +829,7 @@ Vehicle Vitals adopts a **four-tier freemium model** with **contextual advertisi
 - **EveryDrive**: Insurance-integrated dashcam + maintenance (Series A funded)
 - **Torque**: OBD-II scanner focus, DIY mechanics audience
 - **Mechanic.com**: Repair cost estimator + finding mechanics
-- **Vehicle Vitals Differentiation**: Simple UX + multi-platform + B2B capabilities
+- **Vehicle-Vitals Differentiation**: Simple UX + multi-platform + B2B capabilities
 
 ---
 

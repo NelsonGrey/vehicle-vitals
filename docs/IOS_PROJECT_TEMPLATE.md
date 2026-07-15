@@ -1,6 +1,6 @@
 # iOS Project Template
 
-> **Status**: Archived template. Legacy beta-distribution instructions are not part of the current Vehicle Vitals active workflow.
+> **Status**: Archived template. Legacy beta-distribution instructions are not part of the current Vehicle-Vitals active workflow.
 
 > **Project Starter**: Complete template for new iOS projects with certificate management and CI/CD.
 

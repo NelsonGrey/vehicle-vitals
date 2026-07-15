@@ -104,7 +104,7 @@ export default function PersonaPage() {
             The outcome
           </p>
           <h2 className="mt-2 font-serif text-2xl text-slate-900 dark:text-slate-100">
-            What Vehicle Vitals helps prove
+            What Vehicle-Vitals helps prove
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
             {persona.outcome}

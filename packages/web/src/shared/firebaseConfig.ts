@@ -339,7 +339,9 @@ export const remoteConfigFlag = {
 // Emulators are explicit opt-in to avoid accidentally bypassing environment backends.
 if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
   try {
-    connectAuthEmulator(auth, 'http://localhost:9099');
+    connectAuthEmulator(auth, 'http://localhost:9099', {
+      disableWarnings: true,
+    });
     connectFirestoreEmulator(db, 'localhost', 8080);
     connectFunctionsEmulator(functions, 'localhost', 5001);
     connectStorageEmulator(storage, 'localhost', 9199);

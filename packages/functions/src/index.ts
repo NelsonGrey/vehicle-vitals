@@ -15,6 +15,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
 import {
+  createStripeBillingPortalSession,
   createStripeCheckoutSession,
   getStripeSubscriptionPricing,
   IAP_PRODUCT_CATALOG,
@@ -4156,6 +4157,67 @@ export const getSubscriptionPricingCallable = onCall(
 
     const pricing = await getStripeSubscriptionPricing();
     return { success: true, pricing };
+  }
+);
+
+export const createBillingPortalSessionCallable = onCall(
+  {
+    secrets: ['STRIPE_SECRET_KEY'],
+  },
+  async request => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError('unauthenticated', 'Missing auth context');
+    }
+
+    const subscriptionSnap = await admin
+      .firestore()
+      .doc(`users/${uid}/subscription/current`)
+      .get();
+    const stripeCustomerId = (
+      subscriptionSnap.data()?.stripeCustomerId || ''
+    )
+      .toString()
+      .trim();
+
+    if (!stripeCustomerId) {
+      throw new HttpsError(
+        'failed-precondition',
+        'No Stripe customer on file for this account'
+      );
+    }
+
+    const configuredAppBaseUrl = (process.env.APP_BASE_URL || '')
+      .toString()
+      .trim()
+      .replace(/\/$/, '');
+    const returnUrl = configuredAppBaseUrl
+      ? `${configuredAppBaseUrl}/app/subscription`
+      : '';
+
+    if (!returnUrl) {
+      throw new HttpsError(
+        'failed-precondition',
+        'App base URL is not configured'
+      );
+    }
+
+    const portalSession = await createStripeBillingPortalSession({
+      stripeCustomerId,
+      returnUrl,
+    });
+
+    const orgId = await ensurePersonalOrganization(uid);
+    await writeAuditEvent({
+      orgId,
+      actorUid: uid,
+      action: 'billing.create_portal_session',
+      targetType: 'portal_session',
+      targetId: portalSession.sessionId,
+      details: {},
+    });
+
+    return { success: true, portalUrl: portalSession.portalUrl };
   }
 );
 

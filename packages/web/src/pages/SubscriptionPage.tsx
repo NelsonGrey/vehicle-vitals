@@ -16,6 +16,7 @@ import {
 import { ROUTE_SEO } from '../shared/seoMeta';
 import {
   changeSubscriptionTier,
+  createBillingPortalSession,
   createSubscriptionCheckoutSession,
   getSubscriptionPricing,
   type StripeSubscriptionPricing,
@@ -230,6 +231,7 @@ export default function SubscriptionPage() {
     'monthly'
   );
   const [isSubmittingTierChange, setIsSubmittingTierChange] = useState(false);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const [livePricing, setLivePricing] =
     useState<StripeSubscriptionPricing | null>(null);
 
@@ -345,6 +347,30 @@ export default function SubscriptionPage() {
                 Trial active. Billing begins automatically after trial ends.
               </p>
             )}
+            {subscription?.paymentMethod === 'stripe' &&
+              summary.tier !== 'free' && (
+                <button
+                  type="button"
+                  disabled={isOpeningPortal}
+                  onClick={async () => {
+                    setIsOpeningPortal(true);
+                    try {
+                      const portalUrl = await createBillingPortalSession();
+                      window.location.href = portalUrl;
+                    } catch (error) {
+                      window.alert(
+                        `Unable to open the billing portal: ${error instanceof Error ? error.message : String(error)}`
+                      );
+                      setIsOpeningPortal(false);
+                    }
+                  }}
+                  className="mt-3 inline-flex rounded-md border border-teal-700 bg-white px-4 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-teal-600 dark:bg-transparent dark:text-teal-200 dark:hover:bg-teal-950/30"
+                >
+                  {isOpeningPortal
+                    ? 'Opening billing portal…'
+                    : 'Manage subscription'}
+                </button>
+              )}
           </div>
         )}
 

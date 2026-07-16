@@ -1,11 +1,11 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_bottom_nav.dart';
-import '../firebase_options.dart';
 import '../services/auth_service.dart';
+import '../utils/user_facing_error.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -53,9 +53,16 @@ class _AccountScreenState extends State<AccountScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error signing out: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback: 'We could not sign you out. Please try again.',
+              ),
+            ),
+          ),
+        );
       }
     }
   }
@@ -82,7 +89,15 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send reset email: $e')),
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'We could not send the reset email. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     } finally {
@@ -118,7 +133,6 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final authService = context.watch<AuthService>();
     final user = authService.currentUser;
-    final firebaseOptions = Firebase.app().options;
     final providerLabels =
         user?.providerIds.map(_formatProvider).toSet().toList() ??
         const <String>[];
@@ -167,24 +181,25 @@ class _AccountScreenState extends State<AccountScreen> {
                             icon: const Icon(Icons.link),
                             label: const Text('Link Apple Sign-In'),
                           ),
-                        const SizedBox(height: 16),
-                        const Divider(),
                         const SizedBox(height: 12),
-                        Text(
-                          'Data Sync Identity',
-                          style: Theme.of(context).textTheme.titleSmall,
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: user.uid),
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Support ID copied'),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.copy),
+                          label: const Text('Copy Support ID'),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Environment: ${DefaultFirebaseOptions.currentEnvironmentLabel}',
-                        ),
-                        const SizedBox(height: 4),
-                        Text('Firebase Project: ${firebaseOptions.projectId}'),
-                        const SizedBox(height: 4),
-                        Text('Auth UID: ${user.uid}'),
-                        const SizedBox(height: 8),
                         const Text(
-                          'Vehicles sync across web and iOS only when both apps use the same Firebase project and this same Auth UID.',
+                          'Include this ID only when Vehicle-Vitals Support asks for it. Your account data synchronizes automatically when you use the same sign-in on web and iPhone.',
                           style: TextStyle(fontSize: 12, color: Colors.black54),
                         ),
                       ] else ...[
@@ -293,7 +308,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         leading: const Icon(Icons.settings_outlined),
                         title: const Text('Settings'),
                         subtitle: const Text(
-                          'Preferences, Shops & Services, Premium, and more',
+                          'Preferences, Shops & Services, plans, and more',
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/settings'),

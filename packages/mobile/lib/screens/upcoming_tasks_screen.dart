@@ -10,13 +10,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../components/app_bottom_nav.dart';
 import '../models/vehicle.dart';
 import '../services/calendar_service.dart';
-import '../services/feature_flags_service.dart';
 import '../services/firestore_service.dart';
 import '../services/maintenance_plan_service.dart';
-import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 import '../theme/tailwind_utilities.dart';
 import '../utils/number_format.dart';
+import '../utils/user_facing_error.dart';
 import 'maintenance_list_screen.dart';
 
 class UpcomingTasksScreen extends StatefulWidget {
@@ -181,7 +180,15 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading upcoming tasks: $e')),
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Maintenance Plan could not be loaded. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     }
@@ -253,7 +260,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to add to calendar: $e'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The calendar event could not be created. Try again.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -363,7 +375,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to save reminder: $e'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The reminder could not be saved. Try again.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -408,7 +425,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to complete reminder: $e'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The reminder could not be completed. Try again.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -462,7 +484,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to snooze reminder: $e'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The reminder could not be snoozed. Try again.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -507,7 +534,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to dismiss reminder: $e'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The reminder could not be dismissed. Try again.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -552,7 +584,12 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to restore reminder: $e'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The reminder could not be restored. Try again.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -596,51 +633,73 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   }
 
   Widget _buildEmptyState() {
+    final missingScheduleData = _unsupportedVehicles.isNotEmpty;
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 64,
-            color: AppDesignTokens.colorScheme(
-              Theme.of(context).brightness,
-            ).primary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'All caught up!',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'No upcoming maintenance tasks found.\nYour vehicles are well maintained.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              missingScheduleData ? Icons.info_outline : Icons.event_available,
+              size: 64,
+              color: AppDesignTokens.colorScheme(
+                Theme.of(context).brightness,
+              ).primary,
             ),
-          ),
-          if (_unsupportedVehicles.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                "We don't have manufacturer maintenance data for "
-                '${_unsupportedVehicles.map((v) => '${v.year} ${v.make} ${v.model}').join(', ')}, '
-                "so this isn't a confirmed clean bill of health for "
-                '${_unsupportedVehicles.length == 1 ? 'it' : 'them'} — log '
-                'your own service history to get personalized reminders.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.tertiary,
-                ),
+            const SizedBox(height: 16),
+            Text(
+              missingScheduleData
+                  ? 'Recommendations are not available yet'
+                  : 'No upcoming items found',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              missingScheduleData
+                  ? 'Add current mileage and recent service records, then check the owner’s manual for manufacturer requirements.'
+                  : 'There are no saved reminders or available recommendations right now. This is not a guarantee that maintenance is complete.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
+            if (missingScheduleData) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  "We don't have manufacturer maintenance data for "
+                  '${_unsupportedVehicles.map((v) => '${v.year} ${v.make} ${v.model}').join(', ')}, '
+                  'so confirm requirements for '
+                  '${_unsupportedVehicles.length == 1 ? 'this vehicle' : 'these vehicles'} before relying on the plan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              children: [
+                ElevatedButton(
+                  onPressed: () => context.go('/app'),
+                  child: const Text('Review Garage'),
+                ),
+                TextButton(
+                  onPressed: () => context.push('/app/instructions'),
+                  child: const Text('Open Help'),
+                ),
+              ],
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -656,32 +715,6 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
               (item['milesUntilDue'] as int) <= 5000,
         )
         .length;
-
-    final tier = context.watch<PremiumService>().subscriptionTier;
-    final hasPlanning12mo = FeatureFlagsService.isFeatureEnabled(
-      'maintenance_planning_12mo',
-      tier,
-    );
-    final hasPlanning36mo = FeatureFlagsService.isFeatureEnabled(
-      'maintenance_planning_36mo',
-      tier,
-    );
-    final planningHorizonMonths = hasPlanning36mo
-        ? 36
-        : hasPlanning12mo
-        ? 12
-        : 3;
-    // NOTE: this indicator is informational only — the server-side
-    // maintenance plan (MaintenancePlanService.getMaintenancePlan) is not
-    // yet wired to a tier-based mileage cutoff, so the queue below is not
-    // actually clipped to this horizon. TODO: wire a horizon cutoff once
-    // product confirms the desired mileage-per-month assumption for
-    // mobile (web derives it from preferredDailyMiles).
-    final planningHorizonUpgrade = hasPlanning36mo
-        ? null
-        : hasPlanning12mo
-        ? ('Premium', 36)
-        : ('Pro', 12);
 
     return Column(
       children: [
@@ -714,38 +747,11 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
               ),
               SizedBox(height: TwSpace.s2),
               Text(
-                'Planning horizon: $planningHorizonMonths-month forecast',
+                'Recommendations shown are based on available vehicle and service data.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
               ),
-              if (planningHorizonUpgrade != null) ...[
-                SizedBox(height: TwSpace.s2),
-                Container(
-                  padding: EdgeInsets.all(TwSpace.s2),
-                  decoration: BoxDecoration(
-                    color: Colors.indigo.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(TwRadius.base),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Upgrade to ${planningHorizonUpgrade.$1} to plan '
-                          '${planningHorizonUpgrade.$2} months ahead.',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(color: Colors.indigo),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => context.push('/app/premium'),
-                        child: const Text('Upgrade'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               SizedBox(height: TwSpace.s2),
               Row(
                 children: [

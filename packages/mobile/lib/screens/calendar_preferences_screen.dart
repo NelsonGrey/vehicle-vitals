@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/safe_back_button.dart';
 import '../services/calendar_service.dart';
 import '../theme/design_tokens.dart';
+import '../utils/user_facing_error.dart';
 
 class CalendarPreferencesScreen extends StatefulWidget {
   const CalendarPreferencesScreen({super.key});
@@ -54,7 +55,11 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Error loading calendar preferences: ${e.toString()}',
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar preferences could not be loaded. Please try again.',
+              ),
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
@@ -96,7 +101,13 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error requesting permissions: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar permission was not granted. You can change it in iOS Settings.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -127,7 +138,13 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving preferences: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar preferences could not be saved. Please try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -158,7 +175,13 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error syncing to calendar: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar events could not be added. Check permissions and try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

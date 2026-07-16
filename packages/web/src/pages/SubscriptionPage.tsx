@@ -38,6 +38,7 @@ import { useSubscription } from '../shared/useMonetization';
 import { useAuth } from '../shared/AuthContext';
 import AppEntryLink from '../components/AppEntryLink';
 import { useAppOffline } from '../shared/useAppOffline';
+import { userFacingError } from '../shared/userFacingError';
 import { personaPages } from '../data/personas';
 
 // Stripe's success_url here carries only `?checkout=success` (no session ID),
@@ -388,7 +389,10 @@ export default function SubscriptionPage() {
                       window.location.href = portalUrl;
                     } catch (error) {
                       window.alert(
-                        `Unable to open the billing portal: ${error instanceof Error ? error.message : String(error)}`
+                        userFacingError(
+                          error,
+                          'The billing portal could not be opened. Please try again or visit Support.'
+                        )
                       );
                       setIsOpeningPortal(false);
                     }
@@ -432,7 +436,10 @@ export default function SubscriptionPage() {
         <div className="mt-5 inline-flex rounded-lg border border-slate-300 p-1 dark:border-slate-600">
           <button
             type="button"
-            onClick={() => { setBillingPeriod('monthly'); trackPricingBillingToggle('monthly'); }}
+            onClick={() => {
+              setBillingPeriod('monthly');
+              trackPricingBillingToggle('monthly');
+            }}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               billingPeriod === 'monthly'
                 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
@@ -443,7 +450,10 @@ export default function SubscriptionPage() {
           </button>
           <button
             type="button"
-            onClick={() => { setBillingPeriod('annual'); trackPricingBillingToggle('annual'); }}
+            onClick={() => {
+              setBillingPeriod('annual');
+              trackPricingBillingToggle('annual');
+            }}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               billingPeriod === 'annual'
                 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
@@ -546,7 +556,10 @@ export default function SubscriptionPage() {
                         navigate('/app/profile');
                       } catch (error) {
                         window.alert(
-                          `Unable to change subscription: ${error instanceof Error ? error.message : String(error)}`
+                          userFacingError(
+                            error,
+                            'The subscription could not be changed. Please try again or visit Support.'
+                          )
                         );
                       } finally {
                         setIsSubmittingTierChange(false);
@@ -555,9 +568,12 @@ export default function SubscriptionPage() {
                     }
 
                     if (planTier === 'enterprise') {
-                      trackPricingPlanClick(planTier, billingPeriod, 'Contact sales');
-                      window.location.href =
-                        'mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet.';
+                      trackPricingPlanClick(
+                        planTier,
+                        billingPeriod,
+                        'Contact Sales'
+                      );
+                      navigate('/support');
                       return;
                     }
 
@@ -600,7 +616,10 @@ export default function SubscriptionPage() {
                       }
                     } catch (error) {
                       window.alert(
-                        `Unable to change subscription: ${error instanceof Error ? error.message : String(error)}`
+                        userFacingError(
+                          error,
+                          'Checkout could not be started. Please try again or visit Support.'
+                        )
                       );
                     } finally {
                       setIsSubmittingTierChange(false);
@@ -612,15 +631,17 @@ export default function SubscriptionPage() {
                       : 'bg-teal-700 text-white hover:bg-teal-800'
                   }`}
                 >
-                  {isAppOffline && !isCurrent ? 'Currently unavailable' : ctaText}
+                  {isAppOffline && !isCurrent
+                    ? 'Currently unavailable'
+                    : ctaText}
                 </button>
               ) : planTier === 'enterprise' ? (
-                <a
-                  href="mailto:sales@vehicle-vitals.com?subject=Enterprise%20Plan%20Inquiry&body=I%20am%20interested%20in%20an%20Enterprise%20plan%20for%20my%20fleet."
+                <Link
+                  to="/support"
                   className="mt-4 inline-flex w-full justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
                 >
-                  {ctaText}
-                </a>
+                  Contact Sales
+                </Link>
               ) : (
                 <AppEntryLink
                   to={withRedirect(
@@ -766,9 +787,10 @@ export default function SubscriptionPage() {
       </div>
 
       <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-        Pricing source: {buildLiveTierPricing('pro', livePricing).monthlyDisplayPrice}{' '}
-        and {buildLiveTierPricing('premium', livePricing).monthlyDisplayPrice} from
-        monetization feature configuration.
+        Pricing source:{' '}
+        {buildLiveTierPricing('pro', livePricing).monthlyDisplayPrice} and{' '}
+        {buildLiveTierPricing('premium', livePricing).monthlyDisplayPrice}{' '}
+        from monetization feature configuration.
       </p>
     </div>
   );

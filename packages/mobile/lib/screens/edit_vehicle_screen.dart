@@ -14,6 +14,7 @@ import '../services/record_storage_service.dart';
 import '../services/vehicle_photo_service.dart';
 import '../services/vehicle_transfer_service.dart';
 import '../utils/vin_validation.dart' as vin_validation;
+import '../utils/user_facing_error.dart';
 
 const List<String> _vehicleTypeOptions = [
   'Passenger Vehicle',
@@ -139,7 +140,12 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading vehicle: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback: 'The vehicle could not be loaded. Please try again.',
+              ),
+            ),
             backgroundColor: colorScheme.error,
           ),
         );
@@ -299,7 +305,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error decoding VIN: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'We could not look up that VIN. Try again or edit the details manually.',
+              ),
+            ),
             backgroundColor: colorScheme.error,
           ),
         );
@@ -384,7 +396,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error updating vehicle: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The vehicle changes could not be saved. Please try again.',
+              ),
+            ),
             backgroundColor: colorScheme.error,
           ),
         );
@@ -436,7 +454,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Photo upload failed: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The photo could not be uploaded. Try again or continue without it.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -497,7 +521,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Web photo lookup failed: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'We could not find a web photo. Try again or upload your own image.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );
@@ -550,7 +580,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
           final colorScheme = Theme.of(context).colorScheme;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error deleting vehicle: ${e.toString()}'),
+              content: Text(
+                userFacingError(
+                  e,
+                  fallback:
+                      'The vehicle could not be deleted. Please try again or visit Support.',
+                ),
+              ),
               backgroundColor: colorScheme.error,
             ),
           );
@@ -616,7 +652,13 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Transfer failed: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The transfer could not be completed. Confirm the recipient and try again.',
+            ),
+          ),
           backgroundColor: colorScheme.error,
         ),
       );

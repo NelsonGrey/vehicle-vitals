@@ -13,6 +13,7 @@ import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 import '../utils/number_format.dart';
+import '../utils/user_facing_error.dart';
 import 'maintenance_detail_screen.dart';
 
 String _performedByLabel(String value) {
@@ -120,9 +121,16 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loadingVehicle = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading vehicle: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The vehicle could not be loaded. Please try again.',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -140,7 +148,15 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading maintenance entries: $e')),
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'Maintenance entries could not be loaded. Please try again.',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -206,9 +222,17 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error adding entry: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The maintenance entry could not be saved. Please try again.',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -223,7 +247,15 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The CSV export could not be created. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     }
@@ -240,7 +272,15 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The PDF export could not be created. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     }
@@ -257,7 +297,15 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The Excel export could not be created. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     }
@@ -294,7 +342,13 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Calendar sync failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar events could not be added. Check permissions and try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -350,7 +404,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: ListView(
         children: [
           // Add new entry form
           Card(
@@ -574,68 +628,73 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
             const SizedBox(height: 16),
           ],
           // Entries list
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _entries.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No maintenance entries yet.\nAdd one using the form above.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _entries.length,
-                    itemBuilder: (context, index) {
-                      final entry = _entries[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          title: Text(entry.title),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (entry.notes.isNotEmpty) Text(entry.notes),
-                              Text(
-                                entry.providerName.isNotEmpty
-                                    ? '${_performedByLabel(entry.performedBy)} (${entry.providerName}) • ${_coverageLabel(entry.coverage)}'
-                                    : '${_performedByLabel(entry.performedBy)} • ${_coverageLabel(entry.coverage)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Cost: ${formatCurrencyAmount(entry.cost)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_entries.isEmpty)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Text(
+                'No maintenance entries yet.\nAdd one using the form above.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              itemCount: _entries.length,
+              itemBuilder: (context, index) {
+                final entry = _entries[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    title: Text(entry.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (entry.notes.isNotEmpty) Text(entry.notes),
+                        Text(
+                          entry.providerName.isNotEmpty
+                              ? '${_performedByLabel(entry.performedBy)} (${entry.providerName}) • ${_coverageLabel(entry.coverage)}'
+                              : '${_performedByLabel(entry.performedBy)} • ${_coverageLabel(entry.coverage)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
                           ),
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MaintenanceDetailScreen(
-                                  vin: widget.vin,
-                                  entryId: entry.id,
-                                ),
-                              ),
-                            );
-                            if (result == true) {
-                              _loadEntries();
-                            }
-                          },
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Cost: ${formatCurrencyAmount(entry.cost)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MaintenanceDetailScreen(
+                            vin: widget.vin,
+                            entryId: entry.id,
+                          ),
                         ),
                       );
+                      if (result == true) {
+                        _loadEntries();
+                      }
                     },
                   ),
-          ),
+                );
+              },
+            ),
         ],
       ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),

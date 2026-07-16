@@ -20,6 +20,7 @@ import '../theme/design_tokens.dart';
 /// trigger hundreds of parallel maintenance-entry fetches just to render
 /// the list.
 const int _kMaxHealthBadgeFetches = 50;
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -351,20 +352,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      onPressed: () => _handleAddVehicleTap(
-                        currentVehicleCount: vehicles.length,
-                        vehicleLimit: vehicleLimit,
-                        tier: currentTier,
+                    if (!_screenshotMode) ...[
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: () => _handleAddVehicleTap(
+                          currentVehicleCount: vehicles.length,
+                          vehicleLimit: vehicleLimit,
+                          tier: currentTier,
+                        ),
+                        icon: const Icon(Icons.add),
+                        label: Text(
+                          vehicles.length >= vehicleLimit
+                              ? 'Limit Reached'
+                              : 'Add',
+                        ),
                       ),
-                      icon: const Icon(Icons.add),
-                      label: Text(
-                        vehicles.length >= vehicleLimit
-                            ? 'Limit Reached'
-                            : 'Add',
-                      ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 12),

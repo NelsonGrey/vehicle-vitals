@@ -12,6 +12,7 @@ import {
   snoozeReminder,
 } from '../shared/firestoreService';
 import { useFeatureFlag } from '../shared/useMonetization';
+import { userFacingError } from '../shared/userFacingError';
 import { createMaintenanceCalendarEvent } from '../utils/calendarService';
 import {
   formatServiceTypeLabel,
@@ -417,8 +418,10 @@ export default function UpcomingTasks() {
       alert(getCalendarSuccessMessage(calendarTarget));
     } catch (error) {
       alert(
-        'Failed to create calendar event: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'The calendar event could not be created. Please try again.'
+        )
       );
     } finally {
       setSavingCalendarKeys(prev => {
@@ -597,8 +600,10 @@ export default function UpcomingTasks() {
       );
       alert(`Reminder email sent to ${recipient}.`);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to send reminder';
+      const message = userFacingError(
+        error,
+        'The reminder email could not be sent. Please try again.'
+      );
 
       try {
         await markReminderDelivery(reminder.vin, reminder.id, {
@@ -623,7 +628,7 @@ export default function UpcomingTasks() {
             : item
         )
       );
-      alert(`Could not send reminder email to ${recipient}: ${message}`);
+      alert(message);
     } finally {
       setSendingReminderIds(prev => {
         const next = new Set(prev);

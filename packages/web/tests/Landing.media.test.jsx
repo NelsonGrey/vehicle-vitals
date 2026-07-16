@@ -31,7 +31,7 @@ describe('Landing media surfaces', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /One garage for every vehicle record, reminder, and repair cost/i,
+        name: /Know what was done, what is due next, and what every vehicle costs/i,
       })
     ).toBeInTheDocument();
     expect(
@@ -45,18 +45,20 @@ describe('Landing media surfaces', () => {
       })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Product proof for the story/i })
+      screen.getByRole('heading', { name: /See the product in action/i })
     ).toBeInTheDocument();
 
     expect(screen.getAllByText(/Ownership records/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Shared garage/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Household vehicles/i).length).toBeGreaterThan(
+      0
+    );
     expect(screen.getAllByText(/Guided setup/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Hands-on maintenance/i).length).toBeGreaterThan(
       0
     );
     expect(screen.getAllByText(/Work vehicles/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Pro is the best fit/i)).toBeInTheDocument();
-    expect(screen.getByText(/Forecast and automate/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Planned upgrade/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Paid activation is coming/i)).toBeInTheDocument();
 
     expect(screen.queryByText(/you are viewing:/i)).not.toBeInTheDocument();
     expect(
@@ -70,7 +72,7 @@ describe('Landing media surfaces', () => {
     ).not.toBeInTheDocument();
 
     expect(
-      screen.getByRole('link', { name: /Compare plans/i })
+      screen.getByRole('link', { name: /View full pricing/i })
     ).toHaveAttribute('href', '/subscription');
     expect(
       screen.getAllByRole('link', { name: /Read use case/i })[0]

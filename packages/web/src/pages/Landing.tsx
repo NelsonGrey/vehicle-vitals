@@ -37,21 +37,21 @@ const planGuides = [
   },
   {
     name: 'Pro',
-    audience: 'Plan and coordinate',
+    audience: 'Planned upgrade',
     description:
-      'Add calendar sync, advanced reminders, exports, and shared planning for shared garages and hands-on maintenance.',
+      'Designed for stronger reminders, calendar tools, and exports. Paid activation is coming after production validation.',
   },
   {
     name: 'Premium',
-    audience: 'Forecast and automate',
+    audience: 'Planned upgrade',
     description:
-      'Unlock predictive planning, AI-assisted workflows, integrations, and an ad-free workspace for power users.',
+      'Designed for additional automation and an ad-free workspace. Availability will follow production validation.',
   },
   {
     name: 'Enterprise',
-    audience: 'Govern and integrate',
+    audience: 'Talk with us',
     description:
-      'Add contract capacity, operational controls, integrations, reporting, and dedicated support for teams.',
+      'Discuss work-vehicle tracking needs and planned team capabilities with our support team.',
   },
 ];
 
@@ -63,11 +63,11 @@ export default function Landing() {
   }, [meta.title]);
 
   return (
-    <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <div className="min-h-[100dvh] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 lg:h-[100dvh] lg:overflow-hidden">
       <PageSEO meta={meta} />
       <SiteHeader overlay={false} />
       <HeaderAdBar />
-      <main className="site-scroll-area flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900">
+      <main className="site-scroll-area flex-1 overflow-x-hidden bg-slate-50 dark:bg-slate-900 lg:overflow-y-auto">
         <section className="marketing-page-section py-8 sm:py-10 lg:py-12">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-5">
             <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">
@@ -94,13 +94,12 @@ export default function Landing() {
                     </span>
                   </div>
                   <h1 className="mt-4 max-w-3xl font-serif text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
-                    One garage for every vehicle record, reminder, and repair
-                    cost
+                    Know what was done, what is due next, and what every vehicle
+                    costs
                   </h1>
                   <p className="mt-4 max-w-2xl text-base text-slate-100/90 sm:text-lg">
-                    Track service history, plan upcoming work, and prove what
-                    was done across personal vehicles, shared household
-                    vehicles, and light business fleets.
+                    Keep service records, receipts, reminders, and ownership
+                    costs together on the web and iPhone.
                   </p>
                   <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <AppEntryLink
@@ -110,13 +109,13 @@ export default function Landing() {
                       wrapperClassName="inline-flex w-full flex-col items-center gap-1 sm:w-auto"
                       noteClassName="text-xs text-slate-200"
                     >
-                      Create your account
+                      Start free
                     </AppEntryLink>
                     <Link
-                      to="/subscription"
+                      to="/product-tour"
                       className="inline-block w-full rounded-xl border border-white/40 bg-white/10 px-6 py-3 text-center font-semibold text-white transition hover:bg-white/20 sm:w-auto"
                     >
-                      Compare plans
+                      See how it works
                     </Link>
                   </div>
                 </div>
@@ -137,8 +136,8 @@ export default function Landing() {
                   <div className="rounded-xl bg-white/12 px-4 py-3 ring-1 ring-white/20">
                     <p className="font-semibold">Scale by garage</p>
                     <p className="mt-1 text-slate-100/80">
-                      Move from first vehicles to hands-on projects, shared
-                      garages, and teams.
+                      Keep personal, household, and work-vehicle records in one
+                      dependable workspace.
                     </p>
                   </div>
                 </div>
@@ -182,10 +181,10 @@ export default function Landing() {
                           {item.title}
                         </h3>
                         <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          Pain: {item.pain}
+                          {item.pain}
                         </p>
                         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                          Outcome: {item.outcome}
+                          {item.outcome}
                         </p>
                         <div
                           className={`mt-4 rounded-lg border px-3 py-2 text-sm font-medium ${item.accent}`}
@@ -220,9 +219,9 @@ export default function Landing() {
                     Plans built around growing vehicle responsibility
                   </h2>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-                    The pricing model follows the story: organize one vehicle,
-                    coordinate a household, then unlock forecasting, automation,
-                    and team support.
+                    Start with the record-keeping essentials. Paid options are
+                    clearly marked as planned until production purchasing is
+                    fully validated.
                   </p>
                 </div>
                 <Link
@@ -256,12 +255,11 @@ export default function Landing() {
             <section className="marketing-section mt-10 sm:mt-12">
               <div className="mb-5 max-w-3xl">
                 <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 sm:text-3xl">
-                  Product proof for the story
+                  See the product in action
                 </h2>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-                  Use the demos after you know which problem you are solving.
-                  The screenshots and short videos show the core workflows
-                  behind each persona path.
+                  Follow a current, task-based walkthrough and review product
+                  screens captured from the same workflows described above.
                 </p>
               </div>
 
@@ -286,8 +284,8 @@ export default function Landing() {
                     Product tour
                   </h3>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                    Explore core workflows with short videos and product screens
-                    organized around the same capability story.
+                    Explore current product screens organized around the same
+                    capability story.
                   </p>
                   <Link
                     to="/product-tour"

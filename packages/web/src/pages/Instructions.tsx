@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import AppStoreCallout from '../components/AppStoreCallout';
 import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
@@ -12,7 +13,7 @@ const quickLookSteps = [
     title: '1) Add your vehicle',
     description:
       'Enter your vehicle ID and basic details. We can help fill in common fields for you.',
-    image: '/images/features/add-vehicle.png',
+    image: '/images/features/current/add-vehicle.png',
     ctaLabel: 'See add-vehicle demo',
     to: '/vin-lookup-demo',
   },
@@ -21,7 +22,7 @@ const quickLookSteps = [
     title: '2) Track service and costs',
     description:
       'Save oil changes, repairs, and costs so your history stays organized and easy to find.',
-    image: '/images/features/records.png',
+    image: '/images/features/current/records.png',
     ctaLabel: 'See records demo',
     to: '/maintenance-planning-demo',
   },
@@ -30,7 +31,7 @@ const quickLookSteps = [
     title: '3) Stay on top of what is next',
     description:
       'Get simple reminders for upcoming service so you can plan ahead.',
-    image: '/images/features/upcoming.png',
+    image: '/images/features/current/maintenance-plan.png',
     ctaLabel: 'See reminders demo',
     to: '/help#maintenance-history-and-reminders',
   },
@@ -57,8 +58,8 @@ export default function Instructions() {
           Simple setup steps
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-          Start with account access first. Your garage, service records,
-          timeline, and reminders open after you sign in.
+          Start with account access first. Your Garage, Records, Service
+          History, and Maintenance Plan are available after you sign in.
         </p>
         <ol className="list-decimal pl-5 space-y-3 text-slate-700 dark:text-slate-300">
           <li>
@@ -98,15 +99,16 @@ export default function Instructions() {
           </li>
           <li>
             Enter the vehicle ID, use the lookup for faster setup, and fill any
-            missing Year, Make, and Model details by hand if needed.
+            missing year, make, and model details by hand if needed. Review the
+            lookup result before saving because source data can be incomplete.
           </li>
           <li>
             Save service entries with date, mileage, notes, and cost to build a
             clear service record.
           </li>
           <li>
-            Review Service History and your Maintenance Plan to catch up on
-            past work and plan what is next.
+            Review Service History and your Maintenance Plan to catch up on past
+            work and plan what is next.
           </li>
           <li>
             Configure account and notification preferences so reminders match
@@ -180,7 +182,7 @@ export default function Instructions() {
         <MarketingVideoPanel
           title="Simple setup walkthrough"
           description="From account creation to saving your first service entry."
-          poster="/images/features/add-vehicle.png"
+          poster="/images/features/current/add-vehicle.png"
           videoPath="/videos/feature-demos/getting-started-help.mp4"
           fallbackHref="/auth/signup"
           fallbackLabel="Start your account"
@@ -192,15 +194,15 @@ export default function Instructions() {
           Mobile Apps
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">
-          Our iOS and Android apps sync with your account so you can scan a
-          vehicle ID, update mileage, and add notes on the go. Public App Store
-          and Google Play listings are not available yet.
+          The iPhone app uses the same account and garage as the web app. Scan a
+          VIN, update mileage, save records, and review available maintenance
+          information while you are away from your computer.
         </p>
-        <p className="text-slate-600 dark:text-slate-400">
-          Mobile access is currently limited to controlled distribution and
-          internal testing while store launch work is in progress.
+        <AppStoreCallout />
+        <p className="mt-3 text-slate-600 dark:text-slate-400">
+          Android: <strong>Coming Soon</strong>.
         </p>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="mt-4 text-slate-600 dark:text-slate-400">
           Need troubleshooting or support details? Visit the{' '}
           <Link
             to="/help"

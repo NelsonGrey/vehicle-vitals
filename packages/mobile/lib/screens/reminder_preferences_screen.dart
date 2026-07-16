@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../components/safe_back_button.dart';
 
 import '../services/firestore_service.dart';
+import '../utils/user_facing_error.dart';
 
 class ReminderPreferencesScreen extends StatefulWidget {
   const ReminderPreferencesScreen({super.key});
@@ -57,7 +58,14 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
         _loading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to load reminder preferences: $error')),
+        SnackBar(
+          content: Text(
+            userFacingError(
+              error,
+              fallback: 'Reminder preferences could not be loaded.',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -81,7 +89,14 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save reminder preferences: $error')),
+        SnackBar(
+          content: Text(
+            userFacingError(
+              error,
+              fallback: 'Reminder preferences could not be saved. Try again.',
+            ),
+          ),
+        ),
       );
     } finally {
       if (mounted) {

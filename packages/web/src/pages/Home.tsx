@@ -21,6 +21,7 @@ import {
   updateVehicle,
 } from '../shared/firestoreService';
 import { useFeatureFlag, useSubscription } from '../shared/useMonetization';
+import { userFacingError } from '../shared/userFacingError';
 import {
   computeGarageCompleteness,
   computeVehiclePortfolioProgress,
@@ -501,8 +502,10 @@ export default function Home() {
       await refreshVehicles();
     } catch (err) {
       alert(
-        'Error deleting vehicle: ' +
-          (err instanceof Error ? err.message : String(err))
+        userFacingError(
+          err,
+          'The vehicle could not be deleted. Please try again or visit Support.'
+        )
       );
     }
   };

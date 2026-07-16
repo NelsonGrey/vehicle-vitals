@@ -277,6 +277,18 @@ class VehicleVitalsApp extends StatelessWidget {
           builder: (context, state) => const ForgotPasswordScreen(),
         ),
         GoRoute(
+          path: '/privacy',
+          builder: (context, state) => const PrivacyScreen(),
+        ),
+        GoRoute(
+          path: '/terms',
+          builder: (context, state) => const TermsScreen(),
+        ),
+        GoRoute(
+          path: '/support',
+          builder: (context, state) => const SupportScreen(),
+        ),
+        GoRoute(
           path: '/app/onboarding',
           builder: (context, state) => const OnboardingScreen(),
         ),

@@ -26,9 +26,9 @@ describe('PersonaPage', () => {
         name: /Document the work you do yourself/i,
       })
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(/Hands-on maintenance/i).length
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hands-on maintenance/i).length).toBeGreaterThan(
+      0
+    );
     expect(screen.getByText(/parts, labor notes/i)).toBeInTheDocument();
     expect(screen.getByText(/Pro to Premium/i)).toBeInTheDocument();
     expect(

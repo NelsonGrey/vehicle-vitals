@@ -99,7 +99,7 @@ describe('SubscriptionPage', () => {
       })
     ).toBeInTheDocument();
     expect(screen.getByText(/^ownership records$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^shared garage$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^household vehicles$/i)).toBeInTheDocument();
     expect(screen.getByText(/^guided setup$/i)).toBeInTheDocument();
     expect(screen.getByText(/^hands-on maintenance$/i)).toBeInTheDocument();
     expect(screen.getByText(/^work vehicles$/i)).toBeInTheDocument();

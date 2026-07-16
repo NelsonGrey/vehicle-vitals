@@ -104,7 +104,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             icon: Icons.directions_car_filled,
             title: 'Add your first vehicle or scan VIN',
             subtitle:
-                'Create your working garage so reminders, records, and timeline are useful from day one.',
+                'Create your working Garage so reminders, Records, and Service History are useful from day one.',
             actions: [
               _StepAction(
                 label: 'Add vehicle',
@@ -141,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             icon: Icons.event_available,
             title: 'Review your Maintenance Plan',
             subtitle:
-                'See what\'s due soon across your garage so nothing sneaks up on you.',
+                'Review available recommendations and saved reminders. Confirm requirements with the owner’s manual.',
             actions: [
               _StepAction(
                 label: 'View Maintenance Plan',

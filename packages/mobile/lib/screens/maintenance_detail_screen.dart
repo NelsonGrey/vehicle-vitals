@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../components/safe_back_button.dart';
 import '../models/maintenance.dart';
 import '../services/firestore_service.dart';
+import '../utils/user_facing_error.dart';
 
 String _performedByLabel(String value) {
   switch (value) {
@@ -136,9 +137,17 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading entry: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The maintenance entry could not be loaded. Please try again.',
+              ),
+            ),
+          ),
+        );
       }
     }
   }
@@ -195,9 +204,17 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error updating entry: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The maintenance entry could not be updated. Please try again.',
+              ),
+            ),
+          ),
+        );
       }
     }
   }
@@ -241,7 +258,15 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting maintenance entry: $e')),
+            SnackBar(
+              content: Text(
+                userFacingError(
+                  e,
+                  fallback:
+                      'The maintenance entry could not be deleted. Please try again.',
+                ),
+              ),
+            ),
           );
         }
       }

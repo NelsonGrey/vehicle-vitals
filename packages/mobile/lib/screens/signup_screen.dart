@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../components/app_logo.dart';
 import '../services/auth_service.dart';
+import '../utils/user_facing_error.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -48,7 +49,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sign up failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'We could not create your account. Please try again or visit Support.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -74,7 +81,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Apple sign-in failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Apple sign-in could not be completed. Please try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -113,7 +126,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Center(child: AppLogo(size: 72, showText: false, full: true)),
+                  child: Center(
+                    child: AppLogo(size: 72, showText: false, full: true),
+                  ),
                 ),
 
                 Card(
@@ -162,8 +177,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Please enter a password';
                             }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                            if (value.length < 8) {
+                              return 'Password must be at least 8 characters';
                             }
                             return null;
                           },
@@ -218,6 +233,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           onPressed: _isLoading ? null : _signInWithApple,
                           icon: const Icon(Icons.apple),
                           label: const Text('Continue with Apple'),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'By creating an account or continuing with Apple, you agree to the Terms of Use and acknowledge the Privacy Policy.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          children: [
+                            TextButton(
+                              onPressed: () => context.push('/terms'),
+                              child: const Text('Terms of Use'),
+                            ),
+                            TextButton(
+                              onPressed: () => context.push('/privacy'),
+                              child: const Text('Privacy Policy'),
+                            ),
+                          ],
                         ),
                       ],
                     ),

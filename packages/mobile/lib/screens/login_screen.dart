@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../components/app_logo.dart';
 import '../services/auth_service.dart';
+import '../utils/user_facing_error.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,10 +44,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final errorText = e.toString().replaceFirst('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login failed: $errorText'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'We could not sign you in. Please try again or visit Support.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -72,7 +78,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Apple sign-in failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Apple sign-in could not be completed. Please try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -104,14 +116,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Access your secure garage, timeline, and profile.',
+                  'Access your Garage, Service History, Maintenance Plan, and Account.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Center(child: AppLogo(size: 72, showText: false, full: true)),
+                  child: Center(
+                    child: AppLogo(size: 72, showText: false, full: true),
+                  ),
                 ),
 
                 Card(

@@ -113,6 +113,8 @@ describe('Support', () => {
     fireEvent.click(screen.getByRole('button', { name: /send message/i }));
 
     await waitFor(() => screen.getByRole('alert'));
-    expect(screen.getByRole('alert')).toHaveTextContent(/too many support/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /message could not be sent/i
+    );
   });
 });

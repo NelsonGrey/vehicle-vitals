@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../services/feature_flags_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
+import '../utils/user_facing_error.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
@@ -71,86 +72,83 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final features = premiumService.getPremiumFeatures();
     final tierLabel = _tierDisplayName(premiumService.subscriptionTier);
 
-    return Padding(
+    return ListView(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Card(
-            color: AppDesignTokens.success.withValues(alpha: 0.08),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: AppDesignTokens.success,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$tierLabel Active',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(color: AppDesignTokens.success),
+      children: [
+        Card(
+          color: AppDesignTokens.success.withValues(alpha: 0.08),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: AppDesignTokens.success,
+                  size: 32,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$tierLabel Active',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppDesignTokens.success,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Current tier: $tierLabel • Vehicle limit: ${premiumService.vehicleLimit}',
-                          style: TextStyle(color: AppDesignTokens.success),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Current tier: $tierLabel • Vehicle limit: ${premiumService.vehicleLimit}',
+                        style: TextStyle(color: AppDesignTokens.success),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          _buildBillingPeriodToggle(),
-          const SizedBox(height: 16),
-          _buildPlanCatalog(premiumService),
-          const SizedBox(height: 24),
-          Text(
-            'Your Premium Benefits',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 16),
-          _buildFeatureItem(
-            icon: Icons.block,
-            title: 'Ad-Free Experience',
-            description: 'No more banner or interstitial ads',
-            isActive: features['adFree'] ?? false,
-          ),
-          _buildFeatureItem(
-            icon: Icons.analytics,
-            title: 'Advanced Analytics',
-            description: 'Detailed maintenance insights and trends',
-            isActive: features['advancedAnalytics'] ?? false,
-          ),
-          _buildFeatureItem(
-            icon: Icons.file_download,
-            title: 'Unlimited Exports',
-            description: 'Export data as CSV or PDF without limits',
-            isActive: features['unlimitedExports'] ?? false,
-          ),
-          _buildFeatureItem(
-            icon: Icons.support_agent,
-            title: 'Priority Support',
-            description: 'Get help faster with premium support',
-            isActive: features['prioritySupport'] ?? false,
-          ),
-          const Spacer(),
-          const Text(
-            'Premium features are active across all your devices.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+        _buildBillingPeriodToggle(),
+        const SizedBox(height: 16),
+        _buildPlanCatalog(premiumService),
+        const SizedBox(height: 24),
+        Text(
+          'Your $tierLabel benefits',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 16),
+        _buildFeatureItem(
+          icon: Icons.block,
+          title: 'Ad-Free Experience',
+          description: 'No more banner or interstitial ads',
+          isActive: features['adFree'] ?? false,
+        ),
+        _buildFeatureItem(
+          icon: Icons.analytics,
+          title: 'Document Analysis',
+          description: 'Analyze supported maintenance documents and receipts',
+          isActive: features['advancedAnalytics'] ?? false,
+        ),
+        _buildFeatureItem(
+          icon: Icons.file_download,
+          title: 'PDF Export',
+          description: 'Export maintenance records as PDF',
+          isActive: features['unlimitedExports'] ?? false,
+        ),
+        _buildFeatureItem(
+          icon: Icons.support_agent,
+          title: 'Priority Support Entitlement',
+          description: 'Support routing follows the terms for your tier',
+          isActive: features['prioritySupport'] ?? false,
+        ),
+        Text(
+          '$tierLabel entitlements synchronize across supported devices.',
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 
@@ -188,7 +186,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Payment is processed through in-app purchase for Pro and Premium. Enterprise subscriptions are handled through direct sales support.',
+            'Payment is processed through Apple in-app purchase for Pro and Premium. Enterprise inquiries are handled through Support.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
@@ -364,7 +362,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Purchase failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The purchase could not be completed. No subscription change was made.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -387,7 +391,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Restore failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Purchases could not be restored. Please try again later.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

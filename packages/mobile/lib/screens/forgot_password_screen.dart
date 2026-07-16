@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
 import '../theme/design_tokens.dart';
+import '../utils/user_facing_error.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -16,6 +17,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  bool _emailSent = false;
 
   @override
   void dispose() {
@@ -33,19 +35,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await authService.resetPassword(_emailController.text.trim());
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent. Check your inbox.'),
-            backgroundColor: AppDesignTokens.success,
-          ),
-        );
-        context.go('/auth/login');
+        setState(() => _emailSent = true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Reset failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'We could not send the reset email. Check the address and try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -68,6 +70,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (_emailSent) ...[
+                Card(
+                  color: AppDesignTokens.success.withValues(alpha: 0.1),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'Reset email sent. Check your inbox and spam or junk folder. The link may expire, so open it promptly. If it does not arrive, confirm the address or contact Support.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
               Text(
                 'Enter your account email and we will send a reset link.',
                 style: Theme.of(context).textTheme.bodyLarge,
@@ -95,7 +110,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
+                  onPressed: _isLoading || _emailSent ? null : _submit,
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Send Reset Link'),
@@ -104,8 +119,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => context.go('/auth/login'),
-                child: const Text('Back to Login'),
+                child: Text(_emailSent ? 'Return to Login' : 'Back to Login'),
               ),
+              if (_emailSent)
+                TextButton(
+                  onPressed: () => context.push('/support'),
+                  child: const Text('Contact Support'),
+                ),
             ],
           ),
         ),

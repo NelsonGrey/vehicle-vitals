@@ -1,9 +1,5 @@
 export type PersonaId =
-  | 'owners'
-  | 'households'
-  | 'new-drivers'
-  | 'diy-maintainers'
-  | 'light-fleets';
+  'owners' | 'households' | 'new-drivers' | 'diy-maintainers' | 'light-fleets';
 
 export interface PersonaPageContent {
   id: PersonaId;
@@ -37,7 +33,7 @@ export const personaPages: PersonaPageContent[] = [
       'Build a trusted ownership record, see what is due next, and keep resale or warranty evidence ready.',
     plan: 'Start Free for core tracking. Upgrade to Pro when you want exports, calendar sync, and advanced reminders.',
     recommendedPlan: 'Free to Pro',
-    image: '/images/features/records.png',
+    image: '/images/features/current/records.png',
     ctaLabel: 'See ownership history',
     demoTo: '/ownership-history-demo',
     path: '/personas/owners',
@@ -51,36 +47,36 @@ export const personaPages: PersonaPageContent[] = [
     workflows: [
       'Add a vehicle and confirm the profile.',
       'Log maintenance, repairs, receipts, costs, and notes.',
-      'Review timeline history before the next shop visit or sale.',
+      'Review Service History before the next shop visit or sale.',
     ],
   },
   {
     id: 'households',
-    navLabel: 'Shared Garage',
-    label: 'Shared garage',
-    title: 'Coordinate every vehicle in one shared garage',
+    navLabel: 'Household Vehicles',
+    label: 'Household vehicles',
+    title: 'Keep household vehicle records together',
     headline:
-      'One shared view for drivers, vehicles, upcoming work, and ownership costs.',
-    pain: 'Multiple vehicles, drivers, and service schedules turn into text threads, missed handoffs, and duplicate shop follow-up.',
+      'One account can organize the vehicles, upcoming work, and ownership costs used by your household.',
+    pain: 'Multiple vehicles and service schedules are difficult to track when records are split across receipts, inboxes, and different reminders.',
     outcome:
-      'Use one garage view to track vehicles, upcoming work, service costs, and shared history.',
-    plan: 'Pro is the best fit for shared garages that need reminders, exports, calendar sync, and shared planning depth.',
+      'Use one garage view to track household vehicles, upcoming work, service costs, and history from the signed-in account.',
+    plan: 'Pro is the best fit for households that need reminders, exports, calendar sync, and more planning depth. Additional member invitations and shared roles are planned but are not part of the current launch.',
     recommendedPlan: 'Pro',
-    image: '/images/features/garage-vehicles.png',
+    image: '/images/features/current/garage.png',
     ctaLabel: 'See garage overview',
     demoTo: '/cross-platform-access-demo',
     path: '/personas/households',
     accent:
       'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-100',
     benefits: [
-      'See the whole garage without chasing each driver for updates.',
-      'Coordinate recurring maintenance around calendars and responsibilities.',
-      'Export records when a family vehicle changes hands or needs documentation.',
+      'See household vehicle records and upcoming work in one garage view.',
+      'Keep recurring maintenance visible without relying on memory.',
+      'Keep records ready when a household vehicle changes hands or needs documentation.',
     ],
     workflows: [
       'Add each household vehicle to the garage.',
-      'Review upcoming tasks across the shared garage.',
-      'Use exports and reminders to keep everyone aligned.',
+      'Review the Maintenance Plan across the household vehicles in the account.',
+      'Use records and reminders to prepare for upcoming service.',
     ],
   },
   {
@@ -95,7 +91,7 @@ export const personaPages: PersonaPageContent[] = [
       'Capture each service, learn the next step, and keep provider notes in language that makes future decisions easier.',
     plan: 'Free covers the early habit. Pro adds planning depth when reminders, exports, and records start to matter more.',
     recommendedPlan: 'Free to Pro',
-    image: '/images/features/add-vehicle.png',
+    image: '/images/features/current/add-vehicle.png',
     ctaLabel: 'See quick setup',
     demoTo: '/vin-lookup-demo',
     path: '/personas/new-drivers',
@@ -124,7 +120,7 @@ export const personaPages: PersonaPageContent[] = [
       'Capture parts, costs, service intervals, and project notes so self-performed work still builds vehicle value.',
     plan: 'Pro fits active hands-on tracking. Premium adds longer planning, ad-free work sessions, and automation for power users.',
     recommendedPlan: 'Pro to Premium',
-    image: '/images/features/records.png',
+    image: '/images/features/current/records.png',
     ctaLabel: 'See record keeping',
     demoTo: '/ownership-history-demo',
     path: '/personas/diy-maintainers',
@@ -145,29 +141,29 @@ export const personaPages: PersonaPageContent[] = [
     id: 'light-fleets',
     navLabel: 'Work Vehicles',
     label: 'Work vehicles',
-    title: 'Keep business vehicles ready, documented, and accountable',
+    title: 'Keep work-vehicle records organized',
     headline:
-      'Maintenance readiness, cost history, vendor context, and reporting for work vehicles.',
-    pain: 'Downtime, vendor follow-up, driver handoffs, and cost reporting are hard to manage across work vehicles.',
+      'Maintenance history, costs, and provider notes for a small set of work vehicles.',
+    pain: 'Service records, costs, and provider details are hard to retrieve when work-vehicle information is split across invoices and spreadsheets.',
     outcome:
-      'Review service readiness, maintenance forecasts, exportable records, and provider context from one place.',
-    plan: 'Premium supports power users and light operations. Enterprise fits policy, SLA, reporting, and integration needs.',
+      'Track work-vehicle history, upcoming recommendations, costs, and provider context from one account.',
+    plan: 'Premium supports power users and light operations. Enterprise fits policy, SLA, reporting, and integration needs. Team roles, fleet reporting, and integrations are planned capabilities.',
     recommendedPlan: 'Premium to Enterprise',
-    image: '/images/features/upcoming.png',
+    image: '/images/features/current/maintenance-plan.png',
     ctaLabel: 'See maintenance planning',
     demoTo: '/maintenance-planning-demo',
     path: '/personas/light-fleets',
     accent:
       'border-indigo-200 bg-indigo-50 text-indigo-950 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-100',
     benefits: [
-      'Move recurring vehicle work out of spreadsheets and text threads.',
-      'Forecast service needs before they create scheduling or downtime problems.',
-      'Give managers exportable records, vendor context, and policy-ready controls.',
+      'Move work-vehicle service history out of scattered invoices and spreadsheets.',
+      'Review available maintenance recommendations before the next service visit.',
+      'Keep costs and provider context attached to each vehicle record.',
     ],
     workflows: [
       'Track work vehicles and provider history in one garage.',
-      'Review forecasted maintenance and upcoming tasks.',
-      'Use reporting, integrations, and support as operations grow.',
+      'Review available maintenance recommendations and saved reminders.',
+      'Contact Support to discuss planned team workflows as operations grow.',
     ],
   },
 ];

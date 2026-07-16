@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/safe_back_button.dart';
 import '../services/email_reminder_service.dart';
 import '../theme/design_tokens.dart';
+import '../utils/user_facing_error.dart';
 
 class EmailPreferencesScreen extends StatefulWidget {
   const EmailPreferencesScreen({super.key});
@@ -36,7 +37,13 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading preferences: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Email preferences could not be loaded. Please try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -62,7 +69,13 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving preferences: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Email preferences could not be saved. Please try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -89,7 +102,13 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sending test reminder: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The test reminder could not be sent. Check the address and try again.',
+              ),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

@@ -13,36 +13,36 @@ class WelcomeScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Garage')),
+      appBar: AppBar(title: const Text('Vehicle-Vitals')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: ListView(
           children: [
             const SizedBox(height: 8),
             Text(
-              'Welcome to your garage workspace',
+              'Stay ahead of vehicle maintenance',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 10),
             Text(
-              'Jump straight into vehicles, records, and upcoming work. Sign in to continue where you left off, or create an account to get started in minutes.',
+              'Keep service records and receipts together, see available maintenance recommendations, and carry the history to your next shop visit.',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: colorScheme.muted),
             ),
             const SizedBox(height: 18),
             _ActionCard(
-              title: 'Returning user',
-              subtitle: 'Open your existing garage and pick up current tasks.',
+              title: 'Already have an account?',
+              subtitle: 'Open the same Garage you use on the web.',
               ctaLabel: 'Sign In',
               onPressed: () => context.go('/auth/login'),
               icon: Icons.login,
             ),
             const SizedBox(height: 12),
             _ActionCard(
-              title: 'New user',
+              title: 'New to Vehicle-Vitals?',
               subtitle:
-                  'Create your account, add your first vehicle, and configure reminders.',
+                  'Create an account, add a vehicle, and save your first service record.',
               ctaLabel: 'Create Account',
               onPressed: () => context.go('/auth/signup'),
               icon: Icons.person_add_alt_1,
@@ -50,31 +50,18 @@ class WelcomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'Subscription expectations',
+              'What you can do',
               style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Choose a tier based on workload and feature needs. You can start Free and upgrade in-app as your garage grows.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colorScheme.muted),
             ),
             const SizedBox(height: 10),
             const _FeatureBullet(
-              text: 'Free: core tracking, reminders, and baseline workflow',
+              text: 'Keep receipts and service proof with the right vehicle',
             ),
             const _FeatureBullet(
-              text:
-                  'Pro: calendar sync, exports, and expanded workflow controls',
+              text: 'Review what was completed and what may need attention',
             ),
             const _FeatureBullet(
-              text:
-                  'Premium: ad-free experience, API access, and advanced capabilities',
-            ),
-            const _FeatureBullet(
-              text:
-                  'Enterprise: high-volume operations with contract and support handoff',
+              text: 'Use the same account on the web and iPhone',
             ),
           ],
         ),

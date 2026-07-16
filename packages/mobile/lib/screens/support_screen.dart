@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../components/safe_back_button.dart';
 import '../theme/design_tokens.dart';
+import '../utils/user_facing_error.dart';
 
 const List<String> kSupportRequestTopics = [
   'Bug Report',
@@ -71,7 +72,13 @@ class _SupportScreenState extends State<SupportScreen> {
       if (!mounted) {
         return;
       }
-      setState(() => _error = e.message ?? 'Failed to send your message');
+      setState(
+        () => _error = userFacingError(
+          e,
+          fallback:
+              'Your message could not be sent. Check the form and try again.',
+        ),
+      );
     } catch (e) {
       if (!mounted) {
         return;
@@ -96,7 +103,9 @@ class _SupportScreenState extends State<SupportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('We typically respond within 24 hours.'),
+            const Text(
+              'Send the details below and we will respond as soon as possible. Response times vary by request type and support availability.',
+            ),
             const SizedBox(height: 20),
             if (_submitted)
               Container(

@@ -11,6 +11,7 @@ import {
   validateLicensePlate,
 } from '../shared/licensePlateUtils';
 import { generateVehiclePhotoPath, uploadFile } from '../shared/storageService';
+import { userFacingError } from '../shared/userFacingError';
 import {
   useSubscription,
   useUpgradePrompt,
@@ -261,9 +262,13 @@ export default function AddVehicle() {
       });
       alert('Vehicle added successfully');
       navigate('/app');
-    } catch (err: unknown) {
-      const error = err as Error;
-      alert('Error: ' + error.message);
+    } catch (error: unknown) {
+      alert(
+        userFacingError(
+          error,
+          'The vehicle could not be added. Review the required fields and try again.'
+        )
+      );
     }
   };
 
@@ -384,8 +389,10 @@ export default function AddVehicle() {
       }));
     } catch (error) {
       alert(
-        'Failed to upload photo: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'The photo could not be uploaded. Check the file and try again.'
+        )
       );
     } finally {
       setPhotoBusy(false);
@@ -425,8 +432,10 @@ export default function AddVehicle() {
       }));
     } catch (error) {
       alert(
-        'Web photo lookup failed: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'A vehicle photo could not be found right now. You can upload your own image.'
+        )
       );
     } finally {
       setPhotoBusy(false);

@@ -12,7 +12,7 @@ export default function Terms() {
           Terms of Use
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mb-6">
-          Last updated: September 30, 2025
+          Last updated: July 16, 2026
         </p>
 
         <div className="space-y-6 text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -32,7 +32,8 @@ export default function Terms() {
             </h2>
             <p>
               Vehicle-Vitals provides tools to track vehicle information and
-              maintenance. Features may change over time.
+              maintenance. Features may change over time. Vehicle-Vitals is a
+              product of Nelson Grey LLC.
             </p>
           </section>
 

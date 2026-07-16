@@ -333,37 +333,83 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Search Preferences',
+                  'Your Address',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
+                Text(
+                  'Used to find nearby businesses — not shared or shown '
+                  'publicly.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _street1Controller,
-                  decoration: const InputDecoration(labelText: 'Street'),
+                  decoration: const InputDecoration(
+                    labelText: 'Street',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _street2Controller,
                   decoration: const InputDecoration(
                     labelText: 'Street 2 (optional)',
+                    border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _cityController,
-                  decoration: const InputDecoration(labelText: 'City'),
-                ),
-                TextField(
-                  controller: _stateController,
                   decoration: const InputDecoration(
-                    labelText: 'State/Province',
+                    labelText: 'City',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                TextField(
-                  controller: _postalCodeController,
-                  decoration: const InputDecoration(labelText: 'Postal Code'),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: _stateController,
+                        decoration: const InputDecoration(
+                          labelText: 'State/Province',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: _postalCodeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Postal Code',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: _countryController,
+                        decoration: const InputDecoration(
+                          labelText: 'Country',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                TextField(
-                  controller: _countryController,
-                  decoration: const InputDecoration(labelText: 'Country'),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 16),
+                const Text(
+                  'Search Settings',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
                 Text('Search radius: $_preferredProviderRadiusMiles miles'),
@@ -381,10 +427,13 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
                           });
                         },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _preferredProviderType,
-                  decoration: const InputDecoration(labelText: 'Business type'),
+                  decoration: const InputDecoration(
+                    labelText: 'Business type',
+                    border: OutlineInputBorder(),
+                  ),
                   items: const [
                     DropdownMenuItem(
                       value: 'all',

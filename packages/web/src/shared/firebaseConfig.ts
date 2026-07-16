@@ -320,10 +320,19 @@ remoteConfig.defaultConfig = {
   enable_ai_attachment_analysis: 'false',
   enable_provider_discovery: 'true',
   onboarding_vehicle_limit_prompt: '1',
+  // Runtime kill switch for app access (sign-in/sign-up entry points and
+  // subscription checkout) that doesn't require a rebuild+redeploy to flip —
+  // toggle in Firebase Console > Remote Config for a pre-launch window or a
+  // maintenance outage. Entry points stay visible but disabled rather than
+  // disappearing, so a visitor sees why instead of hitting a dead link.
+  app_offline: 'false',
 };
 
 // Fetch and activate in background; app uses defaults until this resolves.
-fetchAndActivate(remoteConfig).catch(() => {
+// Exported so callers that need to react the moment a fetched value
+// supersedes the default (e.g. useAppOffline) can await readiness instead of
+// only ever seeing remoteConfig.defaultConfig's static values.
+export const remoteConfigReady = fetchAndActivate(remoteConfig).catch(() => {
   // Network unavailable or fetch throttled — defaults remain active.
 });
 

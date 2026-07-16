@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import AppOfflineNotice from '../components/AppOfflineNotice';
 import { useAuth } from '../shared/AuthContext';
 import { getRedirectQueryParam, withRedirect } from '../shared/authRedirect';
+import { useAppOffline } from '../shared/useAppOffline';
 // Header and footer provided by Layout
 
 export default function Login() {
   const { signIn, signInWithGoogle, signInWithApple } = useAuth();
+  const isAppOffline = useAppOffline();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +35,10 @@ export default function Login() {
       setBusy(false);
     }
   };
+
+  if (isAppOffline) {
+    return <AppOfflineNotice />;
+  }
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-6">

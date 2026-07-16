@@ -3,6 +3,7 @@ import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
 import { trackOnboardingStepAction } from '../shared/marketingAnalytics';
+import { useAppOffline } from '../shared/useAppOffline';
 // Header and footer provided by Layout
 
 const quickLookSteps = [
@@ -36,6 +37,8 @@ const quickLookSteps = [
 ];
 
 export default function Instructions() {
+  const isAppOffline = useAppOffline();
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5 sm:space-y-6">
       <PageSEO meta={ROUTE_SEO['/getting-started']} />
@@ -59,14 +62,29 @@ export default function Instructions() {
         </p>
         <ol className="list-decimal pl-5 space-y-3 text-slate-700 dark:text-slate-300">
           <li>
-            Create an account or sign in from the{' '}
-            <Link
-              to="/auth/login"
-              className="underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
-            >
-              login page
-            </Link>
-            .
+            {isAppOffline ? (
+              <>
+                Create an account or sign in from the{' '}
+                <span
+                  aria-disabled="true"
+                  className="text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                >
+                  login page
+                </span>{' '}
+                (currently unavailable).
+              </>
+            ) : (
+              <>
+                Create an account or sign in from the{' '}
+                <Link
+                  to="/auth/login"
+                  className="underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
+                >
+                  login page
+                </Link>
+                .
+              </>
+            )}
           </li>
           <li>
             After you sign in, open the{' '}

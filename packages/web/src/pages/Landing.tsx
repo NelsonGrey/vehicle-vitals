@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import AppEntryLink from '../components/AppEntryLink';
 import HeaderAdBar from '../components/HeaderAdBar';
 import InlineAdSection from '../components/InlineAdSection';
 import PageSEO from '../components/PageSEO';
@@ -102,13 +103,15 @@ export default function Landing() {
                     vehicles, and light business fleets.
                   </p>
                   <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <Link
+                    <AppEntryLink
                       to="/auth/signup"
                       className="inline-block w-full rounded-xl bg-white px-6 py-3 text-center font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
                       onClick={() => trackSignupStart('landing_hero')}
+                      wrapperClassName="inline-flex w-full flex-col items-center gap-1 sm:w-auto"
+                      noteClassName="text-xs text-slate-200"
                     >
                       Create your account
-                    </Link>
+                    </AppEntryLink>
                     <Link
                       to="/subscription"
                       className="inline-block w-full rounded-xl border border-white/40 bg-white/10 px-6 py-3 text-center font-semibold text-white transition hover:bg-white/20 sm:w-auto"

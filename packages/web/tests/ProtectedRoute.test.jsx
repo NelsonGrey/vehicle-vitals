@@ -1,13 +1,18 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ProtectedRoute from '../src/components/ProtectedRoute';
 
 vi.mock('../src/shared/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock('../src/shared/useAppOffline', () => ({
+  useAppOffline: vi.fn(),
+}));
+
 import { useAuth } from '../src/shared/AuthContext';
+import { useAppOffline } from '../src/shared/useAppOffline';
 
 function renderWithRouter(authState, initialPath = '/app/dashboard') {
   return render(
@@ -34,8 +39,26 @@ function renderWithRouter(authState, initialPath = '/app/dashboard') {
 }
 
 describe('ProtectedRoute', () => {
+  beforeEach(() => {
+    useAppOffline.mockReturnValue(false);
+  });
+
   afterEach(() => {
     cleanup();
+  });
+
+  it('shows an offline notice instead of children for an authenticated user when app_offline is on', () => {
+    useAuth.mockReturnValue({
+      user: { uid: 'user123', isAnonymous: false },
+      loading: false,
+    });
+    useAppOffline.mockReturnValue(true);
+    renderWithRouter({
+      user: { uid: 'user123', isAnonymous: false },
+      loading: false,
+    });
+    expect(screen.getByText(/not available right now/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
   });
 
   it('renders nothing (null) while loading', () => {

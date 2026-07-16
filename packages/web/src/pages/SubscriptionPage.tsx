@@ -36,6 +36,8 @@ import {
 } from '../shared/subscriptionService';
 import { useSubscription } from '../shared/useMonetization';
 import { useAuth } from '../shared/AuthContext';
+import AppEntryLink from '../components/AppEntryLink';
+import { useAppOffline } from '../shared/useAppOffline';
 import { personaPages } from '../data/personas';
 
 // Stripe's success_url here carries only `?checkout=success` (no session ID),
@@ -229,6 +231,7 @@ export default function SubscriptionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const isAppOffline = useAppOffline();
   const { subscription, tier, isLoading } = useSubscription();
   // Preserves the plan a signed-out visitor picked on the public pricing
   // page: its CTAs redirect through signup to
@@ -527,9 +530,9 @@ export default function SubscriptionPage() {
               {isBillingRoute ? (
                 <button
                   type="button"
-                  disabled={isCurrent || isSubmittingTierChange}
+                  disabled={isCurrent || isSubmittingTierChange || isAppOffline}
                   onClick={async () => {
-                    if (isCurrent) {
+                    if (isCurrent || isAppOffline) {
                       return;
                     }
 
@@ -604,12 +607,12 @@ export default function SubscriptionPage() {
                     }
                   }}
                   className={`mt-4 w-full rounded-md px-4 py-2 text-sm font-semibold ${
-                    isCurrent || isSubmittingTierChange
+                    isCurrent || isSubmittingTierChange || isAppOffline
                       ? 'cursor-not-allowed bg-slate-300 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
                       : 'bg-teal-700 text-white hover:bg-teal-800'
                   }`}
                 >
-                  {ctaText}
+                  {isAppOffline && !isCurrent ? 'Currently unavailable' : ctaText}
                 </button>
               ) : planTier === 'enterprise' ? (
                 <a
@@ -619,7 +622,7 @@ export default function SubscriptionPage() {
                   {ctaText}
                 </a>
               ) : (
-                <Link
+                <AppEntryLink
                   to={withRedirect(
                     '/auth/signup',
                     `/app/subscription?tier=${planTier}&billingPeriod=${billingPeriod}`
@@ -628,9 +631,10 @@ export default function SubscriptionPage() {
                     trackPricingPlanClick(planTier, billingPeriod, ctaText)
                   }
                   className="mt-4 inline-flex w-full justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+                  wrapperClassName="mt-4 inline-flex w-full flex-col items-center gap-1"
                 >
                   {ctaText}
-                </Link>
+                </AppEntryLink>
               )}
             </article>
           );

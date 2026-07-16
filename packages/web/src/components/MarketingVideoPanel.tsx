@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAppOffline } from '../shared/useAppOffline';
 
 interface MarketingVideoPanelProps {
   title: string;
@@ -20,9 +21,14 @@ export default function MarketingVideoPanel({
   className = '',
 }: MarketingVideoPanelProps) {
   const [videoFailed, setVideoFailed] = useState(false);
+  const isAppOffline = useAppOffline();
 
   const canTryVideo = Boolean(videoPath);
   const showVideo = canTryVideo && !videoFailed;
+  // Only entry-flow fallbacks (sign-up/sign-in) respect the offline kill
+  // switch — the other usages of this panel fall back to plain marketing
+  // pages (e.g. /getting-started), which stay available either way.
+  const isEntryFallback = Boolean(fallbackHref?.startsWith('/auth/'));
 
   return (
     <article
@@ -69,7 +75,20 @@ export default function MarketingVideoPanel({
             Video not found at {videoPath}. Add the clip to enable playback.
           </p>
         )}
-        {!showVideo && fallbackHref && (
+        {!showVideo && fallbackHref && isEntryFallback && isAppOffline && (
+          <span className="mt-3 inline-flex flex-col items-start gap-1">
+            <span
+              aria-disabled="true"
+              className="inline-flex items-center rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white opacity-50 cursor-not-allowed dark:bg-slate-200 dark:text-slate-900"
+            >
+              {fallbackLabel}
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Currently unavailable
+            </span>
+          </span>
+        )}
+        {!showVideo && fallbackHref && !(isEntryFallback && isAppOffline) && (
           <a
             href={fallbackHref}
             className="mt-3 inline-flex items-center rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"

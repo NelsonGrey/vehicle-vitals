@@ -1028,8 +1028,10 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
     }) => {
       await page.goto(`${BASE_URL}/app/profile`);
       await page.waitForURL(/\/app\/profile/, { timeout: 15000 });
+      // The Profile page's own <h1> reads "Account" (see Profile.tsx) --
+      // "Profile" is only the nav label pointing at this route.
       await expect(
-        page.getByRole('heading', { name: /^profile$/i })
+        page.getByRole('heading', { name: /^account$/i, level: 1 })
       ).toBeVisible({ timeout: 15000 });
 
       // Account & Security (selected inline in the Profile detail panel)

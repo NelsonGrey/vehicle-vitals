@@ -495,15 +495,22 @@ as of `artifacts/smoke/r1-mobile-build-20260615T154819Z.log` and
 `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`; manual
 acceptance and backend success-path proof are still open.
 
-**Gotcha (found 2026-07-16):** CI's "Align iOS Firebase Environment" step
-(`master-pipeline.yml`) copies the right per-environment `GoogleService-Info.plist`
-into `ios/Runner/` before building, based on the pipeline's target environment —
-but that swap only happens inside the CI runner and is never committed back to
-git. A local `flutter build ios` (e.g. testing directly on HADES outside CI)
-uses whatever plist is currently checked into `ios/Runner/GoogleService-Info.plist`,
-which may not match the environment you intend to test against. Before a local
-HADES build, manually confirm/copy the right environment plist first:
-`cp ios/Runner/GoogleService-Info.<dev|staging|prod>.plist ios/Runner/GoogleService-Info.plist`.
+**Gotcha (found 2026-07-16, corrected same day):** the app does **not** select
+its Firebase project from `GoogleService-Info.plist` at runtime — it uses
+`lib/firebase_options.dart` (FlutterFire-CLI generated), which reads a
+compile-time flag: `String.fromEnvironment('VV_FIREBASE_ENV', ...)`. CI's
+Fastlane build always passes this explicitly (`ios/fastlane/Fastfile:211`), so
+CI-built staging/production apps are correct. A **local** `flutter build ios`
+(e.g. testing directly on HADES outside CI) that omits this flag silently
+defaults to **production** per `firebase_options.dart`'s own documented
+policy ("Always default to production when no explicit VV_FIREBASE_ENV is
+set") — this bit an entire session's worth of HADES builds, which were
+unknowingly running against `vehicle-vitals-prod` while every diagnostic
+check that session was run against `vehicle-vitals-dev`. `GoogleService-Info.plist`
+appears to be a vestigial/unused artifact for this app's actual Auth/Firestore
+init path — do not use it to reason about which project a build targets.
+For a local HADES build intended to test dev, always pass the flag explicitly:
+`flutter build ios --release --dart-define=VV_FIREBASE_ENV=development`.
 
 Run:
 

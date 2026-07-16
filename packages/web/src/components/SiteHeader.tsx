@@ -9,6 +9,7 @@ import {
 } from '../data/capabilities';
 import { personaPages } from '../data/personas';
 import { trackHeaderNavClick } from '../shared/marketingAnalytics';
+import { useAppOffline } from '../shared/useAppOffline';
 import StackedVLogo from './StackedVLogo';
 
 interface SiteHeaderProps {
@@ -18,6 +19,7 @@ interface SiteHeaderProps {
 export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
   const { user, signOut, supportAccess } = useAuth();
   const isLoggedIn = Boolean(user && !user.isAnonymous);
+  const isAppOffline = useAppOffline();
 
   const linkClass = `hover:opacity-80 transition-opacity whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-900 ${
     overlay ? 'text-gray-100 hover:text-white' : 'text-current'
@@ -135,16 +137,31 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
               )}
             </div>
 
-            <div className="flex items-center sm:justify-end rounded-lg px-2 py-1 min-w-[8rem] sm:min-w-[10rem]">
+            <div className="flex flex-col items-center gap-1 sm:items-end rounded-lg px-2 py-1 min-w-32 sm:min-w-40">
               {isLoggedIn ? (
                 <button
                   onClick={signOut}
-                  className={`p-0 bg-transparent border-none cursor-pointer ${linkClass}`}
+                  className="whitespace-nowrap rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
                 >
                   Sign Out
                 </button>
+              ) : isAppOffline ? (
+                <>
+                  <span
+                    aria-disabled="true"
+                    className="whitespace-nowrap rounded-md bg-teal-700 px-3 py-1.5 text-sm font-medium text-white opacity-50 cursor-not-allowed"
+                  >
+                    Login / Sign Up
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Currently unavailable
+                  </span>
+                </>
               ) : (
-                <Link to="/auth/login" className={linkClass}>
+                <Link
+                  to="/auth/login"
+                  className="whitespace-nowrap rounded-md bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+                >
                   Login / Sign Up
                 </Link>
               )}

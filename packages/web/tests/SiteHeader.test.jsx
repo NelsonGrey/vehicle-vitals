@@ -31,6 +31,10 @@ vi.mock('../src/components/StackedVLogo', () => ({
   default: () => <div data-testid="stacked-logo">Vehicle-Vitals</div>,
 }));
 
+vi.mock('../src/shared/useAppOffline', () => ({
+  useAppOffline: () => false,
+}));
+
 function renderHeader() {
   return render(
     <MemoryRouter

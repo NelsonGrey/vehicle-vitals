@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
+import AppEntryLink from '../components/AppEntryLink';
 import PageSEO from '../components/PageSEO';
 import { getPersonaById, personaPages } from '../data/personas';
 import {
@@ -49,15 +50,17 @@ export default function PersonaPage() {
               {persona.headline}
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link
+              <AppEntryLink
                 to="/auth/signup"
                 className="inline-flex w-full justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
                 onClick={() =>
                   trackSignupStart('persona_hero', persona.id)
                 }
+                wrapperClassName="inline-flex w-full flex-col items-center gap-1 sm:w-auto"
+                noteClassName="text-xs text-slate-200"
               >
                 Create your account
-              </Link>
+              </AppEntryLink>
               <Link
                 to="/subscription"
                 className="inline-flex w-full justify-center rounded-xl border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20 sm:w-auto"

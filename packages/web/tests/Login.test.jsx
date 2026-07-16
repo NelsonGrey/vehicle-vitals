@@ -8,6 +8,7 @@ const mockSignIn = vi.fn();
 const mockSignInWithGoogle = vi.fn();
 const mockSignInWithApple = vi.fn();
 const mockNavigate = vi.fn();
+let mockIsAppOffline = false;
 
 vi.mock('../src/shared/AuthContext', () => ({
   useAuth: () => ({
@@ -15,6 +16,10 @@ vi.mock('../src/shared/AuthContext', () => ({
     signInWithGoogle: mockSignInWithGoogle,
     signInWithApple: mockSignInWithApple,
   }),
+}));
+
+vi.mock('../src/shared/useAppOffline', () => ({
+  useAppOffline: () => mockIsAppOffline,
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -39,10 +44,19 @@ function renderLogin() {
 describe('Login page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsAppOffline = false;
   });
 
   afterEach(() => {
     cleanup();
+  });
+
+  it('shows an offline notice instead of the form when app_offline is on', () => {
+    mockIsAppOffline = true;
+    renderLogin();
+
+    expect(screen.getByText(/not available right now/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/email address/i)).not.toBeInTheDocument();
   });
 
   it('renders email and password inputs and a Sign In button', () => {

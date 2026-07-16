@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import AppEntryLink from '../components/AppEntryLink';
 import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import { useAuth } from '../shared/AuthContext';
 
@@ -169,26 +169,26 @@ export default function FeatureDemo({
         <div className="flex flex-wrap gap-3">
           {!user ? (
             <>
-              <Link
+              <AppEntryLink
                 to="/auth/login"
                 className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
               >
                 Sign In
-              </Link>
-              <Link
+              </AppEntryLink>
+              <AppEntryLink
                 to="/auth/signup"
                 className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
               >
                 Create Account
-              </Link>
+              </AppEntryLink>
             </>
           ) : null}
-          <Link
+          <AppEntryLink
             to={user ? appRoute : '/auth/login'}
             className="px-4 py-2 bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900 rounded-lg border border-slate-700 dark:border-slate-300 hover:opacity-90"
           >
             {user ? appCtaLabel : 'Sign in to open this feature'}
-          </Link>
+          </AppEntryLink>
         </div>
       </section>
     </div>

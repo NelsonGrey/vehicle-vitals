@@ -1,14 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../services/firestore_service.dart';
-import '../services/data_export_service.dart';
-import '../services/calendar_service.dart';
-import '../services/premium_service.dart';
-import '../models/maintenance.dart';
-import '../models/maintenance_schedule.dart';
-import '../models/vehicle.dart';
+
 import '../components/ad_banner.dart';
+import '../components/app_bottom_nav.dart';
+import '../models/maintenance.dart';
+import '../models/vehicle.dart';
+import '../services/calendar_service.dart';
+import '../services/data_export_service.dart';
+import '../services/firestore_service.dart';
+import '../services/maintenance_plan_service.dart';
+import '../services/premium_service.dart';
+import '../theme/design_tokens.dart';
+import '../utils/number_format.dart';
+import '../utils/user_facing_error.dart';
 import 'maintenance_detail_screen.dart';
+
+String _performedByLabel(String value) {
+  switch (value) {
+    case 'self':
+      return 'Self-service';
+    case 'repair_shop':
+      return 'Repair shop';
+    case 'dealership':
+      return 'Dealership';
+    case 'body_shop':
+      return 'Body shop';
+    case 'car_wash':
+      return 'Car wash';
+    case 'detailer':
+      return 'Detailer';
+    // Retired categories, kept for entries recorded before this taxonomy
+    // shipped — new entries never write these.
+    case 'business':
+      return 'Business-maintained';
+    case 'mechanic':
+    default:
+      return 'Mechanic';
+  }
+}
+
+String _coverageLabel(String value) {
+  switch (value) {
+    case 'parts_only':
+      return 'Parts only';
+    default:
+      return 'Parts and labor';
+  }
+}
 
 class MaintenanceListScreen extends StatefulWidget {
   final String vin;
@@ -23,12 +62,18 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
+  final _providerNameController = TextEditingController();
+  String _performedBy = 'repair_shop';
+  String _coverage = 'parts_and_labor';
   final DataExportService _exportService = DataExportService();
   final CalendarService _calendarService = CalendarService();
   List<Maintenance> _entries = [];
   Vehicle? _vehicle;
   bool _loading = true;
   bool _loadingVehicle = true;
+  MaintenancePlan? _maintenancePlan;
+  final MaintenancePlanService _maintenancePlanService =
+      MaintenancePlanService();
 
   @override
   void initState() {
@@ -42,6 +87,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     _titleController.dispose();
     _notesController.dispose();
     _costController.dispose();
+    _providerNameController.dispose();
     super.dispose();
   }
 
@@ -50,17 +96,41 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     try {
       final firestoreService = context.read<FirestoreService>();
       final vehicle = await firestoreService.getVehicle(widget.vin);
+
+      MaintenancePlan? plan;
+      if (vehicle != null && vehicle.mileage > 0) {
+        try {
+          plan = await _maintenancePlanService.getMaintenancePlan(
+            vin: vehicle.vin,
+            currentMileage: vehicle.mileage,
+            make: vehicle.make,
+            model: vehicle.model,
+          );
+        } catch (_) {
+          // Leave plan null; the recommended-maintenance card just won't
+          // render its schedule list.
+        }
+      }
+
       if (!mounted) return;
       setState(() {
         _vehicle = vehicle;
+        _maintenancePlan = plan;
         _loadingVehicle = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => _loadingVehicle = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading vehicle: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The vehicle could not be loaded. Please try again.',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -78,7 +148,15 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading maintenance entries: $e')),
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'Maintenance entries could not be loaded. Please try again.',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -112,6 +190,11 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           title: _titleController.text.trim(),
           notes: _notesController.text.trim(),
           cost: cost ?? 0.0,
+          performedBy: _performedBy,
+          providerName: _performedBy == 'self'
+              ? ''
+              : _providerNameController.text.trim(),
+          coverage: _coverage,
           date: DateTime.now(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
@@ -121,6 +204,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       _titleController.clear();
       _notesController.clear();
       _costController.clear();
+      _providerNameController.clear();
+      _performedBy = 'repair_shop';
+      _coverage = 'parts_and_labor';
 
       await _loadEntries();
 
@@ -131,14 +217,22 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
 
       // Show interstitial ad after adding maintenance entry (only for non-premium users)
       final premiumService = context.read<PremiumService>();
-      if (!premiumService.isPremium) {
+      if (premiumService.shouldShowAds()) {
         InterstitialAdHelper.showAd();
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error adding entry: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The maintenance entry could not be saved. Please try again.',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -153,7 +247,15 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The CSV export could not be created. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     }
@@ -170,13 +272,61 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The PDF export could not be created. Please try again.',
+              ),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> exportAsExcel() async {
+    try {
+      await _exportService.exportMaintenanceAsExcel(widget.vin);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Maintenance data exported as Excel')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The Excel export could not be created. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     }
   }
 
   Future<void> _syncToCalendar() async {
+    final premiumService = context.read<PremiumService>();
+    if (!premiumService.canAccessFeature('calendar_sync')) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Calendar sync requires Pro or Premium. Upgrade to continue.',
+            ),
+          ),
+        );
+        context.push('/app/premium');
+      }
+      return;
+    }
+
     try {
       final eventsAdded = await _calendarService
           .syncUpcomingMaintenanceToCalendar();
@@ -184,7 +334,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Added $eventsAdded maintenance events to calendar'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -192,8 +342,14 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Calendar sync failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar events could not be added. Check permissions and try again.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -202,6 +358,10 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final premiumService = context.watch<PremiumService>();
+    final canExportPdf = premiumService.canAccessFeature('pdf_export');
+    final canExportExcel = premiumService.canAccessFeature('excel_export');
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Maintenance - ${widget.vin}'),
@@ -220,6 +380,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                 case 'export_pdf':
                   exportAsPDF();
                   break;
+                case 'export_excel':
+                  exportAsExcel();
+                  break;
               }
             },
             itemBuilder: (context) => [
@@ -227,15 +390,21 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                 value: 'export_csv',
                 child: Text('Export as CSV'),
               ),
-              const PopupMenuItem(
-                value: 'export_pdf',
-                child: Text('Export as PDF'),
-              ),
+              if (canExportPdf)
+                const PopupMenuItem(
+                  value: 'export_pdf',
+                  child: Text('Export as PDF'),
+                ),
+              if (canExportExcel)
+                const PopupMenuItem(
+                  value: 'export_excel',
+                  child: Text('Export as Excel'),
+                ),
             ],
           ),
         ],
       ),
-      body: Column(
+      body: ListView(
         children: [
           // Add new entry form
           Card(
@@ -245,9 +414,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     'Add Maintenance Entry',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -265,6 +434,97 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          initialValue: _performedBy,
+                          decoration: const InputDecoration(
+                            labelText: 'Who did it',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'self',
+                              child: Text('Self-service'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'repair_shop',
+                              child: Text('Repair shop'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'dealership',
+                              child: Text('Dealership'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'body_shop',
+                              child: Text('Body shop'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'car_wash',
+                              child: Text('Car wash'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'detailer',
+                              child: Text('Detailer'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _performedBy = value);
+                          },
+                        ),
+                        if (_performedBy != 'self') ...[
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _providerNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Shop or professional',
+                              hintText: 'e.g. Downtown Auto Repair',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () =>
+                                  context.push('/app/service-providers'),
+                              icon: const Icon(Icons.storefront_outlined),
+                              label: const Text('Find shops & services'),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: _coverage,
+                          decoration: const InputDecoration(
+                            labelText: 'Receipt type',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'parts_only',
+                              child: Text('Parts only'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'parts_and_labor',
+                              child: Text('Parts and labor'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _coverage = value);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -294,12 +554,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Recommended Maintenance',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -309,33 +566,58 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
-                        final schedules =
-                            MaintenanceSchedule.getUpcomingMaintenance(
-                              _vehicle!.make,
-                              _vehicle!.model,
-                              _vehicle!.mileage,
-                            );
-                        if (schedules.isEmpty) {
+                        final plan = _maintenancePlan;
+                        if (plan == null || plan.items.isEmpty) {
                           return const Text(
-                            'No manufacturer schedules available for this vehicle.',
+                            'No maintenance schedule available for this vehicle.',
                             style: TextStyle(
                               fontStyle: FontStyle.italic,
                               color: Colors.grey,
                             ),
                           );
                         }
+                        final mileage = _vehicle!.mileage;
+                        final schedules = [...plan.items]
+                          ..sort(
+                            (a, b) =>
+                                a.nextDueMileage.compareTo(b.nextDueMileage),
+                          );
                         return Column(
-                          children: schedules.take(3).map((schedule) {
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(Icons.build, size: 20),
-                              title: Text(schedule['description']),
-                              subtitle: Text(
-                                'Due: ${schedule['nextDueMileage']} miles (${schedule['milesUntilDue']} miles)',
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!plan.modelSpecific)
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  'No manufacturer data for this vehicle — showing a generic estimate.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                               ),
-                              trailing: Text(schedule['frequency']),
-                            );
-                          }).toList(),
+                            ...schedules.take(3).map((schedule) {
+                              final milesUntilDue =
+                                  (schedule.nextDueMileage - mileage).clamp(
+                                    0,
+                                    1 << 30,
+                                  );
+                              return ListTile(
+                                dense: true,
+                                leading: const Icon(Icons.build, size: 20),
+                                title: Text(
+                                  formatServiceTypeLabel(schedule.serviceType),
+                                ),
+                                subtitle: Text(
+                                  'Due: ${schedule.nextDueMileage} miles ($milesUntilDue miles)',
+                                ),
+                                trailing: Text(
+                                  'Every ${schedule.intervalMiles} mi',
+                                ),
+                              );
+                            }),
+                          ],
                         );
                       },
                     ),
@@ -346,62 +628,76 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
             const SizedBox(height: 16),
           ],
           // Entries list
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _entries.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No maintenance entries yet.\nAdd one using the form above.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _entries.length,
-                    itemBuilder: (context, index) {
-                      final entry = _entries[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          title: Text(entry.title),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (entry.notes.isNotEmpty) Text(entry.notes),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Cost: \$${entry.cost.toStringAsFixed(2)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_entries.isEmpty)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Text(
+                'No maintenance entries yet.\nAdd one using the form above.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              itemCount: _entries.length,
+              itemBuilder: (context, index) {
+                final entry = _entries[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    title: Text(entry.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (entry.notes.isNotEmpty) Text(entry.notes),
+                        Text(
+                          entry.providerName.isNotEmpty
+                              ? '${_performedByLabel(entry.performedBy)} (${entry.providerName}) • ${_coverageLabel(entry.coverage)}'
+                              : '${_performedByLabel(entry.performedBy)} • ${_coverageLabel(entry.coverage)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
                           ),
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MaintenanceDetailScreen(
-                                  vin: widget.vin,
-                                  entryId: entry.id,
-                                ),
-                              ),
-                            );
-                            if (result == true) {
-                              _loadEntries();
-                            }
-                          },
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Cost: ${formatCurrencyAmount(entry.cost)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MaintenanceDetailScreen(
+                            vin: widget.vin,
+                            entryId: entry.id,
+                          ),
                         ),
                       );
+                      if (result == true) {
+                        _loadEntries();
+                      }
                     },
                   ),
-          ),
+                );
+              },
+            ),
         ],
       ),
-      bottomNavigationBar: const AdBanner(),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 }

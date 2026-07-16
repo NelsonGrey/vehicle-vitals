@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../components/safe_back_button.dart';
 import '../services/calendar_service.dart';
+import '../theme/design_tokens.dart';
+import '../utils/user_facing_error.dart';
 
 class CalendarPreferencesScreen extends StatefulWidget {
   const CalendarPreferencesScreen({super.key});
@@ -16,6 +20,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
   bool _isSaving = false;
   bool _hasPermissions = false;
   String? _selectedCalendarId;
+  List<Map<String, dynamic>> _availableCalendars = const [];
 
   @override
   void initState() {
@@ -31,19 +36,32 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       _hasPermissions = await _calendarService.hasCalendarPermissions();
 
       if (_hasPermissions) {
+        final calendars = await _calendarService.getAvailableCalendars();
+        _availableCalendars = calendars
+            .map((c) => Map<String, dynamic>.from(c as Map))
+            .toList();
+
         // Load user preferences
         final preferences = await _calendarService.getCalendarPreferences();
         _calendarSyncEnabled = preferences['calendarSyncEnabled'];
         _selectedCalendarId = preferences['calendarId'];
+
+        if (_selectedCalendarId == null && _availableCalendars.isNotEmpty) {
+          _selectedCalendarId = _availableCalendars.first['id']?.toString();
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Error loading calendar preferences: ${e.toString()}',
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar preferences could not be loaded. Please try again.',
+              ),
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -63,7 +81,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Calendar permissions granted!'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppDesignTokens.success,
             ),
           );
         }
@@ -74,7 +92,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
               content: Text(
                 'Calendar permissions denied. Please enable in settings.',
               ),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppDesignTokens.warning,
             ),
           );
         }
@@ -83,8 +101,14 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error requesting permissions: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar permission was not granted. You can change it in iOS Settings.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -106,7 +130,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Calendar preferences saved successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -114,8 +138,14 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving preferences: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar preferences could not be saved. Please try again.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -137,7 +167,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
             content: Text(
               'Successfully added $eventsAdded maintenance events to calendar!',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -145,8 +175,14 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error syncing to calendar: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Calendar events could not be added. Check permissions and try again.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -159,7 +195,10 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Calendar Preferences')),
+        appBar: AppBar(
+          title: const Text('Calendar Preferences'),
+          leading: const SafeBackButton(fallbackRoute: '/app/settings'),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -167,6 +206,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar Preferences'),
+        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
         actions: [
           if (_hasPermissions)
             TextButton(
@@ -193,19 +233,18 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Calendar Access',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(
                           _hasPermissions ? Icons.check_circle : Icons.error,
-                          color: _hasPermissions ? Colors.green : Colors.red,
+                          color: _hasPermissions
+                              ? AppDesignTokens.success
+                              : Theme.of(context).colorScheme.error,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -213,7 +252,9 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                               ? 'Calendar access granted'
                               : 'Calendar access required',
                           style: TextStyle(
-                            color: _hasPermissions ? Colors.green : Colors.red,
+                            color: _hasPermissions
+                                ? AppDesignTokens.success
+                                : Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
@@ -228,6 +269,11 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                         ),
                       ),
                     ],
+                    if (_hasPermissions)
+                      const Text(
+                        'Calendar is connected through backend event links.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                   ],
                 ),
               ),
@@ -243,12 +289,9 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Maintenance Sync',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -266,6 +309,27 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                           setState(() => _calendarSyncEnabled = value);
                         },
                       ),
+                      if (_calendarSyncEnabled) ...[
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedCalendarId,
+                          decoration: const InputDecoration(
+                            labelText: 'Default Calendar Target',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _availableCalendars
+                              .map(
+                                (c) => DropdownMenuItem<String>(
+                                  value: c['id']?.toString(),
+                                  child: Text(c['name']?.toString() ?? ''),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() => _selectedCalendarId = value);
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -288,8 +352,8 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                         : const Icon(Icons.sync),
                     label: const Text('Sync Upcoming Maintenance'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF59E0B),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppDesignTokens.warning,
+                      foregroundColor: AppDesignTokens.onWarning,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),
@@ -299,7 +363,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
 
               // Information text
               const Text(
-                'Maintenance events are added for services due within the next 30 days. You can disable this at any time.',
+                'Use Maintenance Plan to create calendar events with your selected target.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),

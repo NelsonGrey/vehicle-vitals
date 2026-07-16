@@ -1,27 +1,28 @@
 {
-  "name": "vehicle-vitals-monorepo",
+  "name": "vehicle-vitals",
   "private": true,
-  "description": "Root workspace for Vehicle Vitals (web + mobile)",
+  "description": "Root workspace for Vehicle-Vitals (web + mobile)",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "start": "node scripts/apphosting-server.js",
-    "build:production": "npm run build --workspace=@vehicle-vitals/web",
-    "build:staging": "npm run build:staging --workspace=@vehicle-vitals/web",
-    "build:development": "npm run build:development --workspace=@vehicle-vitals/web",
+    "build:production": "./scripts/build-web-sanitized-env.sh production",
+    "build:staging": "./scripts/build-web-sanitized-env.sh staging",
+    "build:development": "./scripts/build-web-sanitized-env.sh development",
     "dev": "npm run dev --workspaces --if-present",
     "test:emulator": "firebase emulators:exec --only firestore 'npm run test:web'",
     "emulator": "firebase emulators:start --only firestore",
     "lint": "npm run lint --workspaces --if-present",
     "check": "npm run check --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
-    "build:web": "npm run build --workspace=@vehicle-vitals/web",
+    "build:web": "./scripts/build-web-sanitized-env.sh production",
     "dev:web": "npm run dev --workspace=@vehicle-vitals/web",
     "test:web": "npm run test --workspace=@vehicle-vitals/web",
+    "test:unit:all": "./scripts/run-unit-tests.sh",
+    "test:uat:all": "./scripts/run-uat-tests.sh",
     "export:logo": "node scripts/export-logo.js",
-    "dataconnect:codegen": "node scripts/dataconnect-codegen.js",
     "install:all": "npm install",
     "install:clean": "./tools/clean.sh && ./tools/install.sh",
     "firebase:setup": "./tools/setup-firebase.sh",
@@ -29,22 +30,41 @@
     "firebase:test": "./tools/test-firebase.sh",
     "firebase:test-ios": "./tools/test-ios-firebase.sh",
     "firebase:test-android": "./tools/test-android-firebase.sh",
-    "firebase:test-mobile": "./tools/test-mobile-firebase.sh"
+    "firebase:test-mobile": "./tools/test-mobile-firebase.sh",
+    "security:audit": "./scripts/security-posture-audit.sh",
+    "demo-data:load": "npm --workspace=functions run seed:demo-data --",
+    "demo-data:purge": "npm --workspace=functions run purge:demo-data --",
+    "backfill:personal-orgs": "node scripts/backfill-personal-org-memberships.js",
+    "backfill:personal-orgs:apply": "node scripts/backfill-personal-org-memberships.js --apply",
+    "test:scripts": "node --test scripts/tests/*.cjs",
+    "openai:tts:validate": "node scripts/validate-openai-tts.js",
+    "videos:generate:narrated": "node scripts/generate-narrated-feature-demos.js",
+    "videos:generate:interactive": "node scripts/generate-interactive-feature-demos.js",
+    "videos:generate:interactive:vin": "node scripts/generate-interactive-vin-demo.js",
+    "screenshots:capture:web": "node scripts/capture-deliverable-screenshots.js",
+    "screenshots:capture:ios": "bash scripts/capture-ios-deliverable-screenshots.sh"
   },
   "devDependencies": {
+    "@firebase/app-compat": "^0.5.14",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.33.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "prettier": "^3.0.0",
-    "sharp": "^0.33.5",
-    "turbo": "^2.0.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "openai": "^6.45.0",
+    "playwright": "^1.61.1",
+    "prettier": "^3.9.4",
+    "sharp": "^0.35.3",
+    "turbo": "^2.10.3",
     "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9"
   },
-  "dependencies": {}
+  "overrides": {
+    "@grpc/grpc-js": "1.14.4",
+    "uuid": "11.1.1",
+    "minimatch": "9.0.7"
+  }
 }

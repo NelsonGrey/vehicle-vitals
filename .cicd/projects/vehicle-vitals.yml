@@ -1,0 +1,95 @@
+project:
+  name: vehicle-vitals
+  description: 'Vehicle management app with web and mobile clients, Firebase backend'
+  owner: NelsonGrey
+
+targets:
+  ios:
+    enabled: true
+    schemes:
+      - name: 'Runner'
+        path: 'packages/mobile/ios'
+        configuration: 'Release'
+    signing:
+      team_id: '${APPLE_TEAM_ID}'
+      bundle_id: 'com.vehiclevitals.app.ios'
+      profiles:
+        development: true
+        distribution: true
+    destinations:
+      appstore:
+        enabled: true
+
+  android:
+    enabled: false
+    path: 'packages/mobile/android'
+    status: 'on_hold'
+    signing:
+      keystore_ref: '${ANDROID_KEYSTORE_PATH}'
+      key_alias: '${ANDROID_KEY_ALIAS}'
+    destinations:
+      firebase_app_distribution:
+        enabled: false
+        groups:
+          - testers
+      google_play:
+        enabled: false
+        track: 'internal'
+
+  web:
+    enabled: true
+    build_command: 'cd packages/web && npm run build'
+    destinations:
+      firebase_hosting:
+        enabled: true
+
+  firebase:
+    enabled: true
+    project_id: 'vehicle-vitals-prod'
+    hosting:
+      enabled: true
+    functions:
+      enabled: true
+      paths:
+        - 'packages/functions'
+    firestore:
+      deploy_rules: true
+      deploy_indexes: true
+
+  docker:
+    enabled: false
+
+ci:
+  triggers:
+    - event: push
+      branches:
+        - develop
+        - staging
+        - main
+      paths:
+        - 'packages/mobile/**'
+        - 'packages/web/**'
+        - 'packages/functions/**'
+        - '.github/workflows/**'
+        - '.cicd/projects/**'
+        - 'pubspec.yaml'
+        - 'firebase*.json'
+
+    - event: pull_request
+      branches:
+        - develop
+        - staging
+        - main
+
+    - event: workflow_dispatch
+
+  environment:
+    development:
+      firebase_config: 'firebase.dev.json'
+      secrets_profile: 'dev'
+    staging:
+      firebase_config: 'firebase.staging.json'
+      secrets_profile: 'staging'
+    production:
+      firebase_config: 'firebase.prod.json'
+  slack_webhook: '${SLACK_WEBHOOK_URL}'

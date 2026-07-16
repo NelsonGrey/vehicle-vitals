@@ -1,4 +1,5 @@
 // Manufacturer maintenance schedules data
+// Hand-ported from packages/shared/src/maintenanceSchedules.js - keep both in sync.
 class MaintenanceItem {
   final String id;
   final int interval; // miles
@@ -192,10 +193,12 @@ class MaintenanceSchedule {
     return schedule.values.toList();
   }
 
-  // Calculate next due date based on current mileage
+  // Calculate next due mileage based on current mileage. The next due point
+  // is the next unvisited multiple of the interval strictly above
+  // currentMileage — e.g. interval 10000 at currentMileage 25000 is due at
+  // 30000, not 40000.
   static int calculateNextDue(int currentMileage, int interval) {
-    final nextMileage =
-        ((currentMileage / interval).ceil() * interval) + interval;
+    final nextMileage = ((currentMileage / interval).floor() + 1) * interval;
     return nextMileage;
   }
 

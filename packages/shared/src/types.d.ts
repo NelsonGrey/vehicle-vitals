@@ -5,6 +5,13 @@ export interface Vehicle {
   model: string;
   year: string;
   vin: string;
+  vehicleStatus?: 'active' | 'stored';
+  vehicleType?: string;
+  photoUrl?: string;
+  photoPath?: string;
+  photoSource?: string;
+  photoAttributionUrl?: string;
+  photoAttributionText?: string;
   mileage: string;
   purchaseDate: string;
   nextDueByMiles?: string;
@@ -19,9 +26,48 @@ export interface MaintenanceRecord {
   mileage: string;
   cost?: number;
   provider: string;
+  performedBy?:
+    | 'self'
+    | 'repair_shop'
+    | 'dealership'
+    | 'body_shop'
+    | 'car_wash'
+    | 'detailer'
+    /** @deprecated Retired categories — still present on existing records; new entries never write these. */
+    | 'mechanic'
+    | 'business';
+  coverage?: 'parts_only' | 'parts_and_labor';
   notes: string;
 }
 
-export const defaultVehicle: Vehicle;
-export const defaultMaintenanceRecord: MaintenanceRecord;
-export const MAINTENANCE_TYPES: string[];
+export interface InvoiceLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface InvoiceDraft {
+  orgId: string;
+  customerName: string;
+  issueDate: string;
+  dueDate: string;
+  currency: string;
+  amountDue?: number;
+  amountPaid?: number;
+  status?: 'draft' | 'sent' | 'partial' | 'paid' | 'void';
+  notes?: string;
+  lineItems?: InvoiceLineItem[];
+}
+
+export interface PayableDraft {
+  orgId: string;
+  vendorName: string;
+  billDate: string;
+  dueDate: string;
+  currency: string;
+  amountDue?: number;
+  amountPaid?: number;
+  status?: 'draft' | 'approved' | 'scheduled' | 'paid' | 'void';
+  category?: string;
+  notes?: string;
+}

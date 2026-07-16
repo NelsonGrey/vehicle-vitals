@@ -1,59 +1,36 @@
 import { useState } from 'react';
 import { useAuth } from '../shared/AuthContext';
 import {
-  addOrUpdateVehicle,
-  addMaintenanceEntry,
-  getVehicles,
-  getMaintenanceEntries,
-} from '../shared/firestoreService';
-import { defaultVehicle } from '@vehicle-vitals/shared/types';
-
-interface SeedDetails {
-  vehiclesCount: number;
-  maintenanceCount: number;
-}
+  bobDemoVehicleCount,
+  seedBobDemo,
+  type SeedDetails,
+} from '../shared/devSeed';
+import { isDevelopmentEnvironment } from '../shared/environment';
 
 export default function DevSeed() {
   const { user } = useAuth();
   const [status, setStatus] = useState('Idle');
   const [details, setDetails] = useState<SeedDetails | null>(null);
 
-  if (!import.meta.env.DEV) {
-    return <div className="dev-seed-container">This seeding page is only available in development builds.</div>;
+  if (!isDevelopmentEnvironment) {
+    return (
+      <div className="dev-seed-container">
+        This seeding page is only available in the development environment.
+      </div>
+    );
   }
 
   const uid = user?.uid || '(not signed in)';
 
   const runSeed = async () => {
     try {
-      if (!user?.uid) {
-        setStatus('Please sign in (enable Anonymous sign-in for dev), then reload this page.');
-        return;
-      }
       setStatus('Seeding...');
-
-      const vehicle = {
-        ...defaultVehicle,
-        vin: 'SEEDVIN0001',
-        make: 'Toyota',
-        model: 'Camry',
-        year: '2018',
-        mileage: '45000',
-        purchaseDate: '2018-06-15',
-      };
-
-      await addOrUpdateVehicle(vehicle);
-      await addMaintenanceEntry(vehicle.vin, {
-        title: 'Oil Change',
-        notes: 'Seeded entry',
-        cost: 39.99,
-        date: new Date().toISOString(),
+      const nextDetails = await seedBobDemo({
+        uid: user?.uid || '',
+        email: user?.email,
       });
-
-      const vehicles = await getVehicles();
-      const maint = await getMaintenanceEntries(vehicle.vin);
-      setDetails({ vehiclesCount: vehicles.length, maintenanceCount: maint.length });
-      setStatus('Seed complete');
+      setDetails(nextDetails);
+      setStatus('Seed complete: Bob Demo data is ready');
     } catch (err) {
       console.error(err);
       setStatus('Error: ' + (err instanceof Error ? err.message : String(err)));
@@ -62,18 +39,19 @@ export default function DevSeed() {
 
   return (
     <div className="dev-seed-container">
-      <h2>Dev Seed</h2>
+      <h2>Dev Seed - Bob Demo Scenario</h2>
       <p>UID: {uid}</p>
-      <button onClick={runSeed}>Seed sample data</button>
+      <button onClick={runSeed}>
+        Seed Bob Demo ({bobDemoVehicleCount} vehicles)
+      </button>
       <p className="dev-seed-status">Status: {status}</p>
       {details && (
-        <pre className="dev-seed-pre">
-{JSON.stringify(details, null, 2)}
-        </pre>
+        <pre className="dev-seed-pre">{JSON.stringify(details, null, 2)}</pre>
       )}
       <p className="dev-seed-note">
-        This page writes to Firestore to create the expected collections (users/uid/vehicles, .../maintenance).
-        Remove this route before production if you don&apos;t want it exposed.
+        This writes demo data to Firestore for the currently signed-in account:
+        profile preferences, 3 vehicles, maintenance history, reminders, and
+        document portfolio statuses for records workflows.
       </p>
     </div>
   );

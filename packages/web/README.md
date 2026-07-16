@@ -1,6 +1,6 @@
 # @vehicle-vitals/web
 
-React web application for Vehicle Vitals.
+React web application for Vehicle-Vitals.
 
 ## Features
 
@@ -18,17 +18,6 @@ npm run dev     # Start development server
 npm run build   # Build for production
 npm run preview # Preview production build
 npm run test    # Run tests
-```
-
-## Environment Setup
-
-Copy `.env.example` to `.env.local` and configure:
-
-```bash
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-# ... other Firebase config
 ```
 
 ## Project Structure

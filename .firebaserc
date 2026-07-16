@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "vehicle-vitals-staging",
+    "default": "vehicle-vitals-dev",
     "production": "vehicle-vitals-prod",
     "staging": "vehicle-vitals-staging",
     "development": "vehicle-vitals-dev"

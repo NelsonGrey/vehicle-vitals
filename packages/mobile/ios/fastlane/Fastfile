@@ -1,0 +1,277 @@
+
+require 'shellwords'
+
+default_platform(:ios)
+
+platform :ios do
+  def normalized_firebase_env
+    raw = ENV["FIREBASE_ENV"].to_s.strip.downcase
+    return "production" if raw.empty?
+
+    case raw
+    when "production", "prod"
+      "production"
+    when "staging", "stage"
+      "staging"
+    when "development", "dev"
+      "development"
+    else
+      UI.user_error!("Invalid FIREBASE_ENV='#{raw}'. Supported: development, staging, production")
+    end
+  end
+
+  def expected_firebase_project_id_for_env(firebase_env)
+    case firebase_env
+    when "development"
+      "vehicle-vitals-dev"
+    when "staging"
+      "vehicle-vitals-staging"
+    when "production"
+      "vehicle-vitals-prod"
+    else
+      UI.user_error!("No Firebase project mapping for env '#{firebase_env}'")
+    end
+  end
+
+  # Normalizes APP_STORE_CONNECT_KEY into raw PEM/base64 content, handling
+  # quoting/escaping artifacts from however the secret was pasted in.
+  def normalized_app_store_connect_key_content
+    private_key_content = ENV["APP_STORE_CONNECT_KEY"]
+    if private_key_content.nil? || private_key_content.empty?
+      UI.error("APP_STORE_CONNECT_KEY environment variable is not set or empty")
+      raise "Missing APP_STORE_CONNECT_KEY"
+    end
+    private_key_content
+  end
+
+  # Builds the fastlane App Store Connect API key object, for actions that
+  # talk to the App Store Connect web API directly (upload_to_testflight).
+  def app_store_api_key
+    private_key_content = normalized_app_store_connect_key_content
+
+    is_pem = private_key_content.include?("-----BEGIN")
+    cleaned = private_key_content.gsub(/\s+/, "")
+    looks_base64 = cleaned =~ /\A[A-Za-z0-9+\/=]+\z/ && cleaned.length > 100
+
+    if !is_pem && looks_base64
+      UI.message("Detected APP_STORE_CONNECT_KEY as base64; passing directly as key_content (is_key_content_base64: true)")
+      return app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+        key_content: cleaned,
+        is_key_content_base64: true,
+        in_house: false
+      )
+    end
+
+    private_key_content = private_key_content.strip
+    private_key_content = private_key_content.gsub(/\A['\"]|['\"]\z/, '')
+    private_key_content = private_key_content.gsub(/\\n/, "\n")
+    private_key_content = private_key_content.gsub(/\r\n?/, "\n")
+    private_key_content = private_key_content.lines.map { |l| l.strip }.reject { |l| l.empty? }.join("\n") + "\n"
+
+    unless private_key_content.include?("-----BEGIN PRIVATE KEY-----") || private_key_content.include?("-----BEGIN EC PRIVATE KEY-----")
+      begin
+        require 'base64'
+        decoded = Base64.decode64(private_key_content)
+        if decoded.include?("-----BEGIN")
+          private_key_content = decoded
+          UI.message("Decoded APP_STORE_CONNECT_KEY from base64")
+        end
+      rescue => e
+        UI.message("Failed to decode APP_STORE_CONNECT_KEY as base64: #{e.message}")
+      end
+    end
+
+    require 'tempfile'
+    key_file = Tempfile.new(['app_store_connect_key', '.p8'])
+    key_file.write(private_key_content)
+    key_file.close
+
+    UI.message("Created temporary App Store Connect key file: #{key_file.path}")
+
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: key_file.path
+    )
+  end
+
+  # Writes the same App Store Connect key to a temp .p8 FILE PATH, for
+  # xcodebuild's -authenticationKeyPath flag (automatic signing via
+  # -allowProvisioningUpdates authenticates at the xcodebuild CLI level,
+  # not through fastlane's Spaceship session, so it needs a path rather
+  # than the api_key object above).
+  def app_store_connect_key_file_path
+    private_key_content = normalized_app_store_connect_key_content
+
+    unless private_key_content.include?("-----BEGIN")
+      require 'base64'
+      decoded = Base64.decode64(private_key_content.gsub(/\s+/, ""))
+      private_key_content = decoded if decoded.include?("-----BEGIN")
+    end
+
+    private_key_content = private_key_content.gsub(/\A['\"]|['\"]\z/, '')
+    private_key_content = private_key_content.gsub(/\\n/, "\n")
+    private_key_content = private_key_content.gsub(/\r\n?/, "\n")
+    private_key_content = private_key_content.lines.map { |l| l.strip }.reject { |l| l.empty? }.join("\n") + "\n"
+
+    unless private_key_content.include?("-----BEGIN PRIVATE KEY-----") || private_key_content.include?("-----BEGIN EC PRIVATE KEY-----")
+      UI.user_error!("APP_STORE_CONNECT_KEY could not be converted to a valid .p8 key file")
+    end
+
+    require 'tempfile'
+    key_file = Tempfile.new(['app_store_connect_xcode_auth', '.p8'])
+    key_file.write(private_key_content)
+    key_file.flush
+    key_file.close
+
+    # Keep a strong reference so Ruby GC does not unlink the tempfile before xcodebuild uses it.
+    @xcode_auth_key_tempfile = key_file
+    key_file.path
+  end
+
+  # Forces the Runner target into automatic signing. The project's
+  # pbxproj does not set CODE_SIGN_STYLE on the Runner target (only on
+  # RunnerTests) — don't assume it defaults to automatic.
+  def ensure_xcode_automatic_signing!
+    team_id = ENV["FASTLANE_TEAM_ID"].to_s.strip
+    raise "Missing FASTLANE_TEAM_ID" if team_id.empty?
+
+    update_code_signing_settings(
+      use_automatic_signing: true,
+      path: "Runner.xcodeproj",
+      targets: ["Runner"],
+      team_id: team_id
+    )
+
+    team_id
+  end
+
+  desc "Upload to TestFlight"
+  lane :beta do
+    firebase_env = normalized_firebase_env
+    expected_project_id = expected_firebase_project_id_for_env(firebase_env)
+
+    build_number = ENV["GITHUB_RUN_NUMBER"] || "1"
+    increment_build_number(build_number: build_number)
+    UI.message("Using iOS build number: #{build_number}")
+
+    api_key = app_store_api_key
+    team_id = ensure_xcode_automatic_signing!
+    authentication_key_path = app_store_connect_key_file_path
+    authentication_key_id = ENV["APP_STORE_CONNECT_KEY_ID"].to_s.strip
+    authentication_issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s.strip
+
+    # Install CocoaPods dependencies first
+    # Ensure a clean slate for CocoaPods to avoid linker issues (absl/gRPC)
+    sh("rm -rf ../Pods")
+    sh("rm -f ../Podfile.lock")
+
+    # Use fastlane action to clear derived data safely
+    clear_derived_data
+
+    # Ensure dependencies are available
+    Dir.chdir("../../") do
+      sh("rm -rf build")
+      sh("flutter clean || true")
+      sh("flutter pub get")
+    end
+
+    # Explicitly install pods (since we aren't using flutter build ipa command which does it automatically)
+    Dir.chdir("..") do
+      sh("rm -f Podfile.lock")
+      sh("pod install --repo-update")
+    end
+
+    begin
+      actual_project_id = sh(
+        '/usr/libexec/PlistBuddy -c "Print :PROJECT_ID" ../Runner/GoogleService-Info.plist',
+        log: false
+      ).to_s.strip
+    rescue
+      actual_project_id = ""
+    end
+
+    if actual_project_id.empty?
+      UI.user_error!("Unable to read PROJECT_ID from ../Runner/GoogleService-Info.plist")
+    end
+
+    if actual_project_id != expected_project_id
+      UI.user_error!(
+        "Firebase environment mismatch: FIREBASE_ENV=#{firebase_env} expects PROJECT_ID=#{expected_project_id}, " \
+        "but plist contains PROJECT_ID=#{actual_project_id}."
+      )
+    end
+
+    UI.message("Firebase iOS config validated for #{firebase_env} (#{actual_project_id})")
+
+    # Build DART_DEFINES with an explicit Firebase environment and optional AdMob IDs.
+    require 'base64'
+    dart_define_parts = [Base64.strict_encode64("VV_FIREBASE_ENV=#{firebase_env}")]
+    { "ADMOB_BANNER_UNIT_ID" => ENV["ADMOB_BANNER_UNIT_ID"],
+      "ADMOB_INTERSTITIAL_UNIT_ID" => ENV["ADMOB_INTERSTITIAL_UNIT_ID"],
+      "ADMOB_REWARDED_UNIT_ID" => ENV["ADMOB_REWARDED_UNIT_ID"] }.each do |key, val|
+      dart_define_parts << Base64.strict_encode64("#{key}=#{val}") unless val.to_s.empty?
+    end
+    dart_defines_xcarg = "DART_DEFINES='#{dart_define_parts.join(',')}'"
+    UI.message("DART_DEFINES injected with VV_FIREBASE_ENV=#{firebase_env}")
+
+    begin
+      build_app(
+        scheme: "Runner",
+        workspace: "Runner.xcworkspace",
+        clean: true,
+        export_method: "app-store",
+        output_directory: "./builds",
+        output_name: "Vehicle-Vitals.ipa",
+        export_options: {
+          signingStyle: "automatic",
+          teamID: team_id
+        },
+        xcargs: [
+          dart_defines_xcarg,
+          "-allowProvisioningUpdates",
+          "-authenticationKeyPath #{Shellwords.escape(authentication_key_path)}",
+          "-authenticationKeyID #{Shellwords.escape(authentication_key_id)}",
+          "-authenticationKeyIssuerID #{Shellwords.escape(authentication_issuer_id)}"
+        ].join(" ")
+      )
+    ensure
+      if @xcode_auth_key_tempfile
+        @xcode_auth_key_tempfile.unlink
+        @xcode_auth_key_tempfile = nil
+      end
+    end
+
+    # Get IPA path from lane context (gym sets this automatically)
+    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+
+    # Verify IPA using the actual path from gym
+    unless File.exist?(ipa_path)
+       UI.user_error!("gym failed to create IPA at #{ipa_path}")
+    end
+
+    # Verify IPA has content
+    unless File.size(ipa_path) > 0
+       UI.user_error!("IPA file is empty at #{ipa_path}")
+    end
+
+    UI.success("✅ IPA created successfully at #{ipa_path}")
+
+    # IPA is already signed by gym/build_app - no need to resign
+    UI.success("📦 IPA is signed and ready for upload")
+
+    # Upload to TestFlight
+    # Note: deliberately not passing `changelog:` here — combined with
+    # skip_waiting_for_build_processing, pilot will poll App Store Connect
+    # until the build appears in the build list just to attach it (can take
+    # a very long time; see fastlane/fastlane#14997), even though the
+    # upload itself already succeeded by that point.
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end

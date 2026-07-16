@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OfflineService extends ChangeNotifier {
@@ -17,17 +17,14 @@ class OfflineService extends ChangeNotifier {
 
   Future<void> _initializeOfflineSupport() async {
     try {
-      // Enable offline persistence for Firestore
-      FirebaseFirestore.instance.settings = const Settings(
-        persistenceEnabled: true,
-        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      FirebaseFirestore.instance.snapshotsInSync().listen(
+        (_) {
+          _updateOnlineStatus(true);
+        },
+        onError: (_) {
+          _updateOnlineStatus(false);
+        },
       );
-
-      // Listen to connectivity changes (simplified - in production use connectivity_plus)
-      FirebaseFirestore.instance.snapshotsInSync().listen((_) {
-        // This fires when local cache is in sync
-        _updateOnlineStatus(true);
-      });
 
       debugPrint('Offline support initialized');
     } catch (e) {
@@ -50,19 +47,6 @@ class OfflineService extends ChangeNotifier {
 
   Future<void> setOfflineEnabled(bool enabled) async {
     await _saveOfflinePreference(enabled);
-
-    if (enabled) {
-      // Re-enable offline persistence
-      FirebaseFirestore.instance.settings = const Settings(
-        persistenceEnabled: true,
-        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-      );
-    } else {
-      // Disable offline persistence
-      FirebaseFirestore.instance.settings = const Settings(
-        persistenceEnabled: false,
-      );
-    }
   }
 
   void _updateOnlineStatus(bool online) {
@@ -74,33 +58,31 @@ class OfflineService extends ChangeNotifier {
 
   // Get offline queue status
   Future<Map<String, dynamic>> getOfflineStatus() async {
+    final hasPendingWrites = await FirebaseFirestore.instance
+        .waitForPendingWrites()
+        .then((_) => false)
+        .catchError((_) => true);
+
     return {
       'isOnline': _isOnline,
       'offlineEnabled': _isOfflineEnabled,
-      'hasPendingWrites': false, // Simplified for now
+      'hasPendingWrites': hasPendingWrites,
     };
   }
 
   // Force sync when coming back online
   Future<void> syncPendingChanges() async {
-    try {
-      await FirebaseFirestore.instance.waitForPendingWrites();
-      debugPrint('Pending changes synced successfully');
-    } catch (e) {
-      debugPrint('Failed to sync pending changes: $e');
-    }
+    await FirebaseFirestore.instance.waitForPendingWrites();
+    _updateOnlineStatus(true);
   }
 
   // Clear local cache (useful for troubleshooting)
   Future<void> clearCache() async {
     try {
+      await FirebaseFirestore.instance.terminate();
       await FirebaseFirestore.instance.clearPersistence();
-      await FirebaseFirestore.instance.disableNetwork();
-      await Future.delayed(const Duration(milliseconds: 100));
+    } finally {
       await FirebaseFirestore.instance.enableNetwork();
-      debugPrint('Local cache cleared');
-    } catch (e) {
-      debugPrint('Failed to clear cache: $e');
     }
   }
 }

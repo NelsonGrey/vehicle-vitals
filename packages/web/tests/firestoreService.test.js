@@ -1,5 +1,5 @@
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 let testEnv;
 let service;
@@ -12,6 +12,8 @@ beforeAll(async () => {
     testEnv = await initializeTestEnvironment({
       projectId: PROJECT_ID,
       firestore: {
+        host: '127.0.0.1',
+        port: 8080,
         rules: `
           service cloud.firestore {
             match /databases/{database}/documents {
@@ -24,31 +26,26 @@ beforeAll(async () => {
       },
     });
 
-    const authContext = testEnv.authenticatedContext(UID);
-    const testDb = authContext.firestore();
+    const ctx = testEnv.authenticatedContext(UID);
+    const testDb = ctx.firestore();
     const fakeAuth = { currentUser: { uid: UID } };
 
-    // Mock the FirebaseClient to return test environment BEFORE importing the service
-    vi.mock('../src/shared/firebaseConfig.js', () => ({
-      auth: fakeAuth,
-      db: testDb,
-    }));
-
-    // import the service after mocking
-    const {
-      addMaintenanceEntry,
-      getMaintenanceEntries,
-      getMaintenanceEntry,
-      updateMaintenanceEntry,
-      deleteMaintenanceEntry,
-    } = await import('../src/shared/firestoreService.js');
-    service = {
-      addMaintenanceEntry,
-      getMaintenanceEntries,
-      getMaintenanceEntry,
-      updateMaintenanceEntry,
-      deleteMaintenanceEntry,
+    // Use the test environment's firestore API directly
+    const helpers = {
+      collection: (db, path) => db.collection(path),
+      doc: (db, path) => db.doc(path),
+      setDoc: (ref, data) => ref.set(data),
+      getDocs: ref => ref.get(),
+      getDoc: ref => ref.get(),
+      addDoc: (ref, data) => ref.add(data),
+      updateDoc: (ref, data) => ref.update(data),
+      deleteDoc: ref => ref.delete(),
+      serverTimestamp: () => new Date(),
     };
+
+    // Import the service factory and create service with test environment
+    const { createFirestoreService } = await import('@vehicle-vitals/shared');
+    service = createFirestoreService({ db: testDb, auth: fakeAuth, helpers });
   } catch (err) {
     // If emulator isn't running or initialize fails, skip emulator-dependent tests
     console.warn(

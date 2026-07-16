@@ -21,7 +21,31 @@ const MIME_TYPES = {
   '.txt': 'text/plain; charset=utf-8',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf',
+  '.ttf': 'font/ttf'
+};
+
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy':
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "object-src 'none'",
+    "script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com",
+    "frame-src 'self' https://www.googletagmanager.com https://accounts.google.com",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasedatabase.app https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebaseinstallations.googleapis.com https://www.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://www.google.com https://accounts.google.com https://stats.g.doubleclick.net",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'"
+  ].join('; ')
 };
 
 function sendFile(res, filePath) {
@@ -30,29 +54,51 @@ function sendFile(res, filePath) {
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
-      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.writeHead(500, {
+        ...SECURITY_HEADERS,
+        'Content-Type': 'text/plain; charset=utf-8'
+      });
       res.end('Internal server error');
       return;
     }
 
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, {
+      ...SECURITY_HEADERS,
+      'Content-Type': contentType
+    });
     res.end(data);
   });
 }
 
 function getPathFromUrl(url) {
   const rawPath = (url || '/').split('?')[0];
-  const decoded = decodeURIComponent(rawPath);
+  let decoded = '/';
+  try {
+    decoded = decodeURIComponent(rawPath);
+  } catch {
+    return null;
+  }
   const normalized = path.normalize(decoded).replace(/^\.+/, '');
   return normalized === path.sep ? '/index.html' : normalized;
 }
 
 const server = http.createServer((req, res) => {
   const requestPath = getPathFromUrl(req.url);
+  if (!requestPath) {
+    res.writeHead(400, {
+      ...SECURITY_HEADERS,
+      'Content-Type': 'text/plain; charset=utf-8'
+    });
+    res.end('Bad request');
+    return;
+  }
   const filePath = path.join(DIST_DIR, requestPath);
 
   if (!filePath.startsWith(DIST_DIR)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.writeHead(403, {
+      ...SECURITY_HEADERS,
+      'Content-Type': 'text/plain; charset=utf-8'
+    });
     res.end('Forbidden');
     return;
   }
@@ -66,7 +112,10 @@ const server = http.createServer((req, res) => {
     const indexPath = path.join(DIST_DIR, 'index.html');
     fs.access(indexPath, fs.constants.R_OK, indexErr => {
       if (indexErr) {
-        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.writeHead(500, {
+          ...SECURITY_HEADERS,
+          'Content-Type': 'text/plain; charset=utf-8'
+        });
         res.end('Build output not found: packages/web/dist/index.html');
         return;
       }
@@ -77,5 +126,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Vehicle Vitals App Hosting server listening on ${HOST}:${PORT}`);
+  console.log(`Vehicle-Vitals App Hosting server listening on ${HOST}:${PORT}`);
 });

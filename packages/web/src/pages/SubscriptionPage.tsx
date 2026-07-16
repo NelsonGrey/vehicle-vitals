@@ -35,6 +35,7 @@ import {
   isInTrial,
 } from '../shared/subscriptionService';
 import { useSubscription } from '../shared/useMonetization';
+import { useAuth } from '../shared/AuthContext';
 import { personaPages } from '../data/personas';
 
 // Stripe's success_url here carries only `?checkout=success` (no session ID),
@@ -227,6 +228,7 @@ function buildLiveTierPricing(
 export default function SubscriptionPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { subscription, tier, isLoading } = useSubscription();
   // Preserves the plan a signed-out visitor picked on the public pricing
   // page: its CTAs redirect through signup to
@@ -271,7 +273,20 @@ export default function SubscriptionPage() {
     [subscription]
   );
   const isPastDue = subscription?.status === 'past_due';
-  const isBillingRoute = location.pathname.startsWith('/app');
+  // Every link to this page (footer "Pricing", persona pages) points at the
+  // public /subscription path regardless of auth state, since none of them
+  // know whether the visitor is signed in. Gating the authenticated
+  // experience on the URL alone meant an already-signed-in visitor saw the
+  // generic marketing pitch ("Start Pro") instead of their real plan and
+  // purchase buttons -- and clicking through then bounced them via
+  // /auth/signup (AuthOnlyRoute redirecting them straight back out) before
+  // landing on /app/subscription, which *does* show the real experience.
+  // Basing this on auth state directly instead of path means a signed-in
+  // visitor sees their actual subscription and can act on it immediately,
+  // on whichever URL got them here, with no detour through /auth/*.
+  const isBillingRoute =
+    location.pathname.startsWith('/app') ||
+    (Boolean(user) && !user?.isAnonymous);
 
   const checkoutStatus = useMemo(() => {
     const searchParams = new URLSearchParams(location.search || '');

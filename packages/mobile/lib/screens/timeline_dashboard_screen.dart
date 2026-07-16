@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_bottom_nav.dart';
@@ -154,6 +155,11 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
       appBar: AppBar(
         title: const Text('Service History'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.build_circle),
+            tooltip: 'Shops & Services',
+            onPressed: () => context.push('/app/service-providers'),
+          ),
           IconButton(onPressed: _loadTimeline, icon: const Icon(Icons.refresh)),
         ],
       ),

@@ -16,7 +16,7 @@ String readScreen(String relativePath) {
 }
 
 void main() {
-  group('Shops & Services discoverability (3 entry points)', () {
+  group('Shops & Services discoverability (4 entry points)', () {
     test('Garage screen exposes an AppBar action to Shops & Services', () {
       final source = readScreen('lib/screens/home_screen.dart');
       expect(source, contains("Shops & Services"));
@@ -24,11 +24,17 @@ void main() {
       expect(source, contains('actions: ['));
     });
 
-    test('Settings screen still links to Shops & Services (pre-existing)', () {
-      final source = readScreen('lib/screens/settings_screen.dart');
-      expect(source, contains("Shops & Services"));
-      expect(source, contains("context.push('/app/service-providers')"));
-    });
+    test(
+      'Settings screen no longer duplicates the Shops & Services entry point',
+      () {
+        // Removed 2026-07-16: the Garage entry point (added 2026-07-13, one
+        // day before the prior decision to keep this one) already made this
+        // a pure duplicate, same reasoning as the earlier Service History
+        // removal from Settings (a73ac2b).
+        final source = readScreen('lib/screens/settings_screen.dart');
+        expect(source, isNot(contains('Shops & Services')));
+      },
+    );
 
     test(
       'Maintenance add-entry flow offers a contextual Shops & Services link',
@@ -49,6 +55,18 @@ void main() {
         expect(source, contains("context.push('/app/service-providers')"));
       },
     );
+
+    test('Plan screen exposes an AppBar action to Shops & Services', () {
+      final source = readScreen('lib/screens/upcoming_tasks_screen.dart');
+      expect(source, contains("Shops & Services"));
+      expect(source, contains("context.push('/app/service-providers')"));
+    });
+
+    test('History screen exposes an AppBar action to Shops & Services', () {
+      final source = readScreen('lib/screens/timeline_dashboard_screen.dart');
+      expect(source, contains("Shops & Services"));
+      expect(source, contains("context.push('/app/service-providers')"));
+    });
 
     test('Bottom nav stays at exactly 4 items (no 5th Shops & Services slot)', () {
       final source = readScreen('lib/components/app_bottom_nav.dart');

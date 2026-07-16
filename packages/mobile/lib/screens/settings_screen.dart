@@ -98,15 +98,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 16),
                       ListTile(
-                        leading: const Icon(Icons.build_circle),
-                        title: const Text('Shops & Services'),
-                        subtitle: const Text(
-                          'Find nearby businesses and save places you trust',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/service-providers'),
-                      ),
-                      ListTile(
                         leading: const Icon(Icons.star),
                         title: const Text('Plans & Billing'),
                         subtitle: const Text(

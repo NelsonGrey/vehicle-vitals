@@ -34,7 +34,7 @@ class TermsScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Vehicle-Vitals is a mobile and web application that helps users track vehicle information, maintenance records, and associated data.',
+              'Vehicle-Vitals is a mobile and web application that helps users track vehicle information, maintenance records, and associated data. Vehicle-Vitals is a product of Nelson Grey LLC.',
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),

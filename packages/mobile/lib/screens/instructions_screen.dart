@@ -33,7 +33,7 @@ class InstructionsScreen extends StatelessWidget {
       icon: Icons.storefront_outlined,
       title: 'Find Shops & Services',
       content:
-          'Open Account, then Settings, then Shops & Services. Enter location context and choose a business type. Search results are third-party information, so confirm details with the business before visiting.',
+          'Tap the shop icon in the toolbar from Garage, Plan, or History — or tap Find shops & services while adding or editing a maintenance record. Enter location context and choose a business type. Search results are third-party information, so confirm details with the business before visiting.',
     ),
     (
       icon: Icons.tune,

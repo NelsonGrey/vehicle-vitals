@@ -307,9 +307,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       ListTile(
                         leading: const Icon(Icons.settings_outlined),
                         title: const Text('Settings'),
-                        subtitle: const Text(
-                          'Preferences, Shops & Services, plans, and more',
-                        ),
+                        subtitle: const Text('Preferences, plans, and more'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/settings'),
                       ),

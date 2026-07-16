@@ -156,7 +156,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
         title: const Text('Service History'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.build_circle),
+            icon: const Icon(Icons.storefront_outlined),
             tooltip: 'Shops & Services',
             onPressed: () => context.push('/app/service-providers'),
           ),

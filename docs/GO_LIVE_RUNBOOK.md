@@ -1,6 +1,6 @@
 # Vehicle-Vitals Go Live Runbook
 
-Last updated: July 14, 2026
+Last updated: July 16, 2026
 Current decision: NO-GO
 Release manager: Mark Nelson (interim)
 
@@ -25,6 +25,12 @@ In scope for the first market-ready launch:
 - Subscription, entitlement, support, security, privacy, analytics, and
   operational readiness
 
+The current release candidate presents Free as the available option and keeps
+paid plans in a disabled, approval-pending state. Customer-facing capability
+wording is governed by `docs/LAUNCH_CLAIMS_MATRIX.md`. Legal, commercial,
+operations, Apple, security, and final release decisions that cannot be made in
+the repository are collected in `docs/EXTERNAL_LAUNCH_APPROVAL_PROMPT.md`.
+
 Out of scope unless explicitly re-approved:
 
 - Android launch. The current manifest marks Android disabled/on hold in
@@ -35,7 +41,7 @@ Out of scope unless explicitly re-approved:
 
 ## Current Readiness Summary
 
-As of July 14, 2026, Vehicle-Vitals is not ready for market launch.
+As of July 16, 2026, Vehicle-Vitals is not ready for market launch.
 
 **Since the July 9 snapshot**: a large capability/information-architecture
 refactor (centralized nav metadata, `/getting-started` and `/product-tour`

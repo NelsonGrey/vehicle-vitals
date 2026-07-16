@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 
+import '../utils/user_facing_error.dart';
+
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 const bool _screenshotSignedOut = bool.fromEnvironment(
   'VV_SCREENSHOT_SIGNED_OUT',
@@ -183,7 +185,7 @@ class AuthService extends ChangeNotifier {
       if (user == null) return null;
       return UserCredential(user: user);
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw Exception(_friendlyAuthMessage(e, email.trim()));
+      throw FriendlyException(_friendlyAuthMessage(e, email.trim()));
     }
   }
 
@@ -230,11 +232,13 @@ class AuthService extends ChangeNotifier {
       return UserCredential(user: user);
     } on firebase_auth.FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
-        throw Exception(
+        throw FriendlyException(
           'An account already exists for this email. Sign in instead of creating another account.',
         );
       }
-      throw Exception(e.message ?? 'Authentication failed. Please try again.');
+      throw FriendlyException(
+        e.message ?? 'Authentication failed. Please try again.',
+      );
     }
   }
 
@@ -280,9 +284,11 @@ class AuthService extends ChangeNotifier {
         final message = _buildProviderConflictMessage(
           e.email ?? appleCredential.email,
         );
-        throw Exception(message);
+        throw FriendlyException(message);
       }
-      throw Exception(e.message ?? 'Apple sign-in failed. Please try again.');
+      throw FriendlyException(
+        e.message ?? 'Apple sign-in failed. Please try again.',
+      );
     }
   }
 

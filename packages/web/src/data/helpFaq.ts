@@ -90,7 +90,7 @@ export const websiteFaq: FaqItem[] = [
       'Open a vehicle and go to Records.',
       'Add maintenance entries with date, mileage, notes, and cost details.',
       'Save to persist entries.',
-      'Records become part of timeline and reporting workflows.',
+      'Saved records appear in Service History and supported export workflows.',
     ],
   },
   {
@@ -146,7 +146,7 @@ export const websiteFaq: FaqItem[] = [
     legacyTerms: ['Mechanic', 'Mechanics', 'Service Providers'],
   },
   {
-    question: 'How do profile preferences affect reminders?',
+    question: 'How do Account preferences affect reminders?',
     answers: [
       'Account settings include reminder lead-time and usage assumptions (for example average driving patterns) that control how early Maintenance Plan starts surfacing service work.',
       'These values influence when reminder windows appear.',
@@ -190,14 +190,14 @@ export const websiteFaq: FaqItem[] = [
     answers: [
       'Use Getting Started when you are new and want the simple setup steps.',
       'Use Help when something is confusing or not working as expected.',
-      'Short videos are included where media is available.',
+      'The Product Tour uses current screenshots and task-based walkthrough links.',
     ],
   },
   {
     question: 'Why do I sometimes see poster images instead of videos?',
     answers: [
-      'If a demo clip is missing or cannot load, the page falls back to poster preview automatically.',
-      'This is expected behavior and prevents page breakage.',
+      'The current Product Tour uses verified screenshots and task-based walkthrough links.',
+      'Videos will be added only after they are recaptured from the current release and reviewed for accuracy.',
     ],
   },
 ];
@@ -206,15 +206,15 @@ export const iosFaq: FaqItem[] = [
   {
     question: 'How do I start using the iOS app?',
     answers: [
-      'Install and open the app.',
-      'You land on marketing or auth entry depending on state.',
-      'Sign up or log in to access /app routes.',
+      'Install and open Vehicle-Vitals on your iPhone.',
+      'Choose Create Account if you are new, or Sign In if you already use the web app.',
+      'After signing in, Garage shows the vehicles saved to that account.',
     ],
   },
   {
     question: 'How do I sign up on iOS?',
     answers: [
-      'Open Sign Up from auth flow.',
+      'Choose Create Account from the welcome or sign-in screen.',
       'Enter email and password details.',
       'Submit and continue to the app once account creation succeeds.',
     ],
@@ -224,7 +224,7 @@ export const iosFaq: FaqItem[] = [
     answers: [
       'Open Login.',
       'Enter email and password, then Sign In.',
-      'Successful sign-in routes you to Garage (Home).',
+      'After a successful sign-in, Garage opens.',
     ],
   },
   {
@@ -242,7 +242,7 @@ export const iosFaq: FaqItem[] = [
       'Select the vehicle type (passenger vehicle, commercial vehicle, motorcycle, RV, boat, trailer, or other).',
       'Enter a vehicle ID (VIN/HIN/Serial), then use lookup if it is a VIN, or fill fields manually.',
       'Provide mileage and save.',
-      'If subscription limits are reached, app guidance routes to Premium or Support flows.',
+      'If the account has reached its vehicle limit, review Plans & Billing or contact Support.',
     ],
   },
   {
@@ -341,7 +341,7 @@ export const iosFaq: FaqItem[] = [
   {
     question: 'What is the Premium screen for on iOS?',
     answers: [
-      'Premium explains subscription benefits and what each option includes.',
+      'Plans & Billing explains the current account tier and planned subscription options.',
       'If your current subscription limits vehicle count, the app may point you here.',
     ],
   },

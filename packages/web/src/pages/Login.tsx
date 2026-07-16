@@ -4,6 +4,7 @@ import AppOfflineNotice from '../components/AppOfflineNotice';
 import { useAuth } from '../shared/AuthContext';
 import { getRedirectQueryParam, withRedirect } from '../shared/authRedirect';
 import { useAppOffline } from '../shared/useAppOffline';
+import { userFacingError } from '../shared/userFacingError';
 // Header and footer provided by Layout
 
 export default function Login() {
@@ -26,11 +27,12 @@ export default function Login() {
       await signIn(email, password);
       navigate(redirect, { replace: true });
     } catch (err: unknown) {
-      const msg = String((err as Error)?.message || 'Failed to sign in');
-      const hint = msg.includes('api-key-not-valid')
-        ? ' (Check VITE_FIREBASE_* env vars; see web/.env.example)'
-        : '';
-      setError(msg + hint);
+      setError(
+        userFacingError(
+          err,
+          'We could not sign you in. Please try again or visit Support.'
+        )
+      );
     } finally {
       setBusy(false);
     }
@@ -46,7 +48,7 @@ export default function Login() {
         Sign in to Vehicle-Vitals
       </h1>
       <p className="text-center text-slate-600 dark:text-slate-400 mb-6">
-        Access your secure garage, timeline, and upcoming maintenance.
+        Access your Garage, Service History, Maintenance Plan, and Account.
       </p>
       {error && (
         <div
@@ -118,7 +120,12 @@ export default function Login() {
                 navigate(redirect, { replace: true });
               } catch (err: unknown) {
                 const error = err as Error;
-                setError(String(error?.message || 'Google sign-in failed'));
+                setError(
+                  userFacingError(
+                    error,
+                    'Google sign-in could not be completed. Please try again.'
+                  )
+                );
               } finally {
                 setBusy(false);
               }
@@ -138,7 +145,12 @@ export default function Login() {
                 navigate(redirect, { replace: true });
               } catch (err: unknown) {
                 const error = err as Error;
-                setError(String(error?.message || 'Apple sign-in failed'));
+                setError(
+                  userFacingError(
+                    error,
+                    'Apple sign-in could not be completed. Please try again.'
+                  )
+                );
               } finally {
                 setBusy(false);
               }

@@ -13,6 +13,7 @@ import '../services/record_storage_service.dart';
 import '../theme/design_tokens.dart';
 import '../utils/number_format.dart';
 import '../utils/ownership_insights.dart';
+import '../utils/user_facing_error.dart';
 import 'record_category_screen.dart';
 
 class RecordsScreen extends StatefulWidget {
@@ -64,7 +65,12 @@ class _RecordsScreenState extends State<RecordsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error loading records: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'Records could not be loaded. Please try again.',
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -215,7 +221,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error deleting attachment: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The attachment could not be deleted. Please try again.',
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -249,7 +261,12 @@ class _RecordsScreenState extends State<RecordsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error opening attachment: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The attachment could not be opened on this device.',
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -327,7 +344,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error selecting attachments: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The selected files could not be added. Please try again.',
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -406,7 +429,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Retry failed: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The upload still could not be completed. Check your connection and try again.',
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -436,7 +465,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error saving records: ${e.toString()}'),
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The records could not be saved. Review the details and try again.',
+            ),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );

@@ -36,6 +36,7 @@ import {
 import { findVehiclePhotoFromWeb } from '../utils/vehiclePhotoService';
 import { getMaintenancePlan, lookupVin } from '../utils/vehicleService';
 import { transferVehicle } from '../utils/vehicleTransferService';
+import { userFacingError } from '../shared/userFacingError';
 import {
   detectVehicleIdentifierType,
   getVinLookupValidationError,
@@ -274,7 +275,12 @@ export default function EditVehicle() {
       alert('Vehicle updated successfully');
       navigate('/');
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      alert(
+        userFacingError(
+          err,
+          'We could not update this vehicle. Please try again or visit Support.'
+        )
+      );
     }
   };
 
@@ -310,8 +316,10 @@ export default function EditVehicle() {
       );
     } catch (error) {
       alert(
-        'Photo upload failed: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'The photo could not be uploaded. Check the file and try again.'
+        )
       );
     } finally {
       setPhotoBusy(false);
@@ -356,8 +364,10 @@ export default function EditVehicle() {
       );
     } catch (error) {
       alert(
-        'Web photo lookup failed: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'A vehicle photo could not be found right now. You can upload your own image.'
+        )
       );
     } finally {
       setPhotoBusy(false);
@@ -449,8 +459,13 @@ export default function EditVehicle() {
             }
           : null
       );
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to look up VIN');
+    } catch (error) {
+      alert(
+        userFacingError(
+          error,
+          'Vehicle details could not be looked up. Check the vehicle ID and try again.'
+        )
+      );
     }
   };
 
@@ -466,7 +481,10 @@ export default function EditVehicle() {
       navigate('/');
     } catch (err) {
       alert(
-        'Error deleting: ' + (err instanceof Error ? err.message : String(err))
+        userFacingError(
+          err,
+          'The vehicle could not be deleted. Please try again or visit Support.'
+        )
       );
     }
   };
@@ -497,8 +515,10 @@ export default function EditVehicle() {
       navigate('/app');
     } catch (error) {
       alert(
-        'Transfer failed: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'The vehicle could not be transferred. Verify the recipient and try again.'
+        )
       );
     } finally {
       setTransferBusy(false);
@@ -1374,8 +1394,10 @@ function MaintenanceList({
       }
     } catch (error) {
       alert(
-        'Error uploading files: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'The files could not be uploaded. Check the files and try again.'
+        )
       );
     } finally {
       e.target.value = '';
@@ -1456,10 +1478,10 @@ function MaintenanceList({
         }),
       }));
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Unable to retry attachment analysis.';
+      const message = userFacingError(
+        error,
+        'Attachment analysis could not be retried. Please try again later.'
+      );
       setForm(p => ({
         ...p,
         attachments: p.attachments.map(attachment =>
@@ -1549,7 +1571,12 @@ function MaintenanceList({
         attachments: [],
       });
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      alert(
+        userFacingError(
+          err,
+          'We could not save this service record. Please try again or visit Support.'
+        )
+      );
     }
   };
 
@@ -1631,8 +1658,10 @@ function MaintenanceList({
       alert(`Calendar event created for ${calendarTarget}.`);
     } catch (error) {
       alert(
-        'Failed to create calendar event: ' +
-          (error instanceof Error ? error.message : String(error))
+        userFacingError(
+          error,
+          'The calendar event could not be created. Please try again.'
+        )
       );
     }
   };

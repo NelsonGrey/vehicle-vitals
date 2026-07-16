@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { useReauthentication } from '../shared/useReauthentication';
+import { userFacingError } from '../shared/userFacingError';
 
 export function AccountSecurityContent() {
   const {
@@ -93,7 +94,10 @@ export function AccountSecurityContent() {
       setConfirmPassword('');
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to update password'
+        userFacingError(
+          err,
+          'Your password could not be updated. Verify your current password and try again.'
+        )
       );
     } finally {
       setBusy(false);

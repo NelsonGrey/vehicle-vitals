@@ -6,6 +6,7 @@ import '../models/maintenance.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../utils/number_format.dart';
+import '../utils/user_facing_error.dart';
 
 class TimelineDashboardScreen extends StatefulWidget {
   const TimelineDashboardScreen({super.key});
@@ -62,7 +63,10 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = userFacingError(
+          e,
+          fallback: 'Service History could not be loaded. Please try again.',
+        );
         _loading = false;
       });
     }

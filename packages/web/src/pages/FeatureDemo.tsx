@@ -1,5 +1,4 @@
 import AppEntryLink from '../components/AppEntryLink';
-import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import { useAuth } from '../shared/AuthContext';
 
 interface FeatureDemoProps {
@@ -15,49 +14,39 @@ const mediaByFeature: Record<
   {
     hero: string;
     gallery: string[];
-    videoPoster: string;
-    videoPath: string;
   }
 > = {
   'VIN Lookup': {
-    hero: '/images/features/add-vehicle.png',
+    hero: '/images/features/current/add-vehicle.png',
     gallery: [
-      '/images/features/garage-vehicles.png',
-      '/images/features/garage-detail.png',
-      '/images/features/add-vehicle.png',
+      '/images/features/current/garage.png',
+      '/images/features/current/vehicle-detail.png',
+      '/images/features/current/add-vehicle.png',
     ],
-    videoPoster: '/images/features/add-vehicle.png',
-    videoPath: '/videos/feature-demos/vin-lookup-demo.mp4',
   },
   'Maintenance Planning': {
-    hero: '/images/features/upcoming.png',
+    hero: '/images/features/current/maintenance-plan.png',
     gallery: [
-      '/images/features/records.png',
-      '/images/features/timeline.png',
-      '/images/features/upcoming.png',
+      '/images/features/current/records.png',
+      '/images/features/current/service-history.png',
+      '/images/features/current/maintenance-plan.png',
     ],
-    videoPoster: '/images/features/timeline.png',
-    videoPath: '/videos/feature-demos/maintenance-planning-demo.mp4',
   },
   'Cross Platform Access': {
-    hero: '/images/features/ios-home.png',
+    hero: '/images/features/current/garage.png',
     gallery: [
-      '/images/features/ios-home.png',
-      '/images/features/ios-upcoming.png',
-      '/images/features/ios-profile.png',
+      '/images/features/current/garage.png',
+      '/images/features/current/maintenance-plan.png',
+      '/images/features/current/settings.png',
     ],
-    videoPoster: '/images/features/ios-home.png',
-    videoPath: '/videos/feature-demos/cross-platform-access-demo.mp4',
   },
   'Ownership History': {
-    hero: '/images/features/timeline.png',
+    hero: '/images/features/current/service-history.png',
     gallery: [
-      '/images/features/records.png',
-      '/images/features/timeline.png',
-      '/images/features/profile.png',
+      '/images/features/current/records.png',
+      '/images/features/current/service-history.png',
+      '/images/features/current/vehicle-detail.png',
     ],
-    videoPoster: '/images/features/timeline.png',
-    videoPath: '/videos/feature-demos/ownership-history-demo.mp4',
   },
 };
 
@@ -70,14 +59,12 @@ export default function FeatureDemo({
 }: FeatureDemoProps) {
   const { user } = useAuth();
   const media = mediaByFeature[title] ?? {
-    hero: '/images/features/landing-current.png',
+    hero: '/images/features/current/garage.png',
     gallery: [
-      '/images/features/landing-current.png',
-      '/images/features/garage-vehicles.png',
-      '/images/features/profile.png',
+      '/images/features/current/garage.png',
+      '/images/features/current/vehicle-detail.png',
+      '/images/features/current/settings.png',
     ],
-    videoPoster: '/images/features/landing-current.png',
-    videoPath: '/videos/feature-demos/generic-feature-demo.mp4',
   };
 
   return (
@@ -136,25 +123,6 @@ export default function FeatureDemo({
             <li key={item}>{item}</li>
           ))}
         </ul>
-      </section>
-
-      <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
-        <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 mb-3">
-          Video Walkthrough Lane
-        </h2>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Watch the narrated preview here, or fall back to the getting started
-          guide if the clip is unavailable.
-        </p>
-        <MarketingVideoPanel
-          title={`${title} Walkthrough`}
-          description="Narrated product walkthrough lane for this capability."
-          poster={media.videoPoster}
-          videoPath={media.videoPath}
-          fallbackHref="/getting-started"
-          fallbackLabel="View the getting started guide"
-          className="border-slate-200 dark:border-slate-700"
-        />
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">

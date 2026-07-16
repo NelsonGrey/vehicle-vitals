@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
+import '../utils/user_facing_error.dart';
 
 class DataPrivacyScreen extends StatefulWidget {
   const DataPrivacyScreen({super.key});
@@ -30,9 +31,17 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The data export request could not be filed. Please try again or contact Support.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -83,9 +92,17 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The deletion request could not be filed. No account data was changed. Please try again or contact Support.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -124,7 +141,10 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                         'maintenance, and subscription data. Deletion '
                         'requests are processed by our team and cannot be '
                         'undone; you remain signed in until a deletion '
-                        'request has been processed.',
+                        'request has been processed. We will use the account '
+                        'email for status updates and any required identity '
+                        'verification. Processing time depends on the request '
+                        'and applicable legal or retention requirements.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 12),

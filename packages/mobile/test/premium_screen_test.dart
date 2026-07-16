@@ -49,15 +49,19 @@ void main() {
   test('purchase flow is generic across tier and billing period', () {
     expect(
       source,
-      contains('Future<void> _purchase(PremiumService premiumService, String tier)'),
+      contains(
+        'Future<void> _purchase(PremiumService premiumService, String tier)',
+      ),
     );
     expect(source, contains('premiumService.purchase(tier, _billingPeriod)'));
   });
 
-  test('in-app-purchase disclosure mentions both Pro and Premium', () {
+  test('in-app-purchase disclosure mentions Apple, Pro, and Premium', () {
     expect(
       source,
-      contains('Payment is processed through in-app purchase for Pro and Premium'),
+      contains(
+        'Payment is processed through Apple in-app purchase for Pro and Premium',
+      ),
     );
   });
 }

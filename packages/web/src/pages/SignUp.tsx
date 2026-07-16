@@ -4,6 +4,7 @@ import AppOfflineNotice from '../components/AppOfflineNotice';
 import { useAuth } from '../shared/AuthContext';
 import { getRedirectQueryParam, withRedirect } from '../shared/authRedirect';
 import { useAppOffline } from '../shared/useAppOffline';
+import { userFacingError } from '../shared/userFacingError';
 
 export default function SignUp() {
   const { signUp, signInWithGoogle, signInWithApple } = useAuth();
@@ -32,12 +33,12 @@ export default function SignUp() {
       await signUp(email, password);
       navigate(redirect, { replace: true });
     } catch (err: unknown) {
-      const error = err as Error;
-      const msg = String(error?.message || 'Failed to create account');
-      const hint = msg.includes('api-key-not-valid')
-        ? ' (Check VITE_FIREBASE_* env vars; see web/.env.example)'
-        : '';
-      setError(msg + hint);
+      setError(
+        userFacingError(
+          err,
+          'We could not create your account. Please try again or visit Support.'
+        )
+      );
     } finally {
       setBusy(false);
     }
@@ -150,7 +151,12 @@ export default function SignUp() {
                 navigate(redirect, { replace: true });
               } catch (err: unknown) {
                 const error = err as Error;
-                setError(String(error?.message || 'Google sign-in failed'));
+                setError(
+                  userFacingError(
+                    error,
+                    'Google sign-up could not be completed. Please try again.'
+                  )
+                );
               } finally {
                 setBusy(false);
               }
@@ -170,7 +176,12 @@ export default function SignUp() {
                 navigate(redirect, { replace: true });
               } catch (err: unknown) {
                 const error = err as Error;
-                setError(String(error?.message || 'Apple sign-in failed'));
+                setError(
+                  userFacingError(
+                    error,
+                    'Apple sign-up could not be completed. Please try again.'
+                  )
+                );
               } finally {
                 setBusy(false);
               }
@@ -180,6 +191,24 @@ export default function SignUp() {
           </button>
         </div>
       </form>
+      <p className="mt-4 text-center text-xs leading-5 text-slate-500 dark:text-slate-400">
+        By creating an account or continuing with Google or Apple, you agree to
+        our{' '}
+        <Link
+          to="/terms"
+          className="underline hover:text-slate-700 dark:hover:text-slate-200"
+        >
+          Terms of Use
+        </Link>{' '}
+        and acknowledge our{' '}
+        <Link
+          to="/privacy"
+          className="underline hover:text-slate-700 dark:hover:text-slate-200"
+        >
+          Privacy Policy
+        </Link>
+        .
+      </p>
       <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
         Already have an account?{' '}
         <Link

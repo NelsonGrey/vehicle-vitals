@@ -60,29 +60,41 @@ describe('SiteHeader', () => {
     renderHeader();
 
     const header = screen.getByRole('banner');
-    const ownersLink = within(header).getByRole('link', {
-      name: /Ownership Records/i,
-    });
+    const desktopNav = header.querySelector('.hidden.min-w-0');
 
-    expect(ownersLink).toBeVisible();
-    expect(ownersLink).toHaveAttribute('href', '/personas/owners');
     expect(
-      within(header).getByRole('link', { name: /Shared Garage/i })
-    ).toBeVisible();
+      within(desktopNav).getByRole('link', { name: /Getting Started/i })
+    ).toHaveAttribute('href', '/getting-started');
     expect(
-      within(header).getByRole('link', { name: /Guided Setup/i })
+      within(desktopNav).getByRole('link', { name: /Product Tour/i })
+    ).toHaveAttribute('href', '/product-tour');
+    expect(
+      within(desktopNav).getByRole('link', { name: /^Plans$/i })
+    ).toHaveAttribute('href', '/subscription');
+
+    const useCasesButton = within(desktopNav).getByRole('button', {
+      name: /Use cases/i,
+    });
+    expect(useCasesButton).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(useCasesButton);
+
+    expect(
+      within(header).getAllByRole('link', { name: /Ownership Records/i })[0]
+    ).toHaveAttribute('href', '/personas/owners');
+    expect(
+      within(header).getAllByRole('link', { name: /Household Vehicles/i })[0]
+    ).toHaveAttribute('href', '/personas/households');
+    expect(
+      within(header).getAllByRole('link', { name: /Guided Setup/i })[0]
     ).toHaveAttribute('href', '/personas/new-drivers');
     expect(
-      within(header).getByRole('link', { name: /Hands-On Maintenance/i })
+      within(header).getAllByRole('link', { name: /Hands-On Maintenance/i })[0]
     ).toHaveAttribute('href', '/personas/diy-maintainers');
     expect(
-      within(header).getByRole('link', { name: /Work Vehicles/i })
+      within(header).getAllByRole('link', { name: /Work Vehicles/i })[0]
     ).toHaveAttribute('href', '/personas/light-fleets');
     expect(
       within(header).queryByRole('link', { name: /Pricing/i })
-    ).not.toBeInTheDocument();
-    expect(
-      within(header).queryByRole('link', { name: /Product Tour/i })
     ).not.toBeInTheDocument();
     expect(
       within(header).queryByRole('link', { name: /Subscriptions/i })
@@ -110,12 +122,9 @@ describe('SiteHeader', () => {
       within(header).queryByRole('link', { name: /Help & How-To/i })
     ).not.toBeInTheDocument();
     expect(
-      within(header).queryByRole('link', { name: /Getting Started/i })
-    ).not.toBeInTheDocument();
-
-    expect(
-      within(header).getByRole('link', { name: /Login \/ Sign Up/i })
-    ).toBeVisible();
+      within(header).getAllByRole('link', { name: /Login \/ Sign Up/i }).length
+    ).toBeGreaterThan(0);
+    expect(useCasesButton).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('shows application navigation and sign-out action while logged in', () => {
@@ -124,10 +133,13 @@ describe('SiteHeader', () => {
     renderHeader();
 
     const header = screen.getByRole('banner');
-    const gettingStartedLink = within(header).getByRole('link', {
+    const desktopNav = header.querySelector('.hidden.min-w-0');
+    const gettingStartedLink = within(desktopNav).getByRole('link', {
       name: /Getting Started/i,
     });
-    const garageLink = within(header).getByRole('link', { name: /^Garage$/i });
+    const garageLink = within(desktopNav).getByRole('link', {
+      name: /^Garage$/i,
+    });
 
     expect(
       within(header).queryByRole('link', { name: /^Home$/i })
@@ -148,20 +160,20 @@ describe('SiteHeader', () => {
     // Product Tour is marketing content, not a capability, but stays
     // available for continuity once signed in.
     expect(
-      within(header).getByRole('link', { name: /Product Tour/i })
+      within(desktopNav).getByRole('link', { name: /Product Tour/i })
     ).toHaveAttribute('href', '/product-tour');
 
-    expect(garageLink).toBeVisible();
-    expect(gettingStartedLink).toBeVisible();
+    expect(garageLink).toHaveAttribute('href', '/app');
+    expect(gettingStartedLink).toHaveAttribute('href', '/getting-started');
     expect(
-      within(header).getByRole('link', { name: /^Account$/i })
-    ).toBeVisible();
+      within(desktopNav).getByRole('link', { name: /^Account$/i })
+    ).toBeInTheDocument();
     expect(
-      within(header).getByRole('link', { name: /^Service History$/i })
-    ).toBeVisible();
+      within(desktopNav).getByRole('link', { name: /^Service History$/i })
+    ).toBeInTheDocument();
     expect(
-      within(header).getByRole('link', { name: /^Maintenance Plan$/i })
-    ).toBeVisible();
+      within(desktopNav).getByRole('link', { name: /^Maintenance Plan$/i })
+    ).toBeInTheDocument();
 
     // Getting Started should appear before app workspace links.
     expect(
@@ -169,10 +181,9 @@ describe('SiteHeader', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeGreaterThan(0);
 
-    const signOutButton = within(header).getByRole('button', {
+    const signOutButton = within(desktopNav).getByRole('button', {
       name: /Sign Out/i,
     });
-    expect(signOutButton).toBeVisible();
 
     fireEvent.click(signOutButton);
     expect(authState.signOut).toHaveBeenCalledTimes(1);
@@ -184,6 +195,7 @@ describe('SiteHeader', () => {
     renderHeader();
 
     const header = screen.getByRole('banner');
+    const desktopNav = header.querySelector('.hidden.min-w-0');
     const expectedOrder = [
       'Getting Started',
       'Product Tour',
@@ -194,7 +206,7 @@ describe('SiteHeader', () => {
       'Account',
     ];
     const links = expectedOrder.map(name =>
-      within(header).getByRole('link', {
+      within(desktopNav).getByRole('link', {
         name: new RegExp(`^${name}$`, 'i'),
       })
     );
@@ -206,12 +218,6 @@ describe('SiteHeader', () => {
       ).toBeGreaterThan(0);
     }
 
-    // The pair sits in its own margined wrapper so it reads as visually
-    // separated from the capability links, without breaking the flex-wrap
-    // layout the rest of the nav relies on at narrow widths.
-    const gettingStartedLink = within(header).getByRole('link', {
-      name: /^Getting Started$/i,
-    });
-    expect(gettingStartedLink.parentElement.className).toMatch(/mr-4/);
+    expect(desktopNav).toHaveClass('lg:flex');
   });
 });

@@ -122,7 +122,7 @@ describe('Login page', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
-        /invalid credentials/i
+        /could not sign you in/i
       );
     });
   });
@@ -175,7 +175,9 @@ describe('Login page', () => {
     await userEvent.click(googleButton);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/popup closed/i);
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /Google sign-in could not be completed/i
+      );
     });
   });
 });

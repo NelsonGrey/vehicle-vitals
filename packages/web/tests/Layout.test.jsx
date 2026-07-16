@@ -59,7 +59,9 @@ describe('Layout Component', () => {
     );
 
     const appRoot = container.firstChild;
-    expect(appRoot).toHaveClass('min-h-screen');
+    expect(appRoot).toHaveClass('min-h-[100dvh]');
+    expect(appRoot).toHaveClass('lg:h-[100dvh]');
+    expect(appRoot).not.toHaveClass('overflow-hidden');
 
     const mainContentContainer = container.querySelector('main > div');
     expect(mainContentContainer).toBeTruthy();

@@ -14,6 +14,7 @@ import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 import '../utils/number_format.dart';
+import '../utils/user_facing_error.dart';
 
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
@@ -82,7 +83,10 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = userFacingError(
+          e,
+          fallback: 'This vehicle could not be loaded. Please try again.',
+        );
         _loading = false;
       });
     }
@@ -301,15 +305,11 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     if (plan == null) return const SizedBox.shrink();
     final items =
         (plan.items
-              .where(
-                (item) => item.nextDueMileage - vehicle.mileage <= 10000,
-              )
-              .toList()
-            ..sort(
-              (a, b) => a.nextDueMileage.compareTo(b.nextDueMileage),
-            ))
-        .take(3)
-        .toList();
+                .where((item) => item.nextDueMileage - vehicle.mileage <= 10000)
+                .toList()
+              ..sort((a, b) => a.nextDueMileage.compareTo(b.nextDueMileage)))
+            .take(3)
+            .toList();
     if (items.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

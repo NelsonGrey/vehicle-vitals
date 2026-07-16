@@ -320,7 +320,8 @@ describe('UpcomingTasks reminder actions', () => {
         'rem-1',
         expect.objectContaining({
           deliveryStatus: 'failed',
-          lastDeliveryError: 'Provider down',
+          lastDeliveryError:
+            'The reminder email could not be sent. Please try again.',
         })
       );
     });

@@ -151,7 +151,7 @@ describe('SignUp page', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
-        /email already in use/i
+        /could not create your account/i
       );
     });
   });

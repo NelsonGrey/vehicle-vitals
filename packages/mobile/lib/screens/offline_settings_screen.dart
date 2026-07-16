@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../components/safe_back_button.dart';
 import '../services/offline_service.dart';
+import '../utils/user_facing_error.dart';
 
 class OfflineSettingsScreen extends StatefulWidget {
   const OfflineSettingsScreen({super.key});
@@ -220,7 +221,13 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update offline settings: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Offline settings could not be updated. Please try again.',
+              ),
+            ),
             backgroundColor: colorScheme.error,
           ),
         );
@@ -250,7 +257,13 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sync failed: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Synchronization could not be completed. Check your connection and try again.',
+              ),
+            ),
             backgroundColor: colorScheme.error,
           ),
         );
@@ -305,7 +318,13 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to clear cache: ${e.toString()}'),
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The local cache could not be cleared. Please try again.',
+              ),
+            ),
             backgroundColor: colorScheme.error,
           ),
         );

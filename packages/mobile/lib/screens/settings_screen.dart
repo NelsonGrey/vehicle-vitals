@@ -108,9 +108,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.star),
-                        title: const Text('Premium Features'),
+                        title: const Text('Plans & Billing'),
                         subtitle: const Text(
-                          'Remove ads and unlock advanced features',
+                          'Review your current tier and available plans',
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/premium'),

@@ -6,12 +6,12 @@ import SiteHeader from './SiteHeader';
 
 export default function AuthLayout() {
   return (
-    <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <div className="min-h-[100dvh] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 lg:h-[100dvh] lg:overflow-hidden">
       <SiteHeader />
 
       <HeaderAdBar />
 
-      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900 px-4 sm:px-5 py-6 sm:py-8">
+      <main className="flex-1 overflow-x-hidden bg-slate-50 dark:bg-slate-900 px-4 sm:px-5 py-6 sm:py-8 lg:overflow-y-auto">
         <div className="w-full max-w-7xl mx-auto">
           <div className="w-full max-w-2xl mx-auto">
             <Outlet />

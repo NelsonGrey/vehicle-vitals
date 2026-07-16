@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../services/firestore_service.dart';
 import '../services/local_providers_service.dart';
+import '../utils/user_facing_error.dart';
 
 class ServiceProvidersScreen extends StatefulWidget {
   const ServiceProvidersScreen({super.key});
@@ -170,7 +171,12 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
       });
     } catch (error) {
       if (!mounted) return;
-      setState(() => _error = 'Failed to save this place: $error');
+      setState(
+        () => _error = userFacingError(
+          error,
+          fallback: 'This place could not be saved. Please try again.',
+        ),
+      );
     }
   }
 

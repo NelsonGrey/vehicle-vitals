@@ -1,5 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 /// Mirrors packages/functions/src/schedule.provider.ts's MaintenancePlanItem.
 class MaintenancePlanItem {
   final String serviceType;
@@ -78,6 +80,28 @@ class MaintenancePlanService {
     String? make,
     String? model,
   }) async {
+    if (_screenshotMode) {
+      return MaintenancePlan(
+        modelSpecific: true,
+        items: [
+          MaintenancePlanItem(
+            serviceType: 'oil_change',
+            intervalMiles: 7500,
+            intervalMonths: 12,
+            nextDueMileage: currentMileage + 480,
+            nextDueDate: '2026-08-01',
+          ),
+          MaintenancePlanItem(
+            serviceType: 'tire_rotation',
+            intervalMiles: 7500,
+            intervalMonths: 12,
+            nextDueMileage: currentMileage + 2480,
+            nextDueDate: '2026-09-15',
+          ),
+        ],
+      );
+    }
+
     final callable = _functions.httpsCallable('getMaintenancePlanCallable');
     final response = await callable.call(<String, dynamic>{
       'vin': vin,

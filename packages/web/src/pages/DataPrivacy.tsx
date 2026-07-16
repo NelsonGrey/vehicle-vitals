@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { useReauthentication } from '../shared/useReauthentication';
+import { userFacingError } from '../shared/userFacingError';
 import {
   requestAccountDataDeletion,
   requestAccountDataExport,
@@ -38,9 +39,10 @@ export function DataPrivacyContent() {
       );
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to file account deletion request'
+        userFacingError(
+          err,
+          'The deletion request could not be filed. No account data was changed. Please try again or visit Support.'
+        )
       );
     } finally {
       setBusy(false);
@@ -59,9 +61,10 @@ export function DataPrivacyContent() {
       );
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to file data export request'
+        userFacingError(
+          err,
+          'The data export request could not be filed. Please try again or visit Support.'
+        )
       );
     } finally {
       setBusy(false);
@@ -95,7 +98,10 @@ export function DataPrivacyContent() {
           Request a copy of your data, or request deletion of your account and
           all associated vehicle, maintenance, and subscription data. Deletion
           requests are processed by our team and cannot be undone; you remain
-          signed in until a deletion request has been processed.
+          signed in until a deletion request has been processed. We use the
+          account email for status updates and any required identity
+          verification. Processing time depends on the request and applicable
+          legal or retention requirements.
         </p>
         <div>
           <label

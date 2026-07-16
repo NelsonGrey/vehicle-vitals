@@ -67,9 +67,9 @@ describe('AccountConsolidation – household garage', () => {
 
     renderPage();
 
-    await waitFor(() => screen.getByLabelText(/shared garage name/i));
+    await waitFor(() => screen.getByLabelText(/household garage name/i));
     expect(
-      screen.getByRole('button', { name: /create shared garage/i })
+      screen.getByRole('button', { name: /create household garage/i })
     ).toBeDisabled();
   });
 
@@ -91,12 +91,12 @@ describe('AccountConsolidation – household garage', () => {
 
     renderPage();
 
-    const nameInput = await screen.findByLabelText(/shared garage name/i);
+    const nameInput = await screen.findByLabelText(/household garage name/i);
     fireEvent.change(nameInput, {
       target: { value: 'The Nelson Household' },
     });
     fireEvent.click(
-      screen.getByRole('button', { name: /create shared garage/i })
+      screen.getByRole('button', { name: /create household garage/i })
     );
 
     await waitFor(() =>
@@ -110,7 +110,7 @@ describe('AccountConsolidation – household garage', () => {
     );
   });
 
-  it('shows current household status and a TODO note for invites when already a household', async () => {
+  it('shows current household status and a clear launch limitation for member access', async () => {
     getHouseholdGarageStatus.mockResolvedValue({
       success: true,
       orgId: 'org-1',
@@ -121,12 +121,12 @@ describe('AccountConsolidation – household garage', () => {
 
     renderPage();
 
-    await waitFor(() => screen.getByText(/is a shared household garage/i));
+    await waitFor(() => screen.getByText(/managed by this account/i));
     expect(
-      screen.getByText(/inviting additional members.*not yet available/i)
+      screen.getByText(/additional member invitations are not available/i)
     ).toBeInTheDocument();
     expect(
-      screen.queryByLabelText(/shared garage name/i)
+      screen.queryByLabelText(/household garage name/i)
     ).not.toBeInTheDocument();
   });
 });
@@ -155,9 +155,9 @@ describe('AccountConsolidation – account merge', () => {
   it('blocks account consolidation when the source UID matches the current user', async () => {
     renderPage();
 
-    await waitFor(() => screen.getByLabelText(/source account uid/i));
+    await waitFor(() => screen.getByLabelText(/other account support id/i));
 
-    fireEvent.change(screen.getByLabelText(/source account uid/i), {
+    fireEvent.change(screen.getByLabelText(/other account support id/i), {
       target: { value: MOCK_USER.uid },
     });
     fireEvent.click(
@@ -188,7 +188,9 @@ describe('AccountConsolidation – account merge', () => {
 
     renderPage();
 
-    const sourceUidInput = await screen.findByLabelText(/source account uid/i);
+    const sourceUidInput = await screen.findByLabelText(
+      /other account support id/i
+    );
     fireEvent.change(sourceUidInput, {
       target: { value: 'source-user-2' },
     });

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
+import { userFacingError } from '../shared/userFacingError';
 import {
   SUPPORT_REQUEST_TOPICS,
   submitSupportRequest,
@@ -30,7 +31,10 @@ export default function Support() {
       setMessage('');
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to send your message'
+        userFacingError(
+          err,
+          'Your message could not be sent. Check the form and try again.'
+        )
       );
     } finally {
       setSubmitting(false);
@@ -45,7 +49,8 @@ export default function Support() {
           Support
         </h1>
         <p className="text-slate-700 dark:text-slate-300 mb-6">
-          We typically respond within 24 hours.
+          Send the details below and we will respond as soon as possible.
+          Response times vary by request type and support availability.
         </p>
 
         {submitted ? (

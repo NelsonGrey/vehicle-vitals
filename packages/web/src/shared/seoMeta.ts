@@ -9,7 +9,9 @@
 import { personaPages } from '../data/personas';
 
 // Set VITE_APP_URL=https://vehicle-vitals.com in your production .env
-const APP_URL = (import.meta.env.VITE_APP_URL || 'https://vehicle-vitals.com').replace(/\/$/, '');
+const APP_URL = (
+  import.meta.env.VITE_APP_URL || 'https://vehicle-vitals.com'
+).replace(/\/$/, '');
 
 const SITE_NAME = 'Vehicle-Vitals';
 
@@ -88,9 +90,9 @@ const softwareAppSchema = {
 
 export const ROUTE_SEO: Record<string, SeoMeta> = {
   '/': {
-    title: `${SITE_NAME} — One garage for every vehicle record, reminder, and repair cost`,
+    title: `${SITE_NAME} — Know what was done and what may need attention next`,
     description:
-      'Track maintenance history, stay ahead of upcoming service, and keep proof of ownership ready. Free to start — scales from one vehicle to household fleets.',
+      'Keep service records, receipts, reminders, and ownership costs together. Know what was done and what may need attention next.',
     canonical: `${APP_URL}/`,
     ogType: 'website',
     ogImage: DEFAULT_OG_IMAGE,
@@ -115,7 +117,7 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   '/getting-started': {
     title: `Getting Started — ${SITE_NAME}`,
     description:
-      'Start in three simple steps: add your vehicle, track service and costs, stay on top of what\'s next. See how Vehicle-Vitals turns scattered receipts into a trusted ownership record.',
+      "Start in three simple steps: add your vehicle, track service and costs, stay on top of what's next. See how Vehicle-Vitals turns scattered receipts into a trusted ownership record.",
     canonical: `${APP_URL}/getting-started`,
     ogType: 'website',
   },
@@ -123,7 +125,7 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   '/product-tour': {
     title: `Product Tour — ${SITE_NAME}`,
     description:
-      'Short video walkthroughs and screen-by-screen tours of Vehicle-Vitals: Garage, service records, Service History, Maintenance Plan, and Shops & Services.',
+      'A current screen-by-screen tour of Vehicle-Vitals: Garage, service records, Service History, Maintenance Plan, and Shops & Services.',
     canonical: `${APP_URL}/product-tour`,
     ogType: 'website',
   },
@@ -138,7 +140,8 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
 
   '/support': {
     title: `Support — ${SITE_NAME}`,
-    description: 'Get help with Vehicle-Vitals. Contact our support team for questions, billing, or technical issues.',
+    description:
+      'Get help with Vehicle-Vitals. Contact our support team for questions, billing, or technical issues.',
     canonical: `${APP_URL}/support`,
     ogType: 'website',
   },
@@ -147,7 +150,8 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   // converge on the new path.
   '/contact': {
     title: `Support — ${SITE_NAME}`,
-    description: 'Get help with Vehicle-Vitals. Contact our support team for questions, billing, or technical issues.',
+    description:
+      'Get help with Vehicle-Vitals. Contact our support team for questions, billing, or technical issues.',
     canonical: `${APP_URL}/support`,
     ogType: 'website',
   },
@@ -173,13 +177,13 @@ const personaDescriptions: Record<string, string> = {
   owners:
     'Keep every service record ready when it matters. Track history, stay on top of what is due, and keep credible proof ready for resale, warranty, or insurance.',
   households:
-    'Coordinate every vehicle in one shared garage. Manage upcoming work, share records, and keep everyone aligned without the text threads.',
+    'Keep household vehicle records together in one account. Review upcoming work, service history, and costs without relying on scattered receipts.',
   'new-drivers':
     'Know what to track from day one. Capture each service, learn what matters, and start good ownership habits with plain-language guidance.',
   'diy-maintainers':
     'Document the work you do yourself. Tie parts, costs, and labor notes to each job so self-performed maintenance still builds vehicle value.',
   'light-fleets':
-    'Keep business vehicles ready, documented, and accountable. Track maintenance readiness, costs, and vendor context across your work vehicles.',
+    'Keep records organized for a small set of work vehicles. Track maintenance history, costs, and provider context from one account.',
 };
 
 export function getPersonaSeoMeta(personaId: string): SeoMeta {
@@ -189,8 +193,7 @@ export function getPersonaSeoMeta(personaId: string): SeoMeta {
   }
 
   const description =
-    personaDescriptions[personaId] ??
-    `${persona.headline} — ${SITE_NAME}`;
+    personaDescriptions[personaId] ?? `${persona.headline} — ${SITE_NAME}`;
 
   return {
     title: `${persona.title} — ${SITE_NAME}`,

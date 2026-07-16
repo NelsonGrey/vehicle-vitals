@@ -84,17 +84,14 @@ describe('Help page', () => {
       ['Upcoming Tasks', /How do I use Maintenance Plan\?/i],
       ['Mechanic', /How do I find nearby shops and services\?/i],
       ['Service Providers', /How do I find nearby shops and services\?/i],
-      ['Profile', /How do profile preferences affect reminders\?/i],
+      ['Profile', /How do Account preferences affect reminders\?/i],
     ])(
       'finds the current FAQ answer when searching the retired term "%s"',
       async (legacyTerm, expectedQuestion) => {
         renderHelp();
         const user = userEvent.setup();
 
-        await user.type(
-          screen.getByLabelText(/Search FAQs/i),
-          legacyTerm
-        );
+        await user.type(screen.getByLabelText(/Search FAQs/i), legacyTerm);
 
         expect(screen.getByText(expectedQuestion)).toBeInTheDocument();
       }

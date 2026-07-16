@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { userFacingError } from '../shared/userFacingError';
 import {
   getHouseholdGarageStatus,
   promotePersonalGarageToHousehold,
@@ -87,9 +88,12 @@ export function AccountConsolidationContent() {
         );
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to send verification code';
-      setError(errorMessage);
+      setError(
+        userFacingError(
+          err,
+          'The verification code could not be sent. Please try again or visit Support.'
+        )
+      );
     } finally {
       setRequestCodeBusy(false);
     }
@@ -141,9 +145,12 @@ export function AccountConsolidationContent() {
         setError(result.message || 'Account consolidation failed');
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to consolidate accounts';
-      setError(errorMessage);
+      setError(
+        userFacingError(
+          err,
+          'The accounts could not be merged. Please verify the code and try again.'
+        )
+      );
     } finally {
       setConsolidationBusy(false);
     }
@@ -156,7 +163,7 @@ export function AccountConsolidationContent() {
     }
 
     const sure = window.confirm(
-      'This will convert your personal garage into a shared household garage. Your existing vehicles will be copied into the shared garage. Continue?'
+      'This will organize your personal garage as a household garage managed by this signed-in account. Your existing vehicles will be copied into it. Continue?'
     );
     if (!sure) return;
 
@@ -176,14 +183,15 @@ export function AccountConsolidationContent() {
         name: result.name,
       });
       setStatus(
-        `${result.name} is now a household garage. ${result.vehiclesCopied} vehicle(s) were copied into the shared garage.`
+        `${result.name} is now a household garage. ${result.vehiclesCopied} vehicle(s) were copied into it.`
       );
     } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Failed to create household garage';
-      setError(errorMessage);
+      setError(
+        userFacingError(
+          err,
+          'The household garage could not be created. Please try again.'
+        )
+      );
     } finally {
       setHouseholdBusy(false);
     }
@@ -219,9 +227,8 @@ export function AccountConsolidationContent() {
         </p>
         <div className="rounded-lg border border-warning-300 dark:border-warning-700 bg-warning-50 dark:bg-warning-950/30 px-4 py-3">
           <p className="text-sm text-warning-900 dark:text-warning-200 m-0">
-            <strong>How to find your secondary account UID:</strong> Sign in to
-            the other account on web or mobile, then look for the User ID in
-            Account settings.
+            <strong>How to find the other account’s Support ID:</strong> Sign in
+            to the other account, open Account, and use Copy Support ID.
           </p>
         </div>
         <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-4">
@@ -230,7 +237,7 @@ export function AccountConsolidationContent() {
               htmlFor="consolidationSourceUid"
               className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
             >
-              Source Account UID
+              Other account Support ID
             </label>
             <input
               id="consolidationSourceUid"
@@ -241,7 +248,7 @@ export function AccountConsolidationContent() {
                 setConsolidationCodeSentTo('');
                 setConsolidationCode('');
               }}
-              placeholder="Paste the UID from your secondary account"
+              placeholder="Paste the Support ID from the other account"
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
             />
           </div>
@@ -327,11 +334,12 @@ export function AccountConsolidationContent() {
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-4">
         <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
-          Shared Garage
+          Household Garage
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
-          Share one garage with your household so everyone sees the same
-          vehicles, records, and reminders.
+          Organize the vehicles your household relies on in one garage. This
+          release keeps management with the signed-in account; invitations and
+          additional member access are not yet available.
         </p>
 
         {householdStatusLoading ? (
@@ -341,18 +349,19 @@ export function AccountConsolidationContent() {
         ) : householdStatus?.orgType === 'household' ? (
           <div className="rounded-lg border border-accent-300 dark:border-accent-700 bg-accent-50 dark:bg-accent-950/30 px-4 py-3 space-y-1">
             <p className="text-sm text-accent-900 dark:text-accent-200 m-0">
-              <strong>{householdStatus.name || 'Shared Garage'}</strong> is a
-              shared household garage.
+              <strong>{householdStatus.name || 'Household Garage'}</strong> is a
+              household garage managed by this account.
             </p>
             <p className="text-xs text-accent-800 dark:text-accent-300 m-0">
               Storage mode:{' '}
               {householdStatus.garageStorageMode === 'org_scoped'
-                ? 'Shared only'
-                : 'Shared (dual write)'}
+                ? 'Household garage'
+                : 'Household garage (migration in progress)'}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 mb-0">
-              TODO: inviting additional members to this household is not yet
-              available.
+              Additional member invitations are not available in this release.
+              This household garage is currently managed from the signed-in
+              account.
             </p>
           </div>
         ) : (
@@ -362,7 +371,7 @@ export function AccountConsolidationContent() {
                 htmlFor="householdName"
                 className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2"
               >
-                Shared garage name
+                Household garage name
               </label>
               <input
                 id="householdName"
@@ -374,8 +383,8 @@ export function AccountConsolidationContent() {
               />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
-              Your existing vehicles will be copied into the shared garage. You
-              remain the owner and keep access to your personal garage.
+              Your existing vehicles will be copied into the household garage.
+              You remain the owner and keep access to your personal garage.
             </p>
             <button
               type="button"
@@ -383,7 +392,7 @@ export function AccountConsolidationContent() {
               disabled={householdBusy || !householdName.trim()}
               className="bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
             >
-              {householdBusy ? 'Creating…' : 'Create Shared Garage'}
+              {householdBusy ? 'Creating…' : 'Create Household Garage'}
             </button>
           </div>
         )}
@@ -397,7 +406,7 @@ export default function AccountConsolidation() {
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-          Merge &amp; Share Garage
+          Accounts &amp; Household Garage
         </h1>
         <Link
           to="/app/profile"

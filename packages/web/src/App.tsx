@@ -17,7 +17,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';
 import AdminSupport from './pages/AdminSupport';
 import { AuthProvider, useAuth } from './shared/AuthContext';
-import { DEFAULT_APP_REDIRECT } from './shared/authRedirect';
+import {
+  DEFAULT_APP_REDIRECT,
+  getRedirectQueryParam,
+} from './shared/authRedirect';
 import {
   appEnvironment,
   isDevelopmentEnvironment,
@@ -220,13 +223,20 @@ function MarketingRoute({ children }: { children: React.ReactNode }) {
 
 function AuthOnlyRoute() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   if (user && !user.isAnonymous) {
-    return <Navigate to={DEFAULT_APP_REDIRECT} replace />;
+    // An already-signed-in visitor hitting /auth/signup or /auth/login
+    // (e.g. clicking a Pricing page CTA while logged in) should still land
+    // wherever that link intended -- not get bounced to the Garage,
+    // silently dropping the plan they were trying to buy.
+    return (
+      <Navigate to={getRedirectQueryParam(location.search)} replace />
+    );
   }
 
   return <Outlet />;

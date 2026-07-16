@@ -1,7 +1,21 @@
+/// Marks an exception whose message is already end-user-friendly (e.g. one
+/// built by AuthService from a specific FirebaseAuthException code), so
+/// [userFacingError] displays it verbatim instead of re-translating it and
+/// losing the detail a generic code-based match can't express.
+class FriendlyException implements Exception {
+  final String message;
+  const FriendlyException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 String userFacingError(
   Object error, {
   String fallback = 'Something went wrong. Please try again.',
 }) {
+  if (error is FriendlyException) return error.message;
+
   final message = error.toString().toLowerCase();
 
   if (message.contains('network') || message.contains('unavailable')) {

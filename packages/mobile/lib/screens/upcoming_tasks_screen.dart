@@ -617,7 +617,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
         title: const Text('Maintenance Plan'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.build_circle),
+            icon: const Icon(Icons.storefront_outlined),
             tooltip: 'Shops & Services',
             onPressed: () => context.push('/app/service-providers'),
           ),

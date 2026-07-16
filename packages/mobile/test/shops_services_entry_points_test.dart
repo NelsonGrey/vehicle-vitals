@@ -22,6 +22,7 @@ void main() {
       expect(source, contains("Shops & Services"));
       expect(source, contains("context.push('/app/service-providers')"));
       expect(source, contains('actions: ['));
+      expect(source, contains('Icons.storefront_outlined'));
     });
 
     test(
@@ -60,13 +61,35 @@ void main() {
       final source = readScreen('lib/screens/upcoming_tasks_screen.dart');
       expect(source, contains("Shops & Services"));
       expect(source, contains("context.push('/app/service-providers')"));
+      expect(source, contains('Icons.storefront_outlined'));
     });
 
     test('History screen exposes an AppBar action to Shops & Services', () {
       final source = readScreen('lib/screens/timeline_dashboard_screen.dart');
       expect(source, contains("Shops & Services"));
       expect(source, contains("context.push('/app/service-providers')"));
+      expect(source, contains('Icons.storefront_outlined'));
     });
+
+    test(
+      'All Shops & Services entry points use the same storefront icon',
+      () {
+        for (final path in [
+          'lib/screens/home_screen.dart',
+          'lib/screens/upcoming_tasks_screen.dart',
+          'lib/screens/timeline_dashboard_screen.dart',
+          'lib/screens/maintenance_list_screen.dart',
+          'lib/screens/maintenance_detail_screen.dart',
+        ]) {
+          final source = readScreen(path);
+          expect(
+            source,
+            contains('Icons.storefront_outlined'),
+            reason: '$path should use Icons.storefront_outlined',
+          );
+        }
+      },
+    );
 
     test('Bottom nav stays at exactly 4 items (no 5th Shops & Services slot)', () {
       final source = readScreen('lib/components/app_bottom_nav.dart');

@@ -14,6 +14,7 @@ import {
   trackPurchase,
 } from '../shared/marketingAnalytics';
 import { ROUTE_SEO } from '../shared/seoMeta';
+import { withRedirect } from '../shared/authRedirect';
 import {
   changeSubscriptionTier,
   createBillingPortalSession,
@@ -227,8 +228,18 @@ export default function SubscriptionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { subscription, tier, isLoading } = useSubscription();
+  // Preserves the plan a signed-out visitor picked on the public pricing
+  // page: its CTAs redirect through signup to
+  // /app/subscription?tier=...&billingPeriod=..., since otherwise a new
+  // user would land back in the Garage with no memory of which plan they
+  // clicked "Start" on.
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
-    'monthly'
+    () => {
+      const requestedPeriod = new URLSearchParams(location.search || '').get(
+        'billingPeriod'
+      );
+      return requestedPeriod === 'annual' ? 'annual' : 'monthly';
+    }
   );
   const [isSubmittingTierChange, setIsSubmittingTierChange] = useState(false);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
@@ -594,7 +605,13 @@ export default function SubscriptionPage() {
                 </a>
               ) : (
                 <Link
-                  to="/auth/signup"
+                  to={withRedirect(
+                    '/auth/signup',
+                    `/app/subscription?tier=${planTier}&billingPeriod=${billingPeriod}`
+                  )}
+                  onClick={() =>
+                    trackPricingPlanClick(planTier, billingPeriod, ctaText)
+                  }
                   className="mt-4 inline-flex w-full justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
                 >
                   {ctaText}

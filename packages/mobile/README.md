@@ -1,6 +1,6 @@
-# Vehicle Vitals - Flutter Mobile App
+# Vehicle-Vitals - Flutter Mobile App
 
-This is the Flutter version of the Vehicle Vitals mobile app, converted from React Native. It provides the same functionality as the React Native version with native Flutter performance and UI.
+This is the Flutter version of the Vehicle-Vitals mobile app, converted from React Native. It provides the same functionality as the React Native version with native Flutter performance and UI.
 
 ## Features
 
@@ -21,11 +21,13 @@ This is the Flutter version of the Vehicle Vitals mobile app, converted from Rea
 ### Installation
 
 1. Navigate to the Flutter app directory:
+
    ```bash
    cd mobile_flutter
    ```
 
 2. Install dependencies:
+
    ```bash
    flutter pub get
    ```
@@ -33,13 +35,14 @@ This is the Flutter version of the Vehicle Vitals mobile app, converted from Rea
 3. Configure Firebase (see Firebase Configuration section)
 
 4. Run the app:
+
    ```bash
    # For iOS
    flutter run -d ios
-   
+
    # For Android
    flutter run -d android
-   
+
    # For debugging
    flutter run --debug
    ```
@@ -66,6 +69,7 @@ flutterfire configure
 ```
 
 This will:
+
 - Update `lib/firebase_options.dart` with your project configuration
 - Add platform-specific config files (GoogleService-Info.plist for iOS, google-services.json for Android)
 
@@ -78,7 +82,7 @@ static const FirebaseOptions android = FirebaseOptions(
   apiKey: 'your-android-api-key',
   appId: 'your-android-app-id',
   messagingSenderId: 'your-messaging-sender-id',
-  projectId: 'your-project-id',
+   projectId: 'vehicle-vitals-dev',
   storageBucket: 'your-storage-bucket',
 );
 
@@ -86,7 +90,7 @@ static const FirebaseOptions ios = FirebaseOptions(
   apiKey: 'your-ios-api-key',
   appId: 'your-ios-app-id',
   messagingSenderId: 'your-messaging-sender-id',
-  projectId: 'your-project-id',
+   projectId: 'vehicle-vitals-dev',
   storageBucket: 'your-storage-bucket',
   iosBundleId: 'com.example.vehicleVitalsFlutter',
 );

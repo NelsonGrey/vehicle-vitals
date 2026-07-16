@@ -1,5 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  debugPrint('Handling background message: ${message.messageId}');
+}
 
 class NotificationService extends ChangeNotifier {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -12,100 +18,46 @@ class NotificationService extends ChangeNotifier {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
+    if (_screenshotMode) {
+      _isInitialized = true;
+      notifyListeners();
+      return;
+    }
+
     try {
-      // Request permission for notifications
-      NotificationSettings settings = await _firebaseMessaging
-          .requestPermission(alert: true, badge: true, sound: true);
+      await _firebaseMessaging.requestPermission();
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        debugPrint('User granted permission');
-
-        // Get FCM token
-        _fcmToken = await _firebaseMessaging.getToken();
-        debugPrint('FCM Token: $_fcmToken');
-
-        // Set up message handlers
-        _setupMessageHandlers();
-
-        _isInitialized = true;
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+        _fcmToken = token;
         notifyListeners();
+      });
+
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        final apnsToken = await _firebaseMessaging.getAPNSToken();
+        if (apnsToken == null) {
+          debugPrint(
+            'APNS token not available yet; deferring FCM token fetch until refresh.',
+          );
+        } else {
+          _fcmToken = await _firebaseMessaging.getToken();
+        }
       } else {
-        debugPrint('User declined or has not accepted permission');
+        _fcmToken = await _firebaseMessaging.getToken();
       }
+
+      _isInitialized = true;
+      notifyListeners();
     } catch (e) {
       debugPrint('Error initializing notifications: $e');
     }
   }
 
-  void _setupMessageHandlers() {
-    // Handle messages when app is in foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-
-      if (message.notification != null) {
-        debugPrint(
-          'Message also contained a notification: ${message.notification}',
-        );
-        // Here you could show a local notification or update UI
-        _showLocalNotification(message);
-      }
-    });
-
-    // Handle messages when app is opened from a terminated state
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('Message opened app: ${message.data}');
-      // Handle navigation or other actions based on message data
-      _handleMessageNavigation(message);
-    });
-
-    // Handle messages when app is in background
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  }
-
-  void _showLocalNotification(RemoteMessage message) {
-    // This would integrate with flutter_local_notifications package
-    // For now, just log the notification
-    debugPrint('Showing local notification: ${message.notification?.title}');
-  }
-
-  void _handleMessageNavigation(RemoteMessage message) {
-    // Handle navigation based on message data
-    final data = message.data;
-    if (data.containsKey('screen')) {
-      final screen = data['screen'];
-      debugPrint('Navigate to screen: $screen');
-      // You would emit an event or use a navigation service here
-    }
-  }
-
   Future<void> subscribeToTopic(String topic) async {
-    try {
-      await _firebaseMessaging.subscribeToTopic(topic);
-      debugPrint('Subscribed to topic: $topic');
-    } catch (e) {
-      debugPrint('Error subscribing to topic: $e');
-    }
+    await _firebaseMessaging.subscribeToTopic(topic);
   }
 
   Future<void> unsubscribeFromTopic(String topic) async {
-    try {
-      await _firebaseMessaging.unsubscribeFromTopic(topic);
-      debugPrint('Unsubscribed from topic: $topic');
-    } catch (e) {
-      debugPrint('Error unsubscribing from topic: $e');
-    }
-  }
-}
-
-// Background message handler (must be a top-level function)
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('Handling a background message: ${message.messageId}');
-  debugPrint('Message data: ${message.data}');
-
-  if (message.notification != null) {
-    debugPrint(
-      'Message also contained a notification: ${message.notification}',
-    );
+    await _firebaseMessaging.unsubscribeFromTopic(topic);
   }
 }

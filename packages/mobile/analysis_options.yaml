@@ -9,6 +9,15 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # build/ is gitignored generated output, but some plugins (e.g.
+  # firebase_storage's macOS SourcePackages) vendor their own internal test
+  # suites inside it -- those reference the plugin's own dev-dependencies
+  # (mockito etc.), not this project's, and aren't reachable from git status
+  # alone since gitignore doesn't affect the analyzer's file discovery.
+  exclude:
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

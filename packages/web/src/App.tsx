@@ -1,11 +1,64 @@
 // File: web/src/App.tsx
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
-import EnvironmentGate from './components/EnvironmentGate';
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
+import AuthLayout from './components/AuthLayout';
+import CookieConsentBanner from './components/CookieConsentBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import SuperAdminRoute from './components/SuperAdminRoute';
+import AdminSupport from './pages/AdminSupport';
 import { AuthProvider, useAuth } from './shared/AuthContext';
+import {
+  DEFAULT_APP_REDIRECT,
+  getRedirectQueryParam,
+} from './shared/authRedirect';
+import {
+  appEnvironment,
+  isDevelopmentEnvironment,
+  isMarketingOnlyEnvironment,
+} from './shared/environment';
+import {
+  buildReminderNotificationPath,
+  subscribeToForegroundMessages,
+} from './shared/notificationService';
+import { replayStoredConsent } from './shared/consent';
+import { captureUtmParams } from './shared/marketingAnalytics';
 import { analytics, logger } from './utils/logger';
+
+// Replay any previously stored consent decision into GTM on every page load.
+replayStoredConsent();
+
+// Capture UTM params from the landing URL before any navigation occurs.
+captureUtmParams();
+
+// Every path below only ever renders a <Navigate replace /> — visiting one
+// briefly sets `location.pathname` to the legacy path before the redirect
+// lands, so AppAnalytics skips firing page_view for these to avoid a
+// spurious extra pageview alongside the one for the real destination.
+// (edit-vehicle/:vin is deliberately excluded: it's a redirect only under
+// marketingOnlyMode, and a real protected page otherwise.)
+const LEGACY_REDIRECT_PATHS = new Set([
+  '/start-steps',
+  '/everyday-screens',
+  '/short-video-tours',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/add-vehicle',
+  '/providers',
+  '/profile',
+  '/timeline',
+  '/upcoming',
+]);
 
 // Component to handle logging and analytics
 function AppAnalytics() {
@@ -33,7 +86,8 @@ function AppAnalytics() {
     }
   }, [user]);
 
-  // Track page views
+  // Track page views. Use a microtask delay so PageSEO's useEffect (which
+  // updates document.title) runs first, giving us the correct route title.
   useEffect(() => {
     const startTime = Date.now();
     logger.info(`Page view: ${location.pathname}`, {
@@ -41,14 +95,18 @@ function AppAnalytics() {
       data: { path: location.pathname, search: location.search },
     });
 
-    // Track page view in analytics
-    analytics.trackEvent('page_view', {
-      page_path: location.pathname,
-      page_title: document.title,
-    });
+    const id = setTimeout(() => {
+      if (LEGACY_REDIRECT_PATHS.has(location.pathname)) return;
+      analytics.trackEvent('page_view', {
+        page_path: location.pathname,
+        page_search: location.search,
+        page_title: document.title,
+      });
+    }, 0);
 
     // Track time spent on page when leaving
     return () => {
+      clearTimeout(id);
       const timeSpent = Date.now() - startTime;
       logger.info(`Page exit: ${location.pathname}`, {
         category: 'navigation',
@@ -60,36 +118,135 @@ function AppAnalytics() {
   return null; // This component doesn't render anything
 }
 
+function AppNotificationBridge() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      return undefined;
+    }
+
+    let unsubscribe = () => {};
+    let isActive = true;
+
+    void subscribeToForegroundMessages(payload => {
+      const notificationTitle = payload.notification?.title || 'Vehicle-Vitals';
+      const notificationBody =
+        payload.notification?.body || 'You have a maintenance reminder.';
+      const destination = buildReminderNotificationPath(payload.data);
+
+      if (
+        typeof Notification !== 'undefined' &&
+        Notification.permission === 'granted'
+      ) {
+        const notification = new Notification(notificationTitle, {
+          body: notificationBody,
+          tag: payload.data?.tag || 'vehicle-vitals-notification',
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          navigate(destination);
+          notification.close();
+        };
+        return;
+      }
+
+      window.alert(`${notificationTitle}\n\n${notificationBody}`);
+      navigate(destination);
+    }).then(nextUnsubscribe => {
+      if (!isActive) {
+        nextUnsubscribe();
+        return;
+      }
+
+      unsubscribe = nextUnsubscribe;
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [navigate, user]);
+
+  return null;
+}
+
 // Public pages - lazy loaded
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const SignUp = lazy(() => import('./pages/SignUp'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const FeatureDemo = lazy(() => import('./pages/FeatureDemo'));
 const Instructions = lazy(() => import('./pages/Instructions'));
-const Contact = lazy(() => import('./pages/Contact'));
+const Help = lazy(() => import('./pages/Help'));
+const ProductTour = lazy(() => import('./pages/ProductTour'));
+const Support = lazy(() => import('./pages/Support'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const PersonaPage = lazy(() => import('./pages/PersonaPage'));
 const ComingSoon = lazy(() => import('./pages/ComingSoon'));
 
 // Protected pages - lazy loaded
 const Home = lazy(() => import('./pages/Home'));
 const AddVehicle = lazy(() => import('./pages/AddVehicle'));
 const EditVehicle = lazy(() => import('./pages/EditVehicle'));
+const Records = lazy(() => import('./pages/Records'));
 const Profile = lazy(() => import('./pages/Profile'));
-const DevSeed = lazy(() => import('./pages/DevSeed'));
+const ServiceProviders = lazy(() => import('./pages/ServiceProviders'));
+const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
 const UpcomingTasks = lazy(() => import('./pages/UpcomingTasks'));
+const DevSeed = lazy(() => import('./pages/DevSeed'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-600 dark:border-slate-300"></div>
   </div>
 );
 
+function MarketingRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (user && !user.isAnonymous) {
+    return <Navigate to={DEFAULT_APP_REDIRECT} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function AuthOnlyRoute() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (user && !user.isAnonymous) {
+    // An already-signed-in visitor hitting /auth/signup or /auth/login
+    // (e.g. clicking a Pricing page CTA while logged in) should still land
+    // wherever that link intended -- not get bounced to the Garage,
+    // silently dropping the plan they were trying to buy.
+    return (
+      <Navigate to={getRedirectQueryParam(location.search)} replace />
+    );
+  }
+
+  return <Outlet />;
+}
+
 function App() {
   // Check if we should show the coming soon page
+  const environment = appEnvironment;
   const showComingSoon = import.meta.env.VITE_SHOW_COMING_SOON === 'true';
-  const environment = import.meta.env.VITE_ENVIRONMENT || 'development';
+  const marketingOnlyMode = isMarketingOnlyEnvironment;
 
   // Track app initialization
   useEffect(() => {
@@ -97,9 +254,10 @@ function App() {
     logger.info('App initialized', {
       category: 'app',
       data: {
-        environment: import.meta.env.MODE,
+        environment,
+        buildMode: import.meta.env.MODE,
         showComingSoon,
-        appEnvironment: environment,
+        marketingOnlyMode,
       },
     });
 
@@ -110,14 +268,12 @@ function App() {
     return () => {
       logger.info('App unmounting', { category: 'app' });
     };
-  }, [showComingSoon, environment]);
+  }, [showComingSoon, environment, marketingOnlyMode]);
 
   // Show Coming Soon page if flag is enabled
   if (showComingSoon) {
     return (
-      <BrowserRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
+      <BrowserRouter>
         <Suspense fallback={<LoadingSpinner />}>
           <ComingSoon />
         </Suspense>
@@ -125,91 +281,281 @@ function App() {
     );
   }
 
-  console.log('App component rendering with full routing');
-
   const appContent = (
-    <BrowserRouter
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-    >
+    <BrowserRouter>
       <AuthProvider>
         <AppAnalytics />
+        <AppNotificationBridge />
+        <CookieConsentBanner />
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            {/* Landing page without layout */}
-            <Route path="/" element={<Landing />} />
+            {/* Marketing (anonymous) pages */}
+            <Route
+              path="/"
+              element={
+                <MarketingRoute>
+                  <Landing />
+                </MarketingRoute>
+              }
+            />
 
-            {/* Routes with layout */}
+            {/* Marketing and user-app routes with main layout */}
             <Route path="/" element={<Layout />}>
-              {/* Public routes */}
-              <Route path="login" element={<Login />} />
-              <Route path="signup" element={<SignUp />} />
+              <Route
+                path="vin-lookup-demo"
+                element={
+                  <FeatureDemo
+                    title="VIN Lookup"
+                    subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
+                    marketingBullets={[
+                      'Enter a VIN and preview looked-up year, make, and model.',
+                      'Understand how quick add reduces setup friction.',
+                      'See the path from initial lookup to saved vehicle records.',
+                    ]}
+                    appRoute="/app/add-vehicle"
+                    appCtaLabel="Open VIN Add Flow"
+                  />
+                }
+              />
+              <Route
+                path="maintenance-planning-demo"
+                element={
+                  <FeatureDemo
+                    title="Maintenance Planning"
+                    subtitle="See how service planning becomes visible, organized, and predictable."
+                    marketingBullets={[
+                      'Preview scheduled maintenance workflows and reminders.',
+                      'Understand how timeline and upcoming tasks connect.',
+                      'See how service history supports long-term ownership.',
+                    ]}
+                    appRoute="/app/upcoming"
+                    appCtaLabel="Open Maintenance Plan"
+                  />
+                }
+              />
+              <Route
+                path="cross-platform-access-demo"
+                element={
+                  <FeatureDemo
+                    title="Cross Platform Access"
+                    subtitle="See how the same garage data follows users across devices."
+                    marketingBullets={[
+                      'Understand web and mobile continuity from one account.',
+                      'Preview secure sign-in and shared data behavior.',
+                      'See where users continue work from any platform.',
+                    ]}
+                    appRoute="/app"
+                    appCtaLabel="Open Garage Dashboard"
+                  />
+                }
+              />
+              <Route
+                path="ownership-history-demo"
+                element={
+                  <FeatureDemo
+                    title="Ownership History"
+                    subtitle="See how long-term maintenance records become a single source of truth."
+                    marketingBullets={[
+                      'Preview complete vehicle history and service chronology.',
+                      'Understand resale and ownership confidence benefits.',
+                      'See where records are maintained behind secure access.',
+                    ]}
+                    appRoute="/app/timeline"
+                    appCtaLabel="Open Service History"
+                  />
+                }
+              />
+
               <Route path="instructions" element={<Instructions />} />
-              <Route path="contact" element={<Contact />} />
+              <Route path="getting-started" element={<Instructions />} />
+              <Route path="help" element={<Help />} />
+              <Route
+                path="start-steps"
+                element={<Navigate to="/getting-started" replace />}
+              />
+              <Route path="product-tour" element={<ProductTour />} />
+              <Route
+                path="everyday-screens"
+                element={<Navigate to="/product-tour" replace />}
+              />
+              <Route
+                path="short-video-tours"
+                element={<Navigate to="/product-tour" replace />}
+              />
+              <Route path="support" element={<Support />} />
+              <Route path="contact" element={<Support />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />
+              <Route path="personas/:personaId" element={<PersonaPage />} />
 
-              {/* Protected routes */}
+              {/* Legacy auth URLs */}
               <Route
-                path="app"
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                }
+                path="login"
+                element={<Navigate to="/auth/login" replace />}
               />
               <Route
-                path="add-vehicle"
-                element={
-                  <ProtectedRoute>
-                    <AddVehicle />
-                  </ProtectedRoute>
-                }
+                path="signup"
+                element={<Navigate to="/auth/signup" replace />}
               />
               <Route
-                path="edit-vehicle/:vin"
-                element={
-                  <ProtectedRoute>
-                    <EditVehicle />
-                  </ProtectedRoute>
-                }
+                path="forgot-password"
+                element={<Navigate to="/auth/forgot-password" replace />}
               />
-              <Route
-                path="profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="timeline"
-                element={
-                  <ProtectedRoute>
-                    <TimelineDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="upcoming"
-                element={
-                  <ProtectedRoute>
-                    <UpcomingTasks />
-                  </ProtectedRoute>
-                }
-              />
+
+              {/* Protected user application */}
+              {marketingOnlyMode ? (
+                <>
+                  <Route path="app/*" element={<Navigate to="/" replace />} />
+                  <Route
+                    path="add-vehicle"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route
+                    path="edit-vehicle/:vin"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route
+                    path="providers"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route path="profile" element={<Navigate to="/" replace />} />
+                  <Route
+                    path="timeline"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route
+                    path="upcoming"
+                    element={<Navigate to="/" replace />}
+                  />
+                </>
+              ) : (
+                <>
+                  <Route
+                    path="app"
+                    element={
+                      <ProtectedRoute>
+                        <Outlet />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Home />} />
+                    <Route path="add-vehicle" element={<AddVehicle />} />
+                    <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
+                    <Route path="records/:vin" element={<Records />} />
+                    <Route path="profile" element={<Profile />} />
+                    {/* Orphaned since the Profile-hub refactor (see
+                        docs/CAPABILITY_ARCHITECTURE_REFACTOR_PROMPT.md)
+                        consolidated these into Profile tabs — redirect any
+                        stale bookmarks/links instead of leaving a dead end. */}
+                    <Route
+                      path="account"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
+                    <Route
+                      path="maintenance-alerts"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
+                    <Route
+                      path="account-consolidation"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
+                    <Route
+                      path="api-automation"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
+                    <Route
+                      path="data-privacy"
+                      element={<Navigate to="/app/profile" replace />}
+                    />
+                    <Route path="subscription" element={<SubscriptionPage />} />
+                    <Route path="providers" element={<ServiceProviders />} />
+                    <Route path="timeline" element={<TimelineDashboard />} />
+                    <Route path="upcoming" element={<UpcomingTasks />} />
+                    <Route
+                      path="admin"
+                      element={
+                        <SuperAdminRoute>
+                          <Outlet />
+                        </SuperAdminRoute>
+                      }
+                    >
+                      <Route index element={<AdminSupport />} />
+                    </Route>
+                    {isDevelopmentEnvironment && (
+                      <Route path="dev-seed" element={<DevSeed />} />
+                    )}
+                  </Route>
+
+                  {/* Legacy protected URLs */}
+                  <Route
+                    path="add-vehicle"
+                    element={<Navigate to="/app/add-vehicle" replace />}
+                  />
+                  <Route
+                    path="edit-vehicle/:vin"
+                    element={
+                      <ProtectedRoute>
+                        <EditVehicle />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="providers"
+                    element={<Navigate to="/app/providers" replace />}
+                  />
+                  <Route
+                    path="profile"
+                    element={<Navigate to="/app/profile" replace />}
+                  />
+                  <Route path="subscription" element={<SubscriptionPage />} />
+                  <Route
+                    path="timeline"
+                    element={<Navigate to="/app/timeline" replace />}
+                  />
+                  <Route
+                    path="upcoming"
+                    element={<Navigate to="/app/upcoming" replace />}
+                  />
+                </>
+              )}
             </Route>
 
-            {/* Development route - remove in production */}
-            <Route path="/dev-seed" element={<DevSeed />} />
+            {/* Authentication and authorization routes */}
+            {marketingOnlyMode ? (
+              <Route path="/auth/*" element={<Navigate to="/" replace />} />
+            ) : (
+              <Route path="/auth" element={<AuthOnlyRoute />}>
+                <Route element={<AuthLayout />}>
+                  <Route path="login" element={<Login />} />
+                  <Route path="signup" element={<SignUp />} />
+                  <Route path="forgot-password" element={<ForgotPassword />} />
+                </Route>
+              </Route>
+            )}
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </AuthProvider>
     </BrowserRouter>
   );
 
-  // Wrap with environment gate for staging and dev
   return (
-    <EnvironmentGate environment={environment}>{appContent}</EnvironmentGate>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        logger.error('Application error', {
+          category: 'error',
+          data: {
+            error: error.message,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+          },
+        });
+      }}
+    >
+      {appContent}
+    </ErrorBoundary>
   );
 }
 

@@ -1,37 +1,55 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:logging/logging.dart';
+import 'package:provider/provider.dart';
+
+import 'components/ad_banner.dart';
+import 'components/error_boundary.dart';
 import 'firebase_options.dart';
+import 'screens/account_screen.dart';
+import 'screens/add_vehicle_screen.dart';
+import 'screens/calendar_preferences_screen.dart';
+import 'screens/data_privacy_screen.dart';
+import 'screens/edit_vehicle_screen.dart';
+import 'screens/email_preferences_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/instructions_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/maintenance_detail_screen.dart';
+import 'screens/maintenance_list_screen.dart';
+import 'screens/marketing_welcome_screen.dart';
+import 'screens/offline_settings_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/premium_screen.dart';
+import 'screens/privacy_screen.dart';
+import 'screens/records_screen.dart';
+import 'screens/reminder_preferences_screen.dart';
+import 'screens/scan_vin_screen.dart';
+import 'screens/service_providers_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/support_screen.dart';
+import 'screens/terms_screen.dart';
+import 'screens/timeline_dashboard_screen.dart';
+import 'screens/upcoming_tasks_screen.dart';
+import 'screens/vehicle_detail_screen.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
-import 'services/premium_service.dart';
 import 'services/offline_service.dart';
-import 'services/analytics_service.dart';
+import 'services/onboarding_service.dart';
+import 'services/premium_service.dart';
 import 'theme/app_theme.dart';
-import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
-import 'screens/add_vehicle_screen.dart';
-import 'screens/edit_vehicle_screen.dart';
-import 'screens/scan_vin_screen.dart';
-import 'screens/maintenance_list_screen.dart';
-import 'screens/maintenance_detail_screen.dart';
-import 'screens/account_screen.dart';
-import 'screens/contact_screen.dart';
-import 'screens/privacy_screen.dart';
-import 'screens/terms_screen.dart';
-import 'screens/instructions_screen.dart';
-import 'screens/email_preferences_screen.dart';
-import 'screens/calendar_preferences_screen.dart';
-import 'components/ad_banner.dart';
-import 'screens/premium_screen.dart';
-import 'screens/offline_settings_screen.dart';
-import 'screens/analytics_screen.dart';
-import 'screens/upcoming_tasks_screen.dart';
+
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,21 +62,78 @@ void main() async {
     );
   });
 
-  // Initialize Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Initialize Firebase with explicit options to avoid environment drift.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    final activeOptions = Firebase.app().options;
+    debugPrint(
+      'Firebase initialized: env=${DefaultFirebaseOptions.currentEnvironmentLabel}, '
+      'project=${activeOptions.projectId}, appId=${activeOptions.appId}',
+    );
 
-  // Initialize Google Mobile Ads
+    // Wire Flutter and Dart error handlers to Crashlytics.
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      return Material(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Something went wrong',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  kDebugMode
+                      ? details.exceptionAsString()
+                      : 'Please restart the app or visit Support if the problem persists.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    };
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+    rethrow;
+  }
+
+  // Initialize Google Mobile Ads.
   await MobileAds.instance.initialize();
 
-  // Initialize notifications
+  // Initialize notifications.
   final notificationService = NotificationService();
   await notificationService.initialize();
 
-  // Pre-load interstitial and rewarded ads
+  // Pre-load interstitial and rewarded ads.
   InterstitialAdHelper.loadAd();
   RewardedAdHelper.loadAd();
 
   runApp(VehicleVitalsApp(notificationService: notificationService));
+}
+
+String _resolveInitialRoute() {
+  final routeName = PlatformDispatcher.instance.defaultRouteName.trim();
+  if (routeName.isEmpty || routeName == '/') {
+    return '/welcome';
+  }
+
+  return routeName;
 }
 
 class VehicleVitalsApp extends StatelessWidget {
@@ -73,96 +148,133 @@ class VehicleVitalsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthService()),
         Provider(create: (context) => FirestoreService()),
         Provider(create: (context) => notificationService),
-        ChangeNotifierProvider(create: (context) => PremiumService()),
+        ChangeNotifierProxyProvider<AuthService, PremiumService>(
+          create: (context) => PremiumService(),
+          update: (context, authService, premiumService) {
+            final service = premiumService ?? PremiumService();
+            unawaited(service.syncForAuthUser(authService.currentUser?.uid));
+            return service;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthService, OnboardingService>(
+          create: (context) => OnboardingService(),
+          update: (context, authService, onboardingService) {
+            final service = onboardingService ?? OnboardingService();
+            unawaited(service.syncForAuthUser(authService.currentUser?.uid));
+            return service;
+          },
+        ),
         ChangeNotifierProvider(create: (context) => OfflineService()),
-        ChangeNotifierProvider(create: (context) => AnalyticsService()),
       ],
-      child: Consumer<AuthService>(
-        builder: (context, authService, child) {
-          return MaterialApp.router(
-            title: 'Vehicle Vitals',
-            theme: AppTheme.lightTheme(),
-            darkTheme: AppTheme.darkTheme(),
-            themeMode: ThemeMode.system,
-            routerConfig: _createRouter(authService),
+      child: Consumer2<AuthService, OnboardingService>(
+        builder: (context, authService, onboardingService, child) {
+          return ErrorWidgetWrapper(
+            child: MaterialApp.router(
+              title: 'Garage',
+              debugShowCheckedModeBanner: !_screenshotMode,
+              theme: AppTheme.lightTheme(),
+              darkTheme: AppTheme.darkTheme(),
+              themeMode: ThemeMode.system,
+              routerConfig: _createRouter(authService, onboardingService),
+              builder: (context, child) {
+                return Column(
+                  children: [
+                    if (kDebugMode && !_screenshotMode)
+                      const _DebugFirebaseEnvBanner(),
+                    if (!_screenshotMode)
+                      const SafeArea(
+                        bottom: false,
+                        child: AdBanner(margin: EdgeInsets.zero),
+                      ),
+                    Expanded(child: child ?? const SizedBox.shrink()),
+                  ],
+                );
+              },
+            ),
           );
         },
       ),
     );
   }
 
-  GoRouter _createRouter(AuthService authService) {
+  GoRouter _createRouter(
+    AuthService authService,
+    OnboardingService onboardingService,
+  ) {
     return GoRouter(
-      initialLocation: '/',
+      initialLocation: _resolveInitialRoute(),
       redirect: (context, state) {
         final isLoggedIn = authService.currentUser != null;
         final isLoading = authService.isLoading;
+        final onboardingLoading = onboardingService.isLoading;
+        final onboardingCompleted = onboardingService.isCompleted;
+        final location = state.matchedLocation;
+
+        final isAuthRoute = location.startsWith('/auth/');
+        final isWelcomeRoute =
+            location == '/welcome' || location == '/marketing';
+        final isAppRoute = location == '/app' || location.startsWith('/app/');
+        final isOnboardingRoute = location == '/app/onboarding';
+        final isAllowedSetupRoute =
+            isOnboardingRoute ||
+            location.startsWith('/app/add-vehicle') ||
+            location == '/app/reminder-preferences' ||
+            location == '/app/premium' ||
+            location == '/app/support' ||
+            location == '/app/contact';
 
         if (isLoading) return null; // Don't redirect while loading
 
-        // Redirect to login if not authenticated and trying to access protected routes
-        if (!isLoggedIn &&
-            state.matchedLocation != '/login' &&
-            state.matchedLocation != '/signup') {
-          return '/login';
+        // Unauthenticated users may only access welcome or auth routes.
+        if (!isLoggedIn && isAppRoute) {
+          return '/auth/login';
         }
 
-        // Redirect to home if authenticated and on login/signup pages
-        if (isLoggedIn &&
-            (state.matchedLocation == '/login' ||
-                state.matchedLocation == '/signup')) {
-          return '/';
+        if (!isLoggedIn) {
+          return null;
+        }
+
+        if (onboardingLoading) {
+          return null;
+        }
+
+        final needsOnboarding = !onboardingCompleted;
+
+        // Authenticated users are routed into the secure app namespace.
+        if (isAuthRoute || isWelcomeRoute) {
+          return needsOnboarding ? '/app/onboarding' : '/app';
+        }
+
+        if (needsOnboarding && isAppRoute && !isAllowedSetupRoute) {
+          return '/app/onboarding';
+        }
+
+        if (!needsOnboarding && isOnboardingRoute) {
+          return '/app';
         }
 
         return null;
       },
       routes: [
-        GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
         GoRoute(
-          path: '/login',
+          path: '/welcome',
+          builder: (context, state) => const WelcomeScreen(),
+        ),
+        GoRoute(
+          path: '/marketing',
+          builder: (context, state) => const WelcomeScreen(),
+        ),
+        GoRoute(
+          path: '/auth/login',
           builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
-          path: '/signup',
+          path: '/auth/signup',
           builder: (context, state) => const SignUpScreen(),
         ),
         GoRoute(
-          path: '/add-vehicle/:vin?',
-          builder: (context, state) =>
-              AddVehicleScreen(initialVin: state.pathParameters['vin']),
-        ),
-        GoRoute(
-          path: '/edit-vehicle/:vin',
-          builder: (context, state) =>
-              EditVehicleScreen(vin: state.pathParameters['vin']!),
-        ),
-        GoRoute(
-          path: '/scan-vin',
-          builder: (context, state) => const ScanVINScreen(),
-        ),
-        GoRoute(
-          path: '/maintenance/:vin',
-          builder: (context, state) =>
-              MaintenanceListScreen(vin: state.pathParameters['vin']!),
-        ),
-        GoRoute(
-          path: '/maintenance/:vin/:entryId',
-          builder: (context, state) => MaintenanceDetailScreen(
-            vin: state.pathParameters['vin']!,
-            entryId: state.pathParameters['entryId']!,
-          ),
-        ),
-        GoRoute(
-          path: '/account',
-          builder: (context, state) => const AccountScreen(),
-        ),
-        GoRoute(
-          path: '/email-preferences',
-          builder: (context, state) => const EmailPreferencesScreen(),
-        ),
-        GoRoute(
-          path: '/contact',
-          builder: (context, state) => const ContactScreen(),
+          path: '/auth/forgot-password',
+          builder: (context, state) => const ForgotPasswordScreen(),
         ),
         GoRoute(
           path: '/privacy',
@@ -173,30 +285,220 @@ class VehicleVitalsApp extends StatelessWidget {
           builder: (context, state) => const TermsScreen(),
         ),
         GoRoute(
-          path: '/instructions',
+          path: '/support',
+          builder: (context, state) => const SupportScreen(),
+        ),
+        GoRoute(
+          path: '/app/onboarding',
+          builder: (context, state) => const OnboardingScreen(),
+        ),
+        GoRoute(path: '/app', builder: (context, state) => const HomeScreen()),
+        GoRoute(
+          path: '/app/vehicle/:vin',
+          builder: (context, state) =>
+              VehicleDetailScreen(vin: state.pathParameters['vin']!),
+        ),
+        GoRoute(
+          path: '/app/add-vehicle',
+          builder: (context, state) => const AddVehicleScreen(),
+        ),
+        GoRoute(
+          path: '/app/add-vehicle/:vin',
+          builder: (context, state) =>
+              AddVehicleScreen(initialVin: state.pathParameters['vin']),
+        ),
+        GoRoute(
+          path: '/app/edit-vehicle/:vin',
+          builder: (context, state) =>
+              EditVehicleScreen(vin: state.pathParameters['vin']!),
+        ),
+        GoRoute(
+          path: '/app/records/:vin',
+          builder: (context, state) =>
+              RecordsScreen(vin: state.pathParameters['vin']!),
+        ),
+        GoRoute(
+          path: '/app/scan-vin',
+          builder: (context, state) => const ScanVINScreen(),
+        ),
+        GoRoute(
+          path: '/app/maintenance/:vin',
+          builder: (context, state) =>
+              MaintenanceListScreen(vin: state.pathParameters['vin']!),
+        ),
+        GoRoute(
+          path: '/app/maintenance/:vin/:entryId',
+          builder: (context, state) => MaintenanceDetailScreen(
+            vin: state.pathParameters['vin']!,
+            entryId: state.pathParameters['entryId']!,
+          ),
+        ),
+        GoRoute(
+          path: '/app/profile',
+          builder: (context, state) => const AccountScreen(),
+        ),
+        GoRoute(
+          path: '/app/account',
+          redirect: (context, state) => '/app/profile',
+        ),
+        GoRoute(
+          path: '/app/settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
+        GoRoute(
+          path: '/app/data-privacy',
+          builder: (context, state) => const DataPrivacyScreen(),
+        ),
+        GoRoute(
+          path: '/app/email-preferences',
+          builder: (context, state) => const EmailPreferencesScreen(),
+        ),
+        GoRoute(
+          path: '/app/support',
+          builder: (context, state) => const SupportScreen(),
+        ),
+        GoRoute(
+          path: '/app/contact',
+          builder: (context, state) => const SupportScreen(),
+        ),
+        GoRoute(
+          path: '/app/privacy',
+          builder: (context, state) => const PrivacyScreen(),
+        ),
+        GoRoute(
+          path: '/app/terms',
+          builder: (context, state) => const TermsScreen(),
+        ),
+        GoRoute(
+          path: '/app/instructions',
           builder: (context, state) => const InstructionsScreen(),
         ),
         GoRoute(
-          path: '/calendar-preferences',
+          path: '/app/calendar-preferences',
           builder: (context, state) => const CalendarPreferencesScreen(),
         ),
         GoRoute(
-          path: '/premium',
+          path: '/app/reminder-preferences',
+          builder: (context, state) => const ReminderPreferencesScreen(),
+        ),
+        GoRoute(
+          path: '/app/service-providers',
+          builder: (context, state) => const ServiceProvidersScreen(),
+        ),
+        GoRoute(
+          path: '/app/premium',
           builder: (context, state) => const PremiumScreen(),
         ),
         GoRoute(
-          path: '/offline-settings',
+          path: '/app/offline-settings',
           builder: (context, state) => const OfflineSettingsScreen(),
         ),
         GoRoute(
-          path: '/analytics',
-          builder: (context, state) => const AnalyticsScreen(),
-        ),
-        GoRoute(
-          path: '/upcoming',
+          path: '/app/upcoming',
           builder: (context, state) => const UpcomingTasksScreen(),
         ),
+        GoRoute(
+          path: '/app/timeline',
+          builder: (context, state) => const TimelineDashboardScreen(),
+        ),
+        // Legacy routes for backward compatibility.
+        GoRoute(path: '/', redirect: (context, state) => '/welcome'),
+        GoRoute(path: '/login', redirect: (context, state) => '/auth/login'),
+        GoRoute(path: '/signup', redirect: (context, state) => '/auth/signup'),
+        GoRoute(
+          path: '/forgot-password',
+          redirect: (context, state) => '/auth/forgot-password',
+        ),
+        GoRoute(
+          path: '/add-vehicle',
+          redirect: (context, state) => '/app/add-vehicle',
+        ),
+        GoRoute(
+          path: '/add-vehicle/:vin',
+          redirect: (context, state) =>
+              '/app/add-vehicle/${state.pathParameters['vin']}',
+        ),
+        GoRoute(
+          path: '/edit-vehicle/:vin',
+          redirect: (context, state) =>
+              '/app/edit-vehicle/${state.pathParameters['vin']}',
+        ),
+        GoRoute(
+          path: '/scan-vin',
+          redirect: (context, state) => '/app/scan-vin',
+        ),
+        GoRoute(
+          path: '/maintenance/:vin',
+          redirect: (context, state) =>
+              '/app/maintenance/${state.pathParameters['vin']}',
+        ),
+        GoRoute(
+          path: '/maintenance/:vin/:entryId',
+          redirect: (context, state) =>
+              '/app/maintenance/${state.pathParameters['vin']}/${state.pathParameters['entryId']}',
+        ),
+        GoRoute(path: '/profile', redirect: (context, state) => '/app/profile'),
+        GoRoute(path: '/account', redirect: (context, state) => '/app/profile'),
+        GoRoute(
+          path: '/email-preferences',
+          redirect: (context, state) => '/app/email-preferences',
+        ),
+        GoRoute(path: '/support', redirect: (context, state) => '/app/support'),
+        GoRoute(path: '/contact', redirect: (context, state) => '/app/contact'),
+        GoRoute(path: '/privacy', redirect: (context, state) => '/app/privacy'),
+        GoRoute(path: '/terms', redirect: (context, state) => '/app/terms'),
+        GoRoute(
+          path: '/instructions',
+          redirect: (context, state) => '/app/instructions',
+        ),
+        GoRoute(
+          path: '/calendar-preferences',
+          redirect: (context, state) => '/app/calendar-preferences',
+        ),
+        GoRoute(path: '/premium', redirect: (context, state) => '/app/premium'),
+        GoRoute(
+          path: '/offline-settings',
+          redirect: (context, state) => '/app/offline-settings',
+        ),
+        GoRoute(path: '/analytics', redirect: (context, state) => '/app'),
+        GoRoute(
+          path: '/upcoming',
+          redirect: (context, state) => '/app/upcoming',
+        ),
+        GoRoute(
+          path: '/timeline',
+          redirect: (context, state) => '/app/timeline',
+        ),
       ],
+    );
+  }
+}
+
+class _DebugFirebaseEnvBanner extends StatelessWidget {
+  const _DebugFirebaseEnvBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final options = Firebase.app().options;
+    final env = DefaultFirebaseOptions.currentEnvironmentLabel;
+    final projectId = options.projectId;
+
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        width: double.infinity,
+        color: Colors.amber.shade700,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          'DEBUG Firebase env=$env | project=$projectId',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -5,49 +5,8 @@
     "rules": "firebase/firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "hosting": {
-    "public": "packages/web/dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*.js",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/javascript"
-          }
-        ]
-      },
-      {
-        "source": "**/*.css",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "text/css"
-          }
-        ]
-      }
-    ]
-  },
-  "emulators": {
-    "firestore": {
-      "port": 8080
-    },
-    "dataconnect": {
-      "dataDir": "dataconnect/.dataconnect/pgliteData"
-    },
-    "ui": {
-      "enabled": true
-    }
-  },
-  "dataconnect": {
-    "source": "dataconnect"
+  "storage": {
+    "rules": "firebase/storage.rules"
   },
   "functions": [
     {
@@ -56,5 +15,20 @@
       "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"],
       "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run lint", "npm --prefix \"$RESOURCE_DIR\" run build"]
     }
-  ]
+  ],
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    }
+  }
 }

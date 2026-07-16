@@ -1,6 +1,6 @@
 # @vehicle-vitals/shared
 
-Shared utilities and Firebase services for the Vehicle Vitals monorepo.
+Shared utilities and Firebase services for the Vehicle-Vitals monorepo.
 
 ## Features
 

@@ -1,19 +1,4 @@
-interface HexProps {
-  cx: number;
-  cy: number;
-  r?: number;
-  fill?: string;
-  stroke?: string;
-}
-
-function Hex({ cx, cy, r = 3, fill = 'currentColor', stroke = 'none' }: HexProps) {
-  const points = [];
-  for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i + Math.PI / 6; // flat-top hex
-    points.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
-  }
-  return <polygon points={points.join(' ')} fill={fill} stroke={stroke} />;
-}
+import type { CSSProperties } from 'react';
 
 interface StackedVLogoProps {
   size?: number;
@@ -22,48 +7,70 @@ interface StackedVLogoProps {
   showText?: boolean;
   compact?: boolean;
   wordmarkColor?: string;
+  windowColor?: string;
+  gaugeColor?: string;
 }
+
+// The nav mark uses the simplified square small-size icon so header/footer
+// usage stays legible without carrying the full app-icon detail.
+const MARK_ASPECT_RATIO = 1;
 
 export default function StackedVLogo({
   size = 32,
   color = 'currentColor',
-  accent = '#334155',
   showText = true,
   compact = false,
-  wordmarkColor = '#64748b'
+  wordmarkColor = '#64748b',
 }: StackedVLogoProps) {
-  const width = Math.round(size * 2.1);
-  const height = size;
+  const width = Math.round(size * MARK_ASPECT_RATIO);
+  const isLightMark =
+    color.toLowerCase() === '#ffffff' ||
+    color.toLowerCase() === 'white' ||
+    wordmarkColor.toLowerCase() === '#ffffff';
+  // Cache-bust: this filename was previously overwritten in place multiple
+  // times behind a 1-year immutable Cache-Control header, so browsers that
+  // fetched an earlier version had a stale (differently-proportioned) copy
+  // stuck in cache, rendered distorted once forced into the current square
+  // dimensions. Bumping this query param forces a fresh fetch for everyone.
+  const logoSrc = isLightMark
+    ? '/assets/vehicle-vitals-header-mark-light.png?v=2026-07-12-sm'
+    : '/assets/vehicle-vitals-header-mark.png?v=2026-07-12-sm';
+
+  const compactFontSize = Math.max(14, Math.round(size * 0.3));
+  const compactLetterSpacing = 0;
 
   const wordmark = (
-    <div className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`} style={{ color: wordmarkColor }}>
-      VEHICLE<br />VITALS
+    <div
+      className={`stacked-v-logo-wordmark ${compact ? 'compact' : ''} ${wordmarkColor === '#64748b' ? '' : 'shadow'}`}
+      style={{ color: wordmarkColor }}
+    >
+      {compact ? 'VEHICLE-VITALS' : <>VEHICLE-<br />VITALS</>}
     </div>
   );
 
   return (
-    <div className={`stacked-v-logo-container ${compact ? 'compact' : ''}`}>
-      <svg
+    <div
+      className={`stacked-v-logo-container ${compact ? 'compact' : ''}`}
+      style={
+        compact
+          ? ({
+              '--logo-icon-height': `${size}px`,
+              '--logo-icon-width': `${width}px`,
+              '--logo-font-size': `${compactFontSize}px`,
+              '--logo-letter-spacing': `${compactLetterSpacing}px`,
+            } as CSSProperties)
+          : undefined
+      }
+    >
+      <img
+        src={logoSrc}
         width={width}
-        height={height}
-        viewBox="0 0 72 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+        height={size}
+        className="stacked-v-logo-mark"
+        alt=""
         aria-hidden="true"
-        focusable="false"
-      >
-  {/* Outer V (further inset to avoid edge collision and add breathing room) */}
-  <path d="M12 4 L32 30 L52 4" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
-  {/* Middle V — more inset to increase spacing */}
-  <path d="M14 5 L32 26 L50 5" stroke={color} strokeOpacity="0.75" strokeWidth="2.1" strokeLinecap="round" />
-  {/* Inner V — further inset and higher clearance for stronger separation */}
-  <path d="M24 8 L32 20 L40 8" stroke={accent} strokeWidth="3.0" strokeLinecap="round" />
-
-        {/* Bolt accents (hex nuts) at endpoints and apex */}
-  <Hex cx={12} cy={4} r={3.5} fill={color} />
-  <Hex cx={52} cy={4} r={3.5} fill={color} />
-        <Hex cx={32} cy={30} r={3.5} fill={accent} />
-      </svg>
+        decoding="async"
+      />
       {showText && wordmark}
     </div>
   );

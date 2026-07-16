@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Vehicle Vitals - Complete Production Environment Setup
+# Vehicle-Vitals - Complete Production Environment Setup
 # This script sets up all required GitHub secrets for production deployment
 
 set -e
 
-echo "🚀 Setting up complete PROD environment for Vehicle Vitals..."
+echo "🚀 Setting up complete PROD environment for Vehicle-Vitals..."
 echo ""
 
 # Colors for output
@@ -30,6 +30,15 @@ set_secret() {
     echo ""
 }
 
+require_value() {
+    local name=$1
+    local value="${!name:-}"
+    if [ -z "$value" ]; then
+        echo -e "${RED}❌ Missing required environment variable: ${name}${NC}"
+        exit 1
+    fi
+}
+
 # Check if GitHub CLI is available
 if ! command -v gh &> /dev/null; then
     echo -e "${RED}❌ GitHub CLI (gh) is not installed or not authenticated${NC}"
@@ -38,47 +47,68 @@ if ! command -v gh &> /dev/null; then
 fi
 
 # Check if we're in the right repository
-if ! gh repo view --json name | grep -q "vehicle-vitals-react-project"; then
+if ! gh repo view --json name | grep -q "vehicle-vitals"; then
     echo -e "${RED}❌ Not in the correct repository${NC}"
-    echo "Please run this script from the vehicle-vitals-react-project repository"
+    echo "Please run this script from the vehicle-vitals repository"
     exit 1
 fi
 
 echo -e "${YELLOW}📋 Setting up Firebase Configuration Secrets...${NC}"
 
 # Firebase Configuration
-set_secret "VITE_FIREBASE_API_KEY_PRODUCTION" "AIzaSyDE99EAoGniEwCLfu4llmv_NsSjbwr-ZRE" "Firebase API Key for production"
-set_secret "VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION" "vehicle-vitals-prod.firebaseapp.com" "Firebase Auth domain"
-set_secret "VITE_FIREBASE_PROJECT_ID_PRODUCTION" "vehicle-vitals-prod" "Firebase project ID"
-set_secret "VITE_FIREBASE_STORAGE_BUCKET_PRODUCTION" "vehicle-vitals-prod.appspot.com" "Firebase storage bucket"
-set_secret "VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION" "489413148337" "Firebase messaging sender ID"
-set_secret "VITE_FIREBASE_APP_ID_PRODUCTION" "1:489413148337:web:9b4e97350073a22968ac90" "Firebase app ID"
-set_secret "VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION" "G-32PCGDSNT9" "Google Analytics measurement ID"
+require_value VITE_FIREBASE_API_KEY_PRODUCTION
+require_value VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION
+require_value VITE_FIREBASE_PROJECT_ID_PRODUCTION
+require_value VITE_FIREBASE_STORAGE_BUCKET_PRODUCTION
+require_value VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION
+require_value VITE_FIREBASE_APP_ID_PRODUCTION
+require_value VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION
+
+set_secret "VITE_FIREBASE_API_KEY_PRODUCTION" "$VITE_FIREBASE_API_KEY_PRODUCTION" "Firebase API Key for production"
+set_secret "VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION" "$VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION" "Firebase Auth domain"
+set_secret "VITE_FIREBASE_PROJECT_ID_PRODUCTION" "$VITE_FIREBASE_PROJECT_ID_PRODUCTION" "Firebase project ID"
+set_secret "VITE_FIREBASE_STORAGE_BUCKET_PRODUCTION" "$VITE_FIREBASE_STORAGE_BUCKET_PRODUCTION" "Firebase storage bucket"
+set_secret "VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION" "$VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION" "Firebase messaging sender ID"
+set_secret "VITE_FIREBASE_APP_ID_PRODUCTION" "$VITE_FIREBASE_APP_ID_PRODUCTION" "Firebase app ID"
+set_secret "VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION" "$VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION" "Google Analytics measurement ID"
 
 echo -e "${YELLOW}📋 Setting up Environment & Feature Flags...${NC}"
 
 # Environment settings
 set_secret "VITE_DEBUG_PRODUCTION" "false" "Disable debug mode in production"
 set_secret "VITE_SHOW_COMING_SOON_PRODUCTION" "true" "Show coming soon page instead of full app"
+set_secret "VITE_SHOW_COMING_SOON_STAGING" "false" "Show full app on staging (not coming soon)"
+set_secret "VITE_SHOW_COMING_SOON_DEVELOPMENT" "false" "Show full app on development (not coming soon)"
 
 echo -e "${YELLOW}📋 Setting up Analytics & Monitoring...${NC}"
 
-# Analytics & Monitoring (placeholders - you'll need to set actual values)
-set_secret "VITE_ANALYTICS_ID_PRODUCTION" "G-32PCGDSNT9" "Google Analytics ID"
-set_secret "VITE_GTM_ID_PRODUCTION" "G-32PCGDSNT9" "Google tag ID (supports GTM-XXXXXXX or G-XXXXXXXXXX)"
-set_secret "VITE_SENTRY_DSN_PRODUCTION" "" "Sentry DSN for error reporting (leave empty if not using)"
+# Analytics & Monitoring
+require_value VITE_ANALYTICS_ID_PRODUCTION
+require_value VITE_GTM_ID_PRODUCTION
+
+set_secret "VITE_ANALYTICS_ID_PRODUCTION" "$VITE_ANALYTICS_ID_PRODUCTION" "Google Analytics ID"
+set_secret "VITE_GTM_ID_PRODUCTION" "$VITE_GTM_ID_PRODUCTION" "Google tag ID (supports GTM-XXXXXXX or G-XXXXXXXXXX)"
+set_secret "VITE_SENTRY_DSN_PRODUCTION" "${VITE_SENTRY_DSN_PRODUCTION:-}" "Sentry DSN for error reporting (leave empty if not using)"
 
 echo -e "${YELLOW}📋 Setting up Ad Configuration...${NC}"
 
 # Ad configuration
-set_secret "VITE_ADSENSE_CLIENT" "ca-pub-5198775482699756" "AdSense publisher ID"
-set_secret "VITE_ADSENSE_SLOT" "1234567890" "AdSense ad slot ID (placeholder)"
+require_value VITE_ADSENSE_CLIENT
+require_value VITE_ADSENSE_SLOT
+
+set_secret "VITE_ADSENSE_CLIENT" "$VITE_ADSENSE_CLIENT" "AdSense publisher ID"
+set_secret "VITE_ADSENSE_SLOT" "$VITE_ADSENSE_SLOT" "AdSense ad slot ID"
 
 echo -e "${YELLOW}📋 Setting up Environment Access Control...${NC}"
 
-# Environment access passwords (change these defaults!)
-set_secret "VITE_ACCESS_PASSWORD_STAGING" "staging2025" "Password for staging environment access"
-set_secret "VITE_ACCESS_PASSWORD_DEVELOPMENT" "dev2025" "Password for development environment access"
+# OAuth/team-based environment gate allowlists
+require_value VITE_ALLOWED_EMAIL_DOMAINS_STAGING
+require_value VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT
+
+set_secret "VITE_ALLOWED_EMAIL_DOMAINS_STAGING" "$VITE_ALLOWED_EMAIL_DOMAINS_STAGING" "Comma-separated email domains allowed into staging"
+set_secret "VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT" "$VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT" "Comma-separated email domains allowed into development"
+set_secret "VITE_ALLOWED_EMAILS_STAGING" "${VITE_ALLOWED_EMAILS_STAGING:-}" "Optional comma-separated exact emails allowed into staging"
+set_secret "VITE_ALLOWED_EMAILS_DEVELOPMENT" "${VITE_ALLOWED_EMAILS_DEVELOPMENT:-}" "Optional comma-separated exact emails allowed into development"
 
 echo -e "${YELLOW}📋 Setting up Firebase Service Account...${NC}"
 
@@ -100,8 +130,8 @@ echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo "1. Set FIREBASE_SERVICE_ACCOUNT_PRODUCTION secret with service account JSON"
 echo "2. Set FIREBASE_TOKEN secret with 'firebase login:ci' token"
-echo "3. Update VITE_SENTRY_DSN_PRODUCTION with actual Sentry DSN if using error reporting"
-echo "4. Update VITE_ADSENSE_SLOT with actual AdSense slot ID"
+echo "3. Export the required environment variables before running this script"
+echo "4. Update VITE_SENTRY_DSN_PRODUCTION if using error reporting"
 echo "5. Trigger a production deployment:"
 echo "   gh workflow run ci-cd-pipeline.yml -f environment=PRODUCTION"
 echo ""

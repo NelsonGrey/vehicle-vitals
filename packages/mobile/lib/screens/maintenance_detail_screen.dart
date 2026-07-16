@@ -1,7 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../services/firestore_service.dart';
+
+import '../components/safe_back_button.dart';
 import '../models/maintenance.dart';
+import '../services/firestore_service.dart';
+import '../utils/user_facing_error.dart';
+
+String _performedByLabel(String value) {
+  switch (value) {
+    case 'self':
+      return 'Self-service';
+    case 'repair_shop':
+      return 'Repair shop';
+    case 'dealership':
+      return 'Dealership';
+    case 'body_shop':
+      return 'Body shop';
+    case 'car_wash':
+      return 'Car wash';
+    case 'detailer':
+      return 'Detailer';
+    // Retired categories, kept for entries recorded before this taxonomy
+    // shipped — new entries never write these.
+    case 'business':
+      return 'Business-maintained';
+    case 'mechanic':
+    default:
+      return 'Mechanic';
+  }
+}
+
+// A DropdownButtonFormField requires its current value to appear in `items`.
+// Entries saved before this taxonomy shipped may still carry a retired
+// 'mechanic'/'business' value, so it's appended here (labeled as legacy)
+// only when that's the value actually loaded — new entries never see it.
+List<DropdownMenuItem<String>> _performedByItems(String currentValue) {
+  final items = <DropdownMenuItem<String>>[
+    const DropdownMenuItem(value: 'self', child: Text('Self-service')),
+    const DropdownMenuItem(value: 'repair_shop', child: Text('Repair shop')),
+    const DropdownMenuItem(value: 'dealership', child: Text('Dealership')),
+    const DropdownMenuItem(value: 'body_shop', child: Text('Body shop')),
+    const DropdownMenuItem(value: 'car_wash', child: Text('Car wash')),
+    const DropdownMenuItem(value: 'detailer', child: Text('Detailer')),
+  ];
+  if (currentValue == 'mechanic' || currentValue == 'business') {
+    items.add(
+      DropdownMenuItem(
+        value: currentValue,
+        child: Text('${_performedByLabel(currentValue)} (legacy)'),
+      ),
+    );
+  }
+  return items;
+}
+
+String _coverageLabel(String value) {
+  switch (value) {
+    case 'parts_only':
+      return 'Parts only';
+    default:
+      return 'Parts and labor';
+  }
+}
 
 class MaintenanceDetailScreen extends StatefulWidget {
   final String vin;
@@ -22,6 +83,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
+  final _providerNameController = TextEditingController();
+  String _performedBy = 'repair_shop';
+  String _coverage = 'parts_and_labor';
   Maintenance? _entry;
   bool _loading = true;
   DateTime _selectedDate = DateTime.now();
@@ -37,6 +101,7 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     _titleController.dispose();
     _notesController.dispose();
     _costController.dispose();
+    _providerNameController.dispose();
     super.dispose();
   }
 
@@ -55,6 +120,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
           _titleController.text = entry.title;
           _notesController.text = entry.notes;
           _costController.text = entry.cost.toString();
+          _performedBy = entry.performedBy;
+          _providerNameController.text = entry.providerName;
+          _coverage = entry.coverage;
           _selectedDate = entry.date;
           _loading = false;
         });
@@ -69,9 +137,17 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading entry: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The maintenance entry could not be loaded. Please try again.',
+              ),
+            ),
+          ),
+        );
       }
     }
   }
@@ -105,6 +181,11 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
         title: _titleController.text.trim(),
         notes: _notesController.text.trim(),
         cost: cost,
+        performedBy: _performedBy,
+        providerName: _performedBy == 'self'
+            ? ''
+            : _providerNameController.text.trim(),
+        coverage: _coverage,
         date: _selectedDate,
         updatedAt: DateTime.now(),
       );
@@ -123,9 +204,17 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error updating entry: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The maintenance entry could not be updated. Please try again.',
+              ),
+            ),
+          ),
+        );
       }
     }
   }
@@ -146,7 +235,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -167,7 +258,15 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting maintenance entry: $e')),
+            SnackBar(
+              content: Text(
+                userFacingError(
+                  e,
+                  fallback:
+                      'The maintenance entry could not be deleted. Please try again.',
+                ),
+              ),
+            ),
           );
         }
       }
@@ -194,6 +293,9 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Maintenance'),
+        leading: SafeBackButton(
+          fallbackRoute: '/app/maintenance/${widget.vin}',
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.delete), onPressed: _deleteEntry),
         ],
@@ -222,6 +324,72 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                     maxLines: 4,
                   ),
                   const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          initialValue: _performedBy,
+                          decoration: const InputDecoration(
+                            labelText: 'Who did it',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _performedByItems(_performedBy),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _performedBy = value);
+                          },
+                        ),
+                        if (_performedBy != 'self') ...[
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _providerNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Shop or professional',
+                              hintText: 'e.g. Downtown Auto Repair',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () =>
+                                  context.push('/app/service-providers'),
+                              icon: const Icon(Icons.storefront_outlined),
+                              label: const Text('Find shops & services'),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: _coverage,
+                          decoration: const InputDecoration(
+                            labelText: 'Receipt type',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'parts_only',
+                              child: Text('Parts only'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'parts_and_labor',
+                              child: Text('Parts and labor'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _coverage = value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: _costController,
                     decoration: const InputDecoration(
@@ -230,6 +398,13 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                       prefixText: '\$',
                     ),
                     keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _providerNameController.text.trim().isNotEmpty
+                        ? '${_performedByLabel(_performedBy)} (${_providerNameController.text.trim()}) • ${_coverageLabel(_coverage)}'
+                        : '${_performedByLabel(_performedBy)} • ${_coverageLabel(_coverage)}',
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 16),
                   Row(

@@ -2,31 +2,52 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#020617" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vehicle Vitals</title>
-    <link rel="canonical" href="https://vehicle-vitals.com/" />
+    <title>Vehicle-Vitals</title>
+    <!-- Default SEO meta — overridden per-route by PageSEO component -->
     <meta
       name="description"
-      content="Vehicle Vitals tracks maintenance, service records, and reminders for every vehicle you own. Launching soon."
+      content="Keep service records, receipts, reminders, and ownership costs together on the web and iPhone."
     />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Vehicle Vitals" />
-    <meta
-      property="og:description"
-      content="Vehicle Vitals tracks maintenance, service records, and reminders for every vehicle you own. Launching soon."
-    />
-    <meta property="og:url" content="https://vehicle-vitals.com/" />
-    <meta
-      property="og:image"
-      content="https://vehicle-vitals.com/android-chrome-512x512.png"
-    />
-    <!-- Firebase SDKs are now bundled with the app -->
+    <!-- Google Consent Mode v2 — must run before GTM so defaults are in place -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        functionality_storage: 'denied',
+        security_storage: 'granted',
+        wait_for_update: 500
+      });
+    </script>
+    <!-- Google Tag Manager — only loads when VITE_GTM_ID is set at build time -->
+    <script>
+      (function(w,d,s,l,i){
+        if (!i) return;
+        w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+        f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','%VITE_GTM_ID%');
+    </script>
+    <!-- End Google Tag Manager -->
+    <!-- AdSense is loaded on demand by AdBanner.tsx when enableAds is true —
+         no global script tag here to avoid loading it on non-production environments -->
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) — only meaningful when VITE_GTM_ID is set -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=%VITE_GTM_ID%"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

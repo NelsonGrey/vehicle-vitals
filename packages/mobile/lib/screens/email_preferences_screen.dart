@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../components/safe_back_button.dart';
 import '../services/email_reminder_service.dart';
+import '../theme/design_tokens.dart';
+import '../utils/user_facing_error.dart';
 
 class EmailPreferencesScreen extends StatefulWidget {
   const EmailPreferencesScreen({super.key});
@@ -34,8 +37,14 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading preferences: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Email preferences could not be loaded. Please try again.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -52,7 +61,7 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Email preferences saved successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -60,8 +69,14 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving preferences: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Email preferences could not be saved. Please try again.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -79,7 +94,7 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Test reminder sent successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignTokens.success,
           ),
         );
       }
@@ -87,8 +102,14 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sending test reminder: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The test reminder could not be sent. Check the address and try again.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -101,7 +122,10 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Email Preferences')),
+        appBar: AppBar(
+          title: const Text('Email Preferences'),
+          leading: const SafeBackButton(fallbackRoute: '/app/settings'),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -109,6 +133,7 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Email Preferences'),
+        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
         actions: [
           TextButton(
             onPressed: _isSaving ? null : _savePreferences,
@@ -134,23 +159,19 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Email Address',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _userEmail.isNotEmpty
                           ? _userEmail
                           : 'No email address available',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: _userEmail.isNotEmpty
-                            ? Colors.black
-                            : Colors.grey,
+                            ? null
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -166,17 +187,14 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Maintenance Reminders',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Receive email notifications for upcoming vehicle maintenance based on manufacturer recommendations and your maintenance history.',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 16),
                     SwitchListTile(
@@ -210,8 +228,8 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
                       : const Icon(Icons.send),
                   label: const Text('Send Test Reminder'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF59E0B),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppDesignTokens.warning,
+                    foregroundColor: AppDesignTokens.onWarning,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),

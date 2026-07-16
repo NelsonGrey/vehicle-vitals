@@ -1,9 +1,39 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../components/safe_back_button.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
+import '../services/premium_service.dart';
+import '../services/record_storage_service.dart';
+import '../services/vehicle_photo_service.dart';
+import '../utils/vin_validation.dart' as vin_validation;
+import '../utils/user_facing_error.dart';
+
+const List<String> _vehicleTypeOptions = [
+  'Passenger Vehicle',
+  'Commercial Vehicle',
+  'Motorcycle',
+  'Recreational Vehicle (RV)',
+  'Boat',
+  'Van',
+  'SUV',
+  'Trailer',
+  'ATV/UTV',
+  'Other',
+];
+
+const List<DropdownMenuItem<String>> _vehicleStatusOptions = [
+  DropdownMenuItem(value: 'active', child: Text('In Garage')),
+  DropdownMenuItem(value: 'stored', child: Text('In Storage')),
+];
 
 class AddVehicleScreen extends StatefulWidget {
   const AddVehicleScreen({super.key, this.initialVin});
@@ -25,6 +55,30 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _mileageController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isPhotoBusy = false;
+  int? _recallsCount;
+  String? _recallsSource;
+  String? _engineType;
+  String? _bodyClass;
+  String? _fuelType;
+  String? _driveType;
+  String? _transmissionStyle;
+  String? _trim;
+  String? _vehicleType;
+  String _vehicleStatus = 'active';
+  List<Map<String, dynamic>> _recallsItems = const [];
+  Map<String, dynamic> _vinProfile = const {};
+  Map<String, dynamic> _vinInsights = const {};
+  String? _photoUrl;
+  String? _photoPath;
+  String? _photoSource;
+  String? _photoAttributionUrl;
+  String? _photoAttributionText;
+
+  final _recordStorageService = RecordStorageService();
+  final _vehiclePhotoService = VehiclePhotoService();
+
+  bool _looksLikeVin(String value) => value.trim().length == 17;
 
   @override
   void initState() {
@@ -45,92 +99,166 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     super.dispose();
   }
 
-  Future<void> _decodeVIN() async {
+  Future<void> _lookupVin() async {
     final vin = _vinController.text.trim().toUpperCase();
-    if (vin.length != 17) return;
+    final validationError = vin_validation.getVinLookupValidationError(vin);
+    if (validationError != null) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$validationError You can still save using a vehicle ID.',
+          ),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     try {
-      final functions = FirebaseFunctions.instance;
-      final result = await functions.httpsCallable('decodeVIN').call({
-        'vin': vin,
+      Map<String, dynamic> data;
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+
+      try {
+        final result = await functions
+            .httpsCallable('getVehicleInsightsCallable')
+            .call({'vin': vin});
+        data = Map<String, dynamic>.from(result.data as Map);
+      } on FirebaseFunctionsException catch (e) {
+        final shouldFallback =
+            e.code == 'not-found' ||
+            e.code == 'unimplemented' ||
+            e.code == 'internal';
+
+        if (!shouldFallback) {
+          if (e.code == 'unauthenticated') {
+            throw Exception('Please sign in to look up VIN.');
+          }
+          throw Exception(e.message ?? 'VIN lookup service unavailable');
+        }
+
+        try {
+          final lookupResult = await functions
+              .httpsCallable('vinLookupCallable')
+              .call({'vin': vin});
+          data = Map<String, dynamic>.from(lookupResult.data as Map);
+        } on FirebaseFunctionsException catch (lookupError) {
+          final lookupFallbackAllowed =
+              lookupError.code == 'not-found' ||
+              lookupError.code == 'unimplemented' ||
+              lookupError.code == 'internal';
+
+          if (!lookupFallbackAllowed) {
+            if (lookupError.code == 'unauthenticated') {
+              throw Exception('Please sign in to look up VIN.');
+            }
+            throw Exception(
+              lookupError.message ?? 'VIN lookup service unavailable',
+            );
+          }
+
+          final projectId = Firebase.app().options.projectId;
+          final uri = Uri.parse(
+            'https://us-central1-$projectId.cloudfunctions.net/vinLookup',
+          );
+
+          final client = HttpClient();
+          final request = await client.postUrl(uri);
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode({'vin': vin}));
+
+          final response = await request.close();
+          final responseBody = await response.transform(utf8.decoder).join();
+          final decoded = jsonDecode(responseBody);
+          data = Map<String, dynamic>.from(
+            decoded is Map ? decoded : <String, dynamic>{},
+          );
+
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            final errorMessage = (data['error'] ?? 'VIN lookup failed')
+                .toString();
+            throw Exception(errorMessage);
+          }
+        }
+      }
+
+      if (data['success'] != true) {
+        final errorMessage = (data['error'] ?? 'VIN lookup failed').toString();
+        throw Exception(errorMessage);
+      }
+
+      final free = Map<String, dynamic>.from(
+        data['free'] as Map? ?? <String, dynamic>{},
+      );
+      final recalls = Map<String, dynamic>.from(
+        free['recalls'] as Map? ?? <String, dynamic>{},
+      );
+      final recallsItems = ((recalls['items'] as List?) ?? const [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final vehicleData = Map<String, dynamic>.from(
+        (free['vinProfile'] as Map?) ??
+            (data['vehicle'] as Map?) ??
+            <String, dynamic>{},
+      );
+      final lookupYear = (vehicleData['year'] ?? '').toString();
+
+      setState(() {
+        _makeController.text = (vehicleData['make'] ?? '').toString();
+        _modelController.text = (vehicleData['model'] ?? '').toString();
+        if (lookupYear.isNotEmpty) {
+          _yearController.text = lookupYear;
+        }
+
+        final recallsCountValue = int.tryParse(
+          (recalls['count'] ?? '0').toString(),
+        );
+        _recallsCount = recallsCountValue;
+        _recallsSource = (recalls['source'] ?? 'NHTSA').toString();
+        _engineType = (vehicleData['engineType'] ?? '').toString();
+        _bodyClass = (vehicleData['bodyClass'] ?? '').toString();
+        _fuelType = (vehicleData['fuelType'] ?? '').toString();
+        _driveType = (vehicleData['driveType'] ?? '').toString();
+        _transmissionStyle = (vehicleData['transmissionStyle'] ?? '')
+            .toString();
+        _trim = (vehicleData['trim'] ?? '').toString();
+        _vehicleType = (vehicleData['vehicleType'] ?? '').toString();
+        _recallsItems = recallsItems;
+        _vinProfile = Map<String, dynamic>.from(vehicleData);
+        _vinInsights = {
+          ...Map<String, dynamic>.from(data),
+          'fetchedAt': DateTime.now().toUtc().toIso8601String(),
+        };
       });
 
-      if (result.data['success'] == true) {
-        final vehicle = result.data['vehicle'];
-        setState(() {
-          _makeController.text = vehicle['make'] ?? '';
-          _modelController.text = vehicle['model'] ?? '';
-          _yearController.text = vehicle['year'] ?? '';
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            // ignore: use_build_context_synchronously
-            const SnackBar(
-              content: Text('VIN decoded successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            // ignore: use_build_context_synchronously
-            SnackBar(
-              content: Text('Failed to decode VIN: ${result.data['error']}'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      }
-    } catch (e) {
       if (mounted) {
+        final recallsNote = _recallsCount == null
+            ? ''
+            : ' • Open recalls: ${_recallsCount!}';
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          // ignore: use_build_context_synchronously
           SnackBar(
-            content: Text('Error decoding VIN: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text('VIN looked up successfully$recallsNote'),
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _saveVehicle() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      final vehicle = Vehicle(
-        vin: _vinController.text.trim().toUpperCase(),
-        make: _makeController.text.trim(),
-        model: _modelController.text.trim(),
-        year: int.parse(_yearController.text),
-        mileage: int.parse(_mileageController.text),
-      );
-
-      await _firestoreService.addOrUpdateVehicle(vehicle);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vehicle added successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.go('/');
-      }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error adding vehicle: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'We could not look up that VIN. Try again or enter the vehicle details manually.',
+              ),
+            ),
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -141,14 +269,276 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     }
   }
 
+  Future<void> _saveVehicle() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    final premiumService = context.read<PremiumService>();
+
+    try {
+      final normalizedVin = _vinController.text.trim().toUpperCase();
+      final existingVehicle = await _firestoreService.getVehicle(normalizedVin);
+      if (existingVehicle == null) {
+        final allVehicles = await _firestoreService.getVehicles();
+        final vehicleLimit = premiumService.vehicleLimit;
+
+        if (allVehicles.length >= vehicleLimit) {
+          if (!mounted) return;
+
+          final currentTier = premiumService.subscriptionTier;
+          final isPremiumLike =
+              currentTier == 'premium' || currentTier == 'enterprise';
+          final colorScheme = Theme.of(context).colorScheme;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isPremiumLike
+                    ? 'Your vehicle limit is reached. Visit Support for Enterprise expansion.'
+                    : 'Vehicle limit reached. Upgrade to add more vehicles.',
+              ),
+              backgroundColor: colorScheme.secondary,
+            ),
+          );
+
+          context.push(isPremiumLike ? '/app/support' : '/app/premium');
+          return;
+        }
+      }
+
+      var photoUrl = _photoUrl;
+      var photoPath = _photoPath;
+      var photoSource = _photoSource;
+      var photoAttributionUrl = _photoAttributionUrl;
+      var photoAttributionText = _photoAttributionText;
+
+      if ((photoUrl == null || photoUrl.isEmpty) &&
+          _makeController.text.trim().isNotEmpty &&
+          _modelController.text.trim().isNotEmpty) {
+        final candidate = await _vehiclePhotoService.findVehiclePhotoFromWeb(
+          year: _yearController.text.trim(),
+          make: _makeController.text.trim(),
+          model: _modelController.text.trim(),
+          vehicleType: _vehicleType,
+        );
+        if (candidate != null && (candidate['url'] ?? '').isNotEmpty) {
+          photoUrl = candidate['url'];
+          photoPath = '';
+          photoSource = candidate['source'];
+          photoAttributionUrl = candidate['attributionUrl'];
+          photoAttributionText = candidate['attributionText'];
+        }
+      }
+
+      final vehicle = Vehicle(
+        vin: normalizedVin,
+        make: _makeController.text.trim(),
+        model: _modelController.text.trim(),
+        year: int.parse(_yearController.text),
+        mileage: int.parse(_mileageController.text),
+        photoUrl: photoUrl,
+        photoPath: photoPath,
+        photoSource: photoSource,
+        photoAttributionUrl: photoAttributionUrl,
+        photoAttributionText: photoAttributionText,
+        recallsCount: _recallsCount ?? 0,
+        recallsSource: _recallsSource,
+        engineType: _engineType,
+        bodyClass: _bodyClass,
+        fuelType: _fuelType,
+        driveType: _driveType,
+        transmissionStyle: _transmissionStyle,
+        trim: _trim,
+        vehicleType: _vehicleType,
+        vehicleStatus: _vehicleStatus,
+        recallsItems: _recallsItems,
+        vinProfile: _vinProfile,
+        vinInsights: _vinInsights,
+      );
+
+      await _firestoreService.addOrUpdateVehicle(vehicle);
+
+      if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Vehicle added successfully!'),
+            backgroundColor: colorScheme.primary,
+          ),
+        );
+        context.go('/app');
+      }
+    } catch (e) {
+      if (mounted) {
+        final message = e.toString();
+        if (message.contains('Not authenticated')) {
+          final colorScheme = Theme.of(context).colorScheme;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Session expired. Please sign in again.'),
+              backgroundColor: colorScheme.error,
+            ),
+          );
+          context.go('/auth/login');
+          return;
+        }
+
+        final colorScheme = Theme.of(context).colorScheme;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'The vehicle could not be saved. Review the details and try again.',
+              ),
+            ),
+            backgroundColor: colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    final vin = _vinController.text.trim().toUpperCase();
+    if (vin.isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Enter a vehicle ID before uploading a photo.'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isPhotoBusy = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final uploaded = await _recordStorageService.uploadVehiclePhoto(
+        vin,
+        result.files.first,
+      );
+
+      setState(() {
+        _photoUrl = uploaded['url']?.toString();
+        _photoPath = uploaded['path']?.toString();
+        _photoSource = 'user_upload';
+        _photoAttributionUrl = null;
+        _photoAttributionText = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The photo could not be uploaded. Try again or continue without it.',
+            ),
+          ),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPhotoBusy = false);
+      }
+    }
+  }
+
+  Future<void> _findPhotoFromWeb() async {
+    if (_makeController.text.trim().isEmpty ||
+        _modelController.text.trim().isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Add make and model before searching for a web photo.',
+          ),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isPhotoBusy = true);
+    try {
+      final candidate = await _vehiclePhotoService.findVehiclePhotoFromWeb(
+        year: _yearController.text.trim(),
+        make: _makeController.text.trim(),
+        model: _modelController.text.trim(),
+        vehicleType: _vehicleType,
+      );
+
+      if (candidate == null || (candidate['url'] ?? '').isEmpty) {
+        if (!mounted) return;
+        final colorScheme = Theme.of(context).colorScheme;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'No web photo match found. Try uploading your own image.',
+            ),
+            backgroundColor: colorScheme.secondary,
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        _photoUrl = candidate['url'];
+        _photoPath = '';
+        _photoSource = candidate['source'];
+        _photoAttributionUrl = candidate['attributionUrl'];
+        _photoAttributionText = candidate['attributionText'];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'We could not find a web photo. Try again or upload your own image.',
+            ),
+          ),
+          backgroundColor: colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPhotoBusy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Vehicle'),
+        leading: const SafeBackButton(),
         actions: [
           TextButton(
-            onPressed: () => context.go('/scan-vin'),
+            onPressed: () => context.push('/app/scan-vin'),
             child: const Text('Scan VIN'),
           ),
         ],
@@ -163,6 +553,37 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: colorScheme.outline),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Vehicle Form',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Enter a vehicle ID (VIN/HIN/Serial). VIN lookup can auto-fill details for compatible VINs.',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                       // VIN field
                       Row(
                         children: [
@@ -170,37 +591,121 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             child: TextFormField(
                               controller: _vinController,
                               decoration: const InputDecoration(
-                                labelText: 'VIN*',
+                                labelText: 'Vehicle ID (VIN/HIN/Serial)*',
                                 border: OutlineInputBorder(),
-                                hintText: '17-character VIN',
+                                hintText: 'VIN, HIN, or serial number',
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter the VIN';
-                                }
-                                if (value.length != 17) {
-                                  return 'VIN must be 17 characters';
+                                  return 'Please enter a vehicle ID';
                                 }
                                 return null;
                               },
                               textCapitalization: TextCapitalization.characters,
                               onChanged: (value) {
-                                // Auto-decode when VIN is complete
-                                if (value.length == 17 && !_isLoading) {
-                                  _decodeVIN();
+                                // Auto-lookup only when ID appears to be a VIN.
+                                if (_looksLikeVin(value) && !_isLoading) {
+                                  _lookupVin();
                                 }
                               },
                             ),
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            onPressed: _isLoading ? null : _decodeVIN,
+                            onPressed: _isLoading ? null : _lookupVin,
                             icon: const Icon(Icons.search),
-                            tooltip: 'Decode VIN',
+                            tooltip: 'Look Up VIN (17-character VIN only)',
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
+
+                      DropdownButtonFormField<String>(
+                        initialValue: _vehicleStatus,
+                        decoration: const InputDecoration(
+                          labelText: 'Location Status',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _vehicleStatusOptions,
+                        onChanged: (value) {
+                          setState(() => _vehicleStatus = value ?? 'active');
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _vehicleType,
+                        decoration: const InputDecoration(
+                          labelText: 'Vehicle Type',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _vehicleTypeOptions
+                            .map(
+                              (type) => DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() => _vehicleType = value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: colorScheme.secondary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: colorScheme.secondary.withValues(
+                              alpha: 0.35,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _recallsCount == null
+                                  ? 'VIN Insight Preview'
+                                  : 'Free insights (${_recallsSource ?? 'NHTSA'}): Open recalls: $_recallsCount',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _recallsCount == null
+                                  ? 'Look up a VIN to preview body class, powertrain details, and recall metadata before saving.'
+                                  : [
+                                          _engineType,
+                                          _transmissionStyle,
+                                          _fuelType,
+                                          _driveType,
+                                          _bodyClass,
+                                          _trim,
+                                        ]
+                                        .where(
+                                          (value) =>
+                                              value != null &&
+                                              value
+                                                  .toString()
+                                                  .trim()
+                                                  .isNotEmpty,
+                                        )
+                                        .join(' • '),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                       // Make field
                       TextFormField(
@@ -283,6 +788,90 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Vehicle Photo',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 140,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: colorScheme.outline),
+                              color: colorScheme.surface,
+                            ),
+                            child: _photoUrl != null && _photoUrl!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      _photoUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Center(
+                                                child: Icon(
+                                                  Icons.directions_car,
+                                                  size: 42,
+                                                ),
+                                              ),
+                                    ),
+                                  )
+                                : const Center(
+                                    child: Icon(Icons.directions_car, size: 42),
+                                  ),
+                          ),
+                          if (_photoSource == 'wikimedia')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                'Source: Wikimedia (free public media)',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isPhotoBusy
+                                      ? null
+                                      : _pickAndUploadPhoto,
+                                  icon: const Icon(Icons.upload),
+                                  label: const Text('Upload Photo'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isPhotoBusy
+                                      ? null
+                                      : _findPhotoFromWeb,
+                                  icon: const Icon(Icons.image_search),
+                                  label: const Text('Find Free Web Photo'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            'Web lookup is best-effort and may not match exact trim or color.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -294,12 +883,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveVehicle,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF59E0B),
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? CircularProgressIndicator(color: colorScheme.onPrimary)
                       : const Text('Save Vehicle'),
                 ),
               ),

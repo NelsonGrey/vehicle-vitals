@@ -1,0 +1,346 @@
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import EditVehicle from '../src/pages/EditVehicle';
+
+const ROUTE_VIN = '1HGCM82633A004352';
+
+const mockNavigate = vi.fn();
+const mockGetVehicle = vi.fn();
+const mockUpdateVehicle = vi.fn();
+const mockDeleteVehicle = vi.fn();
+const mockLookupVin = vi.fn();
+const mockTransferVehicle = vi.fn();
+const mockFindVehiclePhotoFromWeb = vi.fn();
+
+vi.mock('../src/hooks/useVehicleOptions', () => ({
+  default: () => ({
+    years: ['2019', '2020', '2021'],
+    makes: ['Toyota'],
+    models: ['Camry'],
+    loadingMakes: false,
+    loadingModels: false,
+  }),
+}));
+
+const mockGetMaintenanceEntries = vi.fn().mockResolvedValue([]);
+
+vi.mock('../src/shared/firestoreService', () => ({
+  addMaintenanceEntry: vi.fn(),
+  deleteVehicle: (...args) => mockDeleteVehicle(...args),
+  getAttachmentAnalyses: vi.fn().mockResolvedValue([]),
+  getMaintenanceEntries: (...args) => mockGetMaintenanceEntries(...args),
+  getVehicle: (...args) => mockGetVehicle(...args),
+  updateVehicle: (...args) => mockUpdateVehicle(...args),
+}));
+
+vi.mock('../src/shared/storageService', () => ({
+  generateMaintenanceAttachmentPath: vi.fn(),
+  uploadFile: vi.fn(),
+}));
+
+vi.mock('../src/utils/attachmentAnalysisService', () => ({
+  analyzeAttachmentText: vi.fn(),
+}));
+
+vi.mock('../src/utils/calendarService', () => ({
+  createMaintenanceCalendarEvent: vi.fn(),
+}));
+
+vi.mock('../src/utils/vehicleService', () => ({
+  lookupVin: (...args) => mockLookupVin(...args),
+  getMaintenancePlan: vi.fn(() =>
+    Promise.resolve({
+      strategy: 'static_schedule_v1',
+      modelSpecific: false,
+      items: [],
+    })
+  ),
+}));
+
+vi.mock('../src/utils/vehicleTransferService', () => ({
+  transferVehicle: (...args) => mockTransferVehicle(...args),
+}));
+
+vi.mock('../src/utils/vehiclePhotoService', () => ({
+  findVehiclePhotoFromWeb: (...args) => mockFindVehiclePhotoFromWeb(...args),
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({ state: undefined }),
+    useParams: () => ({ vin: ROUTE_VIN }),
+  };
+});
+
+function renderPage() {
+  return render(
+    <MemoryRouter
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
+      <EditVehicle />
+    </MemoryRouter>
+  );
+}
+
+const BASE_VEHICLE = {
+  vin: ROUTE_VIN,
+  year: '2020',
+  make: 'Toyota',
+  model: 'Camry',
+  mileage: '45000',
+  licensePlate: 'ABC123',
+  purchaseDate: '2020-01-01',
+  vehicleStatus: 'active',
+};
+
+describe('EditVehicle page', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal('alert', vi.fn());
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true)
+    );
+    mockGetVehicle.mockResolvedValue({ ...BASE_VEHICLE });
+    mockFindVehiclePhotoFromWeb.mockResolvedValue(null);
+    mockGetMaintenanceEntries.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it('loads and displays vehicle details', async () => {
+    renderPage();
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /edit vehicle/i })
+      ).toBeInTheDocument();
+      expect(screen.getByDisplayValue(ROUTE_VIN)).toBeInTheDocument();
+    });
+  });
+
+  it('saves changes and navigates home', async () => {
+    mockUpdateVehicle.mockResolvedValue(undefined);
+    renderPage();
+
+    await waitFor(() => screen.getByRole('button', { name: /save changes/i }));
+    await userEvent.clear(screen.getByLabelText(/mileage/i));
+    await userEvent.type(screen.getByLabelText(/mileage/i), '50000');
+    await userEvent.click(
+      screen.getByRole('button', { name: /save changes/i })
+    );
+
+    await waitFor(() => {
+      expect(mockUpdateVehicle).toHaveBeenCalledWith(
+        ROUTE_VIN,
+        expect.objectContaining({ mileage: '50000', vehicleStatus: 'active' })
+      );
+      expect(global.alert).toHaveBeenCalledWith('Vehicle updated successfully');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('saves storage status selection', async () => {
+    mockUpdateVehicle.mockResolvedValue(undefined);
+    renderPage();
+
+    await waitFor(() => screen.getByLabelText(/location status/i));
+    await userEvent.selectOptions(
+      screen.getByLabelText(/location status/i),
+      'stored'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /save changes/i })
+    );
+
+    await waitFor(() => {
+      expect(mockUpdateVehicle).toHaveBeenCalledWith(
+        ROUTE_VIN,
+        expect.objectContaining({ vehicleStatus: 'stored' })
+      );
+    });
+  });
+
+  it('requires recipient email before transferring', async () => {
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'Enter the recipient email before transferring this vehicle.'
+    );
+    expect(mockTransferVehicle).not.toHaveBeenCalled();
+  });
+
+  it('transfers vehicle and navigates to app', async () => {
+    mockTransferVehicle.mockResolvedValue({
+      success: true,
+      recipientEmail: 'recipient@example.com',
+    });
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByPlaceholderText(/recipient account email/i)
+    );
+    await userEvent.type(
+      screen.getByPlaceholderText(/recipient account email/i),
+      'recipient@example.com'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /^transfer vehicle$/i })
+    );
+
+    await waitFor(() => {
+      expect(global.confirm).toHaveBeenCalled();
+      expect(mockTransferVehicle).toHaveBeenCalledWith({
+        vin: ROUTE_VIN,
+        recipientEmail: 'recipient@example.com',
+      });
+      expect(global.alert).toHaveBeenCalledWith(
+        'Vehicle transferred to recipient@example.com.'
+      );
+      expect(mockNavigate).toHaveBeenCalledWith('/app');
+    });
+  });
+
+  it('deletes vehicle when confirmed', async () => {
+    mockDeleteVehicle.mockResolvedValue(undefined);
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByRole('button', { name: /delete vehicle/i })
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /delete vehicle/i })
+    );
+
+    await waitFor(() => {
+      expect(global.confirm).toHaveBeenCalled();
+      expect(mockDeleteVehicle).toHaveBeenCalledWith(ROUTE_VIN);
+      expect(global.alert).toHaveBeenCalledWith('Vehicle deleted');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('does not delete vehicle when confirmation is cancelled', async () => {
+    global.confirm.mockReturnValue(false);
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByRole('button', { name: /delete vehicle/i })
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /delete vehicle/i })
+    );
+
+    expect(mockDeleteVehicle).not.toHaveBeenCalled();
+  });
+
+  it('looks up VIN and updates visible details', async () => {
+    mockLookupVin.mockResolvedValue({
+      make: 'Toyota',
+      model: 'Camry',
+      year: '2021',
+      recallsCount: 1,
+      recallsSource: 'NHTSA',
+      vehicleType: 'Passenger Vehicle',
+      bodyClass: 'Sedan',
+      fuelType: 'Gasoline',
+      engineType: 'I4',
+      driveType: 'FWD',
+      transmissionStyle: 'Automatic',
+      trim: 'SE',
+      recallsItems: [],
+      vinProfile: {},
+    });
+
+    renderPage();
+
+    await waitFor(() => screen.getByRole('button', { name: /vin lookup/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
+
+    await waitFor(() => {
+      expect(mockLookupVin).toHaveBeenCalledWith(ROUTE_VIN);
+      expect(screen.getByText(/1 recall/i)).toBeInTheDocument();
+      expect(screen.getByText(/source: nhtsa/i)).toBeInTheDocument();
+    });
+  });
+
+  it('blocks lookup for HIN identifiers', async () => {
+    mockGetVehicle.mockResolvedValue({
+      ...BASE_VEHICLE,
+      vin: 'ABC12345A595',
+      vehicleType: 'Boat',
+    });
+
+    renderPage();
+
+    await waitFor(() => screen.getByRole('button', { name: /vin lookup/i }));
+    await userEvent.click(screen.getByRole('button', { name: /vin lookup/i }));
+
+    expect(global.alert).toHaveBeenCalledWith(
+      'VIN lookup currently supports VIN only. Detected HIN. You can still save this vehicle ID and edit details manually.'
+    );
+    expect(mockLookupVin).not.toHaveBeenCalled();
+  });
+
+  it('offers the current shop-type taxonomy in the Who did it dropdown', async () => {
+    renderPage();
+
+    const select = await waitFor(() => screen.getByLabelText(/who did it/i));
+    const optionLabels = Array.from(select.options).map(o => o.textContent);
+
+    expect(optionLabels).toEqual([
+      'Self-service',
+      'Repair shop',
+      'Dealership',
+      'Body shop',
+      'Car wash',
+      'Detailer',
+    ]);
+  });
+
+  it('still displays retired performedBy values on entries saved before this taxonomy shipped', async () => {
+    mockGetMaintenanceEntries.mockResolvedValue([
+      {
+        id: 'legacy-1',
+        title: 'Oil change',
+        cost: '80',
+        date: '2024-01-01T00:00:00.000Z',
+        performedBy: 'mechanic',
+        coverage: 'parts_and_labor',
+        notes: '',
+      },
+      {
+        id: 'legacy-2',
+        title: 'Fleet inspection',
+        cost: '120',
+        date: '2024-02-01T00:00:00.000Z',
+        performedBy: 'business',
+        coverage: 'parts_and_labor',
+        notes: '',
+      },
+    ]);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Mechanic/)).toBeInTheDocument();
+      expect(screen.getByText(/Business-maintained/)).toBeInTheDocument();
+    });
+  });
+});

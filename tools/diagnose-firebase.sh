@@ -5,25 +5,6 @@ echo "🔍 Firebase Connection Diagnostic"
 echo "================================="
 echo ""
 
-# Check if .env.local exists
-if [ -f "web/.env.local" ]; then
-    echo "✅ web/.env.local exists"
-    
-    # Check if it has real values (not placeholders)
-    if grep -q "YOUR_API_KEY\|REPLACE_WITH" web/.env.local; then
-        echo "❌ web/.env.local contains placeholder values"
-        echo "   → Copy real Firebase config values from Firebase Console"
-    else
-        echo "✅ web/.env.local appears to have real values"
-    fi
-else
-    echo "❌ web/.env.local is missing"
-    echo "   → Copy web/.env.example to web/.env.local"
-    echo "   → Add your Firebase project configuration"
-fi
-
-echo ""
-
 # Check Firebase CLI
 if command -v firebase &> /dev/null; then
     echo "✅ Firebase CLI is installed"

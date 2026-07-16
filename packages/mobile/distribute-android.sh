@@ -67,21 +67,26 @@ echo "✅ APK built successfully: $APK_PATH"
 # Set environment variables for Firebase App Distribution
 export RELEASE_NOTES="$RELEASE_NOTES"
 
-# Check if we should skip distribution (for local testing)
-if [ "$SKIP_DISTRIBUTION" = "true" ]; then
-    echo "⏭️  Skipping Firebase App Distribution (SKIP_DISTRIBUTION=true)"
+# Check if we should skip distribution (for local testing or missing credentials)
+if [ "$SKIP_DISTRIBUTION" = "true" ] || [ ! -f "android/app/service-account-key.json" ]; then
+    echo "⏭️  Skipping Firebase App Distribution (SKIP_DISTRIBUTION=true or no service account key)"
     echo "✅ Android app built successfully!"
     echo "📱 APK available at: build/app/outputs/flutter-apk/app-$BUILD_TYPE.apk"
     exit 0
 fi
 
-# Distribute using Gradle task
+# Distribute using Firebase CLI instead of Gradle task
 echo "📤 Distributing to Firebase App Distribution..."
-cd android
 if [ "$BUILD_TYPE" = "release" ]; then
-    ./gradlew appDistributionUploadRelease
+    firebase appdistribution:distribute "build/app/outputs/flutter-apk/app-$BUILD_TYPE.apk" \
+        --app "$FIREBASE_APP_ID_ANDROID" \
+        --groups "$TESTER_GROUPS" \
+        --release-notes "$RELEASE_NOTES"
 else
-    ./gradlew appDistributionUploadDebug
+    firebase appdistribution:distribute "build/app/outputs/flutter-apk/app-$BUILD_TYPE.apk" \
+        --app "$FIREBASE_APP_ID_ANDROID" \
+        --groups "$TESTER_GROUPS" \
+        --release-notes "$RELEASE_NOTES"
 fi
 
 echo "🎉 Android app distributed successfully!"

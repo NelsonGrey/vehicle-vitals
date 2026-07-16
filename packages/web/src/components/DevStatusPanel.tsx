@@ -1,18 +1,15 @@
 import { useEffect, useState } from 'react';
 import { getVehicles } from '../shared/firestoreService';
 
-const shouldShow = () => import.meta.env.DEV || import.meta.env.VITE_SHOW_STATUS === 'true';
+const shouldShow = () =>
+  import.meta.env.DEV || import.meta.env.VITE_SHOW_STATUS === 'true';
 
 // Create async Firebase auth service that hides imports from Vite
 const createFirebaseAuthService = async () => {
   try {
-    // Use Function constructor to hide imports from Vite's static analysis
-    const authFn = new Function('return import("firebase/auth")');
-    const configFn = new Function('return import("../shared/firebaseConfig")');
-    
     const [{ onAuthStateChanged }, { getFirebaseAuth }] = await Promise.all([
-      authFn(),
-      configFn()
+      import('firebase/auth'),
+      import('../shared/firebaseConfig'),
     ]);
 
     const auth = await getFirebaseAuth();
@@ -22,7 +19,7 @@ const createFirebaseAuthService = async () => {
     // Return mock service for build compatibility
     return {
       auth: { currentUser: null },
-      onAuthStateChanged: () => () => {}
+      onAuthStateChanged: () => () => {},
     };
   }
 };
@@ -34,24 +31,27 @@ export default function DevStatusPanel() {
 
   useEffect(() => {
     if (!visible) return;
-    
+
     createFirebaseAuthService().then(service => {
       setUid((service as any).auth.currentUser?.uid || '');
-      
-      const unsub = (service as any).onAuthStateChanged((service as any).auth, async (user: unknown) => {
-        const firebaseUser = user as any;
-        setUid(firebaseUser?.uid || '');
-        if (!firebaseUser?.uid) {
-          setCount(0);
-          return;
+
+      const unsub = (service as any).onAuthStateChanged(
+        (service as any).auth,
+        async (user: unknown) => {
+          const firebaseUser = user as any;
+          setUid(firebaseUser?.uid || '');
+          if (!firebaseUser?.uid) {
+            setCount(0);
+            return;
+          }
+          try {
+            const list = await getVehicles();
+            setCount(list.length);
+          } catch {
+            setCount(0);
+          }
         }
-        try {
-          const list = await getVehicles();
-          setCount(list.length);
-        } catch {
-          setCount(0);
-        }
-      });
+      );
       return () => unsub();
     });
   }, [visible]);

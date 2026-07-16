@@ -1,0 +1,76 @@
+import 'package:cloud_functions/cloud_functions.dart';
+
+class EntitlementsService {
+  final FirebaseFunctions _functions;
+
+  EntitlementsService({FirebaseFunctions? functions})
+    : _functions = functions ?? FirebaseFunctions.instance;
+
+  Future<Map<String, dynamic>> bootstrapEnterpriseContext() async {
+    final callable = _functions.httpsCallable(
+      'bootstrapEnterpriseContextCallable',
+    );
+    final response = await callable.call(<String, dynamic>{});
+    final data = Map<String, dynamic>.from(response.data as Map? ?? const {});
+
+    if (data['success'] != true) {
+      throw Exception('Failed to bootstrap enterprise context');
+    }
+
+    return data;
+  }
+
+  Future<Map<String, dynamic>> promotePersonalGarageToHousehold({
+    required String householdName,
+    String garageStorageMode = 'dual_write',
+  }) async {
+    final callable = _functions.httpsCallable(
+      'promotePersonalGarageToHouseholdCallable',
+    );
+    final response = await callable.call({
+      'householdName': householdName,
+      'garageStorageMode': garageStorageMode,
+    });
+    final data = Map<String, dynamic>.from(response.data as Map? ?? const {});
+
+    if (data['success'] != true) {
+      throw Exception('Failed to promote garage to household');
+    }
+
+    return data;
+  }
+
+  Future<Map<String, dynamic>> setGarageStorageMode({
+    String? orgId,
+    required String garageStorageMode,
+  }) async {
+    final callable = _functions.httpsCallable('setGarageStorageModeCallable');
+    final response = await callable.call({
+      'orgId': orgId ?? '',
+      'garageStorageMode': garageStorageMode,
+    });
+    final data = Map<String, dynamic>.from(response.data as Map? ?? const {});
+
+    if (data['success'] != true) {
+      throw Exception('Failed to update garage storage mode');
+    }
+
+    return data;
+  }
+
+  Future<Map<String, dynamic>> getEffectiveEntitlements({String? orgId}) async {
+    final callable = _functions.httpsCallable(
+      'getEffectiveEntitlementsCallable',
+    );
+    final response = await callable.call({'orgId': orgId ?? ''});
+    final data = Map<String, dynamic>.from(response.data as Map? ?? const {});
+
+    if (data['success'] != true) {
+      throw Exception('Failed to resolve effective entitlements');
+    }
+
+    return Map<String, dynamic>.from(
+      data['entitlements'] as Map? ?? const <String, dynamic>{},
+    );
+  }
+}

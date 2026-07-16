@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../components/safe_back_button.dart';
+
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
+
 class ScanVINScreen extends StatefulWidget {
   const ScanVINScreen({super.key});
 
@@ -10,115 +14,113 @@ class ScanVINScreen extends StatefulWidget {
 }
 
 class _ScanVINScreenState extends State<ScanVINScreen> {
-  MobileScannerController cameraController = MobileScannerController(
+  final MobileScannerController _cameraController = MobileScannerController(
     formats: [BarcodeFormat.code39, BarcodeFormat.code128],
   );
   bool _screenOpened = false;
 
   @override
   void dispose() {
-    cameraController.dispose();
+    _cameraController.dispose();
     super.dispose();
   }
 
   void _foundBarcode(BarcodeCapture capture) {
-    /// Prevent opening the same screen multiple times
     if (_screenOpened) return;
-    _screenOpened = true;
 
-    final List<Barcode> barcodes = capture.barcodes;
-    for (final barcode in barcodes) {
-      final String? code = barcode.rawValue;
-      if (code != null && code.length == 17) {
-        // Found a valid 17-character VIN
-        Navigator.of(context).pop();
-        context.go('/add-vehicle/$code');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('VIN detected: $code'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        return;
+    for (final barcode in capture.barcodes) {
+      final code = barcode.rawValue?.trim().toUpperCase();
+      if (code == null || code.length != 17) {
+        continue;
       }
+
+      _screenOpened = true;
+      final colorScheme = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('VIN detected: $code'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
+      context.pushReplacement('/app/add-vehicle/$code');
+      return;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan VIN'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
+        leading: const SafeBackButton(
+          icon: Icons.arrow_back,
+          fallbackRoute: '/app/add-vehicle',
+        ),
       ),
-      body: Stack(
+      body: Column(
         children: [
-          // Camera preview
-          MobileScanner(controller: cameraController, onDetect: _foundBarcode),
-
-          // Overlay with scanning instructions
+          Expanded(
+            child: _screenshotMode
+                ? Container(
+                    width: double.infinity,
+                    color: Colors.black87,
+                    child: Center(
+                      child: Container(
+                        margin: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 3),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.document_scanner,
+                              color: Colors.white,
+                              size: 72,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'VIN barcode frame',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              '1FTEW1EP8NFA23457',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : MobileScanner(
+                    controller: _cameraController,
+                    onDetect: _foundBarcode,
+                  ),
+          ),
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.8),
-                  Colors.transparent,
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.8),
-                ],
-                stops: const [0.0, 0.3, 0.7, 1.0],
-              ),
-            ),
-          ),
-
-          // Scanning frame
-          Center(
-            child: Container(
-              width: 300,
-              height: 150,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-
-          // Instructions
-          const Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
+            width: double.infinity,
+            color: colorScheme.surface,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
             child: Text(
-              'Position the VIN barcode within the frame',
+              'Center the VIN barcode in the camera frame. If scan fails, go back and enter VIN manually.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
               ),
-            ),
-          ),
-
-          // Manual entry button
-          Positioned(
-            bottom: 50,
-            left: 20,
-            right: 20,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.go('/add-vehicle');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF59E0B),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text('Enter VIN Manually'),
             ),
           ),
         ],

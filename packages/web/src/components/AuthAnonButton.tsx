@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
 
-// Create async Firebase service that hides imports from Vite
-const createFirebaseAuth = async () => {
-  try {
-    // Use Function constructor to hide imports from Vite's static analysis
-    const authFn = new Function('return import("firebase/auth")');
-    const configFn = new Function('return import("../shared/firebaseConfig")');
+type FirebaseAuthBridge = {
+  auth: { currentUser?: unknown };
+  onAuthStateChanged: (
+    auth: unknown,
+    callback: (user: unknown) => void
+  ) => () => void;
+  signInAnonymously: (auth: unknown) => Promise<unknown>;
+};
 
-    const [{ onAuthStateChanged, signInAnonymously }, { getFirebaseAuth }] = await Promise.all([
-      authFn(),
-      configFn()
-    ]);
+// Create async Firebase service that hides imports from Vite
+const createFirebaseAuth = async (): Promise<FirebaseAuthBridge> => {
+  try {
+    const [{ onAuthStateChanged, signInAnonymously }, { getFirebaseAuth }] =
+      await Promise.all([
+        import('firebase/auth'),
+        import('../shared/firebaseConfig'),
+      ]);
 
     const auth = await getFirebaseAuth();
     return { auth, onAuthStateChanged, signInAnonymously };
@@ -20,7 +26,7 @@ const createFirebaseAuth = async () => {
     return {
       auth: { currentUser: null },
       onAuthStateChanged: () => () => {},
-      signInAnonymously: async () => {}
+      signInAnonymously: async () => undefined,
     };
   }
 };
@@ -29,18 +35,18 @@ export default function AuthAnonButton() {
   const [authed, setAuthed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [firebaseAuth, setFirebaseAuth] = useState<{
-    auth: unknown;
-    onAuthStateChanged: (auth: unknown, callback: (user: unknown) => void) => () => void;
-    signInAnonymously: (auth: unknown) => Promise<void>;
-  } | null>(null);
+  const [firebaseAuth, setFirebaseAuth] = useState<FirebaseAuthBridge | null>(
+    null
+  );
 
   useEffect(() => {
     createFirebaseAuth().then(service => {
       setFirebaseAuth(service);
       setAuthed(!!service.auth.currentUser);
-      
-      const unsub = service.onAuthStateChanged(service.auth, (user: unknown) => setAuthed(!!user));
+
+      const unsub = service.onAuthStateChanged(service.auth, (user: unknown) =>
+        setAuthed(!!user)
+      );
       return () => unsub();
     });
   }, []);
@@ -49,7 +55,7 @@ export default function AuthAnonButton() {
 
   const signIn = async () => {
     if (!firebaseAuth) return;
-    
+
     setBusy(true);
     setError('');
     try {
@@ -64,7 +70,7 @@ export default function AuthAnonButton() {
 
   return (
     <div className="auth-anon-banner">
-            <span className="auth-anon-text">You&apos;re not signed in.</span>
+      <span className="auth-anon-text">You&apos;re not signed in.</span>
       <div>
         <button onClick={signIn} disabled={busy} className="auth-anon-button">
           {busy ? 'Signing in…' : 'Continue without account'}

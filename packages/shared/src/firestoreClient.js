@@ -1,36 +1,42 @@
 // shared/firestoreClient.js
-import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
+import { getReactNativePersistence, initializeAuth } from 'firebase/auth';
 import * as firestoreHelpers from 'firebase/firestore';
-import { createFirestoreService } from './firestoreServiceFactory';
+import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig as _fc } from './firebaseConfig';
+import { createFirestoreService } from './firestoreServiceFactory';
 
 // initialize app using shared/firebaseConfig placeholders (mobile will use process.env)
 const app = initializeApp(_fc);
 export const auth = initializeAuth(app, {
-	persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
 });
 export const db = getFirestore(app);
 
-export const firestoreService = createFirestoreService({ db, auth, helpers: firestoreHelpers });
+export const firestoreService = createFirestoreService({
+  db,
+  auth,
+  helpers: firestoreHelpers,
+});
 
 // Also export named methods for convenience/consistency with web wiring
 export const {
-	addOrUpdateVehicle,
-	getVehicles,
-	getVehicle,
-	addMaintenanceEntry,
-	getMaintenanceEntries,
-	getMaintenanceEntry,
-	updateMaintenanceEntry,
-	deleteMaintenanceEntry,
-	updateVehicle,
-	deleteVehicle,
-	// reminder stubs
-	addReminder,
-	getReminders,
-	completeReminder,
-	snoozeReminder,
+  addOrUpdateVehicle,
+  getVehicles,
+  getVehicle,
+  addMaintenanceEntry,
+  getMaintenanceEntries,
+  getMaintenanceEntry,
+  updateMaintenanceEntry,
+  deleteMaintenanceEntry,
+  updateVehicle,
+  deleteVehicle,
+  // reminder lifecycle
+  addReminder,
+  getReminders,
+  completeReminder,
+  snoozeReminder,
+  dismissReminder,
+  reopenReminder,
 } = firestoreService;

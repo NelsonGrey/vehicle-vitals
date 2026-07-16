@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Vehicle Vitals - Memory-Optimized Installation Script
+# Vehicle-Vitals - Memory-Optimized Installation Script
 # This script ensures npm install runs without memory issues
 
-echo "🚗 Vehicle Vitals - Starting optimized installation..."
+echo "🚗 Vehicle-Vitals - Starting optimized installation..."
 
 # Check if Node.js version is compatible
 NODE_VERSION=$(node --version | sed 's/v//')

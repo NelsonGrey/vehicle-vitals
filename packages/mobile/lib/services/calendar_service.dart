@@ -1,76 +1,149 @@
-import 'package:add_2_calendar/add_2_calendar.dart' as add2cal;
-import 'package:device_calendar/device_calendar.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logging/logging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CalendarService {
-  final DeviceCalendarPlugin _deviceCalendar = DeviceCalendarPlugin();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final Logger _logger = Logger('CalendarService');
+  static const String _syncEnabledKey = 'calendar_sync_enabled';
+  static const String _targetKey = 'calendar_target';
+  static const String _functionsBaseUrl = String.fromEnvironment(
+    'FUNCTIONS_BASE_URL',
+    defaultValue: '',
+  );
+
+  Uri _resolveCalendarEventUri() {
+    final explicit = _functionsBaseUrl.trim();
+    if (explicit.isNotEmpty) {
+      return Uri.parse(
+        '${explicit.replaceAll(RegExp(r'/+$'), '')}/createCalendarEvent',
+      );
+    }
+
+    // Fallback default for current Firebase project/region conventions.
+    return Uri.parse(
+      'https://us-central1-vehicle-vitals.cloudfunctions.net/createCalendarEvent',
+    );
+  }
+
+  Future<Map<String, dynamic>> _callCalendarEventHttp(
+    Map<String, dynamic> payload,
+  ) async {
+    final client = HttpClient();
+    try {
+      final request = await client.postUrl(_resolveCalendarEventUri());
+      request.headers.contentType = ContentType.json;
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken != null && idToken.isNotEmpty) {
+        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
+      }
+      request.write(jsonEncode(payload));
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+      final parsed =
+          (responseBody.isNotEmpty
+                  ? jsonDecode(responseBody)
+                  : <String, dynamic>{})
+              as Map;
+      final data = Map<String, dynamic>.from(parsed);
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final message = (data['error'] ?? 'Calendar HTTP request failed')
+            .toString();
+        throw Exception(message);
+      }
+
+      if (data['success'] != true) {
+        final message = (data['error'] ?? 'Calendar sync failed').toString();
+        throw Exception(message);
+      }
+
+      return Map<String, dynamic>.from(data['event'] as Map? ?? {});
+    } finally {
+      client.close(force: true);
+    }
+  }
 
   // Check if calendar permissions are granted
   Future<bool> hasCalendarPermissions() async {
-    final permissionsGranted = await _deviceCalendar.hasPermissions();
-    return permissionsGranted.isSuccess && permissionsGranted.data == true;
+    // Endpoint-backed flow does not require device-calendar permissions.
+    return true;
   }
 
   // Request calendar permissions
   Future<bool> requestCalendarPermissions() async {
-    final permissionsGranted = await _deviceCalendar.requestPermissions();
-    return permissionsGranted.isSuccess && permissionsGranted.data == true;
+    // Endpoint-backed flow does not require device-calendar permissions.
+    return true;
   }
 
   // Get available calendars
-  Future<List<Calendar>> getAvailableCalendars() async {
-    final calendarsResult = await _deviceCalendar.retrieveCalendars();
-    if (calendarsResult.isSuccess && calendarsResult.data != null) {
-      return calendarsResult.data!
-          .where(
-            (calendar) =>
-                calendar.isReadOnly == false && calendar.isDefault == true,
-          )
-          .toList();
-    }
-    return [];
+  Future<List<dynamic>> getAvailableCalendars() async {
+    return [
+      {'id': 'google', 'name': 'Google Calendar'},
+      {'id': 'apple', 'name': 'Apple Calendar (ICS import)'},
+      {'id': 'ics', 'name': 'ICS Download'},
+    ];
   }
 
-  // Add maintenance reminder to calendar
-  Future<bool> addMaintenanceToCalendar({
+  // Add maintenance reminder to calendar through backend endpoint.
+  Future<Map<String, dynamic>> addMaintenanceToCalendar({
+    required String vehicleVin,
     required String title,
     required String description,
     required DateTime dueDate,
     required String vehicleInfo,
+    String? target,
   }) async {
-    try {
-      final event = add2cal.Event(
-        title: 'Vehicle Maintenance: $title',
-        description:
-            '$description\n\nVehicle: $vehicleInfo\n\nAdded by Vehicle Vitals',
-        startDate: dueDate,
-        endDate: dueDate.add(const Duration(hours: 1)), // 1 hour duration
-        location: 'Vehicle Service Center',
-      );
+    final prefs = await SharedPreferences.getInstance();
+    final selectedTarget = target ?? prefs.getString(_targetKey) ?? 'google';
 
-      final result = await add2cal.Add2Calendar.addEvent2Cal(event);
-      return result;
-    } catch (e) {
-      _logger.severe('Error adding to calendar', e);
-      return false;
+    final payload = {
+      'vehicleVin': vehicleVin,
+      'title': title,
+      'description': '$description\n$vehicleInfo',
+      'startAt': dueDate.toUtc().toIso8601String(),
+      'endAt': dueDate.toUtc().add(const Duration(hours: 1)).toIso8601String(),
+      'target': selectedTarget,
+    };
+
+    Map<String, dynamic> event;
+    try {
+      final callable = _functions.httpsCallable('createCalendarEventCallable');
+      final response = await callable.call(payload);
+      final data = Map<String, dynamic>.from(response.data as Map);
+      if (data['success'] != true) {
+        final message = (data['error'] ?? 'Callable calendar sync failed')
+            .toString();
+        throw Exception(message);
+      }
+      event = Map<String, dynamic>.from(data['event'] as Map? ?? {});
+    } catch (callableError) {
+      _logger.warning(
+        'Callable calendar sync failed, falling back to HTTP: $callableError',
+      );
+      event = await _callCalendarEventHttp(payload);
     }
+
+    final prefixLength = vehicleVin.length < 8 ? vehicleVin.length : 8;
+    _logger.info('Calendar event created', {
+      'target': selectedTarget,
+      'vehicleVinPrefix': vehicleVin.substring(0, prefixLength),
+    });
+    return event;
   }
 
   // Get user's calendar preferences
   Future<Map<String, dynamic>> getCalendarPreferences() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-
-    final doc = await _firestore.collection('users').doc(user.uid).get();
-    final data = doc.data() ?? {};
-
+    final prefs = await SharedPreferences.getInstance();
     return {
-      'calendarSyncEnabled': data['calendarSyncEnabled'] ?? false,
-      'calendarId': data['calendarId'],
+      'calendarSyncEnabled': prefs.getBool(_syncEnabledKey) ?? false,
+      'calendarId': prefs.getString(_targetKey) ?? 'google',
     };
   }
 
@@ -79,75 +152,15 @@ class CalendarService {
     bool enabled, {
     String? calendarId,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-
-    final updateData = <String, dynamic>{'calendarSyncEnabled': enabled};
-    if (calendarId != null) {
-      updateData['calendarId'] = calendarId;
-    }
-
-    await _firestore.collection('users').doc(user.uid).update(updateData);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_syncEnabledKey, enabled);
+    await prefs.setString(_targetKey, calendarId ?? 'google');
   }
 
   // Sync upcoming maintenance to calendar
   Future<int> syncUpcomingMaintenanceToCalendar() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-
-    final preferences = await getCalendarPreferences();
-    if (!(preferences['calendarSyncEnabled'] as bool? ?? false)) {
-      throw Exception('Calendar sync is disabled');
-    }
-
-    // Get all user's vehicles
-    final vehiclesSnapshot = await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('vehicles')
-        .get();
-
-    int eventsAdded = 0;
-
-    for (final vehicleDoc in vehiclesSnapshot.docs) {
-      final vehicle = vehicleDoc.data();
-      final vin = vehicleDoc.id;
-
-      // Get maintenance entries due in next 30 days
-      final maintenanceSnapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('vehicles')
-          .doc(vin)
-          .collection('maintenance')
-          .get();
-
-      final now = DateTime.now();
-      final thirtyDaysFromNow = now.add(const Duration(days: 30));
-
-      for (final maintenanceDoc in maintenanceSnapshot.docs) {
-        final maintenance = maintenanceDoc.data();
-        final dueDate = maintenance['date']?.toDate();
-
-        if (dueDate != null &&
-            dueDate.isAfter(now) &&
-            dueDate.isBefore(thirtyDaysFromNow)) {
-          final vehicleInfo =
-              '${vehicle['make']} ${vehicle['model']} (${vehicle['year']})';
-          final success = await addMaintenanceToCalendar(
-            title: maintenance['title'] ?? 'Maintenance',
-            description: maintenance['notes'] ?? '',
-            dueDate: dueDate,
-            vehicleInfo: vehicleInfo,
-          );
-
-          if (success) {
-            eventsAdded++;
-          }
-        }
-      }
-    }
-
-    return eventsAdded;
+    // Batch sync is screen-managed for now; this exists for compatibility.
+    _logger.info('Batch calendar sync is initiated by Upcoming Tasks screen');
+    return 0;
   }
 }

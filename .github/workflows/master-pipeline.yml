@@ -1,0 +1,1073 @@
+name: "Master CI/CD Pipeline"
+
+concurrency:
+  group: master-pipeline-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to perform"
+        required: true
+        type: choice
+        options:
+          - build_all
+          - test_all
+          - build_and_deploy
+          - deploy_only
+      environment:
+        description: "Environment for deployment"
+        required: false
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: "development"
+      verbose:
+        description: "Enable verbose output"
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - develop
+      - staging
+      - main
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - main
+
+permissions:
+  contents: read
+
+env:
+  MANIFEST_PATH: ".cicd/projects/${{ github.event.repository.name }}.yml"
+
+jobs:
+  cancel-stale-runs:
+    name: Cancel Stale Runs
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel queued and in-progress runs of this workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Wait briefly so the GitHub concurrency group can settle; this
+          # reduces (but does not eliminate) the chance that two simultaneous
+          # runs cancel each other before the concurrency group has a chance
+          # to do so itself.
+          sleep 5
+          gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow "${{ github.workflow }}" \
+            --branch "${{ github.ref_name }}" \
+            --status queued \
+            --json databaseId \
+            --jq '.[].databaseId' | while read -r run_id; do
+              # Only cancel runs older than this one on the same ref.
+              if [ "$run_id" -lt "${{ github.run_id }}" ]; then
+                echo "Cancelling stale queued run $run_id on ${{ github.ref_name }}"
+                gh run cancel "$run_id" --repo "${{ github.repository }}" || true
+              fi
+            done
+          gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow "${{ github.workflow }}" \
+            --branch "${{ github.ref_name }}" \
+            --status in_progress \
+            --json databaseId \
+            --jq '.[].databaseId' | while read -r run_id; do
+              # Only cancel runs older than this one on the same ref.
+              if [ "$run_id" -lt "${{ github.run_id }}" ]; then
+                echo "Cancelling stale in-progress run $run_id on ${{ github.ref_name }}"
+                gh run cancel "$run_id" --repo "${{ github.repository }}" || true
+              fi
+            done
+
+  load-config:
+    name: Load Project Configuration
+    needs: cancel-stale-runs
+    runs-on: ubuntu-latest
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+      FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV || 'vehicle-vitals-dev' }}
+      FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING || 'vehicle-vitals-staging' }}
+      FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD || 'vehicle-vitals-prod' }}
+      MATCH_GIT_BRANCH: main
+    outputs:
+      project_name: ${{ steps.manifest.outputs.project_name }}
+      ios_enabled: ${{ steps.manifest.outputs.ios_enabled }}
+      android_enabled: ${{ steps.manifest.outputs.android_enabled }}
+      web_enabled: ${{ steps.manifest.outputs.web_enabled }}
+      firebase_enabled: ${{ steps.manifest.outputs.firebase_enabled }}
+      chrome_extension: ${{ steps.manifest.outputs.chrome_extension }}
+      mobile_build: ${{ steps.manifest.outputs.mobile_build }}
+      trigger_context: ${{ steps.context.outputs.trigger }}
+      target_environment: ${{ steps.context.outputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Load Manifest
+        id: manifest
+        env:
+          MANIFEST_PATH: ${{ env.MANIFEST_PATH }}
+        run: |
+          ruby <<'RUBY'
+          require 'yaml'
+
+          manifest_path = ENV.fetch('MANIFEST_PATH')
+          unless File.exist?(manifest_path)
+            warn "Project manifest not found at #{manifest_path}"
+            exit 1
+          end
+
+          data = YAML.safe_load(File.read(manifest_path)) || {}
+          targets = data.fetch('targets', {}) || {}
+
+          outputs = {
+            project_name: data.dig('project', 'name') || File.basename(Dir.pwd),
+            ios_enabled: targets.dig('ios', 'enabled') ? 'true' : 'false',
+            android_enabled: targets.dig('android', 'enabled') ? 'true' : 'false',
+            web_enabled: targets.dig('web', 'enabled') ? 'true' : 'false',
+            firebase_enabled: targets.dig('firebase', 'enabled') ? 'true' : 'false',
+            chrome_extension: targets.dig('chrome_extension', 'enabled') ? 'true' : 'false'
+          }
+
+          outputs[:mobile_build] = (outputs[:ios_enabled] == 'true' || outputs[:android_enabled] == 'true') ? 'true' : 'false'
+
+          File.open(ENV.fetch('GITHUB_OUTPUT'), 'a') do |f|
+            outputs.each { |key, value| f.puts("#{key}=#{value}") }
+          end
+
+          puts "Manifest loaded for #{outputs[:project_name]}"
+          RUBY
+
+      - name: Determine Trigger Context
+        id: context
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TRIGGER="${{ github.event.inputs.action }}"
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            TRIGGER="build_and_deploy"
+            ENVIRONMENT="production"
+          elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+            TRIGGER="build_and_deploy"
+            ENVIRONMENT="staging"
+          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            TRIGGER="build_and_deploy"
+            ENVIRONMENT="development"
+          else
+            TRIGGER="test_all"
+            ENVIRONMENT="development"
+          fi
+
+          echo "trigger=$TRIGGER" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+
+  test:
+    name: Run Tests
+    needs: load-config
+    if: |
+      needs.load-config.outputs.trigger_context == 'test_all' ||
+      needs.load-config.outputs.trigger_context == 'build_all' ||
+      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Run Tests (best effort)
+        run: |
+          if [ -f "package.json" ]; then
+            if command -v npm &> /dev/null; then
+              npm install
+              npm test 2>/dev/null || echo "[warn] Node tests skipped or failed"
+            else
+              echo "[warn] npm not found, skipping Node tests"
+            fi
+          else
+            echo "[warn] No package.json found at repo root"
+          fi
+
+          if [ -f "pubspec.yaml" ]; then
+            if command -v flutter &> /dev/null; then
+              flutter pub get
+              flutter test 2>/dev/null || echo "[warn] Flutter tests skipped or failed"
+            else
+              echo "[warn] flutter not found, skipping Flutter tests"
+            fi
+          else
+            echo "[warn] No Flutter pubspec found at repo root"
+          fi
+
+  web-unit-tests:
+    name: Web Unit Tests
+    needs: load-config
+    if: |
+      needs.load-config.outputs.trigger_context == 'test_all' ||
+      needs.load-config.outputs.trigger_context == 'build_all' ||
+      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci --legacy-peer-deps || npm ci --force
+
+      - name: Run Web Unit Tests
+        run: |
+          cd packages/web
+          npm run test:unit
+
+  mobile-unit-tests:
+    name: Mobile Unit Tests
+    needs: load-config
+    if: |
+      needs.load-config.outputs.trigger_context == 'test_all' ||
+      needs.load-config.outputs.trigger_context == 'build_all' ||
+      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.38.4'
+
+      - name: Install Mobile Dependencies
+        run: |
+          cd packages/mobile
+          rm -f pubspec.lock
+          flutter pub get
+
+      - name: Run Mobile Unit Tests
+        run: |
+          cd packages/mobile
+          flutter test
+
+  web-uat-tests:
+    name: Web UAT (${{ matrix.browser }})
+    needs: [load-config, web-unit-tests]
+    if: |
+      needs.load-config.outputs.trigger_context == 'test_all' ||
+      needs.load-config.outputs.trigger_context == 'build_all' ||
+      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: |
+          cd packages/web
+          # Install only the target browser to reduce download surface area.
+          # Retry to tolerate transient CDN/network failures on hosted runners.
+          for attempt in 1 2 3; do
+            echo "Playwright install attempt ${attempt}/3 for browser '${{ matrix.browser }}'"
+            if npx playwright install --with-deps "${{ matrix.browser }}"; then
+              echo "Playwright browser install succeeded"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Install failed, retrying..."
+            fi
+          done
+          echo "Playwright browser install failed after 3 attempts"
+          exit 1
+
+      - name: Run Web UAT (${{ matrix.browser }})
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+        run: |
+          cd packages/web
+          case "$TARGET_ENV" in
+            production)
+              export BASE_URL="https://vehicle-vitals.com"
+              ;;
+            staging)
+              export BASE_URL="https://vehicle-vitals-staging.web.app"
+              ;;
+            *)
+              export BASE_URL="https://vehicle-vitals-dev.web.app"
+              ;;
+          esac
+          echo "Running Web UAT against BASE_URL=$BASE_URL"
+          npm run test:uat:${{ matrix.browser }}
+
+      - name: Upload UAT Artifacts (${{ matrix.browser }})
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-uat-${{ matrix.browser }}-artifacts
+          path: |
+            packages/web/test-results
+            packages/web/test-results-html
+          if-no-files-found: ignore
+
+  quality-gate:
+    name: Quality Gate
+    needs: [load-config, web-unit-tests, mobile-unit-tests, web-uat-tests]
+    if: |
+      always() &&
+      (needs.load-config.outputs.trigger_context == 'test_all' ||
+       needs.load-config.outputs.trigger_context == 'build_all' ||
+       needs.load-config.outputs.trigger_context == 'build_and_deploy')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate test and UAT gates
+        run: |
+          echo "web-unit-tests=${{ needs.web-unit-tests.result }}"
+          echo "mobile-unit-tests=${{ needs.mobile-unit-tests.result }}"
+          echo "web-uat-tests=${{ needs.web-uat-tests.result }}"
+
+          if [ "${{ needs.web-unit-tests.result }}" != "success" ]; then
+            echo "::error::Web unit tests did not pass"
+            exit 1
+          fi
+
+          if [ "${{ needs.mobile-unit-tests.result }}" != "success" ]; then
+            echo "::error::Mobile unit tests did not pass"
+            exit 1
+          fi
+
+          if [ "${{ needs.web-uat-tests.result }}" != "success" ]; then
+            echo "::error::Web UAT matrix did not pass"
+            exit 1
+          fi
+
+          echo "All quality gates passed"
+
+  build-ios:
+    name: Build iOS App
+    needs: [load-config, quality-gate]
+    if: |
+      needs.load-config.outputs.ios_enabled == 'true' &&
+      (needs.load-config.outputs.trigger_context == 'build_all' ||
+       needs.load-config.outputs.trigger_context == 'build_and_deploy') &&
+      (needs.load-config.outputs.target_environment == 'staging' ||
+       needs.load-config.outputs.target_environment == 'production') &&
+      needs.quality-gate.result == 'success'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.38.4'
+
+      - name: Install Flutter Dependencies
+        run: |
+          cd packages/mobile
+          flutter pub get
+
+      - name: Align iOS Firebase Environment
+        id: ios_firebase_guard
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+        run: |
+          set -e
+          cd packages/mobile
+
+          case "$TARGET_ENV" in
+            development)
+              EXPECTED_PROJECT_ID="vehicle-vitals-dev"
+              ;;
+            staging)
+              EXPECTED_PROJECT_ID="vehicle-vitals-staging"
+              ;;
+            production)
+              EXPECTED_PROJECT_ID="vehicle-vitals-prod"
+              ;;
+            *)
+              echo "::error::Unsupported target environment for iOS Firebase config: $TARGET_ENV"
+              exit 1
+              ;;
+          esac
+
+          SOURCE_PLIST="config/$TARGET_ENV/ios/GoogleService-Info.plist"
+          TARGET_PLIST="ios/Runner/GoogleService-Info.plist"
+
+          if [ ! -f "$SOURCE_PLIST" ]; then
+            case "$TARGET_ENV" in
+              development)
+                SOURCE_PLIST="ios/Runner/GoogleService-Info.dev.plist"
+                ;;
+              staging)
+                SOURCE_PLIST="ios/Runner/GoogleService-Info.staging.plist"
+                ;;
+              production)
+                SOURCE_PLIST="ios/Runner/GoogleService-Info.prod.plist"
+                ;;
+            esac
+          fi
+
+          if [ ! -f "$SOURCE_PLIST" ]; then
+            echo "::error::Missing Firebase iOS config for environment '$TARGET_ENV'"
+            echo "::error::Checked config/$TARGET_ENV/ios/GoogleService-Info.plist and tracked ios/Runner fallback plists"
+            exit 1
+          fi
+
+          if ! cmp -s "$SOURCE_PLIST" "$TARGET_PLIST"; then
+            cp "$SOURCE_PLIST" "$TARGET_PLIST"
+          fi
+
+          ACTUAL_PROJECT_ID=$(/usr/libexec/PlistBuddy -c "Print :PROJECT_ID" "$TARGET_PLIST" 2>/dev/null || true)
+
+          if [ -z "$ACTUAL_PROJECT_ID" ]; then
+            echo "::error::Unable to read PROJECT_ID from $TARGET_PLIST"
+            exit 1
+          fi
+
+          if [ "$ACTUAL_PROJECT_ID" != "$EXPECTED_PROJECT_ID" ]; then
+            echo "::error::Firebase iOS config mismatch: env=$TARGET_ENV expected PROJECT_ID=$EXPECTED_PROJECT_ID but found PROJECT_ID=$ACTUAL_PROJECT_ID"
+            exit 1
+          fi
+
+          echo "iOS Firebase config validated for $TARGET_ENV ($ACTUAL_PROJECT_ID)"
+
+          {
+            echo "### iOS Firebase Guard"
+            echo "- Environment: $TARGET_ENV"
+            echo "- PROJECT_ID: $ACTUAL_PROJECT_ID"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Select Xcode Version
+        run: |
+          # Xcode 16.4 has a provisioning-profile resolution bug with automatic signing;
+          # newer Xcode handles it correctly. Select the latest available Xcode 26+.
+          LATEST=$(ls /Applications/ | grep -E "^Xcode_2[6-9]\.[0-9]+\.app$|^Xcode_[3-9][0-9]\.[0-9]+\.app$" | sort -t_ -k2 -V | tail -1)
+          if [ -n "$LATEST" ]; then
+            sudo xcode-select -s "/Applications/${LATEST}"
+            echo "Selected $LATEST"
+          else
+            echo "No Xcode 26+ found; using default $(xcode-select -p)"
+          fi
+          xcodebuild -version
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Run Fastlane Beta (Signed Build + TestFlight)
+        working-directory: packages/mobile/ios
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+          FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: |
+          FIREBASE_ENV="$TARGET_ENV" bundle exec fastlane beta
+
+      - name: Upload iOS Build Artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-signed-build-${{ needs.load-config.outputs.target_environment }}
+          path: packages/mobile/ios/builds/Vehicle-Vitals.ipa
+          if-no-files-found: warn
+
+      - name: Upload Fastlane/gym Logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-fastlane-logs-${{ needs.load-config.outputs.target_environment }}
+          path: |
+            ~/Library/Logs/gym
+            ~/Library/Logs/fastlane
+          if-no-files-found: ignore
+
+  build-android:
+    name: Build Android App
+    needs: load-config
+    if: |
+      needs.load-config.outputs.android_enabled == 'true' &&
+      (needs.load-config.outputs.trigger_context == 'build_all' ||
+       needs.load-config.outputs.trigger_context == 'build_and_deploy')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/mobile
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Debug APK
+        if: needs.load-config.outputs.trigger_context != 'build_and_deploy'
+        run: flutter build apk --debug
+
+      - name: Build Release App Bundle
+        if: needs.load-config.outputs.trigger_context == 'build_and_deploy'
+        run: flutter build appbundle --release
+
+      - name: Upload Android Artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-build-${{ needs.load-config.outputs.trigger_context == 'build_and_deploy' && 'release' || 'debug' }}
+          path: |
+            packages/mobile/build/app/outputs/**/*.apk
+            packages/mobile/build/app/outputs/**/*.aab
+          if-no-files-found: warn
+
+  build-web:
+    name: Build Web App
+    needs: [load-config, quality-gate]
+    if: |
+      always() &&
+      needs.load-config.outputs.web_enabled == 'true' &&
+      (((needs.load-config.outputs.trigger_context == 'build_all' ||
+         needs.load-config.outputs.trigger_context == 'build_and_deploy') &&
+        needs.quality-gate.result == 'success') ||
+       needs.load-config.outputs.trigger_context == 'deploy_only')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
+
+      - name: Build Shared Packages
+        run: |
+          npm run build --workspace=@vehicle-vitals/shared 2>/dev/null || echo "✓ @vehicle-vitals/shared (skip)"
+          npm run build --workspace=@shared/firebase-utils 2>/dev/null || echo "✓ @shared/firebase-utils (skip)"
+
+      - name: Prepare Web Firebase Environment
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+          VITE_FIREBASE_API_KEY_PRODUCTION: ${{ secrets.VITE_FIREBASE_API_KEY_PRODUCTION }}
+          VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION }}
+          VITE_FIREBASE_PROJECT_ID_PRODUCTION: ${{ secrets.VITE_FIREBASE_PROJECT_ID_PRODUCTION }}
+          VITE_FIREBASE_STORAGE_BUCKET_PRODUCTION: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_PRODUCTION }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION }}
+          VITE_FIREBASE_APP_ID_PRODUCTION: ${{ secrets.VITE_FIREBASE_APP_ID_PRODUCTION }}
+          VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION }}
+          VITE_FIREBASE_API_KEY_STAGING: ${{ secrets['VITE_FIREBASE_API_KEY_STAGING'] }}
+          VITE_FIREBASE_AUTH_DOMAIN_STAGING: ${{ secrets['VITE_FIREBASE_AUTH_DOMAIN_STAGING'] }}
+          VITE_FIREBASE_PROJECT_ID_STAGING: ${{ secrets['VITE_FIREBASE_PROJECT_ID_STAGING'] }}
+          VITE_FIREBASE_STORAGE_BUCKET_STAGING: ${{ secrets['VITE_FIREBASE_STORAGE_BUCKET_STAGING'] }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID_STAGING: ${{ secrets['VITE_FIREBASE_MESSAGING_SENDER_ID_STAGING'] }}
+          VITE_FIREBASE_APP_ID_STAGING: ${{ secrets['VITE_FIREBASE_APP_ID_STAGING'] }}
+          VITE_FIREBASE_MEASUREMENT_ID_STAGING: ${{ secrets['VITE_FIREBASE_MEASUREMENT_ID_STAGING'] }}
+          VITE_FIREBASE_API_KEY_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_API_KEY_DEVELOPMENT }}
+          VITE_FIREBASE_AUTH_DOMAIN_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_DEVELOPMENT }}
+          VITE_FIREBASE_PROJECT_ID_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_PROJECT_ID_DEVELOPMENT }}
+          VITE_FIREBASE_STORAGE_BUCKET_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_DEVELOPMENT }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT }}
+          VITE_FIREBASE_APP_ID_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_APP_ID_DEVELOPMENT }}
+          VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT }}
+          VITE_FIREBASE_API_KEY: ${{ secrets['VITE_FIREBASE_API_KEY'] }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets['VITE_FIREBASE_AUTH_DOMAIN'] }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets['VITE_FIREBASE_PROJECT_ID'] }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets['VITE_FIREBASE_STORAGE_BUCKET'] }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets['VITE_FIREBASE_MESSAGING_SENDER_ID'] }}
+          VITE_FIREBASE_APP_ID: ${{ secrets['VITE_FIREBASE_APP_ID'] }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets['VITE_FIREBASE_MEASUREMENT_ID'] }}
+          VITE_SHOW_COMING_SOON_PRODUCTION: ${{ secrets.VITE_SHOW_COMING_SOON_PRODUCTION }}
+          VITE_SHOW_COMING_SOON_STAGING: ${{ secrets.VITE_SHOW_COMING_SOON_STAGING }}
+          VITE_SHOW_COMING_SOON_DEVELOPMENT: ${{ secrets.VITE_SHOW_COMING_SOON_DEVELOPMENT }}
+          VITE_ACCESS_PASSWORD_STAGING: ${{ secrets.VITE_ACCESS_PASSWORD_STAGING }}
+          VITE_ACCESS_PASSWORD_DEVELOPMENT: ${{ secrets.VITE_ACCESS_PASSWORD_DEVELOPMENT }}
+          VITE_ALLOWED_EMAIL_DOMAINS_PRODUCTION: ${{ secrets.VITE_ALLOWED_EMAIL_DOMAINS_PRODUCTION }}
+          VITE_ALLOWED_EMAIL_DOMAINS_STAGING: ${{ secrets.VITE_ALLOWED_EMAIL_DOMAINS_STAGING }}
+          VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT: ${{ secrets.VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT }}
+          VITE_ALLOWED_EMAILS_PRODUCTION: ${{ secrets['VITE_ALLOWED_EMAILS_PRODUCTION'] }}
+          VITE_ALLOWED_EMAILS_STAGING: ${{ secrets['VITE_ALLOWED_EMAILS_STAGING'] }}
+          VITE_ALLOWED_EMAILS_DEVELOPMENT: ${{ secrets['VITE_ALLOWED_EMAILS_DEVELOPMENT'] }}
+          VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION: ${{ secrets['VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION'] }}
+          VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING: ${{ secrets['VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING'] }}
+          VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT }}
+          VITE_GTM_ID_PRODUCTION: ${{ secrets.VITE_GTM_ID_PRODUCTION }}
+          VITE_ADSENSE_SLOT_PRODUCTION: ${{ secrets.VITE_ADSENSE_SLOT_PRODUCTION }}
+        run: |
+          case "$TARGET_ENV" in
+            production)
+              API_KEY="$VITE_FIREBASE_API_KEY_PRODUCTION"
+              AUTH_DOMAIN="$VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION"
+              PROJECT_ID="$VITE_FIREBASE_PROJECT_ID_PRODUCTION"
+              STORAGE_BUCKET="$VITE_FIREBASE_STORAGE_BUCKET_PRODUCTION"
+              MESSAGING_SENDER_ID="$VITE_FIREBASE_MESSAGING_SENDER_ID_PRODUCTION"
+              APP_ID="$VITE_FIREBASE_APP_ID_PRODUCTION"
+              MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION"
+              SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_PRODUCTION"
+              ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_PRODUCTION"
+              VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_PRODUCTION"
+              VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_PRODUCTION"
+              GTM_ID="$VITE_GTM_ID_PRODUCTION"
+              ADSENSE_CLIENT="ca-pub-5198775482699756"
+              ADSENSE_SLOT="${VITE_ADSENSE_SLOT_PRODUCTION:-}"
+              ;;
+            staging)
+              API_KEY="$VITE_FIREBASE_API_KEY_STAGING"
+              AUTH_DOMAIN="$VITE_FIREBASE_AUTH_DOMAIN_STAGING"
+              PROJECT_ID="$VITE_FIREBASE_PROJECT_ID_STAGING"
+              STORAGE_BUCKET="$VITE_FIREBASE_STORAGE_BUCKET_STAGING"
+              MESSAGING_SENDER_ID="$VITE_FIREBASE_MESSAGING_SENDER_ID_STAGING"
+              APP_ID="$VITE_FIREBASE_APP_ID_STAGING"
+              MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_STAGING"
+              SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_STAGING"
+              ACCESS_PASSWORD_VAR_NAME="VITE_ACCESS_PASSWORD_STAGING"
+              ACCESS_PASSWORD_VALUE="$VITE_ACCESS_PASSWORD_STAGING"
+              ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_STAGING"
+              VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_STAGING"
+              VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_STAGING"
+
+              # Fall back to development/canonical secrets when staging-specific
+              # values are unavailable.
+              API_KEY="${API_KEY:-$VITE_FIREBASE_API_KEY_DEVELOPMENT}"
+              AUTH_DOMAIN="${AUTH_DOMAIN:-$VITE_FIREBASE_AUTH_DOMAIN_DEVELOPMENT}"
+              PROJECT_ID="${PROJECT_ID:-$VITE_FIREBASE_PROJECT_ID_DEVELOPMENT}"
+              STORAGE_BUCKET="${STORAGE_BUCKET:-$VITE_FIREBASE_STORAGE_BUCKET_DEVELOPMENT}"
+              MESSAGING_SENDER_ID="${MESSAGING_SENDER_ID:-$VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT}"
+              APP_ID="${APP_ID:-$VITE_FIREBASE_APP_ID_DEVELOPMENT}"
+              MEASUREMENT_ID="${MEASUREMENT_ID:-$VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT}"
+
+              API_KEY="${API_KEY:-$VITE_FIREBASE_API_KEY}"
+              AUTH_DOMAIN="${AUTH_DOMAIN:-$VITE_FIREBASE_AUTH_DOMAIN}"
+              PROJECT_ID="${PROJECT_ID:-$VITE_FIREBASE_PROJECT_ID}"
+              STORAGE_BUCKET="${STORAGE_BUCKET:-$VITE_FIREBASE_STORAGE_BUCKET}"
+              MESSAGING_SENDER_ID="${MESSAGING_SENDER_ID:-$VITE_FIREBASE_MESSAGING_SENDER_ID}"
+              APP_ID="${APP_ID:-$VITE_FIREBASE_APP_ID}"
+              MEASUREMENT_ID="${MEASUREMENT_ID:-$VITE_FIREBASE_MEASUREMENT_ID}"
+
+              if [ -z "$SHOW_COMING_SOON" ]; then
+                SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_DEVELOPMENT"
+              fi
+              if [ -z "$ACCESS_PASSWORD_VALUE" ]; then
+                ACCESS_PASSWORD_VAR_NAME="VITE_ACCESS_PASSWORD_DEVELOPMENT"
+                ACCESS_PASSWORD_VALUE="$VITE_ACCESS_PASSWORD_DEVELOPMENT"
+              fi
+              if [ -z "$ENABLE_HOSTED_DEMO_PDF_UPLOADS" ]; then
+                ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT"
+              fi
+              if [ -z "$VITE_ALLOWED_EMAIL_DOMAINS" ]; then
+                VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT"
+              fi
+              if [ -z "$VITE_ALLOWED_EMAILS" ]; then
+                VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_DEVELOPMENT"
+              fi
+              GTM_ID=""
+              ADSENSE_CLIENT=""
+              ADSENSE_SLOT=""
+              ;;
+            *)
+              API_KEY="$VITE_FIREBASE_API_KEY_DEVELOPMENT"
+              AUTH_DOMAIN="$VITE_FIREBASE_AUTH_DOMAIN_DEVELOPMENT"
+              PROJECT_ID="$VITE_FIREBASE_PROJECT_ID_DEVELOPMENT"
+              STORAGE_BUCKET="$VITE_FIREBASE_STORAGE_BUCKET_DEVELOPMENT"
+              MESSAGING_SENDER_ID="$VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOPMENT"
+              APP_ID="$VITE_FIREBASE_APP_ID_DEVELOPMENT"
+              MEASUREMENT_ID="$VITE_FIREBASE_MEASUREMENT_ID_DEVELOPMENT"
+              SHOW_COMING_SOON="$VITE_SHOW_COMING_SOON_DEVELOPMENT"
+              ACCESS_PASSWORD_VAR_NAME="VITE_ACCESS_PASSWORD_DEVELOPMENT"
+              ACCESS_PASSWORD_VALUE="$VITE_ACCESS_PASSWORD_DEVELOPMENT"
+              ENABLE_HOSTED_DEMO_PDF_UPLOADS="$VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT"
+              VITE_ALLOWED_EMAIL_DOMAINS="$VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT"
+              VITE_ALLOWED_EMAILS="$VITE_ALLOWED_EMAILS_DEVELOPMENT"
+
+                API_KEY="${API_KEY:-$VITE_FIREBASE_API_KEY}"
+                AUTH_DOMAIN="${AUTH_DOMAIN:-$VITE_FIREBASE_AUTH_DOMAIN}"
+                PROJECT_ID="${PROJECT_ID:-$VITE_FIREBASE_PROJECT_ID}"
+                STORAGE_BUCKET="${STORAGE_BUCKET:-$VITE_FIREBASE_STORAGE_BUCKET}"
+                MESSAGING_SENDER_ID="${MESSAGING_SENDER_ID:-$VITE_FIREBASE_MESSAGING_SENDER_ID}"
+                APP_ID="${APP_ID:-$VITE_FIREBASE_APP_ID}"
+                MEASUREMENT_ID="${MEASUREMENT_ID:-$VITE_FIREBASE_MEASUREMENT_ID}"
+              GTM_ID=""
+              ADSENSE_CLIENT=""
+              ADSENSE_SLOT=""
+              ;;
+          esac
+
+          if [ -z "$ENABLE_HOSTED_DEMO_PDF_UPLOADS" ]; then
+            ENABLE_HOSTED_DEMO_PDF_UPLOADS="false"
+          fi
+
+
+          if [ -z "$API_KEY" ] || [ -z "$AUTH_DOMAIN" ] || [ -z "$PROJECT_ID" ] || [ -z "$STORAGE_BUCKET" ] || [ -z "$MESSAGING_SENDER_ID" ] || [ -z "$APP_ID" ]; then
+            echo "❌ Missing required VITE_FIREBASE_* secrets for environment: $TARGET_ENV"
+            exit 1
+          fi
+
+          if [[ "$API_KEY" == YOUR_* ]] || [[ "$AUTH_DOMAIN" == YOUR_* ]] || [[ "$PROJECT_ID" == YOUR_* ]] || [[ "$STORAGE_BUCKET" == YOUR_* ]] || [[ "$MESSAGING_SENDER_ID" == YOUR_* ]] || [[ "$APP_ID" == YOUR_* ]]; then
+            echo "❌ Placeholder Firebase values detected for environment: $TARGET_ENV"
+            exit 1
+          fi
+
+          if [[ ! "$API_KEY" =~ ^AIza ]]; then
+            echo "❌ VITE_FIREBASE_API_KEY for $TARGET_ENV does not look valid"
+            exit 1
+          fi
+
+          if [ "$TARGET_ENV" = "staging" ] || [ "$TARGET_ENV" = "development" ]; then
+            # Require either password (legacy) or OAuth config (new)
+            HAS_PASSWORD="${ACCESS_PASSWORD_VALUE:-}"
+            HAS_OAUTH_CONFIG=0
+            if [ -n "${VITE_ALLOWED_EMAIL_DOMAINS:-}" ] || [ -n "${VITE_ALLOWED_EMAILS:-}" ]; then
+              HAS_OAUTH_CONFIG=1
+            fi
+            
+            if [ -z "$HAS_PASSWORD" ] && [ "$HAS_OAUTH_CONFIG" -eq 0 ]; then
+              echo "❌ Missing access control configuration for environment: $TARGET_ENV"
+              echo "   Provide either:"
+              echo "   - VITE_ACCESS_PASSWORD_$TARGET_ENV (legacy password-based)"
+              echo "   - VITE_ALLOWED_EMAIL_DOMAINS_$TARGET_ENV or VITE_ALLOWED_EMAILS_$TARGET_ENV (OAuth-based)"
+              exit 1
+            fi
+          fi
+
+          EFFECTIVE_VITE_ENVIRONMENT="$TARGET_ENV"
+          case "$PROJECT_ID" in
+            *-dev)
+              EFFECTIVE_VITE_ENVIRONMENT="development"
+              ;;
+            *-staging)
+              EFFECTIVE_VITE_ENVIRONMENT="staging"
+              ;;
+            *-prod)
+              EFFECTIVE_VITE_ENVIRONMENT="production"
+              ;;
+          esac
+
+          if [ "$EFFECTIVE_VITE_ENVIRONMENT" != "$TARGET_ENV" ]; then
+            echo "[warn] Adjusting VITE_ENVIRONMENT from $TARGET_ENV to $EFFECTIVE_VITE_ENVIRONMENT based on Firebase projectId=$PROJECT_ID"
+          fi
+
+          case "$EFFECTIVE_VITE_ENVIRONMENT" in
+            production)
+              APP_URL="https://vehicle-vitals.com"
+              ;;
+            staging)
+              APP_URL="https://vehicle-vitals-staging.web.app"
+              ;;
+            *)
+              APP_URL="https://vehicle-vitals-dev.web.app"
+              ;;
+          esac
+
+          {
+            printf 'VITE_FIREBASE_API_KEY=%s\n' "$API_KEY"
+            printf 'VITE_FIREBASE_AUTH_DOMAIN=%s\n' "$AUTH_DOMAIN"
+            printf 'VITE_FIREBASE_PROJECT_ID=%s\n' "$PROJECT_ID"
+            printf 'VITE_FIREBASE_STORAGE_BUCKET=%s\n' "$STORAGE_BUCKET"
+            printf 'VITE_FIREBASE_MESSAGING_SENDER_ID=%s\n' "$MESSAGING_SENDER_ID"
+            printf 'VITE_FIREBASE_APP_ID=%s\n' "$APP_ID"
+            printf 'VITE_FIREBASE_MEASUREMENT_ID=%s\n' "$MEASUREMENT_ID"
+            printf 'VITE_ENVIRONMENT=%s\n' "$EFFECTIVE_VITE_ENVIRONMENT"
+            printf 'VITE_APP_URL=%s\n' "$APP_URL"
+            printf 'VITE_GTM_ID=%s\n' "${GTM_ID:-}"
+            printf 'VITE_ADSENSE_CLIENT=%s\n' "${ADSENSE_CLIENT:-}"
+            printf 'VITE_ADSENSE_SLOT=%s\n' "${ADSENSE_SLOT:-}"
+            printf 'VITE_SHOW_COMING_SOON=%s\n' "$SHOW_COMING_SOON"
+            printf 'VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=%s\n' "$ENABLE_HOSTED_DEMO_PDF_UPLOADS"
+            if [ -n "${ACCESS_PASSWORD_VAR_NAME:-}" ] && [ -n "${ACCESS_PASSWORD_VALUE:-}" ]; then
+              printf '%s=%s\n' "$ACCESS_PASSWORD_VAR_NAME" "$ACCESS_PASSWORD_VALUE"
+            fi
+            # OAuth-based environment access control
+            if [ -n "${VITE_ALLOWED_EMAIL_DOMAINS:-}" ]; then
+              printf 'VITE_ALLOWED_EMAIL_DOMAINS=%s\n' "$VITE_ALLOWED_EMAIL_DOMAINS"
+            fi
+            if [ -n "${VITE_ALLOWED_EMAILS:-}" ]; then
+              printf 'VITE_ALLOWED_EMAILS=%s\n' "$VITE_ALLOWED_EMAILS"
+            fi
+          } > packages/web/.env.production
+
+          echo "✅ Web Firebase env prepared for $TARGET_ENV (project: $PROJECT_ID, coming_soon: $SHOW_COMING_SOON)"
+
+      - name: Build Web App
+        working-directory: packages/web
+        run: |
+          set +e
+          npm run build
+          BUILD_EXIT=$?
+
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "[warn] Initial web build failed; checking for esbuild service-stop failure"
+
+            if grep -q "The service was stopped" npm-debug.log 2>/dev/null; then
+              echo "[warn] Detected esbuild service-stop via npm-debug.log"
+            fi
+
+            echo "[info] Resetting Vite/esbuild state and retrying once"
+            rm -rf node_modules/.vite .vite
+            npm rebuild esbuild || true
+            pkill -f esbuild || true
+
+            npm run build
+            BUILD_EXIT=$?
+          fi
+
+          exit $BUILD_EXIT
+
+      - name: Upload Web Build Artifact
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-dist-${{ needs.load-config.outputs.target_environment }}
+          path: packages/web/dist
+          if-no-files-found: error
+
+  deploy-firebase:
+    name: Deploy Firebase
+    needs: [load-config, build-web]
+    if: |
+      always() &&
+      needs.load-config.outputs.firebase_enabled == 'true' &&
+      needs.build-web.result == 'success' &&
+      (needs.load-config.outputs.trigger_context == 'build_and_deploy' ||
+       needs.load-config.outputs.trigger_context == 'deploy_only')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
+
+      - name: Build Shared Packages
+        run: |
+          npm run build --workspace=@vehicle-vitals/shared 2>/dev/null || echo "✓ @vehicle-vitals/shared (skip)"
+          npm run build --workspace=@shared/firebase-utils 2>/dev/null || echo "✓ @shared/firebase-utils (skip)"
+
+      - name: Download Web Build Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: web-dist-${{ needs.load-config.outputs.target_environment }}
+          path: packages/web/dist
+
+      - name: Enforce No Data Migration Policy
+        run: |
+          chmod +x scripts/ci-guard-no-data-migration.sh
+          ./scripts/ci-guard-no-data-migration.sh
+
+      - name: Deploy Hosting, Firestore, Storage and Functions
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
+          FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING }}
+          FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD }}
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+          TRIGGER_CONTEXT: ${{ needs.load-config.outputs.trigger_context }}
+          FUNCTIONS_DISCOVERY_TIMEOUT: "60000"
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "❌ FIREBASE_TOKEN is not set"
+            exit 1
+          fi
+
+          case "$TARGET_ENV" in
+            production)
+              PROJECT_ID="$FIREBASE_PROJECT_PROD"
+              CONFIG_FILE="firebase.prod.json"
+              ;;
+            staging)
+              PROJECT_ID="$FIREBASE_PROJECT_STAGING"
+              CONFIG_FILE="firebase.staging.json"
+              ;;
+            *)
+              PROJECT_ID="$FIREBASE_PROJECT_DEV"
+              CONFIG_FILE="firebase.dev.json"
+              ;;
+          esac
+
+          if [ -z "$PROJECT_ID" ]; then
+            echo "❌ Firebase project id is not configured for environment: $TARGET_ENV"
+            exit 1
+          fi
+
+          cp "$CONFIG_FILE" firebase.json
+
+          DEPLOY_TARGETS="firestore,storage,functions,hosting"
+          if [ "$TARGET_ENV" = "production" ] && [ "$TRIGGER_CONTEXT" = "deploy_only" ]; then
+            echo "[info] Production deploy_only run detected; deploying firestore+storage+hosting only"
+            DEPLOY_TARGETS="firestore,storage,hosting"
+          fi
+
+          set +e
+          firebase deploy \
+            --project="$PROJECT_ID" \
+            --token="$FIREBASE_TOKEN" \
+            --only "$DEPLOY_TARGETS" \
+            --message="Firebase deploy (${DEPLOY_TARGETS}) from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+            --force \
+            --non-interactive 2>&1 | tee /tmp/firebase-deploy.log
+          DEPLOY_EXIT=${PIPESTATUS[0]}
+
+          if [ $DEPLOY_EXIT -ne 0 ] && [ "$TARGET_ENV" = "production" ] && grep -q "failed to modify the IAM policy" /tmp/firebase-deploy.log; then
+            echo "[warn] Production functions deploy blocked by project IAM; retrying hosting+firestore+storage deploy"
+            firebase deploy \
+              --project="$PROJECT_ID" \
+              --token="$FIREBASE_TOKEN" \
+              --only firestore,storage,hosting \
+              --message="Hosting/Firestore/Storage fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+              --force \
+              --non-interactive
+            DEPLOY_EXIT=$?
+          fi
+
+          if [ $DEPLOY_EXIT -ne 0 ] && [ "$TARGET_ENV" = "staging" ] && grep -q "Can't find the storage bucket region" /tmp/firebase-deploy.log; then
+            echo "[warn] Staging hit storage bucket region issue; retrying firestore-only deploy"
+            firebase deploy \
+              --project="$PROJECT_ID" \
+              --token="$FIREBASE_TOKEN" \
+              --only firestore \
+              --message="Firestore-only fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
+              --force \
+              --non-interactive
+            DEPLOY_EXIT=$?
+          fi
+
+          exit $DEPLOY_EXIT
+
+  build-chrome-extension:
+    name: Build Chrome Extension
+    needs: load-config
+    if: needs.load-config.outputs.chrome_extension == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "18"
+
+      - name: Detect Extension Project
+        id: detect
+        run: |
+          if [ -d "packages/chrome-extension" ]; then
+            echo "dir=packages/chrome-extension" >> "$GITHUB_OUTPUT"
+          elif [ -d "packages/extension" ]; then
+            echo "dir=packages/extension" >> "$GITHUB_OUTPUT"
+          else
+            echo "dir=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Extension
+        if: steps.detect.outputs.dir != ''
+        run: |
+          cd "${{ steps.detect.outputs.dir }}"
+          npm ci
+          npm run build
+
+      - name: Skip Message
+        if: steps.detect.outputs.dir == ''
+        run: |
+          echo "No Chrome extension package directory found. Skipping extension build."
+
+  pipeline-summary:
+    name: Pipeline Summary
+    needs:
+      [
+        load-config,
+        test,
+        web-unit-tests,
+        mobile-unit-tests,
+        web-uat-tests,
+        quality-gate,
+        build-ios,
+        build-android,
+        build-web,
+        deploy-firebase,
+        build-chrome-extension,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pipeline Summary
+        run: |
+          echo "## CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Project**: ${{ needs.load-config.outputs.project_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ needs.load-config.outputs.trigger_context }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: ${{ needs.load-config.outputs.target_environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web Unit Tests: ${{ needs.web-unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Mobile Unit Tests: ${{ needs.mobile-unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web UAT: ${{ needs.web-uat-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Quality Gate: ${{ needs.quality-gate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- iOS: ${{ needs.build-ios.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Android: ${{ needs.build-android.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Firebase: ${{ needs.deploy-firebase.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Chrome Extension: ${{ needs.build-chrome-extension.result }}" >> $GITHUB_STEP_SUMMARY

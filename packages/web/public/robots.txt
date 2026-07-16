@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
 
+# Block authenticated app pages — no SEO value and they redirect to login anyway
+Disallow: /app/
+Disallow: /auth/
+
+# Block internal/admin routes
+Disallow: /app/admin
+Disallow: /app/dev-seed
+
 Sitemap: https://vehicle-vitals.com/sitemap.xml

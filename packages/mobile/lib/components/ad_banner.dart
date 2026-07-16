@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
+
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
+
+const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
 /// AdMob banner widget for mobile apps
 /// Configure with environment variables or fallback to placeholder
@@ -40,6 +43,9 @@ class _AdBannerState extends State<AdBanner> {
   @override
   void initState() {
     super.initState();
+    if (_screenshotMode) {
+      return;
+    }
     _loadAd();
   }
 
@@ -99,8 +105,12 @@ class _AdBannerState extends State<AdBanner> {
     // Check if user is premium - hide ads for premium users
     return Consumer<PremiumService>(
       builder: (context, premiumService, child) {
-        if (premiumService.isPremium) {
+        if (!premiumService.shouldShowAds()) {
           return const SizedBox.shrink(); // Hide ads for premium users
+        }
+
+        if (_screenshotMode) {
+          return const SizedBox.shrink();
         }
 
         // Show placeholder when no ads configured or failed to load
@@ -186,14 +196,14 @@ class InterstitialAdHelper {
 
   static void _setFullScreenContentCallback() {
     _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) =>
+      onAdShowedFullScreenContent: (dynamic ad) =>
           debugPrint('$ad onAdShowedFullScreenContent.'),
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+      onAdDismissedFullScreenContent: (dynamic ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         loadAd(); // Load the next ad
       },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+      onAdFailedToShowFullScreenContent: (dynamic ad, AdError error) {
         debugPrint('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         loadAd(); // Load the next ad
@@ -260,14 +270,14 @@ class RewardedAdHelper {
 
   static void _setFullScreenContentCallback() {
     _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) =>
+      onAdShowedFullScreenContent: (dynamic ad) =>
           debugPrint('$ad onAdShowedFullScreenContent.'),
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
+      onAdDismissedFullScreenContent: (dynamic ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         loadAd(); // Load the next ad
       },
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+      onAdFailedToShowFullScreenContent: (dynamic ad, AdError error) {
         debugPrint('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         loadAd(); // Load the next ad

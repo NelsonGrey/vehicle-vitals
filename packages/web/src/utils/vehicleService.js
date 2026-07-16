@@ -1,53 +1,47 @@
-// -----------------------------
-// File: web/src/utils/vehicleService.js
-
-// -----------------------------
-// File: web/src/utils/vehicleService.js
-
-// -----------------------------
-// File: web/src/utils/vehicleService.js
+import { auth, db, functions } from '../shared/firebaseConfig';
+import {
+  getLegacyFirebase,
+  getOrInitializeLegacyFirebaseApp,
+  hasLegacyFirebaseModules,
+} from '../shared/firebaseLegacy';
 
 // Create async Firebase service using global Firebase objects
 const createFirebaseService = async () => {
   try {
-    // Wait for global Firebase to be available
-    const checkFirebase = () => {
-      return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max
-
-        const check = () => {
-          attempts++;
-          if (window.firebase && window.firebase.firestore && window.firebase.functions && window.firebase.auth) {
-            resolve(window.firebase);
-          } else if (attempts >= maxAttempts) {
-            reject(new Error('Firebase SDKs failed to load within timeout'));
-          } else {
-            setTimeout(check, 100);
-          }
-        };
-        check();
-      });
-    };
-
-    const firebase = await checkFirebase();
-
-    // Import config
-    const { firebaseConfig } = await import('../shared/firebaseConfig');
-
-    // Initialize Firebase app if not already initialized
-    let app;
-    try {
-      app = firebase.app.getApp();
-    } catch {
-      app = firebase.app.initializeApp(firebaseConfig);
+    // Prefer module exports from shared firebase config.
+    if (db && auth && functions) {
+      const firestore = await import('firebase/firestore');
+      const fn = await import('firebase/functions');
+      return {
+        db,
+        auth,
+        functions,
+        doc: firestore.doc,
+        setDoc: firestore.setDoc,
+        httpsCallable: fn.httpsCallable,
+      };
     }
 
-    const db = firebase.firestore.getFirestore(app);
-    const auth = firebase.auth.getAuth(app);
-    const functions = firebase.functions.getFunctions(app);
+    // Fallback for legacy global Firebase bootstraps.
+    if (hasLegacyFirebaseModules(['firestore', 'functions', 'auth'])) {
+      const firebase = getLegacyFirebase();
+      const app = getOrInitializeLegacyFirebaseApp(firebase);
 
-    return { db, auth, functions, doc: firebase.firestore.doc, setDoc: firebase.firestore.setDoc, httpsCallable: firebase.functions.httpsCallable };
+      const db = firebase.firestore.getFirestore(app);
+      const auth = firebase.auth.getAuth(app);
+      const functions = firebase.functions.getFunctions(app);
+
+      return {
+        db,
+        auth,
+        functions,
+        doc: firebase.firestore.doc,
+        setDoc: firebase.firestore.setDoc,
+        httpsCallable: firebase.functions.httpsCallable,
+      };
+    }
+
+    throw new Error('Firebase SDKs failed to load');
   } catch (error) {
     console.warn('Firebase service not available:', error);
     // Return mock service for build compatibility
@@ -57,7 +51,7 @@ const createFirebaseService = async () => {
       functions: null,
       doc: () => ({}),
       setDoc: async () => {},
-      httpsCallable: () => () => Promise.resolve({ data: {} })
+      httpsCallable: () => () => Promise.resolve({ data: {} }),
     };
   }
 };
@@ -65,37 +59,43 @@ const createFirebaseService = async () => {
 export async function fetchVehicleByVINAndSave(vin) {
   try {
     const firebaseService = await createFirebaseService();
-    
+
     if (!firebaseService.functions) {
       throw new Error('Firebase Functions not available');
     }
 
-    // Call Firebase Function for VIN decoding
-    const decodeVINCallable = firebaseService.httpsCallable(firebaseService.functions, 'decodeVIN');
-    const result = await decodeVINCallable({ vin });
-    
+    // Call Firebase Function for VIN lookup
+    const vinLookupCallable = firebaseService.httpsCallable(
+      firebaseService.functions,
+      'vinLookupCallable'
+    );
+    const result = await vinLookupCallable({ vin });
+
     if (!result.data.success) {
-      throw new Error(result.data.error || 'Failed to decode VIN');
+      throw new Error(result.data.error || 'Failed to look up VIN');
     }
 
     const vehicleData = result.data.vehicle;
-    
+
     // Create vehicle object for Firestore
     const vehicle = {
       ...vehicleData,
       mileage: '',
       purchaseDate: '',
       nextDueDate: '',
-      services: []
+      services: [],
     };
-    
+
     const userId = firebaseService.auth.currentUser?.uid;
     if (userId && firebaseService.db) {
-      const vehicleRef = firebaseService.doc(firebaseService.db, `users/${userId}/vehicles/${vin}`);
+      const vehicleRef = firebaseService.doc(
+        firebaseService.db,
+        `users/${userId}/vehicles/${vin}`
+      );
       await firebaseService.setDoc(vehicleRef, vehicle);
       alert('Vehicle added successfully!');
     }
-    
+
     return vehicle;
   } catch (err) {
     console.error('VIN lookup failed', err);
@@ -104,31 +104,98 @@ export async function fetchVehicleByVINAndSave(vin) {
   }
 }
 
-// Decode VIN without saving; returns { make, model, year } strings or '' when unknown
-export async function decodeVin(vin) {
+export async function getVehicleInsights(vin) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const getVehicleInsightsCallable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'getVehicleInsightsCallable'
+  );
+  const result = await getVehicleInsightsCallable({ vin });
+
+  if (!result.data.success) {
+    throw new Error(result.data.error || 'Failed to fetch vehicle insights');
+  }
+
+  return result.data;
+}
+
+// Fetches the maintenance plan (manufacturer-specific intervals when this
+// app has them on file for the vehicle's make/model, a generic template
+// otherwise — see packages/functions/src/schedule.provider.ts) from the
+// server, replacing the local-only getMaintenanceSchedule/
+// getUpcomingMaintenance from @vehicle-vitals/shared, which only ever
+// covered a hardcoded 6 vehicles and had no fallback for anything else.
+export async function getMaintenancePlan(vin, currentMileage, make, model) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const getMaintenancePlanCallable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'getMaintenancePlanCallable'
+  );
+  const result = await getMaintenancePlanCallable({
+    vin,
+    currentMileage,
+    make,
+    model,
+  });
+
+  if (!result.data.success) {
+    throw new Error(result.data.error || 'Failed to fetch maintenance plan');
+  }
+
+  return result.data.plan;
+}
+
+export function buildPersistedVinInsights(insights) {
+  const vinProfile = insights?.free?.vinProfile || {};
+  const recalls = insights?.free?.recalls || {};
+  const recallCount = Number(recalls?.count || 0);
+
+  return {
+    recallsCount: Number.isFinite(recallCount) ? recallCount : 0,
+    recallsSource: recalls?.source || 'NHTSA',
+    engineType: vinProfile.engineType || '',
+    bodyClass: vinProfile.bodyClass || '',
+    fuelType: vinProfile.fuelType || '',
+    driveType: vinProfile.driveType || '',
+    transmissionStyle: vinProfile.transmissionStyle || '',
+    trim: vinProfile.trim || '',
+    vehicleType: vinProfile.vehicleType || '',
+    recallsItems: Array.isArray(recalls?.items) ? recalls.items : [],
+    vinProfile,
+    vinInsights: {
+      ...insights,
+      fetchedAt: new Date().toISOString(),
+    },
+    insightsUpdatedAt: new Date().toISOString(),
+  };
+}
+
+// Look up VIN without saving; returns { make, model, year } strings or '' when unknown
+export async function lookupVin(vin) {
   try {
-    const firebaseService = await createFirebaseService();
-    
-    if (!firebaseService.functions) {
-      throw new Error('Firebase Functions not available');
-    }
-
-    // Call Firebase Function for VIN decoding
-    const decodeVINCallable = firebaseService.httpsCallable(firebaseService.functions, 'decodeVIN');
-    const result = await decodeVINCallable({ vin });
-    
-    if (!result.data.success) {
-      throw new Error(result.data.error || 'Failed to decode VIN');
-    }
-
-    const vehicle = result.data.vehicle;
-    return { 
-      make: vehicle.make, 
-      model: vehicle.model, 
-      year: vehicle.year 
+    const insights = await getVehicleInsights(vin);
+    const vehicle = insights?.free?.vinProfile || {};
+    const persistedFields = buildPersistedVinInsights(insights);
+    return {
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      ...persistedFields,
+      vinProfile: vehicle,
+      rawInsights: insights,
     };
   } catch (err) {
-    console.error('VIN decode failed', err);
+    console.error('VIN lookup failed', err);
     throw err;
   }
 }

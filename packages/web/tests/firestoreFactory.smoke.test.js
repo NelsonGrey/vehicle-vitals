@@ -16,6 +16,8 @@ beforeAll(async () => {
     testEnv = await initializeTestEnvironment({
       projectId: PROJECT_ID,
       firestore: {
+        host: '127.0.0.1',
+        port: 8080,
         rules: `
           service cloud.firestore {
             match /databases/{database}/documents {
@@ -65,7 +67,7 @@ describe('firestoreServiceFactory smoke', () => {
       ..._defaultVehicle,
       vin,
       make: 'Test',
-      model: 'Car',
+      model: 'Vehicle',
       year: '2025',
     };
 
@@ -78,7 +80,7 @@ describe('firestoreServiceFactory smoke', () => {
     expect(data).toMatchObject({
       vin,
       make: 'Test',
-      model: 'Car',
+      model: 'Vehicle',
       year: '2025',
     });
     expect(data.updatedAt).toBeDefined();

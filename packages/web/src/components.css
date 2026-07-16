@@ -28,11 +28,16 @@
 
 .stacked-v-logo-container.compact {
   flex-direction: row;
-  gap: 8px;
+  gap: 12px;
 }
 
 .stacked-v-logo-container:not(.compact) {
   flex-direction: column;
+}
+
+.stacked-v-logo-mark {
+  display: block;
+  flex: 0 0 auto;
 }
 
 .stacked-v-logo-wordmark {
@@ -44,9 +49,31 @@
   text-align: center;
 }
 
+.stacked-v-logo-container.compact .stacked-v-logo-mark {
+  width: var(--logo-icon-width);
+  height: var(--logo-icon-height);
+}
+
 .stacked-v-logo-wordmark.compact {
-  font-size: 10px;
+  font-size: var(--logo-font-size);
+  letter-spacing: var(--logo-letter-spacing);
+  line-height: 1;
   margin-top: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Cap (never enlarge) the compact lockup on narrow screens, so a
+   small usage (e.g. auth header) isn't blown up past its own size. */
+@media (max-width: 640px) {
+  .stacked-v-logo-container.compact .stacked-v-logo-mark {
+    width: min(var(--logo-icon-width), 94px);
+    height: min(var(--logo-icon-height), 56px);
+  }
+
+  .stacked-v-logo-wordmark.compact {
+    font-size: min(var(--logo-font-size), 20px);
+  }
 }
 
 .stacked-v-logo-wordmark.shadow {

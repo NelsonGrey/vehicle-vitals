@@ -34,7 +34,7 @@
     "@fontsource/inter": "^5.2.8",
     "@fontsource/playfair-display": "^5.2.8",
     "@vehicle-vitals/shared": "file:../shared",
-    "firebase": "^12.15.0",
+    "firebase": "^12.16.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "papaparse": "^5.5.4",
@@ -45,10 +45,10 @@
     "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
-    "@firebase/app-compat": "^0.5.14",
+    "@firebase/app-compat": "^0.5.15",
     "@firebase/rules-unit-testing": "^5.0.1",
     "@playwright/test": "^1.61.1",
-    "@tailwindcss/postcss": "^4.3.2",
+    "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -58,14 +58,14 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vitejs/plugin-react": "^6.0.3",
-    "autoprefixer": "^10.5.2",
+    "autoprefixer": "^10.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^29.1.1",
-    "postcss": "^8.5.16",
+    "postcss": "^8.5.19",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.6.3",
-    "vite": "^8.1.0",
+    "vite": "^8.1.5",
     "vitest": "^4.1.10"
   }
 }

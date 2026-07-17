@@ -29,11 +29,23 @@ Vehicle-Vitals is a cross-platform vehicle management application — web (React
 packages/
 ├── shared/      # Common types, Firebase services, Firestore factory, feature flags
 ├── web/         # React 18 + Vite + Tailwind web app (public marketing + authenticated app)
-├── mobile/      # Flutter iOS app (Android on hold)
-└── functions/   # Firebase Cloud Functions (reminders, VIN, calendar, entitlements, providers)
+└── mobile/      # Flutter iOS app (Android on hold)
 ```
 
 Supporting packages: `packages/firebase-utils` (admin SDK helpers).
+
+**Firebase Cloud Functions** (reminders, VIN, calendar, billing, entitlements,
+providers) live in a separate private repo,
+[NelsonGrey/vehicle-vitals-functions](https://github.com/NelsonGrey/vehicle-vitals-functions)
+— this repo is public, and that code shouldn't be. CI checks out the
+companion repo automatically at deploy time; for local development or
+`firebase emulators:start`, clone it into the gitignored `packages/functions/`
+path:
+```bash
+git clone git@github.com:NelsonGrey/vehicle-vitals-functions.git packages/functions
+npm run build --workspace=@vehicle-vitals/shared
+cd packages/functions && VV_SHARED_DIST=../shared/dist npm run vendor:shared
+```
 
 ## Documentation
 
@@ -89,6 +101,9 @@ flutter run -d ios
 
 ### Functions (local emulator)
 
+Requires cloning the [functions companion repo](#repository-structure) into
+`packages/functions` first (see above).
+
 ```bash
 firebase emulators:start --only firestore,functions,auth
 ```
@@ -105,7 +120,7 @@ cd packages/shared && npx vitest run tests
 # Mobile tests (Flutter)
 cd packages/mobile && flutter test && flutter analyze
 
-# Functions tests (Vitest)
+# Functions tests (node --test; requires the companion repo cloned in first)
 npm --workspace=functions run test
 
 # Web UAT (Playwright — requires a running dev or staging URL)

@@ -69,7 +69,6 @@ ci:
       paths:
         - 'packages/mobile/**'
         - 'packages/web/**'
-        - 'packages/functions/**'
         - '.github/workflows/**'
         - '.cicd/projects/**'
         - 'pubspec.yaml'

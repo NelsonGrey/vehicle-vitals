@@ -889,6 +889,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
+      # packages/functions moved to a separate private repo (business logic
+      # shouldn't be world-readable on this public repo). It lands at the
+      # exact path it used to occupy, so vendor-shared.js's relative path to
+      # packages/shared/dist and firebase*.json's "source": "packages/functions"
+      # both keep working unchanged.
+      - name: Checkout Functions (private companion repo)
+        uses: actions/checkout@v7
+        with:
+          repository: NelsonGrey/vehicle-vitals-functions
+          token: ${{ secrets.FUNCTIONS_REPO_PAT }}
+          ref: ${{ needs.load-config.outputs.target_environment == 'production' && 'main' || needs.load-config.outputs.target_environment == 'staging' && 'staging' || 'develop' }}
+          path: packages/functions
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:

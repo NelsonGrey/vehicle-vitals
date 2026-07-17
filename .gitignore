@@ -4,6 +4,9 @@
 # Local tooling artifacts
 .git-filter-repo/
 
+# Claude Code local settings (machine-specific permission allowlists, not project config)
+.claude/
+
 # Android build files
 packages/mobile/android/app/build/
 packages/mobile/android/build/

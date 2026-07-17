@@ -24,6 +24,10 @@ vi.mock('../src/shared/useMonetization', () => ({
   }),
 }));
 
+vi.mock('../src/shared/useAppOffline', () => ({
+  useAppOffline: () => false,
+}));
+
 vi.mock('../src/shared/entitlementsService', () => ({
   changeSubscriptionTier: (...args) => mockChangeSubscriptionTier(...args),
   createSubscriptionCheckoutSession: (...args) =>

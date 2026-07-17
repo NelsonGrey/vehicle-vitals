@@ -41,19 +41,19 @@ dependencies:
   # references the old `FirebasePlugin` name -- a broken release, not a
   # version-skew issue on our end. Every affected plugin is pinned below its
   # broken version below; unpin each once a fixed patch ships.
-  firebase_core: ^4.1.1
+  firebase_core: ^4.12.1
   # Pinned below 6.5.5 (published ~11h ago): see note above.
-  firebase_auth: ">=6.5.4 <6.5.5"
+  firebase_auth: ^6.5.6
   # Pinned below 5.2.5: see note above.
-  firebase_crashlytics: ">=5.2.4 <5.2.5"
+  firebase_crashlytics: ^5.2.6
   # Pinned below 6.7.0 (published ~11h ago): see note above.
-  cloud_firestore: ">=6.6.0 <6.7.0"
+  cloud_firestore: ^6.7.1
   # Pinned below 6.3.4 (published 2026-07-13): see note above.
-  cloud_functions: ">=6.3.3 <6.3.4"
+  cloud_functions: ^6.3.5
   # Pinned below 16.4.2: see note above.
-  firebase_messaging: ">=16.4.1 <16.4.2"
+  firebase_messaging: ^16.4.3
   # Pinned below 13.4.4: see note above.
-  firebase_storage: ">=13.4.3 <13.4.4"
+  firebase_storage: ^13.4.5
 
   # Navigation
   go_router: ^17.3.0
@@ -62,7 +62,7 @@ dependencies:
   provider: ^6.1.2
 
   # Barcode scanning for VIN
-  mobile_scanner: ^7.1.3
+  mobile_scanner: ^7.3.0
 
   # UI utilities
   cupertino_icons: ^1.0.8

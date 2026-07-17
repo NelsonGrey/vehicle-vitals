@@ -315,6 +315,11 @@ packages/mobile/.bundle/
 packages/mobile/vendor/
 packages/mobile/Gemfile.lock
 
+# packages/functions now lives in a separate private repo
+# (NelsonGrey/vehicle-vitals-functions). A local clone into this path for
+# Firebase emulator use is expected and shouldn't show up as repo noise.
+packages/functions/
+
 # Screenshot capture and design-exploration output — regenerable via the
 # commands in docs/SCREENSHOT_AND_TUTORIAL_MEDIA_INVENTORY.md; final assets
 # get copied into their real tracked location (e.g. packages/*/assets,

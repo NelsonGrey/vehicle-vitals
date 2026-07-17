@@ -5,14 +5,14 @@ import { remoteConfigFlag, remoteConfigReady } from './firebaseConfig';
  * Runtime "app offline" kill switch, driven by Remote Config's app_offline
  * parameter so it can be flipped from the Firebase Console without a
  * rebuild+redeploy — for a pre-launch window or a maintenance outage.
- * Reads the default synchronously (false) and re-checks once the
- * fetch-and-activate call resolves, so a value set in the console is
- * reflected on the next page load without waiting on component-local state.
+ * Starts `true` (safe default) until the fetch-and-activate call resolves,
+ * then reflects the real value. Starting from the SDK's synchronous cached
+ * value instead would let a sign-in/sign-up/purchase form render — and
+ * become interactive — for the brief window before the fetch resolves, even
+ * when the console value is `true`.
  */
 export function useAppOffline(): boolean {
-  const [isOffline, setIsOffline] = useState(() =>
-    remoteConfigFlag.bool('app_offline')
-  );
+  const [isOffline, setIsOffline] = useState(true);
 
   useEffect(() => {
     let cancelled = false;

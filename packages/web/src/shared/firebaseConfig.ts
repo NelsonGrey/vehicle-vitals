@@ -1,10 +1,4 @@
 // Firebase configuration for web app
-import {
-  isSupported as analyticsIsSupported,
-  getAnalytics,
-  logEvent,
-  Analytics,
-} from 'firebase/analytics';
 import { getApps, initializeApp, FirebaseApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, Auth } from 'firebase/auth';
 import {
@@ -260,28 +254,18 @@ const db: Firestore = getFirestore(app);
 const functions: Functions = getFunctions(app);
 const storage: FirebaseStorage = getStorage(app);
 
-// ─── Firebase Analytics ─────────────────────────────────────────────────────
-// Only initialize Analytics when the environment supports it (i.e. not in
-// SSR, Web Workers, or browsers that block it). measurementId must be set.
-let analytics: Analytics | null = null;
-let _analyticsReady = false;
-
-if (firebaseConfig.measurementId) {
-  analyticsIsSupported()
-    .then(supported => {
-      if (supported) {
-        analytics = getAnalytics(app);
-        _analyticsReady = true;
-      }
-    })
-    .catch(() => {
-      // Analytics blocked by browser extension or privacy settings – non-fatal.
-    });
-}
+// ─── GA4 event tracking ──────────────────────────────────────────────────────
+// GTM (see index.html) owns GA4 configuration and tags for this property.
+// This is the single channel the app uses to send events — it only ever
+// pushes to the shared dataLayer via gtag(), so GTM's config decides where
+// events go. Do not also call the Firebase Analytics SDK (getAnalytics/
+// logEvent) anywhere: merely initializing it triggers its own independent
+// GA4 config + automatic page_view against the same property, double-firing
+// against everything this function sends through GTM.
 
 /**
- * Log a Firebase Analytics event. Safe to call unconditionally; no-ops when
- * Analytics is not supported or has not yet initialised.
+ * Log a GA4 event via the GTM/gtag dataLayer. Safe to call unconditionally;
+ * no-ops if gtag isn't defined yet.
  *
  * @param eventName  Standard or custom GA4 event name
  * @param params   Optional key/value event parameters
@@ -290,12 +274,12 @@ export function trackEvent(
   eventName: string,
   params: Record<string, unknown> = {}
 ): void {
-  if (_analyticsReady && analytics) {
-    try {
-      logEvent(analytics, eventName, params);
-    } catch {
-      // Never throw from a tracking helper
+  try {
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('event', eventName, params);
     }
+  } catch {
+    // Never throw from a tracking helper
   }
 }
 
@@ -360,7 +344,7 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
 }
 
 // Export Firebase services
-export { analytics, app, auth, db, functions, remoteConfig, storage };
+export { app, auth, db, functions, remoteConfig, storage };
 
 // Legacy exports for compatibility
 export const getFirebaseConfig = (): FirebaseConfig => firebaseConfig;

@@ -4,9 +4,8 @@
  * Integrates with Google Analytics and custom analytics
  */
 
-import { logEvent } from 'firebase/analytics';
 import type { UserTier } from './featureFlags';
-import { analytics } from './firebaseConfig';
+import { trackEvent } from './firebaseConfig';
 
 export type AdPlacement =
   | 'header'
@@ -43,14 +42,11 @@ export function trackAdImpression(
       timestamp: Date.now(),
     };
 
-    // Firebase Analytics
-    if (analytics) {
-      logEvent(analytics, 'ad_impression', {
-        placement,
-        tier,
-        advertiser_id: advertiserId || 'unknown',
-      });
-    }
+    trackEvent('ad_impression', {
+      placement,
+      tier,
+      advertiser_id: advertiserId || 'unknown',
+    });
 
     // Local analytics
     recordAdEvent(event);
@@ -78,15 +74,12 @@ export function trackAdClick(
       timestamp: Date.now(),
     };
 
-    // Firebase Analytics
-    if (analytics) {
-      logEvent(analytics, 'ad_click', {
-        placement,
-        tier,
-        advertiser_id: advertiserId || 'unknown',
-        campaign_id: campaignId || 'unknown',
-      });
-    }
+    trackEvent('ad_click', {
+      placement,
+      tier,
+      advertiser_id: advertiserId || 'unknown',
+      campaign_id: campaignId || 'unknown',
+    });
 
     // Local analytics
     recordAdEvent(event);
@@ -104,13 +97,11 @@ export function trackTierChange(
   upgradeSource?: string
 ): void {
   try {
-    if (analytics) {
-      logEvent(analytics, 'tier_upgraded', {
-        old_tier: oldTier,
-        new_tier: newTier,
-        source: upgradeSource || 'unknown',
-      });
-    }
+    trackEvent('tier_upgraded', {
+      old_tier: oldTier,
+      new_tier: newTier,
+      source: upgradeSource || 'unknown',
+    });
   } catch (error) {
     console.error('Error tracking tier change:', error);
   }
@@ -125,13 +116,11 @@ export function trackFeatureDenied(
   requiredTier: UserTier
 ): void {
   try {
-    if (analytics) {
-      logEvent(analytics, 'feature_access_denied', {
-        feature: featureName,
-        user_tier: tier,
-        required_tier: requiredTier,
-      });
-    }
+    trackEvent('feature_access_denied', {
+      feature: featureName,
+      user_tier: tier,
+      required_tier: requiredTier,
+    });
   } catch (error) {
     console.error('Error tracking feature denied:', error);
   }
@@ -145,12 +134,10 @@ export function trackSubscriptionPageView(
   fromTier?: UserTier
 ): void {
   try {
-    if (analytics) {
-      logEvent(analytics, 'subscription_page_viewed', {
-        source,
-        from_tier: fromTier || 'unknown',
-      });
-    }
+    trackEvent('subscription_page_viewed', {
+      source,
+      from_tier: fromTier || 'unknown',
+    });
   } catch (error) {
     console.error('Error tracking subscription page view:', error);
   }
@@ -161,12 +148,10 @@ export function trackSubscriptionPageView(
  */
 export function trackUpgradeModalShown(trigger: string, tier: UserTier): void {
   try {
-    if (analytics) {
-      logEvent(analytics, 'upgrade_modal_shown', {
-        trigger,
-        current_tier: tier,
-      });
-    }
+    trackEvent('upgrade_modal_shown', {
+      trigger,
+      current_tier: tier,
+    });
   } catch (error) {
     console.error('Error tracking upgrade modal:', error);
   }
@@ -181,13 +166,11 @@ export function trackUpgradeModalAction(
   currentTier: UserTier
 ): void {
   try {
-    if (analytics) {
-      logEvent(analytics, 'upgrade_modal_action', {
-        action,
-        target_tier: targetTier,
-        current_tier: currentTier,
-      });
-    }
+    trackEvent('upgrade_modal_action', {
+      action,
+      target_tier: targetTier,
+      current_tier: currentTier,
+    });
   } catch (error) {
     console.error('Error tracking upgrade modal action:', error);
   }
@@ -202,13 +185,11 @@ export function trackPaymentInitiated(
   source: string
 ): void {
   try {
-    if (analytics) {
-      logEvent(analytics, 'payment_initiated', {
-        target_tier: targetTier,
-        billing_period: billingPeriod,
-        source,
-      });
-    }
+    trackEvent('payment_initiated', {
+      target_tier: targetTier,
+      billing_period: billingPeriod,
+      source,
+    });
   } catch (error) {
     console.error('Error tracking payment initiated:', error);
   }
@@ -224,14 +205,12 @@ export function trackPaymentCompleted(
   billingPeriod: 'monthly' | 'annual'
 ): void {
   try {
-    if (analytics) {
-      logEvent(analytics, 'payment_completed', {
-        tier,
-        value: amount,
-        currency,
-        billing_period: billingPeriod,
-      });
-    }
+    trackEvent('payment_completed', {
+      tier,
+      value: amount,
+      currency,
+      billing_period: billingPeriod,
+    });
   } catch (error) {
     console.error('Error tracking payment completed:', error);
   }

@@ -1,13 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock Firebase Analytics before importing logger
-vi.mock('firebase/analytics', () => ({
-  getAnalytics: vi.fn(() => ({ analytics: true })),
-  logEvent: vi.fn(),
-  setUserProperties: vi.fn(),
-  setUserId: vi.fn(),
-}));
-
 vi.mock('firebase/performance', () => ({
   getPerformance: vi.fn(() => ({ performance: true })),
 }));
@@ -28,7 +20,6 @@ const consoleSpy = {
 };
 
 // Import logger after mocks are set up
-import { logEvent, setUserId, setUserProperties } from 'firebase/analytics';
 import {
   analytics,
   AnalyticsEvent,
@@ -42,16 +33,20 @@ describe('Logger', () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
+    // GA4 events go through window.gtag() (GTM owns config) — not the
+    // Firebase Analytics SDK, so tests assert against this instead.
+    window.gtag = vi.fn();
     // Reset logger state
     logger.clearUser();
+    window.gtag.mockClear();
     // Ensure analytics is initialized for tests
     logger.isProduction = true;
-    logger.analytics = { analytics: true };
   });
 
   afterEach(() => {
     // Restore console spies
     Object.values(consoleSpy).forEach(spy => spy.mockClear());
+    delete window.gtag;
   });
 
   describe('Basic logging functionality', () => {
@@ -149,8 +144,8 @@ describe('Logger', () => {
     it('should set user properties', () => {
       logger.setUser('user123', { email: 'test@example.com' });
 
-      expect(setUserId).toHaveBeenCalledWith(logger.analytics, 'user123');
-      expect(setUserProperties).toHaveBeenCalledWith(logger.analytics, {
+      expect(window.gtag).toHaveBeenCalledWith('set', { user_id: 'user123' });
+      expect(window.gtag).toHaveBeenCalledWith('set', 'user_properties', {
         email: 'test@example.com',
       });
     });
@@ -158,7 +153,9 @@ describe('Logger', () => {
     it('should clear user on logout', () => {
       logger.clearUser();
 
-      expect(setUserId).toHaveBeenCalledWith(logger.analytics, null);
+      expect(window.gtag).toHaveBeenCalledWith('set', {
+        user_id: undefined,
+      });
     });
   });
 
@@ -166,7 +163,7 @@ describe('Logger', () => {
     it('should track custom events', () => {
       analytics.trackEvent('custom_event', { param: 'value' });
 
-      expect(logEvent).toHaveBeenCalledWith(logger.analytics, 'custom_event', {
+      expect(window.gtag).toHaveBeenCalledWith('event', 'custom_event', {
         param: 'value',
       });
     });
@@ -174,7 +171,7 @@ describe('Logger', () => {
     it('should track user actions', () => {
       analytics.trackUserAction('add_vehicle', { make: 'Toyota' });
 
-      expect(logEvent).toHaveBeenCalledWith(logger.analytics, 'vehicle_added', {
+      expect(window.gtag).toHaveBeenCalledWith('event', 'vehicle_added', {
         make: 'Toyota',
       });
     });
@@ -182,15 +179,11 @@ describe('Logger', () => {
     it('should track timing', () => {
       analytics.trackTiming('api_call', 1500, 'api');
 
-      expect(logEvent).toHaveBeenCalledWith(
-        logger.analytics,
-        'timing_complete',
-        {
-          name: 'api_call',
-          value: 1500,
-          event_category: 'api',
-        }
-      );
+      expect(window.gtag).toHaveBeenCalledWith('event', 'timing_complete', {
+        name: 'api_call',
+        value: 1500,
+        event_category: 'api',
+      });
     });
   });
 
@@ -294,9 +287,9 @@ describe('Logger', () => {
   });
 
   describe('Production vs development behavior', () => {
-    it('should initialize Firebase services in production', () => {
-      // Test that Firebase is initialized (mocked)
-      expect(logger.analytics).toBeDefined();
+    it('should initialize Firebase Performance in production', () => {
+      // Test that Firebase Performance is initialized (mocked). GA4 events
+      // go through window.gtag()/GTM, not a Firebase Analytics instance.
       expect(logger.performance).toBeDefined();
     });
 

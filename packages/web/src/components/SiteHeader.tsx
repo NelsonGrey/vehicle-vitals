@@ -222,14 +222,28 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
             aria-label="Go to home"
             className="inline-flex shrink-0 text-current no-underline"
           >
-            <StackedVLogo
-              size={52}
-              compact
-              showText
-              color={overlay ? '#ffffff' : 'currentColor'}
-              accent={overlay ? '#10b981' : '#334155'}
-              wordmarkColor={overlay ? '#ffffff' : '#64748b'}
-            />
+            {/* Full logo+wordmark only fits alongside the mobile CTA/menu
+                buttons at lg+ widths; below that it overflows the nav shell
+                (see TC-UI-003), so mobile gets an icon-only mark instead. */}
+            <span className="hidden lg:inline-flex">
+              <StackedVLogo
+                size={52}
+                compact
+                showText
+                color={overlay ? '#ffffff' : 'currentColor'}
+                accent={overlay ? '#10b981' : '#334155'}
+                wordmarkColor={overlay ? '#ffffff' : '#64748b'}
+              />
+            </span>
+            <span className="inline-flex lg:hidden">
+              <StackedVLogo
+                size={40}
+                compact
+                showText={false}
+                color={overlay ? '#ffffff' : 'currentColor'}
+                accent={overlay ? '#10b981' : '#334155'}
+              />
+            </span>
           </Link>
 
           <div className="hidden min-w-0 items-center justify-end gap-3 lg:flex">

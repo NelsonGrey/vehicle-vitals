@@ -1,12 +1,15 @@
 // Production logging utilities with Firebase integration
-import {
-  getAnalytics,
-  logEvent,
-  setUserId,
-  setUserProperties,
-} from 'firebase/analytics';
 import { getApp } from 'firebase/app';
 import { getPerformance } from 'firebase/performance';
+
+// GA4 events go through GTM/gtag only (see firebaseConfig.ts) — never
+// through the Firebase Analytics SDK, which would independently
+// config/auto-pageview the same GA4 property a second time.
+function gtagEvent(eventName, params) {
+  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    window.gtag('event', eventName, params);
+  }
+}
 
 // Log levels
 export const LogLevel = {
@@ -47,23 +50,18 @@ export const AnalyticsEvent = {
 
 class Logger {
   constructor() {
-    this.analytics = null;
     this.performance = null;
     this.currentUserId = null;
     this.sessionId = this.generateSessionId();
     this.isProduction = import.meta.env.PROD;
 
-    // Initialize Firebase services in production
+    // Initialize Firebase Performance Monitoring in production
     if (this.isProduction) {
       try {
         const app = getApp();
-        this.analytics = getAnalytics(app);
         this.performance = getPerformance(app);
       } catch (error) {
-        console.warn(
-          'Failed to initialize Firebase Analytics/Performance:',
-          error
-        );
+        console.warn('Failed to initialize Firebase Performance:', error);
       }
     }
   }
@@ -91,10 +89,10 @@ class Logger {
   setUser(userId, properties) {
     this.currentUserId = userId;
 
-    if (this.analytics) {
-      setUserId(this.analytics, userId);
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('set', { user_id: userId });
       if (properties) {
-        setUserProperties(this.analytics, properties);
+        window.gtag('set', 'user_properties', properties);
       }
     }
   }
@@ -102,8 +100,8 @@ class Logger {
   // Clear user on logout
   clearUser() {
     this.currentUserId = null;
-    if (this.analytics) {
-      setUserId(this.analytics, null);
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('set', { user_id: undefined });
     }
   }
 
@@ -121,8 +119,8 @@ class Logger {
     // Console logging (always available)
     this.logToConsole(entry);
 
-    // Firebase Analytics logging (production only)
-    if (this.isProduction && this.analytics) {
+    // GA4 logging via GTM/gtag (production only)
+    if (this.isProduction) {
       this.logToAnalytics(entry);
     }
 
@@ -175,14 +173,12 @@ class Logger {
   }
 
   logToAnalytics(entry) {
-    if (!this.analytics) return;
-
     try {
       // Convert log entry to analytics event
       const eventName = this.getAnalyticsEventName(entry);
       const parameters = this.getAnalyticsParameters(entry);
 
-      logEvent(this.analytics, eventName, parameters);
+      gtagEvent(eventName, parameters);
     } catch (error) {
       console.warn('Failed to log to Analytics:', error);
     }
@@ -270,12 +266,10 @@ class Logger {
 
   // Analytics-specific methods
   trackEvent(event, parameters) {
-    if (this.analytics) {
-      try {
-        logEvent(this.analytics, event, parameters);
-      } catch (error) {
-        console.warn('Failed to track analytics event:', error);
-      }
+    try {
+      gtagEvent(event, parameters);
+    } catch (error) {
+      console.warn('Failed to track analytics event:', error);
     }
 
     // Also log to console for development
@@ -291,16 +285,14 @@ class Logger {
       data: { timing: value, name },
     });
 
-    if (this.analytics) {
-      try {
-        logEvent(this.analytics, 'timing_complete', {
-          name,
-          value,
-          event_category: category,
-        });
-      } catch (error) {
-        console.warn('Failed to track timing:', error);
-      }
+    try {
+      gtagEvent('timing_complete', {
+        name,
+        value,
+        event_category: category,
+      });
+    } catch (error) {
+      console.warn('Failed to track timing:', error);
     }
   }
 

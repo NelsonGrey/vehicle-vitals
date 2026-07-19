@@ -1,13 +1,16 @@
 /**
  * Marketing funnel analytics.
  *
- * All events flow through window.gtag() → GTM → GA4 as the primary channel,
- * with firebaseConfig.trackEvent() as a secondary channel (Firebase Analytics).
+ * All events flow through a single channel: window.gtag() → GTM → GA4.
+ * GTM owns GA4 configuration/tags for this property, so events are only
+ * ever pushed to the shared dataLayer here — never sent directly via the
+ * Firebase Analytics SDK, which would double-fire against the same
+ * property (see firebaseConfig.trackEvent).
  * UTM parameters are captured on landing and attached to every event so
  * attribution is available in GA4 reports without extra configuration.
  */
 
-import { trackEvent as firebaseTrackEvent } from './firebaseConfig';
+import { trackEvent } from './firebaseConfig';
 import { isProductionEnvironment } from './environment';
 
 // ─── UTM capture ─────────────────────────────────────────────────────────────
@@ -97,21 +100,7 @@ function dispatch(eventName: string, params: EventParams = {}): void {
     console.info(`[Marketing Analytics] ${eventName}`, payload);
   }
 
-  // Primary: GTM dataLayer → GA4
-  try {
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', eventName, payload);
-    }
-  } catch {
-    // never throw from analytics
-  }
-
-  // Secondary: Firebase Analytics (async init — safe to call even before ready)
-  try {
-    firebaseTrackEvent(eventName, payload);
-  } catch {
-    // never throw from analytics
-  }
+  trackEvent(eventName, payload);
 }
 
 // ─── Marketing page views ─────────────────────────────────────────────────────

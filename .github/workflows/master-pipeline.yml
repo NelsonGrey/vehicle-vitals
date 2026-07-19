@@ -648,6 +648,8 @@ jobs:
           VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT: ${{ secrets.VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS_DEVELOPMENT }}
           VITE_GTM_ID_PRODUCTION: ${{ secrets.VITE_GTM_ID_PRODUCTION }}
           VITE_ADSENSE_SLOT_PRODUCTION: ${{ secrets.VITE_ADSENSE_SLOT_PRODUCTION }}
+          VITE_ADSENSE_SLOT_HEADER_PRODUCTION: ${{ secrets.VITE_ADSENSE_SLOT_HEADER_PRODUCTION }}
+          VITE_ADSENSE_SLOT_MAINTENANCEHISTORY_PRODUCTION: ${{ secrets.VITE_ADSENSE_SLOT_MAINTENANCEHISTORY_PRODUCTION }}
         run: |
           case "$TARGET_ENV" in
             production)
@@ -665,6 +667,8 @@ jobs:
               GTM_ID="$VITE_GTM_ID_PRODUCTION"
               ADSENSE_CLIENT="ca-pub-5198775482699756"
               ADSENSE_SLOT="${VITE_ADSENSE_SLOT_PRODUCTION:-}"
+              ADSENSE_SLOT_HEADER="${VITE_ADSENSE_SLOT_HEADER_PRODUCTION:-}"
+              ADSENSE_SLOT_MAINTENANCEHISTORY="${VITE_ADSENSE_SLOT_MAINTENANCEHISTORY_PRODUCTION:-}"
               ;;
             staging)
               API_KEY="$VITE_FIREBASE_API_KEY_STAGING"
@@ -718,6 +722,8 @@ jobs:
               GTM_ID=""
               ADSENSE_CLIENT=""
               ADSENSE_SLOT=""
+              ADSENSE_SLOT_HEADER=""
+              ADSENSE_SLOT_MAINTENANCEHISTORY=""
               ;;
             *)
               API_KEY="$VITE_FIREBASE_API_KEY_DEVELOPMENT"
@@ -744,6 +750,8 @@ jobs:
               GTM_ID=""
               ADSENSE_CLIENT=""
               ADSENSE_SLOT=""
+              ADSENSE_SLOT_HEADER=""
+              ADSENSE_SLOT_MAINTENANCEHISTORY=""
               ;;
           esac
 
@@ -826,6 +834,8 @@ jobs:
             printf 'VITE_GTM_ID=%s\n' "${GTM_ID:-}"
             printf 'VITE_ADSENSE_CLIENT=%s\n' "${ADSENSE_CLIENT:-}"
             printf 'VITE_ADSENSE_SLOT=%s\n' "${ADSENSE_SLOT:-}"
+            printf 'VITE_ADSENSE_SLOT_HEADER=%s\n' "${ADSENSE_SLOT_HEADER:-}"
+            printf 'VITE_ADSENSE_SLOT_MAINTENANCEHISTORY=%s\n' "${ADSENSE_SLOT_MAINTENANCEHISTORY:-}"
             printf 'VITE_SHOW_COMING_SOON=%s\n' "$SHOW_COMING_SOON"
             printf 'VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS=%s\n' "$ENABLE_HOSTED_DEMO_PDF_UPLOADS"
             if [ -n "${ACCESS_PASSWORD_VAR_NAME:-}" ] && [ -n "${ACCESS_PASSWORD_VALUE:-}" ]; then

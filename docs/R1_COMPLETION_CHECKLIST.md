@@ -1,5 +1,9 @@
 # R1 Completion Checklist
 
+> **Document status (July 20, 2026): Historical R1 evidence checklist.** The
+> dates, pass totals, and Gate 2 status below describe the June 15 snapshot and
+> must not be read as the current release state. See `GO_LIVE_RUNBOOK.md`.
+
 Last updated: June 15, 2026
 Status: In progress (Gate 2 status: Build/launch PASS; manual acceptance and backend success-path proof still pending)
 

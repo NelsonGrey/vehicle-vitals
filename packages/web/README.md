@@ -1,32 +1,49 @@
-# @vehicle-vitals/web
+# `@vehicle-vitals/web`
 
-React web application for Vehicle-Vitals.
+Last verified: July 20, 2026
 
-## Features
+React 18/Vite application containing the public marketing site, authentication,
+and the protected Vehicle-Vitals web app.
 
-- ⚛️ React 18 with modern hooks
-- 🚀 Vite for fast development and building
-- 🔥 Firebase Authentication and Firestore
-- 🧭 React Router for navigation
-- 🎨 Modern CSS with responsive design
-- 📱 Progressive Web App capabilities
+## Stack
 
-## Development
+- React 18, React Router 7, Vite 8, Tailwind CSS 4.
+- Firebase Auth, Firestore, Storage, Functions, Analytics, and Messaging.
+- Vitest/Testing Library unit tests and Playwright hosted UAT.
+- `@vehicle-vitals/shared` for shared domain and Firestore helpers.
+
+## Commands
+
+Run from the repository root:
 
 ```bash
-npm run dev     # Start development server
-npm run build   # Build for production
-npm run preview # Preview production build
-npm run test    # Run tests
+npm ci
+npm run dev:web
+npm --workspace=@vehicle-vitals/web run check
+npm --workspace=@vehicle-vitals/web run test:unit
+npm --workspace=@vehicle-vitals/web run test:uat:chromium
+npm --workspace=@vehicle-vitals/web run build:production
 ```
 
-## Project Structure
+The package scripts sanitize inherited `VITE_*` variables and select the
+requested development, staging, demonstration, or production environment.
 
+## Structure
+
+```text
+src/App.tsx       route composition and environment modes
+src/pages/        public, auth, app, subscription, support, and admin pages
+src/components/   reusable UI, layout, navigation, ads, and product components
+src/shared/       Firebase, auth, entitlements, analytics, consent, and services
+src/utils/        feature-specific Firebase/callable helpers
+src/data/         persona and marketing data
+public/           static SEO, messaging, icons, ads, and media assets
+tests/            unit and Playwright UAT tests
 ```
-src/
-├── components/     # Reusable UI components
-├── pages/         # Route components
-├── shared/        # Web-specific utilities
-├── hooks/         # Custom React hooks
-└── styles.css     # Global styles
-```
+
+Firebase Cloud Functions are in the private companion repository. Client calls
+remain here; backend source is mounted at `packages/functions` only for local or
+CI backend work.
+
+See `../../docs/DEVELOPER_GUIDE.md`, `../../docs/TESTING_INSTRUCTIONS.md`, and
+`UAT_TESTING.md`.

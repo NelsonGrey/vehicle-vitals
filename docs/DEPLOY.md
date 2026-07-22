@@ -1,53 +1,56 @@
-# Deploying the web app to Firebase Hosting
+# Vehicle-Vitals Deployment Guide
 
-This repository supports multiple Firebase environments: Production, Staging, Development, and Demonstration. Each environment has environment-specific configuration.
+Last verified: July 20, 2026
 
-## Environment Setup
+The active deployment source of truth is
+`.github/workflows/master-pipeline.yml`, with target enablement in
+`.cicd/projects/vehicle-vitals.yml` and environment-specific Firebase behavior
+in `firebase.dev.json`, `firebase.staging.json`, and `firebase.prod.json`.
 
-### 2. Firebase Projects
+See `GO_LIVE_RUNBOOK.md` for the current release decision and
+`STAGING_TO_PRODUCTION_RUNBOOK.md` for promotion policy.
 
-- **Production**: `vehicle-vitals-prod`
-- **Staging**: `vehicle-vitals-staging`
-- **Development**: `vehicle-vitals-dev`
-- **Demonstration**: Uses `vehicle-vitals-dev` with `demonstration` build mode
+## Environment Mapping
 
-### 2. Environment Configuration
+| Environment | Branch | Firebase alias/project | Hosted URL |
+| --- | --- | --- | --- |
+| Development | `develop` | `development` / `vehicle-vitals-dev` | `https://vehicle-vitals-dev.web.app` |
+| Staging | `staging` | `staging` / `vehicle-vitals-staging` | `https://vehicle-vitals-staging.web.app` |
+| Production | `main` | `production` / `vehicle-vitals-prod` | `https://vehicle-vitals.com` |
 
-Each environment has its own `.env` file:
+The Firebase aliases are defined in `.firebaserc`. The production Firebase
+hosting alias is also available at `https://vehicle-vitals-prod.web.app`.
 
-- `.env` - Production (default)
-- `.env.staging` - Staging environment
-- `.env.development` - Development environment
-- `.env.demonstration` - Demonstration environment
+## Repository Boundary
 
-Update the placeholder values in `.env.staging` and `.env.development` with your actual Firebase project configurations.
+Cloud Functions live in the private companion repository
+`NelsonGrey/vehicle-vitals-functions`. The pipeline checks it out at the
+gitignored `packages/functions` path before Firebase deployment. The
+`firebase*.json` files intentionally retain that source path.
 
-## Deployment Methods
-
-### Option A: GitHub Actions (Recommended)
-
-The active deployment workflow is `.github/workflows/master-pipeline.yml`
-(`Master CI/CD Pipeline`). It builds and deploys based on the target
-environment.
-
-#### Setup GitHub Secrets
-
-In your repository settings -> Secrets -> Actions, add:
-
-- `FIREBASE_TOKEN` = your CI token from `firebase login:ci`
-- `FIREBASE_PROJECT_PROD` = `vehicle-vitals-prod`
-- `FIREBASE_PROJECT_STAGING` = `vehicle-vitals-staging`
-- `FIREBASE_PROJECT_DEV` = `vehicle-vitals-dev`
-
-#### Automatic Deployment Triggers
-
-- **Production**: Push to `main` branch
-- **Staging**: Push to `staging` branch or create PR to `main`
-- **Development**: Push to `develop` branch
-
-#### Manual Workflow Dispatch
+Automated deployment requires the repository secret `FUNCTIONS_REPO_PAT`.
+Manual deployment or emulator use requires a local companion checkout:
 
 ```bash
+git clone git@github.com:NelsonGrey/vehicle-vitals-functions.git packages/functions
+npm run build --workspace=@vehicle-vitals/shared
+cd packages/functions
+VV_SHARED_DIST=../shared/dist npm run vendor:shared
+```
+
+## Automated Deployment
+
+The master pipeline runs on pull requests and pushes to `develop`, `staging`,
+and `main`. Pull requests test against development. Branch pushes default to
+`build_and_deploy` for their mapped environment.
+
+Manual dispatch examples:
+
+```bash
+gh workflow run master-pipeline.yml \
+  -f action=test_all \
+  -f environment=development
+
 gh workflow run master-pipeline.yml \
   -f action=build_and_deploy \
   -f environment=staging
@@ -57,59 +60,85 @@ gh workflow run master-pipeline.yml \
   -f environment=production
 ```
 
-Use `deploy_only` only for an intentional Firebase-only redeploy. Production
-`deploy_only` skips Functions and deploys Firestore, Storage, and Hosting.
+The normal deploy path performs unit/UAT gates, builds the web artifact, checks
+out the Functions companion, vendors the shared package, and deploys Firestore,
+Storage, Functions, and Hosting.
 
-### Option B: Manual Deployment
+`deploy_only` is exceptional. On production it omits Functions by workflow
+design and deploys Firestore, Storage, and Hosting. Record the reason whenever
+that reduced target set is used.
 
-#### Build for specific environment:
+## Target Enablement
+
+Current `.cicd/projects/vehicle-vitals.yml` state:
+
+- Web: enabled.
+- Firebase: enabled.
+- iOS: temporarily disabled; when enabled, staging/production builds use the
+  signed Fastlane `beta` lane and TestFlight upload.
+- Android: disabled and on hold.
+- Chrome extension: not configured/enabled.
+
+## Local Builds
 
 ```bash
-# Production (default)
-npm run build
-
-# Staging
-npm run build:staging
-
-# Development
+npm ci
 npm run build:development
-
-# Demonstration
-npm run build:demonstration
+npm run build:staging
+npm run build:production
 ```
 
-#### Deploy to specific environment:
+The scripts sanitize inherited `VITE_*` values and select the requested
+environment. Local builds use local environment files; CI constructs the web
+environment from GitHub secrets.
+
+## Manual Firebase Deployment
+
+Prefer CI so tests, companion checkout, environment selection, and artifact
+handling remain reproducible. If a manual deployment is required:
 
 ```bash
-# Production
-firebase use production
-firebase deploy --only firestore,storage,functions,hosting
+# From repository root, with packages/functions mounted.
+npm ci
+npm run check
+npm run test:unit:all
+npm run build --workspace=@vehicle-vitals/shared
 
-# Staging
+# Select one build/config/alias set.
+npm run build:staging
 firebase use staging
-firebase deploy --only firestore,storage,functions,hosting
-
-# Development
-firebase use development
-firebase deploy --only firestore,storage,functions,hosting
-
-# Demonstration (project alias may remain development depending on local firebase aliases)
-firebase use development
-firebase deploy --only hosting
+firebase deploy --config firebase.staging.json \
+  --only firestore,storage,functions,hosting
 ```
 
-## Environment URLs
+For production, replace `staging` with `production` and use
+`firebase.prod.json`. For development, use `development` and
+`firebase.dev.json`.
 
-- **Production**: https://vehicle-vitals-prod.web.app
-- **Staging**: https://vehicle-vitals-staging.web.app
-- **Development**: https://vehicle-vitals-dev.web.app
-- **Demonstration**: https://vehicle-vitals-dev.web.app (demonstration branch release)
+Before a Functions-inclusive deploy, run the companion repository's documented
+install, build, lint, and tests. Do not assume the public repo's root tests cover
+private backend source.
 
-## Notes
+## Deployment Safety Rules
 
-- Always test builds locally before deploying: `npm run build:staging` etc.
-- The workflow installs dependencies and runs the appropriate build command based on the target environment.
-- For manual deployments, ensure you're using the correct Firebase project with `firebase use <environment>`.
-- Firestore and Storage rules are launch-critical; do not use Hosting-only
-  deploys for release candidates unless rules and Functions are intentionally
-  unchanged.
+- Never commit secret values or generated credential files.
+- Never import/export application data between Firebase environments as part of
+  deployment.
+- Keep public and companion repository branches compatible.
+- Require a green Quality Gate for ordinary releases.
+- Verify target project ID before deploying.
+- Treat Hosting-only or reduced-target deploys as explicit exceptions.
+- Preserve noindex behavior for development and staging.
+- Record workflow URL, commit SHA, target, reviewer, and smoke evidence.
+
+## Post-Deployment Verification
+
+At minimum:
+
+1. Confirm the target URL and expected title respond.
+2. Confirm CSP and security headers.
+3. Exercise authentication and one Firebase-backed critical path.
+4. Verify Firestore/Storage access rules in the target context.
+5. Inspect Functions and Hosting logs for new errors.
+6. Verify production-only analytics/ads and non-production noindex behavior.
+7. Update `GO_LIVE_RUNBOOK.md` if release posture changed.

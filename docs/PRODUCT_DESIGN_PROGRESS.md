@@ -1,5 +1,9 @@
 # Product Design Progress Tracker
 
+> **Document status (July 20, 2026): Historical snapshot.** Current delivery is
+> tracked in `REQUIREMENTS.md`; current release posture is in
+> `GO_LIVE_RUNBOOK.md`.
+
 Last updated: April 13, 2026
 Source of truth: docs/PRODUCT_DESIGN.md
 
@@ -35,4 +39,3 @@ Source of truth: docs/PRODUCT_DESIGN.md
 ## Operational Readiness Target
 
 A production-capable parity claim requires closure of all R1 gates in docs/NEXT_FEATURES_EXECUTION_PLAN.md.
-

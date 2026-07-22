@@ -1,11 +1,17 @@
 # Vehicle-Vitals - Monetization Strategy
 
-**Version**: 1.0  
-**Last Updated**: May 13, 2026  
-**Status**: 🟡 RECOMMENDED FOR IMPLEMENTATION  
+**Version**: 1.1
+**Last Reviewed**: July 20, 2026
+**Status**: Strategy and planning assumptions; current delivery is in `REQUIREMENTS.md`
 **Owner**: Mark Nelson
 
 ---
+
+> Revenue, CPM, conversion, traffic, cost, and adoption figures in this
+> document are unverified planning assumptions unless a dated source is cited.
+> Do not use them for forecasts, pricing, advertising policy, or public claims
+> without revalidation. Paid availability requires the evidence in
+> `GO_LIVE_RUNBOOK.md`.
 
 ## 📋 Executive Summary
 

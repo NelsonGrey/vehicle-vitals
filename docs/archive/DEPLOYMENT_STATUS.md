@@ -52,7 +52,7 @@ Validation snapshot:
 
 ## Beta Readiness
 
-The current beta-test access matrix is documented in [docs/BETA_ACCESS_MATRIX.md](docs/BETA_ACCESS_MATRIX.md). It defines the required Free, Pro, Premium, Enterprise, and Super-Admin identities plus the capability proofs each one must satisfy before beta handoff.
+The beta-test access matrix is documented in [BETA_ACCESS_MATRIX.md](../BETA_ACCESS_MATRIX.md). It defines the required Free, Pro, Premium, Enterprise, and Super-Admin identities plus the capability proofs each one must satisfy before beta handoff.
 
 ## Development Progress Update (May 26, 2026 - Marketing Link Cleanup)
 

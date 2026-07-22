@@ -1,352 +1,104 @@
-# iOS Certificate Repository Setup Guide
+# iOS Signing and TestFlight Setup
 
-> **Reusable Template**: Complete setup guide for iOS code signing certificates using Fastlane Match. Use this for any new iOS project.
+Last reviewed: July 20, 2026
 
-## 🎯 Overview
+Vehicle Vitals currently uses automatic Xcode signing plus an App Store Connect
+API key in the Fastlane `beta` lane. Older Match and standalone
+`ios-distribution.yml` instructions have been retired.
 
-This guide provides a complete, reusable setup for iOS code signing certificates using Fastlane Match with a separate GitHub repository. This approach ensures security, automation, and scalability for iOS development.
+Automated iOS execution is disabled in `.cicd/projects/vehicle-vitals.yml`.
+Re-enable it only for an intentional staging or production build/upload.
 
-## 📋 Prerequisites
+## Executable Sources
 
-### Required Accounts & Tools
+- Bundle ID and signing settings:
+  `packages/mobile/ios/Runner.xcodeproj/project.pbxproj`
+- App Store app identifier: `packages/mobile/ios/fastlane/Appfile`
+- Signed build and TestFlight upload: `packages/mobile/ios/fastlane/Fastfile`
+- GitHub job and secret injection:
+  `.github/workflows/master-pipeline.yml`, job `build-ios`
+- Firebase plist selection: `IOS_FIREBASE_SETUP.md`
 
-- ✅ **Apple Developer Program** ($99/year) - [developer.apple.com](https://developer.apple.com)
-- ✅ **App Store Connect** access (Admin/App Manager role)
-- ✅ **GitHub Account** with private repository access
-- ✅ **Fastlane** installed (`gem install fastlane`)
-- ✅ **Flutter** SDK (for Flutter projects)
-- ✅ **Xcode** Command Line Tools
+The current iOS bundle ID is `com.vehiclevitals.app.ios`.
 
-### Hardware Requirements
+## Required Repository Secrets
 
-- macOS 11.0+ (Big Sur or later)
-- Intel or Apple Silicon (M1/M2/M3 supported)
-- 8GB RAM minimum, 16GB recommended
+- `FASTLANE_TEAM_ID`
+- `APP_STORE_CONNECT_KEY_ID`
+- `APP_STORE_CONNECT_ISSUER_ID`
+- `APP_STORE_CONNECT_KEY`
 
-## 🚀 Step-by-Step Setup
+The workflow passes the target environment as `FIREBASE_ENV`. The Fastlane lane
+accepts a raw or base64-encoded App Store Connect private key and creates only a
+temporary key file during the run.
 
-### Step 1: Create Certificate Repository
+Never commit the `.p8` key, print it in logs, place it in a `VITE_*` variable,
+or paste it into documentation. Use the least-privileged App Store Connect role
+that supports the intended upload and rotate a key immediately if exposed.
 
-1. **Create Private GitHub Repository**
+## Creating the App Store Connect API Key
 
-   ```bash
-   # Repository naming convention: {project-name}-certificates
-   ```
+1. In App Store Connect, open Users and Access and the current Integrations/API
+   keys area.
+2. Create a team API key with the minimum needed access.
+3. Record the key ID and issuer ID.
+4. Download the `.p8` file once and store it in the repository Actions secrets
+   as `APP_STORE_CONNECT_KEY`.
+5. Store the other identifiers using the exact names above.
 
-# Example: vehicle-vitals-certificates
+Use `ASC_PRIVATE_KEY_SETUP.md` as the short secret-entry reference.
 
-````
+## Local Unsigned Validation
 
-2. **Generate GitHub Personal Access Token**
-- Go to: [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)
-- Create token with `repo` scope
-- **Save the token securely** - you'll need it for CI/CD
-
-3. **Set Repository URL**
-```bash
-# Format: https://oauth2:{token}@github.com/{username}/{repo-name}.git
-CERT_REPO_URL="https://oauth2:gho_YOUR_TOKEN_HERE@github.com/mnelson3/vehicle-vitals-certificates.git"
-````
-
-### Step 2: Initialize Fastlane Match
-
-1. **Navigate to iOS Fastlane Directory**
-
-   ```bash
-   cd packages/mobile/ios
-   mkdir -p fastlane
-   cd fastlane
-   ```
-
-2. **Create Matchfile**
-
-   ```ruby
-   # Matchfile - Code signing configuration
-   git_url(ENV["MATCH_GIT_URL"])
-   git_branch("main")  # or "develop" to match your main repo
-   storage_mode("git")
-   type("appstore")  # development, adhoc, appstore, enterprise
-   username(ENV["FASTLANE_APPLE_ID"])
-   team_id(ENV["FASTLANE_TEAM_ID"])
-   ```
-
-3. **Create Appfile**
-   ```ruby
-   # Appfile - App-specific configuration
-   app_identifier("com.vehiclevitals.app.ios")
-   apple_id(ENV["FASTLANE_APPLE_ID"])
-   team_id(ENV["FASTLANE_TEAM_ID"])
-   itc_team_id(ENV["FASTLANE_ITC_TEAM_ID"])
-   ```
-
-### Step 3: Generate App Store Connect API Key
-
-1. **Access App Store Connect**
-   - Go to: [appstoreconnect.apple.com](https://appstoreconnect.apple.com)
-   - Navigate: Users and Access → Keys → App Store Connect API
-
-2. **Create API Key**
-   - Click "+" to create new key
-   - Choose "Admin" role
-   - Name: "Vehicle-Vitals CI"
-   - Download the `.p8` file
-
-3. **Extract Key Details**
-   - **Key ID**: From the downloaded key name
-   - **Issuer ID**: From the API Keys page
-   - **Private Key**: Contents of `.p8` file (base64 encode for CI/CD)
-
-### Step 4: Configure Environment Variables
-
-Create a `.env` file in your iOS fastlane directory:
+From `packages/mobile`:
 
 ```bash
-# Apple Developer Account
-FASTLANE_APPLE_ID=your-apple-id@example.com
-FASTLANE_TEAM_ID=YOUR_TEAM_ID
-FASTLANE_ITC_TEAM_ID=YOUR_ITC_TEAM_ID
-
-# App Store Connect API Key
-APP_STORE_CONNECT_KEY_ID=YOUR_KEY_ID
-APP_STORE_CONNECT_ISSUER_ID=YOUR_ISSUER_ID
-APP_STORE_CONNECT_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----
-
-# Match Configuration
-MATCH_GIT_URL=https://oauth2:gho_YOUR_TOKEN@github.com/mnelson3/vehicle-vitals-certificates.git
-MATCH_PASSWORD=your_match_password
-
-# Legacy Beta Channel Configuration
-BETA_FEEDBACK_EMAIL=support@vehicle-vitals.com
+flutter pub get
+flutter analyze
+flutter test
+flutter build ios --release --no-codesign
 ```
 
-### Step 5: Initialize Certificates
+This validates compilation but not distribution signing, entitlements, the
+App Store record, or purchase products.
 
-**Automated Setup (Recommended)**
+## Intentional Signed Upload
 
-Use the provided setup script for automated certificate initialization:
+Before enabling the target:
+
+1. Verify the selected Firebase plist project ID matches staging or production.
+2. Verify the bundle ID, Apple team, version, and build number.
+3. Verify App Store privacy, purchase products, review metadata, export
+   compliance, and deletion/support flows.
+4. Verify the four repository secrets exist without printing their values.
+5. Set `targets.ios.enabled: true` in
+   `.cicd/projects/vehicle-vitals.yml` in the release change.
+6. Run the normal protected branch pipeline. The iOS job is eligible only for
+   staging or production `build_all`/`build_and_deploy` contexts after the
+   quality gate.
+
+The job runs, from `packages/mobile/ios`:
 
 ```bash
-# Run the automated setup script
-./scripts/setup-ios-certificates.sh
+FIREBASE_ENV="$TARGET_ENV" bundle exec fastlane beta
 ```
 
-This script will:
+The lane validates the plist project, applies automatic signing, produces
+`builds/Vehicle-Vitals.ipa`, and uploads it to TestFlight.
 
-- Check prerequisites (Fastlane, GitHub CLI)
-- Prompt for GitHub Personal Access Token
-- Initialize Fastlane Match
-- Generate development and App Store certificates
-- Provide instructions for CI/CD secrets
+After the intended upload, decide whether the target should remain enabled or
+be disabled to avoid unplanned TestFlight builds on later web-only promotions.
 
-**Manual Setup (Alternative)**
+## Troubleshooting
 
-1. **Run Match Init**
+- Missing provisioning profile: confirm the team ID, API-key role, bundle ID,
+  and automatic-signing access.
+- Firebase mismatch: follow `IOS_FIREBASE_SETUP.md`; do not bypass the project
+  guard.
+- Invalid private key: verify the complete `.p8` content was stored without
+  extra quoting or truncation, then rotate if exposure is possible.
+- App Store upload rejected: inspect the Fastlane/gym artifacts and App Store
+  Connect processing message before changing code or signing.
 
-   ```bash
-   cd packages/mobile/ios
-   fastlane match init
-   # Select "git" when prompted
-   # Enter your certificate repository URL
-   ```
-
-2. **Generate Development Certificate**
-
-   ```bash
-   fastlane match development
-   # This creates and stores your development certificate
-   ```
-
-3. **Generate Distribution Certificate**
-   ```bash
-   fastlane match appstore
-   # This creates distribution certificate and provisioning profiles
-   ```
-
-### Step 6: Create Fastlane Lanes
-
-The Fastfile has been pre-configured with the following lanes:
-
-```ruby
-# Fastfile - Build lanes
-default_platform(:ios)
-
-platform :ios do
-  before_all do
-    setup_ci if ENV['CI']
-  end
-
-  desc "Sync code signing certificates"
-  lane :sync_signing do
-    match(
-      type: "appstore",
-      readonly: true,
-      api_key_path: nil
-    )
-  end
-
-  desc "Generate development certificates"
-  lane :certificates_development do
-    match(
-      type: "development",
-      readonly: false
-    )
-  end
-
-  desc "Generate App Store certificates"
-  lane :certificates_appstore do
-    match(
-      type: "appstore",
-      readonly: false
-    )
-  end
-
-  desc "Generate all certificates"
-  lane :certificates_all do
-    certificates_development
-    certificates_appstore
-  end
-
-  desc "Build and sign for Legacy Beta Channel"
-  lane :build_beta_channel do
-    sync_signing
-
-    # For Flutter projects
-    Dir.chdir("../../") do
-      sh("flutter build ipa --release")
-    end
-
-    # For native iOS projects
-    # build_app(
-    #   scheme: "Runner",
-    #   configuration: "Release",
-    #   export_method: "app-store"
-    # )
-  end
-
-  desc "Upload to Legacy Beta Channel"
-  lane :beta do
-    app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_KEY"],
-      is_key_content_base64: true
-    )
-
-    build_beta_channel
-
-    upload_to_beta_channel(
-      ipa: "../build/ios/ipa/Vehicle-Vitals.ipa",
-      skip_waiting_for_build_processing: true
-    )
-  end
-end
-```
-
-## 🔐 CI/CD Integration
-
-### GitHub Actions Setup
-
-1. **Add Secrets to Repository**
-   - Go to: Repository Settings → Secrets and variables → Actions
-   - Add these secrets:
-     ```
-     FASTLANE_APPLE_ID
-     FASTLANE_TEAM_ID
-     FASTLANE_ITC_TEAM_ID
-     APP_STORE_CONNECT_KEY_ID
-     APP_STORE_CONNECT_ISSUER_ID
-     APP_STORE_CONNECT_KEY
-     MATCH_GIT_URL
-     MATCH_PASSWORD
-     BETA_FEEDBACK_EMAIL
-     ```
-
-2. **Create iOS Workflow** (`.github/workflows/ios-distribution.yml`)
-
-   ```yaml
-   name: iOS Distribution
-   on:
-     push:
-       branches: [main, develop]
-     workflow_dispatch:
-
-   jobs:
-     distribute-ios:
-       runs-on: macos-latest
-       steps:
-         - uses: actions/checkout@v4
-         - uses: subosito/flutter-action@v2
-           with:
-             flutter-version: '3.35.7'
-         - run: gem install fastlane -v 2.228.0
-         - run: flutter pub get
-         - run: |
-             cd packages/mobile/ios
-             fastlane beta
-   ```
-
-## 🔧 Maintenance & Troubleshooting
-
-### Certificate Rotation
-
-```bash
-# Rotate distribution certificate
-fastlane match appstore --force
-
-# Rotate all certificates
-fastlane match nuke distribution  # ⚠️  Removes all certificates
-fastlane match appstore           # Recreate certificates
-```
-
-### Common Issues
-
-**"undefined method `app_name'"**
-
-- Remove `app_name()` from Appfile (deprecated in newer Fastlane)
-
-**"Missing signing credentials"**
-
-- Add `MATCH_PASSWORD` to your environment variables
-
-**"Repository not found"**
-
-- Check MATCH_GIT_URL format and token permissions
-
-**"Certificate not found"**
-
-- Run `fastlane match appstore` to regenerate certificates
-
-### Security Best Practices
-
-- 🔒 **Private Repository**: Keep certificates repo private
-- 🔑 **Token Rotation**: Rotate GitHub tokens regularly
-- 👥 **Access Control**: Limit who can access certificate repository
-- 🔐 **Environment Variables**: Never commit secrets to code
-- 📊 **Audit Logs**: Monitor certificate access and changes
-
-## 📋 Checklist
-
-- [ ] Apple Developer Program membership
-- [ ] App Store Connect API key created
-- [ ] Private GitHub certificates repository created
-- [ ] GitHub Personal Access Token generated
-- [ ] Fastlane Match initialized
-- [ ] Certificates generated (development & distribution)
-- [ ] Environment variables configured
-- [ ] Fastlane lanes created
-- [ ] CI/CD secrets added
-- [ ] GitHub Actions workflow created
-- [ ] Test build completed successfully
-
-## 🎉 Next Steps
-
-1. **Test Locally**: Run `fastlane beta` to verify setup
-2. **Push to CI**: Commit changes and trigger workflow
-3. **Monitor Builds**: Check GitHub Actions for successful builds
-4. **Distribute**: Submit to Legacy Beta Channel and App Store when ready
-
----
-
-**📖 Related Documentation:**
-
-- [Fastlane Documentation](https://docs.fastlane.tools)
+App Store review and storefront availability are external state. Verify them in
+App Store Connect and reflect any change in `GO_LIVE_RUNBOOK.md`.

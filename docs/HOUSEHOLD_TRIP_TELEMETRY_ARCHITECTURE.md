@@ -1,5 +1,9 @@
 # Household Trip Telemetry Architecture
 
+> **Status (July 20, 2026):** Future architecture, not a shipped launch claim.
+> Backend implementation would belong in the private Functions companion
+> mounted at `packages/functions`.
+
 ## Goal
 
 Support shared garages where multiple people belong to the same household and

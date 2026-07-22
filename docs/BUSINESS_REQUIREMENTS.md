@@ -1,11 +1,18 @@
 # Vehicle-Vitals - Business Requirements & Strategic Analysis
 
-**Version**: 1.2  
-**Last Updated**: May 27, 2026  
-**Status**: 🟡 R1 NEAR-COMPLETE (web + mobile real-service runtime operational; Gate 2 acceptance pending)  
+**Version**: 1.3
+**Last Reviewed**: July 20, 2026
+**Status**: Product and market requirements; delivery status is owned by `REQUIREMENTS.md` and release status by `GO_LIVE_RUNBOOK.md`
 **Owner**: Mark Nelson
 
 ---
+
+> Market-size, adoption, revenue, and cost figures in this document are
+> planning assumptions unless a dated source is cited. Revalidate them before
+> investor, legal, pricing, or budget use. The May 2026 delivery snapshot below
+> is retained for history and does not override the current requirements or
+> release runbook. References to `packages/functions` mean the private companion
+> repository mounted at that path.
 
 ## 📋 Executive Summary
 
@@ -22,7 +29,10 @@
 
 **Business Model**: Four-tier freemium (Free, Pro, Premium, Enterprise) with contextual advertising and tiered feature access.
 
-**Current Status**: 🟡 Web core and mobile real-service runtime are both operational. R1 production gates are near-complete: Gate 1 (reminders) and Gate 3 (export parity) are closed; Gate 2 (mobile runtime acceptance) is the remaining blocker.
+**Current Status**: Production web is deployed, iOS source is implemented, and
+the next production deployment is held on a hosted Chromium UAT mismatch. Paid,
+App Store, legal, and operational readiness still require current external
+evidence. See `GO_LIVE_RUNBOOK.md`.
 
 ---
 

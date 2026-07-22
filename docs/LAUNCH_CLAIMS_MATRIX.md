@@ -1,13 +1,17 @@
 # Vehicle-Vitals Launch Claims Matrix
 
-Last updated: July 16, 2026
+Last reviewed: July 20, 2026
 
 This matrix is the copy source of truth for the website and iOS app until the
 release manager records a launch decision in `docs/GO_LIVE_RUNBOOK.md`.
 Customer-facing claims must describe the capability that is demonstrably
 available in the release build, not an intended roadmap state.
 
-## Approved for the current release candidate
+The wording below is conditionally approved only when the cited capability is
+present in the deployed target and any external approval is current. Repository
+text alone does not prove App Store or paid-plan availability.
+
+## Approved capability wording when verified in the target
 
 | Topic                | Approved customer wording                                                         | Website evidence                              | iOS evidence                               | Guardrail                                                                                                        |
 | -------------------- | --------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
@@ -26,7 +30,7 @@ available in the release build, not an intended roadmap state.
 
 | Claim                              | Current presentation                                             | Authority/evidence required before activation                                                                                                                  | Activation control                                                                                                                                             |
 | ---------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pro and Premium purchasing         | “Coming soon” / “Pricing pending approval”                       | Product owner approval, final price and entitlement matrix, production Stripe and App Store purchase evidence, refund/cancellation recovery, support readiness | Set `VITE_PAID_SUBSCRIPTIONS_LIVE=true` and build iOS with `--dart-define=VV_PAID_SUBSCRIPTIONS_LIVE=true` only after all evidence is linked from the runbook. |
+| Pro and Premium purchasing         | Approval-dependent; do not claim general availability without current evidence | Product owner approval, final price and entitlement matrix, production Stripe and App Store purchase evidence, refund/cancellation recovery, support readiness | Coordinate client presentation, provider catalog/secrets, companion backend, store configuration, tests, and rollback; there is no single authoritative paid-live flag in the current clients. |
 | Enterprise/team workflows          | “Discuss planned needs”                                          | Approved product scope, contract terms, operating owner, support model, and verified roles/reporting/integration workflows                                     | Update this matrix and customer copy in the same change that enables the verified capability.                                                                  |
 | Household member invitations       | Explicitly unavailable in this release                           | Verified invitation, acceptance, role, removal, audit, and shared-data authorization flows on web and iOS                                                      | Remove the limitation only after cross-account acceptance tests pass.                                                                                          |
 | Priority support                   | Terms pending approval                                           | Named owner, service hours, response target, escalation policy, and paid entitlement verification                                                              | Publish the exact approved commitment in Plans, Help, Terms, and support operations together.                                                                  |

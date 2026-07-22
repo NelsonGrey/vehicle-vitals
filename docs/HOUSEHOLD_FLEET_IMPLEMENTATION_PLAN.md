@@ -1,5 +1,10 @@
 # Household & Light-Fleet Implementation Plan
 
+> **Status (July 20, 2026):** Plan/status history. Some shared-garage foundation
+> has shipped, but this document is not current release proof. Functions paths
+> refer to the private companion repository mounted at `packages/functions`.
+> Use `REQUIREMENTS.md` for the current delivery classification.
+
 Gap-closing plan for the `households` and `light-fleets` personas defined in
 [PRODUCT_DESIGN.md](./PRODUCT_DESIGN.md). Cross-referenced against
 [REQUIREMENTS.md](./REQUIREMENTS.md), [BUSINESS_REQUIREMENTS.md](./BUSINESS_REQUIREMENTS.md),

@@ -1,5 +1,9 @@
 # Next Features Execution Plan
 
+> **Document status (July 20, 2026): Prioritized planning reference.** This is
+> not a current release checklist. Reconcile proposed work with
+> `REQUIREMENTS.md`, the current code, and `GO_LIVE_RUNBOOK.md` before execution.
+
 Last updated: June 28, 2026
 
 This plan converts current status into concrete completion work. The June 2026 marketing site redesign established a clear product direction (persona-driven, dark-and-teal, proof/planning/growth positioning). Execution must now deliver the app experience that direction promises.

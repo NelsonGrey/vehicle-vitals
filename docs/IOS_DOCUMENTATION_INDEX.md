@@ -1,244 +1,52 @@
-# iOS Development Documentation Index
+# iOS Documentation Index
 
-> **Status**: Historical index. Some linked docs reference legacy beta-distribution flows that are no longer active.
+Last reviewed: July 20, 2026
 
-> **Complete Guide Collection**: All documentation for setting up iOS projects with certificates, CI/CD, and automation.
+The Flutter iOS client is maintained in `packages/mobile`. Automated iOS build
+and TestFlight upload are currently disabled in
+`.cicd/projects/vehicle-vitals.yml`; verify App Store Connect directly for
+external review or storefront status.
 
-## 📚 Documentation Overview
+## Current References
 
-This collection provides everything needed to set up iOS projects with professional certificate management, CI/CD automation, and deployment pipelines.
+| Document or source | Use |
+| --- | --- |
+| `IOS_FIREBASE_SETUP.md` | Environment-specific Firebase plist/options setup |
+| `ASC_PRIVATE_KEY_SETUP.md` | App Store Connect API key secret names and handling |
+| `IOS_CERTIFICATE_SETUP_GUIDE.md` | Signing setup; sections naming old workflows are legacy |
+| `packages/mobile/ios/fastlane/Fastfile` | Executable TestFlight build/upload lane |
+| `packages/mobile/ios/fastlane/README.md` | Auto-generated current lane list |
+| `.github/workflows/master-pipeline.yml` | Current `build-ios` job |
+| `TESTING_INSTRUCTIONS.md` | Current Flutter validation commands |
+| `GO_LIVE_RUNBOOK.md` | Current release posture and manual blockers |
 
-## 📖 Available Guides
+## Historical Templates
 
-### End-User FAQ (Website + iOS)
+The following documents are retained for background or reuse but are not
+Vehicle Vitals deployment instructions:
 
-**File**: [`USER_FAQ_WEBSITE_IOS.md`](./USER_FAQ_WEBSITE_IOS.md)
-**Purpose**: Step-by-step user guidance for core actions across the website and iOS app
-**Use When**: Training users, onboarding, and support issue triage
-**Includes**:
+- `IOS_CERTIFICATE_QUICK_REFERENCE.md`
+- `IOS_CERTIFICATE_SETUP_SUMMARY.md`
+- `IOS_CICD_INTEGRATION_GUIDE.md`
+- `IOS_PROJECT_TEMPLATE.md`
+- `BETA_TESTING_GUIDE.md`
 
-- Account and authentication flows
-- Garage, add/edit vehicle, VIN lookup/scan
-- Records, reminders, upcoming tasks, and calendar actions
-- Profile, service providers, premium, and troubleshooting
+They may reference a removed `ios-distribution.yml`, generic bundle IDs,
+certificate repositories, or inactive distribution channels. Do not execute
+their copy/paste examples against the current project.
 
-### 1. iOS Certificate Setup Guide
+## Current Validation Sequence
 
-**File**: [`IOS_CERTIFICATE_SETUP_GUIDE.md`](./IOS_CERTIFICATE_SETUP_GUIDE.md)
-**Purpose**: Complete step-by-step guide for setting up iOS certificate repositories
-**Use When**: Starting a new iOS project, setting up certificates for the first time
-**Includes**:
-
-- Certificate repository creation
-- Fastlane Match configuration
-- App Store Connect API setup
-- Environment variable configuration
-- Troubleshooting common issues
-
-### 2. iOS Certificate Quick Reference
-
-**File**: [`IOS_CERTIFICATE_QUICK_REFERENCE.md`](./IOS_CERTIFICATE_QUICK_REFERENCE.md)
-**Purpose**: Fast setup commands and essential configurations
-**Use When**: Need a quick cheatsheet, setting up multiple projects
-**Includes**:
-
-- Copy-paste commands
-- Environment variable templates
-- GitHub Secrets checklist
-- Troubleshooting quick fixes
-
-### 3. iOS CI/CD Integration Guide
-
-**File**: [`IOS_CICD_INTEGRATION_GUIDE.md`](./IOS_CICD_INTEGRATION_GUIDE.md)
-**Purpose**: Complete CI/CD automation for iOS projects
-**Use When**: Setting up automated builds, deployments, and testing
-**Includes**:
-
-- GitHub Actions templates
-- GitLab CI configuration
-- Jenkins Pipeline setup
-- Security best practices
-- Performance optimization
-
-### 4. iOS Project Template
-
-**File**: [`IOS_PROJECT_TEMPLATE.md`](./IOS_PROJECT_TEMPLATE.md)
-**Purpose**: Complete project starter with all configurations
-**Use When**: Creating a new iOS project from scratch
-**Includes**:
-
-- Project structure template
-- Setup automation script
-- Fastlane configuration files
-- GitHub Actions workflows
-- Documentation templates
-
-## 🚀 Quick Start for New Projects
-
-### Option 1: Use the Template (Recommended)
+From `packages/mobile`:
 
 ```bash
-# 1. Copy the template files to your new project
-cp docs/IOS_PROJECT_TEMPLATE.md your-new-project/
-cp docs/IOS_CERTIFICATE_SETUP_GUIDE.md your-new-project/docs/
-cp docs/IOS_CICD_INTEGRATION_GUIDE.md your-new-project/docs/
-
-# 2. Follow the setup script in the template
-cd your-new-project
-chmod +x scripts/setup-ios-project.sh
-./scripts/setup-ios-project.sh
+flutter pub get
+flutter analyze
+flutter test
+flutter build ios --release --no-codesign
 ```
 
-### Option 2: Manual Setup
-
-```bash
-# 1. Create certificate repository
-# Follow: IOS_CERTIFICATE_SETUP_GUIDE.md
-
-# 2. Setup Fastlane
-# Follow: IOS_CERTIFICATE_QUICK_REFERENCE.md
-
-# 3. Configure CI/CD
-# Follow: IOS_CICD_INTEGRATION_GUIDE.md
-```
-
-## 📋 Checklist for New Projects
-
-### Pre-Setup Requirements
-
-- [ ] Apple Developer Program membership ($99/year)
-- [ ] App Store Connect access (Admin role)
-- [ ] GitHub account with private repository access
-- [ ] macOS development environment
-
-### Certificate Repository Setup
-
-- [ ] Create private GitHub repository (`{project-name}-certificates`)
-- [ ] Generate GitHub Personal Access Token
-- [ ] Setup Fastlane Match configuration
-- [ ] Generate development and distribution certificates
-
-### Project Configuration
-
-- [ ] Configure Fastlane Appfile and Fastfile
-- [ ] Setup environment variables
-- [ ] Configure CI/CD secrets
-- [ ] Test local builds
-
-### CI/CD Pipeline
-
-- [ ] Setup GitHub Actions (or preferred CI platform)
-- [ ] Test automated builds and deployments
-- [ ] Setup notifications and monitoring
-
-## 🔧 Key Components Explained
-
-### Certificate Management
-
-- **Separate Repository**: `{project-name}-certificates` for security
-- **Fastlane Match**: Automated certificate and profile management
-- **Git Storage**: Version control for certificates
-- **Encrypted**: All sensitive data encrypted
-
-### CI/CD Automation
-
-- **Multi-Platform**: GitHub Actions, GitLab CI, Jenkins support
-- **Security**: Secrets management and access controls
-- **Monitoring**: Build status, performance metrics, alerts
-
-### Deployment Pipeline
-
-- **Build Validation**: Automated pre-release build verification
-- **App Store**: Production releases
-- **Multi-Environment**: Development, staging, production
-- **Rollback**: Version control and emergency procedures
-
-## 🎯 Use Cases
-
-### For Different Team Sizes
-
-**Solo Developer**:
-
-- Use Quick Reference guide
-- GitHub Actions with hosted runners
-- Manual certificate management
-
-**Small Team (2-10 developers)**:
-
-- Use Setup Guide + CI/CD Integration
-- Automated certificate management
-
-**Enterprise Team (10+ developers)**:
-
-- Use Project Template + all guides
-- Advanced CI/CD with GitLab/Jenkins
-- Comprehensive monitoring and security
-
-### For Different Project Types
-
-**Flutter iOS App**:
-
-- Follow all guides (Flutter-specific configurations included)
-- Use Flutter build commands in Fastlane
-
-**Native iOS App**:
-
-- Adapt Fastlane commands for Xcode projects
-- Use different build schemes and configurations
-
-**Cross-Platform App**:
-
-- Combine with Android setup guides
-- Shared certificate management strategy
-
-## 📊 Success Metrics
-
-Track these to ensure successful implementation:
-
-- **Setup Time**: < 2 hours for certificate + CI/CD setup
-- **Build Success Rate**: > 95% for automated builds
-- **Deployment Frequency**: Multiple releases per week
-- **Certificate Validity**: > 30 days remaining
-
-## 🔄 Maintenance & Updates
-
-### Regular Tasks
-
-- **Monthly**: Review certificate expiration
-- **Weekly**: Check build pipeline status
-- **Daily**: Monitor for failed builds
-
-### Updates Needed
-
-- Fastlane version updates (currently 2.228.0)
-- macOS runner updates
-- Security policy updates
-- CI/CD platform changes
-
-## 📞 Support & Resources
-
-### Getting Help
-
-1. Check troubleshooting sections in each guide
-2. Review Fastlane documentation: https://docs.fastlane.tools
-3. Apple Developer Forums: https://developer.apple.com/forums
-4. GitHub Issues in this repository
-
-### Related Documentation
-
-- [Fastlane Documentation](https://docs.fastlane.tools)
-- [App Store Connect API](https://developer.apple.com/support/app-store-connect-api/)
-
----
-
-## 🎉 You're Ready!
-
-With these guides, you can:
-
-- ✅ Setup secure iOS certificate management
-- ✅ Configure automated CI/CD pipelines
-- ✅ Maintain reproducible iOS build and release workflows
-- ✅ Scale to multiple iOS projects
-- ✅ Save costs with optimized infrastructure
-
-**Start with the [iOS Certificate Setup Guide](./IOS_CERTIFICATE_SETUP_GUIDE.md)** for your first project!
+Before a signed upload, verify the intended Firebase plist, bundle ID,
+entitlements, privacy declarations, signing identity, App Store Connect key,
+build number, and review metadata. Re-enable the iOS target in the project
+manifest only for an intentional build/upload run.

@@ -1,8 +1,8 @@
 # Vehicle-Vitals - Product Design & Feature Specifications
 
-**Version**: 1.2
-**Last Updated**: June 28, 2026
-**Status**: 🟡 CORE SHIPPED — web and iOS core flows active; app/marketing alignment in progress (see docs/APP_ALIGNMENT_PLAN.md)
+**Version**: 1.3
+**Last Reviewed**: July 20, 2026
+**Status**: Canonical product vision/specification; delivery truth is in `REQUIREMENTS.md` and release truth is in `GO_LIVE_RUNBOOK.md`
 **Owner**: Mark Nelson
 
 ---
@@ -12,9 +12,12 @@
 This document describes product vision, persona definitions, tier structure, UX direction, and phased roadmap.
 
 - Delivery truth for active releases is tracked in `docs/REQUIREMENTS.md`.
-- App and iOS changes needed to align with marketing direction are in `docs/APP_ALIGNMENT_PLAN.md`.
+- App and iOS changes needed to align with marketing direction are in `APP_ALIGNMENT_PLAN.md`.
 - Planned and aspirational capabilities in this document are not implied as currently shipped.
 - When delivery status differs between documents, defer to `docs/REQUIREMENTS.md` for implementation state.
+- References to Functions source refer to the private companion repository
+  mounted at `packages/functions`; that directory is not tracked in the public
+  repository.
 
 ---
 
@@ -50,9 +53,10 @@ Persona detail pages live at `/personas/:id`. Each page shows the pain/outcome n
 
 ---
 
-## Implementation Reality Snapshot (Code-Verified: June 28, 2026)
+## Historical Implementation Snapshot (Code-Verified: June 28, 2026)
 
-This document contains both product vision and delivery claims. The matrix below reflects current implementation evidence in the repository.
+This matrix records the June 28 review. It is retained as design history and is
+not the current delivery matrix; use `REQUIREMENTS.md`.
 
 | Capability | Current Status | Evidence / Notes |
 | --- | --- | --- |

@@ -1,8 +1,8 @@
 # Vehicle-Vitals API Integration Roadmap
 
-**Version**: 1.0  
-**Last Updated**: March 10, 2026  
-**Status**: Living reference; partially implemented and actively maintained
+**Version**: 1.1
+**Last Reviewed**: July 20, 2026
+**Status**: Plan/status history; verify provider contracts against current client code and the private Functions companion
 
 ---
 
@@ -18,11 +18,16 @@ Define a single backend API surface for both web and mobile so we can deliver:
 
 This roadmap assumes Firebase Functions as the API gateway layer.
 
+Firebase Functions live in the private
+`NelsonGrey/vehicle-vitals-functions` companion repository and are mounted at
+`packages/functions` for local work and CI. Function/provider paths below refer
+to that checkout, not tracked files in the public repository.
+
 As of May 2026, the API surface already includes VIN lookup, calendar sync, owner manuals, warranty summaries, maintenance planning, premium verification, subscription checkout, Zapier webhook handling, and enterprise support callables.
 
 ---
 
-## Current Capability Snapshot (Code-Verified)
+## Historical Capability Snapshot (Originally Code-Verified May 2026)
 
 | Capability                         | Current State        | Evidence                                                                                                                                                                                                                                                                   |
 | ---------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

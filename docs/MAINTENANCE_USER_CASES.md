@@ -1,5 +1,8 @@
 # Vehicle-Vitals - Maintenance User Cases and Types
 
+> **Last reviewed:** July 20, 2026. This is the supported maintenance-record
+> taxonomy; executable models and UI behavior remain the final source.
+
 **Purpose**: Define the supported maintenance users, record types, and feature expectations so the maintenance workflow stays complete across web, mobile, exports, and backend storage.
 
 ---

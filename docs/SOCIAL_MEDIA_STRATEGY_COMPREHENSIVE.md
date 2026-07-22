@@ -1,5 +1,9 @@
 # Vehicle-Vitals Comprehensive Social Media Strategy
 
+> **Status (July 20, 2026):** Supporting strategy. Handle availability,
+> platform rules, prices, and channel performance are external state and must be
+> rechecked before execution.
+
 **Version:** 1.0  
 **Date:** 2026-06-08  
 **Owner:** Marketing / Growth  

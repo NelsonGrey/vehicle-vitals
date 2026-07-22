@@ -1,5 +1,10 @@
 # Vehicle-Vitals - User Acceptance Testing (UAT)
 
+> **Current integration (July 20, 2026):** UAT is already implemented as the
+> Chromium/Firefox/WebKit `web-uat-tests` matrix in
+> `.github/workflows/master-pipeline.yml`. The workflow targets hosted
+> development, staging, or production URLs based on branch/environment.
+
 ## Overview
 
 This document describes the automated UAT suite for the Vehicle-Vitals web application. The suite uses **Playwright** to perform end-to-end testing of all major features and user workflows.
@@ -156,7 +161,8 @@ Tests run against:
 
 ### GitHub Actions
 
-Add to `.github/workflows/test.yml`:
+The active workflow already contains this integration. The following is an
+illustrative job step, not a request to create `.github/workflows/test.yml`:
 
 ```yaml
 - name: Run UAT Tests

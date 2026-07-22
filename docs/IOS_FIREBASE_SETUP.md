@@ -1,79 +1,59 @@
 # Firebase iOS Configuration for Vehicle-Vitals
 
-## ✅ iOS Firebase Setup Complete
+Last verified: July 20, 2026
 
-The iOS Firebase configuration has been set up with the following components:
+The Flutter iOS project supports development, staging, and production Firebase
+projects. This document intentionally omits API keys, app IDs, OAuth client IDs,
+and other configuration values.
 
-### 📱 **iOS Configuration Applied:**
+## Source Locations
 
-- **API Key**: `AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU`
-- **App ID**: `1:489413148337:ios:b55d0b37718e299368ac90`
-- **Bundle ID**: `com.vehiclevitals.app.ios`
-- **Client ID**: `489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com`
+- `packages/mobile/lib/firebase_options.dart`: platform/environment options.
+- `packages/mobile/ios/Runner/GoogleService-Info.plist`: active local Runner
+  plist.
+- `packages/mobile/ios/Runner/GoogleService-Info.dev.plist`.
+- `packages/mobile/ios/Runner/GoogleService-Info.staging.plist`.
+- `packages/mobile/ios/Runner/GoogleService-Info.prod.plist`.
+- `packages/mobile/config/{environment}/ios/`: optional gitignored CI inputs.
 
-### 📁 **Files Updated:**
+The current bundle ID is governed by the Xcode project and signing setup. Verify
+it in source and App Store Connect rather than copying a value from a dated
+document.
 
-1. **`mobile/lib/firebase_options.dart`** - Updated with iOS configuration
-2. **`mobile/ios/Runner/GoogleService-Info.plist`** - Added iOS plist file
+## CI Selection
 
-### 🚀 **Next Steps for iOS Development:**
+When iOS is enabled, the `build-ios` job in `master-pipeline.yml`:
 
-1. **Generate iOS Platform Files:**
-   ```bash
-   cd mobile
-   flutter create --platforms=ios .
-   ```
+1. derives the target environment;
+2. selects `config/{environment}/ios/GoogleService-Info.plist` or the tracked
+   Runner fallback;
+3. reads and validates `PROJECT_ID` against the expected Firebase project;
+4. copies the selected plist into the Runner target;
+5. performs the signed Fastlane/TestFlight build.
 
-2. **Install Dependencies:**
-   ```bash
-   flutter pub get
-   ```
+iOS automation is currently disabled in `.cicd/projects/vehicle-vitals.yml`, so
+the presence of configuration files does not prove a current build or App Store
+status.
 
-3. **Run on iOS Simulator:**
-   ```bash
-   flutter run -d ios
-   ```
+## Local Validation
 
-4. **Configure Xcode Project (when ready):**
-   - Open `mobile/ios/Runner.xcworkspace` in Xcode
-   - Verify the GoogleService-Info.plist is in the Runner target
-   - Set the Bundle Identifier to `com.vehiclevitals.app.ios`
-
-### 🔧 **Firebase Services Enabled:**
-
-- ✅ **Authentication** (Sign-in enabled)
-- ✅ **Cloud Messaging** (GCM enabled)  
-- ✅ **App Invites** (Enabled)
-- ❌ **Analytics** (Disabled)
-- ❌ **Ads** (Disabled)
-
-### 📋 **Project Configuration Summary:**
-
-```dart
-// The firebase_options.dart now includes:
-static const FirebaseOptions ios = FirebaseOptions(
-  apiKey: 'AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU',
-  appId: '1:489413148337:ios:b55d0b37718e299368ac90',
-  messagingSenderId: '489413148337',
-  projectId: 'vehicle-vitals-prod',
-  storageBucket: 'vehicle-vitals-prod.firebasestorage.app',
-  iosBundleId: 'com.vehiclevitals.app.ios',
-  iosClientId: '489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com',
-);
-```
-
-### ⚠️ **Important Notes:**
-
-1. **Android Configuration**: Still needs Android-specific App ID and Client ID
-2. **iOS Platform Files**: Need to run `flutter create --platforms=ios .` to generate iOS platform files
-3. **Xcode Setup**: GoogleService-Info.plist needs to be properly linked in Xcode project
-
-### 🎯 **Test iOS Configuration:**
-
-Once iOS platform files are created:
 ```bash
-cd mobile
+cd packages/mobile
+flutter pub get
+flutter analyze
+flutter test
 flutter run -d ios
 ```
 
-The app will now connect to Firebase on iOS devices and simulators! 📱🔥
+For compilation without signing:
+
+```bash
+flutter build ios --release --no-codesign
+```
+
+Validate Firebase Auth, Firestore personal/org paths, callable Functions,
+Storage, Messaging/Crashlytics, Apple sign-in, purchases/restores, support,
+privacy, and deletion on the exact release build before distribution.
+
+Do not run `flutterfire configure` or `flutter create` over the project without
+reviewing the multi-environment and Xcode files they may replace.

@@ -2,6 +2,10 @@
 
 > **Your complete reference for managing vehicle maintenance, tracking costs, and staying ahead of service schedules.**
 
+Last reviewed: July 20, 2026. The web application is live; verify the current
+App Store/TestFlight state before representing the iOS build as publicly
+available.
+
 ---
 
 ## Table of Contents
@@ -12,10 +16,10 @@
 4. [Adding a Vehicle](#4-adding-a-vehicle)
 5. [Editing a Vehicle](#5-editing-a-vehicle)
 6. [Vehicle Records](#6-vehicle-records)
-7. [Maintenance Timeline](#7-maintenance-timeline)
-8. [Upcoming Tasks & Reminders](#8-upcoming-tasks--reminders)
-9. [Service Providers](#9-service-providers)
-10. [Your Profile & Settings](#10-your-profile--settings)
+7. [Service History](#7-service-history)
+8. [Maintenance Plan & Reminders](#8-maintenance-plan--reminders)
+9. [Shops & Services](#9-shops--services)
+10. [Account & Settings](#10-account--settings)
 11. [Frequently Asked Questions](#11-frequently-asked-questions)
 
 ---
@@ -33,9 +37,9 @@ Vehicle-Vitals is a secure, cloud-based vehicle management platform. With it you
 
 ### Supported Platforms
 
-Vehicle-Vitals is available on the web and on iOS at launch. You can use either interface or both, and the core functionality is the same across them.
-
-The web app works in any modern browser (Chrome, Safari, Edge, Firefox). The iOS app gives you the same full experience on your phone.
+Vehicle-Vitals is live on the web. An iOS client is maintained in this project,
+but its current App Store or TestFlight availability must be confirmed through
+the active release channel.
 
 ### Navigation
 
@@ -44,10 +48,10 @@ The navigation bar at the top of every page provides quick access to all section
 | Section       | What You'll Find                            |
 | ------------- | ------------------------------------------- |
 | **Garage**    | Your vehicle list and cost summaries        |
-| **Timeline**  | All maintenance events across every vehicle |
-| **Upcoming**  | Service reminders and alerts                |
-| **Providers** | Local repair shops and dealerships          |
-| **Profile**   | Account settings, alerts, and address       |
+| **Service History** | All maintenance events across every vehicle |
+| **Maintenance Plan** | Service recommendations, reminders, and alerts |
+| **Shops & Services** | Local repair shops and dealerships |
+| **Account** | Profile, subscription, alerts, privacy, and settings |
 
 ---
 
@@ -223,9 +227,9 @@ At the top of the Records page, the **Ownership Insights** panel extracts financ
 
 ---
 
-## 7. Maintenance Timeline
+## 7. Service History
 
-The Timeline gives you a bird's-eye view of all service events across your entire garage, in reverse chronological order.
+Service History gives you a bird's-eye view of all service events across your entire garage, in reverse chronological order.
 
 Vehicle-Vitals supports three maintenance user types: self-service owners, mechanic-managed service, and business-maintained fleets. It also supports parts-only receipts, so you can record work even when labor was not billed or no paper invoice exists for the labor portion.
 
@@ -233,9 +237,9 @@ For the full maintenance scenario matrix, see [Maintenance User Cases and Types]
 
 ![Maintenance timeline showing all 3 vehicles' service history](./screenshots/timeline.png)
 
-### Timeline Summary Panel
+### Service History Summary Panel
 
-The **Timeline Summary** at the top shows:
+The summary at the top shows:
 
 - **Time Range** filter — All, Past, or Future events
 - **Vehicle filter** — Show all vehicles or select specific ones
@@ -263,9 +267,9 @@ Use the **vehicle filter** buttons to focus on one or more specific vehicles.
 
 ---
 
-## 8. Upcoming Tasks & Reminders
+## 8. Maintenance Plan & Reminders
 
-The Upcoming Tasks page helps you stay ahead of scheduled maintenance.
+The Maintenance Plan page helps you stay ahead of scheduled maintenance.
 
 ![Upcoming tasks page showing reminder center with active alerts](./screenshots/upcoming.png)
 
@@ -302,11 +306,12 @@ For each active reminder, you can:
 
 ### Managing Alert Settings
 
-Scroll down on the Upcoming page to adjust your reminder preferences, or go to **Profile → Maintenance Alert Preferences**.
+Scroll down on Maintenance Plan to adjust reminder preferences, or go to
+**Account → Maintenance Alert Preferences**.
 
 ---
 
-## 9. Service Providers
+## 9. Shops & Services
 
 Find local repair shops and dealerships near your home address.
 
@@ -329,13 +334,13 @@ Check **"Prioritize my saved vehicle make"** to rank dealerships matching your v
 
 Click **Find Nearby Providers** to search. Results will appear below, showing provider name, address, phone, and type.
 
-> **Tip:** Save your home address in your Profile so it pre-fills here automatically.
+> **Tip:** Save your home address in Account so it pre-fills here automatically.
 
 ---
 
-## 10. Your Profile & Settings
+## 10. Account & Settings
 
-Access your profile by clicking **Profile** in the navigation bar.
+Access profile and settings by clicking **Account** in the navigation bar.
 
 ![Profile page showing account overview and settings sections](./screenshots/profile.png)
 
@@ -360,7 +365,7 @@ Click **Save Alert Preferences** to persist your changes.
 
 ### Home Address
 
-Save your address to enable the **Service Providers** search to pre-populate with your location. Also sets your preferred search radius and provider type filter.
+Save your address to enable the **Shops & Services** search to pre-populate with your location. It also sets your preferred search radius and provider type filter.
 
 Click **Save Home Address** when done.
 
@@ -402,10 +407,12 @@ A: Multi-user sharing is on the product roadmap. Currently, each account is priv
 A: Edit the vehicle from the Garage detail panel. Update the Odometer field and save. This refreshes mileage-based maintenance predictions.
 
 **Q: Why aren't reminder emails arriving?**
-A: Check your spam folder first. If emails still don't arrive, verify your reminder email address in the Upcoming Tasks page and make sure **Alerts: Enabled** is showing in the Reminder Center.
+A: Check your spam folder first. If emails still don't arrive, verify your
+reminder email address in Maintenance Plan and make sure **Alerts: Enabled** is
+showing in the Reminder Center.
 
 ---
 
-_For additional help, visit the [Support page](../support)._
+_For additional help, visit the [Support page](https://vehicle-vitals.com/support)._
 
-_Last updated: May 2026_
+_Last reviewed: July 20, 2026_

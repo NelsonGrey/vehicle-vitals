@@ -1,5 +1,9 @@
 # Vehicle-Vitals - Production Release Brief
 
+> **Document status (July 20, 2026): Historical pre-production snapshot.**
+> Production web has since been deployed. Preserve the June 15 evidence below,
+> but use `GO_LIVE_RUNBOOK.md` for the next-release decision.
+
 Last updated: June 15, 2026
 Release decision window: next go/no-go review after R1 Gate 2 and release-candidate CI evidence
 

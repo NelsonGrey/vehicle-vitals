@@ -58,10 +58,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (!mounted) return;
       setState(() {
         _policyMinLength = policy.minPasswordLength;
-        _policyRequiresUpper = policy.containsUppercaseCharacter ?? true;
-        _policyRequiresLower = policy.containsLowercaseCharacter ?? true;
-        _policyRequiresDigit = policy.containsNumericCharacter ?? true;
-        _policyRequiresSymbol = policy.containsNonAlphanumericCharacter ?? true;
+        // A null field means Firebase doesn't enforce that character class
+        // for this policy -- default to not-required, not required, or the
+        // client would reject passwords the server actually accepts.
+        _policyRequiresUpper = policy.containsUppercaseCharacter ?? false;
+        _policyRequiresLower = policy.containsLowercaseCharacter ?? false;
+        _policyRequiresDigit = policy.containsNumericCharacter ?? false;
+        _policyRequiresSymbol = policy.containsNonAlphanumericCharacter ?? false;
       });
     } catch (_) {
       // Keep the defaults above -- _signUp() still authoritatively

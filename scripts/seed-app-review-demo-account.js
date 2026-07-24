@@ -186,7 +186,7 @@ const VEHICLES = [
     ],
   },
   {
-    vin: '1FTEW1EP5KFA23457',
+    vin: '1FTEW1EP4KFA23457',
     make: 'Ford',
     model: 'F-150',
     year: 2019,
@@ -227,7 +227,7 @@ const VEHICLES = [
     ],
   },
   {
-    vin: '5YJ3E1EA0NF123458',
+    vin: '5YJ3E1EA4NF123458',
     make: 'Tesla',
     model: 'Model 3',
     year: 2022,
@@ -472,8 +472,11 @@ async function main() {
     );
 
     const vehicleBatch = db.batch();
-    for (const entry of vehicle.maintenance) {
-      const ref = vehicleRef.collection('maintenance').doc();
+    // Deterministic IDs (not auto-IDs) so re-running this script -- e.g. to
+    // rotate the password -- overwrites the same fixture docs instead of
+    // appending a fresh duplicate set on top every time.
+    vehicle.maintenance.forEach((entry, index) => {
+      const ref = vehicleRef.collection('maintenance').doc(`demo-seed-${index}`);
       vehicleBatch.set(ref, {
         title: entry.title,
         notes: entry.notes,
@@ -486,9 +489,9 @@ async function main() {
         createdAt: now,
         updatedAt: now,
       });
-    }
-    for (const reminder of vehicle.reminders) {
-      const ref = vehicleRef.collection('reminders').doc();
+    });
+    vehicle.reminders.forEach((reminder, index) => {
+      const ref = vehicleRef.collection('reminders').doc(`demo-seed-${index}`);
       vehicleBatch.set(ref, {
         title: reminder.title,
         description: reminder.description,
@@ -500,7 +503,7 @@ async function main() {
         createdAt: now,
         updatedAt: now,
       });
-    }
+    });
     await vehicleBatch.commit();
     console.log(
       `[seed-app-review-demo-account] wrote vehicle ${vehicle.vin} (${vehicle.year} ${vehicle.make} ${vehicle.model}) with ${vehicle.maintenance.length} maintenance + ${vehicle.reminders.length} reminders`

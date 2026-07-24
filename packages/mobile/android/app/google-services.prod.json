@@ -31,10 +31,11 @@
               "client_type": 3
             },
             {
-              "client_id": "489413148337-7ej72fc7l3o1pe078h28hhmeo62it77d.apps.googleusercontent.com",
+              "client_id": "489413148337-scu7qfq0b3c53heoqldnn2nm9eqva4hm.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.vehiclevitals.app.ios"
+                "bundle_id": "com.vehiclevitals.app.ios",
+                "app_store_id": "6783861086"
               }
             }
           ]

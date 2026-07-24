@@ -30,6 +30,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  // Mirrors the password policy enforced server-side by Firebase
+  // Identity Platform (min 8 chars, upper/lower/numeric/symbol required) so
+  // users get an actionable message before submitting instead of a raw
+  // 'weak-password' error after a failed round-trip.
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a password';
+    }
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    if (!value.contains(RegExp(r'[A-Z]'))) {
+      return 'Password must include an uppercase letter';
+    }
+    if (!value.contains(RegExp(r'[a-z]'))) {
+      return 'Password must include a lowercase letter';
+    }
+    if (!value.contains(RegExp(r'[0-9]'))) {
+      return 'Password must include a number';
+    }
+    if (!value.contains(RegExp(r'[^A-Za-z0-9]'))) {
+      return 'Password must include a symbol (e.g. ! @ # ?)';
+    }
+    return null;
+  }
+
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -159,6 +185,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           obscureText: !_showPassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
+                            helperText:
+                                '8+ characters with upper, lower, number, and symbol',
+                            helperMaxLines: 2,
                             suffixIcon: IconButton(
                               onPressed: () => setState(
                                 () => _showPassword = !_showPassword,
@@ -173,15 +202,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   : 'Show password',
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a password';
-                            }
-                            if (value.length < 8) {
-                              return 'Password must be at least 8 characters';
-                            }
-                            return null;
-                          },
+                          validator: _validatePassword,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(

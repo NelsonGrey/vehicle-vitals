@@ -236,6 +236,11 @@ class AuthService extends ChangeNotifier {
           'An account already exists for this email. Sign in instead of creating another account.',
         );
       }
+      if (e.code == 'weak-password') {
+        throw FriendlyException(
+          'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.',
+        );
+      }
       throw FriendlyException(
         e.message ?? 'Authentication failed. Please try again.',
       );

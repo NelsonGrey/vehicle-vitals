@@ -1,71 +1,51 @@
-<!--
-Concise guidance for automated coding agents working on Vehicle-Vitals.
-Only include repository-discoverable facts and file pointers; keep edits minimal and follow existing patterns.
--->
+# Vehicle Vitals Repository Notes for Coding Assistants
 
-# Vehicle-Vitals — Copilot instructions
+Last reviewed: July 20, 2026
 
-Two frontends (web + mobile) share Firebase-backed utilities in `shared/`. Follow the existing data paths, auth checks, and service wiring.
+This file is retained as a repository note under `docs/`; it is not an active
+GitHub Copilot instruction file. Use `docs/README.md` to locate canonical
+documentation and inspect source before editing.
 
-- Architecture (big picture)
-  - Web: React + Vite + react-router. Entry: `web/src/main.jsx` → `web/src/App.jsx`. Pages in `web/src/pages/*` (Home, AddVehicle, EditVehicle, etc.).
-  - Mobile: Flutter + go_router + Provider. Entry: `mobile/lib/main.dart`. Screens in `mobile/lib/screens/*.dart` (HomeScreen, AddVehicleScreen, EditVehicleScreen, ScanVINScreen, MaintenanceListScreen, MaintenanceDetailScreen, AccountScreen, etc.). Package names: com.nelsongrey.vehiclevitals.app.android (Android), com.nelsongrey.vehiclevitals.app.ios (iOS).
-  - Shared: `shared/*` holds platform-agnostic Firebase config, a Firestore service factory, and reusable types. Flutter app has equivalent Dart services and models in `mobile/lib/services/` and `mobile/lib/models/`.
-  - DataConnect: GraphQL config in `dataconnect/` with generated clients vendored under `src/dataconnect-generated` and `web/src/dataconnect-generated`. These are consumed via the local dep `@dataconnect/generated` in web `package.json`. Do not edit generated code; update schema in `dataconnect/schema/schema.gql` if needed.
+## Repository Shape
 
-- Data model and Firestore paths
-  - Vehicles are keyed by VIN: `users/${userId}/vehicles/${vin}`.
-  - Use `shared/types.js` `defaultVehicle` when constructing vehicles (fields include make, model, year, vin, mileage, purchaseDate, nextDue\*).
-  - Maintenance subcollection: `users/${userId}/vehicles/${vin}/maintenance/*`.
-  - Timestamps: writes stamp `createdAt/updatedAt` via `serverTimestamp()` in the factory. Prefer factory helpers over ad‑hoc Firestore calls to keep stamps consistent.
-  - Auth pattern: reads return `[]`/`null` when unauthenticated; writes throw `Error('Not authenticated')`. See `shared/firestoreServiceFactory.js`.
+- `packages/web`: React 19, TypeScript, Vite, React Router, Vitest, and
+  Playwright.
+- `packages/mobile`: Flutter/Dart mobile client using `go_router` and Provider.
+- `packages/shared`: shared JavaScript/TypeScript calculations, types, and data
+  helpers.
+- `packages/firebase-utils`: reusable Firebase utilities.
+- `firebase/`, `firebase*.json`, and `firestore.indexes.json`: public rules,
+  Hosting, emulator, and index configuration.
+- `packages/functions`: gitignored mount point for the private
+  `NelsonGrey/vehicle-vitals-functions` companion checkout; it is not tracked in
+  this repository.
 
-- Firebase initialization boundaries
-  - Web app config lives in `web/src/shared/firebaseConfig.js` (reads `import.meta.env`). Some utilities (e.g., `web/src/utils/vehicleService.js`) import `auth/db` directly from here.
-  - Cross-platform factory wiring for web: `web/src/shared/firestoreService.js` builds a service via `createFirestoreService` from `shared/firestoreServiceFactory.js` using the web app’s `auth/db`.
-  - Mobile uses `shared/firestoreClient.js` (Expo) to initialize `auth` (RN persistence), `db`, and a factory-built `firestoreService`.
-  - Do NOT import web-only modules into mobile bundles. `shared/firebaseConfig.js` is process/env + Expo aware and safe to import from native, but web should use its own config file.
-  - Dev auth: `web/src/shared/devAuth.js` signs in anonymously in Vite dev to enable local writes.
+There is no active Data Connect or React Native application in this repository.
 
-- Key workflows (concrete commands)
-  - Web (from `web/`): `npm run dev`, `npm run build`, `npm run preview`, `npm run test` (Vitest). From repo root, you can prefix with `--prefix web`.
-  - Mobile (from `packages/mobile/`): `flutter run`, `flutter run -d ios`. Android runtime/deployment is currently on hold. `ScanVINScreen` uses `mobile_scanner` package with Code39/Code128 support.
-  - Root scripts: `npm run export:logo` renders assets via `scripts/export-logo.js`.
-  - Tests: `web/tests/firestoreService.test.js` uses Vitest + `@firebase/rules-unit-testing`; it `vi.mock`s `shared/firebaseConfig` so the service uses a test DB.
+## Sources of Truth
 
-- Integration points
-  - VIN lookup: `web/src/utils/vehicleService.js` `fetchVehicleByVINAndSave(vin)` calls NHTSA VPIC, then writes to `users/${uid}/vehicles/${vin}` (web-config path).
+- Web routes: `packages/web/src/App.tsx`
+- Mobile routes: `packages/mobile/lib/main.dart`
+- Capability names: `packages/web/src/data/capabilities.ts` and
+  `packages/mobile/lib/data/capabilities.dart`
+- Web Firebase setup: `packages/web/src/shared/firebaseConfig.ts`
+- Firestore and Storage authorization: `firebase/firestore.rules` and
+  `firebase/storage.rules`
+- CI/CD: `.github/workflows/master-pipeline.yml`
+- Release status: `docs/GO_LIVE_RUNBOOK.md`
 
-- Editing rules (project-specific)
-  - Preserve Firestore document paths and the VIN-as-id convention (vehicles and maintenance).
-  - Prefer factory helpers from `shared/firestoreServiceFactory.js` to keep auth gating and timestamps consistent.
-  - Gate all Firestore writes on `auth.currentUser?.uid` and maintain read-vs-write unauth behavior.
-  - Reminder helpers in the factory are stubs (no Firestore writes yet); keep paths under `users/${uid}/vehicles/${vin}/reminders/*` if implementing.
+## Working Rules
 
-- Files to open first (good exemplars)
-  - `web/src/pages/Home.jsx` — lists vehicles, calls `getVehicles`/`deleteVehicle`.
-  - `web/src/pages/AddVehicle.jsx` — constructs from `defaultVehicle`, uses `addOrUpdateVehicle`.
-  - `web/src/pages/EditVehicle.jsx` — updates vehicle + lists maintenance via factory helpers.
-  - `shared/firestoreServiceFactory.js`, `shared/firestoreClient.js`, `web/src/shared/firestoreService.js` — service wiring patterns.
+- Preserve VIN-based vehicle document IDs and existing user/organization path
+  routing unless a migration is explicitly designed.
+- Keep authorization enforced in rules and callable handlers; UI visibility is
+  not an authorization boundary.
+- Do not expose Functions runtime secrets in Vite variables or public docs.
+- Maintain web/mobile capability-label parity and update its contract test when
+  the model changes.
+- Preserve backward-compatible route redirects when consolidating pages.
+- Treat compact laptop height as a first-class web responsive target.
+- Run the relevant commands in `docs/TESTING_INSTRUCTIONS.md` before handoff.
 
-If anything is unclear (e.g., which Firebase config to import in a new module or how to regenerate DataConnect clients), ask and we’ll inspect callers or scripts to clarify.
-
-## Regenerating DataConnect clients
-
-- Edit schema: update GraphQL in `dataconnect/schema/schema.gql` (and any connector operations under `dataconnect/example/*.gql`).
-- Confirm generator config: see `dataconnect/example/connector.yaml` — outputs are configured for:
-  - `src/dataconnect-generated` (shared, non-React)
-  - `web/src/dataconnect-generated` (React helpers)
-- Run the generator: use the Firebase Data Connect codegen (e.g., via Firebase CLI or your IDE integration) pointed at `dataconnect/dataconnect.yaml`. Ensure the local package alias `@dataconnect/generated` in each `package.json` continues to point to the correct generated folder.
-- Do not hand-edit generated files. If changes are needed, update the schema/operations and regenerate.
-
-### Emulator note (optional)
-
-- To test DataConnect locally, instrument your client to use the emulator host/port. Example:
-  - Web/Shared: `connectDataConnectEmulator(getDataConnect(connectorConfig), 'localhost', 9399)`.
-  - See the generated READMEs in `src/dataconnect-generated` and `web/src/dataconnect-generated` for usage.
-
-## Environment variables (web + mobile)
-
-- Web (Vite): Firebase configuration is handled through environment variables set in CI/CD pipelines. The web config in `web/src/shared/firebaseConfig.js` reads `import.meta.env`.
-- Mobile (Flutter): Firebase configuration is handled through `mobile/lib/firebase_options.dart` (generated by FlutterFire CLI). Run `flutterfire configure` to set up Firebase for the Flutter app.
+Do not infer shipped status from planning documents. When source and docs
+disagree, source wins and the owning canonical document must be updated.

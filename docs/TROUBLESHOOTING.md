@@ -1,11 +1,16 @@
 # Vehicle-Vitals - Troubleshooting Guide
 
-**Version**: 1.0  
-**Last Updated**: February 16, 2026  
-**Status**: ✅ ACTIVE  
+**Version**: 1.1
+**Last Reviewed**: July 20, 2026
+**Status**: Supporting reference; verify commands against current manifests and `TESTING_INSTRUCTIONS.md`
 **Owner**: Mark Nelson
 
 ---
+
+> Cloud Functions are no longer tracked in the public checkout. Clone the
+> private companion into `packages/functions` before using Functions-specific
+> diagnostics. The only active CI/CD workflow is `master-pipeline.yml`; older
+> workflow names are historical.
 
 ## Table of Contents
 
@@ -28,13 +33,13 @@
 Run these commands to quickly diagnose common issues:
 
 ```bash
-# Check Node.js version (should be 20.x)
+# Check Node.js version (root supports >=18; CI currently uses 20)
 node --version
 
 # Check npm version (should be 9.x+)
 npm --version
 
-# Check Flutter version (should be 3.24+)
+# Check Flutter version (CI currently pins 3.38.4)
 flutter --version
 
 # Check Firebase CLI
@@ -856,7 +861,7 @@ npm uninstall unused-package
 
 3. **Contact support**:
    - **Email**: support@vehicle-vitals.com
-   - **GitHub Issues**: https://github.com/mnelson3/vehicle-vitals/issues
+   - **GitHub Issues**: https://github.com/NelsonGrey/vehicle-vitals/issues
    - **Slack** (internal): #vehicle-vitals-support
 
 ### Bug Report Template

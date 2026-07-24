@@ -1,120 +1,69 @@
-# Securing Development Lifecycle Environments
+# Environment Access and Exposure
 
-## Overview
+Last reviewed: July 20, 2026
 
-This guide secures all non-production lifecycle environments with password protection while keeping production marketing-only.
+This document describes the access controls that are implemented now. It does
+not prescribe a future site-wide gate.
 
-## Environment URLs
+## Current Behavior
 
-- **Staging**: `https://vehicle-vitals-staging.web.app`
-- **Development**: `https://vehicle-vitals-dev.web.app`
-- **Demonstration**: `https://vehicle-vitals-dev.web.app` (demonstration branch deployment)
-- **Production (Marketing Only)**: `https://vehicle-vitals-prod.web.app`
+| Surface | Current control |
+| --- | --- |
+| Marketing pages | Public in development, staging, and production |
+| `/auth/*` | Public sign-in, sign-up, and password-reset routes unless marketing-only mode is enabled |
+| `/app/*` | Requires a non-anonymous Firebase Authentication user |
+| `/app/admin/*` | Requires the application's super-admin authorization check |
+| Development seed tools | Registered only when the resolved environment is `development` |
+| Development and staging indexing | Blocked with `X-Robots-Tag: noindex, nofollow` in the Firebase Hosting configuration |
 
-## Security Implementation
+There is no `EnvironmentGate` component and no site-wide password or email
+allowlist gate in the current web application. Development and staging URLs
+should therefore be treated as publicly reachable hosts whose protected data
+depends on Firebase Authentication, Firestore rules, Storage rules, callable
+authorization, and App Check.
 
-The app includes an `EnvironmentGate` component that requires password authentication for development, demonstration, and staging environments.
+## Environment Modes
 
-### Password Variables
+The web client resolves its environment from `VITE_ENVIRONMENT`, Firebase
+project ID, hostname, and finally the Vite mode. The implementation is
+`packages/web/src/shared/environment.ts`.
 
-Set these variables in each environment's deployment configuration:
+- `VITE_SHOW_COMING_SOON=true` replaces the application with the Coming Soon
+  page.
+- `VITE_MARKETING_ONLY_MODE=true` redirects `/app/*`, `/auth/*`, and legacy app
+  routes to `/`.
+- Firebase Remote Config `app_offline=true` disables app-entry links and shows
+  the current-unavailable state. It is an operational kill switch, not an
+  authorization boundary.
+- `VITE_ENABLE_HOSTED_DEMO_PDF_UPLOADS` controls hosted demo PDF uploads.
+- `VITE_ENABLE_ADS` controls ad rendering; its default is enabled only for the
+  production environment aligned to the production Firebase project.
 
-- `VITE_ACCESS_PASSWORD_STAGING`
-- `VITE_ACCESS_PASSWORD_DEVELOPMENT`
-- `VITE_ACCESS_PASSWORD_DEMONSTRATION`
+## Known CI Configuration Debt
 
-Optional shared fallback:
+`.github/workflows/master-pipeline.yml` still requires either a legacy
+`VITE_ACCESS_PASSWORD_*` value or a `VITE_ALLOWED_EMAIL_*` value for development
+and staging builds, and writes the selected value into the generated web env
+file. The current client does not read either family of variables. Satisfying
+that build check does not create an access gate.
 
-- `VITE_ACCESS_PASSWORD`
-
-## Setting Custom Passwords
-
-### Via GitHub Secrets (Recommended)
-
-Set custom passwords using GitHub secrets:
-
-```bash
-# Set staging password
-gh secret set VITE_ACCESS_PASSWORD_STAGING --body 'your-secure-staging-password'
-
-# Set development password
-gh secret set VITE_ACCESS_PASSWORD_DEVELOPMENT --body 'your-secure-dev-password'
-
-# Set demonstration password
-gh secret set VITE_ACCESS_PASSWORD_DEMONSTRATION --body 'your-secure-demo-password'
-```
-
-### Via Environment Variables (Local Development)
-
-For local development, you can set these in your `.env.staging` and `.env.development` files:
-
-```bash
-# .env.staging
-VITE_ACCESS_PASSWORD_STAGING=your-secure-staging-password
-
-# .env.development
-VITE_ACCESS_PASSWORD_DEVELOPMENT=your-secure-dev-password
-
-# .env.demonstration
-VITE_ACCESS_PASSWORD_DEMONSTRATION=your-secure-demo-password
-```
-
-## How It Works
-
-1. **Environment Detection**: The app checks `VITE_ENVIRONMENT`.
-2. **Password Gate**: If environment is `development`, `demonstration`, or `staging`, users must enter the configured password before access.
-3. **Production Lockdown**: If environment is `production`, app/auth routes are redirected to `/`, exposing only marketing routes.
-4. **Session Persistence**: Gate authentication persists until browser session ends.
-
-## User Experience
-
-When accessing development, demonstration, or staging environments, users will see:
-
-- A clean password entry screen with environment branding
-- Error messages for incorrect passwords
-- Loading states during authentication
-- Full app access after successful authentication
-
-## Deployment
-
-After setting the passwords, deploy the environments:
-
-```bash
-# Deploy staging
-gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging
-
-# Deploy development
-gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=development
-
-# Deploy demonstration
-gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=development
-```
+Do not describe those secrets as active security controls. A future gate must
+be implemented and tested in the client (or at an authenticated edge/proxy)
+before the workflow check and the retired OAuth documents are reactivated.
 
 ## Verification
 
-1. Visit development, demonstration, and staging URLs.
-2. Confirm password protection is active
-3. Test with correct and incorrect passwords
-4. Confirm production redirects `/app/*` and `/auth/*` to `/`.
+For each environment:
 
-## Security Best Practices
+1. Confirm the Firebase project ID and `VITE_ENVIRONMENT` align.
+2. Confirm unauthenticated access to `/app` redirects to the authentication
+   flow when marketing-only mode is false.
+3. Confirm authenticated users cannot read another user's Firestore or Storage
+   data.
+4. Confirm development and staging responses contain
+   `X-Robots-Tag: noindex, nofollow`.
+5. Confirm production does not expose development seed routes.
+6. If `app_offline` is enabled, verify every public app-entry CTA is disabled.
 
-1. **Use Strong Passwords**: Avoid default passwords in production
-2. **Regular Rotation**: Change passwords periodically
-3. **Access Control**: Limit knowledge of passwords to authorized team members
-4. **Monitoring**: Monitor access logs for unusual activity
-5. **IP Restrictions**: Consider additional IP-based restrictions if needed
-
-## Troubleshooting
-
-- **Password not working**: Check that secrets are set correctly and deployments are current
-- **Firebase auth issues**: Ensure Firebase configuration is correct for the environment
-- **Environment detection**: Verify `VITE_ENVIRONMENT` is set correctly (`development`, `demonstration`, `staging`, `production`)
-
-## Emergency Access
-
-If you lose access to the passwords:
-
-1. Update the GitHub secrets with new passwords
-2. Redeploy the affected environments
-3. Communicate new passwords to authorized users
+Use `TESTING_INSTRUCTIONS.md` for the current automated test commands and
+`SECURITY_IMPLEMENTATION.md` for the wider security model.

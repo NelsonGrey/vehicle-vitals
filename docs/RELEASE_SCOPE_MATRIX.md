@@ -1,5 +1,9 @@
 # Vehicle-Vitals - Release Scope Matrix
 
+> **Document status (July 20, 2026): Historical R1-R4 scope model.** Use
+> `REQUIREMENTS.md` for current implementation status and `GO_LIVE_RUNBOOK.md`
+> for the current release decision.
+
 Last updated: June 15, 2026
 Source baseline: docs/REQUIREMENTS.md
 

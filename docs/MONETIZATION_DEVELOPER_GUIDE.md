@@ -1,5 +1,11 @@
 # Monetization Implementation Guide
 
+> **Current boundary (July 20, 2026):** This is a client integration reference.
+> Effective entitlements, billing, quotas, and privileged operations are owned
+> by the private Functions companion mounted at `packages/functions`. Use
+> `REQUIREMENTS.md` for delivery status and `GO_LIVE_RUNBOOK.md` for release
+> readiness.
+
 **For**: Vehicle-Vitals Engineering Team  
 **Status**: Phase 1 Complete - Use This Guide for Integration  
 **Updated**: May 13, 2026

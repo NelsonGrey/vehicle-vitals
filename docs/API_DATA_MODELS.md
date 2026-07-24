@@ -1,8 +1,8 @@
 # Vehicle-Vitals - API & Data Models Documentation
 
-**Version**: 1.0  
-**Last Updated**: February 16, 2026  
-**Status**: ⚠️ PARTIALLY PRODUCTION READY (enterprise and monetization extensions still evolving)  
+**Version**: 1.1
+**Last Reviewed**: July 20, 2026
+**Status**: Historical/supporting contract catalog; executable client models, Firestore rules, and private Functions source take precedence
 **Owner**: Mark Nelson
 
 ---
@@ -31,6 +31,12 @@ Vehicle-Vitals uses a **Firebase-First Architecture** where:
 **No custom REST/GraphQL API server** - all API functionality is provided by Firebase services.
 
 Current implementation also includes enterprise org membership and entitlement callables, premium verification, Stripe checkout/session reconciliation, and compliance request workflows in Firebase Functions.
+
+Functions source is maintained in the private
+`NelsonGrey/vehicle-vitals-functions` companion repository and mounted at
+`packages/functions` for local work/CI. This long-form catalog may lag exact
+callable names; verify against the compatible companion branch before changing
+or consuming a server contract.
 
 ---
 
@@ -1207,4 +1213,4 @@ if (kDebugMode) {
 
 **Maintained By**: Mark Nelson  
 **Review Cycle**: Quarterly or on schema changes  
-**Feedback**: Submit issues or PRs to [GitHub repository](https://github.com/mnelson3/vehicle-vitals)
+**Feedback**: Submit issues or PRs to [GitHub repository](https://github.com/NelsonGrey/vehicle-vitals)

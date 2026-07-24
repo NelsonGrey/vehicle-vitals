@@ -1,5 +1,9 @@
 # App Alignment Plan
 
+> **Document status (July 20, 2026): Planning/backlog source.** Some listed
+> changes have shipped since the June 28 snapshot. Verify each item against
+> current web/mobile code and `REQUIREMENTS.md` before treating it as open.
+
 Last updated: June 28, 2026
 
 This document captures the changes needed on the web app (authenticated side) and iOS app to bring the product experience into alignment with the marketing site direction established in the June 2026 redesign.

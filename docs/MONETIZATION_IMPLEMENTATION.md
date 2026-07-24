@@ -1,11 +1,17 @@
 # Monetization Implementation Roadmap
 
-**Version**: 1.2  
-**Last Updated**: May 14, 2026  
-**Phase**: 1 (MVP Foundation) - Months 1-3  
+**Version**: 1.3
+**Last Reviewed**: July 20, 2026
+**Phase**: Historical roadmap with implemented and superseded items
 **Owner**: Engineering Team
 
 ---
+
+> This is not the current release checklist. Use `REQUIREMENTS.md` for delivery
+> status and `GO_LIVE_RUNBOOK.md` for release evidence. References to
+> `packages/functions` mean the private companion repository mounted at that
+> path. Mobile purchasing now uses Apple's `in_app_purchase` flow; older
+> RevenueCat tasks below are retained as superseded roadmap history.
 
 ## Overview
 
@@ -39,7 +45,7 @@ This document tracks the implementation of the Vehicle-Vitals monetization strat
   - Moved inline body ad from top to bottom to improve visual ad separation
 - Remaining critical path for launch readiness:
   - Stripe production validation and webhook monitoring
-  - Mobile IAP/RevenueCat setup for the native purchase surface
+  - Production validation of the implemented Apple in-app purchase surface
   - Firestore rules hardening for full org-scope domain entities (beyond current org/compliance/audit paths)
   - Mobile parity for gated actions
   - Production workflow validation for enterprise admin operations
@@ -518,7 +524,7 @@ ADSENSE_SLOT_SIDEBAR
 ## Files to Modify
 
 - `packages/web/src/shared/adPlacements.ts` (expand placements)
-- `packages/web/src/shared/firebaseConfig.js` (add quota tracking)
+- `packages/web/src/shared/firebaseConfig.ts` (add quota tracking)
 - `packages/mobile/lib/services/premium_service.dart` (expand IAP)
 - `packages/mobile/lib/main.dart` (add feature flag provider)
 - `packages/functions/src/index.ts` (add new callables)

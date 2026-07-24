@@ -5,10 +5,7 @@ project:
 
 targets:
   ios:
-    # Temporarily disabled: app is submitted to Apple and awaiting review;
-    # skip triggering a new TestFlight build during this web-only staging/
-    # production promotion. Re-enable once this promotion is deployed.
-    enabled: false
+    enabled: true
     schemes:
       - name: 'Runner'
         path: 'packages/mobile/ios'

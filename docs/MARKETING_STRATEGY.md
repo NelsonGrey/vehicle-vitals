@@ -1,5 +1,10 @@
 # Vehicle-Vitals — Marketing Strategy & Launch Toolkit
 
+> **Document status (July 20, 2026): Strategy history and content toolkit.**
+> The current claims authority is `LAUNCH_CLAIMS_MATRIX.md`. Do not reuse the
+> fleet-management, savings, resale-value, availability, market-size, or
+> performance language below without current evidence and approval.
+
 **Document Type:** Marketing Strategy & Execution Guide  
 **Last Updated:** May 8, 2026  
 **Intended Audience:** Marketing team, content creators, executives

@@ -1,453 +1,73 @@
-# 🚀 Wishlist Wizard - Complete Automation Suite
+# Vehicle-Vitals Legacy Automation Helpers
 
-> **Zero-Touch DevOps**: Fully automated CI/CD, deployment, monitoring, and security for the entire Wishlist Wizard platform.
+Last reviewed: July 20, 2026
 
-## 🎯 Overview
+Status: **Legacy/supporting.** The root `automate.sh`, monitoring helpers, token
+helpers, and environment scripts predate the current CI/CD design. They are not
+the deployment source of truth and should not be described as zero-touch or
+self-healing production automation.
 
-This automation suite eliminates manual interactions between Visual Studio Code, GitHub, Docker, Firebase, and Apple Store Connect. Everything from token rotation to production deployments happens automatically with intelligent monitoring and self-healing capabilities.
+Use these current sources instead:
 
-## ✨ Key Features
+- `.github/workflows/master-pipeline.yml` for CI/CD.
+- `.cicd/projects/vehicle-vitals.yml` for target enablement.
+- `docs/DEPLOY.md` for deployment.
+- `docs/GO_LIVE_RUNBOOK.md` for release state and gates.
+- `docs/ENVIRONMENT_SETUP.md` for environment configuration.
 
-- 🔐 **Automated Token Management**: GitHub, Firebase, Docker registry, and API tokens rotate automatically
-- 🌍 **Multi-Environment Management**: Development, staging, and production environments with isolated secrets
-- 📊 **Intelligent Monitoring**: 24/7 health checks with auto-healing and smart alerting
-- 🚀 **Zero-Touch Deployments**: Push to main branch → automatic deployment across all platforms
-- 🔄 **Self-Healing Systems**: Automatic service restarts, certificate renewal, and issue resolution
-- 📧 **Multi-Channel Alerts**: Email, Slack, and log-based notifications
-- 💾 **Automated Backups**: Daily backups with disaster recovery capabilities
+## What Remains in the Repository
 
-## 🏗️ Architecture
+| Helper | Intended role | Current caution |
+| --- | --- | --- |
+| `automate.sh` | Menu/controller for setup, deploy, monitoring, token, environment, health, and Docker actions | Several branches are scaffolded or use legacy paths; review before execution |
+| `scripts/manage-environments.sh` | Environment helper | Must be reconciled with current Firebase aliases and sanitized build scripts |
+| `scripts/monitoring.sh` | Local monitoring helper | Not proof of 24/7 production monitoring |
+| `scripts/token-rotation.sh` and `update-tokens.sh` | Credential helper scaffolding | Never run without reviewing targets and recovery plan |
+| `setup-prod-secrets.sh` | Legacy repository-secret bootstrap | Requires obsolete/unused names, assumes a nonexistent allowlist gate, and ends with an old workflow name; do not run as current setup |
+| `monitoring/` and `Dockerfile.monitor` | Optional runner-monitor service | Separate from application availability monitoring |
+| `setup-github-app.sh` | GitHub App setup helper | Review permissions and current GitHub configuration first |
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Visual Studio │    │     GitHub      │    │     Docker      │
-│     Code        │◄──►│   Actions       │◄──►│   Registry      │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         ▲                       ▲                       ▲
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │   Automation    │
-                    │   Controller    │
-                    │                 │
-                    │ • Token Mgmt    │
-                    │ • Environment   │
-                    │ • Monitoring    │
-                    │ • Deployments   │
-                    └─────────────────┘
-                                 │
-         ┌───────────────────────┼───────────────────────┐
-         │                       │                       │
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│    Firebase     │    │  Apple Store   │    │ Chrome Web Store│
-│   Hosting       │    │   Connect      │    │                 │
-│   Functions     │    │                 │    │                 │
-│   Firestore     │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+## Known Legacy Assumptions
 
-## 🚀 Quick Start
+- `automate.sh` contains a web deploy path that changes into `web/`, while the
+  current package lives at `packages/web`.
+- Mobile deployment scaffolding builds both Android and iOS even though Android
+  is on hold and iOS automation is currently disabled.
+- Docker/backup/self-healing sections are partial scaffolding, not verified
+  operational controls.
+- `setup-prod-secrets.sh` does not match the active workflow secret inventory or
+  current environment exposure model.
+- Older copies of this document referred to a different project and claimed
+  capabilities not proven by the current implementation.
 
-### 1. Initial Setup
+## Safe Use
 
-```bash
-# Complete automated setup
-./automate.sh setup
+Before running a helper:
 
-# Or setup specific environment
-./automate.sh environment setup production
-```
+1. Read the complete script and every script it invokes.
+2. Confirm the target environment and resolved project ID.
+3. Confirm it does not print, overwrite, rotate, or delete credentials without
+   an approved recovery path.
+4. Prefer dry-run or read-only status modes.
+5. Use `docs/DEPLOY.md` for actual application deployment.
 
-### 2. Start Monitoring
+Example read-only inspection:
 
 ```bash
-# Start 24/7 monitoring with auto-healing
-./automate.sh monitor start
-
-# Check monitoring status
-./automate.sh monitor status
+bash -n automate.sh
+rg -n 'firebase deploy|gh secret|docker|rm |packages/web|cd web' \
+  automate.sh scripts monitoring
 ```
 
-### 3. Deploy Everything
+## Modernization Criteria
 
-```bash
-# Full production deployment
-./automate.sh deploy full production
+This helper suite should be considered active only after:
 
-# Deploy specific components
-./automate.sh deploy web production
-./automate.sh deploy api production
-./automate.sh deploy mobile production
-```
+- paths and environment mappings match the current repository;
+- destructive/credential operations have explicit confirmation and recovery;
+- automated tests cover argument parsing and target selection;
+- CI/CD behavior does not duplicate or bypass the master pipeline;
+- documentation claims are backed by a successful end-to-end rehearsal.
 
-## 📋 Commands
-
-### Main Commands
-
-| Command       | Description                              |
-| ------------- | ---------------------------------------- |
-| `setup`       | Complete system setup and configuration  |
-| `deploy`      | Automated deployments to all platforms   |
-| `monitor`     | 24/7 monitoring and alerting system      |
-| `tokens`      | Token rotation and credential management |
-| `environment` | Multi-environment configuration          |
-| `backup`      | Backup and disaster recovery             |
-| `health`      | System health checks                     |
-| `docker`      | Docker image and container management    |
-
-### Usage Examples
-
-```bash
-# Complete setup for production
-./automate.sh setup production
-
-# Start monitoring system
-./automate.sh monitor start
-
-# Deploy to production
-./automate.sh deploy full production
-
-# Rotate all tokens
-./automate.sh tokens rotate
-
-# Check system health
-./automate.sh health
-
-# Manage environments
-./automate.sh environment setup staging
-./automate.sh environment sync staging
-./automate.sh environment status production
-
-# Docker management
-./automate.sh docker build
-./automate.sh docker runner restart
-```
-
-## 🔧 Configuration
-
-### Environment Variables (.env.automation.development)
-
-Create a `.env.automation.development` file in the project root:
-
-```bash
-# Notification Settings
-ALERT_EMAIL=admin@your-domain.com
-SLACK_WEBHOOK=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
-
-# Docker Configuration
-DOCKER_REGISTRY=your-registry.com
-DOCKER_USERNAME=your_username
-DOCKER_PASSWORD=your_password
-
-# Monitoring Settings
-MONITOR_INTERVAL=300  # 5 minutes
-
-# Security
-JWT_SECRET_ROTATION_DAYS=30
-SSL_CERT_RENEWAL_DAYS=30
-
-# Backup Settings
-BACKUP_RETENTION_DAYS=7
-BACKUP_SCHEDULE=daily
-```
-
-### GitHub Secrets Required
-
-For production deployments, add these secrets to your GitHub repository:
-
-#### Firebase
-
-- `FIREBASE_SERVICE_ACCOUNT_KEY_PRODUCTION`
-- `FIREBASE_SERVICE_ACCOUNT_KEY_STAGING`
-- `VITE_FIREBASE_API_KEY_PRODUCTION`
-- `VITE_FIREBASE_AUTH_DOMAIN_PRODUCTION`
-- etc.
-
-#### Apple Store Connect
-
-- `APP_STORE_CONNECT_KEY_ID`
-- `APP_STORE_CONNECT_ISSUER_ID`
-- `APP_STORE_CONNECT_KEY`
-- `FASTLANE_APPLE_ID`
-- `FASTLANE_TEAM_ID`
-
-#### Chrome Web Store
-
-- `CHROME_EXTENSION_ID`
-- `CHROME_CLIENT_ID`
-- `CHROME_CLIENT_SECRET`
-- `CHROME_REFRESH_TOKEN`
-
-## 🔐 Security Features
-
-### Automated Token Rotation
-
-- **GitHub Runner Tokens**: Rotate every 30 days
-- **Firebase Tokens**: Refresh weekly
-- **API Secrets**: Rotate every 90 days
-- **SSL Certificates**: Auto-renew 30 days before expiry
-- **Encryption Keys**: Rotate every 180 days
-
-### Secret Management
-
-- Environment-isolated secrets
-- GitHub repository secrets sync
-- Encrypted storage with rotation
-- Audit logging for all access
-
-### Access Control
-
-- Role-based access to environments
-- IP whitelisting for deployments
-- Two-factor authentication for critical operations
-
-## 📊 Monitoring & Alerting
-
-### What Gets Monitored
-
-- ✅ **System Resources**: CPU, memory, disk usage
-- ✅ **GitHub Actions**: Runner status, workflow failures
-- ✅ **Firebase Services**: Hosting, functions, Firestore
-- ✅ **Docker Containers**: Resource usage, health status
-- ✅ **API Endpoints**: Response times, availability
-- ✅ **SSL Certificates**: Expiry dates, validity
-- ✅ **Token Validity**: Expiration monitoring
-
-### Alert Channels
-
-- 📧 **Email**: Critical alerts and weekly reports
-- 💬 **Slack**: Real-time notifications
-- 📝 **Logs**: Comprehensive audit trails
-- 📊 **Dashboards**: Web-based monitoring interface
-
-### Auto-Healing
-
-- 🔄 **Service Restarts**: Automatic container restarts
-- 🔐 **Token Refresh**: Automatic credential renewal
-- 🧹 **Cleanup**: Old containers, images, and logs
-- 💾 **Backups**: Automated backup creation
-
-## 🚀 Deployment Pipeline
-
-### Automatic Triggers
-
-1. **Push to `main`**: Production deployment
-2. **Push to `staging`**: Staging deployment
-3. **Pull Requests**: Testing and validation
-4. **Manual Dispatch**: Custom deployments
-
-### Deployment Stages
-
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  Code Push  │ -> │   Testing   │ -> │ Deployment  │
-│             │    │             │    │             │
-│ • Quality   │    │ • Unit      │    │ • Firebase  │
-│ • Security  │    │ • Integration│    │ • Docker   │
-│ • Linting   │    │ • E2E       │    │ • Mobile    │
-└─────────────┘    └─────────────┘    └─────────────┘
-                                      │
-                                      v
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│ Monitoring  │ -> │   Alerts    │ -> │  Rollback  │
-│             │    │             │    │             │
-│ • Health    │    │ • Email     │    │ • Auto      │
-│ • Performance│    │ • Slack    │    │ • Manual    │
-│ • Logs      │    │ • Dashboard │    │             │
-└─────────────┘    └─────────────┘    └─────────────┘
-```
-
-## 🔄 Token & Credential Automation
-
-### GitHub Integration
-
-```bash
-# Automatic runner token rotation
-./automate.sh tokens github
-
-# Repository secret synchronization
-./automate.sh environment sync production
-```
-
-### Firebase Integration
-
-```bash
-# Service account key rotation
-./automate.sh tokens rotate
-
-# Project configuration deployment
-firebase deploy --only hosting,functions
-```
-
-### Apple Store Connect
-
-```bash
-# Certificate and profile management
-fastlane match development  # Automatic provisioning
-fastlane build_release    # iOS build validation
-```
-
-### Chrome Web Store
-
-```bash
-# Extension publishing
-mnao305/chrome-extension-upload@v5.0.0
-```
-
-## 📈 Performance & Cost Optimization
-
-### Resource Optimization
-
-- **Intelligent Scaling**: Auto-scale based on load
-- **Resource Monitoring**: Prevent over-provisioning
-
-### Cost Savings
-
-- **GitHub Actions**: ~$500/month savings
-- **Firebase**: Optimized function cold starts
-- **Docker**: Efficient image layers and caching
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-#### Monitoring Not Starting
-
-```bash
-# Check system resources
-./automate.sh health
-
-# Check log files
-tail -f monitoring.log
-```
-
-#### Deployment Failures
-
-```bash
-# Check environment configuration
-./automate.sh environment status production
-
-# Verify secrets
-gh secret list --repo your-org/your-repo
-```
-
-#### Token Issues
-
-```bash
-# Force token rotation
-./automate.sh tokens rotate
-
-# Check token status
-./automate.sh tokens status
-```
-
-### Logs and Debugging
-
-```bash
-# View all logs
-tail -f *.log
-
-# Check health status
-cat health-status.json | jq .
-
-# Docker container logs
-./automate.sh docker runner logs
-```
-
-## 📚 Advanced Usage
-
-### Custom Automation Scripts
-
-Create custom automation in `scripts/custom/`:
-
-```bash
-#!/bin/bash
-# scripts/custom/my-automation.sh
-
-source "$(dirname "$0")/../common.sh"
-
-log_info "Running custom automation..."
-# Your custom logic here
-```
-
-### Scheduled Tasks
-
-Set up cron jobs for regular maintenance:
-
-```bash
-# Daily token rotation
-0 2 * * * /path/to/your-repo/automate.sh tokens rotate
-
-# Weekly full backup
-0 3 * * 0 /path/to/your-repo/automate.sh backup create
-
-# Health monitoring
-*/5 * * * * /path/to/your-repo/automate.sh monitor once
-```
-
-### API Integration
-
-The automation system provides REST APIs for integration:
-
-```bash
-# Get system status
-curl http://localhost:8080/api/status
-
-# Trigger deployment
-curl -X POST http://localhost:8080/api/deploy \
-  -H "Content-Type: application/json" \
-  -d '{"environment": "production", "component": "web"}'
-```
-
-## 🤝 Contributing
-
-### Adding New Automation
-
-1. Create script in `scripts/` directory
-2. Add command to `automate.sh`
-3. Update documentation
-4. Test thoroughly
-
-### Code Standards
-
-- Bash strict mode (`set -e`)
-- Comprehensive error handling
-- Detailed logging
-- Security-first approach
-
-## 📄 License
-
-This automation suite is part of the Wishlist Wizard project.
-
----
-
-## 🎉 Getting Started
-
-Ready to eliminate manual DevOps tasks? Here's your quick start:
-
-```bash
-# 1. Clone and setup
-git clone https://github.com/your-org/your-repo.git
-cd your-repo
-
-# 2. Configure your environment
-cp .env.automation.development.example .env.automation.development
-# Edit .env.automation.development with your settings
-
-# 3. Run complete setup
-./automate.sh setup
-
-# 4. Start monitoring
-./automate.sh monitor start
-
-# 5. Push to main for automatic deployment
-git push origin main
-```
-
-**That's it!** Your project now deploys automatically across all platforms with zero manual intervention. 🎯
-
----
-
-_Built with ❤️ for automated DevOps - Zero-touch deployment achieved!_ 🚀
+Until then, preserve these files as operator utilities and historical context,
+not as a release mechanism.

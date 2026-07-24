@@ -1,91 +1,190 @@
-# IMMEDIATE TESTING INSTRUCTIONS
+# Vehicle-Vitals Testing Instructions
 
-## Local Quick Validation (June 11, 2026 update)
+Last verified: July 20, 2026
 
-Run these after Firebase-backed garage improvements (pagination, cached images, error boundaries):
+This is the current command-level testing reference. Detailed Playwright cases
+remain in `packages/web/UAT_TESTING.md`; dated R1 evidence remains in
+`R1_COMPLETION_CHECKLIST.md` and `artifacts/smoke/`.
 
-1. `cd packages/shared && npx vitest run tests/firestoreServiceFactory.pagination.test.ts`
-2. `cd packages/web`
-3. `npm run test -- tests/CachedImage.test.tsx tests/VehicleListItem.test.tsx tests/ErrorBoundary.test.tsx tests/Home.test.jsx`
-4. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-PAGINATION-001|TC-CACHE-001|TC-ERROR-001|TC-ERROR-002"`
+## Prerequisites
 
-Coverage objective for this update:
+- Node.js compatible with the root `engines` field (CI currently uses Node 20;
+  local validation used Node 22).
+- npm 9 or newer.
+- Flutter stable; CI currently pins Flutter 3.38.4.
+- Xcode/macOS for iOS builds.
+- Firebase CLI for emulator/rules validation.
+- Private Functions companion checkout for backend tests/emulation.
 
-- Firestore pagination returns `{ data, lastDoc, hasMore }` when `pageSize` is provided and remains backward compatible without options.
-- Garage page renders `VehicleListItem` thumbnails through `CachedImage` and can load additional vehicle pages.
-- Web `ErrorBoundary` reports caught UI failures to Firebase Analytics.
-- Mobile Crashlytics receives global widget/runtime errors through `ErrorWidget.builder`.
+Install JavaScript dependencies before running other npm commands:
 
-## Local Quick Validation (May 26, 2026 update)
+```bash
+npm ci
+```
 
-Run these before triggering GitHub Actions to validate navigation, auth-aware header visibility, shell/ad layout behavior, and dedicated marketing preview routes.
+Do not run `npm ci` concurrently with npm checks/tests because it replaces
+`node_modules`.
 
-1. `cd packages/web`
-2. `npm run test -- tests/SiteHeader.test.jsx tests/Layout.test.jsx tests/Landing.media.test.jsx tests/StartSteps.test.jsx tests/EverydayScreens.test.jsx tests/ShortVideoTours.test.jsx tests/AddVehicle.test.jsx tests/EditVehicle.test.jsx`
-3. `npm run test:uat:chromium -- tests/uat.spec.ts -g "TC-UI-004|TC-UI-005|TC-UI-006|TC-UI-007|TC-UI-008|TC-UI-010|TC-UI-011|TC-UI-012"`
-4. `ls -lh public/videos/feature-demos/*.mp4`
+## Standard Local Gate
 
-Coverage objective for this update:
+Run from the repository root:
 
-- Logged-out users see marketing demo links and no `Product Overview`, `Help & How-To`, or `Getting Started` links in the header.
-- Logged-in users see `Getting Started` in the header while `Product Overview` and `Help & How-To` remain hidden.
-- Header auth control remains in fixed location and toggles by auth state.
-- Footer `Help` remains available as the primary always-on navigation entry for help content.
-- Site shell is centered and width-limited to `1280px` (`max-w-7xl`).
-- Ad rendering is isolated to standalone ad-break sections outside functional UI content flow.
-- Landing page links users to dedicated preview routes (`/getting-started`, `/product-tour`) instead of rendering all media-heavy sections inline. (Formerly `/start-steps`, `/everyday-screens`, and `/short-video-tours` — those paths now redirect to the two canonical routes above.)
-- Dedicated screenshot and video routes render real app capability media and preserve fallback behavior.
-- Help and Getting Started routes preserve clear purpose boundaries, including explicit context labeling and walkthrough video/fallback states.
+```bash
+npm run check
+npm run test:unit:all
+npm run test:scripts
+npm run build:web
+```
 
-## Step 1: Test Emulator Tests Workflow
+`test:unit:all` runs web unit tests and Flutter tests. On July 20, 2026 the
+baseline passed with 438 web tests and 92 mobile tests. Script tests passed 9/9.
 
-1. Go to: https://github.com/mnelson3/vehicle-vitals/actions
-2. Click 'Emulator Tests' workflow
-3. Click 'Run workflow' → Select 'develop' branch → 'Run workflow'
-4. Monitor the 'Run tests with Firestore emulator' step
+Run Flutter analysis separately:
 
-## Step 2: Test iOS Distribution Workflow
+```bash
+cd packages/mobile
+flutter analyze
+```
 
-1. Go to: https://github.com/mnelson3/vehicle-vitals/actions
-2. Click 'iOS Distribution' workflow
-3. Click 'Run workflow' → Select 'develop' branch → Choose build-only mode → 'Run workflow'
-4. **CRITICAL**: Monitor build and signing steps for deterministic completion
-5. Look for:
-   - ✅ Fastlane lane starts successfully
-   - ✅ Flutter iOS build completes
-   - ✅ Artifact generation completes without interactive prompts
+Avoid running two Flutter test processes against the same package concurrently;
+native-asset build outputs can collide.
 
-## Step 3: Verify Secrets are Set
+## Focused Package Commands
 
-Before running, ensure these GitHub secrets exist:
+### Web
 
-- APP_STORE_CONNECT_KEY (complete .p8 content)
-- APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID
-- FASTLANE_APPLE_ID, FASTLANE_TEAM_ID, etc.
+```bash
+npm --workspace=@vehicle-vitals/web run check
+npm --workspace=@vehicle-vitals/web run lint
+npm --workspace=@vehicle-vitals/web run test:unit
+npm --workspace=@vehicle-vitals/web run build:production
+```
 
-## Expected Results:
+The production build currently succeeds with non-blocking large-chunk and
+ineffective-dynamic-import warnings.
 
-- **Emulator Tests**: Should pass all test suites without Firebase CLI issues
-- **iOS Distribution**: Should complete build-only workflow without interactive failures
+### Shared package
 
-## If Issues Persist:
+```bash
+npm --workspace=@vehicle-vitals/shared run check
+npm --workspace=@vehicle-vitals/shared run test
+npm --workspace=@vehicle-vitals/shared run build
+```
 
-Share the output from the Fastlane + Flutter build steps for debugging.
+### Firebase utilities
 
----
+```bash
+npm --workspace=@shared/firebase-utils run check
+npm --workspace=@shared/firebase-utils run build
+```
 
-Current status: Ready for validation.
+### Mobile
 
-## OpenAI TTS Validation (June 14, 2026 update)
+```bash
+cd packages/mobile
+flutter pub get
+flutter analyze
+flutter test
+flutter build ios --release --no-codesign
+```
 
-Run these after changes to the marketing demo narration pipeline:
+The no-codesign build validates compilation but does not prove signing,
+TestFlight upload, App Store review, or production Firebase behavior.
 
-1. `npm run test:scripts`
-2. `OPENAI_API_KEY=... npm run openai:tts:validate`
-3. `VV_TTS_PROVIDER=openai VV_INTERACTIVE_ONLY=vin-lookup-demo npm run videos:generate:interactive`
+### Functions companion
 
-Coverage objective for this update:
+```bash
+git clone git@github.com:NelsonGrey/vehicle-vitals-functions.git packages/functions
+npm run build --workspace=@vehicle-vitals/shared
+cd packages/functions
+VV_SHARED_DIST=../shared/dist npm run vendor:shared
+npm ci
+npm run build
+npm run lint
+npm test
+```
 
-- Shared OpenAI TTS helper validates config, cache keys, and common error mapping.
-- OpenAI speech generation succeeds without running the full demo batch.
-- Interactive demo generation can reuse cached narration and still produce the expected MP4 artifact.
+Use the companion repository's current scripts if they differ. The public root
+test command does not test private backend source unless that checkout is
+present and explicitly invoked.
+
+## Playwright UAT
+
+Local default (starts the Vite dev server):
+
+```bash
+npm --workspace=@vehicle-vitals/web run test:uat:chromium
+```
+
+Run against a hosted target:
+
+```bash
+BASE_URL=https://vehicle-vitals-staging.web.app \
+  npm --workspace=@vehicle-vitals/web run test:uat:chromium
+
+BASE_URL=https://vehicle-vitals.com \
+  npm --workspace=@vehicle-vitals/web run test:uat:all
+```
+
+The CI matrix runs Chromium, Firefox, and WebKit with retries enabled. A skipped
+test means its prerequisite UI was not exposed on that target; it is not proof
+that the underlying feature works.
+
+Current known issue: `main` workflow run `29701153138` failed production
+Chromium `TC-UI-010` because the test expected `Ownership Records` as the first
+marketing navigation item while production rendered `Getting Started`.
+`TC-UI-007` was also flaky on the expected proof heading. Reconcile the product
+contract and test before the next production deployment.
+
+## Firebase Emulator and Rules
+
+With the Functions companion mounted:
+
+```bash
+firebase emulators:start --only auth,firestore,storage,functions,hosting \
+  --project vehicle-vitals-dev
+```
+
+Public-repo Firestore test entry point:
+
+```bash
+npm run test:emulator
+```
+
+Rules source files are `firebase/firestore.rules` and
+`firebase/storage.rules`. `docs/FIRESTORE_MONETIZATION_RULES.md` explains rule
+intent but is not deployable source.
+
+## GitHub Actions
+
+The only active workflow is `Master CI/CD Pipeline` in
+`.github/workflows/master-pipeline.yml`.
+
+```bash
+gh workflow run master-pipeline.yml \
+  -f action=test_all \
+  -f environment=development
+```
+
+Pushes to `develop`, `staging`, and `main` run deploy-capable paths for their
+mapped environments. Pull requests run tests against development. The Quality
+Gate requires web unit tests, mobile unit tests, and the complete browser UAT
+matrix.
+
+Do not look for separate active `Emulator Tests` or `iOS Distribution`
+workflows; those names survive only in historical documentation. iOS build
+logic is inside the master pipeline and is currently disabled by the project
+manifest.
+
+## Evidence to Capture for a Release
+
+- Commit SHA and clean working-tree state.
+- Exact command and pass/fail totals.
+- Workflow run URL and target environment.
+- Browser matrix results and skip reasons.
+- Functions companion commit/branch and test result.
+- Hosted smoke-test account/context without exposing credentials.
+- Firebase logs for critical backend flows.
+- iOS build, purchase/restore, and App Store evidence when applicable.
+
+Update `GO_LIVE_RUNBOOK.md` when evidence changes the release posture.

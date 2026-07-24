@@ -1,5 +1,9 @@
 # Vehicle-Vitals Capability Architecture Refactor Prompt
 
+> **Document status (July 20, 2026): Implementation prompt/specification, not
+> delivery evidence.** Presentation terminology work has partially landed; use
+> current routes/navigation and `REQUIREMENTS.md` to establish remaining scope.
+
 ## Role and objective
 
 Act as a senior product engineer and application architect working in the
@@ -36,9 +40,7 @@ Important existing web surfaces include:
 - `packages/web/src/components/SiteHeader.tsx`
 - `packages/web/src/components/SiteFooter.tsx`
 - `packages/web/src/pages/Instructions.tsx`
-- `packages/web/src/pages/StartSteps.tsx`
-- `packages/web/src/pages/ShortVideoTours.tsx`
-- `packages/web/src/pages/EverydayScreens.tsx`
+- `packages/web/src/pages/ProductTour.tsx`
 - `packages/web/src/pages/Help.tsx`
 - `packages/web/src/pages/ServiceProviders.tsx`
 - `packages/web/src/pages/TimelineDashboard.tsx`
@@ -47,6 +49,10 @@ Important existing web surfaces include:
 - `packages/web/src/App.tsx`
 - `packages/web/src/shared/seoMeta.ts`
 - `packages/web/public/sitemap.xml`
+
+The former Start Steps, Short Video Tours, and Everyday Screens routes have
+been consolidated into Getting Started and Product Tour redirects in
+`packages/web/src/App.tsx`; do not recreate their removed page modules.
 
 Important mobile surfaces include:
 

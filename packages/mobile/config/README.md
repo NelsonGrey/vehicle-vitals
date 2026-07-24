@@ -1,5 +1,7 @@
 # Firebase Configuration Files by Environment
 
+Last verified: July 20, 2026
+
 This directory contains environment-specific Firebase configuration files for iOS and Android.
 
 ## 📁 Directory Structure
@@ -46,18 +48,27 @@ config/
 5. Download the `GoogleService-Info.plist` file
 6. Place it in the appropriate `config/{environment}/ios/` directory
 
-## 🚀 Build Process
+## Build Process
 
-The build scripts automatically copy the correct configuration files based on the environment:
+The CI `build-ios` job selects `config/{environment}/ios/GoogleService-Info.plist`
+when present, then falls back to the tracked
+`ios/Runner/GoogleService-Info.{dev,staging,prod}.plist` files and validates the
+resolved `PROJECT_ID` before building.
 
 - **Development builds**: Use `config/development/` files
 - **Staging builds**: Use `config/staging/` files
 - **Production builds**: Use `config/production/` files
 
-## ⚠️ Important Notes
+## Important Notes
 
-- **Never commit actual config files** - They contain sensitive API keys
-- **Add to .gitignore**: Ensure `config/*/android/google-services.json` and `config/*/ios/GoogleService-Info.plist` are ignored
+- Environment-specific files under `config/` are gitignored and represented by
+  placeholders.
+- The repository currently tracks runner fallback plist files and the Android
+  app configuration. Firebase client identifiers are not substitutes for
+  server credentials, but their project/bundle alignment is still security- and
+  release-sensitive.
+- Never put service-account JSON, private keys, or provider secrets in mobile
+  Firebase client configuration.
 - **Environment mapping**:
   - Development → `vehicle-vitals-dev`
   - Staging → `vehicle-vitals-staging`

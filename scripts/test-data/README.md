@@ -1,10 +1,19 @@
 # Demo Test Data Toolkit
 
+Last reviewed: July 20, 2026
+
 This toolkit provides repeatable, robust demo data load and unload workflows for Vehicle-Vitals.
+
+The seed and purge implementations live in the private
+`NelsonGrey/vehicle-vitals-functions` companion repository. Clone or mount it
+at the gitignored `packages/functions` path and install its dependencies before
+using the root scripts below. The JSON dataset in this public repository is
+only input data.
 
 ## Prerequisites
 
-- Firebase Admin credentials available to Node runtime.
+- The private Functions companion mounted at `packages/functions`.
+- Firebase Admin credentials available to the Functions Node runtime.
 - One Firebase Auth user UID to seed data into.
 - Optional: FIREBASE_PROJECT_ID if not inferred by credentials.
 
@@ -12,17 +21,17 @@ This toolkit provides repeatable, robust demo data load and unload workflows for
 
 Run from repository root:
 
-npm --workspace=functions run seed:demo-data -- --uid=<firebase-auth-uid>
+npm run demo-data:load -- --uid=<firebase-auth-uid>
 
 Optional custom data file:
 
-npm --workspace=functions run seed:demo-data -- --uid=<firebase-auth-uid> --file=scripts/test-data/demo-data.json
+npm run demo-data:load -- --uid=<firebase-auth-uid> --file=scripts/test-data/demo-data.json
 
 ## Purge Demo Data
 
 Run from repository root:
 
-npm --workspace=functions run purge:demo-data -- --uid=<firebase-auth-uid> --force
+npm run demo-data:purge -- --uid=<firebase-auth-uid> --force
 
 This recursively deletes:
 
@@ -47,5 +56,7 @@ Schema summary:
 
 ## Safety Notes
 
-- Purge requires --force.
+- Purge requires `--force`.
 - Data is scoped to a single UID so demos do not affect other user accounts.
+- Verify the active Firebase project before seeding or purging; these commands
+  mutate backend data and are not safe dry runs.

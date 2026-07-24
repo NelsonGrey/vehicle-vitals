@@ -1,4 +1,9 @@
 # Technical Debt Review Summary
+
+> **Document status (July 20, 2026): Historical review from May 8, 2026.** It
+> records what was known then; current code/tests and `GO_LIVE_RUNBOOK.md` take
+> precedence. Functions references point to source that later moved to the
+> private companion repository.
 **Date:** May 8, 2026  
 **Scope:** Comprehensive review across web, mobile, functions, and shared packages
 

@@ -1,7 +1,10 @@
 # Vehicle Health Dashboard Spec
 
-Last updated: June 12, 2026
-Status: Proposed for implementation
+Last reviewed: July 20, 2026
+Status: Original specification with a partially delivered core. Web and mobile
+now compute/resolve health snapshots and render health scores/components; use
+current source and tests to identify remaining forecasting, paywall, telemetry,
+and UX work rather than treating every item below as unimplemented.
 
 ## Why this exists
 

@@ -1,5 +1,8 @@
 # Beta Access Matrix
 
+> **Status (July 20, 2026):** QA provisioning template. It does not prove that
+> named external accounts exist or that paid checkout is approved for launch.
+
 This document is the working checklist for beta-testers and QA. It turns the tier model into explicit accounts, capabilities, and proof points.
 
 ## Scope

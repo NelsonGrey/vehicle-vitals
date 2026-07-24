@@ -1,5 +1,9 @@
 # Vehicle-Vitals — Marketing Assets Overview
 
+> **Status (July 20, 2026):** Asset catalog and dated production snapshot.
+> Revalidate screenshots, prices, feature claims, third-party tools, and output
+> lengths before publishing.
+
 **Date Created:** May 8, 2026  
 **Purpose:** Quick reference guide to all promotional materials created for Vehicle-Vitals
 

@@ -1,410 +1,143 @@
-# Vehicle-Vitals User FAQ (Website and iOS)
+# Vehicle Vitals User FAQ: Web and iOS
 
-Last updated: May 29, 2026
-Audience: End users (not developers)
+Last reviewed: July 20, 2026
 
-This FAQ explains how to perform common actions in Vehicle-Vitals on both the website and iOS app.
+This FAQ describes the implemented web and iOS application flows. The web app
+is live at `https://vehicle-vitals.com`. Confirm the current App Store or
+TestFlight availability before telling users that the iOS build is publicly
+downloadable.
 
-## Website FAQ
+## Accounts and Sign-In
 
-### 1) How do I create an account on the website?
+### How do I create an account or sign in?
 
-Go to the Login or Sign Up page from the top-right header action.
-On Sign Up, enter your email, password, and confirmation password.
-Submit the form and complete any required verification prompts.
-After successful signup, you are routed to the secure app area.
+On the web, use Sign Up or Sign In from the header. On iOS, start from the
+welcome screen and choose the corresponding action. Email/password and the
+providers shown by the current client are available; the exact providers may
+vary by platform and Firebase configuration.
 
-### 2) How do I sign in to my account?
+### What if I forget my password?
 
-Open the Login page from the header.
-Enter your email and password, then select Sign In.
-If credentials are valid, you are redirected to your Garage.
+Choose Forgot Password, enter the account email, and follow the reset email.
+Check spam or junk mail if the message does not arrive.
 
-### 3) How do I reset my password?
+### Why does the app return me to Garage after sign-in?
 
-From Login, choose Forgot Password.
-Enter your account email and submit.
-Use the password reset email link, then return to Login with your new password.
+Garage is the default authenticated destination. A valid deep link or selected
+plan may override that default.
 
-### 4) How do I add my first vehicle?
+### Why do web and iOS show different vehicles?
 
-Go to Garage and select Add Vehicle.
-Enter VIN (17 characters) and run lookup, or fill Year/Make/Model manually if needed.
-Add mileage and save.
-The vehicle appears in Garage and is available to Records, Upcoming, and Timeline features.
+First confirm both clients are signed into the same Firebase identity. If the
+same person accidentally created two accounts, open Account and use the
+Account Consolidation workflow where it is offered. Review the source and
+destination carefully before confirming a merge.
 
-### 5) How does VIN Lookup help me?
+## Garage and Vehicle Records
 
-VIN lookup can auto-populate vehicle details (for example make/model/year and additional profile data where available).
-After looking up, review fields for accuracy and save.
-If lookup is unavailable, enter details manually and continue.
+### How do I add a vehicle?
 
-### 6) Can I edit a vehicle after adding it?
+Open Garage and choose Add Vehicle. Enter a 17-character VIN for lookup or use
+the available manual fields. Review all decoded values before saving; a VIN
+lookup can be incomplete or unavailable.
 
-Yes.
-Open the vehicle in Garage and choose Edit Vehicle.
-Update fields such as mileage, nickname, or vehicle metadata, then save.
+On iOS, the Scan VIN action can capture a VIN with the camera. Confirm the
+recognized value before continuing.
 
-### 7) How do I remove a vehicle?
+### How do I edit or remove a vehicle?
 
-In Garage, open the vehicle card and choose Delete when available.
-Confirm the prompt.
-Use deletion carefully because it can remove related context used by reminders and history views.
+Open the vehicle and choose the available edit or delete action. Deleting a
+vehicle can affect its records, reminders, history, and attachments; read the
+confirmation before proceeding.
 
-### 8) What is the Garage page used for?
+### What can I store in Records?
 
-Garage is the central list of all vehicles.
-You can search by year, make, model, or VIN.
-You can select a vehicle to review status, maintenance signals, and quick links to related workflows.
+Records organize maintenance and ownership information such as service work,
+costs, dates, mileage, notes, invoices, receipts, and supported attachments.
+File availability and export formats can depend on platform and entitlement.
 
-### 9) What is “Upcoming Maintenance” on vehicle cards?
+## Maintenance Plan and Service History
 
-It shows near-term service items calculated from known schedules and mileage.
-Urgency indicators help prioritize what needs action first.
-Use View all to open the full Upcoming Tasks page.
+### What is Maintenance Plan?
 
-### 10) How do I log maintenance records?
+Maintenance Plan—shown as Plan in compact mobile navigation—combines available
+maintenance recommendations with saved reminders. You can create reminders and,
+where shown, complete, snooze, dismiss, or reopen them.
 
-Open a vehicle and go to Records.
-Add maintenance entries with date, mileage, notes, and cost details.
-Save to persist entries.
-Records become part of timeline and reporting workflows.
+Recommendations and vehicle-health indicators are informational. Confirm
+maintenance requirements with the owner's manual, manufacturer guidance, or a
+qualified professional.
 
-### 11) Can I upload documents (receipts, invoices, PDFs)?
+### What is Service History?
 
-Yes, in Records.
-Upload files for the relevant record item.
-If upload fails, retry from the same records workflow.
-You can also open or remove attachments from the record view.
+Service History—shown as History in compact mobile navigation—presents saved
+service and ownership activity chronologically across the garage. Add or edit
+the underlying vehicle records to correct the history.
 
-### 12) How do reminders work from Records?
+### How do calendar and email reminders work?
 
-Records can create reminder entries tied to service type and due context.
-Saved reminders appear in Upcoming Tasks.
-You can complete, snooze, dismiss, or reopen reminders from task management views.
+Open Account and the relevant reminder, email, or calendar preferences. The
+available calendar target and permission flow differ between web and iOS. A
+successful preference save is not proof that a third-party calendar or email
+provider delivered an event or message, so verify the destination when it
+matters.
 
-### 13) How do I use Upcoming Tasks?
+## Shops, Account, and Privacy
 
-Open Upcoming from navigation.
-Review tasks sorted by urgency.
-For each task, save reminder state and choose action:
-Complete, Snooze, Dismiss, or Reopen where supported.
+### How do I find a service provider?
 
-### 14) Can I add maintenance tasks to my calendar from the website?
+Open Shops & Services. Enter or permit a location and select the available
+search filters. Results come from external provider data and should be verified
+before travel or service decisions.
 
-Yes.
-In reminder or insight-supported flows, choose the calendar action.
-The app creates a calendar event using configured calendar integration behavior.
+### Where are settings?
 
-### 15) What does Timeline Dashboard show?
+Open Account—Account is the compact mobile and current web capability label.
+It contains profile, security, reminder, subscription, data/privacy, support,
+and related settings exposed for that platform.
 
-Timeline gives chronological service and ownership history.
-Use it to verify completed work, ordering of events, and long-term lifecycle trends.
+### How do I request an export or account deletion?
 
-### 16) How do I find nearby service providers?
+Open Account, then Data & Privacy. Use Request Data Export or Delete Account
+when shown and follow the confirmation flow. If the action fails or is not
+available on the client version, use Support. Account deletion is a
+high-impact action and may require recent authentication.
 
-Open Service Providers.
-Enter location context and search criteria.
-Use filtering options where available to narrow provider type and results.
+### What does offline mode do on iOS?
 
-### 17) How do profile preferences affect reminders?
+Offline Settings controls local availability and queued synchronization. Data
+already synchronized to the account remains online when the local cache is
+cleared. Confirm the device has reconnected and synchronization has completed
+before relying on a recent offline change elsewhere.
 
-Profile settings include reminder lead-time and usage assumptions (for example average driving patterns).
-These values influence when reminder windows appear.
-Save profile preferences to apply changes.
+## Plans, Ads, and Availability
 
-### 18) Can I store location and provider preferences?
+### Why is a feature or export unavailable?
 
-Yes.
-Profile supports location fields and provider search preferences.
-These settings are used by nearby provider lookup and recommendation behavior.
+Some capabilities are controlled by the account entitlement, quota, platform,
+runtime feature flags, or the `app_offline` maintenance switch. The upgrade or
+unavailable message shown in the client is the current guidance; planned
+features in strategy documents are not guaranteed shipped features.
 
-### 19) What is the Subscriptions page for?
+### Why do I see ads?
 
-Subscriptions and Billing explains available tiers and limits.
-Use it to evaluate upgrades and current entitlement behavior.
+Ad display depends on environment, consent, placement configuration, and the
+account's ad-free entitlement. Change optional consent through the available
+privacy controls. Do not promise a paid or ad-free outcome unless the current
+checkout and entitlement path has been verified.
 
-### 20) How do I export maintenance history on the website?
+## Troubleshooting and Support
 
-Open a vehicle in Edit Vehicle.
-Use export actions for CSV or PDF where your current tier allows access.
-If a format is locked, upgrade prompts can appear to explain the required subscription tier.
+Try these steps before contacting Support:
 
-### 21) Why can’t I access some app routes in production web?
+1. Confirm network access and the correct signed-in account.
+2. Refresh the web page or fully restart the iOS app.
+3. Check that camera, notifications, calendar, or location permission is
+   enabled when the action needs it.
+4. Retry once and capture the exact error without including credentials or
+   private documents.
 
-Production web may operate in marketing-focused mode depending on environment policy.
-If app routes are restricted, use permitted marketing/help/support flows for that environment.
-
-### 22) How do I contact support from the website?
-
-Open Support from footer or support links in help pages.
-Provide issue summary, environment, and steps to reproduce.
-Include relevant VIN/context when asking about record-specific issues.
-
-### 23) How do I use Help and Getting Started pages?
-
-Use Getting Started for onboarding sequence and first-run actions after you are logged in.
-Use Help for common troubleshooting and task-based guidance from the footer Help link.
-Video walkthrough lanes are included where media is available.
-
-### 24) Why do I sometimes see poster images instead of videos?
-
-If a demo clip is missing or cannot load, the page falls back to poster preview automatically.
-This is expected behavior and prevents page breakage.
-
-### 25) Is there a demonstration data loader in all environments?
-
-No.
-Environment-specific controls may be shown only in designated demonstration contexts.
-If you do not see demo seed controls, that is expected in non-demo environments.
-
-### 26) Is VIN data enrichment automatic?
-
-Yes, where applicable the system can perform VIN insight synchronization automatically and continue retries when recoverable failures occur.
-You should not need a manual backfill action for normal use.
-
-### 27) Why do my vehicles appear on the website but not in the iOS app, or vice versa?
-
-Vehicles sync only when both apps are using the same Vehicle-Vitals environment and the same account UID.
-Using the same email with different sign-in methods can create separate accounts behind the scenes.
-If that happens, open Profile on the website and use Account Consolidation to merge the secondary account into your current one.
-
-### 28) How do I use Account Consolidation on the website?
-
-Open Profile and find the Account Consolidation section.
-Sign in to the secondary account on the other device or platform, copy its User ID, then paste that value into Source Account UID on the primary account.
-Confirm the prompt to migrate vehicles and related account data into the account you are currently using.
-
-## iOS App FAQ
-
-### 1) How do I start using the iOS app?
-
-Install and open the app.
-You land on marketing or auth entry depending on state.
-Sign up or log in to access /app routes.
-
-### 2) How do I sign up on iOS?
-
-Open Sign Up from auth flow.
-Enter email and password details.
-Submit and continue to the app once account creation succeeds.
-
-### 3) How do I sign in on iOS?
-
-Open Login.
-Enter email and password, then Sign In.
-Successful sign-in routes you to Garage (Home).
-
-### 4) How do I reset my password on iOS?
-
-From Login, open Forgot Password.
-Submit your email and follow reset instructions.
-Return to Login and sign in with your updated password.
-
-### 5) How do I add a vehicle on iOS?
-
-From Garage, tap Add Vehicle.
-Enter VIN and look up, or fill fields manually.
-Provide mileage and save.
-If subscription limits are reached, app guidance routes to Premium or Support flows.
-
-### 6) Can I scan a VIN on iOS?
-
-Yes.
-Use the Scan VIN route and confirm captured VIN.
-Continue to add/edit flow to look up and save.
-
-### 7) What happens if VIN lookup fails on iOS?
-
-The app shows an error and you can retry.
-You can still enter Year/Make/Model manually and save.
-
-### 8) How do I edit an existing vehicle on iOS?
-
-Open the vehicle from Garage.
-Choose Edit Vehicle.
-Update details and save.
-
-### 9) How do I view and manage maintenance records on iOS?
-
-Open vehicle Records.
-Edit record categories/items, upload attachments, and save changes.
-Use retry actions for failed uploads.
-
-### 10) Can I open and delete uploaded record files on iOS?
-
-Yes.
-Record attachments support open and delete operations in Records.
-
-### 11) How do I use Upcoming Tasks on iOS?
-
-Open Upcoming from app navigation.
-Review tasks sorted by urgency.
-Save reminders and use actions like complete/snooze/dismiss/reopen where shown.
-
-### 12) How do I add a maintenance event to calendar on iOS?
-
-In Upcoming or related maintenance flows, choose Add to Calendar.
-The app creates an event via calendar integration service and confirms success/failure.
-
-### 13) What does Timeline Dashboard do on iOS?
-
-Timeline shows maintenance events in chronological order.
-Use it to trace ownership and service history over time.
-
-### 14) Where do I configure reminder and calendar preferences on iOS?
-
-Open account-related settings screens:
-Reminder Preferences, Calendar Preferences, and Email Preferences.
-Adjust values and save.
-
-### 15) How do notifications work on iOS?
-
-Allow notification permissions when prompted.
-Foreground reminders and notification routing are handled by app notification services.
-If disabled at OS level, enable them in iOS Settings.
-
-### 16) How do I view account details and sign out on iOS?
-
-Open Profile/Account screen from app menu.
-Use Sign Out action when needed.
-
-### 17) How do I confirm the iOS app is using the same account identity as the website?
-
-Open Profile on iOS and review the Data Sync Identity section.
-It shows the current environment, Firebase project, and Auth UID used by the app.
-For cross-platform vehicle sync, those values must line up with the account you use on the website.
-
-### 18) How do I find service providers on iOS?
-
-Open Service Providers from app routes.
-Search using available location and provider options.
-
-### 18) What is the Premium screen for on iOS?
-
-Premium explains subscription benefits and entitlement paths.
-If your current subscription limits vehicle count, app guidance may route you here.
-
-### 19) How do I export maintenance data on iOS?
-
-Open a vehicle's Maintenance list.
-Use the export menu and select CSV, PDF, or Excel based on subscription availability.
-If a premium format is restricted, upgrade paths are shown.
-
-### 20) What is Offline Settings on iOS?
-
-Offline settings control local behavior for disconnected usage patterns.
-Adjust according to your reliability and storage preferences.
-
-### 21) What is Analytics screen on iOS?
-
-Analytics shows ownership and maintenance insights derived from your stored data.
-Use it to monitor trends and costs.
-
-### 22) Why does iOS route me away from auth pages after login?
-
-Router guards redirect authenticated users into /app routes and block auth pages when already signed in.
-This is expected behavior.
-
-### 23) Why am I redirected to login when opening app routes?
-
-If the current session is unauthenticated, route guards redirect protected /app paths to login.
-Sign in and retry.
-
-### 24) Is there parity between web and iOS features?
-
-Core vehicle, records, upcoming, timeline, auth, profile, and provider workflows are available across both platforms.
-Some environment-dependent or admin-focused functions may vary by deployment mode.
-
-### 25) How do I contact support from iOS?
-
-Use Support screen in app routes.
-Provide device model, iOS version, and steps that reproduce the issue.
-
-### 26) What should I include when reporting a bug?
-
-Include platform (web or iOS), timestamp, affected VIN (if safe to share), expected result, actual result, and screenshots if available.
-This shortens resolution time significantly.
-
-## Cross-Platform Troubleshooting
-
-### 1) I cannot sign in even with correct password. What should I do?
-
-Confirm email spelling and keyboard auto-correct behavior.
-Reset password from Forgot Password.
-If issue persists, visit Support with timestamp and environment.
-
-### 2) A vehicle does not appear after saving. What should I check?
-
-Verify network connectivity.
-Refresh Garage/Home.
-Confirm VIN format and required fields.
-If still missing, log out/in and re-check.
-
-### 3) Reminder actions appear delayed. Is this normal?
-
-Small propagation delays can occur after save/complete/snooze operations.
-Refresh Upcoming view and re-open the task list.
-
-### 4) Calendar event creation failed. What can I try?
-
-Check calendar permissions at OS/browser level.
-Retry from task screen.
-If repeated failures occur, share error message with support.
-
-### 5) Uploaded record file failed. What can I do?
-
-Retry upload from the same record item.
-Check file size/type constraints and network stability.
-If necessary, split large files and upload separately.
-
-### 6) Demo videos are not playing. What should I do?
-
-Reload the page/app view.
-Check environment connectivity.
-If playback still fails, poster fallback is expected and core app functionality is unaffected.
-
-## Quick Navigation Reference
-
-### Website route quick list
-
-- `/` marketing landing
-- `/auth/login` login
-- `/auth/signup` signup
-- `/auth/forgot-password` password reset
-- `/app` garage
-- `/app/add-vehicle` add vehicle
-- `/app/edit-vehicle/:vin` edit vehicle
-- `/app/records/:vin` records
-- `/app/upcoming` upcoming tasks
-- `/app/timeline` timeline dashboard
-- `/app/profile` profile
-- `/app/providers` service providers
-- `/app/subscription` subscriptions and billing
-- `/help` help
-- `/getting-started` onboarding instructions
-
-### iOS route quick list
-
-- `/marketing`
-- `/auth/login`
-- `/auth/signup`
-- `/auth/forgot-password`
-- `/app`
-- `/app/add-vehicle`
-- `/app/scan-vin`
-- `/app/records/:vin`
-- `/app/upcoming`
-- `/app/timeline`
-- `/app/profile`
-- `/app/service-providers`
-- `/app/premium`
-- `/app/calendar-preferences`
-- `/app/reminder-preferences`
-- `/app/email-preferences`
-- `/app/offline-settings`
-- `/app/analytics`
-
----
-
-If you want this FAQ published directly into the web Help page and mirrored in an in-app iOS help screen, that can be added as the next step.
+Use the in-product Support page. Include the platform and version, approximate
+time, steps to reproduce, expected result, actual result, and a redacted
+screenshot when useful. Never send passwords, service-account keys, payment
+details, or unredacted sensitive documents.

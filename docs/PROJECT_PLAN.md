@@ -1,5 +1,10 @@
 # Vehicle-Vitals - Master Project Plan
 
+> **Document status (July 20, 2026): Historical rebaseline.** This file records
+> the May-July 2026 R1 planning horizon and review templates. It is not the
+> current release dashboard. Use `REQUIREMENTS.md` for delivery status and
+> `GO_LIVE_RUNBOOK.md` for current release evidence and blockers.
+
 Last updated: May 28, 2026
 Planning horizon: 8 weeks (rebaseline v2)
 Primary source status: docs/REQUIREMENTS.md

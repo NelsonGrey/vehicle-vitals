@@ -1,5 +1,9 @@
 # Vehicle-Vitals — AI Podcast & Video Generation Guide
 
+> **Status (July 20, 2026):** Supporting workflow with dated tool, price, and
+> timing assumptions. Verify external tool availability, pricing, licenses, and
+> privacy terms before use.
+
 **Date:** May 8, 2026  
 **Purpose:** Generate podcast and video content using AI tools
 

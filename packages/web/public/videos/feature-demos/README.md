@@ -48,4 +48,6 @@ Interactive generation:
 - Validate the OpenAI TTS path without regenerating videos:
   `npm run openai:tts:validate`
 - Without OpenAI settings, narration falls back to macOS `say`.
-- If the environment access gate is enabled, provide `VV_MARKETING_GATE_PASSWORD` before running the script.
+- The recorder retains compatibility with older deployments that show a
+  password gate through `VV_MARKETING_GATE_PASSWORD`. The current client has no
+  such environment gate; see `docs/SECURE_ENVIRONMENTS.md`.

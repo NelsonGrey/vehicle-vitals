@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show PasswordValidationStatus;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
 
+  // Populated from the live Firebase password policy (see
+  // AuthService.validatePassword). These defaults match today's enforced
+  // policy so the form is still usable if the fetch fails (e.g. offline);
+  // the authoritative check in _signUp() re-verifies against the real
+  // policy regardless of whether this fetch succeeded.
+  int _policyMinLength = 8;
+  bool _policyRequiresUpper = true;
+  bool _policyRequiresLower = true;
+  bool _policyRequiresDigit = true;
+  bool _policyRequiresSymbol = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPasswordPolicy();
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -30,30 +48,79 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  // Mirrors the password policy enforced server-side by Firebase
-  // Identity Platform (min 8 chars, upper/lower/numeric/symbol required) so
-  // users get an actionable message before submitting instead of a raw
-  // 'weak-password' error after a failed round-trip.
+  Future<void> _loadPasswordPolicy() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      // A throwaway non-empty candidate -- only .passwordPolicy is used
+      // here, not whether this specific placeholder is valid.
+      final status = await authService.validatePassword(' ');
+      final policy = status.passwordPolicy;
+      if (!mounted) return;
+      setState(() {
+        _policyMinLength = policy.minPasswordLength;
+        _policyRequiresUpper = policy.containsUppercaseCharacter ?? true;
+        _policyRequiresLower = policy.containsLowercaseCharacter ?? true;
+        _policyRequiresDigit = policy.containsNumericCharacter ?? true;
+        _policyRequiresSymbol = policy.containsNonAlphanumericCharacter ?? true;
+      });
+    } catch (_) {
+      // Keep the defaults above -- _signUp() still authoritatively
+      // re-checks the real password against the live policy at submit time.
+    }
+  }
+
+  String _passwordRequirementsHint() {
+    final requirements = <String>[
+      if (_policyRequiresUpper) 'upper',
+      if (_policyRequiresLower) 'lower',
+      if (_policyRequiresDigit) 'number',
+      if (_policyRequiresSymbol) 'symbol',
+    ];
+    if (requirements.isEmpty) {
+      return '$_policyMinLength+ characters';
+    }
+    return '$_policyMinLength+ characters with ${requirements.join(', ')}';
+  }
+
+  // Client-side pass using the cached live policy so users get immediate
+  // feedback while typing. _signUp() re-validates authoritatively against
+  // Firebase itself before submitting, so this never needs to be the last
+  // word on whether a password is accepted.
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter a password';
     }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
+    if (value.length < _policyMinLength) {
+      return 'Password must be at least $_policyMinLength characters';
     }
-    if (!value.contains(RegExp(r'[A-Z]'))) {
+    if (_policyRequiresUpper && !value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must include an uppercase letter';
     }
-    if (!value.contains(RegExp(r'[a-z]'))) {
+    if (_policyRequiresLower && !value.contains(RegExp(r'[a-z]'))) {
       return 'Password must include a lowercase letter';
     }
-    if (!value.contains(RegExp(r'[0-9]'))) {
+    if (_policyRequiresDigit && !value.contains(RegExp(r'[0-9]'))) {
       return 'Password must include a number';
     }
-    if (!value.contains(RegExp(r'[^A-Za-z0-9]'))) {
+    if (_policyRequiresSymbol && !value.contains(RegExp(r'[^A-Za-z0-9]'))) {
       return 'Password must include a symbol (e.g. ! @ # ?)';
     }
     return null;
+  }
+
+  String _describePasswordFailure(PasswordValidationStatus status) {
+    final missing = <String>[
+      if (!status.meetsMinPasswordLength)
+        'be at least $_policyMinLength characters',
+      if (!status.meetsUppercaseRequirement) 'include an uppercase letter',
+      if (!status.meetsLowercaseRequirement) 'include a lowercase letter',
+      if (!status.meetsDigitsRequirement) 'include a number',
+      if (!status.meetsSymbolsRequirement) 'include a symbol',
+    ];
+    if (missing.isEmpty) {
+      return 'Password does not meet the requirements for this account.';
+    }
+    return 'Password must ${missing.join(', ')}.';
   }
 
   Future<void> _signUp() async {
@@ -63,9 +130,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
+      final password = _passwordController.text;
+
+      // Authoritative check against the live Firebase policy -- catches
+      // drift between this form's cached copy and the real policy (e.g.
+      // it changed after this screen loaded, or the initial fetch failed)
+      // before spending a round-trip on account creation.
+      final status = await authService.validatePassword(password);
+      if (!status.isValid) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_describePasswordFailure(status)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+        return;
+      }
+
       await authService.createUserWithEmailAndPassword(
         _emailController.text.trim(),
-        _passwordController.text,
+        password,
       );
 
       if (mounted) {
@@ -185,8 +271,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           obscureText: !_showPassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            helperText:
-                                '8+ characters with upper, lower, number, and symbol',
+                            helperText: _passwordRequirementsHint(),
                             helperMaxLines: 2,
                             suffixIcon: IconButton(
                               onPressed: () => setState(

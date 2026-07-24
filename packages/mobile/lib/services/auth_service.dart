@@ -259,6 +259,16 @@ class AuthService extends ChangeNotifier {
     await _auth.sendPasswordResetEmail(email: email);
   }
 
+  // Fetches the password policy actually enforced by Firebase for this
+  // project (min length, required character classes) and validates
+  // [password] against it in one round-trip. Pass a non-empty placeholder
+  // (e.g. a single space) to just read the policy without a real candidate.
+  Future<firebase_auth.PasswordValidationStatus> validatePassword(
+    String password,
+  ) {
+    return _auth.validatePassword(_auth, password);
+  }
+
   Future<UserCredential?> signInWithApple() async {
     final appleCredential = await apple.SignInWithApple.getAppleIDCredential(
       scopes: [

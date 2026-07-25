@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { userFacingError } from '../shared/userFacingError';
 
 export default function ForgotPassword() {
   const { resetPassword } = useAuth();
@@ -15,16 +16,24 @@ export default function ForgotPassword() {
     setError('');
     setSuccess('');
 
+    const genericSuccessMessage =
+      'If an account exists for that email, a password reset link is on its way. Check your inbox.';
+
     try {
       await resetPassword(email);
-      setSuccess(
-        'Password reset email sent. Check your inbox for the next steps.'
-      );
+      setSuccess(genericSuccessMessage);
     } catch (err: unknown) {
-      const message = String(
-        (err as Error)?.message || 'Failed to send password reset email'
-      );
-      setError(message);
+      const code = String((err as { code?: string })?.code || '');
+      if (code === 'auth/user-not-found') {
+        // Show the same success message as a real send -- distinguishing
+        // "no account" from "sent" here would let this screen be used to
+        // enumerate registered emails.
+        setSuccess(genericSuccessMessage);
+      } else {
+        setError(
+          userFacingError(err, 'Failed to send password reset email.')
+        );
+      }
     } finally {
       setBusy(false);
     }

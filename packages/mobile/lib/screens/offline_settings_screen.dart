@@ -38,12 +38,12 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Offline Mode',
+                          'Offline-Only Mode',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Enable offline mode to access your data without an internet connection. Changes will sync when you reconnect.',
+                          'Vehicle-Vitals always keeps a local copy of your data so you can view and edit it without a connection. Turn this on to force the app to work only from that local copy and stop making network requests entirely -- useful to deliberately save data or battery. Turn it off to resume normal syncing.',
                           style: TextStyle(
                             fontSize: 14,
                             color: colorScheme.onSurfaceVariant,
@@ -51,9 +51,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                         ),
                         const SizedBox(height: 16),
                         SwitchListTile(
-                          title: const Text('Enable Offline Access'),
+                          title: const Text('Force Offline-Only'),
                           subtitle: const Text(
-                            'Store data locally for offline use',
+                            'Stop making network requests until turned off',
                           ),
                           value: offlineService.isOfflineEnabled,
                           onChanged: _isLoading
@@ -177,7 +177,7 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Offline mode stores your vehicle and maintenance data locally on your device. This allows you to view and edit data without an internet connection.',
+                  'Your vehicle and maintenance data is always cached locally, so you can view and edit it without a connection. Offline-Only Mode additionally stops the app from making any network requests, for whenever you want to make sure it stays that way.',
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -207,8 +207,8 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
           SnackBar(
             content: Text(
               enabled
-                  ? 'Offline mode enabled. Your data will be stored locally.'
-                  : 'Offline mode disabled. You need internet to access your data.',
+                  ? 'Offline-only mode enabled. The app will not use the network until you turn this off.'
+                  : 'Offline-only mode disabled. Resuming normal syncing.',
             ),
             backgroundColor: enabled
                 ? colorScheme.primary

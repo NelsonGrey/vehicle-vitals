@@ -2,9 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Firestore caches data locally for offline viewing by default, regardless
+// of this toggle -- that's not something this class controls or needs to.
+// What this toggle actually controls (via enableNetwork()/disableNetwork())
+// is whether the app is allowed to make network requests at all: "offline
+// enabled" here means "force offline-only," working exclusively from the
+// local cache until turned back off. Defaults to false (normal networking)
+// so a fresh install isn't silently stuck cache-only.
 class OfflineService extends ChangeNotifier {
   static const String _offlineEnabledKey = 'offline_enabled';
-  bool _isOfflineEnabled = true; // Default to enabled
+  bool _isOfflineEnabled = false;
   bool _isOnline = true;
 
   bool get isOfflineEnabled => _isOfflineEnabled;
@@ -34,7 +41,8 @@ class OfflineService extends ChangeNotifier {
 
   Future<void> _loadOfflinePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    _isOfflineEnabled = prefs.getBool(_offlineEnabledKey) ?? true;
+    _isOfflineEnabled = prefs.getBool(_offlineEnabledKey) ?? false;
+    await _applyNetworkState(_isOfflineEnabled);
     notifyListeners();
   }
 
@@ -45,8 +53,21 @@ class OfflineService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _applyNetworkState(bool forceOfflineOnly) async {
+    try {
+      if (forceOfflineOnly) {
+        await FirebaseFirestore.instance.disableNetwork();
+      } else {
+        await FirebaseFirestore.instance.enableNetwork();
+      }
+    } catch (e) {
+      debugPrint('Failed to apply Firestore network state: $e');
+    }
+  }
+
   Future<void> setOfflineEnabled(bool enabled) async {
     await _saveOfflinePreference(enabled);
+    await _applyNetworkState(enabled);
   }
 
   void _updateOnlineStatus(bool online) {

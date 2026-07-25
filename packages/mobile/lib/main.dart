@@ -147,7 +147,16 @@ class VehicleVitalsApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => AuthService()),
         Provider(create: (context) => FirestoreService()),
-        Provider(create: (context) => notificationService),
+        ChangeNotifierProxyProvider<AuthService, NotificationService>(
+          create: (context) => notificationService,
+          update: (context, authService, service) {
+            final resolved = service ?? notificationService;
+            unawaited(
+              resolved.syncForAuthUser(authService.currentUser?.uid),
+            );
+            return resolved;
+          },
+        ),
         ChangeNotifierProxyProvider<AuthService, PremiumService>(
           create: (context) => PremiumService(),
           update: (context, authService, premiumService) {

@@ -525,6 +525,16 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                   label: const Text('Maintenance'),
                 ),
               ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      context.push('/app/coverage/${vehicle.vin}'),
+                  icon: const Icon(Icons.verified_user_outlined, size: 16),
+                  label: const Text('Coverage & Manuals'),
+                ),
+              ),
             ],
           ],
         ),

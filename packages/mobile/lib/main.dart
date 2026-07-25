@@ -40,6 +40,7 @@ import 'screens/support_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/timeline_dashboard_screen.dart';
 import 'screens/upcoming_tasks_screen.dart';
+import 'screens/vehicle_coverage_screen.dart';
 import 'screens/vehicle_detail_screen.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
@@ -343,6 +344,11 @@ class VehicleVitalsApp extends StatelessWidget {
           ),
         ),
         GoRoute(
+          path: '/app/coverage/:vin',
+          builder: (context, state) =>
+              VehicleCoverageScreen(vin: state.pathParameters['vin']!),
+        ),
+        GoRoute(
           path: '/app/profile',
           builder: (context, state) => const AccountScreen(),
         ),
@@ -445,6 +451,11 @@ class VehicleVitalsApp extends StatelessWidget {
           path: '/maintenance/:vin/:entryId',
           redirect: (context, state) =>
               '/app/maintenance/${state.pathParameters['vin']}/${state.pathParameters['entryId']}',
+        ),
+        GoRoute(
+          path: '/coverage/:vin',
+          redirect: (context, state) =>
+              '/app/coverage/${state.pathParameters['vin']}',
         ),
         GoRoute(path: '/profile', redirect: (context, state) => '/app/profile'),
         GoRoute(path: '/account', redirect: (context, state) => '/app/profile'),

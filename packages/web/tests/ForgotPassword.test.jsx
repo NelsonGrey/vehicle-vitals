@@ -85,8 +85,12 @@ describe('ForgotPassword page', () => {
     });
   });
 
-  it('shows an error message when reset fails', async () => {
-    mockResetPassword.mockRejectedValue(new Error('User not found'));
+  it('shows the same generic success message for a nonexistent account, not an error', async () => {
+    // auth/user-not-found must not be distinguishable from a real send --
+    // otherwise this screen can be used to enumerate registered emails.
+    const notFoundError = new Error('There is no user record...');
+    notFoundError.code = 'auth/user-not-found';
+    mockResetPassword.mockRejectedValue(notFoundError);
     renderForgotPassword();
 
     await userEvent.type(
@@ -98,7 +102,31 @@ describe('ForgotPassword page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/user not found/i);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /check your inbox/i
+      );
+    });
+  });
+
+  it('shows a sanitized error message for a real failure (e.g. network)', async () => {
+    const networkError = new Error('network error');
+    networkError.code = 'auth/network-request-failed';
+    mockResetPassword.mockRejectedValue(networkError);
+    renderForgotPassword();
+
+    await userEvent.type(
+      screen.getByLabelText(/email address/i),
+      'user@example.com'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /send.*reset|reset.*link/i })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /could not reach vehicle-vitals|check your connection/i
+      );
     });
   });
 

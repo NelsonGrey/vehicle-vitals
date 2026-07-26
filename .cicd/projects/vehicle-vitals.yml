@@ -21,12 +21,12 @@ targets:
         enabled: true
 
   android:
-    enabled: false
+    enabled: true
     path: 'packages/mobile/android'
-    status: 'on_hold'
+    status: 'active'
     signing:
-      keystore_ref: '${ANDROID_KEYSTORE_PATH}'
-      key_alias: '${ANDROID_KEY_ALIAS}'
+      keystore_ref: '${ANDROID_KEYSTORE_BASE64}'
+      key_alias: 'vehicle-vitals'
     destinations:
       firebase_app_distribution:
         enabled: false

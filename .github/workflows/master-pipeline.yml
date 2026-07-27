@@ -543,6 +543,16 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('packages/mobile/android/gradle/wrapper/gradle-wrapper.properties', 'packages/mobile/android/**/build.gradle.kts', 'packages/mobile/android/settings.gradle.kts') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -551,9 +561,27 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Select Firebase Environment Config
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+        run: |
+          # firebase_options.dart's String.fromEnvironment('VV_FIREBASE_ENV')
+          # defaults to production when unset, and android/app/google-services.json
+          # (the file google-services Gradle plugin actually bakes into the
+          # build) is *also* the production project — so without this step
+          # every Android build, including develop/staging pushes, silently
+          # authenticates against vehicle-vitals-prod. Mirrors what the iOS
+          # Fastfile already does for the same reason.
+          case "$TARGET_ENV" in
+            production) SUFFIX="prod" ;;
+            staging) SUFFIX="staging" ;;
+            *) SUFFIX="dev" ;;
+          esac
+          cp "android/app/google-services.$SUFFIX.json" android/app/google-services.json
+
       - name: Build Debug APK
         if: needs.load-config.outputs.trigger_context != 'build_and_deploy'
-        run: flutter build apk --debug
+        run: flutter build apk --debug --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }}
 
       - name: Decode Release Keystore
         if: needs.load-config.outputs.trigger_context == 'build_and_deploy'
@@ -576,7 +604,7 @@ jobs:
             echo "❌ ANDROID_STORE_PASSWORD / ANDROID_KEY_PASSWORD secrets are not set"
             exit 1
           fi
-          flutter build appbundle --release
+          flutter build appbundle --release --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }}
 
       - name: Upload Android Artifacts
         if: always()

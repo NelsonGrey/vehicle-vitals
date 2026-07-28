@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 
 /*
-  Create (or refresh) the Apple App Review demo account in production:
-  Firebase Auth user + a personal org pre-set to the Premium tier + a
-  realistic garage (vehicles, maintenance, reminders, preferences) so a
-  reviewer signing in sees a fully populated app with no setup required.
+  Create (or refresh) an app review demo account in production: Firebase
+  Auth user + a personal org pre-set to the Premium tier + a realistic
+  garage (vehicles, maintenance, reminders, preferences) so a reviewer
+  signing in sees a fully populated app with no setup required.
 
   Usage:
-    node scripts/seed-app-review-demo-account.js           # dry run
-    node scripts/seed-app-review-demo-account.js --apply    # write changes
+    node scripts/seed-app-review-demo-account.js [--store=apple|google]           # dry run
+    node scripts/seed-app-review-demo-account.js [--store=apple|google] --apply    # write changes
+
+  --store defaults to "apple". Each store gets its own account (separate
+  email/uid) so reviewers from one store never see the other's name —
+  Apple and Google review teams get distinct demo accounts rather than a
+  shared one.
 
   Always targets vehicle-vitals-prod explicitly (hardcoded below) —
   this script has exactly one purpose and must never accidentally seed
@@ -31,9 +36,41 @@ const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestor
 const crypto = require('crypto');
 
 const PROJECT_ID = 'vehicle-vitals-prod';
-const DEMO_EMAIL = 'apple-review-demo@vehicle-vitals.com';
-const DEMO_DISPLAY_NAME = 'Apple Review Demo';
 const APPLY = process.argv.includes('--apply');
+
+const storeArg = process.argv.find((arg) => arg.startsWith('--store='));
+const STORE = storeArg ? storeArg.split('=')[1] : 'apple';
+
+const STORE_CONFIG = {
+  apple: {
+    email: 'apple-review-demo@vehicle-vitals.com',
+    displayName: 'Apple Review Demo',
+    orgName: 'Apple Review Demo Garage',
+    entitlementSource: 'app_store',
+    entitlementProductId: 'PREMIUM_iOS_ANNUAL',
+    verificationReason:
+      'Provisioned for Apple App Review, submission 6282ef3d-7122-4c29-ae08-110af9624fd0',
+    credentialsLabel: 'App Store Connect',
+  },
+  google: {
+    email: 'google-play-review-demo@vehicle-vitals.com',
+    displayName: 'Google Play Review Demo',
+    orgName: 'Google Play Review Demo Garage',
+    entitlementSource: 'play_store',
+    entitlementProductId: 'premium_android_annual',
+    verificationReason: 'Provisioned for Google Play App content review',
+    credentialsLabel: 'Google Play Console',
+  },
+};
+
+if (!STORE_CONFIG[STORE]) {
+  console.error(
+    `[seed-app-review-demo-account] unknown --store=${STORE}; expected "apple" or "google"`
+  );
+  process.exit(1);
+}
+
+const { email: DEMO_EMAIL, displayName: DEMO_DISPLAY_NAME } = STORE_CONFIG[STORE];
 
 function generatePassword(length = 20) {
   const charset =
@@ -271,7 +308,7 @@ const VEHICLES = [
 
 async function main() {
   console.log(
-    `[seed-app-review-demo-account] mode=${APPLY ? 'apply' : 'dry-run'} project=${PROJECT_ID}`
+    `[seed-app-review-demo-account] mode=${APPLY ? 'apply' : 'dry-run'} project=${PROJECT_ID} store=${STORE}`
   );
 
   if (!APPLY) {
@@ -329,7 +366,7 @@ async function main() {
     db.doc(`orgs/${orgId}`),
     {
       orgId,
-      name: 'Apple Review Demo Garage',
+      name: STORE_CONFIG[STORE].orgName,
       type: 'personal',
       garageStorageMode: 'user_scoped',
       planTier: 'premium',
@@ -368,7 +405,7 @@ async function main() {
     db.doc(`users/${uid}`),
     {
       displayName: DEMO_DISPLAY_NAME,
-      preferredName: 'Apple Review',
+      preferredName: STORE === 'google' ? 'Google Play Review' : 'Apple Review',
       role: 'demo',
       email: DEMO_EMAIL,
       emailRemindersEnabled: false,
@@ -393,7 +430,7 @@ async function main() {
         new Date(isoDaysFromNow(335))
       ),
       autoRenew: true,
-      paymentMethod: 'app_store',
+      paymentMethod: STORE_CONFIG[STORE].entitlementSource,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
       lastPaymentError: null,
@@ -408,15 +445,14 @@ async function main() {
       active: true,
       tier: 'premium',
       billingPeriod: 'annual',
-      productId: 'PREMIUM_iOS_ANNUAL',
-      source: 'app_store',
+      productId: STORE_CONFIG[STORE].entitlementProductId,
+      source: STORE_CONFIG[STORE].entitlementSource,
       purchaseId: `demo-seed-${uid}`,
       receiptHash: 'demo-seed-noop',
       verificationState: 'verified',
       verified: true,
       verificationProvider: 'admin-seed',
-      verificationReason:
-        'Provisioned for Apple App Review, submission 6282ef3d-7122-4c29-ae08-110af9624fd0',
+      verificationReason: STORE_CONFIG[STORE].verificationReason,
       updatedAt: now,
     },
     { merge: true }
@@ -510,11 +546,12 @@ async function main() {
     );
   }
 
+  const label = STORE_CONFIG[STORE].credentialsLabel;
   console.log('');
-  console.log('=== App Store Connect review credentials ===');
+  console.log(`=== ${label} review credentials ===`);
   console.log(`Email:    ${DEMO_EMAIL}`);
   console.log(`Password: ${password}`);
-  console.log('=============================================');
+  console.log('='.repeat(label.length + 24));
   console.log(
     '[seed-app-review-demo-account] save the password now — it is not stored anywhere and re-running this script will rotate it.'
   );

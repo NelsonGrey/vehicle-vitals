@@ -107,6 +107,8 @@ jobs:
       project_name: ${{ steps.manifest.outputs.project_name }}
       ios_enabled: ${{ steps.manifest.outputs.ios_enabled }}
       android_enabled: ${{ steps.manifest.outputs.android_enabled }}
+      google_play_enabled: ${{ steps.manifest.outputs.google_play_enabled }}
+      google_play_track: ${{ steps.manifest.outputs.google_play_track }}
       web_enabled: ${{ steps.manifest.outputs.web_enabled }}
       firebase_enabled: ${{ steps.manifest.outputs.firebase_enabled }}
       chrome_extension: ${{ steps.manifest.outputs.chrome_extension }}
@@ -140,6 +142,8 @@ jobs:
             project_name: data.dig('project', 'name') || File.basename(Dir.pwd),
             ios_enabled: targets.dig('ios', 'enabled') ? 'true' : 'false',
             android_enabled: targets.dig('android', 'enabled') ? 'true' : 'false',
+            google_play_enabled: targets.dig('android', 'destinations', 'google_play', 'enabled') ? 'true' : 'false',
+            google_play_track: targets.dig('android', 'destinations', 'google_play', 'track') || 'internal',
             web_enabled: targets.dig('web', 'enabled') ? 'true' : 'false',
             firebase_enabled: targets.dig('firebase', 'enabled') ? 'true' : 'false',
             chrome_extension: targets.dig('chrome_extension', 'enabled') ? 'true' : 'false'
@@ -615,6 +619,18 @@ jobs:
             packages/mobile/build/app/outputs/**/*.apk
             packages/mobile/build/app/outputs/**/*.aab
           if-no-files-found: warn
+
+      - name: Upload to Google Play
+        if: |
+          needs.load-config.outputs.trigger_context == 'build_and_deploy' &&
+          needs.load-config.outputs.google_play_enabled == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.vehiclevitals.app.android
+          releaseFiles: packages/mobile/build/app/outputs/bundle/release/*.aab
+          track: ${{ needs.load-config.outputs.google_play_track }}
+          status: completed
 
   build-web:
     name: Build Web App

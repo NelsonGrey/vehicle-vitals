@@ -468,7 +468,10 @@ class FirestoreService {
 
     final vehiclesCollection = await _vehiclesCollection();
     final snapshot = await vehiclesCollection.get();
-    return snapshot.docs.map((doc) => Vehicle.fromMap(doc.data())).toList();
+    return snapshot.docs
+        .where((doc) => !isPreferencesVehicle(doc.id))
+        .map((doc) => Vehicle.fromMap(doc.data()))
+        .toList();
   }
 
   Future<PaginatedVehicles> getVehiclesPaginated({
@@ -489,8 +492,11 @@ class FirestoreService {
     }
 
     final snapshot = await query.get();
+    final docs = snapshot.docs
+        .where((doc) => !isPreferencesVehicle(doc.id))
+        .toList();
     return PaginatedVehicles(
-      data: snapshot.docs.map((doc) => Vehicle.fromMap(doc.data())).toList(),
+      data: docs.map((doc) => Vehicle.fromMap(doc.data())).toList(),
       lastDoc: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
       hasMore: snapshot.docs.length == pageSize,
     );
@@ -592,8 +598,10 @@ class FirestoreService {
 
     final vehiclesCollection = await _vehiclesCollection();
     yield* vehiclesCollection.snapshots().map(
-      (snapshot) =>
-          snapshot.docs.map((doc) => Vehicle.fromMap(doc.data())).toList(),
+      (snapshot) => snapshot.docs
+          .where((doc) => !isPreferencesVehicle(doc.id))
+          .map((doc) => Vehicle.fromMap(doc.data()))
+          .toList(),
     );
   }
 

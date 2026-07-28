@@ -123,17 +123,23 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
           nextUnsupportedVehicles.add(vehicle);
         }
 
-        final reminders = await firestoreService.getReminders(vehicle.vin);
-        for (final reminder in reminders) {
-          final serviceType = (reminder['serviceType'] ?? 'maintenance')
-              .toString();
-          final status = (reminder['status'] ?? 'active').toString();
-          nextSavedReminders.add({...reminder, 'vin': vehicle.vin});
-          if (status != 'completed' && status != 'dismissed') {
-            nextSavedReminderKeys.add(
-              _buildReminderKey(vehicle.vin, serviceType),
-            );
+        try {
+          final reminders = await firestoreService.getReminders(vehicle.vin);
+          for (final reminder in reminders) {
+            final serviceType = (reminder['serviceType'] ?? 'maintenance')
+                .toString();
+            final status = (reminder['status'] ?? 'active').toString();
+            nextSavedReminders.add({...reminder, 'vin': vehicle.vin});
+            if (status != 'completed' && status != 'dismissed') {
+              nextSavedReminderKeys.add(
+                _buildReminderKey(vehicle.vin, serviceType),
+              );
+            }
           }
+        } catch (e) {
+          // Don't let one vehicle's bad data blank out every other
+          // vehicle's already-loaded reminders.
+          debugPrint('Failed to load reminders for ${vehicle.vin}: $e');
         }
 
         final upcoming = (plan?.items ?? const <MaintenancePlanItem>[]).map((

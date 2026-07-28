@@ -12,6 +12,16 @@ service firebase.storage {
         && firestore.get(orgMemberDoc(orgId)).data.status == 'active';
     }
 
+    // Mirrors firestore.rules' canWriteOrgVehicles -- read_only is a real,
+    // assignable member role that must not be able to write org vehicle
+    // records. Previously this only gated Firestore; Storage let a
+    // read_only member upload/overwrite/delete the same vehicle's photos
+    // and attachments.
+    function canWriteOrgVehicles(orgId) {
+      return isActiveOrgMember(orgId)
+        && firestore.get(orgMemberDoc(orgId)).data.role != 'read_only';
+    }
+
     // App attachments live under users/{uid}/... and are private to the owner.
     match /users/{userId}/{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -19,7 +29,8 @@ service firebase.storage {
 
     // Household/shared-garage attachments are private to active org members.
     match /orgs/{orgId}/vehicles/{allPaths=**} {
-      allow read, write: if isActiveOrgMember(orgId);
+      allow read: if isActiveOrgMember(orgId);
+      allow write: if canWriteOrgVehicles(orgId);
     }
 
     // Optional public assets path.

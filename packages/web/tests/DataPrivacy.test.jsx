@@ -19,6 +19,17 @@ vi.mock('../src/utils/privacyRequestService', () => ({
   requestAccountDataExport: vi.fn(),
 }));
 
+const mockSignOut = vi.fn(async () => {});
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 const MOCK_USER = {
   uid: 'user-1',
   email: 'test@example.com',
@@ -29,6 +40,7 @@ vi.mock('../src/shared/AuthContext', () => ({
     user: MOCK_USER,
     reauthenticateWithGoogle: vi.fn(),
     reauthenticateWithApple: vi.fn(),
+    signOut: mockSignOut,
   }),
 }));
 
@@ -64,7 +76,7 @@ describe('DataPrivacy', () => {
     requestAccountDataExport.mockResolvedValue({
       success: true,
       requestId: 'req-export-1',
-      status: 'requested',
+      status: 'completed',
     });
 
     renderPage();
@@ -79,15 +91,16 @@ describe('DataPrivacy', () => {
     await waitFor(() =>
       expect(requestAccountDataExport).toHaveBeenCalledTimes(1)
     );
-    await waitFor(() => screen.getByText(/data export request filed/i));
+    await waitFor(() => screen.getByText(/your data export is ready/i));
     expect(requestAccountDataDeletion).not.toHaveBeenCalled();
+    expect(mockSignOut).not.toHaveBeenCalled();
   });
 
-  it('files an account deletion request and keeps the copy truthful about staying signed in', async () => {
+  it('immediately deletes the account and signs the user out', async () => {
     requestAccountDataDeletion.mockResolvedValue({
       success: true,
       requestId: 'req-delete-1',
-      status: 'requested',
+      status: 'completed',
     });
 
     renderPage();
@@ -102,20 +115,43 @@ describe('DataPrivacy', () => {
     await waitFor(() =>
       expect(requestAccountDataDeletion).toHaveBeenCalledTimes(1)
     );
-    await waitFor(() => screen.getByText(/account deletion request filed/i));
-    expect(
-      screen.getByText(/you remain signed in until then/i)
-    ).toBeInTheDocument();
+    await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'));
   });
 
-  it('does not offer an immediate irreversible delete button', async () => {
+  it('does not sign out or navigate if the deletion request fails', async () => {
+    requestAccountDataDeletion.mockRejectedValue(new Error('network error'));
+
     renderPage();
 
     await waitFor(() =>
       screen.getByRole('button', { name: /request account deletion/i })
     );
-    expect(
-      screen.queryByRole('button', { name: /^delete account$/i })
-    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: /request account deletion/i })
+    );
+
+    await waitFor(() =>
+      expect(requestAccountDataDeletion).toHaveBeenCalledTimes(1)
+    );
+    await waitFor(() => screen.getByRole('alert'));
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('confirms with the user that deletion is immediate and irreversible before proceeding', async () => {
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByRole('button', { name: /request account deletion/i })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: /request account deletion/i })
+    );
+
+    await waitFor(() => expect(window.confirm).toHaveBeenCalledTimes(1));
+    expect(window.confirm.mock.calls[0][0]).toMatch(
+      /immediately.*permanently deletes|cannot be undone/i
+    );
   });
 });

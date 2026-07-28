@@ -8,7 +8,7 @@ import 'package:vehicle_vitals_flutter/screens/premium_screen.dart';
 final _testTheme = ThemeData(useMaterial3: false);
 
 void main() {
-  testWidgets('renders all four subscription tiers and base labels', (
+  testWidgets('renders all three subscription tiers and base labels', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -24,7 +24,6 @@ void main() {
               premiumPrice: r'$4.99',
               onChoosePro: () {},
               onChoosePremium: () {},
-              onContactSales: () {},
             ),
           ),
         ),
@@ -35,46 +34,8 @@ void main() {
     expect(find.text('Free'), findsOneWidget);
     expect(find.text('Pro'), findsOneWidget);
     expect(find.text('Premium'), findsOneWidget);
-    expect(find.text('Enterprise'), findsOneWidget);
-    expect(find.text('Contact Sales'), findsOneWidget);
-  });
-
-  testWidgets('tapping contact sales invokes callback exactly once', (
-    WidgetTester tester,
-  ) async {
-    int contactSalesTapped = 0;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: _testTheme,
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: PremiumPlanCatalog(
-              currentTier: 'free',
-              isLoading: false,
-              billingPeriod: 'monthly',
-              proPrice: r'$2.99/mo',
-              premiumPrice: r'$4.99',
-              onChoosePro: () {},
-              onChoosePremium: () {},
-              onContactSales: () {
-                contactSalesTapped += 1;
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.scrollUntilVisible(
-      find.widgetWithText(ElevatedButton, 'Contact Sales'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Contact Sales'));
-    await tester.pump();
-
-    expect(contactSalesTapped, 1);
+    expect(find.text('Enterprise'), findsNothing);
+    expect(find.text('Contact Sales'), findsNothing);
   });
 
   testWidgets('tapping choose pro invokes callback exactly once', (
@@ -97,7 +58,6 @@ void main() {
                 proTapped += 1;
               },
               onChoosePremium: () {},
-              onContactSales: () {},
             ),
           ),
         ),
@@ -134,7 +94,6 @@ void main() {
               onChoosePremium: () {
                 premiumTapped += 1;
               },
-              onContactSales: () {},
             ),
           ),
         ),
@@ -152,7 +111,7 @@ void main() {
     expect(premiumTapped, 1);
   });
 
-  testWidgets('shows marketing taglines for all four tiers', (
+  testWidgets('shows marketing taglines for all three tiers', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -168,7 +127,6 @@ void main() {
               premiumPrice: null,
               onChoosePro: () {},
               onChoosePremium: () {},
-              onContactSales: () {},
             ),
           ),
         ),
@@ -178,7 +136,7 @@ void main() {
     expect(find.text('Learn and document'), findsOneWidget);
     expect(find.text('Plan and coordinate'), findsOneWidget);
     expect(find.text('Forecast and automate'), findsOneWidget);
-    expect(find.text('Govern and integrate'), findsOneWidget);
+    expect(find.text('Govern and integrate'), findsNothing);
   });
 
   testWidgets(
@@ -197,7 +155,6 @@ void main() {
                 premiumPrice: null,
                 onChoosePro: () {},
                 onChoosePremium: () {},
-                onContactSales: () {},
               ),
             ),
           ),
@@ -229,7 +186,6 @@ void main() {
                 premiumPrice: null,
                 onChoosePro: () {},
                 onChoosePremium: () {},
-                onContactSales: () {},
               ),
             ),
           ),

@@ -193,6 +193,7 @@ const Home = lazy(() => import('./pages/Home'));
 const AddVehicle = lazy(() => import('./pages/AddVehicle'));
 const EditVehicle = lazy(() => import('./pages/EditVehicle'));
 const Records = lazy(() => import('./pages/Records'));
+const Coverage = lazy(() => import('./pages/Coverage'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ServiceProviders = lazy(() => import('./pages/ServiceProviders'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
@@ -442,6 +443,7 @@ function App() {
                     <Route path="add-vehicle" element={<AddVehicle />} />
                     <Route path="edit-vehicle/:vin" element={<EditVehicle />} />
                     <Route path="records/:vin" element={<Records />} />
+                    <Route path="coverage/:vin" element={<Coverage />} />
                     <Route path="profile" element={<Profile />} />
                     {/* Orphaned since the Profile-hub refactor (see
                         docs/CAPABILITY_ARCHITECTURE_REFACTOR_PROMPT.md)

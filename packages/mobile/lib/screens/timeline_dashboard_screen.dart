@@ -44,11 +44,17 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
       final events = <_TimelineEvent>[];
 
       for (final vehicle in vehicles) {
-        final entries = await firestoreService.getMaintenanceEntries(
-          vehicle.vin,
-        );
-        for (final entry in entries) {
-          events.add(_TimelineEvent(vehicle: vehicle, entry: entry));
+        try {
+          final entries = await firestoreService.getMaintenanceEntries(
+            vehicle.vin,
+          );
+          for (final entry in entries) {
+            events.add(_TimelineEvent(vehicle: vehicle, entry: entry));
+          }
+        } catch (e) {
+          // Don't let one vehicle's bad data blank out every other
+          // vehicle's already-loaded history.
+          debugPrint('Failed to load maintenance for ${vehicle.vin}: $e');
         }
       }
 

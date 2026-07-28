@@ -56,12 +56,15 @@ void main() {
     expect(source, contains('premiumService.purchase(tier, _billingPeriod)'));
   });
 
-  test('in-app-purchase disclosure mentions Apple, Pro, and Premium', () {
+  test('in-app-purchase disclosure mentions Apple', () {
     expect(
       source,
-      contains(
-        'Payment is processed through Apple in-app purchase for Pro and Premium',
-      ),
+      contains('Payment is processed through Apple in-app purchase.'),
     );
+  });
+
+  test('Enterprise tier is not offered on the IAP paywall', () {
+    expect(source, isNot(contains('onContactSales')));
+    expect(source, isNot(contains("'Contact Sales'")));
   });
 }

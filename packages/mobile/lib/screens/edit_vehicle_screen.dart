@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -218,10 +219,16 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
           final uri = Uri.parse(
             'https://us-central1-$projectId.cloudfunctions.net/vinLookup',
           );
+          final idToken = await FirebaseAuth.instance.currentUser
+              ?.getIdToken();
+          if (idToken == null) {
+            throw Exception('Please sign in to look up VIN.');
+          }
 
           final client = HttpClient();
           final request = await client.postUrl(uri);
           request.headers.contentType = ContentType.json;
+          request.headers.set('Authorization', 'Bearer $idToken');
           request.write(jsonEncode({'vin': vin}));
 
           final response = await request.close();

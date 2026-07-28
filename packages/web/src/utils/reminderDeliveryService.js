@@ -1,3 +1,5 @@
+import { auth } from '../shared/firebaseConfig';
+
 const resolveReminderEndpoint = () => {
   const explicit = import.meta.env.VITE_FUNCTIONS_BASE_URL;
   if (explicit) {
@@ -17,11 +19,17 @@ export async function sendReminderDeliveryEmail({
   vehicle,
   maintenanceItems,
 }) {
+  const idToken = await auth.currentUser?.getIdToken();
+  if (!idToken) {
+    throw new Error('Please sign in to send a reminder email.');
+  }
+
   const endpoint = resolveReminderEndpoint();
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${idToken}`,
     },
     body: JSON.stringify({ email, vehicle, maintenanceItems }),
   });

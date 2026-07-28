@@ -25,6 +25,11 @@ packages/mobile/android/app/release/
 packages/mobile/android/app/*.jks
 packages/mobile/android/app/*.keystore
 
+# Firebase Test Lab Robo scripts with real demo-account credentials filled in
+# (commit the .example.json templates instead, never the filled versions)
+packages/mobile/android/robo-scripts/*.json
+!packages/mobile/android/robo-scripts/*.example.json
+
 # API server builds
 packages/api-server/dist/
 packages/api-server/build/

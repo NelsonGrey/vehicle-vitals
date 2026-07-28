@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Phone-only, mirroring the iOS TARGETED_DEVICE_FAMILY=1 restriction:
+       the app's UI isn't designed or tested for tablet-sized layouts. -->
+  <supports-screens
+    android:smallScreens="true"
+    android:normalScreens="true"
+    android:largeScreens="false"
+    android:xlargeScreens="false"
+    android:anyDensity="true" />
   <uses-permission android:name="android.permission.CAMERA" />
   <application
     android:label="Vehicle-Vitals"

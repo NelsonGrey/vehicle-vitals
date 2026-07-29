@@ -13,12 +13,8 @@ export default function Terms() {
         <h1 className="mb-2 font-serif text-3xl text-slate-900 dark:text-slate-100 sm:text-4xl">
           Terms of Use
         </h1>
-        <p className="mb-2 text-slate-600 dark:text-slate-400">
-          Last updated: July 16, 2026
-        </p>
-        <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
-          These terms are synchronized across web and iPhone for product review.
-          Final legal approval is required before public launch.
+        <p className="mb-6 text-slate-600 dark:text-slate-400">
+          Last updated: July 29, 2026
         </p>
 
         <div className="space-y-6 leading-relaxed text-slate-700 dark:text-slate-300">

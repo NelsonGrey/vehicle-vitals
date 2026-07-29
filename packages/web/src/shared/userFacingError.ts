@@ -17,7 +17,7 @@ export function userFacingError(
   if (message.includes('email-already-in-use')) {
     return 'An account already uses this email. Sign in or reset your password.';
   }
-  if (message.includes('weak-password')) {
+  if (message.includes('weak-password') || message.includes('password-does-not-meet-requirements')) {
     return 'Choose a stronger password with at least eight characters.';
   }
   if (message.includes('too-many-requests')) {

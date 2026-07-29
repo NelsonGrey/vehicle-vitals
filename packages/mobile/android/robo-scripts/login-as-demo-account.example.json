@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1001,
+    "description": "Sign in with the Google Play review demo account so Robo can explore authenticated screens instead of getting stuck on the login form.",
+    "crawlStage": "pre_crawl",
+    "maxNumberOfRuns": 1,
+    "actions": [
+      {
+        "description": "Enter demo account email",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "google-play-review-demo@vehicle-vitals.com",
+        "elementDescriptors": [
+          {
+            "textRegex": "(?i).*email.*"
+          }
+        ]
+      },
+      {
+        "description": "Enter demo account password",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "REPLACE_WITH_CURRENT_DEMO_ACCOUNT_PASSWORD",
+        "elementDescriptors": [
+          {
+            "textRegex": "(?i).*password.*"
+          }
+        ]
+      },
+      {
+        "description": "Tap Sign In",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Sign In"
+          }
+        ]
+      },
+      {
+        "description": "Wait for the Garage screen to load",
+        "eventType": "WAIT",
+        "delayTime": 3000
+      }
+    ]
+  }
+]

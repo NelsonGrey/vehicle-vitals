@@ -140,13 +140,11 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                       Text(
                         'Request a copy of your data, or request deletion of '
                         'your account and all associated vehicle, '
-                        'maintenance, and subscription data. Deletion '
-                        'requests are processed by our team and cannot be '
-                        'undone; you remain signed in until a deletion '
-                        'request has been processed. We will use the account '
-                        'email for status updates and any required identity '
-                        'verification. Processing time depends on the request '
-                        'and applicable legal or retention requirements.',
+                        'maintenance, and subscription data. Account '
+                        'deletion is immediate and permanent: your account '
+                        'and all associated data are deleted right away and '
+                        'you are signed out automatically. This cannot be '
+                        'undone.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 12),

@@ -10,11 +10,20 @@ const mockSignInWithApple = vi.fn();
 const mockNavigate = vi.fn();
 let mockIsAppOffline = false;
 
+// Permissive by default (no length/character-class requirements) so tests
+// exercising form wiring, not password strength, aren't coupled to the real
+// enforced policy. Tests of the policy gating itself override this per-test.
+const mockCheckPasswordPolicy = vi.fn().mockResolvedValue({
+  isValid: true,
+  passwordPolicy: { customStrengthOptions: { minPasswordLength: 1 } },
+});
+
 vi.mock('../src/shared/AuthContext', () => ({
   useAuth: () => ({
     signUp: mockSignUp,
     signInWithGoogle: mockSignInWithGoogle,
     signInWithApple: mockSignInWithApple,
+    checkPasswordPolicy: mockCheckPasswordPolicy,
   }),
 }));
 
@@ -45,6 +54,10 @@ describe('SignUp page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsAppOffline = false;
+    mockCheckPasswordPolicy.mockResolvedValue({
+      isValid: true,
+      passwordPolicy: { customStrengthOptions: { minPasswordLength: 1 } },
+    });
   });
 
   afterEach(() => {
@@ -188,5 +201,61 @@ describe('SignUp page', () => {
     await userEvent.click(googleButton);
 
     await waitFor(() => expect(mockSignInWithGoogle).toHaveBeenCalled());
+  });
+
+  it('rejects a password that fails the live policy client-side, without calling signUp', async () => {
+    mockCheckPasswordPolicy.mockResolvedValue({
+      isValid: true,
+      passwordPolicy: {
+        customStrengthOptions: {
+          minPasswordLength: 8,
+          containsUppercaseLetter: true,
+          containsLowercaseLetter: true,
+          containsNumericCharacter: true,
+          containsNonAlphanumericCharacter: true,
+        },
+      },
+    });
+    renderSignUp();
+
+    await waitFor(() => expect(mockCheckPasswordPolicy).toHaveBeenCalledWith(' '));
+
+    await userEvent.type(screen.getByLabelText(/email address/i), 'a@b.com');
+    await userEvent.type(screen.getByLabelText(/^password/i), 'weakpass');
+    await userEvent.type(screen.getByLabelText(/confirm password/i), 'weakpass');
+    await userEvent.click(
+      screen.getByRole('button', { name: /create.*account/i })
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/uppercase/i);
+    expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it('rejects a password the authoritative live check flags as invalid, without calling signUp', async () => {
+    mockCheckPasswordPolicy.mockResolvedValue({
+      isValid: false,
+      meetsMinPasswordLength: true,
+      containsUppercaseLetter: false,
+      containsLowercaseLetter: true,
+      containsNumericCharacter: true,
+      containsNonAlphanumericCharacter: true,
+      passwordPolicy: { customStrengthOptions: { minPasswordLength: 1 } },
+    });
+    renderSignUp();
+
+    await userEvent.type(screen.getByLabelText(/email address/i), 'a@b.com');
+    await userEvent.type(screen.getByLabelText(/^password/i), 'password1!');
+    await userEvent.type(
+      screen.getByLabelText(/confirm password/i),
+      'password1!'
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /create.*account/i })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/uppercase/i);
+    });
+    expect(mockSignUp).not.toHaveBeenCalled();
   });
 });

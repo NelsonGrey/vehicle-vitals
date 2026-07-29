@@ -12,19 +12,10 @@ class TermsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            'Last updated: July 16, 2026',
+            'Last updated: July 29, 2026',
             style: TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 12),
-          Card(
-            color: Colors.amber.withValues(alpha: 0.12),
-            child: const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text(
-                'These terms are synchronized across web and iPhone for product review. Final legal approval is required before public launch.',
-              ),
-            ),
-          ),
           const _TermsSection(
             title: '1. Acceptance',
             body:

@@ -554,7 +554,7 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
           ) !== undefined;
         const hasProofHeading =
           Array.from(document.querySelectorAll('h1, h2, h3')).find(node =>
-            node.textContent?.includes('Product proof for the story')
+            node.textContent?.includes('See the product in action')
           ) !== undefined;
         const hasGettingStartedLink =
           Array.from(document.querySelectorAll('a')).find(link =>

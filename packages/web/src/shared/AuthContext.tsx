@@ -7,6 +7,7 @@ import {
   linkWithPopup,
   OAuthProvider,
   onAuthStateChanged,
+  PasswordValidationStatus,
   reauthenticateWithPopup,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -14,6 +15,7 @@ import {
   signOut,
   User,
   UserCredential,
+  validatePassword,
 } from 'firebase/auth';
 import {
   createContext,
@@ -44,6 +46,7 @@ interface AuthContextType {
   supportAccessLoading: boolean;
   signIn: (email: string, password: string) => Promise<UserCredential>;
   signUp: (email: string, password: string) => Promise<UserCredential>;
+  checkPasswordPolicy: (password: string) => Promise<PasswordValidationStatus>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<UserCredential>;
   signInWithApple: () => Promise<UserCredential>;
@@ -71,6 +74,9 @@ const AuthContext = createContext<AuthContextType>({
     throw new Error('Firebase not initialized');
   },
   signUp: async () => {
+    throw new Error('Firebase not initialized');
+  },
+  checkPasswordPolicy: async () => {
     throw new Error('Firebase not initialized');
   },
   signOut: async () => {
@@ -300,6 +306,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       },
       signUp: (email: string, password: string) =>
         createUserWithEmailAndPassword(auth, email, password),
+      checkPasswordPolicy: (password: string) =>
+        validatePassword(auth, password),
       signOut: async () => {
         pendingLinkCredentialRef.current = null;
         pendingLinkEmailRef.current = '';

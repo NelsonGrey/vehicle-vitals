@@ -5,10 +5,11 @@ project:
 
 targets:
   ios:
-    # Temporarily disabled: app is submitted to Apple and awaiting review;
-    # skip triggering a new TestFlight build during this web-only staging/
-    # production promotion. Re-enable once this promotion is deployed.
-    enabled: false
+    # Re-enabled July 29, 2026: Apple rejected build 1092 (3.1.2(c) EULA
+    # link, 5.1.1(v) account deletion copy) and the fix needs a fresh signed
+    # TestFlight build for resubmission. The web-only promotion this was
+    # disabled for is deployed to production.
+    enabled: true
     schemes:
       - name: 'Runner'
         path: 'packages/mobile/ios'

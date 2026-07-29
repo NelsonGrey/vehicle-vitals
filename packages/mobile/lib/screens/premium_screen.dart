@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../services/feature_flags_service.dart';
@@ -147,6 +148,25 @@ class _PremiumScreenState extends State<PremiumScreen> {
           style: TextStyle(fontSize: 12, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
+        const SizedBox(height: 8),
+        _buildLegalLinks(),
+      ],
+    );
+  }
+
+  Widget _buildLegalLinks() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton(
+          onPressed: () => context.push('/app/terms'),
+          child: const Text('Terms of Use', style: TextStyle(fontSize: 12)),
+        ),
+        const Text('•', style: TextStyle(color: Colors.grey)),
+        TextButton(
+          onPressed: () => context.push('/app/privacy'),
+          child: const Text('Privacy Policy', style: TextStyle(fontSize: 12)),
+        ),
       ],
     );
   }
@@ -189,6 +209,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
             style: TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 4),
+          _buildLegalLinks(),
         ],
       ),
     );

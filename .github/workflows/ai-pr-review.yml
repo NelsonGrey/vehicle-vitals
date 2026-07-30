@@ -1,0 +1,60 @@
+name: "AI PR Review"
+
+concurrency:
+  group: ai-pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - main
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: Claude Review
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Install Anthropic SDK
+        run: npm install --no-save @anthropic-ai/sdk@latest
+
+      - name: Generate diff
+        run: |
+          git diff "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > /tmp/pr.diff
+          wc -l /tmp/pr.diff
+
+      - name: Run Claude review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DIFF_PATH: /tmp/pr.diff
+          REVIEW_RESULT_PATH: /tmp/review-result.json
+        run: node .github/scripts/ai-review.mjs
+
+      - name: Submit review as bot account
+        env:
+          GH_TOKEN: ${{ secrets.AI_REVIEWER_PAT }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REVIEW_RESULT_PATH: /tmp/review-result.json
+        run: node .github/scripts/submit-review.mjs

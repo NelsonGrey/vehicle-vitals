@@ -18,13 +18,22 @@
 #   PREMIUM_iOS_MONTH  premium tier, monthly, $6.99/mo
 #   PREMIUM_iOS_ANNUAL premium tier, annual,  $69.99/yr
 #
-# All four are modeled as one subscription group ("Vehicle-Vitals Plans")
-# containing four subscriptions, using groupLevel to encode tier rank so
-# Apple treats a pro->premium change as an upgrade/downgrade rather than a
-# crossgrade, and a monthly<->annual change within the same tier as a
-# duration change:
-#   groupLevel 1: PRO_iOS_MONTH, PRO_iOS_ANNUAL
-#   groupLevel 2: PREMIUM_iOS_MONTH, PREMIUM_iOS_ANNUAL
+# All four are modeled as one subscription group, containing four
+# subscriptions, using groupLevel to encode tier rank so Apple treats a
+# pro->premium change as an upgrade/downgrade rather than a crossgrade, and
+# a monthly<->annual change within the same tier as a duration change. If
+# this script has to create the group (see create_draft below), it uses
+# groupLevel 1 for the two PRO_* products and 2 for the two PREMIUM_*
+# products -- the exact numbers don't matter, only their relative order.
+#
+# As of this script's first live run, all four products already exist in
+# App Store Connect under a group named "Vehicle-Vitals iOS Digital
+# Subscription" (state: READY_TO_SUBMIT, groupLevels 5-8) -- created in an
+# earlier session, not by this script. `create_draft` checks for an
+# existing product by productId across ALL of the app's subscription
+# groups (not just one it might create) before creating anything, so
+# running it against this app is a safe no-op; it only creates what's
+# actually missing.
 #
 # Usage:
 #   ruby manage_subscriptions.rb status                     # read-only

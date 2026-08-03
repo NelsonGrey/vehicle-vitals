@@ -30,6 +30,16 @@ on:
         required: false
         type: boolean
         default: false
+      push_ios_metadata:
+        description: "Push iOS App Store Connect metadata/screenshots (draft, not submitted for review)"
+        required: false
+        type: boolean
+        default: false
+      submit_to_app_store:
+        description: "Submit the current App Store Connect build for App Store review (PRODUCTION only, human-gated)"
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - develop
@@ -525,6 +535,69 @@ jobs:
             ~/Library/Logs/gym
             ~/Library/Logs/fastlane
           if-no-files-found: ignore
+
+  # 📮 Push iOS App Store Connect metadata/screenshots without submitting
+  # for review. Human-triggered only (workflow_dispatch) -- never runs on
+  # a plain push, since it mutates real App Store Connect listing state.
+  push-ios-metadata:
+    name: 📮 Push iOS Metadata (App Store Connect)
+    needs: [load-config]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.push_ios_metadata == 'true' &&
+      needs.load-config.outputs.target_environment == 'production'
+    runs-on: macos-latest
+    environment: production
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Push metadata (draft, not submitted)
+        working-directory: packages/mobile/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec fastlane verify_metadata
+
+  # 📮 Submit the current App Store Connect build for App Store review.
+  # Deliberately manual-gated (workflow_dispatch boolean, PRODUCTION only)
+  # -- this is the one genuinely irreversible step in the iOS pipeline and
+  # must always be a human decision, never automatic on push.
+  submit-ios-app-store:
+    name: 📮 Submit to App Store Review
+    needs: [load-config]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.submit_to_app_store == 'true' &&
+      needs.load-config.outputs.target_environment == 'production'
+    runs-on: macos-latest
+    environment: production
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Submit to App Store review
+        working-directory: packages/mobile/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec fastlane submit_to_app_store
 
   build-android:
     name: Build Android App

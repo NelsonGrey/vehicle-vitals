@@ -40,6 +40,11 @@ on:
         required: false
         type: boolean
         default: false
+      debug_store_scripts:
+        description: "TEMPORARY: run store-automation scripts debug job (removed before merge)"
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - develop
@@ -1236,3 +1241,40 @@ jobs:
           echo "- Web: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Firebase: ${{ needs.deploy-firebase.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Chrome Extension: ${{ needs.build-chrome-extension.result }}" >> $GITHUB_STEP_SUMMARY
+
+  # TEMPORARY -- live-verification job for the new store-automation scripts
+  # (iOS subscription management, Android listing push, Android subscription
+  # management). Removed before this branch merges; see PR description.
+  debug-store-scripts:
+    name: "[TEMP] Debug store scripts"
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.debug_store_scripts == 'true'
+    runs-on: macos-latest
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+      FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: iOS subscription status
+        working-directory: packages/mobile/ios
+        run: bundle exec ruby fastlane/scripts/manage_subscriptions.rb status
+
+      - name: Android listing publish
+        run: bash scripts/store-promo/publish-play-listing.sh
+
+      - name: Android subscription status
+        run: |
+          KEY_FILE=$(mktemp)
+          printf '%s' "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > "$KEY_FILE"
+          SA_ACCOUNT=$(python3 -c "import json; print(json.load(open('$KEY_FILE'))['client_email'])")
+          gcloud auth activate-service-account "$SA_ACCOUNT" --key-file="$KEY_FILE"
+          sed -i '' "s#^SA_ACCOUNT = .*#SA_ACCOUNT = \"$SA_ACCOUNT\"#" scripts/store-promo/manage-play-subscriptions.py
+          python3 scripts/store-promo/manage-play-subscriptions.py status

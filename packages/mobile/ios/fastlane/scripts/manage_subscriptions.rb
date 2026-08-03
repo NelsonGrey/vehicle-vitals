@@ -182,6 +182,25 @@ def find_subscription(group_id, product_id)
   subs["data"]&.find { |s| s.dig("attributes", "productId") == product_id }
 end
 
+# Product IDs are unique per app across ALL subscription groups, not just
+# the one this script would create -- so "does this product already exist"
+# has to check app-wide, not just inside GROUP_REFERENCE_NAME. This matters
+# in practice: this app's four products already exist, created earlier
+# under a differently-named group ("Vehicle-Vitals iOS Digital
+# Subscription"), so scoping the lookup to GROUP_REFERENCE_NAME alone would
+# have missed them and attempted a duplicate create (which the API would
+# have rejected, but only after already creating a second, confusing,
+# empty group).
+def find_subscription_in_any_group(app_id, product_id)
+  groups = asc_get("/v1/apps/#{app_id}/subscriptionGroups?limit=50")
+  groups["data"]&.each do |g|
+    subs = asc_get("/v1/subscriptionGroups/#{g['id']}/subscriptions?limit=50")
+    match = subs["data"]&.find { |s| s.dig("attributes", "productId") == product_id }
+    return [g, match] if match
+  end
+  [nil, nil]
+end
+
 def create_subscription(group_id, product_id, spec)
   puts "Creating subscription '#{product_id}'..."
   created = asc_post("/v1/subscriptions", {
@@ -276,15 +295,17 @@ end
 
 def create_draft
   id = app_id
-  group_id = find_or_create_group(id)
-  puts "Using subscription group #{group_id}"
+  group_id = nil
 
   PRODUCT_CATALOG.each do |product_id, spec|
-    existing = find_subscription(group_id, product_id)
-    if existing
-      puts "'#{product_id}' already exists (id=#{existing['id']}, state=#{existing.dig('attributes', 'state')}) -- skipping"
+    existing_group, existing_sub = find_subscription_in_any_group(id, product_id)
+    if existing_sub
+      puts "'#{product_id}' already exists in group '#{existing_group.dig('attributes', 'referenceName')}' " \
+           "(id=#{existing_sub['id']}, state=#{existing_sub.dig('attributes', 'state')}) -- skipping"
       next
     end
+
+    group_id ||= find_or_create_group(id)
     create_subscription(group_id, product_id, spec)
   end
 

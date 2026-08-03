@@ -63,8 +63,45 @@ import sys
 import urllib.parse
 
 PACKAGE_NAME = "com.vehiclevitals.app.android"
-SA_ACCOUNT = "google-play-console-service@vehicle-vitals-prod.iam.gserviceaccount.com"
 API_BASE = f"https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{PACKAGE_NAME}"
+
+
+def resolve_service_account():
+    """Determine which activated gcloud identity to use. Prefers
+    GOOGLE_PLAY_SA_ACCOUNT (an already-activated account email) if set;
+    otherwise derives client_email from GOOGLE_PLAY_SERVICE_ACCOUNT_JSON (the
+    key content, as GitHub Actions provides it) and activates it. Avoids
+    hardcoding a guessed service-account name, which would silently be wrong
+    for any project whose Play service account isn't named exactly that."""
+    import os
+
+    account = os.environ.get("GOOGLE_PLAY_SA_ACCOUNT")
+    if account:
+        return account
+
+    key_json = os.environ.get("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON")
+    if not key_json:
+        print(
+            "Set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON (key content) or GOOGLE_PLAY_SA_ACCOUNT "
+            "(pre-activated account email).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    import tempfile
+    key = json.loads(key_json)
+    account = key["client_email"]
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        f.write(key_json)
+        key_file = f.name
+    subprocess.run(
+        ["gcloud", "auth", "activate-service-account", account, f"--key-file={key_file}"],
+        check=True,
+    )
+    return account
+
+
+SA_ACCOUNT = None  # resolved lazily on first get_token() call
 
 CATALOG = {
     "pro_android_month": {
@@ -99,6 +136,9 @@ CATALOG = {
 
 
 def get_token():
+    global SA_ACCOUNT
+    if SA_ACCOUNT is None:
+        SA_ACCOUNT = resolve_service_account()
     result = subprocess.run(
         [
             "gcloud", "auth", "print-access-token",

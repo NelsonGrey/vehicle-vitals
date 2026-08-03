@@ -26,6 +26,15 @@ client actually asks Play Billing for:
 IMPORTANT API quirks (consistent with manage-play-iap.py's findings, and
 worth re-confirming here since the subscriptions resource is a distinct
 code path in Google's API, not just a renamed copy of oneTimeProducts):
+  - Despite `subscriptions` being nested under `monetization` in the
+    discovery document's resource tree (and in Google's own client-library
+    naming, e.g. `androidpublisher.monetization().subscriptions()`), the
+    actual REST path has NO `/monetization/` segment -- it's
+    `.../applications/{packageName}/subscriptions`, not
+    `.../applications/{packageName}/monetization/subscriptions`. The
+    latter 404s with a generic Google error page (not a JSON error body).
+    Confirmed by reading the `path` field directly off each method in the
+    discovery doc rather than inferring it from the resource nesting.
   - `regionsVersion.version` is a QUERY parameter on both `create` and
     `patch`, not a body field, obtained via `pricing:convertRegionPrices`.
   - Base plans are NOT created via a separate endpoint -- there is no
@@ -195,7 +204,7 @@ def cmd_status(args):
     product_ids = [args.product_id] if args.product_id else list(CATALOG.keys())
     for product_id in product_ids:
         try:
-            product = api_request("GET", f"{API_BASE}/monetization/subscriptions/{product_id}", token)
+            product = api_request("GET", f"{API_BASE}/subscriptions/{product_id}", token)
         except ApiError as e:
             if e.status == 404:
                 print(f"'{product_id}': does not exist yet.")
@@ -226,7 +235,7 @@ def cmd_create_draft(args):
     token = get_token()
     for product_id, spec in CATALOG.items():
         try:
-            api_request("GET", f"{API_BASE}/monetization/subscriptions/{product_id}", token)
+            api_request("GET", f"{API_BASE}/subscriptions/{product_id}", token)
             print(f"'{product_id}' already exists -- skipping")
             continue
         except ApiError as e:
@@ -263,7 +272,7 @@ def cmd_create_draft(args):
             "productId": product_id,
             "regionsVersion.version": regions_version,
         })
-        api_request("POST", f"{API_BASE}/monetization/subscriptions?{query}", token, body=body)
+        api_request("POST", f"{API_BASE}/subscriptions?{query}", token, body=body)
         print(f"  Created '{product_id}' with DRAFT base plan '{spec['base_plan_id']}' (US price only).")
 
     print("\nDone. No base plan was activated -- run 'status' to confirm current state.")

@@ -287,7 +287,13 @@ platform :ios do
       skip_screenshots: false,
       force: true,
       metadata_path: File.expand_path("metadata", __dir__),
-      screenshots_path: File.expand_path("screenshots", __dir__)
+      screenshots_path: File.expand_path("screenshots", __dir__),
+      # precheck runs even with submit_for_review: false, and it can't
+      # inspect In-App Purchase/subscription metadata when authenticated
+      # via an App Store Connect API key (only Apple ID login supports
+      # that check) -- it hard-fails otherwise. See the identical note on
+      # submit_to_app_store below.
+      precheck_include_in_app_purchases: false
     )
 
     UI.success("✅ Metadata/screenshots pushed to App Store Connect (draft, not submitted)")

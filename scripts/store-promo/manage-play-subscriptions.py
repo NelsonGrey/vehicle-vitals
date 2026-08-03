@@ -174,7 +174,16 @@ def api_request(method, url, token, body=None):
     *body_lines, status_line = result.stdout.rsplit("\n", 1)
     status = int(status_line)
     response_text = "\n".join(body_lines) if body_lines else (body_lines[0] if body_lines else "")
-    parsed = json.loads(response_text) if response_text.strip() else {}
+    if response_text.strip():
+        try:
+            parsed = json.loads(response_text)
+        except json.JSONDecodeError:
+            # A non-JSON body (e.g. a 404 with no body, or an HTML/plain-text
+            # error page) shouldn't crash the script before the caller gets
+            # a chance to check `status` -- surface the raw text instead.
+            parsed = {"raw": response_text}
+    else:
+        parsed = {}
 
     if status >= 400:
         raise ApiError(status, parsed)

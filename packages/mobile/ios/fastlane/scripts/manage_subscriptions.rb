@@ -272,6 +272,13 @@ def print_status
   id = app_id
   puts "App Store Connect app id: #{id}"
 
+  versions = asc_get("/v1/apps/#{id}/appStoreVersions?limit=5")
+  puts "\nRecent App Store versions:"
+  versions["data"].each do |v|
+    attrs = v["attributes"]
+    puts "  - #{attrs['versionString']}: appStoreState=#{attrs['appStoreState']} (created #{attrs['createdDate']})"
+  end
+
   groups = asc_get("/v1/apps/#{id}/subscriptionGroups?limit=50")
   if groups["data"].empty?
     puts "\nNo subscription groups exist yet."

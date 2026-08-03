@@ -608,7 +608,13 @@ jobs:
             echo "❌ ANDROID_STORE_PASSWORD / ANDROID_KEY_PASSWORD secrets are not set"
             exit 1
           fi
-          flutter build appbundle --release --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }}
+          # pubspec.yaml pins a fixed build number (versionCode) that nothing
+          # else increments, so every upload after the first fails with
+          # "Version code N has already been used" on the Play Console
+          # internal track. Mirror the iOS Fastfile's ci_ios_build_number
+          # pattern: use the CI run number as a monotonically increasing
+          # versionCode override, without touching the committed pubspec.
+          flutter build appbundle --release --build-number="${{ github.run_number }}" --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }}
 
       - name: Upload Android Artifacts
         if: always()

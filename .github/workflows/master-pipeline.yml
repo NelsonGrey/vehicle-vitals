@@ -515,6 +515,9 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          ADMOB_BANNER_UNIT_ID: ${{ secrets.ADMOB_BANNER_UNIT_ID_IOS }}
+          ADMOB_INTERSTITIAL_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_IOS }}
+          ADMOB_REWARDED_UNIT_ID: ${{ secrets.ADMOB_REWARDED_UNIT_ID_IOS }}
         run: |
           FIREBASE_ENV="$TARGET_ENV" bundle exec fastlane beta
 
@@ -676,6 +679,9 @@ jobs:
         env:
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ADMOB_BANNER_UNIT_ID_ANDROID: ${{ secrets.ADMOB_BANNER_UNIT_ID_ANDROID }}
+          ADMOB_INTERSTITIAL_UNIT_ID_ANDROID: ${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_ANDROID }}
+          ADMOB_REWARDED_UNIT_ID_ANDROID: ${{ secrets.ADMOB_REWARDED_UNIT_ID_ANDROID }}
         run: |
           if [ -z "$ANDROID_STORE_PASSWORD" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
             echo "❌ ANDROID_STORE_PASSWORD / ANDROID_KEY_PASSWORD secrets are not set"
@@ -687,7 +693,11 @@ jobs:
           # internal track. Mirror the iOS Fastfile's ci_ios_build_number
           # pattern: use the CI run number as a monotonically increasing
           # versionCode override, without touching the committed pubspec.
-          flutter build appbundle --release --build-number="${{ github.run_number }}" --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }}
+          flutter build appbundle --release --build-number="${{ github.run_number }}" \
+            --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }} \
+            --dart-define=ADMOB_BANNER_UNIT_ID="$ADMOB_BANNER_UNIT_ID_ANDROID" \
+            --dart-define=ADMOB_INTERSTITIAL_UNIT_ID="$ADMOB_INTERSTITIAL_UNIT_ID_ANDROID" \
+            --dart-define=ADMOB_REWARDED_UNIT_ID="$ADMOB_REWARDED_UNIT_ID_ANDROID"
 
       - name: Upload Android Artifacts
         if: always()

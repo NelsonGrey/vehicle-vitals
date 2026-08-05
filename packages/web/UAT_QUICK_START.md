@@ -1,14 +1,12 @@
 # 🧪 Vehicle-Vitals UAT - Quick Reference
 
-Last verified: July 20, 2026
-
 ## Install & Run (30 seconds)
 
 ```bash
-npm ci
 cd packages/web
+npm install
 npx playwright install
-npm run test:uat:chromium
+npm run test:uat
 ```
 
 ## Common Commands
@@ -21,7 +19,7 @@ npm run test:uat:chromium
 | `npm run test:uat:report` | View HTML test report |
 | `npx playwright test --grep "AUTH"` | Run only auth tests |
 
-## Test Coverage
+## Test Coverage (25+ Tests)
 
 ```
 ✅ Authentication (Sign Up, Login, Logout, Session)
@@ -100,7 +98,6 @@ See `UAT_TESTING.md` for:
 
 ---
 
-**Current spec:** `tests/uat.spec.ts` (36 declared cases at the July 20 review;
-environment prerequisites can cause intentional skips).
-**CI:** Chromium, Firefox, and WebKit against the hosted target selected by the
-master pipeline.
+**Last Updated:** May 11, 2026  
+**Test Count:** 25+ end-to-end tests  
+**Estimated Runtime:** 5-10 minutes

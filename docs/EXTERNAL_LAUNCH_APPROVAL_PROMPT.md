@@ -1,11 +1,5 @@
 # Vehicle-Vitals External Launch Approval Prompt
 
-Last reviewed: July 20, 2026
-
-This is a reusable decision template, not a statement of current UI, provider,
-or store configuration. Replace the baseline section with observations from the
-exact candidate before sending it for approval.
-
 Copy the prompt below into the review request sent to the people who hold the
 required legal, commercial, operational, Apple, security, and release
 authority. Replace bracketed placeholders, attach evidence by link, and do not
@@ -28,8 +22,7 @@ Release candidate:
 - Evidence index: `[LINK TO GO_LIVE_RUNBOOK AND ARTIFACTS]`
 - Claims matrix: `docs/LAUNCH_CLAIMS_MATRIX.md`
 
-For the exact candidate, verify and record whether each conservative condition
-is true:
+The software currently defaults to the following conservative public state:
 
 - Free account creation is presented as available.
 - Pro and Premium are labeled planned/coming soon; paid checkout and iOS
@@ -46,9 +39,11 @@ is true:
   is configured.
 
 This request does not authorize anyone to bypass the P0 gates in
-`GO_LIVE_RUNBOOK.md`. Current quality, companion-backend, payment, App Store,
-security, and external approval gates remain binding unless the release scope
-explicitly defers the affected capability and the runbook records that decision.
+`docs/GO_LIVE_RUNBOOK.md`. In particular, P0-06 release acceptance evidence and
+P0-11 paid-subscription production proof remain gating items unless the release
+scope explicitly defers paid subscriptions. Do not re-enable Firebase App Check
+enforcement until verified client integration is deployed; the runbook records
+the prior production outage and required sequence.
 
 ## Decision required from the release manager and product owner
 
@@ -190,10 +185,9 @@ Required paid-plan output:
 Stripe/paid-web decision: `[KEEP DEFERRED / APPROVE ENABLEMENT / BLOCK]`  
 Evidence links: `[LINKS]`
 
-If and only if enablement is approved, authorize a controlled release that
-coordinates web/mobile presentation, provider catalogs and secrets, private
-backend behavior, entitlements, support operations, tests, and rollback. The
-current clients do not expose one authoritative paid-live flag.
+If and only if enablement is approved, authorize a controlled release that sets
+`VITE_PAID_SUBSCRIPTIONS_LIVE=true`. The change must be independently verified
+in the deployed production build and must have a tested rollback.
 
 ## Apple and App Store authority review
 
@@ -232,9 +226,9 @@ Authorized owner and date: `[NAME / DATE]`
 Evidence links: `[LINKS]`
 
 If the public URL is approved, authorize setting `VITE_IOS_APP_STORE_URL` to
-that exact URL. If iOS paid subscriptions are separately approved, identify the
-exact build, product catalog, backend verification configuration, and rollback;
-do not rely on an undocumented compile-time flag.
+that exact URL. If iOS paid subscriptions are separately approved, authorize a
+release build with `--dart-define=VV_PAID_SUBSCRIPTIONS_LIVE=true`. Otherwise it
+must remain false.
 
 ## Security and platform authority review
 
@@ -247,9 +241,9 @@ Confirm the following before a public launch decision:
 - Production rules, indexes, Storage authorization, account deletion, export,
   backups, logging, alerts, secret access, and recovery are verified.
 - The release uses the intended production Firebase environment.
-- Record the current Firebase App Check state. Any enforcement change requires
-  verified web/iOS tokens, a staged rollout, monitoring, and rollback; it must
-  not be treated as a console-only switch.
+- Firebase App Check remains unenforced until web and iOS clients implement and
+  verify valid tokens. Re-enforcement requires a staged rollout and rollback
+  evidence; it must not be treated as a console-only switch.
 - The reviewer/demo account has least privilege, synthetic data, an owner, a
   rotation plan, and a post-review disable/rotate action.
 
@@ -263,8 +257,7 @@ Evidence links: `[LINKS]`
 Do not sign this section until the preceding authorities have responded and all
 required evidence is linked.
 
-- [ ] Every current P0 item in `GO_LIVE_RUNBOOK.md` is closed or explicitly
-      accepted by an authorized, time-bounded risk owner.
+- [ ] P0-06 acceptance and backend evidence is PASS.
 - [ ] Paid plans are either demonstrably production-ready or explicitly
       deferred with launch flags false.
 - [ ] Legal final text is deployed identically on website and iOS, with the

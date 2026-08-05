@@ -5,6 +5,10 @@ project:
 
 targets:
   ios:
+    # Re-enabled July 29, 2026: Apple rejected build 1092 (3.1.2(c) EULA
+    # link, 5.1.1(v) account deletion copy) and the fix needs a fresh signed
+    # TestFlight build for resubmission. The web-only promotion this was
+    # disabled for is deployed to production.
     enabled: true
     schemes:
       - name: 'Runner'
@@ -21,12 +25,12 @@ targets:
         enabled: true
 
   android:
-    enabled: true
+    enabled: false
     path: 'packages/mobile/android'
-    status: 'active'
+    status: 'on_hold'
     signing:
-      keystore_ref: '${ANDROID_KEYSTORE_BASE64}'
-      key_alias: 'vehicle-vitals'
+      keystore_ref: '${ANDROID_KEYSTORE_PATH}'
+      key_alias: '${ANDROID_KEY_ALIAS}'
     destinations:
       firebase_app_distribution:
         enabled: false

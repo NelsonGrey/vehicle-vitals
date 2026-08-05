@@ -1,32 +1,35 @@
-# `@vehicle-vitals/shared`
+# @vehicle-vitals/shared
 
-Last verified: July 20, 2026
+Shared utilities and Firebase services for the Vehicle-Vitals monorepo.
 
-Shared domain calculations, tolerant data parsing, and Firestore path/service
-helpers for the web app and private Functions companion.
+## Features
+
+- 🔥 Firebase configuration and services
+- 📊 Firestore service factory with authentication
+- 🏷️ TypeScript types and interfaces
+
+## Usage
+
+```javascript
+import { createFirestoreService, defaultVehicle } from '@vehicle-vitals/shared';
+import { firebaseConfig } from '@vehicle-vitals/shared/firebase';
+
+// Create Firestore service
+const firestoreService = createFirestoreService(auth, db);
+
+// Use shared types
+const newVehicle = { ...defaultVehicle, vin: 'ABC123' };
+```
 
 ## Exports
 
-- base types and default vehicle/maintenance shapes;
-- vehicle health and portfolio calculations;
-- maintenance schedules;
-- ownership insights;
-- VIN validation;
-- document-analysis summaries;
-- currency helpers;
-- personal and organization-scoped Firestore service factory.
+- `createFirestoreService` - Factory for Firestore service
+- `firebaseConfig` - Firebase configuration
+- `defaultVehicle` - Default vehicle object structure
 
-Use the explicit package subpath exports declared in `package.json`. Build
-output is written to `dist` and is consumed by the web app and vendored into the
-private Functions companion during deployment.
-
-## Commands
+## Development
 
 ```bash
-npm --workspace=@vehicle-vitals/shared run check
-npm --workspace=@vehicle-vitals/shared run test
-npm --workspace=@vehicle-vitals/shared run build
+npm test        # Run tests
+npm run lint    # Lint code
 ```
-
-Add regression tests for calculation/data-integrity changes and separate tests
-for personal versus org-scoped Firestore routing.

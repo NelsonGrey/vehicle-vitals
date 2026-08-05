@@ -155,6 +155,53 @@ export async function getMaintenancePlan(vin, currentMileage, make, model) {
   return result.data.plan;
 }
 
+// Fetches this vehicle's warranty coverage summary (manufacturer-specific
+// terms when this app has them on file for the vehicle's make, a flagged
+// generic estimate otherwise — see
+// packages/functions/src/warranty.provider.ts) from the server.
+export async function getWarrantySummary(vin, currentMileage) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const getWarrantySummaryCallable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'getWarrantySummaryCallable'
+  );
+  const result = await getWarrantySummaryCallable({ vin, currentMileage });
+
+  if (!result.data.success) {
+    throw new Error(result.data.error || 'Failed to fetch warranty summary');
+  }
+
+  return result.data.warranty;
+}
+
+// Fetches real, manufacturer-specific owner-manual portal links for this
+// vehicle (see packages/functions/src/manuals.provider.ts) from the
+// server.
+export async function getOwnerManuals(vin) {
+  const firebaseService = await createFirebaseService();
+
+  if (!firebaseService.functions) {
+    throw new Error('Firebase Functions not available');
+  }
+
+  const getOwnerManualsCallable = firebaseService.httpsCallable(
+    firebaseService.functions,
+    'getOwnerManualsCallable'
+  );
+  const result = await getOwnerManualsCallable({ vin });
+
+  if (!result.data.success) {
+    throw new Error(result.data.error || 'Failed to fetch owner manuals');
+  }
+
+  return result.data.manuals;
+}
+
 export function buildPersistedVinInsights(insights) {
   const vinProfile = insights?.free?.vinProfile || {};
   const recalls = insights?.free?.recalls || {};

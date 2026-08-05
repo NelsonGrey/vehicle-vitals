@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Phone-only, mirroring the iOS TARGETED_DEVICE_FAMILY=1 restriction:
+       the app's UI isn't designed or tested for tablet-sized layouts. -->
+  <supports-screens
+    android:smallScreens="true"
+    android:normalScreens="true"
+    android:largeScreens="false"
+    android:xlargeScreens="false"
+    android:anyDensity="true" />
   <uses-permission android:name="android.permission.CAMERA" />
   <application
     android:label="Vehicle-Vitals"
@@ -31,6 +39,12 @@
     <meta-data
       android:name="flutterEmbedding"
       android:value="2" />
+    <!-- Required by the Google Mobile Ads SDK. MobileAdsInitProvider checks
+         for this during attachInfo, before Application.onCreate() runs, and
+         crashes with an IllegalStateException if it's missing. -->
+    <meta-data
+      android:name="com.google.android.gms.ads.APPLICATION_ID"
+      android:value="ca-app-pub-5198775482699756~5462296073" />
   </application>
   <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -236,6 +236,11 @@ class AuthService extends ChangeNotifier {
           'An account already exists for this email. Sign in instead of creating another account.',
         );
       }
+      if (e.code == 'weak-password') {
+        throw FriendlyException(
+          'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.',
+        );
+      }
       throw FriendlyException(
         e.message ?? 'Authentication failed. Please try again.',
       );
@@ -252,6 +257,16 @@ class AuthService extends ChangeNotifier {
 
   Future<void> resetPassword(String email) async {
     await _auth.sendPasswordResetEmail(email: email);
+  }
+
+  // Fetches the password policy actually enforced by Firebase for this
+  // project (min length, required character classes) and validates
+  // [password] against it in one round-trip. Pass a non-empty placeholder
+  // (e.g. a single space) to just read the policy without a real candidate.
+  Future<firebase_auth.PasswordValidationStatus> validatePassword(
+    String password,
+  ) {
+    return _auth.validatePassword(_auth, password);
   }
 
   Future<UserCredential?> signInWithApple() async {

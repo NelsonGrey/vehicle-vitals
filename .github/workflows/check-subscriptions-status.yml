@@ -1,0 +1,27 @@
+name: "Check App Store Connect subscription status (one-off)"
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  status:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Run manage_subscriptions.rb status
+        working-directory: packages/mobile/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec ruby fastlane/scripts/manage_subscriptions.rb status
+
+      # Read-only check. This workflow file can be deleted once no longer needed.

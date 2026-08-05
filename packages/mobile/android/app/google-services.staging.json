@@ -31,11 +31,11 @@
               "client_type": 3
             },
             {
-              "client_id": "364854499099-84hplu6fd9rpqqc29crhti5hl6a6c38a.apps.googleusercontent.com",
+              "client_id": "364854499099-rj20jbe1orlbgrda6hd6rjl2avs4rak4.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.nelsongrey.vehiclevitals.app.ios",
-                "app_store_id": "6753732665"
+                "bundle_id": "com.vehiclevitals.app.ios",
+                "app_store_id": "6783861086"
               }
             }
           ]

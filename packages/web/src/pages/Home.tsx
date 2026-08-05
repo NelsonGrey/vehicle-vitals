@@ -1036,6 +1036,12 @@ export default function Home() {
                           >
                             View Records
                           </Link>
+                          <Link
+                            to={`/app/coverage/${selectedVehicle.vin}`}
+                            className="inline-block px-3 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition-colors no-underline text-sm font-medium"
+                          >
+                            Coverage & Manuals
+                          </Link>
                           <button
                             className="px-3 py-2 bg-danger-100 hover:bg-danger-200 text-danger-700 border border-danger-300 rounded-lg transition-colors text-sm font-medium cursor-pointer"
                             onClick={() => handleDelete(selectedVehicle.vin)}

@@ -30,6 +30,16 @@ on:
         required: false
         type: boolean
         default: false
+      push_ios_metadata:
+        description: "Push iOS App Store Connect metadata/screenshots (draft, not submitted for review)"
+        required: false
+        type: boolean
+        default: false
+      submit_to_app_store:
+        description: "Submit the current App Store Connect build for App Store review (PRODUCTION only, human-gated)"
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - develop
@@ -107,6 +117,8 @@ jobs:
       project_name: ${{ steps.manifest.outputs.project_name }}
       ios_enabled: ${{ steps.manifest.outputs.ios_enabled }}
       android_enabled: ${{ steps.manifest.outputs.android_enabled }}
+      google_play_enabled: ${{ steps.manifest.outputs.google_play_enabled }}
+      google_play_track: ${{ steps.manifest.outputs.google_play_track }}
       web_enabled: ${{ steps.manifest.outputs.web_enabled }}
       firebase_enabled: ${{ steps.manifest.outputs.firebase_enabled }}
       chrome_extension: ${{ steps.manifest.outputs.chrome_extension }}
@@ -140,6 +152,8 @@ jobs:
             project_name: data.dig('project', 'name') || File.basename(Dir.pwd),
             ios_enabled: targets.dig('ios', 'enabled') ? 'true' : 'false',
             android_enabled: targets.dig('android', 'enabled') ? 'true' : 'false',
+            google_play_enabled: targets.dig('android', 'destinations', 'google_play', 'enabled') ? 'true' : 'false',
+            google_play_track: targets.dig('android', 'destinations', 'google_play', 'track') || 'internal',
             web_enabled: targets.dig('web', 'enabled') ? 'true' : 'false',
             firebase_enabled: targets.dig('firebase', 'enabled') ? 'true' : 'false',
             chrome_extension: targets.dig('chrome_extension', 'enabled') ? 'true' : 'false'
@@ -379,14 +393,12 @@ jobs:
     name: Build iOS App
     needs: [load-config, quality-gate]
     if: |
-      always() &&
       needs.load-config.outputs.ios_enabled == 'true' &&
+      (needs.load-config.outputs.trigger_context == 'build_all' ||
+       needs.load-config.outputs.trigger_context == 'build_and_deploy') &&
       (needs.load-config.outputs.target_environment == 'staging' ||
        needs.load-config.outputs.target_environment == 'production') &&
-      (((needs.load-config.outputs.trigger_context == 'build_all' ||
-         needs.load-config.outputs.trigger_context == 'build_and_deploy') &&
-        needs.quality-gate.result == 'success') ||
-       needs.load-config.outputs.trigger_context == 'deploy_only')
+      needs.quality-gate.result == 'success'
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
@@ -503,6 +515,9 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          ADMOB_BANNER_UNIT_ID: ${{ secrets.ADMOB_BANNER_UNIT_ID_IOS }}
+          ADMOB_INTERSTITIAL_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_IOS }}
+          ADMOB_REWARDED_UNIT_ID: ${{ secrets.ADMOB_REWARDED_UNIT_ID_IOS }}
         run: |
           FIREBASE_ENV="$TARGET_ENV" bundle exec fastlane beta
 
@@ -523,6 +538,69 @@ jobs:
             ~/Library/Logs/gym
             ~/Library/Logs/fastlane
           if-no-files-found: ignore
+
+  # 📮 Push iOS App Store Connect metadata/screenshots without submitting
+  # for review. Human-triggered only (workflow_dispatch) -- never runs on
+  # a plain push, since it mutates real App Store Connect listing state.
+  push-ios-metadata:
+    name: 📮 Push iOS Metadata (App Store Connect)
+    needs: [load-config]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.push_ios_metadata == 'true' &&
+      needs.load-config.outputs.target_environment == 'production'
+    runs-on: macos-latest
+    environment: production
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Push metadata (draft, not submitted)
+        working-directory: packages/mobile/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec fastlane verify_metadata
+
+  # 📮 Submit the current App Store Connect build for App Store review.
+  # Deliberately manual-gated (workflow_dispatch boolean, PRODUCTION only)
+  # -- this is the one genuinely irreversible step in the iOS pipeline and
+  # must always be a human decision, never automatic on push.
+  submit-ios-app-store:
+    name: 📮 Submit to App Store Review
+    needs: [load-config]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.submit_to_app_store == 'true' &&
+      needs.load-config.outputs.target_environment == 'production'
+    runs-on: macos-latest
+    environment: production
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Submit to App Store review
+        working-directory: packages/mobile/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec fastlane submit_to_app_store
 
   build-android:
     name: Build Android App
@@ -545,6 +623,16 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('packages/mobile/android/gradle/wrapper/gradle-wrapper.properties', 'packages/mobile/android/**/build.gradle.kts', 'packages/mobile/android/settings.gradle.kts') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -553,13 +641,63 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Select Firebase Environment Config
+        env:
+          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
+        run: |
+          # firebase_options.dart's String.fromEnvironment('VV_FIREBASE_ENV')
+          # defaults to production when unset, and android/app/google-services.json
+          # (the file google-services Gradle plugin actually bakes into the
+          # build) is *also* the production project — so without this step
+          # every Android build, including develop/staging pushes, silently
+          # authenticates against vehicle-vitals-prod. Mirrors what the iOS
+          # Fastfile already does for the same reason.
+          case "$TARGET_ENV" in
+            production) SUFFIX="prod" ;;
+            staging) SUFFIX="staging" ;;
+            *) SUFFIX="dev" ;;
+          esac
+          cp "android/app/google-services.$SUFFIX.json" android/app/google-services.json
+
       - name: Build Debug APK
         if: needs.load-config.outputs.trigger_context != 'build_and_deploy'
-        run: flutter build apk --debug
+        run: flutter build apk --debug --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }}
+
+      - name: Decode Release Keystore
+        if: needs.load-config.outputs.trigger_context == 'build_and_deploy'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "❌ ANDROID_KEYSTORE_BASE64 secret is not set — cannot produce a signed release build"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/vehicle-vitals-key.jks
 
       - name: Build Release App Bundle
         if: needs.load-config.outputs.trigger_context == 'build_and_deploy'
-        run: flutter build appbundle --release
+        env:
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ADMOB_BANNER_UNIT_ID_ANDROID: ${{ secrets.ADMOB_BANNER_UNIT_ID_ANDROID }}
+          ADMOB_INTERSTITIAL_UNIT_ID_ANDROID: ${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_ANDROID }}
+          ADMOB_REWARDED_UNIT_ID_ANDROID: ${{ secrets.ADMOB_REWARDED_UNIT_ID_ANDROID }}
+        run: |
+          if [ -z "$ANDROID_STORE_PASSWORD" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "❌ ANDROID_STORE_PASSWORD / ANDROID_KEY_PASSWORD secrets are not set"
+            exit 1
+          fi
+          # pubspec.yaml pins a fixed build number (versionCode) that nothing
+          # else increments, so every upload after the first fails with
+          # "Version code N has already been used" on the Play Console
+          # internal track. Mirror the iOS Fastfile's ci_ios_build_number
+          # pattern: use the CI run number as a monotonically increasing
+          # versionCode override, without touching the committed pubspec.
+          flutter build appbundle --release --build-number="${{ github.run_number }}" \
+            --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }} \
+            --dart-define=ADMOB_BANNER_UNIT_ID="$ADMOB_BANNER_UNIT_ID_ANDROID" \
+            --dart-define=ADMOB_INTERSTITIAL_UNIT_ID="$ADMOB_INTERSTITIAL_UNIT_ID_ANDROID" \
+            --dart-define=ADMOB_REWARDED_UNIT_ID="$ADMOB_REWARDED_UNIT_ID_ANDROID"
 
       - name: Upload Android Artifacts
         if: always()
@@ -570,6 +708,18 @@ jobs:
             packages/mobile/build/app/outputs/**/*.apk
             packages/mobile/build/app/outputs/**/*.aab
           if-no-files-found: warn
+
+      - name: Upload to Google Play
+        if: |
+          needs.load-config.outputs.trigger_context == 'build_and_deploy' &&
+          needs.load-config.outputs.google_play_enabled == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.vehiclevitals.app.android
+          releaseFiles: packages/mobile/build/app/outputs/bundle/release/*.aab
+          track: ${{ needs.load-config.outputs.google_play_track }}
+          status: completed
 
   build-web:
     name: Build Web App

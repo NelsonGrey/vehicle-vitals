@@ -7,42 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:489413148337:android:0ed732a4b8cd462068ac90",
-        "android_client_info": {
-          "package_name": "com.nelsongrey.vehiclevitals.app.android"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "489413148337-bkukvjc1ht5k8vlroj2qkq1qmuf20d2p.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyB4yx8ABAc5XeU7fbFiz19BOcu9GCkQBvk"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "489413148337-bkukvjc1ht5k8vlroj2qkq1qmuf20d2p.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "489413148337-7ej72fc7l3o1pe078h28hhmeo62it77d.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.vehiclevitals.app.ios"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:489413148337:android:8094cbabf7e1c2b268ac90",
         "android_client_info": {
           "package_name": "com.vehiclevitals.app.android"
@@ -67,10 +31,11 @@
               "client_type": 3
             },
             {
-              "client_id": "489413148337-7ej72fc7l3o1pe078h28hhmeo62it77d.apps.googleusercontent.com",
+              "client_id": "489413148337-scu7qfq0b3c53heoqldnn2nm9eqva4hm.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.vehiclevitals.app.ios"
+                "bundle_id": "com.vehiclevitals.app.ios",
+                "app_store_id": "6783861086"
               }
             }
           ]

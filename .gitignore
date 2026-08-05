@@ -25,6 +25,11 @@ packages/mobile/android/app/release/
 packages/mobile/android/app/*.jks
 packages/mobile/android/app/*.keystore
 
+# Firebase Test Lab Robo scripts with real demo-account credentials filled in
+# (commit the .example.json templates instead, never the filled versions)
+packages/mobile/android/robo-scripts/*.json
+!packages/mobile/android/robo-scripts/*.example.json
+
 # API server builds
 packages/api-server/dist/
 packages/api-server/build/
@@ -305,6 +310,13 @@ android/
 ios/
 !packages/mobile/android/
 !packages/mobile/ios/
+# The blanket `android/` pattern above also matches fastlane's own
+# metadata/android/ convention (packages/mobile/android/fastlane/metadata/android/en-US/),
+# nested two levels below the already-negated packages/mobile/android/ --
+# gitignore negations don't apply transitively past a matched ancestor
+# pattern, so this needs its own explicit re-include.
+!packages/mobile/android/fastlane/metadata/
+!packages/mobile/android/fastlane/metadata/android/
 *.keystore
 *.jks
 android/.gradle/

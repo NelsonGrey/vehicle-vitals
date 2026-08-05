@@ -37,7 +37,7 @@ targets:
         groups:
           - testers
       google_play:
-        enabled: false
+        enabled: true
         track: 'internal'
 
   web:

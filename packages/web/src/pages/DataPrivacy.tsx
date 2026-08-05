@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { useReauthentication } from '../shared/useReauthentication';
 import { userFacingError } from '../shared/userFacingError';
@@ -9,13 +9,7 @@ import {
 } from '../utils/privacyRequestService';
 
 export function DataPrivacyContent() {
-  const navigate = useNavigate();
-  const {
-    user,
-    reauthenticateWithGoogle,
-    reauthenticateWithApple,
-    signOut,
-  } = useAuth();
+  const { user, reauthenticateWithGoogle, reauthenticateWithApple } = useAuth();
   const { reauth } = useReauthentication({
     user,
     reauthenticateWithGoogle,
@@ -31,7 +25,7 @@ export function DataPrivacyContent() {
 
   const onRequestAccountDeletion = async () => {
     const sure = window.confirm(
-      'This immediately and permanently deletes your account and all associated vehicle, maintenance, and subscription data. This cannot be undone, and you will be signed out right away. Continue?'
+      'This will file a request to delete your account and all associated vehicle, maintenance, and subscription data. This cannot be undone once processed. Continue?'
     );
     if (!sure) return;
     setError('');
@@ -39,12 +33,10 @@ export function DataPrivacyContent() {
     setBusy(true);
     try {
       await reauth(currentPassword);
-      await requestAccountDataDeletion();
-      // The account no longer exists server-side at this point -- sign out
-      // immediately rather than leaving a stale "signed in" session.
-      await signOut();
-      navigate('/');
-      return;
+      const result = await requestAccountDataDeletion();
+      setStatus(
+        `Account deletion request filed (request ${result.requestId}). Your data will be deleted as part of processing this request; you remain signed in until then.`
+      );
     } catch (err) {
       setError(
         userFacingError(
@@ -63,9 +55,9 @@ export function DataPrivacyContent() {
     setBusy(true);
     try {
       await reauth(currentPassword);
-      await requestAccountDataExport();
+      const result = await requestAccountDataExport();
       setStatus(
-        'Your data export is ready. Contact Support if you need help retrieving it.'
+        `Data export request filed (request ${result.requestId}). We'll notify you when it's ready.`
       );
     } catch (err) {
       setError(
@@ -103,11 +95,13 @@ export function DataPrivacyContent() {
           Privacy &amp; Data Requests
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
-          Request a copy of your data, or request deletion of your account
-          and all associated vehicle, maintenance, and subscription data.
-          Deletion is immediate and cannot be undone -- you will be signed
-          out as soon as it completes. We use the account email for any
-          required identity verification.
+          Request a copy of your data, or request deletion of your account and
+          all associated vehicle, maintenance, and subscription data. Deletion
+          requests are processed by our team and cannot be undone; you remain
+          signed in until a deletion request has been processed. We use the
+          account email for status updates and any required identity
+          verification. Processing time depends on the request and applicable
+          legal or retention requirements.
         </p>
         <div>
           <label

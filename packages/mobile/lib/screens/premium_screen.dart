@@ -205,7 +205,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Payment is processed through Apple in-app purchase.',
+            'Payment is processed through Apple in-app purchase for Pro and Premium. Enterprise inquiries are handled through Support.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
@@ -225,32 +225,54 @@ class _PremiumScreenState extends State<PremiumScreen> {
       premiumPrice: premiumService.productFor('premium', _billingPeriod)?.price,
       onChoosePro: () => _purchase(premiumService, 'pro'),
       onChoosePremium: () => _purchase(premiumService, 'premium'),
+      onContactSales: () => context.push('/app/support'),
     );
   }
 
   Widget _buildFeatureComparisonTable() {
     final List<Map<String, dynamic>> rows = <Map<String, dynamic>>[
-      {'feature': 'Calendar Sync', 'free': false, 'pro': true, 'premium': true},
+      {
+        'feature': 'Calendar Sync',
+        'free': false,
+        'pro': true,
+        'premium': true,
+        'enterprise': true,
+      },
       {
         'feature': 'PDF and Excel Export',
         'free': false,
         'pro': true,
         'premium': true,
+        'enterprise': true,
       },
-      {'feature': 'AI Analysis', 'free': false, 'pro': true, 'premium': true},
+      {
+        'feature': 'AI Analysis',
+        'free': false,
+        'pro': true,
+        'premium': true,
+        'enterprise': true,
+      },
       {
         'feature': 'Ad-Free Experience',
         'free': false,
         'pro': false,
         'premium': true,
+        'enterprise': true,
       },
       {
         'feature': 'Priority Support',
         'free': false,
         'pro': true,
         'premium': true,
+        'enterprise': true,
       },
-      {'feature': 'API Access', 'free': false, 'pro': false, 'premium': true},
+      {
+        'feature': 'API Access',
+        'free': false,
+        'pro': false,
+        'premium': true,
+        'enterprise': true,
+      },
     ];
 
     DataCell availabilityCell(bool available) {
@@ -279,6 +301,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               DataColumn(label: Text('Free')),
               DataColumn(label: Text('Pro')),
               DataColumn(label: Text('Premium')),
+              DataColumn(label: Text('Enterprise')),
             ],
             rows: rows.map((row) {
               return DataRow(
@@ -287,6 +310,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   availabilityCell(row['free'] as bool),
                   availabilityCell(row['pro'] as bool),
                   availabilityCell(row['premium'] as bool),
+                  availabilityCell(row['enterprise'] as bool),
                 ],
               );
             }).toList(),
@@ -413,6 +437,7 @@ class PremiumPlanCatalog extends StatelessWidget {
     required this.premiumPrice,
     required this.onChoosePro,
     required this.onChoosePremium,
+    required this.onContactSales,
   });
 
   final String currentTier;
@@ -422,8 +447,14 @@ class PremiumPlanCatalog extends StatelessWidget {
   final String? premiumPrice;
   final VoidCallback onChoosePro;
   final VoidCallback onChoosePremium;
+  final VoidCallback onContactSales;
 
-  static const List<String> _tierOrder = <String>['free', 'pro', 'premium'];
+  static const List<String> _tierOrder = <String>[
+    'free',
+    'pro',
+    'premium',
+    'enterprise',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -442,6 +473,7 @@ class PremiumPlanCatalog extends StatelessWidget {
 
   Widget _buildPlanCard(String tier) {
     final bool isCurrent = currentTier == tier;
+    final bool isEnterprise = tier == 'enterprise';
     final bool isProTier = tier == 'pro';
     final bool isPremiumTier = tier == 'premium';
 
@@ -457,6 +489,9 @@ class PremiumPlanCatalog extends StatelessWidget {
     if (isCurrent) {
       buttonLabel = 'Current Subscription';
       onPressed = null;
+    } else if (isEnterprise) {
+      buttonLabel = 'Contact Sales';
+      onPressed = onContactSales;
     } else if (isProTier) {
       buttonLabel = 'Choose Pro';
       onPressed = isLoading ? null : onChoosePro;
@@ -536,6 +571,8 @@ class PremiumPlanCatalog extends StatelessWidget {
         return 'Pro';
       case 'premium':
         return 'Premium';
+      case 'enterprise':
+        return 'Enterprise';
       case 'free':
       default:
         return 'Free';
@@ -548,6 +585,8 @@ class PremiumPlanCatalog extends StatelessWidget {
         return 'Up to 10 vehicles';
       case 'premium':
         return 'Up to 25 vehicles';
+      case 'enterprise':
+        return '25+ vehicles (contract)';
       case 'free':
       default:
         return 'Up to 2 vehicles';
@@ -562,6 +601,8 @@ class PremiumPlanCatalog extends StatelessWidget {
         return 'Plan and coordinate';
       case 'premium':
         return 'Forecast and automate';
+      case 'enterprise':
+        return 'Govern and integrate';
       case 'free':
       default:
         return 'Learn and document';
@@ -588,6 +629,8 @@ class PremiumPlanCatalog extends StatelessWidget {
         return livePrice.contains('/mo') || livePrice.contains('/yr')
             ? livePrice
             : '$livePrice$suffix';
+      case 'enterprise':
+        return 'Contact sales';
       case 'free':
       default:
         return '\$0';

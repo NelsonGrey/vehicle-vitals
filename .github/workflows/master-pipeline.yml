@@ -30,6 +30,16 @@ on:
         required: false
         type: boolean
         default: false
+      push_ios_metadata:
+        description: "Push iOS App Store Connect metadata/screenshots (draft, not submitted for review)"
+        required: false
+        type: boolean
+        default: false
+      submit_to_app_store:
+        description: "Submit the current App Store Connect build for App Store review (PRODUCTION only, human-gated)"
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - develop
@@ -505,6 +515,9 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          ADMOB_BANNER_UNIT_ID: ${{ secrets.ADMOB_BANNER_UNIT_ID_IOS }}
+          ADMOB_INTERSTITIAL_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_IOS }}
+          ADMOB_REWARDED_UNIT_ID: ${{ secrets.ADMOB_REWARDED_UNIT_ID_IOS }}
         run: |
           FIREBASE_ENV="$TARGET_ENV" bundle exec fastlane beta
 
@@ -525,6 +538,69 @@ jobs:
             ~/Library/Logs/gym
             ~/Library/Logs/fastlane
           if-no-files-found: ignore
+
+  # 📮 Push iOS App Store Connect metadata/screenshots without submitting
+  # for review. Human-triggered only (workflow_dispatch) -- never runs on
+  # a plain push, since it mutates real App Store Connect listing state.
+  push-ios-metadata:
+    name: 📮 Push iOS Metadata (App Store Connect)
+    needs: [load-config]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.push_ios_metadata == 'true' &&
+      needs.load-config.outputs.target_environment == 'production'
+    runs-on: macos-latest
+    environment: production
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Push metadata (draft, not submitted)
+        working-directory: packages/mobile/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec fastlane verify_metadata
+
+  # 📮 Submit the current App Store Connect build for App Store review.
+  # Deliberately manual-gated (workflow_dispatch boolean, PRODUCTION only)
+  # -- this is the one genuinely irreversible step in the iOS pipeline and
+  # must always be a human decision, never automatic on push.
+  submit-ios-app-store:
+    name: 📮 Submit to App Store Review
+    needs: [load-config]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.submit_to_app_store == 'true' &&
+      needs.load-config.outputs.target_environment == 'production'
+    runs-on: macos-latest
+    environment: production
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: packages/mobile/ios
+
+      - name: Submit to App Store review
+        working-directory: packages/mobile/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec fastlane submit_to_app_store
 
   build-android:
     name: Build Android App
@@ -603,12 +679,25 @@ jobs:
         env:
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ADMOB_BANNER_UNIT_ID_ANDROID: ${{ secrets.ADMOB_BANNER_UNIT_ID_ANDROID }}
+          ADMOB_INTERSTITIAL_UNIT_ID_ANDROID: ${{ secrets.ADMOB_INTERSTITIAL_UNIT_ID_ANDROID }}
+          ADMOB_REWARDED_UNIT_ID_ANDROID: ${{ secrets.ADMOB_REWARDED_UNIT_ID_ANDROID }}
         run: |
           if [ -z "$ANDROID_STORE_PASSWORD" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
             echo "❌ ANDROID_STORE_PASSWORD / ANDROID_KEY_PASSWORD secrets are not set"
             exit 1
           fi
-          flutter build appbundle --release --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }}
+          # pubspec.yaml pins a fixed build number (versionCode) that nothing
+          # else increments, so every upload after the first fails with
+          # "Version code N has already been used" on the Play Console
+          # internal track. Mirror the iOS Fastfile's ci_ios_build_number
+          # pattern: use the CI run number as a monotonically increasing
+          # versionCode override, without touching the committed pubspec.
+          flutter build appbundle --release --build-number="${{ github.run_number }}" \
+            --dart-define=VV_FIREBASE_ENV=${{ needs.load-config.outputs.target_environment }} \
+            --dart-define=ADMOB_BANNER_UNIT_ID="$ADMOB_BANNER_UNIT_ID_ANDROID" \
+            --dart-define=ADMOB_INTERSTITIAL_UNIT_ID="$ADMOB_INTERSTITIAL_UNIT_ID_ANDROID" \
+            --dart-define=ADMOB_REWARDED_UNIT_ID="$ADMOB_REWARDED_UNIT_ID_ANDROID"
 
       - name: Upload Android Artifacts
         if: always()

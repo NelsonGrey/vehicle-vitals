@@ -1,7 +1,5 @@
 # Icons Directory
 
-Last reviewed: July 20, 2026
-
 This directory contains the canonical icon assets for the Vehicle-Vitals project.
 
 ## Master Icons
@@ -58,11 +56,8 @@ The current icon uses a dark slate app tile with a garage-roof/road `V`, vehicle
 1. Place new high-resolution PNG in this directory as `icon-vehicle-vitals.png`
 2. Run `./scripts/apply-new-icon.sh icons/icon-vehicle-vitals.png`
 3. Review generated icons in all platforms
-4. Review the generated diff, including any `.bak` files, and commit only the
-   intended assets.
-5. Include the regenerated assets in the next intentional platform release.
-   Android delivery is currently on hold, and iOS automation is disabled in the
-   project manifest.
+4. Commit the changes
+5. Deploy to App Store and Google Play
 
 ## Resources
 

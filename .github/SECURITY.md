@@ -15,7 +15,7 @@ Do not open public issues for suspected vulnerabilities.
 Use one of the following private channels:
 
 - GitHub Security Advisories: "Report a vulnerability" in this repository
-- Email fallback: `security@vehicle-vitals.com`
+- Email fallback: `security@vehiclevitals.app`
 
 Please include:
 

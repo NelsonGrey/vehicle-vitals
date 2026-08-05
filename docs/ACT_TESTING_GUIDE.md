@@ -1,77 +1,270 @@
-# Testing the Workflow with `act`
+# Act CLI Testing Guide for Vehicle-Vitals
 
-Last reviewed: July 20, 2026
+## 🎭 Testing Workflows Locally with Act
 
-`act` can inspect and partially exercise Linux GitHub Actions jobs in
-`.github/workflows/master-pipeline.yml`. It is not release evidence and cannot
-reproduce hosted environment URLs, GitHub permissions and protections, the
-private Functions checkout, Firebase deployment identity, or macOS/iOS jobs.
+`act` allows you to run GitHub Actions workflows locally using Docker, preventing costly failures on GitHub and enabling faster development iteration.
 
-## Prerequisites
+## 🚀 Quick Start
 
-- Docker is installed and running.
-- `act` is installed (`brew install act` on macOS).
-- The command is run from the repository root.
-
-List the jobs and resolved event graph before attempting a run:
+### 1. Prerequisites
 
 ```bash
-act --list -W .github/workflows/master-pipeline.yml
+# Install act
+brew install act
+
+# Ensure Docker Desktop is running
+docker info
+
+# Setup test secrets (safe for commits)
+mkdir -p .act-secrets
+cat > .act-secrets/test-secrets << EOF
+FIREBASE_TOKEN=test_token
+FIREBASE_SERVICE_ACCOUNT_KEY={"test": "key"}
+FIREBASE_SERVICE_ACCOUNT_DEVELOPMENT={"type":"service_account","project_id":"vehicle-vitals-dev"}
+FIREBASE_SERVICE_ACCOUNT_STAGING={"type":"service_account","project_id":"vehicle-vitals-staging"}
+FIREBASE_SERVICE_ACCOUNT_PRODUCTION={"type":"service_account","project_id":"vehicle-vitals-prod"}
+EOF
+
+# For real testing, create real-secrets with actual values (DO NOT COMMIT)
+cp .act-secrets/test-secrets .act-secrets/real-secrets
+# Edit .act-secrets/real-secrets with your real Firebase credentials
 ```
 
-## Safe Scope
-
-Use `act` only for a focused, non-deployment Linux job whose actions support the
-local runner. For example, you may attempt the test job with explicitly fake
-configuration:
+### 2. Test Workflows
 
 ```bash
-act pull_request \
-  -W .github/workflows/master-pipeline.yml \
-  --job test \
+# Use the interactive script
+./scripts/test-act.sh
+
+# Or test specific workflows directly
+act -W .github/workflows/master-pipeline.yml --job quality-gate --container-architecture linux/amd64
+```
+
+## 🛠️ Common Commands
+
+### Test Quality Checks
+
+```bash
+act -W .github/workflows/master-pipeline.yml \
+  --job quality-gate \
+  --secret-file .act-secrets/test-secrets \
   --container-architecture linux/amd64
 ```
 
-Expect differences from GitHub-hosted runners. Run the repository's native
-commands first; they are faster and more diagnostic:
+### Test Web Build & Deploy (Dry Run)
 
 ```bash
-npm ci
-npm run check
-npm run test:unit:all
-npm run test:scripts
-npm run build:web
+act -W .github/workflows/master-pipeline.yml \
+  --job build-web \
+  --secret-file .act-secrets/test-secrets \
+  --container-architecture linux/amd64
+
+act -W .github/workflows/master-pipeline.yml \
+  --job deploy-firebase \
+  --secret-file .act-secrets/test-secrets \
+  --container-architecture linux/amd64
 ```
 
-## Do Not Use `act` For
+### Test iOS Distribution
 
-- `deploy-firebase` with real credentials.
-- Proof that a hosted Firebase deployment works.
-- The `build-ios` macOS/signing path.
-- Branch-protection, environment-approval, or secret-availability validation.
-- Hosted Playwright UAT evidence.
+```bash
+act -W .github/workflows/ios-distribution.yml \
+  --job distribute-ios \
+  --secret-file .act-secrets/test-secrets \
+  --container-architecture linux/amd64
+```
 
-The legacy `scripts/test-act.sh` and `scripts/test-cicd-local.sh` contain older
-job names, mock secret shapes, and assumptions. Review them before use; they are
-not the current source of truth. The former standalone
-`ios-distribution.yml` workflow no longer exists.
+## 🔧 Troubleshooting
 
-## Secrets
+### Docker Image Issues (M-series Mac)
 
-Never commit an `.act-secrets` file containing real values. Prefer running
-non-secret local package commands. If a focused workflow simulation genuinely
-requires placeholders, use a gitignored file with nonfunctional values and
-remove it after the test. A local placeholder cannot validate real credential
-scope or Firebase access.
+```bash
+# Specify architecture explicitly
+act --container-architecture linux/amd64
 
-## Troubleshooting
+# Pull images manually first
+docker pull catthehacker/ubuntu:act-latest
+docker pull node:18
+```
 
-- If Docker architecture differs on Apple silicon, add
-  `--container-architecture linux/amd64`.
-- If an action or service is unsupported, run its underlying repository command
-  directly.
-- If a job depends on prior job outputs, hosted services, or private checkout,
-  stop the local simulation and use a pull-request run.
+### Missing Secrets
 
-See `TESTING_INSTRUCTIONS.md` for the authoritative test matrix and
-`COST_EFFECTIVE_CICD.md` for current cost-control guidance.
+```bash
+# Create secrets file
+mkdir -p .act-secrets
+cat > .act-secrets/test-secrets << EOF
+FIREBASE_TOKEN=test_token
+FIREBASE_SERVICE_ACCOUNT_KEY={"test": "key"}
+EOF
+```
+
+### Workflow Path Issues
+
+```bash
+# Use absolute paths
+act -W /full/path/to/.github/workflows/master-pipeline.yml
+
+# Or run from project root
+cd /path/to/vehicle-vitals
+act -W .github/workflows/master-pipeline.yml
+```
+
+### Job Selection
+
+```bash
+# List available jobs
+act --list
+
+# Test specific job
+act -W .github/workflows/master-pipeline.yml --job quality-gate
+```
+
+## 📊 Workflow Testing Strategy
+
+### Phase 1: Individual Job Testing
+
+```bash
+# Test quality checks first
+act -W .github/workflows/master-pipeline.yml --job quality-gate
+
+# Test build jobs
+act -W .github/workflows/master-pipeline.yml --job build-web
+
+# Test deployment jobs (with dry-run)
+act -W .github/workflows/master-pipeline.yml --job deploy-firebase
+```
+
+### Phase 2: Full Pipeline Testing
+
+```bash
+# Test complete workflow
+act -W .github/workflows/master-pipeline.yml --secret-file .act-secrets/test-secrets
+```
+
+### Phase 3: Event Simulation
+
+```bash
+# Simulate push to develop
+act push --secret-file .act-secrets/test-secrets
+
+# Simulate workflow dispatch
+act workflow_dispatch --secret-file .act-secrets/test-secrets
+```
+
+## 🎯 Best Practices
+
+### 1. Test Incrementally
+
+- Start with individual jobs
+- Fix issues locally before full workflow testing
+- Use dry-run mode for deployment testing
+
+### 2. Environment Variables
+
+```bash
+# Set environment variables
+act --env ENVIRONMENT=development \
+    --env DRY_RUN=true \
+    --secret-file .act-secrets/test-secrets
+```
+
+### 3. Mock External Services
+
+```bash
+# Use test tokens/keys that don't consume real resources
+# Mock API endpoints if needed
+# Use local Firebase emulator for testing
+```
+
+## 🎯 Cost-Aware Testing
+
+```bash
+# Always test locally first
+./scripts/test-cicd-local.sh development true master-pipeline
+
+# Use act for workflow logic testing
+./scripts/test-act.sh
+
+# Use safe commits to avoid unnecessary triggers
+./scripts/safe-commit.sh
+
+# Only push to main/staging when confident
+git push origin staging  # Only main/staging trigger Actions now
+```
+
+## 🚨 Common Issues & Solutions
+
+### "No such image" Error
+
+```bash
+# Pull required images
+docker pull catthehacker/ubuntu:act-latest
+docker pull node:18
+
+# Or disable pulling
+act --pull=false
+```
+
+### "Container architecture" Warning
+
+```bash
+# For M-series Macs
+act --container-architecture linux/amd64
+```
+
+### Secrets Not Found
+
+```bash
+# Check secrets file exists
+ls -la .act-secrets/test-secrets
+
+# Verify format
+cat .act-secrets/test-secrets
+```
+
+### Workflow Fails with Real Credentials
+
+```bash
+# Use test/mock credentials for local testing
+# Real credentials should only be used on GitHub
+```
+
+## 📈 Testing Workflow
+
+```
+Local Development → Local Scripts → Act Testing → Safe Commit → Manual Test (develop) → Auto Deploy (main/staging)
+     ↓                    ↓            ↓              ↓              ↓                      ↓
+   0 minutes          0 minutes    0 minutes    0 minutes    Manual trigger          Auto trigger
+```
+
+### Development Workflow
+
+1. **Make changes** in feature branch
+2. **Test locally** with `./scripts/test-cicd-local.sh`
+3. **Test workflows** with `./scripts/test-act.sh`
+4. **Safe commit** with `./scripts/safe-commit.sh`
+5. **Merge to develop** (no automatic triggers)
+6. **Manual testing** via GitHub Actions workflow_dispatch (if needed)
+7. **Merge to staging** → automatic deployment
+8. **Merge to main** → automatic production deployment
+
+## 🆘 Emergency Testing
+
+When workflows fail on GitHub:
+
+1. **Stop the bleeding**: Don't push more commits
+2. **Local diagnosis**: Use `./scripts/test-cicd-local.sh`
+3. **Act debugging**: Use `./scripts/test-act.sh`
+4. **Fix locally**: Iterate until tests pass
+5. **Controlled deployment**: Use workflow dispatch with dry-run
+6. **Production**: Only when confident
+
+## 📚 Resources
+
+- [Act CLI Documentation](https://github.com/nektos/act)
+- [GitHub Actions Reference](https://docs.github.com/en/actions)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+---
+
+**Remember**: Test locally, deploy confidently, save Actions minutes! 🎭

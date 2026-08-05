@@ -2,17 +2,14 @@
 
 One garage for every vehicle record, reminder, and repair cost.
 
-Vehicle-Vitals is a cross-platform vehicle management application — web
-(React) and iOS (Flutter) — backed by Firebase. It lets owners track service
-history, plan upcoming maintenance, and build a credible ownership record for
-personal, household, and individual work vehicles.
+Vehicle-Vitals is a cross-platform vehicle management application — web (React) and iOS (Flutter) — backed by Firebase. It lets owners track service history, plan upcoming maintenance, and build a credible ownership record across personal vehicles, shared household vehicles, and light business fleets.
 
 ## Who it's for
 
 | Persona | Need | Recommended tier |
 |---|---|---|
 | **Ownership Records** | Keep every service record ready when it matters | Free → Pro |
-| **Shared Garage** | Organize household vehicles in one signed-in account | Pro |
+| **Shared Garage** | Coordinate every vehicle in one shared garage | Pro |
 | **Guided Setup** | Know what to track from day one | Free → Pro |
 | **Hands-On Maintenance** | Document the work you do yourself | Pro → Premium |
 | **Work Vehicles** | Keep business vehicles ready, documented, and accountable | Premium → Enterprise |
@@ -25,10 +22,6 @@ personal, household, and individual work vehicles.
 | **Pro** | $2.99/month | 10 | Plan and coordinate |
 | **Premium** | $6.99/month | 25 | Forecast and automate |
 | **Enterprise** | Custom | 25+ | Govern and integrate |
-
-These are configured catalog values, not proof that paid checkout, App Store
-products, or Enterprise operations are currently approved for general sale.
-See [docs/LAUNCH_CLAIMS_MATRIX.md](docs/LAUNCH_CLAIMS_MATRIX.md).
 
 ## Repository structure
 
@@ -56,11 +49,6 @@ cd packages/functions && VV_SHARED_DIST=../shared/dist npm run vendor:shared
 
 ## Documentation
 
-Start with the [documentation index](docs/README.md). It identifies current
-sources of truth, supporting references, future plans, historical snapshots,
-and generated material. Dated planning/checklist documents do not override the
-current release posture in [docs/GO_LIVE_RUNBOOK.md](docs/GO_LIVE_RUNBOOK.md).
-
 **Product & business**
 
 | Doc | Purpose |
@@ -77,8 +65,8 @@ current release posture in [docs/GO_LIVE_RUNBOOK.md](docs/GO_LIVE_RUNBOOK.md).
 | Doc | Purpose |
 |---|---|
 | [docs/GO_LIVE_RUNBOOK.md](docs/GO_LIVE_RUNBOOK.md) | Executable go-live checklist, P0 blockers, validation gates, rollback plan |
-| [docs/PRODUCTION_RELEASE_BRIEF.md](docs/PRODUCTION_RELEASE_BRIEF.md) | Historical R1 release-decision snapshot |
-| [docs/R1_COMPLETION_CHECKLIST.md](docs/R1_COMPLETION_CHECKLIST.md) | Historical R1 gate evidence |
+| [docs/PRODUCTION_RELEASE_BRIEF.md](docs/PRODUCTION_RELEASE_BRIEF.md) | Release brief for the R1 launch |
+| [docs/R1_COMPLETION_CHECKLIST.md](docs/R1_COMPLETION_CHECKLIST.md) | R1 gate evidence checklist |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Deployment guide for all environments |
 | [docs/PROD_SETUP_GUIDE.md](docs/PROD_SETUP_GUIDE.md) | Production secrets and environment setup |
 
@@ -89,7 +77,7 @@ current release posture in [docs/GO_LIVE_RUNBOOK.md](docs/GO_LIVE_RUNBOOK.md).
 | [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | Local dev setup, testing workflow, conventions |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture and data flow |
 | [docs/FIREBASE_CONFIG.md](docs/FIREBASE_CONFIG.md) | Firebase configuration and multi-environment patterns |
-| [docs/FIREBASE_INDEXES.md](docs/FIREBASE_INDEXES.md) | Current Firestore index source and deployment guidance |
+| [docs/FIREBASE_INDEXES.md](docs/FIREBASE_INDEXES.md) | Firestore composite indexes |
 | [docs/MONETIZATION_DEVELOPER_GUIDE.md](docs/MONETIZATION_DEVELOPER_GUIDE.md) | Feature flags, entitlement hooks, tier gating |
 | [docs/IOS_DOCUMENTATION_INDEX.md](docs/IOS_DOCUMENTATION_INDEX.md) | iOS certificate, signing, and CI/CD index |
 
@@ -98,7 +86,7 @@ current release posture in [docs/GO_LIVE_RUNBOOK.md](docs/GO_LIVE_RUNBOOK.md).
 ### Web
 
 ```bash
-npm ci               # install locked workspace dependencies
+npm install          # install all workspace dependencies
 npm run dev:web      # start Vite dev server
 npm run build:web    # production build
 ```
@@ -123,20 +111,19 @@ firebase emulators:start --only firestore,functions,auth
 ## Testing
 
 ```bash
-# Type checks, web/mobile unit tests, scripts, and production web build
-npm run check
-npm run test:unit:all
-npm run test:scripts
-npm run build:web
+# Web unit tests (Vitest)
+npm --workspace=@vehicle-vitals/web run test:unit
+
+# Shared package tests (Vitest)
+cd packages/shared && npx vitest run tests
+
+# Mobile tests (Flutter)
+cd packages/mobile && flutter test && flutter analyze
 
 # Functions tests (node --test; requires the companion repo cloned in first)
 npm --workspace=functions run test
 
-# Flutter static analysis
-cd packages/mobile && flutter analyze
-
-# Web UAT (Playwright — starts local web by default)
-cd ../..
+# Web UAT (Playwright — requires a running dev or staging URL)
 npm --workspace=@vehicle-vitals/web run test:uat:chromium
 ```
 
@@ -152,19 +139,12 @@ The `VITE_SHOW_COMING_SOON_PRODUCTION` GitHub secret controls whether production
 
 ## CI/CD
 
-The active master pipeline (`.github/workflows/master-pipeline.yml`) runs for
-pull requests and pushes involving `develop`, `staging`, or `main`, and it can
-also be dispatched manually. Branch pushes map to development, staging, and
-production respectively. It gates deploy-capable runs on:
+The master pipeline (`master-pipeline.yml`) runs on `staging` and `main`. It gates on:
 
-1. **Web and mobile unit jobs plus hosted web UAT**
-2. **Quality Gate** — aggregates those required results
-3. **Build Web App** — creates the environment-specific Vite artifact
-4. **Deploy Firebase** — Hosting, Firestore, Storage, Functions, and indexes;
-   the private Functions companion repository is checked out for this job
-
-iOS build/upload exists in the workflow but is currently disabled by
-`.cicd/projects/vehicle-vitals.yml`. Android is also disabled/on hold.
+1. **Quality Gate** — web unit tests + mobile unit tests
+2. **Build Web App** — Vite production build
+3. **Build iOS App** — Xcode archive (macOS runner)
+4. **Deploy Firebase** — Hosting, Firestore, Storage, Functions, Indexes
 
 Use `gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging` to trigger manually.
 
@@ -174,16 +154,11 @@ Use `gh workflow run master-pipeline.yml -f action=build_and_deploy -f environme
 - **Data shape**: use `defaultVehicle` from `packages/shared/src/types.js` when creating vehicles.
 - **Feature gating**: use `useSubscription()` and `hasFeature()` from `packages/web/src/shared/featureFlags.ts`; never hard-code tier checks in UI components.
 - **Firestore paths**: user data lives at `users/{uid}/vehicles/{vin}`; org data at `orgs/{orgId}/vehicles/{vin}`.
-- **Bundle IDs**: iOS uses `com.vehiclevitals.app.ios`; Android uses
-  `com.vehiclevitals.app.android` while that target remains on hold.
+- **Bundle ID**: `com.vehiclevitals` (migrated from `com.nelsongrey.vehiclevitals` June 2026).
 
 ## iOS app distribution
 
-The current Fastlane `beta` lane creates a signed build and uploads it through
-TestFlight when the iOS pipeline target is enabled. Automated iOS execution is
-temporarily disabled in `.cicd/projects/vehicle-vitals.yml`; App Store review
-and storefront state are external and must be verified in App Store Connect
-before release decisions.
+Internal testers receive builds via Firebase App Distribution. Production will use TestFlight / App Store.
 
 ```bash
 cd packages/mobile

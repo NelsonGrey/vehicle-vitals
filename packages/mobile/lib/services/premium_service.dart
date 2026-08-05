@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -34,46 +33,26 @@ class PremiumService extends ChangeNotifier {
   static const String _subscriptionTierKey = 'subscription_tier';
   static const String _vehicleLimitKey = 'vehicle_limit';
 
-  // Apple/Google require choosing these product-id strings when creating
-  // each subscription in App Store Connect / Play Console (unlike Stripe,
-  // which generates its own price ids) — must match exactly. Mirrored
-  // server-side in packages/functions/src/billing.provider.ts's
-  // IAP_PRODUCT_CATALOG, which is the trusted source for tier/billingPeriod
-  // on verification.
-  static const Map<String, _IapProductSpec> _iosProductCatalog = {
+  // Apple requires choosing these product-id strings when creating each
+  // subscription in App Store Connect (unlike Stripe, which generates its
+  // own price ids) — must match ASC exactly. Mirrored server-side in
+  // packages/functions/src/billing.provider.ts's IAP_PRODUCT_CATALOG,
+  // which is the trusted source for tier/billingPeriod on verification.
+  static const Map<String, _IapProductSpec> _productCatalog = {
     'PRO_iOS_MONTH': _IapProductSpec('pro', 'monthly'),
     'PRO_iOS_ANNUAL': _IapProductSpec('pro', 'annual'),
     'PREMIUM_iOS_MONTH': _IapProductSpec('premium', 'monthly'),
     'PREMIUM_iOS_ANNUAL': _IapProductSpec('premium', 'annual'),
   };
-  static const Map<String, _IapProductSpec> _androidProductCatalog = {
-    'pro_android_month': _IapProductSpec('pro', 'monthly'),
-    'pro_android_annual': _IapProductSpec('pro', 'annual'),
-    'premium_android_month': _IapProductSpec('premium', 'monthly'),
-    'premium_android_annual': _IapProductSpec('premium', 'annual'),
-  };
-  static final Map<String, _IapProductSpec> _productCatalog = Platform.isAndroid
-      ? _androidProductCatalog
-      : _iosProductCatalog;
 
-  // Shown until the live StoreKit/Play Billing query resolves; matches the
-  // canonical prices in packages/web/src/shared/featureFlags.ts's
-  // TIER_PRICING.
-  static const Map<String, String> _iosPlaceholderPrices = {
+  // Shown until the live StoreKit query resolves; matches the canonical
+  // prices in packages/web/src/shared/featureFlags.ts's TIER_PRICING.
+  static const Map<String, String> _placeholderPrices = {
     'PRO_iOS_MONTH': '\$2.99/mo',
     'PRO_iOS_ANNUAL': '\$29.99/yr',
     'PREMIUM_iOS_MONTH': '\$6.99/mo',
     'PREMIUM_iOS_ANNUAL': '\$69.99/yr',
   };
-  static const Map<String, String> _androidPlaceholderPrices = {
-    'pro_android_month': '\$2.99/mo',
-    'pro_android_annual': '\$29.99/yr',
-    'premium_android_month': '\$6.99/mo',
-    'premium_android_annual': '\$69.99/yr',
-  };
-  static final Map<String, String> _placeholderPrices = Platform.isAndroid
-      ? _androidPlaceholderPrices
-      : _iosPlaceholderPrices;
 
   bool _isPremium = false;
   bool _isLoading = false;

@@ -1,18 +1,12 @@
 # Vehicle-Vitals - Security Implementation Guide
 
-**Version**: 1.1
-**Last Reviewed**: July 20, 2026
-**Status**: Supporting security reference; executable rules/code and current alert state take precedence
+**Version**: 1.0  
+**Last Updated**: February 16, 2026  
+**Status**: ✅ ACTIVE  
 **Owner**: Mark Nelson  
 **Classification**: INTERNAL USE ONLY
 
 ---
-
-> Do not copy embedded rule or code examples into production. The current rule
-> sources are `firebase/firestore.rules` and `firebase/storage.rules`; current
-> server controls live in the private Functions companion mounted at
-> `packages/functions`. See `SECURITY_BEST_PRACTICES_REPORT.md` and
-> `GO_LIVE_RUNBOOK.md` for point-in-time validation.
 
 ## Table of Contents
 
@@ -854,29 +848,26 @@ class DefaultFirebaseOptions {
 
 1. Go to GitHub repository settings
 2. Navigate to "Secrets and variables" > "Actions"
-3. Add only the repository secrets consumed by the active workflow. The
-   current Firebase deployment credential is `FIREBASE_TOKEN`; the private
-   backend checkout uses `FUNCTIONS_REPO_PAT`. Environment-specific public web
-   Firebase values use the `VITE_FIREBASE_*_<ENVIRONMENT>` families.
+3. Add secrets:
+   - `FIREBASE_TOKEN`: Firebase deploy token (`firebase login:ci`)
+   - `FIREBASE_SERVICE_ACCOUNT_KEY`: Service account JSON (for admin operations)
 
 **Using Secrets in Workflows**:
 
 ```yaml
-# Excerpt pattern from .github/workflows/master-pipeline.yml
+# .github/workflows/deploy.yml
 jobs:
-  deploy-firebase:
-    # ...quality/build dependencies omitted...
+  deploy:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Functions
-        uses: actions/checkout@v7
-        with:
-          repository: NelsonGrey/vehicle-vitals-functions
-          token: ${{ secrets.FUNCTIONS_REPO_PAT }}
-          path: packages/functions
+      - uses: actions/checkout@v3
+      - name: Deploy to Firebase
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          npm install -g firebase-tools
+          firebase deploy --token "$FIREBASE_TOKEN"
 ```
-
-The full active inventory is in `PROD_SETUP_GUIDE.md`. Do not add an unused
-service-account secret and assume the workflow consumes it.
 
 ### Firebase Admin SDK Credentials
 

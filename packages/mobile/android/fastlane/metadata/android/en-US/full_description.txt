@@ -1,0 +1,16 @@
+Vehicle-Vitals keeps every vehicle's service records, receipts, reminders, and ownership costs together in one place, so you always know what's been done and what may need attention next.
+
+FEATURES
+- Garage: track every vehicle you own, active or stored, with mileage and health status at a glance
+- Service records: log maintenance with date, mileage, cost, shop, notes, and attachments like receipts or invoices
+- Maintenance plan: see upcoming and overdue work, snooze or dismiss reminders, and get notified before something is due
+- Service history: a full chronological timeline of completed work for each vehicle
+- VIN lookup: add a vehicle by scanning or entering its VIN, with manual fallback
+- Shops & services: find and save nearby providers
+- Reminders: configure lead time, driving assumptions, and calendar sync (Google, Apple, or ICS)
+- Cross-platform: your garage stays in sync between the web app and your phone
+
+PLANS
+Vehicle-Vitals is free to start. Pro and Premium plans unlock a higher vehicle limit and additional features; see current pricing in the app.
+
+Vehicle-Vitals is built for anyone who wants a clear, organized record of vehicle ownership -- private owners, DIY mechanics, and households managing more than one car.

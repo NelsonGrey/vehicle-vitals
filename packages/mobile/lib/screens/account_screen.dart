@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -129,6 +131,32 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _linkGoogle() async {
+    setState(() => _busy = true);
+
+    try {
+      final authService = context.read<AuthService>();
+      await authService.linkCurrentUserWithGoogle();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google sign-in linked to this account'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to link Google sign-in: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = context.watch<AuthService>();
@@ -137,6 +165,7 @@ class _AccountScreenState extends State<AccountScreen> {
         user?.providerIds.map(_formatProvider).toSet().toList() ??
         const <String>[];
     final appleLinked = user?.providerIds.contains('apple.com') ?? false;
+    final googleLinked = user?.providerIds.contains('google.com') ?? false;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Account')),
@@ -175,13 +204,21 @@ class _AccountScreenState extends State<AccountScreen> {
                           'Linked providers: ${providerLabels.isEmpty ? 'Unknown' : providerLabels.join(', ')}',
                         ),
                         const SizedBox(height: 12),
-                        if (!appleLinked)
+                        if (!googleLinked)
+                          OutlinedButton.icon(
+                            onPressed: _busy ? null : _linkGoogle,
+                            icon: const Icon(Icons.link),
+                            label: const Text('Link Google Sign-In'),
+                          ),
+                        if (!googleLinked) const SizedBox(height: 12),
+                        if (Platform.isIOS && !appleLinked)
                           OutlinedButton.icon(
                             onPressed: _busy ? null : _linkApple,
                             icon: const Icon(Icons.link),
                             label: const Text('Link Apple Sign-In'),
                           ),
-                        const SizedBox(height: 12),
+                        if (Platform.isIOS && !appleLinked)
+                          const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: () async {
                             await Clipboard.setData(

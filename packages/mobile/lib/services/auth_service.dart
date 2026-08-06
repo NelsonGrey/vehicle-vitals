@@ -3,9 +3,26 @@ import 'dart:async';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart' as google;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 
+import '../firebase_options.dart';
 import '../utils/user_facing_error.dart';
+
+// The OAuth "Web client" ID Firebase auto-generates per project, required as
+// `serverClientId` so the ID token google_sign_in returns on Android/iOS has
+// an audience Firebase's signInWithCredential will accept. Mirrors the
+// per-environment values already baked into the google-services.*.json /
+// GoogleService-Info.*.plist files that firebase_options.dart is generated
+// from.
+const Map<String, String> _googleServerClientIds = {
+  'development':
+      '919227980868-tuenu6h2df1km03blnn0i8kqa4dinm6u.apps.googleusercontent.com',
+  'staging':
+      '364854499099-5cun3jhs7tu8b1titfv5fpuovjrqhha5.apps.googleusercontent.com',
+  'production':
+      '489413148337-bkukvjc1ht5k8vlroj2qkq1qmuf20d2p.apps.googleusercontent.com',
+};
 
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 const bool _screenshotSignedOut = bool.fromEnvironment(
@@ -366,6 +383,112 @@ class AuthService extends ChangeNotifier {
       throw FriendlyException(
         e.message ?? 'Apple sign-in failed. Please try again.',
       );
+    }
+  }
+
+  google.GoogleSignIn? _googleSignInInstance;
+
+  Future<google.GoogleSignIn> _googleSignIn() async {
+    final existing = _googleSignInInstance;
+    if (existing != null) return existing;
+
+    final instance = google.GoogleSignIn.instance;
+    await instance.initialize(
+      serverClientId:
+          _googleServerClientIds[DefaultFirebaseOptions.currentEnvironmentLabel],
+    );
+    _googleSignInInstance = instance;
+    return instance;
+  }
+
+  Future<UserCredential?> signInWithGoogle() async {
+    final googleSignIn = await _googleSignIn();
+
+    google.GoogleSignInAccount googleAccount;
+    try {
+      googleAccount = await googleSignIn.authenticate();
+    } on google.GoogleSignInException catch (e) {
+      if (e.code == google.GoogleSignInExceptionCode.canceled) {
+        return null;
+      }
+      throw FriendlyException('Google sign-in failed. Please try again.');
+    }
+
+    final idToken = googleAccount.authentication.idToken;
+    if (idToken == null) {
+      throw FriendlyException('Google sign-in failed. Please try again.');
+    }
+
+    final oauthCredential = firebase_auth.GoogleAuthProvider.credential(
+      idToken: idToken,
+    );
+
+    try {
+      final credential = await _auth.signInWithCredential(oauthCredential);
+      await _linkPendingProviderIfNeeded(credential.user);
+      final user = _mapUser(_auth.currentUser ?? credential.user);
+      _currentUser = user;
+      notifyListeners();
+      if (user == null) return null;
+      return UserCredential(user: user);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'account-exists-with-different-credential' ||
+          e.code == 'credential-already-in-use') {
+        _setPendingProviderLink(
+          credential: oauthCredential,
+          email: e.email ?? googleAccount.email,
+        );
+        throw FriendlyException(
+          _buildProviderConflictMessage(e.email ?? googleAccount.email),
+        );
+      }
+      throw FriendlyException(
+        e.message ?? 'Google sign-in failed. Please try again.',
+      );
+    }
+  }
+
+  Future<void> linkCurrentUserWithGoogle() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      throw Exception('Sign in first before linking Google.');
+    }
+
+    final googleSignIn = await _googleSignIn();
+    google.GoogleSignInAccount googleAccount;
+    try {
+      googleAccount = await googleSignIn.authenticate();
+    } on google.GoogleSignInException catch (e) {
+      if (e.code == google.GoogleSignInExceptionCode.canceled) {
+        return;
+      }
+      throw Exception('Unable to link Google sign-in.');
+    }
+
+    final idToken = googleAccount.authentication.idToken;
+    if (idToken == null) {
+      throw Exception('Unable to link Google sign-in.');
+    }
+
+    final oauthCredential = firebase_auth.GoogleAuthProvider.credential(
+      idToken: idToken,
+    );
+
+    try {
+      await currentUser.linkWithCredential(oauthCredential);
+      await currentUser.reload();
+      _currentUser = _mapUser(_auth.currentUser);
+      notifyListeners();
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'provider-already-linked') {
+        return;
+      }
+      if (e.code == 'credential-already-in-use') {
+        throw Exception(
+          'That Google identity is already linked to another account. Sign in with that account first if you need to consolidate data.',
+        );
+      }
+      throw Exception(e.message ?? 'Unable to link Google sign-in.');
     }
   }
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { useReauthentication } from '../shared/useReauthentication';
+import { usePasswordPolicy } from '../shared/usePasswordPolicy';
 import { userFacingError } from '../shared/userFacingError';
 
 export function AccountSecurityContent() {
@@ -12,12 +13,15 @@ export function AccountSecurityContent() {
     linkWithApple,
     reauthenticateWithGoogle,
     reauthenticateWithApple,
+    checkPasswordPolicy,
   } = useAuth();
   const { hasGoogle, hasApple, reauth, updatePassword } = useReauthentication({
     user,
     reauthenticateWithGoogle,
     reauthenticateWithApple,
   });
+  const { hint, quickCheck, checkPolicy, describeFailure } =
+    usePasswordPolicy(checkPasswordPolicy);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -84,9 +88,27 @@ export function AccountSecurityContent() {
       setError('Passwords do not match.');
       return;
     }
+
+    // Quick client-side pass using the cached live policy.
+    const quickCheckError = quickCheck(newPassword);
+    if (quickCheckError) {
+      setError(quickCheckError);
+      return;
+    }
+
     setBusy(true);
     try {
       await reauth(currentPassword);
+
+      // Authoritative check against the live Firebase policy -- catches
+      // drift between this form's cached copy and the real policy before
+      // committing the change.
+      const policyStatus = await checkPolicy(newPassword);
+      if (!policyStatus.isValid) {
+        setError(describeFailure(policyStatus));
+        return;
+      }
+
       await updatePassword(user, newPassword);
       setStatus('Password updated successfully.');
       setCurrentPassword('');
@@ -227,6 +249,9 @@ export function AccountSecurityContent() {
               onChange={e => setNewPassword(e.target.value)}
               required
             />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {hint}
+            </p>
           </div>
           <div>
             <label

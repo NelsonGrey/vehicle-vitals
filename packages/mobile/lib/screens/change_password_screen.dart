@@ -2,34 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../components/app_logo.dart';
 import '../services/auth_service.dart';
 import '../services/password_policy_service.dart';
 import '../utils/user_facing_error.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+class ChangePasswordScreen extends StatefulWidget {
+  const ChangePasswordScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
-  bool _showPassword = false;
+  bool _showCurrentPassword = false;
+  bool _showNewPassword = false;
   bool _showConfirmPassword = false;
 
   final _passwordPolicyService = PasswordPolicyService();
 
-  // Populated from the live Firebase password policy (see
-  // PasswordPolicyService.loadPolicy). Defaults to PasswordPolicyService's
-  // fallback so the form is still usable if the fetch fails (e.g. offline);
-  // the authoritative check in _signUp() re-verifies against the real
-  // policy regardless of whether this fetch succeeded.
+  // Populated from the live Firebase password policy. Defaults to
+  // PasswordPolicyService's fallback so the form is still usable if the
+  // fetch fails (e.g. offline); the authoritative check in _submit()
+  // re-verifies against the real policy regardless of whether this fetch
+  // succeeded.
   PasswordPolicyState _policy = PasswordPolicyService.defaultPolicy;
 
   @override
@@ -40,8 +40,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
@@ -52,20 +52,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _policy = policy);
   }
 
-  Future<void> _signUp() async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final password = _passwordController.text;
+      final currentPassword = _currentPasswordController.text;
+      final newPassword = _newPasswordController.text;
+
+      await authService.reauthenticateWithPassword(currentPassword);
 
       // Authoritative check against the live Firebase policy -- catches
-      // drift between this form's cached copy and the real policy (e.g.
-      // it changed after this screen loaded, or the initial fetch failed)
-      // before spending a round-trip on account creation.
-      final status = await _passwordPolicyService.checkPassword(password);
+      // drift between this form's cached copy and the real policy (e.g. it
+      // changed after this screen loaded, or the initial fetch failed)
+      // before updating the password.
+      final status = await _passwordPolicyService.checkPassword(newPassword);
       if (!status.isValid) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -80,45 +83,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return;
       }
 
-      await authService.createUserWithEmailAndPassword(
-        _emailController.text.trim(),
-        password,
-      );
+      await authService.updatePassword(newPassword);
 
       if (mounted) {
-        context.go('/app');
-      }
-    } catch (e) {
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              userFacingError(
-                e,
-                fallback:
-                    'We could not create your account. Please try again or visit Support.',
-              ),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          const SnackBar(content: Text('Password updated')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _signInWithApple() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.signInWithApple();
-
-      if (mounted) {
-        context.go('/app');
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
@@ -128,7 +99,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               userFacingError(
                 e,
                 fallback:
-                    'Apple sign-in could not be completed. Please try again.',
+                    'We could not update your password. Please try again.',
               ),
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
@@ -145,7 +116,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(title: const Text('Change Password')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -156,24 +127,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Create your account',
+                  'Change your password',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Use one secure account for web and iOS access.',
+                  'Confirm your current password, then choose a new one.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Center(
-                    child: AppLogo(size: 72, showText: false, full: true),
-                  ),
-                ),
-
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -181,39 +145,50 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Email address',
+                          controller: _currentPasswordController,
+                          obscureText: !_showCurrentPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Current password',
+                            suffixIcon: IconButton(
+                              onPressed: () => setState(
+                                () => _showCurrentPassword =
+                                    !_showCurrentPassword,
+                              ),
+                              icon: Icon(
+                                _showCurrentPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              tooltip: _showCurrentPassword
+                                  ? 'Hide password'
+                                  : 'Show password',
+                            ),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Please enter a valid email';
+                              return 'Please enter your current password';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
-                          controller: _passwordController,
-                          obscureText: !_showPassword,
+                          controller: _newPasswordController,
+                          obscureText: !_showNewPassword,
                           decoration: InputDecoration(
-                            labelText: 'Password',
+                            labelText: 'New password',
                             helperText: _passwordPolicyService.hint(_policy),
                             helperMaxLines: 2,
                             suffixIcon: IconButton(
                               onPressed: () => setState(
-                                () => _showPassword = !_showPassword,
+                                () => _showNewPassword = !_showNewPassword,
                               ),
                               icon: Icon(
-                                _showPassword
+                                _showNewPassword
                                     ? Icons.visibility_off
                                     : Icons.visibility,
                               ),
-                              tooltip: _showPassword
+                              tooltip: _showNewPassword
                                   ? 'Hide password'
                                   : 'Show password',
                             ),
@@ -226,7 +201,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           controller: _confirmPasswordController,
                           obscureText: !_showConfirmPassword,
                           decoration: InputDecoration(
-                            labelText: 'Confirm password',
+                            labelText: 'Confirm new password',
                             suffixIcon: IconButton(
                               onPressed: () => setState(
                                 () => _showConfirmPassword =
@@ -244,9 +219,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please confirm your password';
+                              return 'Please confirm your new password';
                             }
-                            if (value != _passwordController.text) {
+                            if (value != _newPasswordController.text) {
                               return 'Passwords do not match';
                             }
                             return null;
@@ -254,7 +229,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: _isLoading ? null : _signUp,
+                          onPressed: _isLoading ? null : _submit,
                           child: _isLoading
                               ? const SizedBox(
                                   height: 20,
@@ -264,41 +239,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Create Account'),
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _signInWithApple,
-                          icon: const Icon(Icons.apple),
-                          label: const Text('Continue with Apple'),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'By creating an account or continuing with Apple, you agree to the Terms of Use and acknowledge the Privacy Policy.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          children: [
-                            TextButton(
-                              onPressed: () => context.push('/terms'),
-                              child: const Text('Terms of Use'),
-                            ),
-                            TextButton(
-                              onPressed: () => context.push('/privacy'),
-                              child: const Text('Privacy Policy'),
-                            ),
-                          ],
+                              : const Text('Update Password'),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.go('/auth/login'),
-                  child: const Text('Already have an account? Sign in'),
                 ),
               ],
             ),

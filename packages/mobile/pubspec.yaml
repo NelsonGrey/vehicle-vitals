@@ -77,6 +77,10 @@ dependencies:
 
   # Apple Sign-In
   sign_in_with_apple: ^7.0.0
+
+  # Google Sign-In
+  google_sign_in: ^7.2.0
+
   csv: ^6.0.0
   excel: ^4.0.6
   pdf: ^3.11.3

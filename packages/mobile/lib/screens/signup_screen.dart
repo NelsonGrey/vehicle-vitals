@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -97,6 +99,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 e,
                 fallback:
                     'We could not create your account. Please try again or visit Support.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final credential = await authService.signInWithGoogle();
+
+      if (mounted && credential != null) {
+        context.go('/app');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Google sign-in could not be completed. Please try again.',
               ),
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
@@ -268,13 +302,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _signInWithApple,
-                          icon: const Icon(Icons.apple),
-                          label: const Text('Continue with Apple'),
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          icon: const Icon(Icons.g_mobiledata),
+                          label: const Text('Continue with Google'),
                         ),
+                        if (Platform.isIOS) ...[
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _signInWithApple,
+                            icon: const Icon(Icons.apple),
+                            label: const Text('Continue with Apple'),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         const Text(
-                          'By creating an account or continuing with Apple, you agree to the Terms of Use and acknowledge the Privacy Policy.',
+                          'By creating an account or continuing with Google or Apple, you agree to the Terms of Use and acknowledge the Privacy Policy.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 12, color: Colors.black54),
                         ),

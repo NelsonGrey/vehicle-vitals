@@ -24,7 +24,9 @@
   },
   "dependencies": {
     "firebase": "^12.16.0",
-    "firebase-admin": "^14.2.0"
+    "firebase-admin": "^14.2.0",
+    "postcss": "^8.5.26",
+    "protobufjs": "^7.6.5"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

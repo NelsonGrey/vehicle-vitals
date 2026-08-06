@@ -312,6 +312,13 @@ class _AccountScreenState extends State<AccountScreen> {
                         onTap: () => context.push('/app/settings'),
                       ),
                       ListTile(
+                        leading: const Icon(Icons.lock_outline),
+                        title: const Text('Change Password'),
+                        subtitle: const Text('Update your account password'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/change-password'),
+                      ),
+                      ListTile(
                         leading: const Icon(Icons.shield_outlined),
                         title: const Text('Data & Privacy'),
                         subtitle: const Text(

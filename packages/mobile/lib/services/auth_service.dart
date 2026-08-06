@@ -269,6 +269,68 @@ class AuthService extends ChangeNotifier {
     return _auth.validatePassword(_auth, password);
   }
 
+  // Re-authenticates the current user with their password before a
+  // sensitive operation (e.g. changing their password) that Firebase
+  // requires a recent sign-in for.
+  Future<void> reauthenticateWithPassword(String currentPassword) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null) {
+      throw FriendlyException('Sign in first before changing your password.');
+    }
+
+    final credential = firebase_auth.EmailAuthProvider.credential(
+      email: email,
+      password: currentPassword,
+    );
+
+    try {
+      await user.reauthenticateWithCredential(credential);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'wrong-password':
+        case 'invalid-credential':
+          throw FriendlyException('Current password is incorrect.');
+        case 'too-many-requests':
+          throw FriendlyException(
+            'Too many attempts. Please wait and try again.',
+          );
+        case 'network-request-failed':
+          throw FriendlyException(
+            'Network error. Please check your connection and try again.',
+          );
+        default:
+          throw FriendlyException(
+            e.message ??
+                'We could not verify your current password. Please try again.',
+          );
+      }
+    }
+  }
+
+  // Updates the signed-in user's password. Firebase requires a recent
+  // sign-in for this -- call reauthenticateWithPassword first if the
+  // session may be stale.
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _auth.currentUser!.updatePassword(newPassword);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        throw FriendlyException(
+          'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.',
+        );
+      }
+      if (e.code == 'requires-recent-login') {
+        throw FriendlyException(
+          'Please verify your current password again and retry.',
+        );
+      }
+      throw FriendlyException(
+        e.message ?? 'We could not update your password. Please try again.',
+      );
+    }
+  }
+
   Future<UserCredential?> signInWithApple() async {
     final appleCredential = await apple.SignInWithApple.getAppleIDCredential(
       scopes: [

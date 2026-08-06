@@ -98,6 +98,13 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # A transitive dependency of firebase_auth, pulled in directly here so
+  # test/password_policy_service_test.dart can construct real
+  # PasswordValidationStatus/PasswordPolicy instances (both have public
+  # constructors) instead of hand-rolling fakes for describeFailure()'s
+  # tests -- see that file's PasswordValidationStatus getters/setters.
+  firebase_auth_platform_interface: ^9.0.5
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

@@ -137,6 +137,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          // Android's Autofill Framework hint -- also what
+                          // Firebase Test Lab / Play Console pre-launch
+                          // report Robo crawls use to auto-detect the login
+                          // field, since a Flutter TextField has no native
+                          // Android resource-id for Robo's "resource name"
+                          // login-credential setting to target directly.
+                          autofillHints: const [AutofillHints.email],
                           decoration: const InputDecoration(
                             labelText: 'Email address',
                           ),
@@ -154,6 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: !_showPassword,
+                          autofillHints: const [AutofillHints.password],
                           decoration: InputDecoration(
                             labelText: 'Password',
                             suffixIcon: IconButton(

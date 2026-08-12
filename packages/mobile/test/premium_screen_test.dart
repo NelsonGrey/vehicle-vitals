@@ -56,12 +56,11 @@ void main() {
     expect(source, contains('premiumService.purchase(tier, _billingPeriod)'));
   });
 
-  test('in-app-purchase disclosure mentions Apple, Pro, and Premium', () {
+  test('in-app-purchase disclosure mentions Apple with no Contact Sales carve-out', () {
     expect(
       source,
-      contains(
-        'Payment is processed through Apple in-app purchase for Pro and Premium',
-      ),
+      contains('Payment is processed through Apple in-app purchase.'),
     );
+    expect(source, isNot(contains('Contact Sales')));
   });
 }

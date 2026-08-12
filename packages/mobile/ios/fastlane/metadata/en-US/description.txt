@@ -14,3 +14,6 @@ PLANS
 Vehicle-Vitals is free to start. Pro and Premium plans unlock a higher vehicle limit and additional features; see current pricing in the app.
 
 Vehicle-Vitals is built for anyone who wants a clear, organized record of vehicle ownership — private owners, DIY mechanics, and households managing more than one car.
+
+Terms of Use (EULA): https://vehicle-vitals.com/terms
+Privacy Policy: https://vehicle-vitals.com/privacy

@@ -33,7 +33,18 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
       return (
         <button
           type="button"
-          onClick={signOut}
+          onClick={() => {
+            signOut().catch(err => {
+              // eslint-disable-next-line no-alert -- this global nav header
+              // has no inline error-banner slot; a signOut() rejection here
+              // is rare (see AuthContext) but must not fail silently.
+              window.alert(
+                err instanceof Error
+                  ? err.message
+                  : 'Could not sign out. Please try again.'
+              );
+            });
+          }}
           className={`whitespace-nowrap rounded-md border border-slate-300 font-medium transition-colors hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 ${sizeClass}`}
         >
           Sign Out

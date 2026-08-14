@@ -338,6 +338,19 @@ class PremiumService extends ChangeNotifier {
     }
   }
 
+  // verifyPremiumPurchase (vehicle-vitals-functions) only ever throws these
+  // three HttpsError codes for a definitive, non-retryable rejection
+  // (bad/duplicate receipt, unsupported product, receipt already claimed
+  // by another account) -- retrying the same receipt would fail the same
+  // way forever. Any other code (network, timeout, an unstructured
+  // "internal" error from an unexpected exception) is a real transient
+  // failure and must NOT be treated as a final answer.
+  static const _definitiveRejectionCodes = {
+    'invalid-argument',
+    'failed-precondition',
+    'permission-denied',
+  };
+
   /// Returns true if the backend confirmed the purchase and granted
   /// premium, false if the backend gave a definitive "not entitled"
   /// answer. Throws on a transient failure (network/function error) so
@@ -350,15 +363,23 @@ class PremiumService extends ChangeNotifier {
       purchaseDetails.verificationData.source,
     );
     final callable = _functions.httpsCallable('verifyPremiumPurchase');
-    final response = await callable.call({
-      'productId': purchaseDetails.productID,
-      'purchaseId': purchaseDetails.purchaseID,
-      'verificationData':
-          purchaseDetails.verificationData.serverVerificationData,
-      'source': normalizedSource,
-    });
-
-    final data = Map<String, dynamic>.from(response.data as Map? ?? {});
+    final Map<String, dynamic> data;
+    try {
+      final response = await callable.call({
+        'productId': purchaseDetails.productID,
+        'purchaseId': purchaseDetails.purchaseID,
+        'verificationData':
+            purchaseDetails.verificationData.serverVerificationData,
+        'source': normalizedSource,
+      });
+      data = Map<String, dynamic>.from(response.data as Map? ?? {});
+    } on FirebaseFunctionsException catch (error) {
+      if (_definitiveRejectionCodes.contains(error.code)) {
+        debugPrint('Purchase definitively rejected: ${error.code}');
+        return false;
+      }
+      rethrow;
+    }
     if (data['success'] != true) return false;
 
     final entitlement = Map<String, dynamic>.from(

@@ -311,7 +311,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signOut: async () => {
         pendingLinkCredentialRef.current = null;
         pendingLinkEmailRef.current = '';
-        await signOut(auth);
+        try {
+          await signOut(auth);
+        } catch (err) {
+          // `user` state here is entirely derived from onAuthStateChanged,
+          // so if the SDK call itself fails there's no local variable to
+          // force-clear -- a caller (e.g. after account deletion, where
+          // the account is already gone server-side) must never be left
+          // rendering the authenticated app for a session that's supposed
+          // to be over. A full navigation guarantees a clean reset
+          // regardless of whatever state the SDK got stuck in.
+          console.warn('Firebase signOut failed, forcing a hard reset:', err);
+          window.location.href = '/auth/login';
+        }
       },
       signInWithGoogle: () => signInWithProvider(googleProvider),
       signInWithApple: () => signInWithProvider(appleProvider),

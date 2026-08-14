@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 
+import '../services/ad_consent_service.dart';
 import '../services/premium_service.dart';
 import '../theme/design_tokens.dart';
 
@@ -67,7 +68,7 @@ class _AdBannerState extends State<AdBanner> {
 
     _bannerAd = BannerAd(
       adUnitId: adUnitId,
-      request: const AdRequest(),
+      request: AdConsentService.buildAdRequest(),
       size: widget.adSize,
       listener: BannerAdListener(
         onAdLoaded: (ad) {
@@ -177,7 +178,7 @@ class InterstitialAdHelper {
 
     InterstitialAd.load(
       adUnitId: adUnitId,
-      request: const AdRequest(),
+      request: AdConsentService.buildAdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
           debugPrint('$ad loaded');
@@ -251,7 +252,7 @@ class RewardedAdHelper {
 
     RewardedAd.load(
       adUnitId: adUnitId,
-      request: const AdRequest(),
+      request: AdConsentService.buildAdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
           debugPrint('$ad loaded.');

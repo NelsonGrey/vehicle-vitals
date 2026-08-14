@@ -49,12 +49,20 @@ export function DataPrivacyContent() {
       // The callable above already deleted all Firestore/Storage data and
       // the Firebase Auth user itself server-side -- the account is gone
       // regardless of what happens next, so a signOut() failure here must
-      // not be reported as if deletion itself failed. Best-effort clear
-      // local state either way.
+      // not be reported as if deletion itself failed. signOut() itself
+      // retries the underlying SDK call and can still throw if the
+      // browser's persisted credential could not be fully cleared -- that's
+      // real, actionable information (unlike a plain deletion failure), so
+      // it gets its own distinct message instead of being swallowed.
       try {
         await signOut();
       } catch (err) {
-        console.warn('Post-deletion signOut failed (account was deleted):', err);
+        setError(
+          userFacingError(
+            err,
+            'Signed out of this session, but could not fully clear the browser credential. Please try signing out again, or clear stored data for this site in your browser settings if you keep seeing your account after reloading.'
+          )
+        );
       }
     } finally {
       setBusy(false);

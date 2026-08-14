@@ -248,11 +248,45 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    // _auth.signOut() clears FirebaseAuth's own persisted session (Keychain/
+    // internal storage), not just this class's in-memory _currentUser. If it
+    // throws and we just clear our own mirror, _init() repopulates
+    // _currentUser from the still-persisted _auth.currentUser on next
+    // launch -- the account silently comes back, which is a real problem on
+    // a shared device and especially after account deletion. It's a local
+    // storage write with no network dependency, so a transient failure is
+    // usually worth a couple of quick retries before giving up.
+    Object? lastError;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        await _auth.signOut();
+        lastError = null;
+        break;
+      } catch (e) {
+        lastError = e;
+        if (attempt < 2) {
+          await Future.delayed(Duration(milliseconds: 200 * (attempt + 1)));
+        }
+      }
+    }
     _pendingLinkCredential = null;
     _pendingLinkEmail = null;
     _currentUser = null;
     notifyListeners();
+    if (lastError != null) {
+      // The persisted FirebaseAuth session may still be intact even though
+      // our own state is now cleared -- surface this so a caller (e.g. the
+      // account-deletion flow) can warn the user rather than silently
+      // reporting success. Force-closing the app does NOT reliably clear
+      // this (Keychain items can survive even an app reinstall on iOS), so
+      // point at a real retry rather than a specific action that may not
+      // actually help.
+      throw FriendlyException(
+        'Signed out of this session, but could not fully clear the device '
+        'credential. Please try signing out again, or contact Support if '
+        'you keep seeing your account after reopening the app.',
+      );
+    }
   }
 
   Future<void> resetPassword(String email) async {

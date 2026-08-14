@@ -180,7 +180,14 @@ export function AccountSecurityContent() {
           </div>
           <button
             type="button"
-            onClick={() => void signOut()}
+            onClick={() => {
+              setError('');
+              signOut().catch(err => {
+                setError(
+                  userFacingError(err, 'Could not sign out. Please try again.')
+                );
+              });
+            }}
             className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-medium py-2 px-4 rounded-md transition-colors duration-200"
           >
             Sign out

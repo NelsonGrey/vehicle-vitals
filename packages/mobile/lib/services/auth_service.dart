@@ -225,7 +225,7 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
-      final user = _mapUser(credential.user);
+      final user = _mapUser(_auth.currentUser ?? credential.user);
       _currentUser = user;
       notifyListeners();
       if (user == null) return null;
@@ -284,7 +284,7 @@ class AuthService extends ChangeNotifier {
 
     try {
       final credential = await _auth.signInWithCredential(oauthCredential);
-      final user = _mapUser(credential.user);
+      final user = _mapUser(_auth.currentUser ?? credential.user);
       _currentUser = user;
       notifyListeners();
       if (user == null) return null;

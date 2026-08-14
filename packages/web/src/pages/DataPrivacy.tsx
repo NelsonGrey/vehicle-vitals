@@ -9,7 +9,8 @@ import {
 } from '../utils/privacyRequestService';
 
 export function DataPrivacyContent() {
-  const { user, reauthenticateWithGoogle, reauthenticateWithApple } = useAuth();
+  const { user, signOut, reauthenticateWithGoogle, reauthenticateWithApple } =
+    useAuth();
   const { reauth } = useReauthentication({
     user,
     reauthenticateWithGoogle,
@@ -25,7 +26,7 @@ export function DataPrivacyContent() {
 
   const onRequestAccountDeletion = async () => {
     const sure = window.confirm(
-      'This will file a request to delete your account and all associated vehicle, maintenance, and subscription data. This cannot be undone once processed. Continue?'
+      'This will immediately and permanently delete your account and all associated vehicle, maintenance, and subscription data, and sign you out. This cannot be undone. Continue?'
     );
     if (!sure) return;
     setError('');
@@ -33,10 +34,12 @@ export function DataPrivacyContent() {
     setBusy(true);
     try {
       await reauth(currentPassword);
-      const result = await requestAccountDataDeletion();
-      setStatus(
-        `Account deletion request filed (request ${result.requestId}). Your data will be deleted as part of processing this request; you remain signed in until then.`
-      );
+      await requestAccountDataDeletion();
+      // The callable deletes all Firestore/Storage data and the Firebase
+      // Auth user itself server-side before returning, so the account is
+      // already gone -- sign out immediately rather than leaving the user
+      // looking at a session for an account that no longer exists.
+      await signOut();
     } catch (err) {
       setError(
         userFacingError(
@@ -131,7 +134,7 @@ export function DataPrivacyContent() {
             onClick={() => void onRequestAccountDeletion()}
             disabled={busy}
           >
-            Request Account Deletion
+            Delete Account
           </button>
         </div>
       </div>

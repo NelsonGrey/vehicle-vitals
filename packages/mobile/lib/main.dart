@@ -43,6 +43,7 @@ import 'screens/timeline_dashboard_screen.dart';
 import 'screens/upcoming_tasks_screen.dart';
 import 'screens/vehicle_coverage_screen.dart';
 import 'screens/vehicle_detail_screen.dart';
+import 'services/ad_consent_service.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
@@ -114,6 +115,10 @@ void main() async {
     debugPrint('Firebase initialization failed: $e');
     rethrow;
   }
+
+  // Ask for App Tracking Transparency consent before any ad request is
+  // made, so AdMob never personalizes ads without the user's decision.
+  await AdConsentService.requestConsent();
 
   // Initialize Google Mobile Ads.
   await MobileAds.instance.initialize();

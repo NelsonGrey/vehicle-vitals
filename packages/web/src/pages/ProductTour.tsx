@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
 
@@ -23,6 +24,35 @@ const workflows = [
       'Use Maintenance Plan for available recommendations and saved reminders, then confirm requirements with the owner’s manual or a qualified professional.',
     to: '/maintenance-planning-demo',
     cta: 'Explore maintenance planning',
+  },
+];
+
+const demoVideoReady = [
+  {
+    title: 'Getting started video',
+    description:
+      'A quick walkthrough of sign-up, adding a vehicle, and opening your garage.',
+    poster: '/images/features/add-vehicle.png',
+    videoPath: '/videos/feature-demos/onboarding-walkthrough.mp4',
+    fallbackHref: '/getting-started',
+    fallbackLabel: 'Open getting started guide',
+  },
+  {
+    title: 'Service tracking video',
+    description:
+      'See how to log service, review history, and track upcoming work.',
+    poster: '/images/features/timeline.png',
+    videoPath: '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
+    fallbackHref: '/maintenance-planning-demo',
+    fallbackLabel: 'Open service tracking demo',
+  },
+  {
+    title: 'Web and mobile video',
+    description: 'See how the same account works on both web and mobile.',
+    poster: '/images/features/ios-home.png',
+    videoPath: '/videos/feature-demos/cross-platform-continuity.mp4',
+    fallbackHref: '/cross-platform-access-demo',
+    fallbackLabel: 'Open web and mobile demo',
   },
 ];
 
@@ -110,6 +140,31 @@ export default function ProductTour() {
                 {item.cta}
               </Link>
             </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="mb-5">
+          <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100">
+            Watch the workflows
+          </h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+            Short clips of the same workflows above, captured from the real
+            app.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {demoVideoReady.map(item => (
+            <MarketingVideoPanel
+              key={item.title}
+              title={item.title}
+              description={item.description}
+              poster={item.poster}
+              videoPath={item.videoPath}
+              fallbackHref={item.fallbackHref}
+              fallbackLabel={item.fallbackLabel}
+            />
           ))}
         </div>
       </section>

@@ -14,19 +14,38 @@ function renderProductTour() {
 }
 
 describe('ProductTour page (canonical Product Tour, /product-tour)', () => {
-  it('renders a task-based tour without unverified video placeholders', () => {
-    const { container } = renderProductTour();
+  it('renders a task-based tour', () => {
+    renderProductTour();
 
     expect(
       screen.getByRole('heading', { name: /^Product Tour$/i })
     ).toBeInTheDocument();
+  });
+
+  it('renders the task-based workflow steps', () => {
+    renderProductTour();
+
     expect(
       screen.getByRole('heading', { name: /1\. Add a vehicle/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /2\. Save service proof/i })
     ).toBeInTheDocument();
-    expect(container.querySelector('video')).toBeNull();
+  });
+
+  it('renders the demo video panels for each workflow, backed by verified assets', () => {
+    const { container } = renderProductTour();
+
+    expect(
+      screen.getByRole('heading', { name: /^Getting started video$/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /^Service tracking video$/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /^Web and mobile video$/i })
+    ).toBeInTheDocument();
+    expect(container.querySelectorAll('video')).toHaveLength(3);
   });
 
   it('includes the screens merged in from the old Everyday Screens page', () => {

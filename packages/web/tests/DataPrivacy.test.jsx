@@ -104,4 +104,25 @@ describe('DataPrivacy', () => {
     );
     await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1));
   });
+
+  it('does not report a failed deletion when signOut fails after the account was already deleted', async () => {
+    requestAccountDataDeletion.mockResolvedValue({
+      success: true,
+      requestId: 'req-delete-2',
+      status: 'completed',
+    });
+    mockSignOut.mockRejectedValueOnce(new Error('local sign-out glitch'));
+
+    renderPage();
+
+    await waitFor(() =>
+      screen.getByRole('button', { name: /^delete account$/i })
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^delete account$/i }));
+
+    await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1));
+    expect(
+      screen.queryByText(/deletion request could not be filed/i)
+    ).not.toBeInTheDocument();
+  });
 });

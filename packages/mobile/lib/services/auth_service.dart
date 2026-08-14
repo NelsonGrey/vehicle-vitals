@@ -265,7 +265,15 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      // Clearing local state doesn't require the underlying SDK call to
+      // have succeeded -- a caller (e.g. after account deletion, where the
+      // account is already gone server-side) must never be left looking
+      // logged in locally just because this one plugin call hiccuped.
+      debugPrint('FirebaseAuth signOut failed, clearing local state anyway: $e');
+    }
     _pendingLinkCredential = null;
     _pendingLinkEmail = null;
     _currentUser = null;

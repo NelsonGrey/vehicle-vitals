@@ -388,61 +388,54 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC-UI-010: Marketing header hides Product Overview and Help context links', async ({
+    test('TC-UI-010: Marketing header shows Getting Started/Product Tour/Plans, with persona pages behind Use cases', async ({
       page,
     }) => {
       await page.goto(BASE_URL);
 
-      const marketingNavMetrics = await page.evaluate(() => {
-        const navRow = document.querySelector('header nav > div:nth-child(2)');
-        const marketingLinks = Array.from(
-          navRow?.querySelectorAll('div:first-child a') ?? []
-        ).map(link => link.textContent?.trim() || '');
+      const header = page.locator('header').first();
 
-        return {
-          hasLinks: marketingLinks.length > 0,
-          firstLink: marketingLinks[0] || null,
-          hasProductOverview: marketingLinks.includes('Product Overview'),
-          hasHelpHowTo: marketingLinks.includes('Help & How-To'),
-          hasGettingStarted: marketingLinks.includes('Getting Started'),
-          hasVinLookup: marketingLinks.includes('VIN Lookup'),
-          hasOwnershipRecords: marketingLinks.includes('Ownership Records'),
-          hasSharedGarage: marketingLinks.includes('Shared Garage'),
-          hasGuidedSetup: marketingLinks.includes('Guided Setup'),
-          hasHandsOnMaintenance: marketingLinks.includes(
-            'Hands-On Maintenance'
-          ),
-          hasWorkVehicles: marketingLinks.includes('Work Vehicles'),
-          hasPricing: marketingLinks.includes('Pricing'),
-          hasProductTour: marketingLinks.includes('Product Tour'),
-        };
-      });
+      // Top-level marketing nav: Getting Started, Product Tour, Plans.
+      // Product Overview/Help & How-To are authenticated-header-only links
+      // and never belong here, logged in or out.
+      await expect(
+        header.getByRole('link', { name: /^Getting Started$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Product Tour$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Plans$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /Product Overview/i })
+      ).toHaveCount(0);
+      await expect(
+        header.getByRole('link', { name: /Help & How-To/i })
+      ).toHaveCount(0);
 
-      test.skip(
-        !marketingNavMetrics.hasLinks,
-        'Marketing header links are unavailable in this deployment target.'
-      );
+      // Persona pages live behind the "Use cases" dropdown, not inline.
+      await expect(
+        header.getByRole('link', { name: /Ownership Records/i })
+      ).toHaveCount(0);
 
-      test.skip(
-        marketingNavMetrics.hasProductOverview ||
-          marketingNavMetrics.hasHelpHowTo,
-        'Deployment target is still on legacy marketing navigation labels.'
-      );
+      await header.getByRole('button', { name: /Use cases/i }).click();
 
-      expect(marketingNavMetrics.firstLink).toBe('Ownership Records');
-      expect(marketingNavMetrics.hasProductOverview).toBe(false);
-      expect(marketingNavMetrics.hasHelpHowTo).toBe(false);
-      expect(marketingNavMetrics.hasGettingStarted).toBe(false);
-      expect(marketingNavMetrics.hasVinLookup).toBe(false);
-      expect(marketingNavMetrics.hasOwnershipRecords).toBe(true);
-      expect(marketingNavMetrics.hasSharedGarage).toBe(true);
-      expect(marketingNavMetrics.hasGuidedSetup).toBe(true);
-      expect(marketingNavMetrics.hasHandsOnMaintenance).toBe(true);
-      expect(marketingNavMetrics.hasWorkVehicles).toBe(true);
-      // Pricing/Product Tour live in the footer and authenticated header,
-      // not the logged-out persona nav row this test inspects.
-      expect(marketingNavMetrics.hasPricing).toBe(false);
-      expect(marketingNavMetrics.hasProductTour).toBe(false);
+      await expect(
+        header.getByRole('link', { name: /^Ownership Records$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Household Vehicles$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Guided Setup$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Hands-On Maintenance$/i })
+      ).toBeVisible();
+      await expect(
+        header.getByRole('link', { name: /^Work Vehicles$/i })
+      ).toBeVisible();
     });
 
     test('TC-UI-011: Authenticated app header hides Product Overview and Help context links', async ({
@@ -490,7 +483,15 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
     test('TC-UI-006: Shell uses centered 1280px layout and standalone ad break', async ({
       page,
     }) => {
+      // styles.css shrinks the root font-size (and therefore every rem-based
+      // max-width) below 900px and 760px viewport heights as short-viewport
+      // density features -- unrelated to what this test checks, so use a
+      // taller viewport to test the shell's baseline width instead.
+      await page.setViewportSize({ width: 1280, height: 1024 });
       await page.goto(BASE_URL);
+      await page
+        .waitForLoadState('networkidle', { timeout: 5000 })
+        .catch(() => null);
 
       const shellMetrics = await page.evaluate(() => {
         const headerContainer = document.querySelector('header > div');
@@ -538,6 +539,11 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       page,
     }) => {
       await page.goto(BASE_URL);
+      // See TC-UI-010: page.evaluate below takes an unretried DOM snapshot,
+      // so wait for hydration to finish before reading heading/link content.
+      await page
+        .waitForLoadState('networkidle', { timeout: 5000 })
+        .catch(() => null);
 
       const landingMediaMetrics = await page.evaluate(() => {
         const hasPersonaHeading =
@@ -587,6 +593,11 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       // Legacy URLs redirect (replace semantics) to their canonical pages.
       await page.goto(`${BASE_URL}/start-steps`);
       await expect(page).toHaveURL(`${BASE_URL}/getting-started`);
+      // toHaveURL only confirms the URL changed, not that the new page's
+      // React content has hydrated -- see TC-UI-010.
+      await page
+        .waitForLoadState('networkidle', { timeout: 5000 })
+        .catch(() => null);
 
       const gettingStartedPageMetrics = await page.evaluate(() => {
         const hasGettingStartedHeading =
@@ -622,6 +633,10 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
 
       await page.goto(`${BASE_URL}/short-video-tours`);
       await expect(page).toHaveURL(`${BASE_URL}/product-tour`);
+      // See above -- wait for hydration before reading the settled page.
+      await page
+        .waitForLoadState('networkidle', { timeout: 5000 })
+        .catch(() => null);
 
       const productTourPageMetrics = await page.evaluate(() => {
         const hasProductTourHeading =

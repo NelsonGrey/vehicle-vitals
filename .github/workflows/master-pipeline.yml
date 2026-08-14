@@ -1092,9 +1092,13 @@ jobs:
           chmod +x scripts/ci-guard-no-data-migration.sh
           ./scripts/ci-guard-no-data-migration.sh
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+
       - name: Deploy Hosting, Firestore, Storage and Functions
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV }}
           FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING }}
           FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD }}
@@ -1102,8 +1106,8 @@ jobs:
           TRIGGER_CONTEXT: ${{ needs.load-config.outputs.trigger_context }}
           FUNCTIONS_DISCOVERY_TIMEOUT: "60000"
         run: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "❌ FIREBASE_TOKEN is not set"
+          if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+            echo "❌ GOOGLE_APPLICATION_CREDENTIALS is not set (Authenticate to Google Cloud step failed to produce credentials)"
             exit 1
           fi
 
@@ -1138,7 +1142,6 @@ jobs:
           set +e
           firebase deploy \
             --project="$PROJECT_ID" \
-            --token="$FIREBASE_TOKEN" \
             --only "$DEPLOY_TARGETS" \
             --message="Firebase deploy (${DEPLOY_TARGETS}) from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
             --force \
@@ -1149,7 +1152,6 @@ jobs:
             echo "[warn] Production functions deploy blocked by project IAM; retrying hosting+firestore+storage deploy"
             firebase deploy \
               --project="$PROJECT_ID" \
-              --token="$FIREBASE_TOKEN" \
               --only firestore,storage,hosting \
               --message="Hosting/Firestore/Storage fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
               --force \
@@ -1161,7 +1163,6 @@ jobs:
             echo "[warn] Staging hit storage bucket region issue; retrying firestore-only deploy"
             firebase deploy \
               --project="$PROJECT_ID" \
-              --token="$FIREBASE_TOKEN" \
               --only firestore \
               --message="Firestore-only fallback deploy from master pipeline for ${{ needs.load-config.outputs.project_name }} ($TARGET_ENV)" \
               --force \

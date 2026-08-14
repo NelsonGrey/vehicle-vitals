@@ -311,19 +311,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signOut: async () => {
         pendingLinkCredentialRef.current = null;
         pendingLinkEmailRef.current = '';
-        try {
-          await signOut(auth);
-        } catch (err) {
-          // `user` state here is entirely derived from onAuthStateChanged,
-          // so if the SDK call itself fails there's no local variable to
-          // force-clear -- a caller (e.g. after account deletion, where
-          // the account is already gone server-side) must never be left
-          // rendering the authenticated app for a session that's supposed
-          // to be over. A full navigation guarantees a clean reset
-          // regardless of whatever state the SDK got stuck in.
-          console.warn('Firebase signOut failed, forcing a hard reset:', err);
-          window.location.href = '/auth/login';
+        // signOut(auth) clears Firebase's own persisted session (IndexedDB),
+        // not just React's `user` state. A reload does NOT help if this
+        // fails -- Firebase re-reads the same still-persisted session on
+        // reload and onAuthStateChanged fires with the same user again, so
+        // ProtectedRoute just renders the authenticated app right back. It's
+        // a local operation with no network dependency, so retry a couple
+        // times before surfacing a real failure to the caller.
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            await signOut(auth);
+            return;
+          } catch (err) {
+            lastError = err;
+            if (attempt < 2) {
+              await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
+            }
+          }
         }
+        console.warn('Firebase signOut failed after retries:', lastError);
+        throw new Error(
+          'Signed out of this session, but could not fully clear the browser credential. Please close all tabs for this site to finish signing out.'
+        );
       },
       signInWithGoogle: () => signInWithProvider(googleProvider),
       signInWithApple: () => signInWithProvider(appleProvider),

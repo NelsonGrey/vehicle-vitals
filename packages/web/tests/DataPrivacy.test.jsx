@@ -105,13 +105,17 @@ describe('DataPrivacy', () => {
     await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1));
   });
 
-  it('does not report a failed deletion when signOut fails after the account was already deleted', async () => {
+  it('shows a distinct warning (not a deletion failure) when signOut fails after the account was already deleted', async () => {
     requestAccountDataDeletion.mockResolvedValue({
       success: true,
       requestId: 'req-delete-2',
       status: 'completed',
     });
-    mockSignOut.mockRejectedValueOnce(new Error('local sign-out glitch'));
+    mockSignOut.mockRejectedValueOnce(
+      new Error(
+        'Signed out of this session, but could not fully clear the browser credential. Please close all tabs for this site to finish signing out.'
+      )
+    );
 
     renderPage();
 
@@ -124,5 +128,8 @@ describe('DataPrivacy', () => {
     expect(
       screen.queryByText(/deletion request could not be filed/i)
     ).not.toBeInTheDocument();
+    await waitFor(() =>
+      screen.getByText(/could not fully clear the browser credential/i)
+    );
   });
 });

@@ -100,15 +100,29 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       // The callable above already deleted all Firestore/Storage data and
       // the Firebase Auth user itself server-side -- the account is gone
       // regardless of what happens next, so a signOut() failure here must
-      // not be reported as if deletion itself failed. Best-effort clear
-      // local state and leave either way.
+      // not be reported as if deletion itself failed. signOut() itself
+      // retries the underlying SDK call and always clears local state, but
+      // can still throw if the device's persisted credential could not be
+      // fully cleared -- that's real, actionable information (unlike a
+      // plain deletion failure), so it gets its own distinct message
+      // instead of being swallowed.
+      String? signOutWarning;
       try {
         await authService.signOut();
       } catch (e) {
-        debugPrint('Post-deletion signOut failed (account was deleted): $e');
+        signOutWarning = userFacingError(
+          e,
+          fallback:
+              'Signed out of this session, but could not fully clear the device credential. Please close the app completely to finish signing out.',
+        );
       }
       if (mounted) {
         context.go('/auth/login');
+        if (signOutWarning != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(signOutWarning), duration: const Duration(seconds: 8)),
+          );
+        }
       }
     } finally {
       if (mounted) {

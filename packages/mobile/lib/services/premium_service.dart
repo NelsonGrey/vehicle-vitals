@@ -299,58 +299,72 @@ class PremiumService extends ChangeNotifier {
         continue;
       }
 
+      // Whether it's safe to complete (consume) this StoreKit transaction.
+      // A definitive outcome (delivered, or the backend explicitly said
+      // not entitled) should be completed. A transient failure (network,
+      // function timeout) must NOT be completed, so the transaction stays
+      // pending and StoreKit redelivers it for another verification
+      // attempt instead of the purchase silently vanishing.
+      var canComplete = true;
+
       if (purchaseDetails.status == iap.PurchaseStatus.error) {
         debugPrint('Purchase error: ${purchaseDetails.error}');
         _isLoading = false;
         notifyListeners();
       } else if (purchaseDetails.status == iap.PurchaseStatus.purchased ||
           purchaseDetails.status == iap.PurchaseStatus.restored) {
-        final verified = await _verifyPurchaseWithBackend(purchaseDetails);
-        if (verified) {
-          await _deliverProduct();
-        } else {
+        try {
+          final verified = await _verifyPurchaseWithBackend(purchaseDetails);
+          if (verified) {
+            await _deliverProduct();
+          } else {
+            _isLoading = false;
+            notifyListeners();
+            debugPrint('Purchase verification failed: not entitled');
+          }
+        } catch (error) {
+          // Transient failure (network, function error/timeout) -- leave
+          // the transaction pending so it retries instead of being lost.
+          canComplete = false;
           _isLoading = false;
           notifyListeners();
-          debugPrint('Purchase verification failed');
+          debugPrint('Purchase verification failed, will retry: $error');
         }
       }
 
-      if (purchaseDetails.pendingCompletePurchase) {
+      if (canComplete && purchaseDetails.pendingCompletePurchase) {
         iap.InAppPurchase.instance.completePurchase(purchaseDetails);
       }
     }
   }
 
+  /// Returns true if the backend confirmed the purchase and granted
+  /// premium, false if the backend gave a definitive "not entitled"
+  /// answer. Throws on a transient failure (network/function error) so
+  /// the caller can leave the StoreKit transaction pending for retry
+  /// instead of treating it as a final, non-retryable outcome.
   Future<bool> _verifyPurchaseWithBackend(
     iap.PurchaseDetails purchaseDetails,
   ) async {
-    try {
-      final normalizedSource = _normalizePurchaseSource(
-        purchaseDetails.verificationData.source,
-      );
-      final callable = _functions.httpsCallable('verifyPremiumPurchase');
-      final response = await callable.call({
-        'productId': purchaseDetails.productID,
-        'purchaseId': purchaseDetails.purchaseID,
-        'verificationData':
-            purchaseDetails.verificationData.serverVerificationData,
-        'source': normalizedSource,
-      });
+    final normalizedSource = _normalizePurchaseSource(
+      purchaseDetails.verificationData.source,
+    );
+    final callable = _functions.httpsCallable('verifyPremiumPurchase');
+    final response = await callable.call({
+      'productId': purchaseDetails.productID,
+      'purchaseId': purchaseDetails.purchaseID,
+      'verificationData':
+          purchaseDetails.verificationData.serverVerificationData,
+      'source': normalizedSource,
+    });
 
-      final data = Map<String, dynamic>.from(response.data as Map? ?? {});
-      if (data['success'] != true) return false;
+    final data = Map<String, dynamic>.from(response.data as Map? ?? {});
+    if (data['success'] != true) return false;
 
-      final entitlement = Map<String, dynamic>.from(
-        data['entitlement'] as Map? ?? <String, dynamic>{},
-      );
-      return entitlement['premium'] == true;
-    } on FirebaseFunctionsException catch (error) {
-      debugPrint('Purchase verification function error: ${error.message}');
-      return false;
-    } catch (error) {
-      debugPrint('Purchase verification failed: $error');
-      return false;
-    }
+    final entitlement = Map<String, dynamic>.from(
+      data['entitlement'] as Map? ?? <String, dynamic>{},
+    );
+    return entitlement['premium'] == true;
   }
 
   String _normalizePurchaseSource(String source) {

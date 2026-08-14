@@ -234,6 +234,7 @@ class VehicleVitalsApp extends StatelessWidget {
         final isAllowedSetupRoute =
             isOnboardingRoute ||
             location.startsWith('/app/add-vehicle') ||
+            location == '/app/scan-vin' ||
             location == '/app/reminder-preferences' ||
             location == '/app/premium' ||
             location == '/app/support' ||

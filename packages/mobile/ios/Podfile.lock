@@ -1188,17 +1188,19 @@ PODS:
     - abseil/meta/type_traits
     - abseil/xcprivacy
   - abseil/xcprivacy (1.20240722.0)
+  - app_tracking_transparency (0.0.1):
+    - Flutter
   - BoringSSL-GRPC (0.0.37):
     - BoringSSL-GRPC/Implementation (= 0.0.37)
     - BoringSSL-GRPC/Interface (= 0.0.37)
   - BoringSSL-GRPC/Implementation (0.0.37):
     - BoringSSL-GRPC/Interface (= 0.0.37)
   - BoringSSL-GRPC/Interface (0.0.37)
-  - cloud_firestore (6.6.0):
+  - cloud_firestore (6.7.1):
     - Firebase/Firestore (= 12.15.0)
     - firebase_core
     - Flutter
-  - cloud_functions (6.3.3):
+  - cloud_functions (6.3.5):
     - Firebase/Functions (= 12.15.0)
     - firebase_core
     - Flutter
@@ -1256,22 +1258,22 @@ PODS:
   - Firebase/Storage (12.15.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 12.15.0)
-  - firebase_auth (6.5.4):
+  - firebase_auth (6.5.6):
     - Firebase/Auth (= 12.15.0)
     - firebase_core
     - Flutter
-  - firebase_core (4.12.0):
+  - firebase_core (4.12.1):
     - Firebase/CoreOnly (= 12.15.0)
     - Flutter
-  - firebase_crashlytics (5.2.4):
+  - firebase_crashlytics (5.2.6):
     - Firebase/Crashlytics (= 12.15.0)
     - firebase_core
     - Flutter
-  - firebase_messaging (16.4.1):
+  - firebase_messaging (16.4.3):
     - Firebase/Messaging (= 12.15.0)
     - firebase_core
     - Flutter
-  - firebase_storage (13.4.3):
+  - firebase_storage (13.4.5):
     - Firebase/Storage (= 12.15.0)
     - firebase_core
     - Flutter
@@ -1529,6 +1531,7 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - app_tracking_transparency (from `.symlinks/plugins/app_tracking_transparency/ios`)
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
   - cloud_functions (from `.symlinks/plugins/cloud_functions/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
@@ -1588,6 +1591,8 @@ SPEC REPOS:
     - SwiftyGif
 
 EXTERNAL SOURCES:
+  app_tracking_transparency:
+    :path: ".symlinks/plugins/app_tracking_transparency/ios"
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
   cloud_functions:
@@ -1627,18 +1632,19 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   abseil: a05cc83bf02079535e17169a73c5be5ba47f714b
+  app_tracking_transparency: e169b653478da7bb15a6c61209015378ca73e375
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
-  cloud_firestore: f7ca38720511e65eede1b19041948ce35f66ebb7
-  cloud_functions: 78db792881457b5a6c4e13e930e2e50c76fe5a45
+  cloud_firestore: e9fb4a8542f2a95445eaf99b3190fb6da9c0419f
+  cloud_functions: daf8915512adb9021a99c2634c7b5ba1b0ea1b06
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
   Firebase: a8539b633d474fbeb654c7043f9c1649e274045b
-  firebase_auth: b9077bef727b19b519285a98f7b97d2ea78a0d78
-  firebase_core: 4d9f4584629ebabedcf18f20cade820c3915ff81
-  firebase_crashlytics: 251d4c57b75af742297bb7a39d50b40b9caf88cc
-  firebase_messaging: c8d9730ad2cf85f50f1e16be82ffebcb9a20a792
-  firebase_storage: 4bfa32d6099a1a3391c0411b28c854e141e984fd
+  firebase_auth: 92f24182be81073cb370710ad6f754932415a99b
+  firebase_core: ee2e6c050e05882c2453c21efd082627351c9d38
+  firebase_crashlytics: a04158d76289665e9400653b67cc23c7d8865810
+  firebase_messaging: 98a853b361e297a7825720ea9ab3e98a9cb55536
+  firebase_storage: 58bf9467197a07e8c47a5f4d6ee69b1390d9b8f5
   FirebaseAppCheckInterop: 5083c9acf65f206832fe659e1c676b7bc3d55e8a
   FirebaseAuth: 6d1d4e5875d93f82e669bee6b05a70a642025b58
   FirebaseAuthInterop: 0778f5f24d6cccd6d67ef45832fe9c67a0b944ea

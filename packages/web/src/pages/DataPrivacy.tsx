@@ -9,7 +9,8 @@ import {
 } from '../utils/privacyRequestService';
 
 export function DataPrivacyContent() {
-  const { user, reauthenticateWithGoogle, reauthenticateWithApple } = useAuth();
+  const { user, signOut, reauthenticateWithGoogle, reauthenticateWithApple } =
+    useAuth();
   const { reauth } = useReauthentication({
     user,
     reauthenticateWithGoogle,
@@ -25,25 +26,44 @@ export function DataPrivacyContent() {
 
   const onRequestAccountDeletion = async () => {
     const sure = window.confirm(
-      'This will file a request to delete your account and all associated vehicle, maintenance, and subscription data. This cannot be undone once processed. Continue?'
+      'This will immediately and permanently delete your account and all associated vehicle, maintenance, and subscription data, and sign you out. This cannot be undone. Continue?'
     );
     if (!sure) return;
     setError('');
     setStatus('');
     setBusy(true);
     try {
-      await reauth(currentPassword);
-      const result = await requestAccountDataDeletion();
-      setStatus(
-        `Account deletion request filed (request ${result.requestId}). Your data will be deleted as part of processing this request; you remain signed in until then.`
-      );
-    } catch (err) {
-      setError(
-        userFacingError(
-          err,
-          'The deletion request could not be filed. No account data was changed. Please try again or visit Support.'
-        )
-      );
+      try {
+        await reauth(currentPassword);
+        await requestAccountDataDeletion();
+      } catch (err) {
+        setError(
+          userFacingError(
+            err,
+            'The deletion request could not be filed. No account data was changed. Please try again or visit Support.'
+          )
+        );
+        return;
+      }
+
+      // The callable above already deleted all Firestore/Storage data and
+      // the Firebase Auth user itself server-side -- the account is gone
+      // regardless of what happens next, so a signOut() failure here must
+      // not be reported as if deletion itself failed. signOut() itself
+      // retries the underlying SDK call and can still throw if the
+      // browser's persisted credential could not be fully cleared -- that's
+      // real, actionable information (unlike a plain deletion failure), so
+      // it gets its own distinct message instead of being swallowed.
+      try {
+        await signOut();
+      } catch (err) {
+        setError(
+          userFacingError(
+            err,
+            'Signed out of this session, but could not fully clear the browser credential. Please try signing out again, or clear stored data for this site in your browser settings if you keep seeing your account after reloading.'
+          )
+        );
+      }
     } finally {
       setBusy(false);
     }
@@ -95,13 +115,11 @@ export function DataPrivacyContent() {
           Privacy &amp; Data Requests
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
-          Request a copy of your data, or request deletion of your account and
-          all associated vehicle, maintenance, and subscription data. Deletion
-          requests are processed by our team and cannot be undone; you remain
-          signed in until a deletion request has been processed. We use the
-          account email for status updates and any required identity
-          verification. Processing time depends on the request and applicable
-          legal or retention requirements.
+          Request a copy of your data, which we&apos;ll email you a link to
+          once it&apos;s ready, or delete your account. Account deletion is
+          immediate and permanent: your account and all associated vehicle,
+          maintenance, and subscription data are deleted right away and you
+          are signed out automatically. This cannot be undone.
         </p>
         <div>
           <label
@@ -131,7 +149,7 @@ export function DataPrivacyContent() {
             onClick={() => void onRequestAccountDeletion()}
             disabled={busy}
           >
-            Request Account Deletion
+            Delete Account
           </button>
         </div>
       </div>

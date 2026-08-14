@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
@@ -54,12 +55,11 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Request Account Deletion'),
+        title: const Text('Delete Account'),
         content: const Text(
-          'This will file a request to delete your account and all '
-          'associated vehicle, maintenance, and subscription data. This '
-          'cannot be undone once processed. You remain signed in until the '
-          'request has been processed.',
+          'This will immediately and permanently delete your account and '
+          'all associated vehicle, maintenance, and subscription data, and '
+          'sign you out. This cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -68,7 +68,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Request Deletion'),
+            child: const Text('Delete Account'),
           ),
         ],
       ),
@@ -78,17 +78,15 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     setState(() => _busy = true);
     try {
       final authService = context.read<AuthService>();
-      final result = await authService.requestAccountDataDeletion();
+      await authService.requestAccountDataDeletion();
+      // The callable above deletes all Firestore/Storage data and the
+      // Firebase Auth user itself server-side before returning, so the
+      // account is already gone -- sign out locally and leave immediately
+      // rather than leaving the user looking at a session for an account
+      // that no longer exists.
+      await authService.signOut();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Account deletion request filed (request ${result['requestId']}). '
-              'Your data will be deleted as part of processing this request; '
-              'you remain signed in until then.',
-            ),
-          ),
-        );
+        context.go('/auth/login');
       }
     } catch (e) {
       if (mounted) {
@@ -98,7 +96,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
               userFacingError(
                 e,
                 fallback:
-                    'The deletion request could not be filed. No account data was changed. Please try again or contact Support.',
+                    'The account could not be deleted. No account data was changed. Please try again or contact Support.',
               ),
             ),
           ),

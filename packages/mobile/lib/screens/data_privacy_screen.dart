@@ -78,29 +78,51 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     setState(() => _busy = true);
     try {
       final authService = context.read<AuthService>();
-      await authService.requestAccountDataDeletion();
-      // The callable above deletes all Firestore/Storage data and the
-      // Firebase Auth user itself server-side before returning, so the
-      // account is already gone -- sign out locally and leave immediately
-      // rather than leaving the user looking at a session for an account
-      // that no longer exists.
-      await authService.signOut();
-      if (mounted) {
-        context.go('/auth/login');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              userFacingError(
-                e,
-                fallback:
-                    'The account could not be deleted. No account data was changed. Please try again or contact Support.',
+      try {
+        await authService.requestAccountDataDeletion();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                userFacingError(
+                  e,
+                  fallback:
+                      'The account could not be deleted. No account data was changed. Please try again or contact Support.',
+                ),
               ),
             ),
-          ),
+          );
+        }
+        return;
+      }
+
+      // The callable above already deleted all Firestore/Storage data and
+      // the Firebase Auth user itself server-side -- the account is gone
+      // regardless of what happens next, so a signOut() failure here must
+      // not be reported as if deletion itself failed. signOut() itself
+      // retries the underlying SDK call and always clears local state, but
+      // can still throw if the device's persisted credential could not be
+      // fully cleared -- that's real, actionable information (unlike a
+      // plain deletion failure), so it gets its own distinct message
+      // instead of being swallowed.
+      String? signOutWarning;
+      try {
+        await authService.signOut();
+      } catch (e) {
+        signOutWarning = userFacingError(
+          e,
+          fallback:
+              'Signed out of this session, but could not fully clear the device credential. Please try signing out again, or contact Support if you keep seeing your account after reopening the app.',
         );
+      }
+      if (mounted) {
+        context.go('/auth/login');
+        if (signOutWarning != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(signOutWarning), duration: const Duration(seconds: 8)),
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -153,7 +175,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                       OutlinedButton.icon(
                         onPressed: _busy ? null : _requestAccountDeletion,
                         icon: const Icon(Icons.delete_forever),
-                        label: const Text('Request Account Deletion'),
+                        label: const Text('Delete Account'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(context).colorScheme.error,
                           side: BorderSide(

@@ -11,7 +11,7 @@ import SiteHeader from '../src/components/SiteHeader';
 
 const authState = {
   user: null,
-  signOut: vi.fn(),
+  signOut: vi.fn(async () => {}),
   supportAccess: null,
 };
 
@@ -49,7 +49,7 @@ describe('SiteHeader', () => {
   beforeEach(() => {
     authState.user = null;
     authState.supportAccess = null;
-    authState.signOut = vi.fn();
+    authState.signOut = vi.fn(async () => {});
   });
 
   afterEach(() => {

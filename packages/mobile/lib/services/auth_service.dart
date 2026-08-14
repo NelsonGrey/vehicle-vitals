@@ -293,11 +293,15 @@ class AuthService extends ChangeNotifier {
     if (lastError != null) {
       // The persisted FirebaseAuth session may still be intact even though
       // our own state is now cleared -- surface this so a caller (e.g. the
-      // account-deletion flow) can warn the user to fully close the app
-      // rather than silently reporting success.
+      // account-deletion flow) can warn the user rather than silently
+      // reporting success. Force-closing the app does NOT reliably clear
+      // this (Keychain items can survive even an app reinstall on iOS), so
+      // point at a real retry rather than a specific action that may not
+      // actually help.
       throw FriendlyException(
         'Signed out of this session, but could not fully clear the device '
-        'credential. Please close the app completely to finish signing out.',
+        'credential. Please try signing out again, or contact Support if '
+        'you keep seeing your account after reopening the app.',
       );
     }
   }

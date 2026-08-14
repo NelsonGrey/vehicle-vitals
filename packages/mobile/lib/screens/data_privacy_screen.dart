@@ -113,7 +113,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         signOutWarning = userFacingError(
           e,
           fallback:
-              'Signed out of this session, but could not fully clear the device credential. Please close the app completely to finish signing out.',
+              'Signed out of this session, but could not fully clear the device credential. Please try signing out again, or contact Support if you keep seeing your account after reopening the app.',
         );
       }
       if (mounted) {

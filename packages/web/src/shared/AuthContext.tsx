@@ -332,7 +332,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         console.warn('Firebase signOut failed after retries:', lastError);
         throw new Error(
-          'Signed out of this session, but could not fully clear the browser credential. Please close all tabs for this site to finish signing out.'
+          'Signed out of this session, but could not fully clear the browser credential. Please try signing out again, or clear stored data for this site in your browser settings if you keep seeing your account after reloading.'
         );
       },
       signInWithGoogle: () => signInWithProvider(googleProvider),

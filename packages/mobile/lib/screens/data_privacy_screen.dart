@@ -78,29 +78,37 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     setState(() => _busy = true);
     try {
       final authService = context.read<AuthService>();
-      await authService.requestAccountDataDeletion();
-      // The callable above deletes all Firestore/Storage data and the
-      // Firebase Auth user itself server-side before returning, so the
-      // account is already gone -- sign out locally and leave immediately
-      // rather than leaving the user looking at a session for an account
-      // that no longer exists.
-      await authService.signOut();
-      if (mounted) {
-        context.go('/auth/login');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              userFacingError(
-                e,
-                fallback:
-                    'The account could not be deleted. No account data was changed. Please try again or contact Support.',
+      try {
+        await authService.requestAccountDataDeletion();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                userFacingError(
+                  e,
+                  fallback:
+                      'The account could not be deleted. No account data was changed. Please try again or contact Support.',
+                ),
               ),
             ),
-          ),
-        );
+          );
+        }
+        return;
+      }
+
+      // The callable above already deleted all Firestore/Storage data and
+      // the Firebase Auth user itself server-side -- the account is gone
+      // regardless of what happens next, so a signOut() failure here must
+      // not be reported as if deletion itself failed. Best-effort clear
+      // local state and leave either way.
+      try {
+        await authService.signOut();
+      } catch (e) {
+        debugPrint('Post-deletion signOut failed (account was deleted): $e');
+      }
+      if (mounted) {
+        context.go('/auth/login');
       }
     } finally {
       if (mounted) {
@@ -153,7 +161,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                       OutlinedButton.icon(
                         onPressed: _busy ? null : _requestAccountDeletion,
                         icon: const Icon(Icons.delete_forever),
-                        label: const Text('Request Account Deletion'),
+                        label: const Text('Delete Account'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(context).colorScheme.error,
                           side: BorderSide(

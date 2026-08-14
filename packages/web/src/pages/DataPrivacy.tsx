@@ -33,20 +33,29 @@ export function DataPrivacyContent() {
     setStatus('');
     setBusy(true);
     try {
-      await reauth(currentPassword);
-      await requestAccountDataDeletion();
-      // The callable deletes all Firestore/Storage data and the Firebase
-      // Auth user itself server-side before returning, so the account is
-      // already gone -- sign out immediately rather than leaving the user
-      // looking at a session for an account that no longer exists.
-      await signOut();
-    } catch (err) {
-      setError(
-        userFacingError(
-          err,
-          'The deletion request could not be filed. No account data was changed. Please try again or visit Support.'
-        )
-      );
+      try {
+        await reauth(currentPassword);
+        await requestAccountDataDeletion();
+      } catch (err) {
+        setError(
+          userFacingError(
+            err,
+            'The deletion request could not be filed. No account data was changed. Please try again or visit Support.'
+          )
+        );
+        return;
+      }
+
+      // The callable above already deleted all Firestore/Storage data and
+      // the Firebase Auth user itself server-side -- the account is gone
+      // regardless of what happens next, so a signOut() failure here must
+      // not be reported as if deletion itself failed. Best-effort clear
+      // local state either way.
+      try {
+        await signOut();
+      } catch (err) {
+        console.warn('Post-deletion signOut failed (account was deleted):', err);
+      }
     } finally {
       setBusy(false);
     }
@@ -98,13 +107,11 @@ export function DataPrivacyContent() {
           Privacy &amp; Data Requests
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
-          Request a copy of your data, or request deletion of your account and
-          all associated vehicle, maintenance, and subscription data. Deletion
-          requests are processed by our team and cannot be undone; you remain
-          signed in until a deletion request has been processed. We use the
-          account email for status updates and any required identity
-          verification. Processing time depends on the request and applicable
-          legal or retention requirements.
+          Request a copy of your data, which we&apos;ll email you a link to
+          once it&apos;s ready, or delete your account. Account deletion is
+          immediate and permanent: your account and all associated vehicle,
+          maintenance, and subscription data are deleted right away and you
+          are signed out automatically. This cannot be undone.
         </p>
         <div>
           <label

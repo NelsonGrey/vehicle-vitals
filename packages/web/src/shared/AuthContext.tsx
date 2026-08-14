@@ -311,7 +311,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signOut: async () => {
         pendingLinkCredentialRef.current = null;
         pendingLinkEmailRef.current = '';
-        await signOut(auth);
+        // signOut(auth) clears Firebase's own persisted session (IndexedDB),
+        // not just React's `user` state. A reload does NOT help if this
+        // fails -- Firebase re-reads the same still-persisted session on
+        // reload and onAuthStateChanged fires with the same user again, so
+        // ProtectedRoute just renders the authenticated app right back. It's
+        // a local operation with no network dependency, so retry a couple
+        // times before surfacing a real failure to the caller.
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            await signOut(auth);
+            return;
+          } catch (err) {
+            lastError = err;
+            if (attempt < 2) {
+              await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
+            }
+          }
+        }
+        console.warn('Firebase signOut failed after retries:', lastError);
+        throw new Error(
+          'Signed out of this session, but could not fully clear the browser credential. Please try signing out again, or clear stored data for this site in your browser settings if you keep seeing your account after reloading.'
+        );
       },
       signInWithGoogle: () => signInWithProvider(googleProvider),
       signInWithApple: () => signInWithProvider(appleProvider),

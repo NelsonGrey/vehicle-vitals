@@ -74,6 +74,7 @@ dependencies:
 
   # AdMob integration
   google_mobile_ads: ^6.0.0
+  app_tracking_transparency: ^2.0.6+1
 
   # Apple Sign-In
   sign_in_with_apple: ^7.0.0

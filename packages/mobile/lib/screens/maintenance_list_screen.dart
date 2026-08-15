@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -5,16 +8,33 @@ import 'package:provider/provider.dart';
 import '../components/ad_banner.dart';
 import '../components/app_bottom_nav.dart';
 import '../models/maintenance.dart';
+import '../models/maintenance_attachment.dart';
 import '../models/vehicle.dart';
+import '../services/attachment_analysis_service.dart';
 import '../services/calendar_service.dart';
 import '../services/data_export_service.dart';
 import '../services/firestore_service.dart';
 import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
+import '../services/record_storage_service.dart';
 import '../theme/design_tokens.dart';
 import '../utils/number_format.dart';
 import '../utils/user_facing_error.dart';
 import 'maintenance_detail_screen.dart';
+import 'maintenance_insights_screen.dart';
+
+// An attachment picked (and immediately uploaded) while filling out the Add
+// Entry form, before the entry itself is saved. Uploaded eagerly against a
+// pre-reserved entry id so analysis can run and pre-fill the form fields —
+// see _MaintenanceListScreenState._draftEntryId.
+class _PendingAttachment {
+  final PlatformFile file;
+  MaintenanceAttachment? uploaded;
+  bool busy = true;
+  String? error;
+
+  _PendingAttachment(this.file);
+}
 
 String _performedByLabel(String value) {
   switch (value) {
@@ -63,10 +83,18 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   final _notesController = TextEditingController();
   final _costController = TextEditingController();
   final _providerNameController = TextEditingController();
+  final _mileageController = TextEditingController();
   String _performedBy = 'repair_shop';
   String _coverage = 'parts_and_labor';
+  DateTime _entryDate = DateTime.now();
+  bool _dateManuallySet = false;
   final DataExportService _exportService = DataExportService();
   final CalendarService _calendarService = CalendarService();
+  final RecordStorageService _recordStorageService = RecordStorageService();
+  final AttachmentAnalysisService _analysisService = AttachmentAnalysisService();
+  final List<_PendingAttachment> _pendingAttachments = [];
+  String? _draftEntryId;
+  bool _saving = false;
   List<Maintenance> _entries = [];
   Vehicle? _vehicle;
   bool _loading = true;
@@ -88,6 +116,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     _notesController.dispose();
     _costController.dispose();
     _providerNameController.dispose();
+    _mileageController.dispose();
     super.dispose();
   }
 
@@ -161,6 +190,122 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     }
   }
 
+  Future<void> _pickPhoto() => _pickAndAttach(FileType.image);
+
+  Future<void> _pickDocument() => _pickAndAttach(FileType.any);
+
+  Future<void> _pickAndAttach(FileType type) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: type,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    if (!mounted) return;
+
+    final pending = _PendingAttachment(result.files.first);
+    setState(() => _pendingAttachments.add(pending));
+
+    try {
+      final firestoreService = context.read<FirestoreService>();
+      _draftEntryId ??= await firestoreService.reserveMaintenanceEntryId(
+        widget.vin,
+      );
+      final entryId = _draftEntryId!;
+
+      final uploadedMap = await _recordStorageService
+          .uploadMaintenanceAttachment(widget.vin, entryId, pending.file);
+
+      AttachmentAnalysis? analysis;
+      try {
+        analysis = await _analysisService.analyze(
+          widget.vin,
+          uploadedMap['path'].toString(),
+        );
+      } catch (_) {
+        // Non-fatal: the attachment is still saved with the entry, just
+        // without extracted data to pre-fill from. The backend's passive
+        // Storage-finalize trigger will still attempt analysis on its own.
+      }
+
+      if (!mounted) return;
+      setState(() {
+        pending.uploaded = MaintenanceAttachment(
+          path: uploadedMap['path'].toString(),
+          url: uploadedMap['url'].toString(),
+          name: uploadedMap['name'].toString(),
+          type: uploadedMap['type'].toString(),
+          size: (uploadedMap['size'] as num?)?.toInt() ?? pending.file.size,
+          analysis: analysis,
+        );
+        pending.busy = false;
+      });
+
+      if (analysis != null) {
+        _applyExtractedData(analysis.extracted);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        pending.busy = false;
+        pending.error = userFacingError(
+          e,
+          fallback: 'This attachment could not be uploaded.',
+        );
+      });
+    }
+  }
+
+  void _removePendingAttachment(_PendingAttachment pending) {
+    setState(() => _pendingAttachments.remove(pending));
+    final path = pending.uploaded?.path;
+    if (path != null && path.isNotEmpty) {
+      // Best-effort: the draft entry is never saved with this attachment
+      // referenced, so an orphaned file isn't user-facing, but there's no
+      // reason to leave it in Storage either.
+      unawaited(_recordStorageService.deleteVehicleRecordFile(path));
+    }
+  }
+
+  // Fills in form fields the user hasn't already provided a value for, from
+  // whichever attachment's analysis resolves first. Never overwrites a
+  // value the user already typed or a value a previous attachment already
+  // supplied.
+  void _applyExtractedData(AttachmentExtractedData extracted) {
+    setState(() {
+      if (_titleController.text.trim().isEmpty &&
+          (extracted.serviceType?.trim().isNotEmpty ?? false)) {
+        _titleController.text = extracted.serviceType!.trim();
+      }
+      if (_costController.text.trim().isEmpty && extracted.totalCost != null) {
+        _costController.text = extracted.totalCost!.toStringAsFixed(2);
+      }
+      if (_mileageController.text.trim().isEmpty && extracted.mileage != null) {
+        _mileageController.text = extracted.mileage!.toString();
+      }
+      if (!_dateManuallySet && extracted.serviceDate != null) {
+        final parsed = DateTime.tryParse(extracted.serviceDate!);
+        if (parsed != null) {
+          _entryDate = parsed;
+        }
+      }
+    });
+  }
+
+  Future<void> _selectEntryDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _entryDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _entryDate = picked;
+        _dateManuallySet = true;
+      });
+    }
+  }
+
   Future<void> _addEntry() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
@@ -181,39 +326,62 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       }
     }
 
+    if (_pendingAttachments.any((a) => a.busy)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait for attachments to finish uploading.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
     try {
       final firestoreService = context.read<FirestoreService>();
+      final attachments = _pendingAttachments
+          .map((a) => a.uploaded)
+          .whereType<MaintenanceAttachment>()
+          .toList();
+
       await firestoreService.addMaintenanceEntry(
         widget.vin,
         Maintenance(
           id: '', // Will be set by Firestore
           title: _titleController.text.trim(),
           notes: _notesController.text.trim(),
+          mileage: _mileageController.text.trim(),
           cost: cost ?? 0.0,
           performedBy: _performedBy,
           providerName: _performedBy == 'self'
               ? ''
               : _providerNameController.text.trim(),
           coverage: _coverage,
-          date: DateTime.now(),
+          date: _entryDate,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
+          attachments: attachments,
         ),
+        id: _draftEntryId,
       );
 
       _titleController.clear();
       _notesController.clear();
       _costController.clear();
       _providerNameController.clear();
+      _mileageController.clear();
       _performedBy = 'repair_shop';
       _coverage = 'parts_and_labor';
+      _entryDate = DateTime.now();
+      _dateManuallySet = false;
+      _pendingAttachments.clear();
+      _draftEntryId = null;
 
       await _loadEntries();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Maintenance entry added')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maintenance entry added')),
+      );
 
       // Show interstitial ad after adding maintenance entry (only for non-premium users)
       final premiumService = context.read<PremiumService>();
@@ -233,6 +401,10 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           ),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -366,6 +538,19 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       appBar: AppBar(
         title: Text('Maintenance - ${widget.vin}'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.insights_outlined),
+            tooltip: 'Maintenance Insights',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      MaintenanceInsightsScreen(vin: widget.vin),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             tooltip: 'Sync to Calendar',
@@ -527,19 +712,96 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: _costController,
-                    decoration: const InputDecoration(
-                      labelText: 'Cost',
-                      border: OutlineInputBorder(),
-                      prefixText: '\$',
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _costController,
+                          decoration: const InputDecoration(
+                            labelText: 'Cost',
+                            border: OutlineInputBorder(),
+                            prefixText: '\$',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _mileageController,
+                          decoration: const InputDecoration(
+                            labelText: 'Mileage',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text('Date: '),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_entryDate.day}/${_entryDate.month}/${_entryDate.year}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _selectEntryDate,
+                        child: const Text('Change Date'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Attachments',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Add a photo or receipt and we\'ll try to pre-fill the '
+                    'cost, date, mileage, and title for you.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  ..._pendingAttachments.map(
+                    (pending) => _PendingAttachmentTile(
+                      pending: pending,
+                      onRemove: () => _removePendingAttachment(pending),
                     ),
-                    keyboardType: TextInputType.number,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _pickPhoto,
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: const Text('Add Photo'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _pickDocument,
+                          icon: const Icon(Icons.attach_file),
+                          label: const Text('Add Document'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _addEntry,
-                    child: const Text('Add Entry'),
+                    onPressed: _saving ? null : _addEntry,
+                    child: _saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Add Entry'),
                   ),
                 ],
               ),
@@ -650,9 +912,31 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
               itemCount: _entries.length,
               itemBuilder: (context, index) {
                 final entry = _entries[index];
+                final firstAttachment = entry.attachments.isNotEmpty
+                    ? entry.attachments.first
+                    : null;
+                final isImageAttachment =
+                    firstAttachment != null &&
+                    const ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif']
+                        .contains(firstAttachment.type.toLowerCase());
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
+                    leading: firstAttachment == null
+                        ? null
+                        : isImageAttachment
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              firstAttachment.url,
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.build),
+                            ),
+                          )
+                        : const Icon(Icons.description_outlined, size: 32),
                     title: Text(entry.title),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,7 +953,8 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Cost: ${formatCurrencyAmount(entry.cost)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}',
+                          'Cost: ${formatCurrencyAmount(entry.cost)} • ${entry.date.day}/${entry.date.month}/${entry.date.year}'
+                          '${entry.attachments.length > 1 ? ' • ${entry.attachments.length} attachments' : ''}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -698,6 +983,120 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
         ],
       ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),
+    );
+  }
+}
+
+class _PendingAttachmentTile extends StatelessWidget {
+  const _PendingAttachmentTile({required this.pending, required this.onRemove});
+
+  final _PendingAttachment pending;
+  final VoidCallback onRemove;
+
+  static const _imageExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'heic',
+    'heif',
+    'gif',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isImage = pending.file.extension != null &&
+        _imageExtensions.contains(pending.file.extension!.toLowerCase());
+    final extracted = pending.uploaded?.analysis?.extracted;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isImage && pending.file.bytes != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.memory(
+                  pending.file.bytes!,
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.cover,
+                ),
+              )
+            else
+              const Icon(Icons.description_outlined, size: 36),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pending.file.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  if (pending.busy)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 6),
+                          Text('Uploading and analyzing…', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    )
+                  else if (pending.error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        pending.error!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    )
+                  else if (extracted != null && !extracted.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Detected: '
+                        '${extracted.totalCost != null ? formatCurrencyAmount(extracted.totalCost!) : '—'}'
+                        '${extracted.serviceDate != null ? ' • ${extracted.serviceDate}' : ''}'
+                        '${extracted.serviceType != null ? ' • ${extracted.serviceType}' : ''}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )
+                  else if (!pending.busy && pending.error == null)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: Text(
+                        'No data could be extracted from this file.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Remove attachment',
+              onPressed: pending.busy ? null : onRemove,
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

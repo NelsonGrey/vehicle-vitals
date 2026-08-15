@@ -286,6 +286,20 @@ class AuthService extends ChangeNotifier {
         }
       }
     }
+    // Firebase's own signOut() above does not touch the native Google
+    // session google_sign_in caches -- without this, choosing Google again
+    // on a shared device can silently reuse the previous identity instead
+    // of starting from a clean provider session. Only relevant if this
+    // session actually initialized a Google client; best-effort since the
+    // app's own state is already cleared regardless of the outcome.
+    final googleSignIn = _googleSignInInstance;
+    if (googleSignIn != null) {
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {
+        // Non-fatal -- see comment above.
+      }
+    }
     _pendingLinkCredential = null;
     _pendingLinkEmail = null;
     _currentUser = null;
@@ -397,6 +411,7 @@ class AuthService extends ChangeNotifier {
 
     try {
       final credential = await _auth.signInWithCredential(oauthCredential);
+      await _linkPendingProviderIfNeeded(credential.user);
       final user = _mapUser(_auth.currentUser ?? credential.user);
       _currentUser = user;
       notifyListeners();
@@ -482,7 +497,10 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> linkCurrentUserWithGoogle() async {
+  // Returns true if Google is now linked (including if it already was),
+  // false if the user canceled the account chooser -- callers must not
+  // report a cancellation as a successful link.
+  Future<bool> linkCurrentUserWithGoogle() async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
       throw Exception('Sign in first before linking Google.');
@@ -494,7 +512,7 @@ class AuthService extends ChangeNotifier {
       googleAccount = await googleSignIn.authenticate();
     } on google.GoogleSignInException catch (e) {
       if (e.code == google.GoogleSignInExceptionCode.canceled) {
-        return;
+        return false;
       }
       throw Exception('Unable to link Google sign-in.');
     }
@@ -513,9 +531,10 @@ class AuthService extends ChangeNotifier {
       await currentUser.reload();
       _currentUser = _mapUser(_auth.currentUser);
       notifyListeners();
+      return true;
     } on firebase_auth.FirebaseAuthException catch (e) {
       if (e.code == 'provider-already-linked') {
-        return;
+        return true;
       }
       if (e.code == 'credential-already-in-use') {
         throw Exception(

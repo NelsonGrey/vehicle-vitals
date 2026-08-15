@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vehicle_vitals_flutter/models/maintenance.dart';
+import 'package:vehicle_vitals_flutter/models/maintenance_attachment.dart';
 
 void main() {
   test(
@@ -109,6 +110,95 @@ void main() {
         'updatedAt': DateTime.utc(2024, 1, 1),
       }, 'entry-legacy-2');
       expect(legacyBusiness.performedBy, 'business');
+    },
+  );
+
+  test(
+    'Maintenance round-trips attachments (with extracted analysis) through '
+    'toMap/fromMap',
+    () {
+      final withAttachment = Maintenance(
+        id: 'entry-8',
+        title: 'Oil change',
+        date: DateTime.utc(2026, 1, 1),
+        createdAt: DateTime.utc(2026, 1, 1),
+        updatedAt: DateTime.utc(2026, 1, 1),
+        attachments: const [
+          MaintenanceAttachment(
+            path: 'users/uid/vehicles/VIN/maintenance/entry-8/123.jpg',
+            url: 'https://example.com/photo.jpg',
+            name: 'receipt.jpg',
+            type: 'jpg',
+            size: 12345,
+            analysis: AttachmentAnalysis(
+              extracted: AttachmentExtractedData(
+                documentCategory: 'receipt',
+                serviceType: 'Oil Change',
+                totalCost: 84.99,
+                currency: 'USD',
+                serviceDate: '2025-10-03',
+                mileage: 45210,
+              ),
+              confidence: 0.85,
+            ),
+          ),
+        ],
+      );
+
+      final map = withAttachment.toMap();
+      final attachmentsMap = map['attachments'] as List;
+      expect(attachmentsMap, hasLength(1));
+      expect(
+        attachmentsMap.first['path'],
+        'users/uid/vehicles/VIN/maintenance/entry-8/123.jpg',
+      );
+      expect(attachmentsMap.first['analysis']['extracted']['totalCost'], 84.99);
+
+      final restored = Maintenance.fromMap(map, 'entry-8');
+      expect(restored.attachments, hasLength(1));
+      expect(restored.attachments.first.path, withAttachment.attachments.first.path);
+      expect(restored.attachments.first.analysis?.confidence, 0.85);
+      expect(
+        restored.attachments.first.analysis?.extracted.serviceType,
+        'Oil Change',
+      );
+      expect(
+        restored.attachments.first.analysis?.extracted.totalCost,
+        84.99,
+      );
+    },
+  );
+
+  test('Maintenance defaults to no attachments when absent from Firestore', () {
+    final entry = Maintenance.fromMap({'title': 'Oil change'}, 'entry-9');
+    expect(entry.attachments, isEmpty);
+  });
+
+  test(
+    'Maintenance.copyWith leaves attachments untouched by default but '
+    'replaces them when explicitly passed a new list',
+    () {
+      const attachment = MaintenanceAttachment(
+        path: 'path/to/photo.jpg',
+        url: 'https://example.com/photo.jpg',
+        name: 'photo.jpg',
+        type: 'jpg',
+        size: 100,
+      );
+      final entry = Maintenance(
+        id: 'entry-10',
+        title: 'Oil change',
+        date: DateTime.utc(2026, 1, 1),
+        createdAt: DateTime.utc(2026, 1, 1),
+        updatedAt: DateTime.utc(2026, 1, 1),
+        attachments: const [attachment],
+      );
+
+      final unrelatedUpdate = entry.copyWith(title: 'Oil and filter change');
+      expect(unrelatedUpdate.attachments, entry.attachments);
+
+      final cleared = entry.copyWith(attachments: const []);
+      expect(cleared.attachments, isEmpty);
     },
   );
 }

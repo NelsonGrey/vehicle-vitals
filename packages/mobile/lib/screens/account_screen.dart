@@ -136,8 +136,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
     try {
       final authService = context.read<AuthService>();
-      await authService.linkCurrentUserWithGoogle();
-      if (mounted) {
+      final linked = await authService.linkCurrentUserWithGoogle();
+      if (mounted && linked) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Google sign-in linked to this account'),
@@ -166,6 +166,7 @@ class _AccountScreenState extends State<AccountScreen> {
         const <String>[];
     final appleLinked = user?.providerIds.contains('apple.com') ?? false;
     final googleLinked = user?.providerIds.contains('google.com') ?? false;
+    final passwordLinked = user?.providerIds.contains('password') ?? false;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Account')),
@@ -348,13 +349,16 @@ class _AccountScreenState extends State<AccountScreen> {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/settings'),
                       ),
-                      ListTile(
-                        leading: const Icon(Icons.lock_outline),
-                        title: const Text('Change Password'),
-                        subtitle: const Text('Update your account password'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/app/change-password'),
-                      ),
+                      if (passwordLinked)
+                        ListTile(
+                          leading: const Icon(Icons.lock_outline),
+                          title: const Text('Change Password'),
+                          subtitle: const Text(
+                            'Update your account password',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/app/change-password'),
+                        ),
                       ListTile(
                         leading: const Icon(Icons.shield_outlined),
                         title: const Text('Data & Privacy'),

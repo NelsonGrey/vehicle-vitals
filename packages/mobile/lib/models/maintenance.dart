@@ -58,6 +58,11 @@ class Maintenance {
   final bool hasKnownDate;
   final DateTime createdAt;
   final DateTime updatedAt;
+  // Firebase Storage download URL / storage path for a photo attached to
+  // this entry (e.g. a receipt or a photo of the work performed). Both null
+  // when no photo has been attached.
+  final String? photoUrl;
+  final String? photoPath;
 
   Maintenance({
     required this.id,
@@ -72,6 +77,8 @@ class Maintenance {
     this.hasKnownDate = true,
     required this.createdAt,
     required this.updatedAt,
+    this.photoUrl,
+    this.photoPath,
   });
 
   factory Maintenance.fromMap(Map<String, dynamic> map, String docId) {
@@ -88,6 +95,8 @@ class Maintenance {
       hasKnownDate: _isDateKnown(map['date']),
       createdAt: _parseDate(map['createdAt']),
       updatedAt: _parseDate(map['updatedAt']),
+      photoUrl: map['photoUrl']?.toString(),
+      photoPath: map['photoPath']?.toString(),
     );
   }
 
@@ -103,6 +112,8 @@ class Maintenance {
       'date': date,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'photoUrl': photoUrl,
+      'photoPath': photoPath,
     };
   }
 
@@ -118,6 +129,10 @@ class Maintenance {
     DateTime? date,
     DateTime? createdAt,
     DateTime? updatedAt,
+    // Wrapped so callers can distinguish "leave unchanged" from "clear it" —
+    // a plain `String? photoUrl` positional-default can't express removal.
+    Object? photoUrl = _unset,
+    Object? photoPath = _unset,
   }) {
     return Maintenance(
       id: id ?? this.id,
@@ -135,6 +150,14 @@ class Maintenance {
       hasKnownDate: date != null ? true : hasKnownDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      photoUrl: identical(photoUrl, _unset)
+          ? this.photoUrl
+          : photoUrl as String?,
+      photoPath: identical(photoPath, _unset)
+          ? this.photoPath
+          : photoPath as String?,
     );
   }
 }
+
+const _unset = Object();

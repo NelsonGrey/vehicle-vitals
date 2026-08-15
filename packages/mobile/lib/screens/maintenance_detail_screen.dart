@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../components/safe_back_button.dart';
 import '../models/maintenance.dart';
 import '../services/firestore_service.dart';
+import '../services/record_storage_service.dart';
 import '../utils/user_facing_error.dart';
 
 String _performedByLabel(String value) {
@@ -86,8 +90,10 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
   final _providerNameController = TextEditingController();
   String _performedBy = 'repair_shop';
   String _coverage = 'parts_and_labor';
+  final RecordStorageService _recordStorageService = RecordStorageService();
   Maintenance? _entry;
   bool _loading = true;
+  bool _photoBusy = false;
   DateTime _selectedDate = DateTime.now();
 
   @override
@@ -273,6 +279,110 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     }
   }
 
+  Future<void> _pickAndUploadPhoto() async {
+    if (_entry == null) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    if (!mounted) return;
+
+    setState(() => _photoBusy = true);
+    try {
+      final firestoreService = context.read<FirestoreService>();
+      final previousPath = _entry!.photoPath;
+
+      final uploaded = await _recordStorageService.uploadVehicleRecordFile(
+        widget.vin,
+        widget.entryId,
+        result.files.first,
+      );
+
+      final updated = _entry!.copyWith(
+        photoUrl: uploaded['url']?.toString(),
+        photoPath: uploaded['path']?.toString(),
+        updatedAt: DateTime.now(),
+      );
+      await firestoreService.updateMaintenanceEntry(
+        widget.vin,
+        widget.entryId,
+        updated,
+      );
+
+      if (previousPath != null && previousPath.isNotEmpty) {
+        // Best-effort cleanup of the file being replaced; the entry itself
+        // already points at the new photo regardless of whether this
+        // succeeds, so a failure here is not user-facing.
+        unawaited(_recordStorageService.deleteVehicleRecordFile(previousPath));
+      }
+
+      if (!mounted) return;
+      setState(() => _entry = updated);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback:
+                  'The photo could not be uploaded. Please try again.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _photoBusy = false);
+      }
+    }
+  }
+
+  Future<void> _removePhoto() async {
+    if (_entry == null || _entry!.photoUrl == null) return;
+
+    setState(() => _photoBusy = true);
+    try {
+      final firestoreService = context.read<FirestoreService>();
+      final previousPath = _entry!.photoPath;
+      final updated = _entry!.copyWith(
+        photoUrl: null,
+        photoPath: null,
+        updatedAt: DateTime.now(),
+      );
+      await firestoreService.updateMaintenanceEntry(
+        widget.vin,
+        widget.entryId,
+        updated,
+      );
+
+      if (previousPath != null && previousPath.isNotEmpty) {
+        unawaited(_recordStorageService.deleteVehicleRecordFile(previousPath));
+      }
+
+      if (!mounted) return;
+      setState(() => _entry = updated);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFacingError(
+              e,
+              fallback: 'The photo could not be removed. Please try again.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _photoBusy = false);
+      }
+    }
+  }
+
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -405,6 +515,51 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                         ? '${_performedByLabel(_performedBy)} (${_providerNameController.text.trim()}) • ${_coverageLabel(_coverage)}'
                         : '${_performedByLabel(_performedBy)} • ${_coverageLabel(_coverage)}',
                     style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Photo',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_entry?.photoUrl != null &&
+                      _entry!.photoUrl!.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        _entry!.photoUrl!,
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Center(child: Icon(Icons.build, size: 42)),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _photoBusy ? null : _pickAndUploadPhoto,
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: Text(
+                            _entry?.photoUrl == null
+                                ? 'Add Photo'
+                                : 'Replace Photo',
+                          ),
+                        ),
+                      ),
+                      if (_entry?.photoUrl != null) ...[
+                        const SizedBox(width: 8),
+                        OutlinedButton(
+                          onPressed: _photoBusy ? null : _removePhoto,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                          child: const Text('Remove'),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 16),
                   Row(

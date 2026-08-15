@@ -650,9 +650,10 @@ class FirestoreService {
     );
   }
 
-  // Add maintenance entry
-  Future<void> addMaintenanceEntry(String vin, Maintenance entry) async {
-    if (_screenshotMode) return;
+  // Add maintenance entry. Returns the new entry's doc id so callers can
+  // attach follow-up data (e.g. an uploaded photo) that depends on it.
+  Future<String> addMaintenanceEntry(String vin, Maintenance entry) async {
+    if (_screenshotMode) return entry.id;
 
     final docRef = (await _maintenanceCollection(vin)).doc();
     final now = FieldValue.serverTimestamp();
@@ -662,6 +663,7 @@ class FirestoreService {
       'updatedAt': now,
       'date': Timestamp.fromDate(entry.date),
     }, SetOptions(merge: true));
+    return docRef.id;
   }
 
   // Get a specific maintenance entry

@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import '../services/data_export_service.dart';
 import '../services/firestore_service.dart';
 import '../services/maintenance_plan_service.dart';
 import '../services/premium_service.dart';
+import '../services/record_storage_service.dart';
 import '../theme/design_tokens.dart';
 import '../utils/number_format.dart';
 import '../utils/user_facing_error.dart';
@@ -67,6 +69,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   String _coverage = 'parts_and_labor';
   final DataExportService _exportService = DataExportService();
   final CalendarService _calendarService = CalendarService();
+  final RecordStorageService _recordStorageService = RecordStorageService();
+  PlatformFile? _pickedPhoto;
+  bool _photoBusy = false;
   List<Maintenance> _entries = [];
   Vehicle? _vehicle;
   bool _loading = true;
@@ -161,6 +166,16 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     }
   }
 
+  Future<void> _pickPhoto() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    if (!mounted) return;
+    setState(() => _pickedPhoto = result.files.first);
+  }
+
   Future<void> _addEntry() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
@@ -181,9 +196,11 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       }
     }
 
+    final pendingPhoto = _pickedPhoto;
+    setState(() => _photoBusy = true);
     try {
       final firestoreService = context.read<FirestoreService>();
-      await firestoreService.addMaintenanceEntry(
+      final entryId = await firestoreService.addMaintenanceEntry(
         widget.vin,
         Maintenance(
           id: '', // Will be set by Firestore
@@ -201,19 +218,56 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
         ),
       );
 
+      // The entry itself is already saved at this point regardless of what
+      // happens next, so a photo-upload failure must not be reported as if
+      // the entry itself failed to save.
+      String? photoWarning;
+      if (pendingPhoto != null) {
+        try {
+          final uploaded = await _recordStorageService.uploadVehicleRecordFile(
+            widget.vin,
+            entryId,
+            pendingPhoto,
+          );
+          final saved = await firestoreService.getMaintenanceEntry(
+            widget.vin,
+            entryId,
+          );
+          if (saved != null) {
+            await firestoreService.updateMaintenanceEntry(
+              widget.vin,
+              entryId,
+              saved.copyWith(
+                photoUrl: uploaded['url']?.toString(),
+                photoPath: uploaded['path']?.toString(),
+              ),
+            );
+          }
+        } catch (e) {
+          photoWarning = userFacingError(
+            e,
+            fallback:
+                'The entry was saved, but the photo could not be attached. You can add it from the entry.',
+          );
+        }
+      }
+
       _titleController.clear();
       _notesController.clear();
       _costController.clear();
       _providerNameController.clear();
       _performedBy = 'repair_shop';
       _coverage = 'parts_and_labor';
+      _pickedPhoto = null;
 
       await _loadEntries();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Maintenance entry added')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(photoWarning ?? 'Maintenance entry added'),
+        ),
+      );
 
       // Show interstitial ad after adding maintenance entry (only for non-premium users)
       final premiumService = context.read<PremiumService>();
@@ -233,6 +287,10 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           ),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _photoBusy = false);
+      }
     }
   }
 
@@ -536,10 +594,54 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                     ),
                     keyboardType: TextInputType.number,
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (_pickedPhoto?.bytes != null) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(
+                            _pickedPhoto!.bytes!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _photoBusy ? null : _pickPhoto,
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: Text(
+                            _pickedPhoto == null
+                                ? 'Add Photo'
+                                : 'Change Photo',
+                          ),
+                        ),
+                      ),
+                      if (_pickedPhoto != null) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Remove photo',
+                          onPressed: _photoBusy
+                              ? null
+                              : () => setState(() => _pickedPhoto = null),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _addEntry,
-                    child: const Text('Add Entry'),
+                    onPressed: _photoBusy ? null : _addEntry,
+                    child: _photoBusy
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Add Entry'),
                   ),
                 ],
               ),
@@ -653,6 +755,19 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
+                    leading: entry.photoUrl != null && entry.photoUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              entry.photoUrl!,
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.build),
+                            ),
+                          )
+                        : null,
                     title: Text(entry.title),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

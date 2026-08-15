@@ -111,4 +111,54 @@ void main() {
       expect(legacyBusiness.performedBy, 'business');
     },
   );
+
+  test('Maintenance round-trips an attached photo through toMap/fromMap', () {
+    final withPhoto = Maintenance(
+      id: 'entry-8',
+      title: 'Oil change',
+      date: DateTime.utc(2026, 1, 1),
+      createdAt: DateTime.utc(2026, 1, 1),
+      updatedAt: DateTime.utc(2026, 1, 1),
+      photoUrl: 'https://example.com/photo.jpg',
+      photoPath: 'users/uid/vehicles/VIN/records/entry-8/123.jpg',
+    );
+
+    final map = withPhoto.toMap();
+    expect(map['photoUrl'], 'https://example.com/photo.jpg');
+    expect(map['photoPath'], 'users/uid/vehicles/VIN/records/entry-8/123.jpg');
+
+    final restored = Maintenance.fromMap(map, 'entry-8');
+    expect(restored.photoUrl, withPhoto.photoUrl);
+    expect(restored.photoPath, withPhoto.photoPath);
+  });
+
+  test('Maintenance defaults to no photo when absent from Firestore', () {
+    final entry = Maintenance.fromMap({'title': 'Oil change'}, 'entry-9');
+    expect(entry.photoUrl, isNull);
+    expect(entry.photoPath, isNull);
+  });
+
+  test(
+    'Maintenance.copyWith leaves photo fields untouched by default but '
+    'clears them when explicitly passed null',
+    () {
+      final entry = Maintenance(
+        id: 'entry-10',
+        title: 'Oil change',
+        date: DateTime.utc(2026, 1, 1),
+        createdAt: DateTime.utc(2026, 1, 1),
+        updatedAt: DateTime.utc(2026, 1, 1),
+        photoUrl: 'https://example.com/photo.jpg',
+        photoPath: 'path/to/photo.jpg',
+      );
+
+      final unrelatedUpdate = entry.copyWith(title: 'Oil and filter change');
+      expect(unrelatedUpdate.photoUrl, entry.photoUrl);
+      expect(unrelatedUpdate.photoPath, entry.photoPath);
+
+      final cleared = entry.copyWith(photoUrl: null, photoPath: null);
+      expect(cleared.photoUrl, isNull);
+      expect(cleared.photoPath, isNull);
+    },
+  );
 }

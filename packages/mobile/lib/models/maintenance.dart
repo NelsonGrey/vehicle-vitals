@@ -1,3 +1,5 @@
+import 'maintenance_attachment.dart';
+
 DateTime _parseDate(dynamic value) {
   if (value == null) return DateTime.now();
   if (value is DateTime) return value;
@@ -58,6 +60,13 @@ class Maintenance {
   final bool hasKnownDate;
   final DateTime createdAt;
   final DateTime updatedAt;
+  // Photos/documents (receipts, invoices) attached to this entry. Each
+  // carries its own AI-extracted data once analysis completes — see
+  // MaintenanceAttachment. Persisted verbatim as a Firestore array under
+  // this exact shape; the backend's Storage-finalize trigger matches array
+  // entries by `path` to merge in `analysis`, so this shape must stay in
+  // sync with the functions repo.
+  final List<MaintenanceAttachment> attachments;
 
   Maintenance({
     required this.id,
@@ -72,9 +81,11 @@ class Maintenance {
     this.hasKnownDate = true,
     required this.createdAt,
     required this.updatedAt,
+    this.attachments = const [],
   });
 
   factory Maintenance.fromMap(Map<String, dynamic> map, String docId) {
+    final rawAttachments = map['attachments'];
     return Maintenance(
       id: docId,
       title: map['title'] ?? '',
@@ -88,6 +99,12 @@ class Maintenance {
       hasKnownDate: _isDateKnown(map['date']),
       createdAt: _parseDate(map['createdAt']),
       updatedAt: _parseDate(map['updatedAt']),
+      attachments: rawAttachments is List
+          ? rawAttachments
+              .whereType<Map>()
+              .map((m) => MaintenanceAttachment.fromMap(m.cast<String, dynamic>()))
+              .toList()
+          : const [],
     );
   }
 
@@ -103,6 +120,7 @@ class Maintenance {
       'date': date,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'attachments': attachments.map((a) => a.toMap()).toList(),
     };
   }
 
@@ -118,6 +136,7 @@ class Maintenance {
     DateTime? date,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<MaintenanceAttachment>? attachments,
   }) {
     return Maintenance(
       id: id ?? this.id,
@@ -135,6 +154,7 @@ class Maintenance {
       hasKnownDate: date != null ? true : hasKnownDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      attachments: attachments ?? this.attachments,
     );
   }
 }

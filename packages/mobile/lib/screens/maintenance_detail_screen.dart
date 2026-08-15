@@ -10,6 +10,7 @@ import '../models/maintenance.dart';
 import '../models/maintenance_attachment.dart';
 import '../services/attachment_analysis_service.dart';
 import '../services/firestore_service.dart';
+import '../services/premium_service.dart';
 import '../services/record_storage_service.dart';
 import '../utils/number_format.dart';
 import '../utils/user_facing_error.dart';
@@ -138,6 +139,13 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
           _providerNameController.text = entry.providerName;
           _coverage = entry.coverage;
           _selectedDate = entry.date;
+          // A real, already-known date on the loaded entry counts as
+          // user-provided for extraction's don't-overwrite rule, same as
+          // cost/mileage (whose loaded controllers are simply non-empty).
+          // A fabricated date (hasKnownDate == false, e.g. a legacy record
+          // with no real date) is legitimately fair game for an attached
+          // receipt to fill in.
+          _dateManuallySet = entry.hasKnownDate;
           _loading = false;
         });
       } else {
@@ -266,6 +274,16 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
           widget.entryId,
         );
 
+        // Best-effort: the entry doc is already gone regardless of whether
+        // these succeed, so failures here aren't user-facing — but leaving
+        // the files behind would otherwise retain user documents (photos,
+        // receipts) indefinitely with no remaining reference to them.
+        for (final attachment in _entry?.attachments ?? const []) {
+          unawaited(
+            _recordStorageService.deleteVehicleRecordFile(attachment.path),
+          );
+        }
+
         if (mounted) {
           final navigator = Navigator.of(context);
           navigator.pop(); // Go back to maintenance list
@@ -302,6 +320,10 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
     if (result == null || result.files.isEmpty) return;
     if (!mounted) return;
 
+    final canAnalyze = context.read<PremiumService>().canAccessFeature(
+      'ai_analysis',
+    );
+
     setState(() => _attachmentBusy = true);
     try {
       final firestoreService = context.read<FirestoreService>();
@@ -312,15 +334,19 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
             widget.entryId,
             result.files.first,
           );
+      final uploadedPath = uploadedMap['path'].toString();
 
       AttachmentAnalysis? analysis;
-      try {
-        analysis = await _analysisService.analyze(
-          widget.vin,
-          uploadedMap['path'].toString(),
+      if (canAnalyze) {
+        analysis = await _analyzeWithFallback(uploadedPath);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'AI extraction requires Pro or Premium. The attachment is still saved.',
+            ),
+          ),
         );
-      } catch (_) {
-        // Non-fatal — see the matching comment in maintenance_list_screen.
       }
 
       final attachment = MaintenanceAttachment(
@@ -365,6 +391,32 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
       if (mounted) {
         setState(() => _attachmentBusy = false);
       }
+    }
+  }
+
+  // See the matching comment in maintenance_list_screen — the backend's
+  // passive Storage-finalize trigger writes to `attachmentAnalyses`
+  // independently of the synchronous callable, so a delayed read can
+  // recover a result the direct call failed to get.
+  Future<AttachmentAnalysis?> _analyzeWithFallback(String path) async {
+    try {
+      return await _analysisService.analyze(widget.vin, path);
+    } catch (_) {
+      // Fall through to the read-based fallback below.
+    }
+
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return null;
+    try {
+      final firestoreService = context.read<FirestoreService>();
+      final analyses = await firestoreService.getAttachmentAnalyses(
+        widget.vin,
+        [path],
+      );
+      final raw = analyses[path];
+      return raw != null ? AttachmentAnalysis.fromMap(raw) : null;
+    } catch (_) {
+      return null;
     }
   }
 

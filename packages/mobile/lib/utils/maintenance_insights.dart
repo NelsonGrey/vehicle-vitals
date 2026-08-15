@@ -139,8 +139,13 @@ MaintenanceInsights computeMaintenanceInsights(List<Maintenance> entries) {
       count: (existing?.count ?? 0) + 1,
     );
 
-    final monthStart = DateTime(entry.date.year, entry.date.month);
-    monthTotals[monthStart] = (monthTotals[monthStart] ?? 0) + entry.cost;
+    // A fabricated date (see Maintenance.hasKnownDate) would otherwise
+    // attribute its cost to "this month" regardless of when the work
+    // actually happened, producing a misleading current-month spike.
+    if (entry.hasKnownDate) {
+      final monthStart = DateTime(entry.date.year, entry.date.month);
+      monthTotals[monthStart] = (monthTotals[monthStart] ?? 0) + entry.cost;
+    }
   }
 
   final spendByCategory = categoryTotals.values.toList()

@@ -258,14 +258,16 @@ class _SpendTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxAmount = spendByMonth
-        .map((m) => m.amount)
-        .fold<double>(0, (a, b) => a > b ? a : b);
     // Cap to the most recent 12 months so a long history doesn't produce an
     // unreadably squeezed chart.
     final recent = spendByMonth.length > 12
         ? spendByMonth.sublist(spendByMonth.length - 12)
         : spendByMonth;
+    // Scale against only the displayed months — an older, undisplayed spike
+    // would otherwise flatten every visible bar against an invisible max.
+    final maxAmount = recent
+        .map((m) => m.amount)
+        .fold<double>(0, (a, b) => a > b ? a : b);
 
     return Card(
       child: Padding(

@@ -134,6 +134,55 @@ class RecordStorageService {
     };
   }
 
+  // Uploads a photo or document attached to a maintenance entry. Uses the
+  // `maintenance/{entryId}/...` path segment (not `records/`) so the
+  // backend's Storage-finalize trigger (parseAttachmentPath in the functions
+  // repo) classifies it as `section: 'maintenance'` and, once the entry doc
+  // exists, patches extracted analysis back onto the matching attachment
+  // array entry.
+  Future<Map<String, dynamic>> uploadMaintenanceAttachment(
+    String vin,
+    String entryId,
+    PlatformFile file,
+  ) async {
+    final extension = file.extension?.trim().isNotEmpty == true
+        ? file.extension!
+        : 'bin';
+    final context = await _resolveGarageContext();
+    final path =
+        '${buildVehicleStorageBasePath(context, vin)}/maintenance/$entryId/${DateTime.now().millisecondsSinceEpoch}.$extension';
+    final ref = _storage.ref(path);
+    final metadata = SettableMetadata(
+      customMetadata: {
+        'originalName': file.name,
+        'extension': extension,
+        'vin': vin,
+        'entryId': entryId,
+      },
+    );
+
+    UploadTask uploadTask;
+    final Uint8List? bytes = file.bytes;
+    if (bytes != null) {
+      uploadTask = ref.putData(bytes, metadata);
+    } else if (file.path != null) {
+      uploadTask = ref.putFile(File(file.path!), metadata);
+    } else {
+      throw Exception('Unable to read selected file');
+    }
+
+    await uploadTask;
+    final url = await ref.getDownloadURL();
+
+    return {
+      'name': file.name,
+      'url': url,
+      'path': path,
+      'size': file.size,
+      'type': extension,
+    };
+  }
+
   Future<void> deleteVehicleRecordFile(String path) async {
     await _storage.ref(path).delete();
   }

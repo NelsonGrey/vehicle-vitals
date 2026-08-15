@@ -1,10 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart' show PasswordValidationStatus;
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_logo.dart';
 import '../services/auth_service.dart';
+import '../services/password_policy_service.dart';
 import '../utils/user_facing_error.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -23,16 +25,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
 
+  final _passwordPolicyService = PasswordPolicyService();
+
   // Populated from the live Firebase password policy (see
-  // AuthService.validatePassword). These defaults match today's enforced
-  // policy so the form is still usable if the fetch fails (e.g. offline);
+  // PasswordPolicyService.loadPolicy). Defaults to PasswordPolicyService's
+  // fallback so the form is still usable if the fetch fails (e.g. offline);
   // the authoritative check in _signUp() re-verifies against the real
   // policy regardless of whether this fetch succeeded.
-  int _policyMinLength = 8;
-  bool _policyRequiresUpper = true;
-  bool _policyRequiresLower = true;
-  bool _policyRequiresDigit = true;
-  bool _policyRequiresSymbol = true;
+  PasswordPolicyState _policy = PasswordPolicyService.defaultPolicy;
 
   @override
   void initState() {
@@ -49,81 +49,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _loadPasswordPolicy() async {
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      // A throwaway non-empty candidate -- only .passwordPolicy is used
-      // here, not whether this specific placeholder is valid.
-      final status = await authService.validatePassword(' ');
-      final policy = status.passwordPolicy;
-      if (!mounted) return;
-      setState(() {
-        _policyMinLength = policy.minPasswordLength;
-        // A null field means Firebase doesn't enforce that character class
-        // for this policy -- default to not-required, not required, or the
-        // client would reject passwords the server actually accepts.
-        _policyRequiresUpper = policy.containsUppercaseCharacter ?? false;
-        _policyRequiresLower = policy.containsLowercaseCharacter ?? false;
-        _policyRequiresDigit = policy.containsNumericCharacter ?? false;
-        _policyRequiresSymbol = policy.containsNonAlphanumericCharacter ?? false;
-      });
-    } catch (_) {
-      // Keep the defaults above -- _signUp() still authoritatively
-      // re-checks the real password against the live policy at submit time.
-    }
-  }
-
-  String _passwordRequirementsHint() {
-    final requirements = <String>[
-      if (_policyRequiresUpper) 'upper',
-      if (_policyRequiresLower) 'lower',
-      if (_policyRequiresDigit) 'number',
-      if (_policyRequiresSymbol) 'symbol',
-    ];
-    if (requirements.isEmpty) {
-      return '$_policyMinLength+ characters';
-    }
-    return '$_policyMinLength+ characters with ${requirements.join(', ')}';
-  }
-
-  // Client-side pass using the cached live policy so users get immediate
-  // feedback while typing. _signUp() re-validates authoritatively against
-  // Firebase itself before submitting, so this never needs to be the last
-  // word on whether a password is accepted.
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a password';
-    }
-    if (value.length < _policyMinLength) {
-      return 'Password must be at least $_policyMinLength characters';
-    }
-    if (_policyRequiresUpper && !value.contains(RegExp(r'[A-Z]'))) {
-      return 'Password must include an uppercase letter';
-    }
-    if (_policyRequiresLower && !value.contains(RegExp(r'[a-z]'))) {
-      return 'Password must include a lowercase letter';
-    }
-    if (_policyRequiresDigit && !value.contains(RegExp(r'[0-9]'))) {
-      return 'Password must include a number';
-    }
-    if (_policyRequiresSymbol && !value.contains(RegExp(r'[^A-Za-z0-9]'))) {
-      return 'Password must include a symbol (e.g. ! @ # ?)';
-    }
-    return null;
-  }
-
-  String _describePasswordFailure(PasswordValidationStatus status) {
-    final missing = <String>[
-      if (!status.meetsMinPasswordLength)
-        'be at least $_policyMinLength characters',
-      if (!status.meetsUppercaseRequirement) 'include an uppercase letter',
-      if (!status.meetsLowercaseRequirement) 'include a lowercase letter',
-      if (!status.meetsDigitsRequirement) 'include a number',
-      if (!status.meetsSymbolsRequirement) 'include a symbol',
-    ];
-    if (missing.isEmpty) {
-      return 'Password does not meet the requirements for this account.';
-    }
-    return 'Password must ${missing.join(', ')}.';
+    final policy = await _passwordPolicyService.loadPolicy();
+    if (!mounted) return;
+    setState(() => _policy = policy);
   }
 
   Future<void> _signUp() async {
@@ -139,12 +67,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // drift between this form's cached copy and the real policy (e.g.
       // it changed after this screen loaded, or the initial fetch failed)
       // before spending a round-trip on account creation.
-      final status = await authService.validatePassword(password);
+      final status = await _passwordPolicyService.checkPassword(password);
       if (!status.isValid) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(_describePasswordFailure(status)),
+              content: Text(
+                _passwordPolicyService.describeFailure(status, _policy),
+              ),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -169,6 +99,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 e,
                 fallback:
                     'We could not create your account. Please try again or visit Support.',
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final credential = await authService.signInWithGoogle();
+
+      if (mounted && credential != null) {
+        context.go('/app');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFacingError(
+                e,
+                fallback:
+                    'Google sign-in could not be completed. Please try again.',
               ),
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
@@ -274,7 +236,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           obscureText: !_showPassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            helperText: _passwordRequirementsHint(),
+                            helperText: _passwordPolicyService.hint(_policy),
                             helperMaxLines: 2,
                             suffixIcon: IconButton(
                               onPressed: () => setState(
@@ -290,7 +252,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   : 'Show password',
                             ),
                           ),
-                          validator: _validatePassword,
+                          validator: (value) => _passwordPolicyService
+                              .quickCheck(value ?? '', _policy),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -339,13 +302,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _signInWithApple,
-                          icon: const Icon(Icons.apple),
-                          label: const Text('Continue with Apple'),
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          icon: const Icon(Icons.g_mobiledata),
+                          label: const Text('Continue with Google'),
                         ),
+                        if (Platform.isIOS) ...[
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _signInWithApple,
+                            icon: const Icon(Icons.apple),
+                            label: const Text('Continue with Apple'),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         const Text(
-                          'By creating an account or continuing with Apple, you agree to the Terms of Use and acknowledge the Privacy Policy.',
+                          'By creating an account or continuing with Google or Apple, you agree to the Terms of Use and acknowledge the Privacy Policy.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 12, color: Colors.black54),
                         ),

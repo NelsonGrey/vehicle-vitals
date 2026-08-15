@@ -650,11 +650,28 @@ class FirestoreService {
     );
   }
 
-  // Add maintenance entry
-  Future<void> addMaintenanceEntry(String vin, Maintenance entry) async {
-    if (_screenshotMode) return;
+  // Reserves a doc id for a maintenance entry before it's saved, so a caller
+  // can upload attachments to their final storage path (which is keyed by
+  // entry id) and run analysis on them *before* the entry itself exists —
+  // letting extracted data pre-fill the entry form for the user to review.
+  Future<String> reserveMaintenanceEntryId(String vin) async {
+    return (await _maintenanceCollection(vin)).doc().id;
+  }
 
-    final docRef = (await _maintenanceCollection(vin)).doc();
+  // Add maintenance entry. Returns the new entry's doc id so callers can
+  // attach follow-up data (e.g. an uploaded photo) that depends on it. Pass
+  // `id` to write to a previously reserved id (see reserveMaintenanceEntryId)
+  // instead of generating a fresh one.
+  Future<String> addMaintenanceEntry(
+    String vin,
+    Maintenance entry, {
+    String? id,
+  }) async {
+    if (_screenshotMode) return entry.id;
+
+    final docRef = id != null
+        ? (await _maintenanceCollection(vin)).doc(id)
+        : (await _maintenanceCollection(vin)).doc();
     final now = FieldValue.serverTimestamp();
     await docRef.set({
       ...entry.toMap(),
@@ -662,6 +679,7 @@ class FirestoreService {
       'updatedAt': now,
       'date': Timestamp.fromDate(entry.date),
     }, SetOptions(merge: true));
+    return docRef.id;
   }
 
   // Get a specific maintenance entry

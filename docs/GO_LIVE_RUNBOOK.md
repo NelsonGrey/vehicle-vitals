@@ -654,6 +654,130 @@ gh run list --branch staging --limit 3
 gh run view <run-id> --json jobs
 ```
 
+## Marketing Tools API Access (GA4 / GTM / Search Console)
+
+Mirrors the pattern set up on the sibling `modulo-squares` project
+(`modulo-squares` repo, `docs/GO_LIVE_RUNBOOK.md` §3.2b, 2026-07-31). Goal:
+reach GA4, Google Tag Manager, and Search Console via API using a dedicated
+service account, `marketing-tools-service@vehicle-vitals-prod.iam.gserviceaccount.com`.
+AdSense and Google Ads are **not** covered by this — see note at the end.
+
+**Done (2026-08-04):**
+- [x] APIs enabled on `vehicle-vitals-prod`: `analyticsadmin`, `analyticsdata`,
+  `tagmanager`, `searchconsole`, `adsense`
+- [x] Service account `marketing-tools-service@vehicle-vitals-prod.iam.gserviceaccount.com`
+  created (no key yet — see blocker below)
+
+**Blocked — needs the account owner to run these manually:**
+
+1. **Org-policy exception for SA key creation.** `constraints/iam.disableServiceAccountKeyCreation`
+   is enforced org-wide, which blocks minting a key for the new service
+   account. Add a project-scoped exception (matches what was done on
+   `modulo-squares-prod`):
+   ```bash
+   cat > /tmp/sa-key-policy.yaml <<'EOF'
+   name: projects/vehicle-vitals-prod/policies/iam.disableServiceAccountKeyCreation
+   spec:
+     rules:
+     - enforce: false
+   EOF
+   gcloud org-policies set-policy /tmp/sa-key-policy.yaml --project=vehicle-vitals-prod
+   ```
+2. **Create the key** (after the policy exception above is live):
+   ```bash
+   gcloud iam service-accounts keys create ~/marketing-tools-service-key.json \
+     --iam-account=marketing-tools-service@vehicle-vitals-prod.iam.gserviceaccount.com \
+     --project=vehicle-vitals-prod
+   ```
+   Treat the resulting file like any other credential — do not commit it.
+3. **Restore the org-wide policy immediately** — the exception in step 1 leaves
+   *every* service account in `vehicle-vitals-prod` eligible for new key
+   creation, not just this one, for as long as it's in place:
+   ```bash
+   gcloud org-policies delete constraints/iam.disableServiceAccountKeyCreation \
+     --project=vehicle-vitals-prod
+   ```
+   This removes the project-level override entirely, reverting to the
+   org-wide policy (enforced). Confirm it's gone with
+   `gcloud org-policies describe constraints/iam.disableServiceAccountKeyCreation --project=vehicle-vitals-prod`
+   (should show the org-inherited policy, not a project-level override).
+4. **Manual UI invites — no API for this.** Once the key exists, invite the
+   service account as a user in each product's own permission system:
+   - **GTM**: Tag Manager → Admin → **Account** `Nelson Grey` (account ID
+     `6359833234` — the same shared account used by `modulo-squares`) → User
+     Management → invite `marketing-tools-service@vehicle-vitals-prod.iam.gserviceaccount.com`.
+     Confirm the vehicle-vitals container is under this account first (see
+     "Discovered live" below).
+   - **GA4**: Analytics → Admin → Property Access Management, for whichever
+     GA4 property backs `GTM-5GHJHB5J` (see below) → invite the same service
+     account.
+   - **Search Console**: Settings → Users and permissions, for the
+     `https://vehicle-vitals.com` property → invite the same service account.
+
+**Discovered live (2026-08-04, via unauthenticated public reconnaissance only
+— see "What could not be verified" below for what this doesn't cover):**
+- Production GTM container ID: **`GTM-5GHJHB5J`** (read from the deployed
+  `https://vehicle-vitals.com` page source — this is the only container/tag
+  ID hardcoded in the served HTML)
+- `https://vehicle-vitals.com` has a Search Console verification TXT record
+  (`google-site-verification=4tbIQwb5R1xSQ1MMW0-8GeOPLk9P7NXLloEblj__cKY`),
+  so the site is already verified in Search Console under *some* Google
+  account — likely `admin@nelsongrey.com`, not yet confirmed
+- `robots.txt` and `sitemap.xml` both serve correctly (HTTP 200) at their
+  expected paths
+- The actual GA4 measurement ID and GTM/GA4 account and property IDs were
+  **not** discovered — they're injected at build time from GitHub secrets
+  (`VITE_GTM_ID_PRODUCTION`, `VITE_FIREBASE_MEASUREMENT_ID_PRODUCTION`, see
+  `.github/workflows/master-pipeline.yml`) and aren't present in any
+  unauthenticated, publicly fetchable artifact. Confirming them requires the
+  authenticated Tag Manager / Analytics Admin API read calls below, or the
+  console UI.
+
+**What could not be verified this session — needs API/UI access:**
+Whether the live, *published* GTM container version matches the draft/expected
+config (this is exactly the class of bug found on `modulo-squares`: a stale
+published version silently serving 3 unidentified foreign tags alongside the
+correct GA4 tag) could not be confirmed. The compiled `gtm.js` runtime served
+for `GTM-5GHJHB5J` was fetched and grepped for other `G-`/`GT-`/`AW-`-style
+IDs; none were found as literal strings, but this is *not* a reliable
+substitute for reading the container's actual tag list via the Tag Manager
+API (`GET tagmanager.googleapis.com/tagmanager/v2/accounts/{id}/containers/{id}/versions/live`)
+or the GTM console UI — the compiled runtime is largely a generic library and
+doesn't necessarily expose configured tag IDs as plain grep-able strings.
+Whether a duplicate/orphaned GA4 property exists (as was found and cleaned
+up on `modulo-squares`) also could not be checked without Analytics Admin API
+read access. **Recommend the account owner check both of these directly in
+the GTM/GA4 consoles**, or use the read-only auth pattern below once the key
+exists.
+
+**How to authenticate once the key exists** (two gotchas that cost real time
+on `modulo-squares`, confirmed to reproduce identically here):
+1. `gcloud auth application-default login --scopes=...` via the shared gcloud
+   CLI OAuth client is **blocked by Google entirely** for Analytics/Tag
+   Manager/Search Console scopes ("This app is blocked") — don't attempt it.
+2. `gcloud auth print-access-token --impersonate-service-account=...` silently
+   **ignores `--scopes`** and always returns a `cloud-platform`-only token,
+   which none of these APIs accept. Directly activate the identity instead:
+   ```bash
+   gcloud config set account marketing-tools-service@vehicle-vitals-prod.iam.gserviceaccount.com
+   TOKEN=$(gcloud auth print-access-token --scopes="https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/tagmanager.readonly,https://www.googleapis.com/auth/webmasters.readonly" --project=vehicle-vitals-prod)
+   curl -s -H "Authorization: Bearer $TOKEN" "https://tagmanager.googleapis.com/tagmanager/v2/accounts"
+   gcloud config set account admin@nelsongrey.com   # restore default identity when done
+   ```
+   Mutating calls (GTM `create_version`/`publish`, GA4 property edits/deletes)
+   need broader scopes (`tagmanager.edit.containers` +
+   `tagmanager.edit.containerversions` + `tagmanager.publish` for GTM,
+   `analytics.edit` for GA4) and should be run by a human, not automated.
+
+**AdSense and Google Ads are a different, harder auth model, deliberately not
+attempted** — same as `modulo-squares`. AdSense's permission system doesn't
+support inviting a service account as a delegated user; it needs the account
+owner's own interactive OAuth consent via a custom, Google-verified OAuth
+client. Google Ads additionally requires a developer token application
+through Google.
+
+## Rollback
+
 - [ ] Confirm deploy targets included Hosting, Firestore, Storage, Functions, and Firestore indexes.
   - Note: the pipeline's `deploy_only` action skips Functions for production. Use
     `build_and_deploy` to ensure Functions are deployed.

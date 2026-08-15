@@ -1,4 +1,4 @@
-package com.nelsongrey.vehiclevitals.app.vehicle_vitals_flutter
+package com.vehiclevitals.app.android
 
 import io.flutter.embedding.android.FlutterActivity
 

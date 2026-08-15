@@ -16,6 +16,7 @@ import 'firebase_options.dart';
 import 'screens/account_screen.dart';
 import 'screens/add_vehicle_screen.dart';
 import 'screens/calendar_preferences_screen.dart';
+import 'screens/change_password_screen.dart';
 import 'screens/data_privacy_screen.dart';
 import 'screens/edit_vehicle_screen.dart';
 import 'screens/email_preferences_screen.dart';
@@ -361,6 +362,10 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/app/account',
           redirect: (context, state) => '/app/profile',
+        ),
+        GoRoute(
+          path: '/app/change-password',
+          builder: (context, state) => const ChangePasswordScreen(),
         ),
         GoRoute(
           path: '/app/settings',

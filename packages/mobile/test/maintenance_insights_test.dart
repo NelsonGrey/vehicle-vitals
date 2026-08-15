@@ -8,6 +8,7 @@ Maintenance _entry({
   required String title,
   double cost = 0,
   DateTime? date,
+  bool hasKnownDate = true,
   List<MaintenanceAttachment> attachments = const [],
 }) {
   final when = date ?? DateTime.utc(2026, 1, 1);
@@ -16,6 +17,7 @@ Maintenance _entry({
     title: title,
     cost: cost,
     date: when,
+    hasKnownDate: hasKnownDate,
     createdAt: when,
     updatedAt: when,
     attachments: attachments,
@@ -168,6 +170,28 @@ void main() {
       expect(insights.spendByMonth.first.amount, 80);
       expect(insights.spendByMonth.last.monthStart, DateTime(2026, 3));
       expect(insights.spendByMonth.last.amount, 100);
+    },
+  );
+
+  test(
+    'computeMaintenanceInsights excludes entries with an unknown '
+    '(fabricated) date from the monthly spend trend, since attributing '
+    'them to "this month" would be misleading — but still counts their '
+    'cost in the overall total',
+    () {
+      final insights = computeMaintenanceInsights([
+        _entry(id: '1', title: 'Known', cost: 50, date: DateTime.utc(2026, 1, 10)),
+        _entry(
+          id: '2',
+          title: 'Unknown date',
+          cost: 999,
+          hasKnownDate: false,
+        ),
+      ]);
+
+      expect(insights.totalSpend, 1049);
+      expect(insights.spendByMonth, hasLength(1));
+      expect(insights.spendByMonth.first.amount, 50);
     },
   );
 }

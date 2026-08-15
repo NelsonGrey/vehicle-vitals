@@ -32,6 +32,7 @@ class _PendingAttachment {
   MaintenanceAttachment? uploaded;
   bool busy = true;
   String? error;
+  bool notEntitled = false;
 
   _PendingAttachment(this.file);
 }
@@ -112,6 +113,16 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
 
   @override
   void dispose() {
+    // Best-effort: any attachment uploaded while filling out the form but
+    // never committed via _addEntry (navigated away, backgrounded) would
+    // otherwise sit in Storage indefinitely with no Firestore doc ever
+    // referencing it.
+    for (final pending in _pendingAttachments) {
+      final path = pending.uploaded?.path;
+      if (path != null && path.isNotEmpty) {
+        unawaited(_recordStorageService.deleteVehicleRecordFile(path));
+      }
+    }
     _titleController.dispose();
     _notesController.dispose();
     _costController.dispose();
@@ -202,7 +213,11 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     if (result == null || result.files.isEmpty) return;
     if (!mounted) return;
 
-    final pending = _PendingAttachment(result.files.first);
+    final canAnalyze = context.read<PremiumService>().canAccessFeature(
+      'ai_analysis',
+    );
+    final pending = _PendingAttachment(result.files.first)
+      ..notEntitled = !canAnalyze;
     setState(() => _pendingAttachments.add(pending));
 
     try {
@@ -214,17 +229,11 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
 
       final uploadedMap = await _recordStorageService
           .uploadMaintenanceAttachment(widget.vin, entryId, pending.file);
+      final uploadedPath = uploadedMap['path'].toString();
 
       AttachmentAnalysis? analysis;
-      try {
-        analysis = await _analysisService.analyze(
-          widget.vin,
-          uploadedMap['path'].toString(),
-        );
-      } catch (_) {
-        // Non-fatal: the attachment is still saved with the entry, just
-        // without extracted data to pre-fill from. The backend's passive
-        // Storage-finalize trigger will still attempt analysis on its own.
+      if (canAnalyze) {
+        analysis = await _analyzeWithFallback(uploadedPath);
       }
 
       if (!mounted) return;
@@ -252,6 +261,36 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           fallback: 'This attachment could not be uploaded.',
         );
       });
+    }
+  }
+
+  // The synchronous callable can fail on a transient network error even
+  // though the backend's passive Storage-finalize trigger still runs and
+  // writes the same result to `attachmentAnalyses` independently — that
+  // write doesn't depend on the maintenance doc existing (only the
+  // separate array write-back does), so a delayed read there can recover
+  // the result even for a not-yet-saved draft attachment. Best-effort: one
+  // retry, then one delayed read; genuinely give up after that rather than
+  // polling indefinitely.
+  Future<AttachmentAnalysis?> _analyzeWithFallback(String path) async {
+    try {
+      return await _analysisService.analyze(widget.vin, path);
+    } catch (_) {
+      // Fall through to the read-based fallback below.
+    }
+
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return null;
+    try {
+      final firestoreService = context.read<FirestoreService>();
+      final analyses = await firestoreService.getAttachmentAnalyses(
+        widget.vin,
+        [path],
+      );
+      final raw = analyses[path];
+      return raw != null ? AttachmentAnalysis.fromMap(raw) : null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -1079,11 +1118,13 @@ class _PendingAttachmentTile extends StatelessWidget {
                       ),
                     )
                   else if (!pending.busy && pending.error == null)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'No data could be extracted from this file.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        pending.notEntitled
+                            ? 'AI extraction requires Pro or Premium. The attachment is still saved.'
+                            : 'No data could be extracted from this file.',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ),
                 ],

@@ -690,7 +690,18 @@ AdSense and Google Ads are **not** covered by this — see note at the end.
      --project=vehicle-vitals-prod
    ```
    Treat the resulting file like any other credential — do not commit it.
-3. **Manual UI invites — no API for this.** Once the key exists, invite the
+3. **Restore the org-wide policy immediately** — the exception in step 1 leaves
+   *every* service account in `vehicle-vitals-prod` eligible for new key
+   creation, not just this one, for as long as it's in place:
+   ```bash
+   gcloud org-policies delete constraints/iam.disableServiceAccountKeyCreation \
+     --project=vehicle-vitals-prod
+   ```
+   This removes the project-level override entirely, reverting to the
+   org-wide policy (enforced). Confirm it's gone with
+   `gcloud org-policies describe constraints/iam.disableServiceAccountKeyCreation --project=vehicle-vitals-prod`
+   (should show the org-inherited policy, not a project-level override).
+4. **Manual UI invites — no API for this.** Once the key exists, invite the
    service account as a user in each product's own permission system:
    - **GTM**: Tag Manager → Admin → **Account** `Nelson Grey` (account ID
      `6359833234` — the same shared account used by `modulo-squares`) → User

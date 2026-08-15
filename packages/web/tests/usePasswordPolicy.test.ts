@@ -69,7 +69,21 @@ describe('usePasswordPolicy', () => {
 
     const { result } = renderHook(() => usePasswordPolicy(checkPasswordPolicy));
 
-    await waitFor(() => expect(result.current.policy.minLength).toBe(8));
+    // Asserting only policy.minLength === 8 here is ambiguous: it's also
+    // DEFAULT_POLICY's minLength, so that check alone can pass against the
+    // pre-fetch default state (requiresUpper: true) before the mocked fetch
+    // has actually resolved -- letting the assertions below race against a
+    // stale policy. Wait for the full object so this can only be satisfied
+    // once the real fetch result has landed.
+    await waitFor(() =>
+      expect(result.current.policy).toEqual({
+        minLength: 8,
+        requiresUpper: false,
+        requiresLower: false,
+        requiresDigit: false,
+        requiresSymbol: false,
+      })
+    );
 
     expect(result.current.quickCheck('short')).toMatch(/at least 8 characters/i);
     expect(result.current.quickCheck('longenough')).toBeNull();

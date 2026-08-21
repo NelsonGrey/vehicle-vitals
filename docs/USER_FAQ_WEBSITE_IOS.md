@@ -76,7 +76,7 @@ Yes, in Records.
 Upload files for the relevant record item.
 If upload fails, retry from the same records workflow.
 You can also open or remove attachments from the record view.
-There's no in-app scanner, but iPhone's built-in one works well: open Notes, tap the camera icon, choose Scan Documents, then share the resulting PDF into Vehicle-Vitals or save it to Files first and upload from there.
+There's no in-app scanner, but iPhone's built-in one works well: open Notes, tap the camera icon, choose Scan Documents, save the result as a PDF to Files, then upload it from there using the normal attachment option.
 
 ### 12) How do reminders work from Records?
 

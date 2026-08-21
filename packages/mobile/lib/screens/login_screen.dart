@@ -236,12 +236,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 )
                               : const Text('Sign In'),
                         ),
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _signInWithGoogle,
-                          icon: const Icon(Icons.g_mobiledata),
-                          label: const Text('Continue with Google'),
-                        ),
+                        if (Platform.isAndroid) ...[
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _signInWithGoogle,
+                            icon: const Icon(Icons.g_mobiledata),
+                            label: const Text('Continue with Google'),
+                          ),
+                        ],
                         if (Platform.isIOS) ...[
                           const SizedBox(height: 8),
                           OutlinedButton.icon(

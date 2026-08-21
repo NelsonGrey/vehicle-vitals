@@ -9,7 +9,7 @@ Two frontends (web + mobile) share Firebase-backed utilities in `shared/`. Follo
 
 - Architecture (big picture)
   - Web: React + Vite + react-router. Entry: `web/src/main.jsx` → `web/src/App.jsx`. Pages in `web/src/pages/*` (Home, AddVehicle, EditVehicle, etc.).
-  - Mobile: Flutter + go_router + Provider. Entry: `mobile/lib/main.dart`. Screens in `mobile/lib/screens/*.dart` (HomeScreen, AddVehicleScreen, EditVehicleScreen, ScanVINScreen, MaintenanceListScreen, MaintenanceDetailScreen, AccountScreen, etc.). Package names: com.nelsongrey.vehiclevitals.app.android (Android), com.nelsongrey.vehiclevitals.app.ios (iOS).
+  - Mobile: Flutter + go_router + Provider. Entry: `mobile/lib/main.dart`. Screens in `mobile/lib/screens/*.dart` (HomeScreen, AddVehicleScreen, EditVehicleScreen, MaintenanceListScreen, MaintenanceDetailScreen, AccountScreen, etc.). Package names: com.nelsongrey.vehiclevitals.app.android (Android), com.nelsongrey.vehiclevitals.app.ios (iOS).
   - Shared: `shared/*` holds platform-agnostic Firebase config, a Firestore service factory, and reusable types. Flutter app has equivalent Dart services and models in `mobile/lib/services/` and `mobile/lib/models/`.
   - DataConnect: GraphQL config in `dataconnect/` with generated clients vendored under `src/dataconnect-generated` and `web/src/dataconnect-generated`. These are consumed via the local dep `@dataconnect/generated` in web `package.json`. Do not edit generated code; update schema in `dataconnect/schema/schema.gql` if needed.
 
@@ -29,7 +29,7 @@ Two frontends (web + mobile) share Firebase-backed utilities in `shared/`. Follo
 
 - Key workflows (concrete commands)
   - Web (from `web/`): `npm run dev`, `npm run build`, `npm run preview`, `npm run test` (Vitest). From repo root, you can prefix with `--prefix web`.
-  - Mobile (from `packages/mobile/`): `flutter run`, `flutter run -d ios`. Android runtime/deployment is currently on hold. `ScanVINScreen` uses `mobile_scanner` package with Code39/Code128 support.
+  - Mobile (from `packages/mobile/`): `flutter run`, `flutter run -d ios`. Android runtime/deployment is currently on hold.
   - Root scripts: `npm run export:logo` renders assets via `scripts/export-logo.js`.
   - Tests: `web/tests/firestoreService.test.js` uses Vitest + `@firebase/rules-unit-testing`; it `vi.mock`s `shared/firebaseConfig` so the service uses a test DB.
 

@@ -205,13 +205,14 @@ class _AccountScreenState extends State<AccountScreen> {
                           'Linked providers: ${providerLabels.isEmpty ? 'Unknown' : providerLabels.join(', ')}',
                         ),
                         const SizedBox(height: 12),
-                        if (!googleLinked)
+                        if (Platform.isAndroid && !googleLinked)
                           OutlinedButton.icon(
                             onPressed: _busy ? null : _linkGoogle,
                             icon: const Icon(Icons.link),
                             label: const Text('Link Google Sign-In'),
                           ),
-                        if (!googleLinked) const SizedBox(height: 12),
+                        if (Platform.isAndroid && !googleLinked)
+                          const SizedBox(height: 12),
                         if (Platform.isIOS && !appleLinked)
                           OutlinedButton.icon(
                             onPressed: _busy ? null : _linkApple,

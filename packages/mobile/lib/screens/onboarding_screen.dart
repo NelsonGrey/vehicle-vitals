@@ -102,17 +102,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           _PrimaryStepCard(
             stepNumber: 1,
             icon: Icons.directions_car_filled,
-            title: 'Add your first vehicle or scan VIN',
+            title: 'Add your first vehicle',
             subtitle:
                 'Create your working Garage so reminders, Records, and Service History are useful from day one.',
             actions: [
               _StepAction(
                 label: 'Add vehicle',
                 onTap: () => context.push('/app/add-vehicle'),
-              ),
-              _StepAction(
-                label: 'Scan VIN',
-                onTap: () => context.push('/app/scan-vin'),
               ),
             ],
           ),

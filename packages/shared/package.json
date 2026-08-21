@@ -55,7 +55,7 @@
     "clean": "rm -rf node_modules dist"
   },
   "dependencies": {
-    "firebase": "^12.17.0"
+    "firebase": "^12.17.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

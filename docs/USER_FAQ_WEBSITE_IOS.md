@@ -1,6 +1,6 @@
 # Vehicle-Vitals User FAQ (Website and iOS)
 
-Last updated: May 29, 2026
+Last updated: August 21, 2026
 Audience: End users (not developers)
 
 This FAQ explains how to perform common actions in Vehicle-Vitals on both the website and iOS app.
@@ -76,6 +76,7 @@ Yes, in Records.
 Upload files for the relevant record item.
 If upload fails, retry from the same records workflow.
 You can also open or remove attachments from the record view.
+There's no in-app scanner, but iPhone's built-in one works well: open Notes, tap the camera icon, choose Scan Documents, then share the resulting PDF into Vehicle-Vitals or save it to Files first and upload from there.
 
 ### 12) How do reminders work from Records?
 
@@ -208,120 +209,114 @@ Enter VIN and look up, or fill fields manually.
 Provide mileage and save.
 If subscription limits are reached, app guidance routes to Premium or Support flows.
 
-### 6) Can I scan a VIN on iOS?
-
-Yes.
-Use the Scan VIN route and confirm captured VIN.
-Continue to add/edit flow to look up and save.
-
-### 7) What happens if VIN lookup fails on iOS?
+### 6) What happens if VIN lookup fails on iOS?
 
 The app shows an error and you can retry.
 You can still enter Year/Make/Model manually and save.
 
-### 8) How do I edit an existing vehicle on iOS?
+### 7) How do I edit an existing vehicle on iOS?
 
 Open the vehicle from Garage.
 Choose Edit Vehicle.
 Update details and save.
 
-### 9) How do I view and manage maintenance records on iOS?
+### 8) How do I view and manage maintenance records on iOS?
 
 Open vehicle Records.
 Edit record categories/items, upload attachments, and save changes.
 Use retry actions for failed uploads.
 
-### 10) Can I open and delete uploaded record files on iOS?
+### 9) Can I open and delete uploaded record files on iOS?
 
 Yes.
 Record attachments support open and delete operations in Records.
 
-### 11) How do I use Upcoming Tasks on iOS?
+### 10) How do I use Upcoming Tasks on iOS?
 
 Open Upcoming from app navigation.
 Review tasks sorted by urgency.
 Save reminders and use actions like complete/snooze/dismiss/reopen where shown.
 
-### 12) How do I add a maintenance event to calendar on iOS?
+### 11) How do I add a maintenance event to calendar on iOS?
 
 In Upcoming or related maintenance flows, choose Add to Calendar.
 The app creates an event via calendar integration service and confirms success/failure.
 
-### 13) What does Timeline Dashboard do on iOS?
+### 12) What does Timeline Dashboard do on iOS?
 
 Timeline shows maintenance events in chronological order.
 Use it to trace ownership and service history over time.
 
-### 14) Where do I configure reminder and calendar preferences on iOS?
+### 13) Where do I configure reminder and calendar preferences on iOS?
 
 Open account-related settings screens:
 Reminder Preferences, Calendar Preferences, and Email Preferences.
 Adjust values and save.
 
-### 15) How do notifications work on iOS?
+### 14) How do notifications work on iOS?
 
 Allow notification permissions when prompted.
 Foreground reminders and notification routing are handled by app notification services.
 If disabled at OS level, enable them in iOS Settings.
 
-### 16) How do I view account details and sign out on iOS?
+### 15) How do I view account details and sign out on iOS?
 
 Open Profile/Account screen from app menu.
 Use Sign Out action when needed.
 
-### 17) How do I confirm the iOS app is using the same account identity as the website?
+### 16) How do I confirm the iOS app is using the same account identity as the website?
 
 Open Profile on iOS and review the Data Sync Identity section.
 It shows the current environment, Firebase project, and Auth UID used by the app.
 For cross-platform vehicle sync, those values must line up with the account you use on the website.
 
-### 18) How do I find service providers on iOS?
+### 17) How do I find service providers on iOS?
 
 Open Service Providers from app routes.
 Search using available location and provider options.
 
-### 18) What is the Premium screen for on iOS?
+### 17) What is the Premium screen for on iOS?
 
 Premium explains subscription benefits and entitlement paths.
 If your current subscription limits vehicle count, app guidance may route you here.
 
-### 19) How do I export maintenance data on iOS?
+### 18) How do I export maintenance data on iOS?
 
 Open a vehicle's Maintenance list.
 Use the export menu and select CSV, PDF, or Excel based on subscription availability.
 If a premium format is restricted, upgrade paths are shown.
 
-### 20) What is Offline Settings on iOS?
+### 19) What is Offline Settings on iOS?
 
 Offline settings control local behavior for disconnected usage patterns.
 Adjust according to your reliability and storage preferences.
 
-### 21) What is Analytics screen on iOS?
+### 20) What is Analytics screen on iOS?
 
 Analytics shows ownership and maintenance insights derived from your stored data.
 Use it to monitor trends and costs.
 
-### 22) Why does iOS route me away from auth pages after login?
+### 21) Why does iOS route me away from auth pages after login?
 
 Router guards redirect authenticated users into /app routes and block auth pages when already signed in.
 This is expected behavior.
 
-### 23) Why am I redirected to login when opening app routes?
+### 22) Why am I redirected to login when opening app routes?
 
 If the current session is unauthenticated, route guards redirect protected /app paths to login.
 Sign in and retry.
 
-### 24) Is there parity between web and iOS features?
+### 23) Is there parity between web and iOS features?
 
 Core vehicle, records, upcoming, timeline, auth, profile, and provider workflows are available across both platforms.
 Some environment-dependent or admin-focused functions may vary by deployment mode.
 
-### 25) How do I contact support from iOS?
+### 24) How do I contact support from iOS?
 
 Use Support screen in app routes.
 Provide device model, iOS version, and steps that reproduce the issue.
 
-### 26) What should I include when reporting a bug?
+### 25) What should I include when reporting a bug?
 
 Include platform (web or iOS), timestamp, affected VIN (if safe to share), expected result, actual result, and screenshots if available.
 This shortens resolution time significantly.
@@ -392,7 +387,6 @@ If playback still fails, poster fallback is expected and core app functionality 
 - `/auth/forgot-password`
 - `/app`
 - `/app/add-vehicle`
-- `/app/scan-vin`
 - `/app/records/:vin`
 - `/app/upcoming`
 - `/app/timeline`

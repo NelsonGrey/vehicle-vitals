@@ -61,9 +61,6 @@ dependencies:
   # State management
   provider: ^6.1.2
 
-  # Barcode scanning for VIN
-  mobile_scanner: ^7.4.0
-
   # UI utilities
   cupertino_icons: ^1.0.8
   cached_network_image: ^3.4.1

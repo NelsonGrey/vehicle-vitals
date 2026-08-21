@@ -5,7 +5,7 @@ FEATURES
 - Service records: log maintenance with date, mileage, cost, shop, notes, and attachments like receipts or invoices
 - Maintenance plan: see upcoming and overdue work, snooze or dismiss reminders, and get notified before something is due
 - Service history: a full chronological timeline of completed work for each vehicle
-- VIN lookup: add a vehicle by scanning or entering its VIN, with manual fallback
+- VIN lookup: add a vehicle by entering its VIN to auto-fill make, model, and year
 - Shops & services: find and save nearby providers
 - Reminders: configure lead time, driving assumptions, and calendar sync (Google, Apple, or ICS)
 - Cross-platform: your garage stays in sync between the web app and your phone

@@ -389,6 +389,15 @@ A: Yes. There is no limit to the number of vehicles you can add to your Garage.
 **Q: What file types can I upload for records?**
 A: PDF files are recommended for all record uploads. Each record category can have multiple attachments.
 
+**Q: I have a paper receipt or invoice, not a digital file — how do I get it into Vehicle-Vitals?**
+A: Vehicle-Vitals doesn't include an in-app scanner, but your phone likely already has one built in, and it usually produces a cleaner, better-corrected PDF than a plain photo would:
+
+- **iPhone**: Open the **Notes** app, start a new note, tap the camera icon, and choose **Scan Documents**. Capture the page (it auto-detects edges and corrects perspective), tap Save, then share it as a PDF — either directly to Vehicle-Vitals from the share sheet, or to Files first and upload it from there. The **Files** app has the same scanner under its own camera/scan icon.
+- **Android**: Open **Google Drive**, tap the **+** button, and choose **Scan**. Capture the page, adjust the crop if needed, and save — the file lands in Drive as a PDF, ready to download or share into Vehicle-Vitals.
+- **A standalone scanner or all-in-one printer** (e.g., an HP OfficeJet): use the device's own scan-to-PDF option, saving to your computer, email, or a cloud drive (Google Drive, iCloud, Dropbox). From there, transfer the PDF to your phone or upload it directly from a computer using the Vehicle-Vitals website.
+
+Once you have a PDF on your device, upload it the normal way from the record's attachment option — document intelligence extraction works the same regardless of how the file was captured.
+
 **Q: How does VIN Lookup work?**
 A: When you enter a VIN and click "VIN Lookup," Vehicle-Vitals queries the NHTSA (National Highway Traffic Safety Administration) database to retrieve the official make, model, and year.
 
@@ -408,4 +417,4 @@ A: Check your spam folder first. If emails still don't arrive, verify your remin
 
 _For additional help, visit the [Support page](../support)._
 
-_Last updated: May 2026_
+_Last updated: August 2026_

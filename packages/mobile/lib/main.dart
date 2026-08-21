@@ -33,7 +33,6 @@ import 'screens/premium_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/records_screen.dart';
 import 'screens/reminder_preferences_screen.dart';
-import 'screens/scan_vin_screen.dart';
 import 'screens/service_providers_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/signup_screen.dart';
@@ -234,7 +233,6 @@ class VehicleVitalsApp extends StatelessWidget {
         final isAllowedSetupRoute =
             isOnboardingRoute ||
             location.startsWith('/app/add-vehicle') ||
-            location == '/app/scan-vin' ||
             location == '/app/reminder-preferences' ||
             location == '/app/premium' ||
             location == '/app/support' ||
@@ -333,10 +331,6 @@ class VehicleVitalsApp extends StatelessWidget {
           path: '/app/records/:vin',
           builder: (context, state) =>
               RecordsScreen(vin: state.pathParameters['vin']!),
-        ),
-        GoRoute(
-          path: '/app/scan-vin',
-          builder: (context, state) => const ScanVINScreen(),
         ),
         GoRoute(
           path: '/app/maintenance/:vin',
@@ -448,10 +442,6 @@ class VehicleVitalsApp extends StatelessWidget {
           path: '/edit-vehicle/:vin',
           redirect: (context, state) =>
               '/app/edit-vehicle/${state.pathParameters['vin']}',
-        ),
-        GoRoute(
-          path: '/scan-vin',
-          redirect: (context, state) => '/app/scan-vin',
         ),
         GoRoute(
           path: '/maintenance/:vin',

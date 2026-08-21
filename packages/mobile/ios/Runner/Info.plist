@@ -65,8 +65,6 @@
 	<true/>
 	<key>NSCalendarsUsageDescription</key>
 	<string>This app needs calendar access to schedule maintenance reminders</string>
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan vehicle VIN barcodes</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>This app uses the local network to connect to Firebase services and development tools</string>
 	<key>NSPhotoLibraryUsageDescription</key>

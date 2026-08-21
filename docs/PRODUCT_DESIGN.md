@@ -57,7 +57,7 @@ This document contains both product vision and delivery claims. The matrix below
 | Capability | Current Status | Evidence / Notes |
 | --- | --- | --- |
 | Multi-vehicle management | 🟢 Implemented | Web CRUD in `Home.tsx`, `AddVehicle.tsx`, `EditVehicle.tsx`; iOS in `firestore_service.dart`; active/stored status on both platforms |
-| VIN lookup / auto-populate | 🟢 Implemented | Callable in `functions/src/index.ts`; web `AddVehicle.tsx` and iOS `ScanVinScreen` consume it |
+| VIN lookup / auto-populate | 🟢 Implemented | Callable in `functions/src/index.ts`; web `AddVehicle.tsx` and iOS `add_vehicle_screen.dart` consume it via manual VIN entry (camera barcode scanning was removed 2026-08-21 — see note under Feature 2 below) |
 | Maintenance logging + timeline | 🟢 Implemented | Web: `EditVehicle.tsx`, `TimelineDashboard.tsx`; iOS: `MaintenanceListScreen`, `TimelineDashboardScreen` |
 | Document portfolio + AI analysis | 🟡 Partial (web only) | Web: full portfolio with file upload and analysis in `Records.tsx`; iOS: `RecordsScreen` exists but lacks analysis display and ownership insights — see APP_ALIGNMENT_PLAN.md |
 | Smart reminders (dismiss/snooze/complete) | 🟢 Implemented | Full lifecycle on web (`UpcomingTasks.tsx`) and iOS (`upcoming_tasks_screen.dart`); delivery outcome persisted |
@@ -271,8 +271,7 @@ Install App
   └→ Confirm email (for sensitive operations)
   ↓
 [Add First Vehicle]
-  ├→ Option A: Scan VIN (camera barcode scanner)
-  │   └→ VIN looked up → Auto-populate (make, model, year, engine)
+  ├→ Option A: Enter VIN → looked up → Auto-populate (make, model, year, engine)
   ├→ Option B: Manual entry (Make / Model / Year / VIN)
   ├→ Option C: Skip & enter later
   └→ Vehicle added, ready to track
@@ -284,7 +283,7 @@ Install App
   └→ Next: Log current mileage & maintenance history
 ```
 
-**Time Investment**: 2-3 minutes (VIN scan shortest path)
+**Time Investment**: 2-3 minutes
 
 ---
 
@@ -423,25 +422,18 @@ My Vehicles (Dashboard)
 
 ---
 
-### Feature 2: VIN Scanning & Auto-Population
+### Feature 2: VIN Lookup & Auto-Population
 
-**Status**: 🟡 Partial
+**Status**: 🟢 Implemented (manual entry only)
+
+**Note (2026-08-21)**: an in-app camera barcode scanner (`mobile_scanner`, Code39/Code128) was built and shipped, but was removed after real-vehicle testing found it was never validated against actual VIN barcodes — it produced zero detection against a real door-jamb certification label, whose symbology and payload format aren't standardized across manufacturers. The feature was coded and tested only against hand-typed synthetic 17-character strings, never a real scan. See commit `26426d7` (PR #255).
 
 **VIN Lookup Process**:
 
-1. User taps "Scan VIN" button
-2. Camera opens (with preview, focus guides)
-3. User positions VIN barcode/plate in frame
-4. App recognizes barcode (Code39 or Code128)
-5. VIN transmitted to NHTSA VPIC API
-6. VPIC returns: Make, Model, Year, Engine, Transmission
-7. Form pre-populated, user confirms or corrects
-
-**Manual Entry Fallback** (if barcode unreadable):
-
-- User manually enters 17-digit VIN
-- Same NHTSA lookup applies
-- Form populated, user confirms
+1. User manually enters the 17-character VIN
+2. VIN transmitted to NHTSA VPIC API
+3. VPIC returns: Make, Model, Year, Engine, Transmission
+4. Form pre-populated, user confirms or corrects
 
 **Validation**:
 
@@ -615,7 +607,6 @@ Oil Change: $35-55 (avg from community)
 
 - Swift + SwiftUI
 - Firebase SDK
-- Camera2 for VIN scanning
 - CoreLocation for GPS
 
 **Apple-Specific Features**:
@@ -839,7 +830,7 @@ side-effect of a navigation rename.
 | Feature                    | Impact   | Effort    | Priority | Delivery Status               |
 | -------------------------- | -------- | --------- | -------- | ----------------------------- |
 | Multi-vehicle management   | Critical | Medium    | P0       | 🟡 Partial                    |
-| VIN scanning (barcode)     | High     | Medium    | P1       | 🟡 Partial                    |
+| VIN scanning (barcode)     | High     | Medium    | P1       | 🔴 Removed (2026-08-21, never validated against real hardware) |
 | Maintenance logging        | Critical | Medium    | P0       | 🟡 Partial                    |
 | Smart alerts               | High     | Medium    | P1       | 🔴 Not implemented end-to-end |
 | Timeline view              | High     | Low       | P1       | 🟡 Partial                    |
@@ -885,7 +876,7 @@ side-effect of a navigation rename.
 ### Phase 1: Foundation (Partially Delivered)
 
 - 🟡 Multi-vehicle support
-- 🟡 VIN scanning & auto-population
+- 🟢 VIN lookup & auto-population (manual entry only — camera scanning removed 2026-08-21)
 - 🟡 Maintenance logging & timeline
 - 🔴 Smart maintenance alerts
 - 🟡 Cross-platform parity (web/mobile parity incomplete)

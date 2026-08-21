@@ -543,12 +543,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       appBar: AppBar(
         title: const Text('Add Vehicle'),
         leading: const SafeBackButton(),
-        actions: [
-          TextButton(
-            onPressed: () => context.push('/app/scan-vin'),
-            child: const Text('Scan VIN'),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

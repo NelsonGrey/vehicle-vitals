@@ -300,12 +300,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 )
                               : const Text('Create Account'),
                         ),
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _signInWithGoogle,
-                          icon: const Icon(Icons.g_mobiledata),
-                          label: const Text('Continue with Google'),
-                        ),
+                        if (Platform.isAndroid) ...[
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _signInWithGoogle,
+                            icon: const Icon(Icons.g_mobiledata),
+                            label: const Text('Continue with Google'),
+                          ),
+                        ],
                         if (Platform.isIOS) ...[
                           const SizedBox(height: 8),
                           OutlinedButton.icon(
@@ -315,10 +317,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        const Text(
-                          'By creating an account or continuing with Google or Apple, you agree to the Terms of Use and acknowledge the Privacy Policy.',
+                        Text(
+                          'By creating an account or continuing with ${Platform.isAndroid ? 'Google' : 'Apple'}, you agree to the Terms of Use and acknowledge the Privacy Policy.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                          style: const TextStyle(fontSize: 12, color: Colors.black54),
                         ),
                         Wrap(
                           alignment: WrapAlignment.center,

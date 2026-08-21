@@ -43,20 +43,20 @@ dependencies:
   # broken version below; unpin each once a fixed patch ships.
   firebase_core: ^4.12.1
   # Pinned below 6.5.5 (published ~11h ago): see note above.
-  firebase_auth: ^6.5.6
+  firebase_auth: ^6.5.7
   # Pinned below 5.2.5: see note above.
-  firebase_crashlytics: ^5.2.6
+  firebase_crashlytics: ^5.2.7
   # Pinned below 6.7.0 (published ~11h ago): see note above.
-  cloud_firestore: ^6.7.1
+  cloud_firestore: ^6.8.0
   # Pinned below 6.3.4 (published 2026-07-13): see note above.
-  cloud_functions: ^6.3.5
+  cloud_functions: ^6.3.6
   # Pinned below 16.4.2: see note above.
-  firebase_messaging: ^16.4.3
+  firebase_messaging: ^16.5.0
   # Pinned below 13.4.4: see note above.
-  firebase_storage: ^13.4.5
+  firebase_storage: ^13.4.6
 
   # Navigation
-  go_router: ^17.3.0
+  go_router: ^17.5.0
 
   # State management
   provider: ^6.1.2

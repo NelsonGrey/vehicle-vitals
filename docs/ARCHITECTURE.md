@@ -292,7 +292,6 @@ firebase.prod.json      # Production Firebase project
 | **Navigation**    | go_router          | Latest  | Declarative routing, deep linking support    |
 | **State**         | Provider           | Latest  | Simple, Flutter-recommended state management |
 | **Firebase**      | FlutterFire        | Latest  | Official Firebase SDK for Flutter            |
-| **Barcode Scan**  | mobile_scanner     | Latest  | VIN barcode scanning (Code39/128)            |
 | **Local Storage** | shared_preferences | Latest  | Persistent key-value storage                 |
 
 **Key Dependencies**:
@@ -306,7 +305,6 @@ dependencies:
   cloud_firestore: latest
   go_router: latest
   provider: latest
-  mobile_scanner: latest
 ```
 
 ### Backend Technologies
@@ -414,7 +412,6 @@ packages/mobile/
 │   │   ├── home_screen.dart       # Vehicle cards dashboard
 │   │   ├── add_vehicle_screen.dart
 │   │   ├── edit_vehicle_screen.dart
-│   │   ├── scan_vin_screen.dart   # Camera-based VIN scanning
 │   │   ├── maintenance_list_screen.dart
 │   │   ├── maintenance_detail_screen.dart
 │   │   ├── account_screen.dart    # User profile
@@ -469,7 +466,6 @@ final router = GoRouter(
     ),
     GoRoute(path: '/add-vehicle', builder: (context, state) => AddVehicleScreen()),
     GoRoute(path: '/edit-vehicle/:id', builder: (context, state) => EditVehicleScreen()),
-    GoRoute(path: '/scan-vin', builder: (context, state) => ScanVINScreen()),
     GoRoute(path: '/maintenance/:vehicleId', builder: (context, state) => MaintenanceListScreen()),
   ],
 );
@@ -1429,7 +1425,6 @@ try {
 **Mobile Application**:
 
 - App Startup: <2 seconds
-- VIN Scan: <1 second (camera init)
 - Firestore Query: <500ms (cached), <2s (network)
 
 ### Glossary

@@ -6,7 +6,6 @@ This is the Flutter version of the Vehicle-Vitals mobile app, converted from Rea
 
 - Firebase Authentication (email/password)
 - Firestore integration for vehicle data
-- VIN barcode scanning
 - Vehicle management (add, edit, delete)
 - Material Design 3 UI
 
@@ -109,8 +108,7 @@ lib/
 │   ├── login_screen.dart       # Authentication
 │   ├── signup_screen.dart      # User registration
 │   ├── add_vehicle_screen.dart # Add new vehicle
-│   ├── edit_vehicle_screen.dart # Edit existing vehicle
-│   └── scan_vin_screen.dart    # VIN barcode scanning
+│   └── edit_vehicle_screen.dart # Edit existing vehicle
 └── services/
     ├── auth_service.dart       # Firebase Auth wrapper
     └── firestore_service.dart  # Firestore database operations
@@ -124,7 +122,6 @@ The Flutter app follows the same patterns as the React Native version:
 - **Database**: Firestore with path structure `users/{userId}/vehicles/{vin}`
 - **State Management**: Provider pattern for auth state
 - **Navigation**: go_router for declarative routing
-- **VIN Scanning**: mobile_scanner package for barcode detection
 
 ## Dependencies
 
@@ -134,7 +131,6 @@ Key Flutter packages used:
 - `cloud_firestore` - Firestore database
 - `provider` - State management
 - `go_router` - Navigation
-- `mobile_scanner` - Barcode/VIN scanning
 
 ## Development
 
@@ -166,7 +162,6 @@ This Flutter app provides the same functionality as the React Native version:
 
 - ✅ Firebase Authentication
 - ✅ Vehicle CRUD operations
-- ✅ VIN barcode scanning
 - ✅ Firestore integration
 - ✅ Material Design UI matching the RN app colors and layout
 
@@ -177,9 +172,8 @@ The data structure and Firebase paths remain identical, so both apps can share t
 ### Common Issues
 
 1. **Firebase not initialized**: Ensure `firebase_options.dart` is properly configured
-2. **Camera permissions**: VIN scanning requires camera permissions on device
-3. **Build errors**: Run `flutter clean && flutter pub get` to reset dependencies
-4. **iOS signing**: iOS builds require proper development team and bundle ID configuration
+2. **Build errors**: Run `flutter clean && flutter pub get` to reset dependencies
+3. **iOS signing**: iOS builds require proper development team and bundle ID configuration
 
 ### Getting Help
 

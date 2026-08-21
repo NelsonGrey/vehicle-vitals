@@ -426,7 +426,7 @@ My Vehicles (Dashboard)
 
 **Status**: 🟢 Implemented (manual entry only)
 
-**Note (2026-08-21)**: an in-app camera barcode scanner (`mobile_scanner`, Code39/Code128) was built and shipped, but was removed after real-vehicle testing found it was never validated against actual VIN barcodes — it produced zero detection against a real door-jamb certification label, whose symbology and payload format aren't standardized across manufacturers. The feature was coded and tested only against hand-typed synthetic 17-character strings, never a real scan. See commit `5f5805d1`.
+**Note (2026-08-21)**: an in-app camera barcode scanner (`mobile_scanner`, Code39/Code128) was built and shipped, but was removed after real-vehicle testing found it was never validated against actual VIN barcodes — it produced zero detection against a real door-jamb certification label, whose symbology and payload format aren't standardized across manufacturers. The feature was coded and tested only against hand-typed synthetic 17-character strings, never a real scan. See commit `26426d7` (PR #255).
 
 **VIN Lookup Process**:
 

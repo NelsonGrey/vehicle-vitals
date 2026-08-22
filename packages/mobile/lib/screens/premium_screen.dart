@@ -375,11 +375,22 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Future<void> _restorePurchases(PremiumService premiumService) async {
     try {
+      // premiumService.restorePurchases() only starts the OS-level restore
+      // request -- actual verification and entitlement delivery happen
+      // asynchronously afterward via the purchase stream (see
+      // PremiumService._listenToPurchaseUpdated), which already correctly
+      // rebuilds this screen via notifyListeners() once a restored purchase
+      // is verified. Claiming success here, before that's happened, was
+      // misleading -- it said "restored" even for a request that finds
+      // nothing to restore, or one that's still pending verification.
       await premiumService.restorePurchases();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Purchase restored successfully!'),
+            content: Text(
+              'Checking for previous purchases -- your subscription will '
+              'update automatically once verified.',
+            ),
             backgroundColor: AppDesignTokens.success,
           ),
         );

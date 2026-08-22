@@ -313,22 +313,45 @@ class PremiumService extends ChangeNotifier {
         notifyListeners();
       } else if (purchaseDetails.status == iap.PurchaseStatus.purchased ||
           purchaseDetails.status == iap.PurchaseStatus.restored) {
-        try {
-          final verified = await _verifyPurchaseWithBackend(purchaseDetails);
-          if (verified) {
-            await _deliverProduct();
-          } else {
-            _isLoading = false;
-            notifyListeners();
-            debugPrint('Purchase verification failed: not entitled');
-          }
-        } catch (error) {
-          // Transient failure (network, function error/timeout) -- leave
-          // the transaction pending so it retries instead of being lost.
+        // in_app_purchase_storekit's StoreKit2 wrapper falls back to an
+        // empty string (`receiptData ?? ''`) when Apple's signed
+        // transaction JWS isn't populated yet -- a known StoreKit2 timing
+        // edge case, not a real rejection. Sending that empty string to
+        // verifyPremiumPurchase gets a definitive invalid-argument 400,
+        // which the block below (correctly, for a REAL bad receipt) treats
+        // as non-retryable and completes the transaction -- permanently
+        // consuming a real purchase with zero entitlement and no way to
+        // retry. Treat empty verification data as transient instead, so
+        // StoreKit keeps the transaction pending and redelivers it once
+        // the JWS is actually available.
+        if (purchaseDetails.verificationData.serverVerificationData.isEmpty) {
           canComplete = false;
           _isLoading = false;
           notifyListeners();
-          debugPrint('Purchase verification failed, will retry: $error');
+          debugPrint(
+            'Purchase has no verification data yet, will retry: '
+            '${purchaseDetails.productID}',
+          );
+        } else {
+          try {
+            final verified = await _verifyPurchaseWithBackend(
+              purchaseDetails,
+            );
+            if (verified) {
+              await _deliverProduct();
+            } else {
+              _isLoading = false;
+              notifyListeners();
+              debugPrint('Purchase verification failed: not entitled');
+            }
+          } catch (error) {
+            // Transient failure (network, function error/timeout) -- leave
+            // the transaction pending so it retries instead of being lost.
+            canComplete = false;
+            _isLoading = false;
+            notifyListeners();
+            debugPrint('Purchase verification failed, will retry: $error');
+          }
         }
       }
 

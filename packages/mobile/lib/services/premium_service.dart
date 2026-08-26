@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart' as iap;
+import 'package:in_app_purchase_storekit/in_app_purchase_storekit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'entitlements_service.dart';
@@ -247,6 +248,23 @@ class PremiumService extends ChangeNotifier {
   }
 
   Future<void> _initializeInAppPurchase() async {
+    if (!Platform.isAndroid) {
+      // in_app_purchase_storekit defaults to StoreKit2, whose signed
+      // transaction JWS goes into verificationData.serverVerificationData --
+      // but our backend's verifyAppleReceipt (premium.provider.ts) verifies
+      // against Apple's legacy /verifyReceipt endpoint, which only accepts
+      // the classic base64 App Store receipt, not a JWS. That mismatch made
+      // every purchase verification fail server-side (confirmed via prod
+      // Cloud Function logs during the build 1309 App Review recording:
+      // every verifyPremiumPurchase call returned 400). Forcing StoreKit1
+      // here makes serverVerificationData carry the classic receipt the
+      // backend already expects. This must run before the first access to
+      // InAppPurchase.instance below, since that's what triggers
+      // InAppPurchaseStoreKitPlatform.registerPlatform() and locks in
+      // whichever StoreKit version is selected at that point.
+      await InAppPurchaseStoreKitPlatform.enableStoreKit1();
+    }
+
     final available = await iap.InAppPurchase.instance.isAvailable();
     if (!available) {
       debugPrint('In-app purchase not available');

@@ -73,14 +73,26 @@ if (!STORE_CONFIG[STORE]) {
 const { email: DEMO_EMAIL, displayName: DEMO_DISPLAY_NAME } = STORE_CONFIG[STORE];
 
 function generatePassword(length = 20) {
-  const charset =
-    'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%^&*-_=+';
-  const bytes = crypto.randomBytes(length);
-  let out = '';
-  for (let i = 0; i < length; i += 1) {
-    out += charset[bytes[i] % charset.length];
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnopqrstuvwxyz';
+  const digits = '23456789';
+  const symbols = '!@#%^&*-_=+';
+  const all = upper + lower + digits + symbols;
+  const pick = (set) => set[crypto.randomBytes(1)[0] % set.length];
+
+  // vehicle-vitals-prod enforces a password policy (min 8, upper, lower,
+  // numeric, symbol). A uniform draw from `all` leaves a ~4% chance of no
+  // symbol (more once every class is required), which Auth rejects at
+  // createUser/updateUser time. Seed one character from each required class
+  // up front, fill the rest from the full set, then shuffle so the
+  // guaranteed characters aren't always in the first four positions.
+  const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)];
+  while (chars.length < length) chars.push(pick(all));
+  for (let i = chars.length - 1; i > 0; i -= 1) {
+    const j = crypto.randomBytes(1)[0] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
   }
-  return out;
+  return chars.join('');
 }
 
 function personalOrgId(uid) {

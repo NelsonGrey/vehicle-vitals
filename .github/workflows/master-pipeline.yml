@@ -112,7 +112,6 @@ jobs:
       FIREBASE_PROJECT_DEV: ${{ secrets.FIREBASE_PROJECT_DEV || 'vehicle-vitals-dev' }}
       FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING || 'vehicle-vitals-staging' }}
       FIREBASE_PROJECT_PROD: ${{ secrets.FIREBASE_PROJECT_PROD || 'vehicle-vitals-prod' }}
-      MATCH_GIT_BRANCH: main
     outputs:
       project_name: ${{ steps.manifest.outputs.project_name }}
       ios_enabled: ${{ steps.manifest.outputs.ios_enabled }}
@@ -254,6 +253,9 @@ jobs:
       - name: Install Dependencies
         run: |
           npm ci --legacy-peer-deps || npm ci --force
+
+      - name: Lint (web + shared + firebase-utils)
+        run: npm run lint --workspaces --if-present
 
       - name: Run Web Unit Tests
         run: |

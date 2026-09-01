@@ -50,9 +50,7 @@ export default function EnvironmentGate({
   // Environments that require gate authentication
   const requiresAuth =
     !isLocalhost &&
-    (environment === 'staging' ||
-      environment === 'development' ||
-      environment === 'demonstration');
+    (environment === 'staging' || environment === 'development');
 
   const allowedConfig = useMemo(() => {
     const domains = (import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS || '')

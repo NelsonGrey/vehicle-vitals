@@ -254,6 +254,9 @@ jobs:
         run: |
           npm ci --legacy-peer-deps || npm ci --force
 
+      - name: Lint (web + shared + firebase-utils)
+        run: npm run lint --workspaces --if-present
+
       - name: Run Web Unit Tests
         run: |
           cd packages/web

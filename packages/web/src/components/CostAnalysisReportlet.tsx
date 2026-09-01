@@ -204,7 +204,8 @@ export default function CostAnalysisReportlet({ vehicle }: Props) {
   let purchasePrice = 0;
   let insuranceAnnual = 0;
   let loanMonthly = 0;
-  let fuelTotal = 0;
+  // No fuel-cost category is classified from analyses yet, so this stays 0.
+  const fuelTotal = 0;
   let inspectionTotal = 0;
   let registrationTotal = 0;
 

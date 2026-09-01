@@ -333,22 +333,14 @@ jobs:
           exit 1
 
       - name: Run Web UAT (${{ matrix.browser }})
-        env:
-          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
         run: |
           cd packages/web
-          case "$TARGET_ENV" in
-            production)
-              export BASE_URL="https://vehicle-vitals.com"
-              ;;
-            staging)
-              export BASE_URL="https://vehicle-vitals-staging.web.app"
-              ;;
-            *)
-              export BASE_URL="https://vehicle-vitals-dev.web.app"
-              ;;
-          esac
-          echo "Running Web UAT against BASE_URL=$BASE_URL"
+          # Run against a local dev server (playwright.config.ts starts
+          # `npm run dev` when BASE_URL is unset). The deployed dev/staging
+          # sites sit behind EnvironmentGate's Google-sign-in wall, against
+          # which tests/uat.spec.ts skips everything; EnvironmentGate is
+          # bypassed on localhost, so a local server gives real coverage.
+          echo "Running Web UAT against a local dev server"
           npm run test:uat:${{ matrix.browser }}
 
       - name: Upload UAT Artifacts (${{ matrix.browser }})

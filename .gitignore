@@ -346,6 +346,9 @@ media-library/
 artifacts/asc-screenshots/
 artifacts/logo-preview/
 artifacts/logo-preview-color-bleed-archive/
+# Point-in-time R1 smoke/release evidence — regenerable via scripts/smoke-*.sh
+artifacts/release/
+artifacts/smoke/
 
 # Secrets
 .act-secrets/

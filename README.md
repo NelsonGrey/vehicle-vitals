@@ -76,7 +76,7 @@ cd packages/functions && VV_SHARED_DIST=../shared/dist npm run vendor:shared
 | [docs/FIREBASE_CONFIG.md](docs/FIREBASE_CONFIG.md) | Firebase configuration and multi-environment patterns |
 | [docs/FIREBASE_INDEXES.md](docs/FIREBASE_INDEXES.md) | Firestore composite indexes |
 | [docs/MONETIZATION_DEVELOPER_GUIDE.md](docs/MONETIZATION_DEVELOPER_GUIDE.md) | Feature flags, entitlement hooks, tier gating |
-| [docs/IOS_DOCUMENTATION_INDEX.md](docs/IOS_DOCUMENTATION_INDEX.md) | iOS certificate, signing, and CI/CD index |
+| [docs/IOS_SIGNING_AND_CICD.md](docs/IOS_SIGNING_AND_CICD.md) | iOS code signing (ASC API key + automatic signing) and CI/CD |
 
 ## Quick start
 
@@ -162,7 +162,8 @@ cd packages/mobile
 bundle exec fastlane ios beta    # build + distribute to internal testers
 ```
 
-Signing certificates are managed via Fastlane Match. See [docs/IOS_CERTIFICATE_SETUP_GUIDE.md](docs/IOS_CERTIFICATE_SETUP_GUIDE.md).
+Signing is via an App Store Connect API key + Xcode automatic signing (no
+certificate repo, no Fastlane Match). See [docs/IOS_SIGNING_AND_CICD.md](docs/IOS_SIGNING_AND_CICD.md).
 
 ## Android status
 

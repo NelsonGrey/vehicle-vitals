@@ -17,7 +17,7 @@
 1. **Go to:** https://notebooklm.google.com
 
 2. **Create a new notebook** and upload the podcast script:
-   - Copy content from `/docs/PROMOTIONAL_PODCAST_SCRIPT.md`
+   - Copy content from `docs/marketing/PROMOTIONAL_PODCAST_SCRIPT.md`
    - Paste into NotebookLM
 
 3. **Generate Audio Overviews:**
@@ -113,8 +113,8 @@
 3. **Create new project → "Text to Speech"**
 
 4. **Paste your script:**
-   - Use `/docs/PROMOTIONAL_PODCAST_SCRIPT.md` for podcast
-   - Use `/docs/PROMOTIONAL_VIDEO_SCRIPT.md` for video voiceover
+   - Use `docs/marketing/PROMOTIONAL_PODCAST_SCRIPT.md` for podcast
+   - Use `docs/marketing/PROMOTIONAL_VIDEO_SCRIPT.md` for video voiceover
 
 5. **Choose voice:**
    - Browse 100+ AI voices
@@ -259,7 +259,7 @@
 ### Step 1: Prepare Script
 
 ```
-Copy this content from /docs/PROMOTIONAL_PODCAST_SCRIPT.md:
+Copy this content from docs/marketing/PROMOTIONAL_PODCAST_SCRIPT.md:
 [Lines 1–50, the main podcast content without production notes]
 ```
 
@@ -285,7 +285,7 @@ Copy this content from /docs/PROMOTIONAL_PODCAST_SCRIPT.md:
 ### Step 5: Download
 
 - Click "Download" (MP3 format)
-- Save to: `/docs/generated/podcast.mp3`
+- Save to: `docs/marketing/podcast.mp3`
 
 ### Step 6: Enhance (Optional)
 
@@ -307,7 +307,7 @@ Copy this content from /docs/PROMOTIONAL_PODCAST_SCRIPT.md:
 ### Step 1: Prepare Materials
 
 - Have screenshots ready from `/docs/screenshots/`
-- Have script ready from `/docs/PROMOTIONAL_VIDEO_SCRIPT.md`
+- Have script ready from `docs/marketing/PROMOTIONAL_VIDEO_SCRIPT.md`
 
 ### Step 2: Go to Descript
 

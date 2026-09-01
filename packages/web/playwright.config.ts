@@ -25,10 +25,17 @@ export default defineConfig({
   },
   webServer: shouldStartWebServer
     ? {
-        command: 'npm run dev',
-        port: 5173,
+        // Serve a real built artifact (build:development + vite preview), not
+        // the dev server: the dev server's dependency scan can't resolve
+        // expo-constants (a mobile-only import in packages/shared) and the
+        // resulting runtime breakage makes marketing-nav tests like TC-UI-010
+        // fail against `npm run dev` while passing against a built deploy.
+        // EnvironmentGate is bypassed on localhost, so this gives real
+        // coverage without the deployed dev/staging Google-sign-in wall.
+        command: 'npm run uat:serve',
+        port: 4173,
         reuseExistingServer: !process.env.CI,
-        timeout: 120000,
+        timeout: 180000,
       }
     : undefined,
   projects: [

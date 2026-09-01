@@ -56,17 +56,14 @@ cd packages/functions && VV_SHARED_DIST=../shared/dist npm run vendor:shared
 | [docs/PRODUCT_DESIGN.md](docs/PRODUCT_DESIGN.md) | Product vision, persona definitions, tier matrix, UX flows |
 | [docs/APP_ALIGNMENT_PLAN.md](docs/APP_ALIGNMENT_PLAN.md) | Web app + iOS changes needed to align with marketing direction |
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Feature implementation status and production-readiness baseline |
-| [docs/NEXT_FEATURES_EXECUTION_PLAN.md](docs/NEXT_FEATURES_EXECUTION_PLAN.md) | Prioritized execution roadmap (R1 → R4) |
-| [docs/RELEASE_SCOPE_MATRIX.md](docs/RELEASE_SCOPE_MATRIX.md) | What is and is not in scope for R1 launch |
+| [docs/NEXT_FEATURES_EXECUTION_PLAN.md](docs/NEXT_FEATURES_EXECUTION_PLAN.md) | Prioritized execution roadmap (post-launch) |
 | [docs/MONETIZATION_STRATEGY.md](docs/MONETIZATION_STRATEGY.md) | Subscription tiers, ad placements, revenue model |
 
 **Release & operations**
 
 | Doc | Purpose |
 |---|---|
-| [docs/GO_LIVE_RUNBOOK.md](docs/GO_LIVE_RUNBOOK.md) | Executable go-live checklist, P0 blockers, validation gates, rollback plan |
-| [docs/PRODUCTION_RELEASE_BRIEF.md](docs/PRODUCTION_RELEASE_BRIEF.md) | Release brief for the R1 launch |
-| [docs/R1_COMPLETION_CHECKLIST.md](docs/R1_COMPLETION_CHECKLIST.md) | R1 gate evidence checklist |
+| [docs/GO_LIVE_RUNBOOK.md](docs/GO_LIVE_RUNBOOK.md) | Go-live checklist and launch record (App Store: approved, live) |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Deployment guide for all environments |
 | [docs/PROD_SETUP_GUIDE.md](docs/PROD_SETUP_GUIDE.md) | Production secrets and environment setup |
 
@@ -79,7 +76,7 @@ cd packages/functions && VV_SHARED_DIST=../shared/dist npm run vendor:shared
 | [docs/FIREBASE_CONFIG.md](docs/FIREBASE_CONFIG.md) | Firebase configuration and multi-environment patterns |
 | [docs/FIREBASE_INDEXES.md](docs/FIREBASE_INDEXES.md) | Firestore composite indexes |
 | [docs/MONETIZATION_DEVELOPER_GUIDE.md](docs/MONETIZATION_DEVELOPER_GUIDE.md) | Feature flags, entitlement hooks, tier gating |
-| [docs/IOS_DOCUMENTATION_INDEX.md](docs/IOS_DOCUMENTATION_INDEX.md) | iOS certificate, signing, and CI/CD index |
+| [docs/IOS_SIGNING_AND_CICD.md](docs/IOS_SIGNING_AND_CICD.md) | iOS code signing (ASC API key + automatic signing) and CI/CD |
 
 ## Quick start
 
@@ -165,7 +162,8 @@ cd packages/mobile
 bundle exec fastlane ios beta    # build + distribute to internal testers
 ```
 
-Signing certificates are managed via Fastlane Match. See [docs/IOS_CERTIFICATE_SETUP_GUIDE.md](docs/IOS_CERTIFICATE_SETUP_GUIDE.md).
+Signing is via an App Store Connect API key + Xcode automatic signing (no
+certificate repo, no Fastlane Match). See [docs/IOS_SIGNING_AND_CICD.md](docs/IOS_SIGNING_AND_CICD.md).
 
 ## Android status
 

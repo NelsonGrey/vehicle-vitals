@@ -37,8 +37,8 @@ const demoVideoReady = [
     description:
       'A quick walkthrough of sign-up, adding a vehicle, and opening your garage.',
     poster: '/images/features/add-vehicle.png',
-    youtubeId: '',
-    videoPath: '/videos/feature-demos/onboarding-walkthrough.mp4',
+    youtubeId: 'U36DOWKh3ro',
+    videoPath: '',
     fallbackHref: '/getting-started',
     fallbackLabel: 'Open getting started guide',
   },
@@ -47,8 +47,8 @@ const demoVideoReady = [
     description:
       'See how to log service, review history, and track upcoming work.',
     poster: '/images/features/timeline.png',
-    youtubeId: '',
-    videoPath: '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
+    youtubeId: 'sRveTblZYDU',
+    videoPath: '',
     fallbackHref: '/maintenance-planning-demo',
     fallbackLabel: 'Open service tracking demo',
   },

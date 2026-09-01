@@ -45,7 +45,15 @@ describe('ProductTour page (canonical Product Tour, /product-tour)', () => {
     expect(
       screen.getByRole('heading', { name: /^Web and mobile video$/i })
     ).toBeInTheDocument();
-    expect(container.querySelectorAll('video')).toHaveLength(3);
+    // One self-hosted <video> panel + two YouTube facades (play buttons;
+    // the youtube-nocookie iframe only mounts on click).
+    expect(container.querySelectorAll('video')).toHaveLength(1);
+    expect(
+      screen.getByRole('button', { name: /^Play Getting started video$/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^Play Service tracking video$/i })
+    ).toBeInTheDocument();
   });
 
   it('includes the screens merged in from the old Everyday Screens page', () => {

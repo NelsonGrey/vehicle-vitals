@@ -2,8 +2,11 @@
   "name": "vehicle-vitals",
   "private": true,
   "description": "Root workspace for Vehicle-Vitals (web + mobile)",
+  "_workspaces_note": "Explicit list, NOT packages/*. packages/functions is a separate private repo (NelsonGrey/vehicle-vitals-functions), gitignored here and only cloned in at CI deploy time. If it were matched by a glob, any `npm install` run without that dir present would silently strip its deps from package-lock.json and break `npm ci` in the Deploy Firebase job. It manages its own deps via its own package-lock.json; CI installs them with `npm --prefix packages/functions ci`.",
   "workspaces": [
-    "packages/*"
+    "packages/firebase-utils",
+    "packages/shared",
+    "packages/web"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
@@ -22,14 +25,11 @@
     "test:web": "npm run test --workspace=@vehicle-vitals/web",
     "test:unit:all": "./scripts/run-unit-tests.sh",
     "test:uat:all": "./scripts/run-uat-tests.sh",
-    "export:logo": "node scripts/export-logo.js",
     "install:all": "npm install",
     "install:clean": "./tools/clean.sh && ./tools/install.sh",
     "firebase:setup": "./tools/setup-firebase.sh",
     "firebase:diagnose": "./tools/diagnose-firebase.sh",
     "firebase:test": "./tools/test-firebase.sh",
-    "firebase:test-ios": "./tools/test-ios-firebase.sh",
-    "firebase:test-android": "./tools/test-android-firebase.sh",
     "firebase:test-mobile": "./tools/test-mobile-firebase.sh",
     "security:audit": "./scripts/security-posture-audit.sh",
     "demo-data:load": "npm --workspace=functions run seed:demo-data --",
@@ -45,7 +45,7 @@
     "screenshots:capture:ios": "bash scripts/capture-ios-deliverable-screenshots.sh"
   },
   "devDependencies": {
-    "@firebase/app-compat": "^0.5.16",
+    "@firebase/app-compat": "^0.5.17",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
@@ -54,8 +54,8 @@
     "openai": "^6.49.0",
     "playwright": "^1.62.1",
     "prettier": "^3.9.6",
-    "sharp": "^0.35.3",
-    "turbo": "^2.10.9",
+    "sharp": "^0.35.4",
+    "turbo": "^2.10.12",
     "typescript": "^5.6.3"
   },
   "engines": {

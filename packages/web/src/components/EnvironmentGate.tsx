@@ -38,11 +38,21 @@ export default function EnvironmentGate({
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
 
+  // The gate protects the *publicly reachable* non-prod deployments
+  // (vehicle-vitals-{dev,staging}.web.app). A local dev server is not a
+  // public attack surface, and gating it would neuter the Playwright UAT
+  // suite (tests/uat.spec.ts), which relies on the email/password auth UI
+  // being reachable. So skip the gate on localhost.
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(window.location.hostname);
+
   // Environments that require gate authentication
   const requiresAuth =
-    environment === 'staging' ||
-    environment === 'development' ||
-    environment === 'demonstration';
+    !isLocalhost &&
+    (environment === 'staging' ||
+      environment === 'development' ||
+      environment === 'demonstration');
 
   const allowedConfig = useMemo(() => {
     const domains = (import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS || '')

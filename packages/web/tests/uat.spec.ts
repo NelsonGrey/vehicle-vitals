@@ -797,8 +797,8 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       request,
     }) => {
       const demoVideoPaths = [
-        '/videos/feature-demos/onboarding-walkthrough.mp4',
-        '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
+        // moved to YouTube: onboarding-walkthrough (youtu.be/U36DOWKh3ro),
+        // maintenance-lifecycle-tour (youtu.be/sRveTblZYDU)
         '/videos/feature-demos/cross-platform-continuity.mp4',
         '/videos/feature-demos/vin-lookup-demo.mp4',
         '/videos/feature-demos/maintenance-planning-demo.mp4',

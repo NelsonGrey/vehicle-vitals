@@ -31,6 +31,8 @@ interface ImportMetaEnv {
   readonly VITE_ACCESS_PASSWORD_STAGING?: string;
   readonly VITE_ACCESS_PASSWORD_DEVELOPMENT?: string;
   readonly VITE_ACCESS_PASSWORD_DEMONSTRATION?: string;
+  readonly VITE_ALLOWED_EMAIL_DOMAINS?: string;
+  readonly VITE_ALLOWED_EMAILS?: string;
 
   // Vite built-ins
   readonly DEV: boolean;

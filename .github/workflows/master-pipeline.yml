@@ -246,6 +246,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Guard workspaces / lockfile consistency
+        run: |
+          chmod +x scripts/ci-guard-workspaces-lockfile.sh
+          ./scripts/ci-guard-workspaces-lockfile.sh
+
       - name: Install Dependencies
         run: |
           npm ci --legacy-peer-deps || npm ci --force
@@ -328,22 +333,16 @@ jobs:
           exit 1
 
       - name: Run Web UAT (${{ matrix.browser }})
-        env:
-          TARGET_ENV: ${{ needs.load-config.outputs.target_environment }}
         run: |
           cd packages/web
-          case "$TARGET_ENV" in
-            production)
-              export BASE_URL="https://vehicle-vitals.com"
-              ;;
-            staging)
-              export BASE_URL="https://vehicle-vitals-staging.web.app"
-              ;;
-            *)
-              export BASE_URL="https://vehicle-vitals-dev.web.app"
-              ;;
-          esac
-          echo "Running Web UAT against BASE_URL=$BASE_URL"
+          # Run against a local built artifact. playwright.config.ts starts
+          # `npm run uat:serve` (build:development + vite preview) on :4173
+          # when BASE_URL points at localhost. The deployed dev/staging sites
+          # sit behind EnvironmentGate's Google-sign-in wall (uat.spec.ts
+          # would fail/skip against it); EnvironmentGate is bypassed on
+          # localhost, so this gives real coverage.
+          export BASE_URL="http://localhost:4173"
+          echo "Running Web UAT against $BASE_URL (local vite preview)"
           npm run test:uat:${{ matrix.browser }}
 
       - name: Upload UAT Artifacts (${{ matrix.browser }})
@@ -618,7 +617,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -1075,6 +1074,14 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
+
+      # packages/functions is a separate private repo, deliberately NOT a root
+      # npm workspace (see _workspaces_note in package.json) so a lockfile
+      # regenerated without it present can't break the root `npm ci` above.
+      # It carries its own package-lock.json; install it here for the
+      # firebase.json functions predeploy hooks (lint + build).
+      - name: Install Functions Dependencies
+        run: npm --prefix packages/functions ci --legacy-peer-deps 2>/dev/null || npm --prefix packages/functions ci --force
 
       - name: Build Shared Packages
         run: |

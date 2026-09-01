@@ -1,8 +1,8 @@
 # Vehicle-Vitals - Business Requirements & Strategic Analysis
 
-**Version**: 1.2  
-**Last Updated**: May 27, 2026  
-**Status**: 🟡 R1 NEAR-COMPLETE (web + mobile real-service runtime operational; Gate 2 acceptance pending)  
+**Version**: 1.3  
+**Last Updated**: September 1, 2026  
+**Status**: 🟢 LAUNCHED — iOS 1.0 approved and eligible for distribution on the App Store  
 **Owner**: Mark Nelson
 
 ---

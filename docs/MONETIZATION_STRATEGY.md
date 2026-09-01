@@ -1,9 +1,21 @@
 # Vehicle-Vitals - Monetization Strategy
 
-**Version**: 1.0  
-**Last Updated**: May 13, 2026  
-**Status**: 🟡 RECOMMENDED FOR IMPLEMENTATION  
+**Version**: 1.1  
+**Last Updated**: September 1, 2026  
+**Status**: 🟢 IMPLEMENTED — Pro/Premium subscriptions are live via real Stripe
+(web) and native StoreKit IAP (iOS), approved by Apple as part of the 1.0
+launch. Ad placements and pricing below reflect the original plan and have
+not been individually re-verified against the live app in this pass — the
+figures (revenue projections, CPM targets, user counts) are the original
+May 2026 planning estimates, not measured results.  
 **Owner**: Mark Nelson
+
+> This doc previously had a companion `MONETIZATION_IMPLEMENTATION.md`
+> tracking Phase 1 MVP build-out week by week (dated May 14, 2026). That
+> phase is complete — subscriptions, feature flags, entitlement resolution,
+> and mobile IAP are all shipped — so the week-by-week tracker has been
+> retired rather than merged verbatim. See `docs/MONETIZATION_DEVELOPER_GUIDE.md`
+> for how feature flags/entitlements actually work in code today.
 
 ---
 

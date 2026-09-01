@@ -11,6 +11,8 @@
     "build:demonstration": "./scripts/vite-sanitized-env.sh build demonstration",
     "build:production": "./scripts/vite-sanitized-env.sh build production",
     "preview": "./scripts/vite-sanitized-env.sh preview production",
+    "preview:development": "./scripts/vite-sanitized-env.sh preview development",
+    "uat:serve": "npm run build:development && npm run preview:development -- --port 4173 --strictPort",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest",

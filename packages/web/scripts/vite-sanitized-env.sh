@@ -38,13 +38,13 @@ done
 
 case "$CMD" in
   dev)
-    exec vite --mode "$MODE"
+    exec vite --mode "$MODE" "${@:3}"
     ;;
   build)
-    exec vite build --mode "$MODE"
+    exec vite build --mode "$MODE" "${@:3}"
     ;;
   preview)
-    exec vite preview --mode "$MODE"
+    exec vite preview --mode "$MODE" "${@:3}"
     ;;
   *)
     echo "Invalid command: $CMD" >&2

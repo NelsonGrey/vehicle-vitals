@@ -1,13 +1,18 @@
 # Next Features Execution Plan
 
-Last updated: June 28, 2026
+Last updated: September 1, 2026
+
+> **Note**: this plan's "Immediate Next Action Plan" section below predates
+> launch and is retained as history — the iOS app is now approved and live
+> (see `docs/GO_LIVE_RUNBOOK.md`). The "Reference-worthy" sections above it
+> (feature-completion snapshot, backlog) may still be useful but have not
+> been re-verified against current code as part of this pass.
 
 This plan converts current status into concrete completion work. The June 2026 marketing site redesign established a clear product direction (persona-driven, dark-and-teal, proof/planning/growth positioning). Execution must now deliver the app experience that direction promises.
 
 Reference documents:
 
 - `docs/APP_ALIGNMENT_PLAN.md` — web app and iOS changes needed to align with marketing (new June 2026)
-- `docs/R1_COMPLETION_CHECKLIST.md` — R1 gate evidence checklist
 - `docs/GO_LIVE_RUNBOOK.md` — go-live blockers and launch sequencing
 
 ## Current Completion Snapshot
@@ -191,9 +196,15 @@ The marketing site direction is set. This work closes the gap between what the s
 
 ---
 
-## Immediate Next Action Plan (As of June 28, 2026)
+## Immediate Next Action Plan (As of June 28, 2026) — HISTORICAL, superseded by launch
 
-1. **Close R1 Gate 2** (P0-06): Run iOS acceptance checklist on HADES — auth, vehicle CRUD, maintenance CRUD, reminders, export, backend traffic. Capture evidence via `smoke-r1-mobile-acceptance-capture.sh`. Update `docs/R1_COMPLETION_CHECKLIST.md`.
+All four items below (R1 Gate 2 closure, the develop→staging merge, the launch
+scope decision, and starting R2 alignment work) were completed en route to
+the iOS 1.0 App Store approval. Retained for history; do not use as current
+guidance. See `docs/GO_LIVE_RUNBOOK.md` for the launch record and this repo's
+memory for what's actually next.
+
+1. **Close R1 Gate 2** (P0-06): Run iOS acceptance checklist on HADES — auth, vehicle CRUD, maintenance CRUD, reminders, export, backend traffic. Capture evidence via `smoke-r1-mobile-acceptance-capture.sh`.
 
 2. **Merge develop → staging** (P0-09): PR #109 is open. Once CI Quality Gate passes and iOS build completes, merge to staging and run the Phase 7 rehearsal (`gh workflow run master-pipeline.yml -f action=build_and_deploy -f environment=staging`).
 
@@ -205,7 +216,6 @@ The marketing site direction is set. This work closes the gap between what the s
 
 ## Delivery Governance
 
-- Status updates must synchronize docs/REQUIREMENTS.md and docs/RELEASE_SCOPE_MATRIX.md.
+- Status updates must synchronize with docs/REQUIREMENTS.md.
 - Scope or order changes must update this file in the same commit.
 - Every completed milestone item requires evidence references (test outputs or smoke logs).
-- R1 gate execution must use and update docs/R1_COMPLETION_CHECKLIST.md.

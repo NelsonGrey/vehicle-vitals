@@ -798,8 +798,8 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
     }) => {
       const demoVideoPaths = [
         // moved to YouTube: onboarding-walkthrough (youtu.be/U36DOWKh3ro),
-        // maintenance-lifecycle-tour (youtu.be/sRveTblZYDU)
-        '/videos/feature-demos/cross-platform-continuity.mp4',
+        // maintenance-lifecycle-tour (youtu.be/sRveTblZYDU),
+        // cross-platform-continuity (youtu.be/WssReypPl9w)
         '/videos/feature-demos/vin-lookup-demo.mp4',
         '/videos/feature-demos/maintenance-planning-demo.mp4',
         '/videos/feature-demos/cross-platform-access-demo.mp4',

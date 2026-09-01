@@ -1,8 +1,8 @@
 # Vehicle-Vitals - Product Design & Feature Specifications
 
-**Version**: 1.2
-**Last Updated**: June 28, 2026
-**Status**: 🟡 CORE SHIPPED — web and iOS core flows active; app/marketing alignment in progress (see docs/APP_ALIGNMENT_PLAN.md)
+**Version**: 1.3
+**Last Updated**: September 1, 2026
+**Status**: 🟢 LAUNCHED — iOS 1.0 approved on the App Store; app/marketing alignment ongoing (see docs/APP_ALIGNMENT_PLAN.md)
 **Owner**: Mark Nelson
 
 ---

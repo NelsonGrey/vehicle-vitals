@@ -1,11 +1,16 @@
 # Vehicle-Vitals Launch Claims Matrix
 
-Last updated: July 16, 2026
+Last updated: September 1, 2026
+Launch decision recorded: LAUNCHED (`docs/GO_LIVE_RUNBOOK.md`, 2026-09-01) — iOS 1.0 approved.
 
-This matrix is the copy source of truth for the website and iOS app until the
-release manager records a launch decision in `docs/GO_LIVE_RUNBOOK.md`.
+This matrix remains the copy source of truth for the website and iOS app.
 Customer-facing claims must describe the capability that is demonstrably
 available in the release build, not an intended roadmap state.
+
+> **Not yet done as part of this pass**: the individual claim rows below have
+> not been re-verified against the actual shipped 1.0 build — only the
+> header/decision status was updated. Re-check each row's evidence links
+> before relying on this as current.
 
 ## Approved for the current release candidate
 

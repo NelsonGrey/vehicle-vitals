@@ -1,8 +1,8 @@
 # Vehicle-Vitals - Architecture Design Document
 
-**Version**: 1.2  
-**Last Updated**: June 11, 2026  
-**Status**: 🟡 R1 NEAR-COMPLETE (web deployed, mobile real-service runtime validated, Gate 2 acceptance pending)  
+**Version**: 1.3  
+**Last Updated**: September 1, 2026  
+**Status**: 🟢 LAUNCHED — web live, iOS 1.0 approved and eligible for distribution on the App Store  
 **Owner**: Mark Nelson
 
 ---

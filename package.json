@@ -2,8 +2,11 @@
   "name": "vehicle-vitals",
   "private": true,
   "description": "Root workspace for Vehicle-Vitals (web + mobile)",
+  "_workspaces_note": "Explicit list, NOT packages/*. packages/functions is a separate private repo (NelsonGrey/vehicle-vitals-functions), gitignored here and only cloned in at CI deploy time. If it were matched by a glob, any `npm install` run without that dir present would silently strip its deps from package-lock.json and break `npm ci` in the Deploy Firebase job. It manages its own deps via its own package-lock.json; CI installs them with `npm --prefix packages/functions ci`.",
   "workspaces": [
-    "packages/*"
+    "packages/firebase-utils",
+    "packages/shared",
+    "packages/web"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",

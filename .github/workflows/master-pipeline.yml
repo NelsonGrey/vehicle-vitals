@@ -246,6 +246,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Guard workspaces / lockfile consistency
+        run: |
+          chmod +x scripts/ci-guard-workspaces-lockfile.sh
+          ./scripts/ci-guard-workspaces-lockfile.sh
+
       - name: Install Dependencies
         run: |
           npm ci --legacy-peer-deps || npm ci --force
@@ -1075,6 +1080,14 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps 2>/dev/null || npm ci --force
+
+      # packages/functions is a separate private repo, deliberately NOT a root
+      # npm workspace (see _workspaces_note in package.json) so a lockfile
+      # regenerated without it present can't break the root `npm ci` above.
+      # It carries its own package-lock.json; install it here for the
+      # firebase.json functions predeploy hooks (lint + build).
+      - name: Install Functions Dependencies
+        run: npm --prefix packages/functions ci --legacy-peer-deps 2>/dev/null || npm --prefix packages/functions ci --force
 
       - name: Build Shared Packages
         run: |

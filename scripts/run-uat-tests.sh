@@ -11,12 +11,12 @@ case "$TARGET_ENV" in
   staging)
     BASE_URL="https://vehicle-vitals-staging.web.app"
     ;;
-  development|demonstration)
+  development)
     BASE_URL="https://vehicle-vitals-dev.web.app"
     ;;
   *)
     echo "Unsupported environment: $TARGET_ENV"
-    echo "Usage: ./scripts/run-uat-tests.sh [development|demonstration|staging|production]"
+    echo "Usage: ./scripts/run-uat-tests.sh [development|staging|production]"
     exit 1
     ;;
 esac

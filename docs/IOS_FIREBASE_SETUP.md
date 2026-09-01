@@ -1,79 +1,47 @@
 # Firebase iOS Configuration for Vehicle-Vitals
 
-## ✅ iOS Firebase Setup Complete
+**Status**: Active. iOS is the primary shipping mobile platform (App Store
+1.0 approved, September 2026).
 
-The iOS Firebase configuration has been set up with the following components:
+## Where the real configuration lives
 
-### 📱 **iOS Configuration Applied:**
+This doc previously hardcoded a snapshot of the iOS `FirebaseOptions` values
+(API key, App ID, client ID) as they stood at initial setup. Those values
+have since rotated more than once (config refreshes, org migration — see
+git history), so a hardcoded copy here silently goes stale and is exactly
+the kind of drift worth avoiding. The live values are always:
 
-- **API Key**: `AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU`
-- **App ID**: `1:489413148337:ios:b55d0b37718e299368ac90`
-- **Bundle ID**: `com.vehiclevitals.app.ios`
-- **Client ID**: `489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com`
+- `packages/mobile/ios/Runner/GoogleService-Info.{dev,staging,prod}.plist`
+  (+ the unsuffixed default used by the active build)
+- `packages/mobile/config/{env}/ios/...`
+- `packages/mobile/lib/firebase_options.dart` (generated; do not hand-edit —
+  regenerate via `firebase apps:sdkconfig IOS <appId> --project <project>`
+  or the FlutterFire CLI)
 
-### 📁 **Files Updated:**
+To pull the current values for a given environment:
 
-1. **`mobile/lib/firebase_options.dart`** - Updated with iOS configuration
-2. **`mobile/ios/Runner/GoogleService-Info.plist`** - Added iOS plist file
-
-### 🚀 **Next Steps for iOS Development:**
-
-1. **Generate iOS Platform Files:**
-   ```bash
-   cd mobile
-   flutter create --platforms=ios .
-   ```
-
-2. **Install Dependencies:**
-   ```bash
-   flutter pub get
-   ```
-
-3. **Run on iOS Simulator:**
-   ```bash
-   flutter run -d ios
-   ```
-
-4. **Configure Xcode Project (when ready):**
-   - Open `mobile/ios/Runner.xcworkspace` in Xcode
-   - Verify the GoogleService-Info.plist is in the Runner target
-   - Set the Bundle Identifier to `com.vehiclevitals.app.ios`
-
-### 🔧 **Firebase Services Enabled:**
-
-- ✅ **Authentication** (Sign-in enabled)
-- ✅ **Cloud Messaging** (GCM enabled)  
-- ✅ **App Invites** (Enabled)
-- ❌ **Analytics** (Disabled)
-- ❌ **Ads** (Disabled)
-
-### 📋 **Project Configuration Summary:**
-
-```dart
-// The firebase_options.dart now includes:
-static const FirebaseOptions ios = FirebaseOptions(
-  apiKey: 'AIzaSyCIyHtjchXulHKuwM2RANh6JxAfK7EyTWU',
-  appId: '1:489413148337:ios:b55d0b37718e299368ac90',
-  messagingSenderId: '489413148337',
-  projectId: 'vehicle-vitals-prod',
-  storageBucket: 'vehicle-vitals-prod.firebasestorage.app',
-  iosBundleId: 'com.vehiclevitals.app.ios',
-  iosClientId: '489413148337-p7ocsoegok2nfnfm7rlg3oohudldlb58.apps.googleusercontent.com',
-);
-```
-
-### ⚠️ **Important Notes:**
-
-1. **Android Configuration**: Still needs Android-specific App ID and Client ID
-2. **iOS Platform Files**: Need to run `flutter create --platforms=ios .` to generate iOS platform files
-3. **Xcode Setup**: GoogleService-Info.plist needs to be properly linked in Xcode project
-
-### 🎯 **Test iOS Configuration:**
-
-Once iOS platform files are created:
 ```bash
-cd mobile
-flutter run -d ios
+firebase apps:sdkconfig IOS <ios-app-id> --project vehicle-vitals-{dev,staging,prod}
 ```
 
-The app will now connect to Firebase on iOS devices and simulators! 📱🔥
+## Bundle ID
+
+`com.vehiclevitals.app.ios`
+
+## Firebase services in use
+
+- Authentication (email/password, Sign in with Apple, Google Sign-In)
+- Firestore
+- Cloud Messaging
+- Crashlytics
+
+## Verifying the setup
+
+```bash
+cd packages/mobile
+flutter pub get
+VV_FIREBASE_ENV=staging ./scripts/ios-restart-local.sh   # or dev/production
+```
+
+See `docs/ENVIRONMENT_SETUP.md` for the full per-environment picture and
+`docs/DEVELOPER_GUIDE.md` for general mobile dev setup.

@@ -44,7 +44,7 @@ This document outlines a comprehensive marketing strategy for Vehicle-Vitals, le
 
 ### 1. PODCAST & AUDIO
 
-**Primary Asset:** `docs/PROMOTIONAL_PODCAST_SCRIPT.md` (8-minute full script)
+**Primary Asset:** `docs/marketing/PROMOTIONAL_PODCAST_SCRIPT.md` (8-minute full script)
 
 #### Channels
 
@@ -78,7 +78,7 @@ This document outlines a comprehensive marketing strategy for Vehicle-Vitals, le
 
 ### 2. VIDEO MARKETING
 
-**Primary Asset:** `docs/PROMOTIONAL_VIDEO_SCRIPT.md` (3:20 full script + shorter versions)
+**Primary Asset:** `docs/marketing/PROMOTIONAL_VIDEO_SCRIPT.md` (3:20 full script + shorter versions)
 
 #### Main Platforms & Versions
 
@@ -474,8 +474,8 @@ This document outlines a comprehensive marketing strategy for Vehicle-Vitals, le
 
 ## Appendix: Asset Checklist
 
-- [x] **Podcast Script** — `docs/PROMOTIONAL_PODCAST_SCRIPT.md`
-- [x] **Video Script** — `docs/PROMOTIONAL_VIDEO_SCRIPT.md`
+- [x] **Podcast Script** — `docs/marketing/PROMOTIONAL_PODCAST_SCRIPT.md`
+- [x] **Video Script** — `docs/marketing/PROMOTIONAL_VIDEO_SCRIPT.md`
 - [x] **User Guide** — `docs/USER_GUIDE.md`
 - [x] **Screenshots** — `docs/screenshots/` (19 images, web + iOS)
 - [ ] **Video Production** — Full 3:20 video + 60-second clips

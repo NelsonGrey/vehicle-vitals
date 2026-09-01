@@ -42,17 +42,9 @@ if [ "$SAVE_MASTER" == "true" ]; then
   fi
 fi
 
-# Also sync master SVG to web directories if present
-MASTER_SVG_SRC="$ROOT/icons/icon-vehicle-vitals.svg"
-if [ -f "$MASTER_SVG_SRC" ]; then
-  echo "Syncing master SVG into web directories..."
-  if [ -d "$ROOT/packages/web/public" ]; then
-    cp -v "$MASTER_SVG_SRC" "$ROOT/packages/web/public/vehicle-vitals-icon.svg" || true
-  fi
-  if [ -d "$ROOT/packages/mobile/web" ]; then
-    cp -v "$MASTER_SVG_SRC" "$ROOT/packages/mobile/web/vehicle-vitals-icon.svg" || true
-  fi
-fi
+# (Removed 2026-09-01: a block that copied icons/icon-vehicle-vitals.svg into
+# packages/{web/public,mobile/web}. That "SVG" was a 3.2MB base64-PNG-in-<svg>
+# blob referenced by nothing — all real icons are the PNGs generated below.)
 
 # Find tool: prefer sips on macOS, else try convert (ImageMagick)
 USE_SIPS=false

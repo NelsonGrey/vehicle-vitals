@@ -35,13 +35,16 @@ export default function WheelBreakdownChart({
   const cx = BOX / 2;
   const cy = BOX / 2;
 
-  let cursor = 0;
-  const arcs = segments.map(segment => {
+  // Cumulative amount before each segment, computed without mutating a
+  // render-scoped variable (segments is a handful of items).
+  const arcs = segments.map((segment, i) => {
+    const amountBefore = segments
+      .slice(0, i)
+      .reduce((sum, s) => sum + s.amount, 0);
     const fraction = total > 0 ? segment.amount / total : 0;
     const dash = fraction * CIRCUMFERENCE;
     const gap = CIRCUMFERENCE - dash;
-    const rotation = (cursor / total) * 360 - 90;
-    cursor += segment.amount;
+    const rotation = (amountBefore / total) * 360 - 90;
     return { ...segment, dash, gap, rotation, fraction };
   });
 

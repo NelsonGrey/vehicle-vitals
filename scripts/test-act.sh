@@ -128,10 +128,10 @@ test_workflow() {
     # Add event-specific options
     case $event in
         "push")
-            act_cmd="$act_cmd --eventpath .github/workflows/test-events/push.json"
+            act_cmd="$act_cmd --eventpath .github/act/push.json"
             ;;
         "workflow_dispatch")
-            act_cmd="$act_cmd --eventpath .github/workflows/test-events/workflow_dispatch.json"
+            act_cmd="$act_cmd --eventpath .github/act/workflow_dispatch.json"
             ;;
     esac
 
@@ -199,10 +199,10 @@ cleanup_docker() {
 create_test_events() {
     echo -e "${YELLOW}📝 Creating test event files...${NC}"
 
-    mkdir -p .github/workflows/test-events
+    mkdir -p .github/act
 
     # Push event
-    cat > .github/workflows/test-events/push.json << EOF
+    cat > .github/act/push.json << EOF
 {
   "push": {
     "ref": "refs/heads/develop",
@@ -214,7 +214,7 @@ create_test_events() {
 EOF
 
     # Workflow dispatch event
-    cat > .github/workflows/test-events/workflow_dispatch.json << EOF
+    cat > .github/act/workflow_dispatch.json << EOF
 {
   "inputs": {
     "action": "build_and_deploy",

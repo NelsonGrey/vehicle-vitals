@@ -2,10 +2,15 @@
 
 This directory contains the canonical icon assets for the Vehicle-Vitals project.
 
-## Master Icons
+## Master Icon
 
-- **`icon-vehicle-vitals.png`**: High-resolution master icon (1024x1024 or larger recommended)
-- **`icon-vehicle-vitals.svg`**: Vector format master icon (optional, preferred for scaling)
+- **`icon-vehicle-vitals.png`**: High-resolution master icon (4096x4096). All
+  app/web/favicon assets are downsampled from this by
+  `scripts/apply-new-icon.sh`.
+
+  (There was previously an `icon-vehicle-vitals.svg` "master" — it was a 3.2MB
+  base64-PNG-in-`<svg>` blob, not a real vector, referenced by nothing. Removed
+  2026-09-01.)
 
 ## Automated Icon Generation
 

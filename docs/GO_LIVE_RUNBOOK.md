@@ -1,8 +1,17 @@
 # Vehicle-Vitals Go Live Runbook
 
-Last updated: July 16, 2026
-Current decision: NO-GO
+Last updated: September 1, 2026
+Current decision: **LAUNCHED** — iOS app 1.0 approved by Apple and eligible
+for distribution as of ~Sep 1, 2026 (submission `8b517b4f`, all 7 items —
+app version, non-consumable IAP, 4 subscriptions, subscription group —
+accepted). https://apps.apple.com/app/vehicle-vitals/id6783861086
 Release manager: Mark Nelson (interim)
+
+> The gate-by-gate history below (originally tracked through a series of
+> NO-GO snapshots) is retained as the record of how launch readiness was
+> reached; it has not been rewritten gate-by-gate now that the decision is
+> LAUNCHED. Treat any "NO-GO" / "OPEN" status further down this file as
+> historical unless a section says otherwise.
 
 ## Purpose
 
@@ -564,8 +573,7 @@ Current evidence:
 
 Exit criteria:
 
-- [ ] Gate 2 is marked complete in `docs/R1_COMPLETION_CHECKLIST.md`.
-- [ ] `docs/PRODUCTION_RELEASE_BRIEF.md` and this runbook are updated.
+- [x] Gate 2 closed (superseded by launch — `docs/R1_COMPLETION_CHECKLIST.md` retired, see LAUNCHED banner above).
 
 ## Phase 6: Branch and CI Gate
 
@@ -977,17 +985,16 @@ Open conditions (pre-filled for review):
 3. Paid tier disposition: Stripe+RevenueCat proven OR launch copy explicitly defers paid tiers.
 4. Branch promotion: develop→staging PR must merge (requires Mark's review per branch protection) before a staging rehearsal is meaningful.
 
-Final decision rationale: (complete at go/no-go meeting)
+Final decision rationale: LAUNCHED — see banner at top of this file
+(2026-09-01). `PRODUCTION_RELEASE_BRIEF.md`, `R1_COMPLETION_CHECKLIST.md`,
+`PROJECT_PLAN.md`, and `RELEASE_SCOPE_MATRIX.md` were retired at launch
+(purged 2026-09-01 house-cleaning) rather than synchronized one last time.
 
 ## Documentation Sync Checklist
 
 After each readiness state change, update these files as needed:
 
 - [ ] `docs/GO_LIVE_RUNBOOK.md`
-- [ ] `docs/PRODUCTION_RELEASE_BRIEF.md`
-- [ ] `docs/R1_COMPLETION_CHECKLIST.md`
-- [ ] `docs/PROJECT_PLAN.md`
-- [ ] `docs/RELEASE_SCOPE_MATRIX.md`
 - [ ] `docs/REQUIREMENTS.md`
 - [ ] `docs/NEXT_FEATURES_EXECUTION_PLAN.md`
 - [ ] `docs/DEPLOY.md`

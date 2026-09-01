@@ -11,6 +11,7 @@ import {
 } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
 import CookieConsentBanner from './components/CookieConsentBanner';
+import EnvironmentGate from './components/EnvironmentGate';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -285,6 +286,10 @@ function App() {
   const appContent = (
     <BrowserRouter>
       <AuthProvider>
+        {/* Inside AuthProvider (not outside it) so useAuth() inside the gate
+            actually sees the signed-in user -- the pre-2026-07 wiring had
+            this outside AuthProvider, which meant the gate never worked. */}
+        <EnvironmentGate environment={environment}>
         <AppAnalytics />
         <AppNotificationBridge />
         <CookieConsentBanner />
@@ -539,6 +544,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </EnvironmentGate>
       </AuthProvider>
     </BrowserRouter>
   );

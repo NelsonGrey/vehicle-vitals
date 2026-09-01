@@ -1,11 +1,33 @@
 # Vehicle-Vitals Launch Claims Matrix
 
-Last updated: July 16, 2026
+Last updated: September 1, 2026
+Launch decision recorded: LAUNCHED (`docs/GO_LIVE_RUNBOOK.md`, 2026-09-01) — iOS 1.0 approved.
 
-This matrix is the copy source of truth for the website and iOS app until the
-release manager records a launch decision in `docs/GO_LIVE_RUNBOOK.md`.
+This matrix remains the copy source of truth for the website and iOS app.
 Customer-facing claims must describe the capability that is demonstrably
 available in the release build, not an intended roadmap state.
+
+> **Partial re-verification, 2026-09-01.** The "Approved for the current
+> release candidate" rows still describe the shipped behaviour and are left
+> as-is. Three rows in "Planned or approval-dependent claims" are now stale
+> against the launch and are annotated inline below (⚠️) — each needs an
+> owner decision, not just a copy edit:
+> - **Pro and Premium purchasing** — Apple approved the IAP subscriptions as
+>   part of the 1.0 submission (`8b517b4f`) and web uses live Stripe, so paid
+>   purchasing is effectively live. The `VITE_PAID_SUBSCRIPTIONS_LIVE` /
+>   `VV_PAID_SUBSCRIPTIONS_LIVE` activation flag named below **does not exist
+>   in the codebase** (grep: 0 hits) — the real paywall wiring is
+>   unconditional. Decide whether to formally mark this claim active and
+>   retire the flag language.
+> - **App Store download link** — the listing is public
+>   (`https://apps.apple.com/app/vehicle-vitals/id6783861086`) but
+>   `VITE_IOS_APP_STORE_URL` is still unset in every committed env, so the
+>   web still shows the "validation in progress" fallback. Set the secret.
+> - **Legal terms and privacy statements** — the "pending legal review /
+>   final-approval notice" was **removed from the app** (commit `030e590`) so
+>   Terms could serve as a valid EULA link for Apple. The "Current
+>   presentation" text below no longer matches; confirm counsel signoff
+>   status and update accordingly.
 
 ## Approved for the current release candidate
 

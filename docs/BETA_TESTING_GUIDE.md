@@ -1,16 +1,19 @@
 # Vehicle-Vitals - Beta Testing Guide
 
-> **Status**: Archived beta guide. Legacy mobile distribution channel instructions are currently on hold/inactive.
+> **Status**: Archived beta guide from the pre-launch phase (Oct 2025). iOS
+> has since shipped past beta entirely — 1.0 is App Store-approved and live
+> (see `docs/GO_LIVE_RUNBOOK.md`). Retained as process reference for a future
+> beta round (e.g. Android's eventual Play Store beta track), not as current
+> status.
 
-## 🚀 Beta Testing Status
+## 🚀 Beta Testing Status (historical, Oct 2025)
 
-This guide is historical. Current active validation focuses on web and iOS build/release readiness.
-
-### ✅ Completed
+### ✅ Completed (as of this guide's writing)
 
 - **Web App**: Live at https://vehicle-vitals-prod.web.app
-- **Android App**: On hold (no active Play Store test/deploy path)
-- **iOS App**: Build validation active; distribution channels are controlled separately
+- **Android App**: was on hold at the time; now active pre-launch (CI signed
+  builds, Play Developer API + IAP wired, listing drafted — not yet submitted)
+- **iOS App**: was build-validation-only at the time; now shipped (1.0 approved)
 - **Features**: Tailwind CSS styling, AdSense/AdMob integration, Firebase backend
 
 ### 📱 Mobile App Distribution
@@ -146,13 +149,12 @@ Track these during beta:
 - **Bug Priority**: Focus on crashes and core functionality first
 - **Feature Requests**: Collect but don't implement during beta
 
-### 🎯 Next Steps (Current)
+### 🎯 Next Steps (historical — superseded by launch)
 
-1. **Run web production verification** against live hosting
-2. **Validate iOS build/signing readiness** in CI
-3. **Resolve mobile mock/stub backend gaps** before broad beta rollout
-4. **Resume Android track only after test/deploy path is re-established**
-5. **Plan staged distribution after platform readiness checks pass**
+The 5 items originally here (web verification, iOS build/signing readiness,
+resolving mobile backend gaps, resuming Android, staged distribution) are all
+complete or superseded now that iOS 1.0 is live. See `docs/GO_LIVE_RUNBOOK.md`
+for the current launch record and Android's actual next steps.
 
 ---
 

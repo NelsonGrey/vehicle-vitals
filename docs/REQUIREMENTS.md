@@ -2,8 +2,8 @@
 
 Project overview: Vehicle-Vitals is a cross-platform vehicle ownership application (web + mobile) with Firebase-backed auth, data, reminders, exports, calendar utilities, provider lookup, and premium/ad monetization primitives.
 
-Last updated: June 11, 2026
-Project status: CORE IMPLEMENTED, R1 GATE 2 CLOSURE IN PROGRESS
+Last updated: September 1, 2026
+Project status: LAUNCHED — iOS app approved and live on the App Store (see docs/GO_LIVE_RUNBOOK.md)
 
 ---
 
@@ -49,7 +49,6 @@ Validation evidence:
 This document is the implementation truth for delivery status.
 
 - Product intent authority: docs/PRODUCT_DESIGN.md
-- Release scope authority: docs/RELEASE_SCOPE_MATRIX.md
 - Execution authority: docs/NEXT_FEATURES_EXECUTION_PLAN.md
 
 If these documents disagree, this file is source-of-truth for feature completion state.
@@ -260,8 +259,6 @@ Current docs now reflect code reality as of May 27, 2026, with historical eviden
 
 When a feature status changes:
 
-1. Update this file and docs/RELEASE_SCOPE_MATRIX.md in the same commit.
+1. Update this file when a feature's status changes.
 2. Update docs/NEXT_FEATURES_EXECUTION_PLAN.md if scope or ordering changes.
 3. Include evidence references (tests, smoke outputs, or logs).
-4. For R1 gate execution, keep docs/R1_COMPLETION_CHECKLIST.md current.
-5. Keep docs/PROJECT_PLAN.md aligned with milestone timing and ownership changes.

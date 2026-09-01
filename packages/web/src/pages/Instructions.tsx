@@ -183,8 +183,7 @@ export default function Instructions() {
           title="Simple setup walkthrough"
           description="From account creation to saving your first service entry."
           poster="/images/features/current/add-vehicle.png"
-          youtubeId=""
-          videoPath="/videos/feature-demos/getting-started-help.mp4"
+          youtubeId="B5k2Mni25GQ"
           fallbackHref="/auth/signup"
           fallbackLabel="Start your account"
         />

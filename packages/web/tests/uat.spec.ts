@@ -796,16 +796,19 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
     test('TC-UI-009: Hosted marketing demo MP4 assets resolve as video content', async ({
       request,
     }) => {
+      // All four demo panels moved to YouTube (see docs/marketing/DEMO_VIDEOS.md):
+      // onboarding-walkthrough -> youtu.be/U36DOWKh3ro
+      // maintenance-lifecycle-tour -> youtu.be/sRveTblZYDU
+      // cross-platform-continuity -> youtu.be/WssReypPl9w
+      // getting-started-help -> youtu.be/B5k2Mni25GQ
+      // The paths below are the remaining unreferenced clips still shipped
+      // in packages/web/public/videos/feature-demos/.
       const demoVideoPaths = [
-        // moved to YouTube: onboarding-walkthrough (youtu.be/U36DOWKh3ro),
-        // maintenance-lifecycle-tour (youtu.be/sRveTblZYDU),
-        // cross-platform-continuity (youtu.be/WssReypPl9w)
         '/videos/feature-demos/vin-lookup-demo.mp4',
         '/videos/feature-demos/maintenance-planning-demo.mp4',
         '/videos/feature-demos/cross-platform-access-demo.mp4',
         '/videos/feature-demos/ownership-history-demo.mp4',
         '/videos/feature-demos/generic-feature-demo.mp4',
-        '/videos/feature-demos/getting-started-help.mp4',
         '/videos/feature-demos/help-center-overview.mp4',
       ];
 

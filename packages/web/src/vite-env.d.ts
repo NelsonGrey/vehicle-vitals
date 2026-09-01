@@ -26,11 +26,8 @@ interface ImportMetaEnv {
   // App canonical URL for SEO
   readonly VITE_APP_URL?: string;
 
-  // Access gates
-  readonly VITE_ACCESS_PASSWORD?: string;
-  readonly VITE_ACCESS_PASSWORD_STAGING?: string;
-  readonly VITE_ACCESS_PASSWORD_DEVELOPMENT?: string;
-  readonly VITE_ACCESS_PASSWORD_DEMONSTRATION?: string;
+  // Access gate (EnvironmentGate — OAuth allowlist; the old password-based
+  // VITE_ACCESS_PASSWORD_* vars were removed 2026-09-01)
   readonly VITE_ALLOWED_EMAIL_DOMAINS?: string;
   readonly VITE_ALLOWED_EMAILS?: string;
 

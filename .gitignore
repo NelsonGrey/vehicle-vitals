@@ -30,10 +30,6 @@ packages/mobile/android/app/*.keystore
 packages/mobile/android/robo-scripts/*.json
 !packages/mobile/android/robo-scripts/*.example.json
 
-# API server builds
-packages/api-server/dist/
-packages/api-server/build/
-
 # App Store Connect Private Keys (NEVER COMMIT)
 packages/mobile/ios/asc_private_key.p8
 packages/mobile/ios/*.p8
@@ -53,12 +49,6 @@ monitoring.pid
 *.backup
 package.json.backup
 packages/*/package.json.backup
-
-# Browser extension builds
-packages/browser-extension/dist/
-packages/browser-extension/build/
-chrome-extension-package/
-wishlist-wizard-extension.zip
 
 # Build outputs
 dist/
@@ -131,10 +121,6 @@ mock-*.js
 
 # Environment-specific files (dynamically generated during CI/CD)
 packages/web/.env
-
-# Expo leftover (local)
-mobile/app.json
-mobile/.expo/
 
 # Fastlane
 fastlane/report.xml

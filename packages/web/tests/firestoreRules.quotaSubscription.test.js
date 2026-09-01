@@ -6,7 +6,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, it } from 'vitest';
 
 // Loads the REAL firebase/firestore.rules file (not a synthetic allow-all
 // ruleset) so this test exercises what actually deploys — specifically the

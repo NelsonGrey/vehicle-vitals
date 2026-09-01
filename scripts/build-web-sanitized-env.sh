@@ -14,12 +14,9 @@ case "$MODE" in
   development)
     WEB_BUILD_SCRIPT="build:development"
     ;;
-  demonstration)
-    WEB_BUILD_SCRIPT="build:demonstration"
-    ;;
   *)
     echo "Invalid mode: $MODE"
-    echo "Valid options: production, staging, development, demonstration"
+    echo "Valid options: production, staging, development"
     exit 1
     ;;
 esac

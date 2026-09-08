@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -96,7 +97,8 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
   String _performedBy = 'repair_shop';
   String _coverage = 'parts_and_labor';
   final RecordStorageService _recordStorageService = RecordStorageService();
-  final AttachmentAnalysisService _analysisService = AttachmentAnalysisService();
+  final AttachmentAnalysisService _analysisService =
+      AttachmentAnalysisService();
   Maintenance? _entry;
   bool _loading = true;
   bool _attachmentBusy = false;
@@ -500,16 +502,12 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Maintenance'),
-        leading: SafeBackButton(
-          fallbackRoute: '/app/maintenance/${widget.vin}',
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.delete), onPressed: _deleteEntry),
-        ],
-      ),
+    return BrandScaffold(
+      title: const Text('Edit Maintenance'),
+      leading: SafeBackButton(fallbackRoute: '/app/maintenance/${widget.vin}'),
+      actions: [
+        IconButton(icon: const Icon(Icons.delete), onPressed: _deleteEntry),
+      ],
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -667,7 +665,10 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                       const SizedBox(width: 8),
                       Text(
                         '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                       const Spacer(),
                       TextButton(
@@ -741,7 +742,10 @@ class _AttachmentTile extends StatelessWidget {
                 '${extracted.serviceDate != null ? ' • ${extracted.serviceDate}' : ''}'
                 '${extracted.serviceType != null ? ' • ${extracted.serviceType}' : ''}'
                 '${attachment.analysis != null ? ' • ${(attachment.analysis!.confidence * 100).round()}% confidence' : ''}',
-                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
               )
             : const Text(
                 'No data extracted from this file.',

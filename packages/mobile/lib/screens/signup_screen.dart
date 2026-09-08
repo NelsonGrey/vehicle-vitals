@@ -1,10 +1,12 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_logo.dart';
+import '../components/password_requirements_checklist.dart';
 import '../services/auth_service.dart';
 import '../services/password_policy_service.dart';
 import '../utils/user_facing_error.dart';
@@ -178,8 +180,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+    return BrandScaffold(
+      title: const Text('Create Account'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -234,10 +236,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: !_showPassword,
+                          onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            helperText: _passwordPolicyService.hint(_policy),
-                            helperMaxLines: 2,
                             suffixIcon: IconButton(
                               onPressed: () => setState(
                                 () => _showPassword = !_showPassword,
@@ -254,6 +255,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           validator: (value) => _passwordPolicyService
                               .quickCheck(value ?? '', _policy),
+                        ),
+                        PasswordRequirementsChecklist(
+                          password: _passwordController.text,
+                          policy: _policy,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -320,7 +325,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Text(
                           'By creating an account or continuing with ${Platform.isAndroid ? 'Google' : 'Apple'}, you agree to the Terms of Use and acknowledge the Privacy Policy.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 12, color: Colors.black54),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
                         ),
                         Wrap(
                           alignment: WrapAlignment.center,

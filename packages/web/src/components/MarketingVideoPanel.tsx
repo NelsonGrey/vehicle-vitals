@@ -5,7 +5,16 @@ interface MarketingVideoPanelProps {
   title: string;
   description: string;
   poster: string;
-  videoPath: string;
+  /**
+   * 11-character YouTube video ID. When set, the panel renders a
+   * privacy-friendly facade (poster + play button) that only loads the
+   * youtube-nocookie.com iframe on click — no YouTube cookie or tracker
+   * until the visitor chooses to play. Falls back to `videoPath` when empty.
+   * See docs/marketing/DEMO_VIDEOS.md.
+   */
+  youtubeId?: string;
+  /** Self-hosted MP4 fallback, used when `youtubeId` is not set. */
+  videoPath?: string;
   fallbackHref?: string;
   fallbackLabel?: string;
   className?: string;
@@ -15,16 +24,20 @@ export default function MarketingVideoPanel({
   title,
   description,
   poster,
+  youtubeId,
   videoPath,
   fallbackHref,
   fallbackLabel = 'Open interactive demo',
   className = '',
 }: MarketingVideoPanelProps) {
   const [videoFailed, setVideoFailed] = useState(false);
+  const [ytLoaded, setYtLoaded] = useState(false);
   const isAppOffline = useAppOffline();
 
-  const canTryVideo = Boolean(videoPath);
+  const hasYouTube = Boolean(youtubeId);
+  const canTryVideo = !hasYouTube && Boolean(videoPath);
   const showVideo = canTryVideo && !videoFailed;
+  const showMedia = hasYouTube || showVideo;
   // Only entry-flow fallbacks (sign-up/sign-in) respect the offline kill
   // switch — the other usages of this panel fall back to plain marketing
   // pages (e.g. /getting-started), which stay available either way.
@@ -35,7 +48,42 @@ export default function MarketingVideoPanel({
       className={`overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 ${className}`.trim()}
     >
       <div className="relative h-56 sm:h-64 lg:h-72">
-        {showVideo ? (
+        {hasYouTube ? (
+          ytLoaded ? (
+            <iframe
+              className="h-full w-full"
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+              title={`${title} video`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setYtLoaded(true)}
+              className="group h-full w-full"
+              aria-label={`Play ${title}`}
+            >
+              <img
+                src={poster}
+                alt={`${title} video poster`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg transition group-hover:scale-105">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="ml-1 h-6 w-6 fill-slate-900"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+              </span>
+            </button>
+          )
+        ) : showVideo ? (
           <video
             className="h-full w-full object-cover"
             controls
@@ -59,7 +107,7 @@ export default function MarketingVideoPanel({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 to-black/10" />
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">
-            {showVideo ? 'Playable demo' : 'Poster preview'}
+            {showMedia ? 'Playable demo' : 'Poster preview'}
           </span>
         </div>
       </div>
@@ -75,7 +123,7 @@ export default function MarketingVideoPanel({
             Video not found at {videoPath}. Add the clip to enable playback.
           </p>
         )}
-        {!showVideo && fallbackHref && isEntryFallback && isAppOffline && (
+        {!showMedia && fallbackHref && isEntryFallback && isAppOffline && (
           <span className="mt-3 inline-flex flex-col items-start gap-1">
             <span
               aria-disabled="true"
@@ -88,7 +136,7 @@ export default function MarketingVideoPanel({
             </span>
           </span>
         )}
-        {!showVideo && fallbackHref && !(isEntryFallback && isAppOffline) && (
+        {!showMedia && fallbackHref && !(isEntryFallback && isAppOffline) && (
           <a
             href={fallbackHref}
             className="mt-3 inline-flex items-center rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"

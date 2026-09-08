@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -87,8 +88,8 @@ class _VehicleCoverageScreenState extends State<VehicleCoverageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Coverage & Manuals')),
+    return BrandScaffold(
+      title: const Text('Coverage & Manuals'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -205,7 +206,10 @@ class _WarrantyCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             formatCoverageTypeLabel(coverage.type),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                           ),
                         ),
                         Text(
@@ -288,7 +292,9 @@ class _ManualsCard extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.menu_book_outlined),
                   title: Text(manual.title),
-                  subtitle: const Text('Opens the manufacturer\'s official site'),
+                  subtitle: const Text(
+                    'Opens the manufacturer\'s official site',
+                  ),
                   trailing: const Icon(Icons.open_in_new, size: 18),
                   onTap: () => onOpen(manual.url),
                 ),

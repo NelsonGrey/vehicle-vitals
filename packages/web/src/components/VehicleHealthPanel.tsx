@@ -211,7 +211,7 @@ export default function VehicleHealthPanel({
           </p>
           <Link
             to={`/app/records/${vehicle.vin}`}
-            className="mt-2 inline-block text-xs font-medium text-teal-700 hover:underline dark:text-teal-400"
+            className="mt-2 inline-block text-xs font-medium text-blue-700 hover:underline dark:text-blue-400"
           >
             View records →
           </Link>

@@ -78,7 +78,7 @@ export default function Landing() {
                 className="absolute inset-0 h-full w-full object-cover opacity-45"
                 loading="eager"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/75 to-teal-950/60" />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/75 to-blue-950/60" />
               <div className="marketing-hero-content relative grid gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-[1.1fr_0.9fr] lg:px-12 lg:py-16">
                 <div>
                   <div className="flex items-center gap-4">
@@ -242,7 +242,7 @@ export default function Landing() {
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                       {plan.name}
                     </h3>
-                    <p className="mt-1 text-sm font-semibold text-teal-700 dark:text-teal-300">
+                    <p className="mt-1 text-sm font-semibold text-blue-700 dark:text-blue-300">
                       {plan.audience}
                     </p>
                     <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">

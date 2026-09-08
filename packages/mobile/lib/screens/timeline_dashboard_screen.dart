@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -118,16 +119,16 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
     );
 
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Service History')),
+      return BrandScaffold(
+        title: const Text('Service History'),
         body: const Center(child: CircularProgressIndicator()),
         bottomNavigationBar: const AppBottomNav(currentIndex: 2),
       );
     }
 
     if (_error != null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Service History')),
+      return BrandScaffold(
+        title: const Text('Service History'),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -157,18 +158,16 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Service History'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.storefront_outlined),
-            tooltip: 'Shops & Services',
-            onPressed: () => context.push('/app/service-providers'),
-          ),
-          IconButton(onPressed: _loadTimeline, icon: const Icon(Icons.refresh)),
-        ],
-      ),
+    return BrandScaffold(
+      title: const Text('Service History'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.storefront_outlined),
+          tooltip: 'Shops & Services',
+          onPressed: () => context.push('/app/service-providers'),
+        ),
+        IconButton(onPressed: _loadTimeline, icon: const Icon(Icons.refresh)),
+      ],
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -242,9 +241,15 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
               runSpacing: 6,
               children: [30, 90, 365, 0].map((days) {
                 final selected = _daysFilter == days;
+                final colorScheme = Theme.of(context).colorScheme;
                 return ChoiceChip(
                   label: Text(_dateFilterLabel(days)),
                   selected: selected,
+                  selectedColor: colorScheme.primary,
+                  checkmarkColor: colorScheme.onPrimary,
+                  labelStyle: selected
+                      ? TextStyle(color: colorScheme.onPrimary)
+                      : null,
                   onSelected: (_) {
                     setState(() {
                       _daysFilter = days;
@@ -331,7 +336,11 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 2),
           Text(

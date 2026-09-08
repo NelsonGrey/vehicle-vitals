@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -39,8 +40,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final onboardingService = context.watch<OnboardingService>();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+    return BrandScaffold(
+      title: const Text('Settings'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),

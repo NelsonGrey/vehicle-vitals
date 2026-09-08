@@ -94,7 +94,7 @@ export default function Landing() {
                       Vehicle-Vitals
                     </span>
                   </div>
-                  <h1 className="mt-4 max-w-3xl font-serif text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
+                  <h1 className="mt-4 max-w-3xl font-serif font-bold text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
                     Know what was done, what is due next, and what every vehicle
                     costs
                   </h1>
@@ -147,10 +147,10 @@ export default function Landing() {
 
             <section className="marketing-section mt-10 sm:mt-12">
               <div className="mb-5 max-w-3xl">
-                <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 sm:text-3xl">
+                <h2 className="content-h2">
                   Choose the path that matches your garage
                 </h2>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+                <p className="content-body mt-2">
                   Each buyer has a different reason to trust the same vehicle
                   record. Start with the use case, then pick the plan that
                   supports it.
@@ -178,13 +178,13 @@ export default function Landing() {
                         </div>
                       </div>
                       <div className="p-5">
-                        <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
+                        <h3 className="content-h3">
                           {item.title}
                         </h3>
                         <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
                           {item.pain}
                         </p>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                        <p className="content-body mt-2">
                           {item.outcome}
                         </p>
                         <div
@@ -216,10 +216,10 @@ export default function Landing() {
             <section className="marketing-section mt-10 sm:mt-12">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div className="max-w-3xl">
-                  <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 sm:text-3xl">
+                  <h2 className="content-h2">
                     Plans built around growing vehicle responsibility
                   </h2>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+                  <p className="content-body mt-2">
                     Start with the record-keeping essentials. Paid options are
                     clearly marked as planned until production purchasing is
                     fully validated.
@@ -239,9 +239,7 @@ export default function Landing() {
                     key={plan.name}
                     className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                      {plan.name}
-                    </h3>
+                    <h3 className="ui-h3">{plan.name}</h3>
                     <p className="mt-1 text-sm font-semibold text-blue-700 dark:text-blue-300">
                       {plan.audience}
                     </p>
@@ -255,10 +253,10 @@ export default function Landing() {
 
             <section className="marketing-section mt-10 sm:mt-12">
               <div className="mb-5 max-w-3xl">
-                <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100 sm:text-3xl">
+                <h2 className="content-h2">
                   See the product in action
                 </h2>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+                <p className="content-body mt-2">
                   Follow a current, task-based walkthrough and review product
                   screens captured from the same workflows described above.
                 </p>
@@ -266,10 +264,10 @@ export default function Landing() {
 
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                  <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
+                  <h3 className="content-h3">
                     3-step onboarding guide
                   </h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  <p className="content-body mt-2">
                     Add a vehicle, track service, and stay ahead without
                     learning the whole product at once.
                   </p>
@@ -281,10 +279,10 @@ export default function Landing() {
                   </Link>
                 </article>
                 <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                  <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
+                  <h3 className="content-h3">
                     Product tour
                   </h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  <p className="content-body mt-2">
                     Explore current product screens organized around the same
                     capability story.
                   </p>
@@ -304,10 +302,10 @@ export default function Landing() {
                   key={point.title}
                   className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800"
                 >
-                  <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
+                  <h3 className="content-h3">
                     {point.title}
                   </h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  <p className="content-body mt-2">
                     {point.body}
                   </p>
                 </div>

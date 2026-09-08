@@ -1,10 +1,5 @@
 // Firebase configuration for web app
 import { getApps, initializeApp, FirebaseApp } from 'firebase/app';
-import {
-  initializeAppCheck,
-  ReCaptchaV3Provider,
-  AppCheck,
-} from 'firebase/app-check';
 import { connectAuthEmulator, getAuth, Auth } from 'firebase/auth';
 import {
   connectFirestoreEmulator,
@@ -254,36 +249,6 @@ redirectToCanonicalHostedOrigin();
 
 const app: FirebaseApp =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-
-// App Check must activate before any other Firebase service issues a
-// request, so every subsequent Auth/Firestore/Functions/Storage call
-// already carries a token. Skipped entirely under vitest — it's a
-// browser-only API (window/indexedDB) that would otherwise throw or hang
-// in jsdom for no benefit, since nothing under test talks to real backends.
-let appCheck: AppCheck | undefined;
-if (!isTestRuntime()) {
-  const environment = resolveEnvironmentName();
-  if (environment === 'development') {
-    // Debug provider: lets local `npm run dev` mint tokens without a real
-    // reCAPTCHA site key. Firebase auto-generates and logs a debug token to
-    // the console on first run; register it once under Firebase Console >
-    // App Check > Apps > Manage debug tokens.
-    (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean }).FIREBASE_APPCHECK_DEBUG_TOKEN =
-      true;
-  }
-  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-  if (environment === 'development' || recaptchaSiteKey) {
-    appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(recaptchaSiteKey || 'debug'),
-      isTokenAutoRefreshEnabled: true,
-    });
-  } else {
-    console.warn(
-      '[firebaseConfig] VITE_RECAPTCHA_SITE_KEY is not set — App Check is not active in this environment.'
-    );
-  }
-}
-
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 const functions: Functions = getFunctions(app);
@@ -379,7 +344,7 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
 }
 
 // Export Firebase services
-export { app, appCheck, auth, db, functions, remoteConfig, storage };
+export { app, auth, db, functions, remoteConfig, storage };
 
 // Legacy exports for compatibility
 export const getFirebaseConfig = (): FirebaseConfig => firebaseConfig;

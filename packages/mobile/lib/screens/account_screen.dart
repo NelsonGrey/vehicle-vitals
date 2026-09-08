@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -168,8 +169,8 @@ class _AccountScreenState extends State<AccountScreen> {
     final googleLinked = user?.providerIds.contains('google.com') ?? false;
     final passwordLinked = user?.providerIds.contains('password') ?? false;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+    return BrandScaffold(
+      title: const Text('Account'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -354,9 +355,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         ListTile(
                           leading: const Icon(Icons.lock_outline),
                           title: const Text('Change Password'),
-                          subtitle: const Text(
-                            'Update your account password',
-                          ),
+                          subtitle: const Text('Update your account password'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push('/app/change-password'),
                         ),

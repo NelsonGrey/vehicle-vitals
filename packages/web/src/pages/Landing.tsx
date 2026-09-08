@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppEntryLink from '../components/AppEntryLink';
 import HeaderAdBar from '../components/HeaderAdBar';
@@ -57,17 +57,18 @@ const planGuides = [
 
 export default function Landing() {
   const meta = ROUTE_SEO['/'];
+  const [inlineAdVisible, setInlineAdVisible] = useState(false);
 
   useEffect(() => {
     trackMarketingPageView('/', meta.title);
   }, [meta.title]);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 lg:h-[100dvh] lg:overflow-hidden">
+    <div className="min-h-[100dvh] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <PageSEO meta={meta} />
       <SiteHeader overlay={false} />
       <HeaderAdBar />
-      <main className="site-scroll-area flex-1 overflow-x-hidden bg-slate-50 dark:bg-slate-900 lg:overflow-y-auto">
+      <main className="site-scroll-area flex-1 overflow-x-hidden bg-slate-50 dark:bg-slate-900">
         <section className="marketing-page-section py-8 sm:py-10 lg:py-12">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-5">
             <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">
@@ -315,9 +316,16 @@ export default function Landing() {
           </div>
         </section>
       </main>
-      <div className="shrink-0 bg-slate-50 dark:bg-slate-900">
+      <div
+        className={
+          inlineAdVisible ? 'shrink-0 bg-slate-50 dark:bg-slate-900' : 'hidden'
+        }
+      >
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-3">
-          <InlineAdSection placement="maintenanceHistory" />
+          <InlineAdSection
+            placement="maintenanceHistory"
+            onVisibilityChange={setInlineAdVisible}
+          />
         </div>
       </div>
       <SiteFooter />

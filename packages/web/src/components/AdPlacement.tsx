@@ -17,6 +17,12 @@ interface AdPlacementProps {
   campaignId?: string;
   hideLabel?: boolean;
   surface?: 'card' | 'flat';
+  /** Called with whether this placement is actually rendering anything
+   * (config allows it AND, for a real ad slot, AdSense confirmed it filled).
+   * Parents that add their own wrapper padding/margin around AdPlacement
+   * use this to collapse that wrapper too when nothing rendered, instead of
+   * leaving a blank gap. */
+  onVisibilityChange?: (visible: boolean) => void;
 }
 
 function isMobileViewport(): boolean {
@@ -37,11 +43,13 @@ export default function AdPlacement({
   campaignId,
   hideLabel = false,
   surface = 'card',
+  onVisibilityChange,
 }: AdPlacementProps) {
   const { tier } = useSubscription();
   const [isMobile, setIsMobile] = useState(isMobileViewport());
   const [isVisible, setIsVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [adFilled, setAdFilled] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hasTrackedImpressionRef = useRef(false);
 
@@ -102,29 +110,46 @@ export default function AdPlacement({
     }
   }, [adConfig.shouldShow]);
 
-  if (!adConfig.shouldShow || dismissed) {
+  const eligible =
+    adConfig.shouldShow &&
+    !dismissed &&
+    !(
+      (isMobile && !isAdVisibleOnMobile(placement)) ||
+      (!isMobile && !isAdVisibleOnDesktop(placement))
+    );
+
+  // Reports whether this instance is actually putting anything on screen:
+  // eligible per config/dismiss/viewport rules AND (for a real ad slot)
+  // AdSense confirmed it filled. Parents use this to collapse their own
+  // wrapper padding rather than leave a blank gap.
+  useEffect(() => {
+    onVisibilityChange?.(eligible && adFilled);
+  }, [eligible, adFilled, onVisibilityChange]);
+
+  if (!eligible) {
     return null;
   }
 
-  if (
-    (isMobile && !isAdVisibleOnMobile(placement)) ||
-    (!isMobile && !isAdVisibleOnDesktop(placement))
-  ) {
-    return null;
-  }
+  // Real ad slots (not the always-filled dev/disabled placeholder) start
+  // and stay chrome-less until AdSense actually confirms a fill -- avoids a
+  // bordered/padded/labeled box flashing in and then collapsing away for
+  // every unfilled or blocked ad, which is worse than just not showing it.
+  const showChrome = adFilled;
 
   return (
     <section
       ref={containerRef}
       aria-label={`Sponsored placement: ${adUnit.name}`}
       className={`${
-        surface === 'card'
-          ? 'rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800'
-          : 'border-0 bg-transparent rounded-none px-0 py-0'
+        !showChrome
+          ? 'border-0 bg-transparent rounded-none px-0 py-0'
+          : surface === 'card'
+            ? 'rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800'
+            : 'border-0 bg-transparent rounded-none px-0 py-0'
       } ${className || ''}`}
       onClick={() => trackAdClick(placement, tier, advertiserId, campaignId)}
     >
-      {!hideLabel && (
+      {!hideLabel && showChrome && (
         <div className="mb-1 flex items-center justify-between gap-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Sponsored
@@ -145,7 +170,11 @@ export default function AdPlacement({
         </div>
       )}
 
-      <AdBanner className="my-0" slot={adConfig.adSlot} />
+      <AdBanner
+        className="my-0"
+        slot={adConfig.adSlot}
+        onFillStatusChange={setAdFilled}
+      />
     </section>
   );
 }

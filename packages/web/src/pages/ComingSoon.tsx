@@ -60,7 +60,7 @@ export default function ComingSoon() {
   };
 
   return (
-    <div className="h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <div className="min-h-[100dvh] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       {/* Header */}
       <header className="shrink-0 bg-slate-50 dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-5 py-3">
@@ -79,7 +79,7 @@ export default function ComingSoon() {
 
       <HeaderAdBar />
 
-      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-900 pt-8 pb-16">
+      <main className="flex-1 overflow-x-hidden bg-slate-50 dark:bg-slate-900 pt-8 pb-16">
         {/* Hero Section */}
         <section className="py-10 sm:py-14 lg:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-5">

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 
 import '../components/safe_back_button.dart';
 import '../services/email_reminder_service.dart';
@@ -121,32 +122,28 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Email Preferences'),
-          leading: const SafeBackButton(fallbackRoute: '/app/settings'),
-        ),
+      return BrandScaffold(
+        title: const Text('Email Preferences'),
+        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Email Preferences'),
-        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
-        actions: [
-          TextButton(
-            onPressed: _isSaving ? null : _savePreferences,
-            child: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
-          ),
-        ],
-      ),
+    return BrandScaffold(
+      title: const Text('Email Preferences'),
+      leading: const SafeBackButton(fallbackRoute: '/app/settings'),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : _savePreferences,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

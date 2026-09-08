@@ -506,20 +506,36 @@ class FirestoreService {
   Future<void> addOrUpdateVehicle(Vehicle vehicle) async {
     if (_screenshotMode) return;
 
-    final docRef = await _vehicleDocument(vehicle.vin);
+    final context = await _resolveGarageContext();
+    final docRef = _db.doc(buildVehicleDocumentPath(context, vehicle.vin));
     final now = FieldValue.serverTimestamp();
     final currentDoc = await docRef.get();
     final existingData = currentDoc.data();
     final existingPortfolio = existingData?['documentPortfolio'];
 
-    await docRef.set({
+    final payload = {
       ...vehicle.toMap(),
       'vin': vehicle.vin,
       'documentPortfolio':
           existingPortfolio ?? _createStandardVehiclePortfolio(),
       'updatedAt': now,
       'createdAt': now,
-    }, SetOptions(merge: true));
+    };
+
+    await docRef.set(payload, SetOptions(merge: true));
+
+    // Mirrors web's firestoreServiceFactory.js dual-write behavior: during
+    // a household migration (dual_write mode), keep the legacy
+    // user-scoped doc in sync too, so it doesn't silently go stale on the
+    // path being migrated away from.
+    if (context.garageStorageMode == 'dual_write' && context.orgId != null) {
+      final userScopedRef = _db.doc(
+        'users/${context.userId}/vehicles/${vehicle.vin}',
+      );
+      if (userScopedRef.path != docRef.path) {
+        await userScopedRef.set(payload, SetOptions(merge: true));
+      }
+    }
   }
 
   // Delete a vehicle

@@ -20,14 +20,28 @@ void main() {
       source = readFile('lib/screens/change_password_screen.dart');
     });
 
-    test('uses PasswordPolicyService for the live policy/hint/quickCheck', () {
-      expect(source, contains("import '../services/password_policy_service.dart';"));
-      expect(source, contains('PasswordPolicyService()'));
-      expect(source, contains('PasswordPolicyService.defaultPolicy'));
-      expect(source, contains('_passwordPolicyService.hint(_policy)'));
-      expect(source, contains('_passwordPolicyService'));
-      expect(source, contains(".quickCheck(value ?? '', _policy)"));
-    });
+    test(
+      'uses PasswordPolicyService for the live policy/checklist/quickCheck',
+      () {
+        expect(
+          source,
+          contains("import '../services/password_policy_service.dart';"),
+        );
+        expect(source, contains('PasswordPolicyService()'));
+        expect(source, contains('PasswordPolicyService.defaultPolicy'));
+        expect(source, contains('_passwordPolicyService'));
+        expect(source, contains(".quickCheck(value ?? '', _policy)"));
+        // Live per-rule checklist replaced the old static hint() sentence.
+        expect(
+          source,
+          contains(
+            "import '../components/password_requirements_checklist.dart';",
+          ),
+        );
+        expect(source, contains('PasswordRequirementsChecklist('));
+        expect(source, isNot(contains('_passwordPolicyService.hint(')));
+      },
+    );
 
     test('has current-password, new-password, and confirm fields', () {
       expect(source, contains("labelText: 'Current password'"));
@@ -35,54 +49,51 @@ void main() {
       expect(source, contains("labelText: 'Confirm new password'"));
     });
 
-    test(
-      'submits in order: reauthenticate, then authoritative policy check, '
-      'then updatePassword',
-      () {
-        final reauthIndex = source.indexOf('reauthenticateWithPassword(');
-        final checkIndex = source.indexOf(
-          '_passwordPolicyService.checkPassword(',
-        );
-        final updateIndex = source.indexOf('authService.updatePassword(');
+    test('submits in order: reauthenticate, then authoritative policy check, '
+        'then updatePassword', () {
+      final reauthIndex = source.indexOf('reauthenticateWithPassword(');
+      final checkIndex = source.indexOf(
+        '_passwordPolicyService.checkPassword(',
+      );
+      final updateIndex = source.indexOf('authService.updatePassword(');
 
-        expect(reauthIndex, greaterThan(-1));
-        expect(checkIndex, greaterThan(-1));
-        expect(updateIndex, greaterThan(-1));
+      expect(reauthIndex, greaterThan(-1));
+      expect(checkIndex, greaterThan(-1));
+      expect(updateIndex, greaterThan(-1));
+      expect(
+        reauthIndex < checkIndex,
+        isTrue,
+        reason: 'reauthentication must happen before the policy check',
+      );
+      expect(
+        checkIndex < updateIndex,
+        isTrue,
+        reason: 'the authoritative policy check must happen before updating',
+      );
+    });
+
+    test(
+      'blocks the update and shows describeFailure on an invalid password',
+      () {
+        expect(source, contains('if (!status.isValid)'));
         expect(
-          reauthIndex < checkIndex,
-          isTrue,
-          reason: 'reauthentication must happen before the policy check',
+          source,
+          contains('_passwordPolicyService.describeFailure(status, _policy)'),
         );
-        expect(
-          checkIndex < updateIndex,
-          isTrue,
-          reason: 'the authoritative policy check must happen before updating',
+        // The invalid branch must return before reaching updatePassword.
+        final invalidBranch = source.substring(
+          source.indexOf('if (!status.isValid)'),
+          source.indexOf('authService.updatePassword('),
         );
+        expect(invalidBranch, contains('return;'));
       },
     );
-
-    test('blocks the update and shows describeFailure on an invalid password', () {
-      expect(source, contains('if (!status.isValid)'));
-      expect(
-        source,
-        contains('_passwordPolicyService.describeFailure(status, _policy)'),
-      );
-      // The invalid branch must return before reaching updatePassword.
-      final invalidBranch = source.substring(
-        source.indexOf('if (!status.isValid)'),
-        source.indexOf('authService.updatePassword('),
-      );
-      expect(invalidBranch, contains('return;'));
-    });
   });
 
   group('Change-password navigation wiring', () {
     test('main.dart routes /app/change-password to ChangePasswordScreen', () {
       final source = readFile('lib/main.dart');
-      expect(
-        source,
-        contains("import 'screens/change_password_screen.dart';"),
-      );
+      expect(source, contains("import 'screens/change_password_screen.dart';"));
       expect(source, contains("path: '/app/change-password'"));
       expect(source, contains('const ChangePasswordScreen()'));
     });

@@ -7,8 +7,12 @@
   signing in sees a fully populated app with no setup required.
 
   Usage:
-    node scripts/seed-app-review-demo-account.js [--store=apple|google]           # dry run
-    node scripts/seed-app-review-demo-account.js [--store=apple|google] --apply    # write changes
+    node scripts/seed-app-review-demo-account.js [--store=apple|google]              # dry run
+    node scripts/seed-app-review-demo-account.js [--store=apple|google] --apply       # write changes
+    node scripts/seed-app-review-demo-account.js [--store=apple|google] --disable --apply
+      # lock the account out between review cycles, without touching its
+      # password or seeded data. Re-running the normal (no --disable) form
+      # afterward re-enables it (and rotates the password) for the next cycle.
 
   --store defaults to "apple". Each store gets its own account (separate
   email/uid) so reviewers from one store never see the other's name —
@@ -37,6 +41,12 @@ const crypto = require('crypto');
 
 const PROJECT_ID = 'vehicle-vitals-prod';
 const APPLY = process.argv.includes('--apply');
+// Locks the account out (Auth `disabled: true`) without touching its
+// password or seeded data, for once a review cycle is over and the account
+// isn't needed until the next one. Re-running without --disable (a normal
+// rotate) automatically re-enables it (see the `disabled: false` reset
+// below), so there's no separate "re-enable" mode needed.
+const DISABLE = process.argv.includes('--disable');
 
 const storeArg = process.argv.find((arg) => arg.startsWith('--store='));
 const STORE = storeArg ? storeArg.split('=')[1] : 'apple';
@@ -322,16 +332,22 @@ const VEHICLES = [
 
 async function main() {
   console.log(
-    `[seed-app-review-demo-account] mode=${APPLY ? 'apply' : 'dry-run'} project=${PROJECT_ID} store=${STORE}`
+    `[seed-app-review-demo-account] mode=${APPLY ? 'apply' : 'dry-run'}${DISABLE ? '+disable' : ''} project=${PROJECT_ID} store=${STORE}`
   );
 
   if (!APPLY) {
-    console.log(
-      `[seed-app-review-demo-account] would create/update Auth user ${DEMO_EMAIL}`
-    );
-    console.log(
-      `[seed-app-review-demo-account] would write personal org (planTier=premium), subscription, entitlements, preferences, and ${VEHICLES.length} vehicles (${VEHICLES.reduce((n, v) => n + v.maintenance.length, 0)} maintenance records, ${VEHICLES.reduce((n, v) => n + v.reminders.length, 0)} reminders)`
-    );
+    if (DISABLE) {
+      console.log(
+        `[seed-app-review-demo-account] would disable Auth user ${DEMO_EMAIL} (no password/data changes)`
+      );
+    } else {
+      console.log(
+        `[seed-app-review-demo-account] would create/update Auth user ${DEMO_EMAIL}`
+      );
+      console.log(
+        `[seed-app-review-demo-account] would write personal org (planTier=premium), subscription, entitlements, preferences, and ${VEHICLES.length} vehicles (${VEHICLES.reduce((n, v) => n + v.maintenance.length, 0)} maintenance records, ${VEHICLES.reduce((n, v) => n + v.reminders.length, 0)} reminders)`
+      );
+    }
     console.log(
       '[seed-app-review-demo-account] dry run complete; pass --apply to write changes'
     );
@@ -344,6 +360,25 @@ async function main() {
   });
 
   const auth = getAuth();
+
+  if (DISABLE) {
+    const existing = await auth.getUserByEmail(DEMO_EMAIL).catch((error) => {
+      if (error.code === 'auth/user-not-found') return null;
+      throw error;
+    });
+    if (!existing) {
+      console.log(
+        `[seed-app-review-demo-account] no user ${DEMO_EMAIL} to disable -- nothing to do`
+      );
+      return;
+    }
+    await auth.updateUser(existing.uid, { disabled: true });
+    console.log(
+      `[seed-app-review-demo-account] disabled uid=${existing.uid} (${DEMO_EMAIL}) -- password/data left untouched; re-run without --disable to re-enable and rotate for the next review cycle`
+    );
+    return;
+  }
+
   const db = getFirestore();
   const password = generatePassword();
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -120,7 +121,10 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         context.go('/auth/login');
         if (signOutWarning != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(signOutWarning), duration: const Duration(seconds: 8)),
+            SnackBar(
+              content: Text(signOutWarning),
+              duration: const Duration(seconds: 8),
+            ),
           );
         }
       }
@@ -133,8 +137,8 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Data & Privacy')),
+    return BrandScaffold(
+      title: const Text('Data & Privacy'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),

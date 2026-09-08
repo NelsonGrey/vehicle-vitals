@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'design_tokens.dart';
 
@@ -32,16 +33,29 @@ class AppTheme {
 
       // App bar
       appBarTheme: AppBarTheme(
-        backgroundColor: colors.background,
-        foregroundColor: colors.onBackground,
+        backgroundColor: AppDesignTokens.headerColor,
+        foregroundColor: Colors.white,
+        toolbarHeight: AppDesignTokens.headerToolbarHeight,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: colors.onBackground,
+          color: Colors.white,
         ),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+      ),
+
+      // A TabBar always lands in BrandScaffold's `bottom:`, on the same
+      // fixed-navy header as the AppBar -- so it needs the same white
+      // foreground regardless of light/dark mode, not Material3's default
+      // (which would otherwise pull a dark color from the ColorScheme and
+      // become unreadable against the header).
+      tabBarTheme: const TabBarThemeData(
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white70,
+        indicatorColor: Colors.white,
       ),
 
       // Card
@@ -147,37 +161,51 @@ class AppTheme {
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 48,
           fontWeight: FontWeight.w700,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         displayMedium: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 36,
           fontWeight: FontWeight.w700,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         displaySmall: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 30,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         headlineLarge: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         headlineMedium: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         headlineSmall: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
+        ),
+        // Sub-subheaders -- Material's "title" tier, used for things like
+        // section headings within a screen ("Event Feed") that sit below a
+        // headline but above body text.
+        titleLarge: TextStyle(fontSize: 22, color: colors.primary),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: colors.primary,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: colors.primary,
         ),
         bodyLarge: TextStyle(
           fontFamily: AppDesignTokens.fontSans,
@@ -232,16 +260,29 @@ class AppTheme {
 
       // App bar
       appBarTheme: AppBarTheme(
-        backgroundColor: colors.background,
-        foregroundColor: colors.onBackground,
+        backgroundColor: AppDesignTokens.headerColor,
+        foregroundColor: Colors.white,
+        toolbarHeight: AppDesignTokens.headerToolbarHeight,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: colors.onBackground,
+          color: Colors.white,
         ),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+      ),
+
+      // A TabBar always lands in BrandScaffold's `bottom:`, on the same
+      // fixed-navy header as the AppBar -- so it needs the same white
+      // foreground regardless of light/dark mode, not Material3's default
+      // (which would otherwise pull a dark color from the ColorScheme and
+      // become unreadable against the header).
+      tabBarTheme: const TabBarThemeData(
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white70,
+        indicatorColor: Colors.white,
       ),
 
       // Card
@@ -347,37 +388,51 @@ class AppTheme {
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 48,
           fontWeight: FontWeight.w700,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         displayMedium: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 36,
           fontWeight: FontWeight.w700,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         displaySmall: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 30,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         headlineLarge: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         headlineMedium: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
         ),
         headlineSmall: TextStyle(
           fontFamily: AppDesignTokens.fontSerif,
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: colors.onBackground,
+          color: colors.primary,
+        ),
+        // Sub-subheaders -- Material's "title" tier, used for things like
+        // section headings within a screen ("Event Feed") that sit below a
+        // headline but above body text.
+        titleLarge: TextStyle(fontSize: 22, color: colors.primary),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: colors.primary,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: colors.primary,
         ),
         bodyLarge: TextStyle(
           fontFamily: AppDesignTokens.fontSans,

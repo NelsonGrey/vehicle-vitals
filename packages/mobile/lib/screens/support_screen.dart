@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 
 import '../components/safe_back_button.dart';
 import '../theme/design_tokens.dart';
@@ -93,11 +94,9 @@ class _SupportScreenState extends State<SupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Support'),
-        leading: const SafeBackButton(),
-      ),
+    return BrandScaffold(
+      title: const Text('Support'),
+      leading: const SafeBackButton(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

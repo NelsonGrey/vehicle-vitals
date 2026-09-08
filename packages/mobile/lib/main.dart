@@ -22,6 +22,7 @@ import 'screens/edit_vehicle_screen.dart';
 import 'screens/email_preferences_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/household_garage_screen.dart';
 import 'screens/instructions_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/maintenance_detail_screen.dart';
@@ -353,6 +354,10 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/app/data-privacy',
           builder: (context, state) => const DataPrivacyScreen(),
+        ),
+        GoRoute(
+          path: '/app/household-garage',
+          builder: (context, state) => const HouseholdGarageScreen(),
         ),
         GoRoute(
           path: '/app/email-preferences',

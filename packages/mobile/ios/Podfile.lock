@@ -1270,6 +1270,11 @@ PODS:
   - Firebase/Storage (12.18.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 12.18.0)
+  - firebase_app_check (0.4.7):
+    - Firebase/CoreOnly (~> 12.18.0)
+    - firebase_core
+    - FirebaseAppCheck (~> 12.18.0)
+    - Flutter
   - firebase_auth (6.6.1):
     - Firebase/Auth (= 12.18.0)
     - firebase_core
@@ -1289,6 +1294,12 @@ PODS:
     - Firebase/Storage (= 12.18.0)
     - firebase_core
     - Flutter
+  - FirebaseAppCheck (12.18.0):
+    - AppCheckCore (~> 11.3)
+    - FirebaseAppCheckInterop (~> 12.18.0)
+    - FirebaseCore (~> 12.18.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
   - FirebaseAppCheckInterop (12.18.0)
   - FirebaseAuth (12.18.0):
     - FirebaseAppCheckInterop (~> 12.18.0)
@@ -1561,6 +1572,7 @@ DEPENDENCIES:
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
   - cloud_functions (from `.symlinks/plugins/cloud_functions/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
+  - firebase_app_check (from `.symlinks/plugins/firebase_app_check/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_crashlytics (from `.symlinks/plugins/firebase_crashlytics/ios`)
@@ -1586,6 +1598,7 @@ SPEC REPOS:
     - DKImagePickerController
     - DKPhotoGallery
     - Firebase
+    - FirebaseAppCheck
     - FirebaseAppCheckInterop
     - FirebaseAuth
     - FirebaseAuthInterop
@@ -1629,6 +1642,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/cloud_functions/ios"
   file_picker:
     :path: ".symlinks/plugins/file_picker/ios"
+  firebase_app_check:
+    :path: ".symlinks/plugins/firebase_app_check/ios"
   firebase_auth:
     :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
@@ -1672,11 +1687,13 @@ SPEC CHECKSUMS:
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
   Firebase: 5523dd53ebe603451b4e1befcd99fa20a5c015cd
+  firebase_app_check: bbfcddd5ce92ce388129fa1820e7ec35605255ca
   firebase_auth: 8c86ebb960d57cd0841ce4dd8e14c2a550406317
   firebase_core: 9bb8d013f9b36a31d32e34629e5348dd51d8e35e
   firebase_crashlytics: 09c4988fa79b9c8645c70f56f7c4637b8626dc5e
   firebase_messaging: 7fa0f5b499bab6d0e658f3d591f8d45d0d7dd8b1
   firebase_storage: fc60434562b55f6e1d3327d433b124e00cf48578
+  FirebaseAppCheck: 06fc2eca9cc0499dc393f9d4320faeb373b24851
   FirebaseAppCheckInterop: 8c2fe8b563377bd948ee6acc2871fe2dfb3a034a
   FirebaseAuth: 389097b0c63059262aa02800cb0b93c9fab09130
   FirebaseAuthInterop: 32c03820809ddc9e63dfaaf3711ce2ac8da7e6ae

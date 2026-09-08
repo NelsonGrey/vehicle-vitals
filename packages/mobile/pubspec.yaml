@@ -54,7 +54,6 @@ dependencies:
   firebase_messaging: ^16.6.0
   # Pinned below 13.4.4: see note above.
   firebase_storage: ^13.5.0
-  firebase_app_check: ^0.4.4
 
   # Navigation
   go_router: ^17.5.0

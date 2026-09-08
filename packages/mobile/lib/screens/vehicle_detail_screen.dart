@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -269,7 +270,11 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           const SizedBox(height: 6),
           Text(
             'Next likely service: ${snapshot.nextLikelyService}',
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ],
         const SizedBox(height: 4),
@@ -319,9 +324,13 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Upcoming Maintenance',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             GestureDetector(
               onTap: () => context.push('/app/upcoming'),
@@ -390,16 +399,16 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Vehicle')),
+      return BrandScaffold(
+        title: const Text('Vehicle'),
         body: const Center(child: CircularProgressIndicator()),
         bottomNavigationBar: const AppBottomNav(currentIndex: 0),
       );
     }
 
     if (_error != null || _vehicle == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Vehicle')),
+      return BrandScaffold(
+        title: const Text('Vehicle'),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -429,10 +438,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
     final vehicle = _vehicle!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${vehicle.year} ${vehicle.make} ${vehicle.model}'),
-      ),
+    return BrandScaffold(
+      title: Text('${vehicle.year} ${vehicle.make} ${vehicle.model}'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -529,8 +536,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () =>
-                      context.push('/app/coverage/${vehicle.vin}'),
+                  onPressed: () => context.push('/app/coverage/${vehicle.vin}'),
                   icon: const Icon(Icons.verified_user_outlined, size: 16),
                   label: const Text('Coverage & Manuals'),
                 ),

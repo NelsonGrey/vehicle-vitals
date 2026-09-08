@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
+import '../theme/design_tokens.dart';
 
 class VehicleThumbnail extends StatelessWidget {
   final Vehicle vehicle;
@@ -16,10 +17,18 @@ class VehicleThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondary = Theme.of(context).colorScheme.secondary;
+    final fallbackColor = secondary.withValues(alpha: 0.12);
+    final fallbackIcon = Icon(
+      Icons.directions_car,
+      size: 20,
+      color: secondary,
+    );
+
     final imageUrl = (vehicle.photoUrl ?? '').trim();
     if (imageUrl.isNotEmpty) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDesignTokens.radiusBase),
         child: CachedNetworkImage(
           imageUrl: imageUrl,
           width: width,
@@ -28,14 +37,14 @@ class VehicleThumbnail extends StatelessWidget {
           placeholder: (context, url) => Container(
             width: width,
             height: height,
-            color: Colors.grey.shade200,
-            child: const Icon(Icons.directions_car, size: 20),
+            color: fallbackColor,
+            child: fallbackIcon,
           ),
           errorWidget: (context, url, error) => Container(
             width: width,
             height: height,
-            color: Colors.grey.shade200,
-            child: const Icon(Icons.directions_car, size: 20),
+            color: fallbackColor,
+            child: fallbackIcon,
           ),
         ),
       );
@@ -45,10 +54,10 @@ class VehicleThumbnail extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(8),
+        color: fallbackColor,
+        borderRadius: BorderRadius.circular(AppDesignTokens.radiusBase),
       ),
-      child: const Icon(Icons.directions_car, size: 20),
+      child: fallbackIcon,
     );
   }
 }

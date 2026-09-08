@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:provider/provider.dart';
 
 import '../components/safe_back_button.dart';
@@ -19,11 +20,9 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Offline Settings'),
-        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
-      ),
+    return BrandScaffold(
+      title: const Text('Offline Settings'),
+      leading: const SafeBackButton(fallbackRoute: '/app/settings'),
       body: Consumer<OfflineService>(
         builder: (context, offlineService, child) {
           return SingleChildScrollView(
@@ -210,9 +209,7 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                   ? 'Offline-only mode enabled. The app will not use the network until you turn this off.'
                   : 'Offline-only mode disabled. Resuming normal syncing.',
             ),
-            backgroundColor: enabled
-                ? colorScheme.primary
-                : colorScheme.secondary,
+            backgroundColor: colorScheme.primary,
           ),
         );
       }

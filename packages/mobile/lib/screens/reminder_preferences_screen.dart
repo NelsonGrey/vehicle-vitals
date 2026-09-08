@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:provider/provider.dart';
 
 import '../components/safe_back_button.dart';
@@ -109,11 +110,9 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reminder Preferences'),
-        leading: const SafeBackButton(fallbackRoute: '/app/settings'),
-      ),
+    return BrandScaffold(
+      title: const Text('Reminder Preferences'),
+      leading: const SafeBackButton(fallbackRoute: '/app/settings'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -125,12 +124,10 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Reminder Lead Time',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -161,12 +158,10 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Driving Profile',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 8),
                         Text(

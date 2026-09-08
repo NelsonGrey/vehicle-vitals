@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/safe_back_button.dart';
@@ -219,8 +220,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
           final uri = Uri.parse(
             'https://us-central1-$projectId.cloudfunctions.net/vinLookup',
           );
-          final idToken = await FirebaseAuth.instance.currentUser
-              ?.getIdToken();
+          final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
           if (idToken == null) {
             throw Exception('Please sign in to look up VIN.');
           }
@@ -510,7 +510,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
             content: const Text(
               'No web photo match found. Uploading your own image is recommended.',
             ),
-            backgroundColor: colorScheme.secondary,
+            backgroundColor: colorScheme.primary,
           ),
         );
         return;
@@ -698,21 +698,22 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const BrandScaffold(
+        title: Text('Edit Vehicle'),
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Vehicle'),
-        leading: const SafeBackButton(),
-        actions: [
-          IconButton(
-            onPressed: _deleteVehicle,
-            icon: const Icon(Icons.delete),
-            color: colorScheme.error,
-          ),
-        ],
-      ),
+    return BrandScaffold(
+      title: const Text('Edit Vehicle'),
+      leading: const SafeBackButton(),
+      actions: [
+        IconButton(
+          onPressed: _deleteVehicle,
+          icon: const Icon(Icons.delete),
+          color: colorScheme.error,
+        ),
+      ],
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

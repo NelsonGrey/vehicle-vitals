@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:provider/provider.dart';
 
 import '../services/firestore_service.dart';
@@ -282,20 +283,18 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Shops & Services'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            const Tab(text: 'Search'),
-            Tab(
-              text: _preferredProviders.isEmpty
-                  ? 'Saved'
-                  : 'Saved (${_preferredProviders.length})',
-            ),
-          ],
-        ),
+    return BrandScaffold(
+      title: const Text('Shops & Services'),
+      bottom: TabBar(
+        controller: _tabController,
+        tabs: [
+          const Tab(text: 'Search'),
+          Tab(
+            text: _preferredProviders.isEmpty
+                ? 'Saved'
+                : 'Saved (${_preferredProviders.length})',
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -332,9 +331,11 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Your Address',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -407,9 +408,11 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
                 const SizedBox(height: 24),
                 const Divider(),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Search Settings',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text('Search radius: $_preferredProviderRadiusMiles miles'),

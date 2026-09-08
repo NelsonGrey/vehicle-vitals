@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 
 import '../components/plus_minus_expansion_tile.dart';
 import '../theme/design_tokens.dart';
@@ -109,8 +110,8 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
     final currentStatus = (item['status'] ?? 'missing').toString();
     final files = widget.itemFiles(widget.categoryIndex, widget.itemIndex);
 
-    return Scaffold(
-      appBar: AppBar(title: Text((item['title'] ?? '').toString())),
+    return BrandScaffold(
+      title: Text((item['title'] ?? '').toString()),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -251,20 +252,20 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
               ),
             ),
           if (isUploadingThis)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: double.infinity,
                     child: LinearProgressIndicator(),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     'Updating attachment state...',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: Theme.of(context).colorScheme.secondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -320,7 +321,7 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
   ColorScheme colorScheme,
 ) {
   if (confidence == null) {
-    return (label: 'Unscored', color: Colors.blueGrey);
+    return (label: 'Unscored', color: colorScheme.outline);
   }
   if (confidence >= 0.7) {
     return (label: 'Auto-Verified', color: AppDesignTokens.success);
@@ -429,9 +430,13 @@ class _FileAttachmentTile extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 4, top: 4),
                 child: PlusMinusExpansionTile(
                   tilePadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: Text(
                     'Analysis details',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   childrenPadding: const EdgeInsets.only(bottom: 8),
                   children: [

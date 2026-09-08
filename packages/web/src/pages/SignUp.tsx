@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AppOfflineNotice from '../components/AppOfflineNotice';
+import PasswordRequirementsChecklist from '../components/PasswordRequirementsChecklist';
 import { useAuth } from '../shared/AuthContext';
 import { getRedirectQueryParam, withRedirect } from '../shared/authRedirect';
 import { useAppOffline } from '../shared/useAppOffline';
@@ -9,7 +10,7 @@ import { userFacingError } from '../shared/userFacingError';
 
 export default function SignUp() {
   const { signUp, signInWithGoogle, signInWithApple, checkPasswordPolicy } = useAuth();
-  const { hint, quickCheck, checkPolicy, describeFailure } =
+  const { policy, quickCheck, checkPolicy, describeFailure } =
     usePasswordPolicy(checkPasswordPolicy);
   const isAppOffline = useAppOffline();
   const [email, setEmail] = useState('');
@@ -125,9 +126,7 @@ export default function SignUp() {
               {showPassword ? 'Hide' : 'Show'}
             </button>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {hint}
-          </p>
+          <PasswordRequirementsChecklist password={password} policy={policy} />
         </div>
         <div className="mb-6">
           <label

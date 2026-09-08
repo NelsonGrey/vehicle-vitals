@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -92,7 +93,8 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
   final DataExportService _exportService = DataExportService();
   final CalendarService _calendarService = CalendarService();
   final RecordStorageService _recordStorageService = RecordStorageService();
-  final AttachmentAnalysisService _analysisService = AttachmentAnalysisService();
+  final AttachmentAnalysisService _analysisService =
+      AttachmentAnalysisService();
   final List<_PendingAttachment> _pendingAttachments = [];
   String? _draftEntryId;
   bool _saving = false;
@@ -418,9 +420,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
       await _loadEntries();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maintenance entry added')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Maintenance entry added')));
 
       // Show interstitial ad after adding maintenance entry (only for non-premium users)
       final premiumService = context.read<PremiumService>();
@@ -573,61 +575,59 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
     final canExportPdf = premiumService.canAccessFeature('pdf_export');
     final canExportExcel = premiumService.canAccessFeature('excel_export');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Maintenance - ${widget.vin}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.insights_outlined),
-            tooltip: 'Maintenance Insights',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      MaintenanceInsightsScreen(vin: widget.vin),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_today),
-            tooltip: 'Sync to Calendar',
-            onPressed: _syncToCalendar,
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'export_csv':
-                  exportAsCSV();
-                  break;
-                case 'export_pdf':
-                  exportAsPDF();
-                  break;
-                case 'export_excel':
-                  exportAsExcel();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'export_csv',
-                child: Text('Export as CSV'),
+    return BrandScaffold(
+      title: Text('Maintenance - ${widget.vin}'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.insights_outlined),
+          tooltip: 'Maintenance Insights',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    MaintenanceInsightsScreen(vin: widget.vin),
               ),
-              if (canExportPdf)
-                const PopupMenuItem(
-                  value: 'export_pdf',
-                  child: Text('Export as PDF'),
-                ),
-              if (canExportExcel)
-                const PopupMenuItem(
-                  value: 'export_excel',
-                  child: Text('Export as Excel'),
-                ),
-            ],
-          ),
-        ],
-      ),
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.calendar_today),
+          tooltip: 'Sync to Calendar',
+          onPressed: _syncToCalendar,
+        ),
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            switch (value) {
+              case 'export_csv':
+                exportAsCSV();
+                break;
+              case 'export_pdf':
+                exportAsPDF();
+                break;
+              case 'export_excel':
+                exportAsExcel();
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'export_csv',
+              child: Text('Export as CSV'),
+            ),
+            if (canExportPdf)
+              const PopupMenuItem(
+                value: 'export_pdf',
+                child: Text('Export as PDF'),
+              ),
+            if (canExportExcel)
+              const PopupMenuItem(
+                value: 'export_excel',
+                child: Text('Export as Excel'),
+              ),
+          ],
+        ),
+      ],
       body: ListView(
         children: [
           // Add new entry form
@@ -785,7 +785,10 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                       const SizedBox(width: 8),
                       Text(
                         '${_entryDate.day}/${_entryDate.month}/${_entryDate.year}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                       const Spacer(),
                       TextButton(
@@ -956,8 +959,15 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                     : null;
                 final isImageAttachment =
                     firstAttachment != null &&
-                    const ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif']
-                        .contains(firstAttachment.type.toLowerCase());
+                    const [
+                      'jpg',
+                      'jpeg',
+                      'png',
+                      'webp',
+                      'heic',
+                      'heif',
+                      'gif',
+                    ].contains(firstAttachment.type.toLowerCase());
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
@@ -1044,7 +1054,8 @@ class _PendingAttachmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isImage = pending.file.extension != null &&
+    final isImage =
+        pending.file.extension != null &&
         _imageExtensions.contains(pending.file.extension!.toLowerCase());
     final extracted = pending.uploaded?.analysis?.extracted;
 
@@ -1075,7 +1086,10 @@ class _PendingAttachmentTile extends StatelessWidget {
                   Text(
                     pending.file.name,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   if (pending.busy)
                     const Padding(
@@ -1088,7 +1102,10 @@ class _PendingAttachmentTile extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                           SizedBox(width: 6),
-                          Text('Uploading and analyzing…', style: TextStyle(fontSize: 12)),
+                          Text(
+                            'Uploading and analyzing…',
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ],
                       ),
                     )
@@ -1124,7 +1141,10 @@ class _PendingAttachmentTile extends StatelessWidget {
                         pending.notEntitled
                             ? 'AI extraction requires Pro or Premium. The attachment is still saved.'
                             : 'No data could be extracted from this file.',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                 ],

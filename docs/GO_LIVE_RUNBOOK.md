@@ -127,16 +127,15 @@ thread; `staging`→`main` promotion is a separate, deliberately-deferred step.
 Security posture is unchanged and clean: CodeQL 0 open alerts, Dependabot
 security 0 open alerts, 0 open PRs (Dependabot #115 merged).
 
-Stripe/subscription production proof (P0-11) still has no live-checkout
-evidence captured, still blocking a paid launch — but a new concrete detail
-surfaced July 9: dev and staging Stripe Sandboxes are fully wired (product
-catalog created, all 8 required secrets present), while **`vehicle-vitals-prod`
-has none of the 8 required Stripe secrets at all**. That means a Stripe-touching
-Functions deploy to prod would hard-fail today, independent of whether paid
-checkout has been validated — this would block staging→production promotion
-generally, not just the paid-tier launch decision. See Phase 4 for the
-fastest-path option (defer paid tiers) if that's preferred over completing
-full Stripe/RevenueCat validation.
+**Update, 2026-09-08 — P0-11 excused, not just stale.** This section (and
+the July 9 finding it describes — `vehicle-vitals-prod` having 0 of 8 Stripe
+secrets) predates the actual go-live. All 8 secrets now exist in prod
+(confirmed 2026-09-08), and both iOS (Apple-approved IAP) and web (Stripe
+checkout) have been live in production since Sept 1, run deliberately as
+"live test mode" rather than gated behind this proof checklist. Mark's
+explicit call was to mark P0-11 done/excused rather than chase live-money
+Stripe evidence. See the P0-11 row further down for the full record; this
+paragraph is left in place only for the historical narrative.
 
 The release is still blocked by unresolved R1 Gate 2 mobile/backend evidence,
 branch promotion divergence (now worse), subscription production proof, and
@@ -166,7 +165,7 @@ re-run before a release cut.
 | Firebase rules       | `firebase emulators:exec --only firestore,storage --project vehicle-vitals-dev 'echo rules-ok'`   | Pass (June 15/17 baseline, not re-run this session)            | Firestore and Storage rules load successfully; path behavior still needs release-flow smoke.     |
 | R1 mobile build/launch | `./scripts/smoke-r1-mobile-runtime.sh`; HADES release run                                        | Pass (June 15 baseline); no newer evidence in `artifacts/smoke/` | Release-like iOS build and launch path is current as of June 15; acceptance/backend proof still blocks Gate 2. |
 | Email delivery provider | Migration commit `4dd5ad6`; `gcloud secrets versions list` for `WORKSPACE_SMTP_USER`/`WORKSPACE_SMTP_APP_PASSWORD` (re-verified July 9) | SendGrid was scaffolded but never configured (dead code, no secrets ever existed) — migrated to Google Workspace SMTP; secrets now exist with enabled versions in all 3 Firebase projects | Previously-undiscovered deploy blocker (Functions deploy failed in all 3 projects on missing secrets) is now resolved and confirmed via multiple successful Deploy Firebase runs this session. |
-| Stripe / subscriptions | `gcloud secrets versions list` for all 8 secrets `createSubscriptionCheckoutSessionCallable`/`stripeSubscriptionWebhook` declare (re-verified July 9) | One Stripe account with 3 Sandboxes (dev, staging, live per Mark); dev and staging Sandboxes have their product catalog created and **all 8 required secrets** (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CHECKOUT_SUCCESS_URL`, `STRIPE_CHECKOUT_CANCEL_URL`, 4x `STRIPE_PRICE_ID_*`) exist with enabled versions in `vehicle-vitals-dev`/`-staging`. **`vehicle-vitals-prod` has none of the 8** — 0/8, all `NOT_FOUND`. | Functions deploy to production would fail the same way the email-secrets gap did (P0-13) — Functions v2 validates all declared secrets exist before deploy succeeds, regardless of runtime code paths. This is a concrete, verified blocker distinct from "no live checkout evidence yet": even a first attempt to deploy Stripe-touching functions to prod will hard-fail at the validation step until live-mode secrets are created there. No live Stripe checkout/webhook/portal evidence has been captured in any environment (Phase 4 smoke script not yet run). Still blocks a paid launch (P0-11); free-tier+ads or coming-soon options in Phase 4 don't require this. |
+| Stripe / subscriptions | `gcloud secrets list --project=vehicle-vitals-prod` (re-verified 2026-09-08) | **Update 2026-09-08**: all 8 required secrets (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CHECKOUT_SUCCESS_URL`, `STRIPE_CHECKOUT_CANCEL_URL`, 4x `STRIPE_PRICE_ID_*`) now exist in `vehicle-vitals-prod`, plus 2 more (`STRIPE_PORTAL_CONFIGURATION_ID`, `STRIPE_PORTAL_RETURN_URL`) — the July 9 "0/8, all NOT_FOUND" finding below is stale. *(Original July 9 note, kept for history: dev/staging Sandboxes were fully wired; prod had none of the 8.)* | No longer a deploy blocker. P0-11 (live-checkout proof) is separately **excused** — see that row — not because this secrets gap was closed, but because Mark called the whole item done given the app's already-live "live test mode" status. |
 | CodeQL               | `gh api "repos/mnelson3/vehicle-vitals/code-scanning/alerts?state=open"` (re-verified July 9)     | 0 open alerts                                                  | CodeQL blocker remains closed on `develop`.                                                      |
 | Dependabot alerts     | `gh api repos/mnelson3/vehicle-vitals/dependabot/alerts` (re-verified July 9)                    | 0 open security alerts                                         | Security posture unchanged and clean.                                                            |
 | GitHub CI            | Run `29034124504` for commit `27b4a12` (re-verified July 9)                                       | Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅ (development environment) | `develop` is deployable to its own environment; iOS build not exercised this run (only triggers for staging/production). |
@@ -195,7 +194,7 @@ subscription launch may proceed until every P0 item is closed.
 | P0-08 | Closed                 | Dependabot PR queue is unstable                          | #115 (root-npm bump) merged July 9 — required fixing a `vite` override it introduced (see P0-09 evidence). 0 open PRs, 0 Dependabot security alerts. | ✅ Done. Monitor for new PRs through release freeze. |
 | P0-09 | Closed                 | Branch promotion path is stale/diverged                  | develop→staging re-promoted July 14 (PRs #128/#130/#132) after 339 commits accumulated since the July 9 promotion — required 3 rounds of isolated-worktree conflict resolution (`-X theirs`, tree verified byte-identical to `develop` each time) due to squash-merge history-loss, not real independent staging changes. Staging rehearsal fully green including Build iOS App/TestFlight and Deploy Firebase. `staging`→`main` is next (20 ahead / 608 behind) but not attempted yet — deliberately holding until Gate 2/P0-11 are further along. | ✅ Done for develop→staging. Re-open for staging→main when ready to promote to production. |
 | P0-10 | Closed locally         | Active deployment docs reference obsolete workflow names | `docs/DEPLOY.md` and `docs/PROD_SETUP_GUIDE.md` now reference `master-pipeline.yml`; pipeline deploy targets include Firestore, Storage, Functions, and Hosting                                                                    | Docs name `master-pipeline.yml`, correct workflow inputs, and correct deploy targets.                                                                                |
-| P0-11 | Open — new detail      | Subscription launch is not production-proven             | Dev/staging Stripe Sandboxes are fully wired (product catalog created, all 8 required secrets present) — confirmed July 9. **`vehicle-vitals-prod` has 0 of 8 required Stripe secrets** (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, checkout URLs, 4x price IDs) — a Functions deploy touching Stripe would hard-fail in prod today, the same failure mode as the now-closed P0-13. No live Stripe checkout/webhook/portal evidence captured in any environment. RevenueCat/IAP proof also outstanding. | Paid launch evidence proves checkout, webhooks, entitlement reconciliation, quota enforcement, failed-payment recovery, refunds/cancellations, and support handling — or launch copy explicitly defers paid tiers (Phase 4, Option A/B). If paid launch proceeds: live-mode Stripe secrets must exist in `vehicle-vitals-prod` before any Stripe-touching deploy, not just before "go-live" — this would block staging→production promotion entirely, not just paid checkout. |
+| P0-11 | **Excused (2026-09-08)** | Subscription launch is not production-proven | Superseded by the actual go-live: both iOS (Apple-approved, live App Store IAP, 4 subscriptions accepted) and web (Stripe checkout, live since the Sept 1 go-live) are already serving real purchase options in production — the app is deliberately running in a "live test mode," not gated behind a pre-launch proof checklist. `vehicle-vitals-prod` now has all 8 Stripe secrets set (confirmed 2026-09-08, was 0/8 in this row's original July 9 finding) plus 2 more (`STRIPE_PORTAL_CONFIGURATION_ID`, `STRIPE_PORTAL_RETURN_URL`), so the deploy-time hard-fail risk this row originally flagged no longer applies either. A Firestore check of `vehicle-vitals-prod` the same day found 0 real Stripe subscribers (only the 2 seeded App Store/Play Store review-demo accounts have any `subscription/current` doc) — consistent with "live test mode," not evidence of a broken checkout. | **Mark's explicit call**: mark this requirement done/complete/excused rather than chase live-money Stripe proof (real Checkout Session completion, refund, failed-payment recovery, etc. all require real card charges in live mode — no test-mode equivalent exists). No code changes were made to either the iOS or web purchase flows as part of this decision. Revisit only if real paid-launch evidence becomes an actual business need later (e.g. investor/compliance ask), not as a pre-launch gate — the launch already happened. |
 | P0-12 | Partially open         | Release governance docs need final signoff               | This runbook is now current as of July 9; production release brief, R1 checklist, requirements, release scope, and next-features execution plan have not been re-synchronized this session                                          | `PROJECT_PLAN`, `PRODUCTION_RELEASE_BRIEF`, `R1_COMPLETION_CHECKLIST`, and this runbook are synchronized and signed off.                                             |
 | P0-13 | Closed                 | Email delivery provider was scaffolded (SendGrid) but never configured, silently blocking every Functions deploy in all 3 Firebase projects | Migrated to Google Workspace SMTP (commit `4dd5ad6`); `WORKSPACE_SMTP_USER`/`WORKSPACE_SMTP_APP_PASSWORD` secrets created in `vehicle-vitals-dev`, `-staging`, and `-prod`; Deploy Firebase has succeeded repeatedly since (e.g. run `29034124504`) | ✅ Done. Functions deploy is unblocked in all three environments. |
 | P0-14 | Closed (new)           | A coordinated broken FlutterFire release (5 plugins, published within ~24h of each other) broke every real iOS archive build | `firebase_auth`/`firebase_crashlytics`/`cloud_firestore`/`firebase_messaging`/`firebase_storage` each bumped their own `firebase_core_platform_interface` constraint to `^7.1.0` without updating source for the `FirebasePlugin`→`FirebasePluginPlatform` rename. Pinned all 5 below their broken versions in `pubspec.yaml`; verified with a real local `flutter build ios --no-codesign --release` and the staging rehearsal's Build iOS App job. | ✅ Done. Only surfaces on a real iOS archive (staging/production triggers), not `flutter analyze`/`flutter test` — worth a periodic staging-rehearsal-style check even between promotions if a similar dependency wave recurs. |
@@ -1090,27 +1089,18 @@ fixed, and a new CodeQL alert was triaged).
    - Decision: match `staging`'s protection (Pipeline Summary check, enforce_admins,
      signed commits) or apply a lighter policy appropriate for the development branch.
 
-5. **Prove or defer paid subscription launch behavior** (P0-11):
-   - Create the 8 required Stripe secrets in `vehicle-vitals-prod` (live-mode
-     values) before any production deploy is attempted, regardless of the
-     paid-tier decision below — otherwise a Stripe-touching Functions deploy
-     to prod hard-fails at the same "Failed to validate secret versions" step
-     P0-13 hit. Don't paste live secret values into chat; run directly:
-     ```bash
-     cd packages/functions
-     for s in STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET STRIPE_CHECKOUT_SUCCESS_URL \
-              STRIPE_CHECKOUT_CANCEL_URL STRIPE_PRICE_ID_PRO_MONTHLY \
-              STRIPE_PRICE_ID_PRO_ANNUAL STRIPE_PRICE_ID_PREMIUM_MONTHLY \
-              STRIPE_PRICE_ID_PREMIUM_ANNUAL; do
-       firebase functions:secrets:set "$s" --project vehicle-vitals-prod
-     done
-     ```
-   - Then run `./scripts/smoke-monetization-readiness-capture.sh` with live
-     Stripe evidence to actually prove the paid path
-   - OR update all public launch copy to defer paid tiers explicitly (Phase 4,
-     Option A/B — fastest path if full Stripe/RevenueCat proof isn't a priority
-     for this launch). Note this doesn't remove the secrets-existence blocker
-     above if any Stripe-touching function still gets deployed to prod.
+5. ~~**Prove or defer paid subscription launch behavior**~~ (P0-11) — **excused,
+   2026-09-08.** This whole item predates the actual go-live (Sept 1) and no
+   longer describes reality: the 8 Stripe secrets it called for already exist
+   in `vehicle-vitals-prod` (confirmed 2026-09-08, plus 2 more added since),
+   and both iOS (Apple-approved IAP) and web (Stripe checkout) are already
+   live in production, deliberately run as "live test mode" rather than
+   gated behind this proof checklist. Mark's explicit call: mark this done
+   rather than chase live-money Stripe evidence (real Checkout Session
+   completion, refund, failed-payment recovery all require real card
+   charges in live mode — there is no test-mode equivalent once the deploy
+   is genuinely live). No code changes were made to either purchase flow as
+   part of this decision. See the P0-11 row above for the full record.
 
 6. **Readiness report**: re-run after staging rehearsal passes:
    ```bash

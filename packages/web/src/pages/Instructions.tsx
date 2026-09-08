@@ -44,7 +44,7 @@ export default function Instructions() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5 sm:space-y-6">
       <PageSEO meta={ROUTE_SEO['/getting-started']} />
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h1 className="font-serif text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-3">
+        <h1 className="content-h1 mb-3">
           Getting Started
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
@@ -54,7 +54,7 @@ export default function Instructions() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-4">
+        <h2 className="content-h2 mb-4">
           Simple setup steps
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
@@ -128,7 +128,7 @@ export default function Instructions() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-4">
+        <h2 className="content-h2 mb-4">
           Quick look at the first steps
         </h2>
         <div className="flex flex-col gap-5">
@@ -150,7 +150,7 @@ export default function Instructions() {
                 </div>
               </div>
               <div className="flex flex-1 flex-col justify-center p-5">
-                <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
+                <h3 className="content-h3">
                   {item.title}
                 </h3>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
@@ -172,7 +172,7 @@ export default function Instructions() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+        <h2 className="content-h2 mb-3">
           Getting Started Video
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
@@ -190,7 +190,7 @@ export default function Instructions() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+        <h2 className="content-h2 mb-3">
           Mobile Apps
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">

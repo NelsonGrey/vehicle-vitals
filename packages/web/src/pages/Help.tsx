@@ -238,7 +238,7 @@ export default function Help() {
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <div className="grid gap-5 lg:grid-cols-[1.4fr_0.9fr] lg:items-start">
           <div>
-            <h1 className="font-serif text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 mb-3">
+            <h1 className="content-h1 mb-3">
               Help Center
             </h1>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl">
@@ -286,7 +286,7 @@ export default function Help() {
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-1">
+            <h2 className="content-h2 mb-1">
               Common tasks
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
@@ -300,7 +300,7 @@ export default function Help() {
               key={action.title}
               className="flex h-full flex-col rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50 p-4"
             >
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-0 mb-2">
+              <h3 className="ui-h3 mb-2">
                 {action.title}
               </h3>
               <p className="text-slate-700 dark:text-slate-300 mb-4 flex-1">
@@ -318,13 +318,13 @@ export default function Help() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-4">
+        <h2 className="content-h2 mb-4">
           Help by capability
         </h2>
         <div className="space-y-4">
           {helpTopics.map(topic => (
             <article key={topic.title} id={topic.id} tabIndex={-1}>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+              <h3 className="ui-h3 mb-1">
                 {topic.title}
               </h3>
               <p className="text-slate-700 dark:text-slate-300">
@@ -337,7 +337,7 @@ export default function Help() {
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm space-y-6">
         <div>
-          <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-2">
+          <h2 className="content-h2 mb-2">
             Search all answers
           </h2>
           <p className="text-slate-700 dark:text-slate-300">
@@ -404,21 +404,21 @@ export default function Help() {
         ) : null}
 
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+          <h3 className="ui-h3 mb-3">
             Website answers
           </h3>
           <FaqList items={filteredWebsiteFaq} />
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+          <h3 className="ui-h3 mb-3">
             iOS answers
           </h3>
           <FaqList items={filteredIosFaq} />
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+          <h3 className="ui-h3 mb-3">
             Troubleshooting help
           </h3>
           <FaqList items={filteredTroubleshootingFaq} />
@@ -426,7 +426,7 @@ export default function Help() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+        <h2 className="content-h2 mb-3">
           Plain-language glossary
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-4">
@@ -450,7 +450,7 @@ export default function Help() {
       </section>
 
       <section className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3">
+        <h2 className="content-h2 mb-3">
           Need more help?
         </h2>
         <p className="text-slate-700 dark:text-slate-300 mb-3">

@@ -43,7 +43,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-image": "^4.1.0",
-    "react-router-dom": "^7.18.2"
+    "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
     "@firebase/app-compat": "^0.5.17",
@@ -53,7 +53,7 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.6",
+    "@testing-library/user-event": "^14.6.7",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -63,7 +63,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^29.1.1",
-    "postcss": "^8.5.26",
+    "postcss": "^8.5.28",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.6.3",
     "vite": "^8.2.2",

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:provider/provider.dart';
 
 import '../services/firestore_service.dart';
@@ -17,8 +18,7 @@ class MaintenanceInsightsScreen extends StatefulWidget {
       _MaintenanceInsightsScreenState();
 }
 
-class _MaintenanceInsightsScreenState
-    extends State<MaintenanceInsightsScreen> {
+class _MaintenanceInsightsScreenState extends State<MaintenanceInsightsScreen> {
   bool _loading = true;
   MaintenanceInsights? _insights;
 
@@ -32,9 +32,7 @@ class _MaintenanceInsightsScreenState
     setState(() => _loading = true);
     try {
       final firestoreService = context.read<FirestoreService>();
-      final entries = await firestoreService.getMaintenanceEntries(
-        widget.vin,
-      );
+      final entries = await firestoreService.getMaintenanceEntries(widget.vin);
       if (!mounted) return;
       setState(() {
         _insights = computeMaintenanceInsights(entries);
@@ -58,8 +56,8 @@ class _MaintenanceInsightsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Maintenance Insights - ${widget.vin}')),
+    return BrandScaffold(
+      title: Text('Maintenance Insights - ${widget.vin}'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _insights == null
@@ -132,9 +130,10 @@ class _SummaryCard extends StatelessWidget {
           children: [
             Text(
               'Total maintenance spend: ${formatCurrencyAmount(insights.totalSpend)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 4),
@@ -146,7 +145,10 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Documentation coverage: $coveragePercent%',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             Text(
               '${insights.entriesWithAttachments} of ${insights.totalEntries} entries have at least one attached photo or document.',
@@ -157,7 +159,10 @@ class _SummaryCard extends StatelessWidget {
               Text(
                 'Average extraction confidence: '
                 '${(insights.averageConfidence! * 100).round()}%',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               Text(
                 'Across ${insights.analyzedAttachmentCount} analyzed attachment${insights.analyzedAttachmentCount == 1 ? '' : 's'}.',
@@ -290,8 +295,9 @@ class _SpendTrendCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: recent.map((month) {
-                  final heightFraction =
-                      maxAmount > 0 ? month.amount / maxAmount : 0.0;
+                  final heightFraction = maxAmount > 0
+                      ? month.amount / maxAmount
+                      : 0.0;
                   return Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),

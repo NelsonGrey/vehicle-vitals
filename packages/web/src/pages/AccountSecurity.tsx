@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import PasswordRequirementsChecklist from '../components/PasswordRequirementsChecklist';
 import { useAuth } from '../shared/AuthContext';
 import { useReauthentication } from '../shared/useReauthentication';
 import { usePasswordPolicy } from '../shared/usePasswordPolicy';
@@ -20,7 +21,7 @@ export function AccountSecurityContent() {
     reauthenticateWithGoogle,
     reauthenticateWithApple,
   });
-  const { hint, quickCheck, checkPolicy, describeFailure } =
+  const { policy, quickCheck, checkPolicy, describeFailure } =
     usePasswordPolicy(checkPasswordPolicy);
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -256,9 +257,7 @@ export function AccountSecurityContent() {
               onChange={e => setNewPassword(e.target.value)}
               required
             />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {hint}
-            </p>
+            <PasswordRequirementsChecklist password={newPassword} policy={policy} />
           </div>
           <div>
             <label

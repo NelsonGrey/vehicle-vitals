@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -61,8 +62,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Forgot Password')),
+    return BrandScaffold(
+      title: const Text('Forgot Password'),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 
 import '../theme/design_tokens.dart';
 import 'record_item_screen.dart';
@@ -86,8 +87,8 @@ class _RecordCategoryScreenState extends State<RecordCategoryScreen> {
     final category = widget.getCategory();
     final items = (category['items'] as List?) ?? [];
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.categoryTitle)),
+    return BrandScaffold(
+      title: Text(widget.categoryTitle),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: items.length,

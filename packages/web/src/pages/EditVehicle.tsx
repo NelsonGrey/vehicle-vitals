@@ -1720,7 +1720,7 @@ function MaintenanceList({
             </div>
           </div>
           {!hasCalendarSync && (
-            <p className="mb-3 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-200">
+            <p className="mb-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
               Calendar sync is available on Pro and Premium plans.
             </p>
           )}
@@ -1960,7 +1960,7 @@ function MaintenanceList({
               Photos/Receipts
             </label>
             {!hasAiAnalysis && (
-              <p className="mb-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-200">
+              <p className="mb-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
                 AI receipt extraction is a Pro and Premium feature. Attachments
                 will still upload for manual record-keeping.
               </p>

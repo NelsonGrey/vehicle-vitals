@@ -23,7 +23,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
   const isLoggedIn = Boolean(user && !user.isAnonymous);
   const isAppOffline = useAppOffline();
 
-  const linkClass = `hover:opacity-80 transition-opacity whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-900 ${
+  const linkClass = `hover:opacity-80 transition-opacity whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-900 ${
     overlay ? 'text-gray-100 hover:text-white' : 'text-current'
   }`;
 
@@ -55,7 +55,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
       return (
         <span
           aria-disabled="true"
-          className={`whitespace-nowrap rounded-md bg-teal-700 font-medium text-white opacity-50 ${sizeClass}`}
+          className={`whitespace-nowrap rounded-md bg-blue-700 font-medium text-white opacity-50 ${sizeClass}`}
         >
           Sign in unavailable
         </span>
@@ -64,7 +64,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
     return (
       <Link
         to="/auth/login"
-        className={`whitespace-nowrap rounded-md bg-teal-700 font-medium text-white transition hover:bg-teal-800 ${sizeClass}`}
+        className={`whitespace-nowrap rounded-md bg-blue-700 font-medium text-white transition hover:bg-blue-800 ${sizeClass}`}
       >
         Login / Sign Up
       </Link>
@@ -242,7 +242,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 compact
                 showText
                 color={overlay ? '#ffffff' : 'currentColor'}
-                accent={overlay ? '#10b981' : '#334155'}
+                accent={overlay ? '#60a5fa' : '#334155'}
                 wordmarkColor={overlay ? '#ffffff' : '#64748b'}
               />
             </span>
@@ -252,7 +252,7 @@ export default function SiteHeader({ overlay = false }: SiteHeaderProps) {
                 compact
                 showText={false}
                 color={overlay ? '#ffffff' : 'currentColor'}
-                accent={overlay ? '#10b981' : '#334155'}
+                accent={overlay ? '#60a5fa' : '#334155'}
               />
             </span>
           </Link>

@@ -270,7 +270,7 @@ export default function Help() {
                 <Link
                   key={path.title}
                   to={path.to}
-                  className="block rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 transition hover:border-teal-300 hover:bg-teal-50/60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-teal-700 dark:hover:bg-teal-950/20"
+                  className="block rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 transition hover:border-blue-300 hover:bg-blue-50/60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-blue-700 dark:hover:bg-blue-950/20"
                 >
                   <div className="text-sm font-semibold">{path.title}</div>
                   <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -494,7 +494,7 @@ export default function Help() {
               </p>
               <Link
                 to="/app/subscription"
-                className="inline-flex mt-2 text-sm font-medium underline text-teal-700 dark:text-teal-300"
+                className="inline-flex mt-2 text-sm font-medium underline text-blue-700 dark:text-blue-300"
               >
                 Compare support plans
               </Link>
@@ -504,13 +504,13 @@ export default function Help() {
         <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
           <Link
             to="/support"
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-800 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-800 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
           >
             Support
           </Link>
           <Link
             to="/getting-started"
-            className="underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
+            className="underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800"
           >
             Open getting started
           </Link>

@@ -657,7 +657,7 @@ export default function ServiceProviders() {
                               href={provider.website}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-sm text-teal-700 hover:text-teal-800"
+                              className="text-sm text-blue-700 hover:text-blue-800"
                             >
                               Visit website
                             </a>

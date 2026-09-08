@@ -916,7 +916,7 @@ export default function UpcomingTasks() {
           )}
 
           {!hasAdvancedReminders && (
-            <div className="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
+            <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-sm text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-100">
               Advanced reminder timing controls are available on Pro and Premium
               plans.
               <div className="mt-2">
@@ -940,7 +940,7 @@ export default function UpcomingTasks() {
             <strong>{planningHorizonMonths}-month forecast</strong>
           </div>
           {planningHorizonUpgrade && (
-            <div className="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
+            <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-sm text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-100">
               You're seeing the next{' '}
               <strong>{planningHorizonMonths} months</strong> of maintenance
               planning.{' '}
@@ -950,7 +950,7 @@ export default function UpcomingTasks() {
               to plan {planningHorizonUpgrade.months} months ahead.
             </div>
           )}
-          <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-3 text-sm text-teal-900 dark:border-teal-900/40 dark:bg-teal-950/30 dark:text-teal-100">
+          <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-sm text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-100">
             <div>
               Tasks due within about <strong>{effectiveLeadDays} days</strong>{' '}
               at <strong>{effectiveDailyMiles} miles/day</strong> appear by
@@ -961,7 +961,7 @@ export default function UpcomingTasks() {
               <button
                 type="button"
                 onClick={() => setShowAllRecommendations(current => !current)}
-                className="rounded-md border border-teal-300 px-3 py-1.5 text-sm font-medium text-teal-800 hover:bg-teal-100 dark:border-teal-700 dark:text-teal-200 dark:hover:bg-teal-900/40"
+                className="rounded-md border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-200 dark:hover:bg-blue-900/40"
               >
                 {showAllRecommendations
                   ? 'Show only tasks due soon'
@@ -1236,7 +1236,7 @@ export default function UpcomingTasks() {
                                   </div>
                                 </div>
                                 {hasAiPredictions && (
-                                  <p className="mt-2 mb-0 text-sm text-indigo-800 dark:text-indigo-200">
+                                  <p className="mt-2 mb-0 text-sm text-blue-800 dark:text-blue-200">
                                     Predicted due date:{' '}
                                     {estimateDueDateLabel(
                                       entry.item.milesUntilDue

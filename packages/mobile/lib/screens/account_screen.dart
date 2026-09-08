@@ -368,6 +368,15 @@ class _AccountScreenState extends State<AccountScreen> {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/app/data-privacy'),
                       ),
+                      ListTile(
+                        leading: const Icon(Icons.home_work_outlined),
+                        title: const Text('Household Garage'),
+                        subtitle: const Text(
+                          'Organize vehicles into a shared household garage',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/app/household-garage'),
+                      ),
                     ],
                   ),
                 ),

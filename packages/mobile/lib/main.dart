@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -75,24 +74,6 @@ void main() async {
     debugPrint(
       'Firebase initialized: env=${DefaultFirebaseOptions.currentEnvironmentLabel}, '
       'project=${activeOptions.projectId}, appId=${activeOptions.appId}',
-    );
-
-    // App Check must activate before any other Firebase service is touched
-    // (Crashlytics below, then Auth/Firestore/Functions/Storage elsewhere)
-    // so every subsequent call already carries a token. Provider selection
-    // keys off the Firebase *environment* (not build mode/kDebugMode):
-    // debug builds are routinely pointed at staging/production, and App
-    // Attest doesn't work on the iOS Simulator at all, so `development`
-    // is the only safe signal for the debug provider.
-    final isDevelopmentEnvironment =
-        DefaultFirebaseOptions.currentEnvironmentLabel == 'development';
-    await FirebaseAppCheck.instance.activate(
-      providerApple: isDevelopmentEnvironment
-          ? const AppleDebugProvider()
-          : const AppleAppAttestWithDeviceCheckFallbackProvider(),
-      providerAndroid: isDevelopmentEnvironment
-          ? const AndroidDebugProvider()
-          : const AndroidPlayIntegrityProvider(),
     );
 
     // Wire Flutter and Dart error handlers to Crashlytics.

@@ -19,6 +19,27 @@ class PasswordPolicyState {
   final bool requiresSymbol;
 }
 
+/// Per-rule pass/fail for a single password against a [PasswordPolicyState],
+/// as returned by [PasswordPolicyService.evaluate] -- unlike [quickCheck],
+/// which only surfaces the first failing rule (a string, meant for a form
+/// validator), this exposes every rule's state at once so a UI can render a
+/// live checklist.
+class PasswordRequirementResults {
+  const PasswordRequirementResults({
+    required this.meetsLength,
+    required this.hasUpper,
+    required this.hasLower,
+    required this.hasDigit,
+    required this.hasSymbol,
+  });
+
+  final bool meetsLength;
+  final bool hasUpper;
+  final bool hasLower;
+  final bool hasDigit;
+  final bool hasSymbol;
+}
+
 // Fetches and applies the live Firebase Auth password policy (minimum
 // length, required character classes) for any screen that collects a new
 // password (sign-up, change-password). Centralizes the fetch/hint/validate
@@ -107,11 +128,27 @@ class PasswordPolicyService {
     if (policy.requiresDigit && !password.contains(RegExp(r'[0-9]'))) {
       return 'Password must include a number';
     }
-    if (policy.requiresSymbol &&
-        !password.contains(RegExp(r'[^A-Za-z0-9]'))) {
+    if (policy.requiresSymbol && !password.contains(RegExp(r'[^A-Za-z0-9]'))) {
       return 'Password must include a symbol (e.g. ! @ # ?)';
     }
     return null;
+  }
+
+  // Per-rule pass/fail against [policy], for a live checklist UI. Reuses the
+  // same character-class checks as [quickCheck], just without short-
+  // circuiting on the first failure. Pure local string matching -- safe to
+  // call on every keystroke, no network round-trip.
+  PasswordRequirementResults evaluate(
+    String password,
+    PasswordPolicyState policy,
+  ) {
+    return PasswordRequirementResults(
+      meetsLength: password.length >= policy.minLength,
+      hasUpper: password.contains(RegExp(r'[A-Z]')),
+      hasLower: password.contains(RegExp(r'[a-z]')),
+      hasDigit: password.contains(RegExp(r'[0-9]')),
+      hasSymbol: password.contains(RegExp(r'[^A-Za-z0-9]')),
+    );
   }
 
   // Authoritative check against the live Firebase policy -- catches drift

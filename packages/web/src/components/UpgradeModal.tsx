@@ -114,7 +114,7 @@ export default function UpgradeModal({
       aria-labelledby="upgrade-modal-title"
     >
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-400">
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-400">
           {upgradeContext.eyebrow}
         </p>
         <h2
@@ -130,7 +130,7 @@ export default function UpgradeModal({
         <ul className="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-300">
           {upgradeContext.bullets.map(item => (
             <li key={item} className="flex items-start gap-2">
-              <span className="mt-0.5 text-teal-700 dark:text-teal-400">•</span>
+              <span className="mt-0.5 text-blue-700 dark:text-blue-400">•</span>
               <span>{item}</span>
             </li>
           ))}
@@ -167,14 +167,14 @@ export default function UpgradeModal({
           <button
             type="button"
             onClick={handleLearnMore}
-            className="rounded-md border border-teal-300 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300 dark:hover:bg-teal-950/40"
+            className="rounded-md border border-blue-300 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/40"
           >
             Learn more
           </button>
           <button
             type="button"
             onClick={handleUpgrade}
-            className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+            className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
           >
             Upgrade to {getTierDisplayName(targetTier)}
           </button>

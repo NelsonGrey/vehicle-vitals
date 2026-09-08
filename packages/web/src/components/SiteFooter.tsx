@@ -17,7 +17,7 @@ interface FooterLink {
 
 // Getting Started and Product Tour are both "learn about the product"
 // content rather than an app task, so they're paired together and styled
-// distinctly (teal, vs. the slate used by every other footer link) on both
+// distinctly (blue, vs. the slate used by every other footer link) on both
 // the signed-out (marketing) and signed-in (app) sides — always shown,
 // unlike the persona/App nav below which switches on auth state.
 const learnMoreLinks: FooterLink[] = [
@@ -122,7 +122,7 @@ export default function SiteFooter() {
               size={28}
               showText={false}
               color="#ffffff"
-              accent="#14b8a6"
+              accent="#2563eb"
               wordmarkColor="#cbd5e1"
               windowColor="#020617"
             />
@@ -131,13 +131,13 @@ export default function SiteFooter() {
           <div className="footer-primary-links flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:gap-x-10 sm:gap-y-4 lg:flex-nowrap lg:items-center lg:gap-x-5">
             <nav
               aria-label="Learn more"
-              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-teal-300 lg:flex-nowrap"
+              className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-blue-300 lg:flex-nowrap"
             >
               {learnMoreLinks.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="whitespace-nowrap transition-colors hover:text-teal-100"
+                  className="whitespace-nowrap transition-colors hover:text-blue-100"
                   onClick={() =>
                     trackFooterNavClick(link.label, link.to, link.capabilityId)
                   }

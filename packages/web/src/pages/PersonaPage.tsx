@@ -103,7 +103,7 @@ export default function PersonaPage() {
           </p>
         </article>
         <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <p className="text-sm font-semibold uppercase text-teal-700 dark:text-teal-300">
+          <p className="text-sm font-semibold uppercase text-blue-700 dark:text-blue-300">
             The outcome
           </p>
           <h2 className="mt-2 font-serif text-2xl text-slate-900 dark:text-slate-100">
@@ -125,7 +125,7 @@ export default function PersonaPage() {
               <li key={benefit} className="flex gap-3">
                 <span
                   aria-hidden="true"
-                  className="mt-2 size-1.5 shrink-0 rounded-full bg-teal-600"
+                  className="mt-2 size-1.5 shrink-0 rounded-full bg-blue-600"
                 />
                 <span>{benefit}</span>
               </li>

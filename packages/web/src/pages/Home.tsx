@@ -634,13 +634,13 @@ export default function Home() {
               </p>
               <ol className="list-none p-0 m-0 space-y-3">
                 <li className="flex items-start gap-3">
-                  <span className="flex-none w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center">
+                  <span className="flex-none w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
                     1
                   </span>
                   <div>
                     <Link
                       to="/app/add-vehicle"
-                      className="font-medium text-teal-700 dark:text-teal-400 no-underline hover:underline"
+                      className="font-medium text-blue-700 dark:text-blue-400 no-underline hover:underline"
                     >
                       Add your first vehicle
                     </Link>
@@ -664,13 +664,13 @@ export default function Home() {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="flex-none w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center">
+                  <span className="flex-none w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
                     3
                   </span>
                   <div>
                     <Link
                       to="/app/upcoming"
-                      className="font-medium text-teal-700 dark:text-teal-400 no-underline hover:underline"
+                      className="font-medium text-blue-700 dark:text-blue-400 no-underline hover:underline"
                     >
                       Review upcoming maintenance
                     </Link>
@@ -1038,7 +1038,7 @@ export default function Home() {
                           </Link>
                           <Link
                             to={`/app/coverage/${selectedVehicle.vin}`}
-                            className="inline-block px-3 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition-colors no-underline text-sm font-medium"
+                            className="inline-block px-3 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors no-underline text-sm font-medium"
                           >
                             Coverage & Manuals
                           </Link>

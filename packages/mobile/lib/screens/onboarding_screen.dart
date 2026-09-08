@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -84,8 +85,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final tier = premiumService.subscriptionTier;
     final hasVehicle = _firstVehicleVin != null;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Getting Started')),
+    return BrandScaffold(
+      title: const Text('Getting Started'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -203,9 +204,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Current tier expectation',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(_tierSummary(tier)),
@@ -220,7 +225,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text('Start using Garage'),
           ),
@@ -350,7 +358,13 @@ class _SecondaryStepTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, size: 20),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,

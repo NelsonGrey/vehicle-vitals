@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 
 class PrivacyScreen extends StatelessWidget {
@@ -6,8 +7,8 @@ class PrivacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Privacy Policy')),
+    return BrandScaffold(
+      title: const Text('Privacy Policy'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

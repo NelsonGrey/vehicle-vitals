@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -611,28 +612,26 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Maintenance Plan')),
+      return BrandScaffold(
+        title: const Text('Maintenance Plan'),
         body: const Center(child: CircularProgressIndicator()),
         bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Maintenance Plan'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.storefront_outlined),
-            tooltip: 'Shops & Services',
-            onPressed: () => context.push('/app/service-providers'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadUpcomingTasks,
-          ),
-        ],
-      ),
+    return BrandScaffold(
+      title: const Text('Maintenance Plan'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.storefront_outlined),
+          tooltip: 'Shops & Services',
+          onPressed: () => context.push('/app/service-providers'),
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadUpcomingTasks,
+        ),
+      ],
       body: _upcomingItems.isEmpty ? _buildEmptyState() : _buildUpcomingList(),
       bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );

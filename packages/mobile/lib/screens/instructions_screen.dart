@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 
 class InstructionsScreen extends StatelessWidget {
@@ -57,8 +58,8 @@ class InstructionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Help')),
+    return BrandScaffold(
+      title: const Text('Help'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

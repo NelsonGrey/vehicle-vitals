@@ -27,13 +27,18 @@ const workflows = [
   },
 ];
 
+// To move a clip to YouTube: upload it to the Vehicle-Vitals channel, then
+// set `youtubeId` to the 11-char video ID. The panel switches to a
+// click-to-load youtube-nocookie embed and the local MP4 becomes unused.
+// See docs/marketing/DEMO_VIDEOS.md.
 const demoVideoReady = [
   {
     title: 'Getting started video',
     description:
       'A quick walkthrough of sign-up, adding a vehicle, and opening your garage.',
     poster: '/images/features/add-vehicle.png',
-    videoPath: '/videos/feature-demos/onboarding-walkthrough.mp4',
+    youtubeId: 'U36DOWKh3ro',
+    videoPath: '',
     fallbackHref: '/getting-started',
     fallbackLabel: 'Open getting started guide',
   },
@@ -42,7 +47,8 @@ const demoVideoReady = [
     description:
       'See how to log service, review history, and track upcoming work.',
     poster: '/images/features/timeline.png',
-    videoPath: '/videos/feature-demos/maintenance-lifecycle-tour.mp4',
+    youtubeId: 'sRveTblZYDU',
+    videoPath: '',
     fallbackHref: '/maintenance-planning-demo',
     fallbackLabel: 'Open service tracking demo',
   },
@@ -50,7 +56,8 @@ const demoVideoReady = [
     title: 'Web and mobile video',
     description: 'See how the same account works on both web and mobile.',
     poster: '/images/features/ios-home.png',
-    videoPath: '/videos/feature-demos/cross-platform-continuity.mp4',
+    youtubeId: 'WssReypPl9w',
+    videoPath: '',
     fallbackHref: '/cross-platform-access-demo',
     fallbackLabel: 'Open web and mobile demo',
   },
@@ -161,6 +168,7 @@ export default function ProductTour() {
               title={item.title}
               description={item.description}
               poster={item.poster}
+              youtubeId={item.youtubeId}
               videoPath={item.videoPath}
               fallbackHref={item.fallbackHref}
               fallbackLabel={item.fallbackLabel}

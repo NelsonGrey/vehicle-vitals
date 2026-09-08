@@ -61,6 +61,33 @@ export function quickPasswordCheck(
   return null;
 }
 
+// Per-rule pass/fail for a single requirement row -- see PasswordRequirementResults.
+export interface PasswordRequirementResults {
+  meetsLength: boolean;
+  hasUpper: boolean;
+  hasLower: boolean;
+  hasDigit: boolean;
+  hasSymbol: boolean;
+}
+
+// Per-rule pass/fail against the cached policy, for a live checklist UI.
+// Unlike quickPasswordCheck (which only surfaces the first failing rule, for
+// a form-submit error message), this exposes every rule's state at once.
+// Pure local string matching -- safe to call on every keystroke, no network
+// round-trip.
+export function evaluatePassword(
+  password: string,
+  policy: PasswordPolicyState
+): PasswordRequirementResults {
+  return {
+    meetsLength: password.length >= policy.minLength,
+    hasUpper: /[A-Z]/.test(password),
+    hasLower: /[a-z]/.test(password),
+    hasDigit: /[0-9]/.test(password),
+    hasSymbol: /[^A-Za-z0-9]/.test(password),
+  };
+}
+
 export function describePasswordPolicyFailure(
   status: PasswordValidationStatus,
   policy: PasswordPolicyState
@@ -131,11 +158,17 @@ export function usePasswordPolicy(
     [policy]
   );
 
+  const evaluate = useCallback(
+    (password: string) => evaluatePassword(password, policy),
+    [policy]
+  );
+
   return {
     policy,
     hint: passwordRequirementsHint(policy),
     quickCheck,
     checkPolicy,
     describeFailure,
+    evaluate,
   };
 }

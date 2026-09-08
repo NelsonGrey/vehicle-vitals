@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -164,8 +165,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           final uri = Uri.parse(
             'https://us-central1-$projectId.cloudfunctions.net/vinLookup',
           );
-          final idToken = await FirebaseAuth.instance.currentUser
-              ?.getIdToken();
+          final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
           if (idToken == null) {
             throw Exception('Please sign in to look up VIN.');
           }
@@ -304,7 +304,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     ? 'Your vehicle limit is reached. Visit Support for Enterprise expansion.'
                     : 'Vehicle limit reached. Upgrade to add more vehicles.',
               ),
-              backgroundColor: colorScheme.secondary,
+              backgroundColor: colorScheme.primary,
             ),
           );
 
@@ -500,7 +500,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             content: const Text(
               'No web photo match found. Try uploading your own image.',
             ),
-            backgroundColor: colorScheme.secondary,
+            backgroundColor: colorScheme.primary,
           ),
         );
         return;
@@ -539,11 +539,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Vehicle'),
-        leading: const SafeBackButton(),
-      ),
+    return BrandScaffold(
+      title: const Text('Add Vehicle'),
+      leading: const SafeBackButton(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

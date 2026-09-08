@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Design tokens that mirror the web Tailwind configuration
 class AppDesignTokens {
-  // Slate/teal palette matching the web app style.
+  // Slate/blue palette matching the web app style.
   static const slate50 = Color(0xFFF8FAFC);
   static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
@@ -12,7 +12,8 @@ class AppDesignTokens {
   static const slate700 = Color(0xFF334155);
   static const slate800 = Color(0xFF1E293B);
   static const slate900 = Color(0xFF0F172A);
-  static const teal700 = Color(0xFF0F766E);
+  static const blue600 = Color(0xFF2563EB);
+  static const blue400 = Color(0xFF60A5FA);
 
   // Semantic status colors, used everywhere the app needs to signal
   // error/warning/success rather than a screen-specific Colors.red/etc.
@@ -45,6 +46,12 @@ class AppDesignTokens {
   // Typography
   static const fontSans = 'Inter';
   static const fontSerif = 'Playfair Display';
+
+  // Every screen's AppBar uses this fixed brand color (not brightness-
+  // dependent) so headers read as one consistent brand surface in both
+  // light and dark mode, with white text/icons always legible on top.
+  static const headerColor = slate700;
+  static const headerToolbarHeight = 50.0;
 
   // Get color scheme based on brightness
   static AppColorScheme colorScheme(Brightness brightness) {
@@ -87,7 +94,7 @@ class AppColorScheme {
     onSurface: AppDesignTokens.slate900,
     primary: AppDesignTokens.slate700,
     onPrimary: Colors.white,
-    secondary: AppDesignTokens.teal700,
+    secondary: AppDesignTokens.blue600,
     onSecondary: Colors.white,
     border: AppDesignTokens.slate200,
     muted: AppDesignTokens.slate500,
@@ -100,7 +107,7 @@ class AppColorScheme {
     onSurface: AppDesignTokens.slate50,
     primary: AppDesignTokens.slate300,
     onPrimary: AppDesignTokens.slate900,
-    secondary: Color(0xFF2DD4BF),
+    secondary: AppDesignTokens.blue400,
     onSecondary: AppDesignTokens.slate900,
     border: AppDesignTokens.slate700,
     muted: AppDesignTokens.slate400,

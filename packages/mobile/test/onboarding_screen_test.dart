@@ -18,7 +18,7 @@ void main() {
     });
 
     test('AppBar is retitled to the Getting Started capability label', () {
-      expect(source, contains("AppBar(title: const Text('Getting Started')"));
+      expect(source, contains("title: const Text('Getting Started')"));
     });
 
     test('adds a Service History milestone linked to /app/timeline', () {

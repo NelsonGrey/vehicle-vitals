@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_bottom_nav.dart';
 import '../components/app_logo.dart';
+import '../components/garage_empty_state.dart';
 import '../components/vehicle_health_widgets.dart';
 import '../models/maintenance.dart';
 import '../models/vehicle.dart';
@@ -87,8 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
               model: vehicle.model,
             )
             .catchError(
-              (_) =>
-                  const MaintenancePlan(modelSpecific: false, items: []),
+              (_) => const MaintenancePlan(modelSpecific: false, items: []),
             ),
       ),
     );
@@ -129,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : 'Vehicle limit reached for your current subscription. Upgrade to add more vehicles.';
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: colorScheme.secondary),
+      SnackBar(content: Text(message), backgroundColor: colorScheme.primary),
     );
 
     if (isPremiumLike) {
@@ -146,9 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
         plan.items
             .where((item) => item.nextDueMileage - vehicle.mileage <= 10000)
             .toList()
-          ..sort(
-            (a, b) => a.nextDueMileage.compareTo(b.nextDueMileage),
-          );
+          ..sort((a, b) => a.nextDueMileage.compareTo(b.nextDueMileage));
     if (dueSoon.isEmpty) return null;
     final miles = (dueSoon.first.nextDueMileage - vehicle.mileage).clamp(
       0,
@@ -223,17 +222,15 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Garage'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.storefront_outlined),
-            tooltip: 'Shops & Services',
-            onPressed: () => context.push('/app/service-providers'),
-          ),
-        ],
-      ),
+    return BrandScaffold(
+      title: const Text('Garage'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.storefront_outlined),
+          tooltip: 'Shops & Services',
+          onPressed: () => context.push('/app/service-providers'),
+        ),
+      ],
       body: StreamBuilder<List<Vehicle>>(
         stream: firestoreService.getVehiclesStream(),
         builder: (context, snapshot) {
@@ -284,11 +281,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color:
+                      gradient: LinearGradient(
+                        colors: [
                           (attentionCount > 0
                                   ? colorScheme.tertiary
                                   : AppDesignTokens.success)
-                              .withValues(alpha: 0.1),
+                              .withValues(alpha: 0.16),
+                          (attentionCount > 0
+                                  ? colorScheme.tertiary
+                                  : AppDesignTokens.success)
+                              .withValues(alpha: 0.04),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -377,7 +383,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 Expanded(
-                  child: filtered.isEmpty
+                  child: vehicles.isEmpty
+                      ? GarageEmptyState(
+                          onAddVehicle: () => _handleAddVehicleTap(
+                            currentVehicleCount: vehicles.length,
+                            vehicleLimit: vehicleLimit,
+                            tier: currentTier,
+                          ),
+                        )
+                      : filtered.isEmpty
                       ? const Center(
                           child: Text('No vehicles match this filter.'),
                         )
@@ -432,7 +446,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       '/app/vehicle/${vehicle.vin}',
                                     ),
                                     leading: CircleAvatar(
-                                      backgroundColor: Colors.grey.shade200,
+                                      backgroundColor: colorScheme.secondary
+                                          .withValues(alpha: 0.12),
                                       backgroundImage:
                                           (vehicle.photoUrl ?? '')
                                               .trim()
@@ -443,7 +458,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                           (vehicle.photoUrl ?? '')
                                               .trim()
                                               .isEmpty
-                                          ? const Icon(Icons.directions_car)
+                                          ? Icon(
+                                              Icons.directions_car,
+                                              color: colorScheme.secondary,
+                                            )
                                           : null,
                                     ),
                                     title: Text(

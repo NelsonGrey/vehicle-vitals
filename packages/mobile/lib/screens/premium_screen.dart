@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -19,8 +20,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Subscriptions and Billing')),
+    return BrandScaffold(
+      title: const Text('Subscriptions and Billing'),
       body: Consumer<PremiumService>(
         builder: (context, premiumService, child) {
           if (premiumService.subscriptionTier != FeatureFlagsService.freeTier) {
@@ -181,9 +182,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
           const SizedBox(height: 8),
           Icon(Icons.star, size: 56, color: Theme.of(context).primaryColor),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Choose the subscription tier that fits your garage',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -446,17 +447,19 @@ class PremiumPlanCatalog extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        ..._tierOrder.map((tier) => _buildPlanCard(tier)),
+        ..._tierOrder.map((tier) => _buildPlanCard(context, tier)),
       ],
     );
   }
 
-  Widget _buildPlanCard(String tier) {
+  Widget _buildPlanCard(BuildContext context, String tier) {
     final bool isCurrent = currentTier == tier;
     final bool isProTier = tier == 'pro';
     final bool isPremiumTier = tier == 'premium';
 
-    final Color accentColor = isCurrent ? Colors.teal : Colors.blueGrey;
+    final Color accentColor = isCurrent
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.outline;
     final String priceLabel = _tierPriceLabel(
       tier,
       tier == 'pro' ? proPrice : premiumPrice,

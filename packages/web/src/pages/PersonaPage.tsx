@@ -43,7 +43,7 @@ export default function PersonaPage() {
             <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase text-slate-100 ring-1 ring-white/30">
               {persona.label}
             </p>
-            <h1 className="mt-4 max-w-3xl font-serif text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 max-w-3xl font-serif font-bold text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
               {persona.title}
             </h1>
             <p className="mt-4 max-w-2xl text-base text-slate-100/90 sm:text-lg">
@@ -95,7 +95,7 @@ export default function PersonaPage() {
           <p className="text-sm font-semibold uppercase text-rose-700 dark:text-rose-300">
             The problem
           </p>
-          <h2 className="mt-2 font-serif text-2xl text-slate-900 dark:text-slate-100">
+          <h2 className="content-h2">
             What gets in the way
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -106,7 +106,7 @@ export default function PersonaPage() {
           <p className="text-sm font-semibold uppercase text-blue-700 dark:text-blue-300">
             The outcome
           </p>
-          <h2 className="mt-2 font-serif text-2xl text-slate-900 dark:text-slate-100">
+          <h2 className="content-h2">
             What Vehicle-Vitals helps prove
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -117,7 +117,7 @@ export default function PersonaPage() {
 
       <section className="grid gap-5 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100">
+          <h2 className="content-h2">
             Why it matters
           </h2>
           <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
@@ -133,7 +133,7 @@ export default function PersonaPage() {
           </ul>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100">
+          <h2 className="content-h2">
             Common workflow
           </h2>
           <ol className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
@@ -152,7 +152,7 @@ export default function PersonaPage() {
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100">
+            <h2 className="content-h2">
               See the workflow behind this use case
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
@@ -178,7 +178,7 @@ export default function PersonaPage() {
       </section>
 
       <section>
-        <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100">
+        <h2 className="content-h2">
           Other persona paths
         </h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">

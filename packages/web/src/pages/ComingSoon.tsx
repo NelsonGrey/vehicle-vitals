@@ -98,7 +98,7 @@ export default function ComingSoon() {
 
               {/* Email Signup Form */}
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mb-12">
-                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-4">
+                <h3 className="content-h3 mb-4">
                   Get notified when we launch
                 </h3>
                 <form onSubmit={handleEmailSignup} className="space-y-4">
@@ -134,7 +134,7 @@ export default function ComingSoon() {
             {/* Feature Cards */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
-                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
+                <h3 className="content-h3 mb-3">
                   VIN lookup & quick add
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400">
@@ -143,7 +143,7 @@ export default function ComingSoon() {
                 </p>
               </div>
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
-                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
+                <h3 className="content-h3 mb-3">
                   Maintenance, organized
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400">
@@ -152,7 +152,7 @@ export default function ComingSoon() {
                 </p>
               </div>
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
-                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
+                <h3 className="content-h3 mb-3">
                   Your garage, anywhere
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400">
@@ -161,7 +161,7 @@ export default function ComingSoon() {
                 </p>
               </div>
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-sm">
-                <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-3">
+                <h3 className="content-h3 mb-3">
                   Own your history
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400">
@@ -173,7 +173,7 @@ export default function ComingSoon() {
 
             {/* Suggestion Form */}
             <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 rounded-xl shadow-sm max-w-7xl mx-auto mt-12">
-              <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-4 text-center">
+              <h3 className="content-h3 mb-4 text-center">
                 Have a suggestion?
               </h3>
               <p className="text-slate-600 dark:text-slate-400 mb-6 text-center">

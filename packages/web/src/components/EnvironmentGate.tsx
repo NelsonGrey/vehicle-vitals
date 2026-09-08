@@ -215,7 +215,7 @@ export default function EnvironmentGate({
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+          <h1 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 mb-2">
             {environment.charAt(0).toUpperCase() + environment.slice(1)}{' '}
             Environment
           </h1>

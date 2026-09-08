@@ -58,9 +58,14 @@ describe('Layout Component', () => {
       </MemoryRouter>
     );
 
+    // Deliberately plain document-flow scrolling (min-h-[100dvh] + flex-col,
+    // no fixed-height/overflow-hidden shell) -- the earlier lg:h-[100dvh]
+    // fixed-height pattern was the root cause of the footer inconsistently
+    // landing mid-page instead of pinned to the bottom (its rendered height
+    // never actually matched the viewport in practice); see Layout.tsx.
     const appRoot = container.firstChild;
     expect(appRoot).toHaveClass('min-h-[100dvh]');
-    expect(appRoot).toHaveClass('lg:h-[100dvh]');
+    expect(appRoot).not.toHaveClass('lg:h-[100dvh]');
     expect(appRoot).not.toHaveClass('overflow-hidden');
 
     const mainContentContainer = container.querySelector('main > div');

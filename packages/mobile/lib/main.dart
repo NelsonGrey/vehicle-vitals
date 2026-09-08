@@ -157,9 +157,7 @@ class VehicleVitalsApp extends StatelessWidget {
           create: (context) => notificationService,
           update: (context, authService, service) {
             final resolved = service ?? notificationService;
-            unawaited(
-              resolved.syncForAuthUser(authService.currentUser?.uid),
-            );
+            unawaited(resolved.syncForAuthUser(authService.currentUser?.uid));
             return resolved;
           },
         ),
@@ -191,20 +189,7 @@ class VehicleVitalsApp extends StatelessWidget {
               darkTheme: AppTheme.darkTheme(),
               themeMode: ThemeMode.system,
               routerConfig: _createRouter(authService, onboardingService),
-              builder: (context, child) {
-                return Column(
-                  children: [
-                    if (kDebugMode && !_screenshotMode)
-                      const _DebugFirebaseEnvBanner(),
-                    if (!_screenshotMode)
-                      const SafeArea(
-                        bottom: false,
-                        child: AdBanner(margin: EdgeInsets.zero),
-                      ),
-                    Expanded(child: child ?? const SizedBox.shrink()),
-                  ],
-                );
-              },
+              builder: (context, child) => child ?? const SizedBox.shrink(),
             ),
           );
         },
@@ -491,35 +476,6 @@ class VehicleVitalsApp extends StatelessWidget {
           redirect: (context, state) => '/app/timeline',
         ),
       ],
-    );
-  }
-}
-
-class _DebugFirebaseEnvBanner extends StatelessWidget {
-  const _DebugFirebaseEnvBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final options = Firebase.app().options;
-    final env = DefaultFirebaseOptions.currentEnvironmentLabel;
-    final projectId = options.projectId;
-
-    return SafeArea(
-      bottom: false,
-      child: Container(
-        width: double.infinity,
-        color: Colors.amber.shade700,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Text(
-          'DEBUG Firebase env=$env | project=$projectId',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/app_bottom_nav.dart';
@@ -538,7 +539,11 @@ class _RecordsScreenState extends State<RecordsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const BrandScaffold(
+        title: Text('Vehicle Records'),
+        body: Center(child: CircularProgressIndicator()),
+        bottomNavigationBar: AppBottomNav(currentIndex: 0),
+      );
     }
 
     var requiredCount = 0;
@@ -580,8 +585,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
       vehicleYear: _vehicle?.year,
     );
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Vehicle Records')),
+    return BrandScaffold(
+      title: const Text('Vehicle Records'),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -609,13 +614,15 @@ class _RecordsScreenState extends State<RecordsScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.12),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.secondary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Upload in progress. Please wait before saving.',
                         style: TextStyle(
-                          color: Colors.blue,
+                          color: Theme.of(context).colorScheme.secondary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -746,7 +753,10 @@ class _OwnershipInsightsPanel extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Maintenance spend captured: ${formatCurrencyAmount(insights.maintenanceTotalCost)}',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             Text(
               '${insights.maintenanceDocsCount} doc${insights.maintenanceDocsCount == 1 ? '' : 's'}'
@@ -828,7 +838,10 @@ class _OwnershipInsightsPanel extends StatelessWidget {
               insights.estimatedMonthlyPayment != null
                   ? 'Estimated monthly payment: ${formatCurrencyAmount(insights.estimatedMonthlyPayment!)}'
                   : 'Estimated monthly payment: add finance docs',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             Text(
               'Finance docs detected: ${insights.financeDocsCount}',
@@ -838,7 +851,10 @@ class _OwnershipInsightsPanel extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Estimated value realized: ${formatCurrencyAmount(insights.estimatedValueRealized!)}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               if (insights.estimatedCurrentValue != null)
                 Text(

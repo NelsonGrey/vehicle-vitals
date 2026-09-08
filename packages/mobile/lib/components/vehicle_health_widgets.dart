@@ -111,7 +111,10 @@ class HealthComponentCard extends StatelessWidget {
             children: [
               Text(
                 component.label,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               const SizedBox(height: 8),
               Text(

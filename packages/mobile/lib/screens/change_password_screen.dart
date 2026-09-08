@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../components/password_requirements_checklist.dart';
 import '../services/auth_service.dart';
 import '../services/password_policy_service.dart';
 import '../utils/user_facing_error.dart';
@@ -86,9 +88,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       await authService.updatePassword(newPassword);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password updated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Password updated')));
         context.pop();
       }
     } catch (e) {
@@ -115,8 +117,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Change Password')),
+    return BrandScaffold(
+      title: const Text('Change Password'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -175,10 +177,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         TextFormField(
                           controller: _newPasswordController,
                           obscureText: !_showNewPassword,
+                          onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
                             labelText: 'New password',
-                            helperText: _passwordPolicyService.hint(_policy),
-                            helperMaxLines: 2,
                             suffixIcon: IconButton(
                               onPressed: () => setState(
                                 () => _showNewPassword = !_showNewPassword,
@@ -195,6 +196,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           ),
                           validator: (value) => _passwordPolicyService
                               .quickCheck(value ?? '', _policy),
+                        ),
+                        PasswordRequirementsChecklist(
+                          password: _newPasswordController.text,
+                          policy: _policy,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(

@@ -1006,8 +1006,6 @@ jobs:
           } > packages/web/.env.production
 
           echo "✅ Web Firebase env prepared for $TARGET_ENV (project: $PROJECT_ID, coming_soon: $SHOW_COMING_SOON)"
-          echo "🔍 TEMP DEBUG (remove after diagnosing): secret var lengths — VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT=${#VITE_ALLOWED_EMAIL_DOMAINS_DEVELOPMENT} VITE_ALLOWED_EMAILS_DEVELOPMENT=${#VITE_ALLOWED_EMAILS_DEVELOPMENT} resolved-VITE_ALLOWED_EMAIL_DOMAINS=${#VITE_ALLOWED_EMAIL_DOMAINS} resolved-VITE_ALLOWED_EMAILS=${#VITE_ALLOWED_EMAILS}"
-          echo "🔍 TEMP DEBUG: .env.production lines containing ALLOWED: $(grep -c ALLOWED packages/web/.env.production || echo 0)"
 
       - name: Build Web App
         working-directory: packages/web

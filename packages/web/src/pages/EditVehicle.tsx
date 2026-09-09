@@ -536,10 +536,8 @@ export default function EditVehicle() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h2 className="font-serif font-bold text-3xl text-slate-800 dark:text-slate-100 m-0">
-            Edit Vehicle
-          </h2>
-          <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
+          <h2 className="ui-h1">Edit Vehicle</h2>
+          <p className="ui-body mt-2">
             {form.year} {form.make} {form.model} • {form.vin}
           </p>
         </div>

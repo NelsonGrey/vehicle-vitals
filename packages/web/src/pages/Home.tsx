@@ -553,9 +553,7 @@ export default function Home() {
       <main>
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-              Garage
-            </h1>
+            <h1 className="ui-h1">Garage</h1>
             {householdName && (
               <p className="mt-1 mb-0 inline-flex items-center gap-1 text-xs font-medium text-accent-700 dark:text-accent-300">
                 <span aria-hidden="true">🏠</span>
@@ -563,7 +561,7 @@ export default function Home() {
               </p>
             )}
             {vehicles.length > 0 && (
-              <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
+              <p className="ui-body mt-2">
                 {activeVehicles.length} active vehicle
                 {activeVehicles.length === 1 ? '' : 's'} in garage
                 {storedVehicles.length > 0

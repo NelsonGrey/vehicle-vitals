@@ -403,10 +403,8 @@ export default function ServiceProviders() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
-      <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-        Shops &amp; Services
-      </h1>
-      <p className="text-slate-600 dark:text-slate-300 mt-2 mb-6">
+      <h1 className="ui-h1">Shops &amp; Services</h1>
+      <p className="ui-body mt-2 mb-6">
         Find nearby repair shops, dealerships, body shops, vehicle washes, and
         detailers, and keep track of the ones you trust.
       </p>

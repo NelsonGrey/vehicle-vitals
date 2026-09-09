@@ -64,11 +64,11 @@ export default function Landing() {
   }, [meta.title]);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <div className="h-dvh flex flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <PageSEO meta={meta} />
       <SiteHeader overlay={false} />
       <HeaderAdBar />
-      <main className="site-scroll-area flex-1 overflow-x-hidden bg-slate-50 dark:bg-slate-900">
+      <main className="site-scroll-area flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 dark:bg-slate-900">
         <section className="marketing-page-section py-8 sm:py-10 lg:py-12">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-5">
             <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">

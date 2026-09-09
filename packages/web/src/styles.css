@@ -71,6 +71,9 @@ select:focus-visible {
 .ui-body {
   @apply text-sm leading-normal text-slate-600 dark:text-slate-400;
 }
+.ui-hint {
+  @apply text-xs leading-normal text-slate-500 dark:text-slate-400;
+}
 
 /* Design tokens - Layout only (colors handled by Tailwind) */
 :root {

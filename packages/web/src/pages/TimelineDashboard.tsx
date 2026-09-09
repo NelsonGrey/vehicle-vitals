@@ -361,10 +361,8 @@ export default function TimelineDashboard() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 m-0">
-            Service History
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2 mb-0">
+          <h1 className="ui-h1">Service History</h1>
+          <p className="ui-body mt-2">
             Review completed work across the garage in reverse chronological
             order.
           </p>

@@ -536,10 +536,8 @@ export default function EditVehicle() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h2 className="font-serif font-bold text-3xl text-slate-800 dark:text-slate-100 m-0">
-            Edit Vehicle
-          </h2>
-          <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
+          <h2 className="ui-h1">Edit Vehicle</h2>
+          <p className="ui-body mt-2">
             {form.year} {form.make} {form.model} • {form.vin}
           </p>
         </div>
@@ -1720,7 +1718,7 @@ function MaintenanceList({
             </div>
           </div>
           {!hasCalendarSync && (
-            <p className="mb-3 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-200">
+            <p className="mb-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
               Calendar sync is available on Pro and Premium plans.
             </p>
           )}
@@ -1960,7 +1958,7 @@ function MaintenanceList({
               Photos/Receipts
             </label>
             {!hasAiAnalysis && (
-              <p className="mb-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-800 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-200">
+              <p className="mb-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
                 AI receipt extraction is a Pro and Premium feature. Attachments
                 will still upload for manual record-keeping.
               </p>

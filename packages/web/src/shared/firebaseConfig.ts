@@ -1,5 +1,5 @@
 // Firebase configuration for web app
-import { getApps, initializeApp, FirebaseApp } from 'firebase/app';
+import { getApp, getApps, initializeApp, FirebaseApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, Auth } from 'firebase/auth';
 import {
   connectFirestoreEmulator,
@@ -254,6 +254,28 @@ const db: Firestore = getFirestore(app);
 const functions: Functions = getFunctions(app);
 const storage: FirebaseStorage = getStorage(app);
 
+// A second, fully independent Firebase App instance used only by
+// EnvironmentGate's team-access check (dev/staging only). It shares the
+// same project config, but keeps its own Auth instance and persisted
+// session -- signing in here must never touch `auth` above, since
+// AuthContext's onAuthStateChanged listener is bound to that instance and
+// any app route (e.g. MarketingRoute) reacting to a transient signed-in
+// state there would defeat the whole point of a separate access gate. A
+// same-instance "sign in, check, then sign back out" approach was tried
+// first and had exactly that race: onAuthStateChanged fired with the new
+// user before the sign-out call resolved, long enough for a redirect to
+// fire. A second app instance sidesteps the race entirely rather than
+// trying to win it.
+const GATE_APP_NAME = 'vehicle-vitals-gate';
+const gateApp: FirebaseApp = (() => {
+  try {
+    return getApp(GATE_APP_NAME);
+  } catch {
+    return initializeApp(firebaseConfig, GATE_APP_NAME);
+  }
+})();
+const gateAuth: Auth = getAuth(gateApp);
+
 // ─── GA4 event tracking ──────────────────────────────────────────────────────
 // GTM (see index.html) owns GA4 configuration and tags for this property.
 // This is the single channel the app uses to send events — it only ever
@@ -344,7 +366,7 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
 }
 
 // Export Firebase services
-export { app, auth, db, functions, remoteConfig, storage };
+export { app, auth, db, functions, gateAuth, remoteConfig, storage };
 
 // Legacy exports for compatibility
 export const getFirebaseConfig = (): FirebaseConfig => firebaseConfig;

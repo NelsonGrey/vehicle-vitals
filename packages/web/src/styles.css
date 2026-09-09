@@ -20,9 +20,59 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #0f766e;
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* ─── Canonical typography scale ──────────────────────────────────────────
+ * Two contexts, deliberately different, not the same rules applied
+ * inconsistently:
+ *   - "content" (.content-h1/h2/h3/.content-body/.content-caption): long-form
+ *     marketing/help/legal pages (Landing, Subscription, Help, Support,
+ *     Instructions, Privacy, Terms, PersonaPage, ComingSoon). Serif
+ *     headings, roomier body text -- these pages are read, not scanned.
+ *   - "ui" (.ui-h1/h2/h3/.ui-label/.ui-body): authenticated app screens --
+ *     cards, forms, dense lists. Sans-serif, tighter, prioritizes scanning
+ *     density over editorial feel.
+ * Both scales share the same color tokens (slate-900/dark:slate-100 for
+ * headings, slate-600/dark:slate-400 for secondary text) so light/dark mode
+ * and hierarchy read consistently across both contexts even though size and
+ * font-family differ.
+ */
+.content-h1 {
+  @apply font-serif font-bold text-3xl sm:text-4xl text-slate-900 dark:text-slate-100;
+}
+.content-h2 {
+  @apply font-serif font-bold text-2xl sm:text-3xl text-slate-900 dark:text-slate-100;
+}
+.content-h3 {
+  @apply font-serif font-semibold text-xl text-slate-900 dark:text-slate-100;
+}
+.content-body {
+  @apply text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400;
+}
+.content-caption {
+  @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+}
+
+.ui-h1 {
+  @apply font-semibold text-2xl text-slate-900 dark:text-slate-100;
+}
+.ui-h2 {
+  @apply font-semibold text-xl text-slate-900 dark:text-slate-100;
+}
+.ui-h3 {
+  @apply font-semibold text-lg text-slate-900 dark:text-slate-100;
+}
+.ui-label {
+  @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+}
+.ui-body {
+  @apply text-sm leading-normal text-slate-600 dark:text-slate-400;
+}
+.ui-hint {
+  @apply text-xs leading-normal text-slate-500 dark:text-slate-400;
 }
 
 /* Design tokens - Layout only (colors handled by Tailwind) */

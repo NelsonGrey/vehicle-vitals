@@ -217,16 +217,14 @@ export function AccountConsolidationContent() {
       )}
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-6">
-        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
-          Account Consolidation
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
+        <h2 className="ui-h2">Account Consolidation</h2>
+        <p className="ui-body">
           If you have a split account (same email across web and mobile but
           different accounts), use this tool to merge vehicles and data from
           your secondary account into this primary account.
         </p>
         <div className="rounded-lg border border-warning-300 dark:border-warning-700 bg-warning-50 dark:bg-warning-950/30 px-4 py-3">
-          <p className="text-sm text-warning-900 dark:text-warning-200 m-0">
+          <p className="text-sm text-warning-900 dark:text-warning-200">
             <strong>How to find the other account’s Support ID:</strong> Sign in
             to the other account, open Account, and use Copy Support ID.
           </p>
@@ -271,7 +269,7 @@ export function AccountConsolidationContent() {
                 >
                   Verification Code
                 </label>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+                <p className="ui-hint mb-2">
                   Sent to {consolidationCodeSentTo}. Only the owner of that
                   account can retrieve this code.
                 </p>
@@ -308,10 +306,10 @@ export function AccountConsolidationContent() {
 
           {consolidationResult && (
             <div className="rounded-lg border border-accent-300 dark:border-accent-700 bg-accent-50 dark:bg-accent-950/30 px-4 py-3">
-              <p className="text-sm text-accent-900 dark:text-accent-200 m-0 mb-2">
+              <p className="text-sm text-accent-900 dark:text-accent-200 mb-2">
                 <strong>Consolidation successful!</strong>
               </p>
-              <ul className="text-sm text-accent-800 dark:text-accent-300 m-0 pl-5">
+              <ul className="text-sm text-accent-800 dark:text-accent-300 pl-5">
                 <li>
                   Migrated vehicles: {consolidationResult.vehiclesMigrated}
                 </li>
@@ -333,32 +331,28 @@ export function AccountConsolidationContent() {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-4">
-        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
-          Household Garage
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-0">
+        <h2 className="ui-h2">Household Garage</h2>
+        <p className="ui-body">
           Organize the vehicles your household relies on in one garage. This
           release keeps management with the signed-in account; invitations and
           additional member access are not yet available.
         </p>
 
         {householdStatusLoading ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
-            Loading household status…
-          </p>
+          <p className="ui-body">Loading household status…</p>
         ) : householdStatus?.orgType === 'household' ? (
           <div className="rounded-lg border border-accent-300 dark:border-accent-700 bg-accent-50 dark:bg-accent-950/30 px-4 py-3 space-y-1">
-            <p className="text-sm text-accent-900 dark:text-accent-200 m-0">
+            <p className="text-sm text-accent-900 dark:text-accent-200">
               <strong>{householdStatus.name || 'Household Garage'}</strong> is a
               household garage managed by this account.
             </p>
-            <p className="text-xs text-accent-800 dark:text-accent-300 m-0">
+            <p className="text-xs text-accent-800 dark:text-accent-300">
               Storage mode:{' '}
               {householdStatus.garageStorageMode === 'org_scoped'
                 ? 'Household garage'
                 : 'Household garage (migration in progress)'}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 mb-0">
+            <p className="ui-hint mt-2">
               Additional member invitations are not available in this release.
               This household garage is currently managed from the signed-in
               account.
@@ -382,7 +376,7 @@ export function AccountConsolidationContent() {
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
               />
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+            <p className="ui-hint">
               Your existing vehicles will be copied into the household garage.
               You remain the owner and keep access to your personal garage.
             </p>
@@ -405,9 +399,7 @@ export default function AccountConsolidation() {
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
-        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-          Accounts &amp; Household Garage
-        </h1>
+        <h1 className="ui-h1">Accounts &amp; Household Garage</h1>
         <Link
           to="/app/profile"
           className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"

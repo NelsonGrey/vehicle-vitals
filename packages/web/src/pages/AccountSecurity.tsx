@@ -147,31 +147,23 @@ export function AccountSecurityContent() {
       )}
 
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6">
-        <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4">
-          Account Overview
-        </h2>
+        <h2 className="ui-h2 mb-4">Account Overview</h2>
         <div className="space-y-3 text-sm">
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
-              Email
-            </p>
-            <p className="font-medium text-slate-900 dark:text-slate-100 m-0 break-all">
+            <p className="ui-hint mb-1">Email</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100 break-all">
               {user.email}
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
-              User ID
-            </p>
-            <p className="font-medium text-slate-900 dark:text-slate-100 m-0 break-all">
+            <p className="ui-hint mb-1">User ID</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100 break-all">
               {user.uid}
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
-              Linked providers
-            </p>
-            <p className="font-medium text-slate-900 dark:text-slate-100 m-0">
+            <p className="ui-hint mb-1">Linked providers</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100">
               {providerLabels.length ? providerLabels.join(', ') : 'Unknown'}
             </p>
             <div className="mt-3 grid grid-cols-1 gap-2">
@@ -218,13 +210,13 @@ export function AccountSecurityContent() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
-        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
-          Change Password
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-4">
-          Update your password to keep your account secure.
-        </p>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-4">
+        <div>
+          <h2 className="ui-h2">Change Password</h2>
+          <p className="ui-body mt-1">
+            Update your password to keep your account secure.
+          </p>
+        </div>
         <form onSubmit={onChangePassword} className="space-y-4">
           <div>
             <label
@@ -298,10 +290,8 @@ export default function AccountSecurity() {
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-            Account &amp; Security
-          </h1>
-          <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
+          <h1 className="ui-h1">Account &amp; Security</h1>
+          <p className="ui-body mt-2">
             Signed in as{' '}
             <strong className="text-slate-900 dark:text-slate-100">
               {user.email}

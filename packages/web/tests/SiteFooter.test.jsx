@@ -31,7 +31,7 @@ describe('SiteFooter', () => {
     const footer = screen.getByRole('contentinfo');
 
     // Getting Started and Product Tour are paired together and styled
-    // distinctly (teal) from every other footer link, always present
+    // distinctly (blue) from every other footer link, always present
     // regardless of auth state.
     const learnMoreNav = within(footer).getByRole('navigation', {
       name: /Learn more/i,
@@ -45,8 +45,8 @@ describe('SiteFooter', () => {
     });
     expect(gettingStartedLink).toHaveAttribute('href', '/getting-started');
     expect(productTourLink).toHaveAttribute('href', '/product-tour');
-    expect(gettingStartedLink.className).toMatch(/text-teal-100/);
-    expect(learnMoreNav.className).toMatch(/text-teal-300/);
+    expect(gettingStartedLink.className).toMatch(/text-blue-100/);
+    expect(learnMoreNav.className).toMatch(/text-blue-300/);
     expect(
       within(footer).queryByRole('link', { name: /^Screens$/i })
     ).not.toBeInTheDocument();

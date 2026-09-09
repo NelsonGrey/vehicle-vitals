@@ -103,13 +103,11 @@ export default function Coverage() {
   return (
     <div className="w-full max-w-3xl mx-auto px-4 sm:px-5 py-5">
       {vehicle && (
-        <h1 className="font-serif font-bold text-3xl text-slate-900 dark:text-slate-100 m-0 mb-1">
+        <h1 className="ui-h1 mb-1">
           {vehicle.year} {vehicle.make} {vehicle.model}
         </h1>
       )}
-      <p className="text-slate-500 dark:text-slate-400 mb-5">
-        Coverage & Manuals
-      </p>
+      <p className="ui-body mb-5">Coverage &amp; Manuals</p>
 
       {warranty && (
         <section className="mb-6 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">

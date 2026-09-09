@@ -1,6 +1,6 @@
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { useCallback, useMemo, useState } from 'react';
-import { auth } from '../shared/firebaseConfig';
+import { gateAuth } from '../shared/firebaseConfig';
 
 interface EnvironmentGateProps {
   children: React.ReactNode;
@@ -32,17 +32,24 @@ const GATE_EMAIL_KEY = 'vv_env_gate_email';
  * never saw a signed-in user. This restore renders it *inside*
  * <AuthProvider> instead (see App.tsx) so `user` is actually populated.
  *
- * 2026-09-09: stopped using AuthContext's `user`/`onAuthStateChanged` for
- * the gate's own authorized state. The gate's Google Sign-In shares the
- * exact same Firebase Auth instance as the app's real login -- passing the
- * gate was silently also signing the visitor into the app itself (as that
- * Google account), and App.tsx's MarketingRoute then redirected them straight
- * to /app, so they never actually saw the marketing pages at all. Now the
- * gate signs back out of the shared Firebase Auth session immediately after
- * confirming the email is allowlisted, and remembers "this tab passed the
- * gate" via sessionStorage instead -- so passing the gate no longer implies
- * being logged into the app. Logging into the app is a separate, deliberate
- * step via the normal Login page, unaffected by this gate.
+ * 2026-09-09: stopped using AuthContext's `user`/`onAuthStateChanged`, and
+ * stopped using the app's own Firebase Auth instance entirely, for the
+ * gate's own authorized state. The gate's Google Sign-In originally shared
+ * the exact same Firebase Auth instance as the app's real login -- passing
+ * the gate was silently also signing the visitor into the app itself (as
+ * that Google account), and App.tsx's MarketingRoute then redirected them
+ * straight to /app, so they never actually saw the marketing pages at all.
+ * A first fix tried signing back out of that shared instance right after
+ * confirming the email, but that had a race: AuthContext's
+ * onAuthStateChanged fires with the new user before the sign-out call
+ * resolves, which was long enough for MarketingRoute's redirect to fire
+ * anyway. The gate now signs in through `gateAuth`, a second, fully
+ * independent Firebase App instance (see firebaseConfig.ts) that
+ * AuthContext never observes at all -- no shared state, no race. "This tab
+ * passed the gate" is remembered via sessionStorage, so passing the gate
+ * no longer implies being logged into the app. Logging into the app is a
+ * separate, deliberate step via the normal Login page, unaffected by this
+ * gate.
  */
 export default function EnvironmentGate({
   children,
@@ -129,7 +136,10 @@ export default function EnvironmentGate({
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      const credential = await signInWithPopup(auth, provider);
+      // gateAuth is a Firebase App instance the app's own auth/AuthContext
+      // never observes -- see the class doc comment for why that isolation
+      // matters here.
+      const credential = await signInWithPopup(gateAuth, provider);
       const signedInEmail = credential.user.email;
 
       if (isEmailAuthorized(signedInEmail)) {
@@ -149,9 +159,9 @@ export default function EnvironmentGate({
         );
       }
 
-      // Always sign back out of the shared Firebase Auth session -- this is
-      // a team-access gate, not an app login. See the class doc comment.
-      await signOut(auth).catch(() => {});
+      // Tidy up gateAuth's own session -- it isn't observed by anything
+      // else, so this is just hygiene, not a fix for anything.
+      await signOut(gateAuth).catch(() => {});
     } catch (err) {
       const error = err as { code?: string; message?: string };
       if (error.code !== 'auth/popup-closed-by-user') {

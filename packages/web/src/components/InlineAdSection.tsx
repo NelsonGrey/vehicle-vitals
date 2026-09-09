@@ -4,11 +4,13 @@ import AdPlacement from './AdPlacement';
 interface InlineAdSectionProps {
   placement?: WebAdPlacement;
   className?: string;
+  onVisibilityChange?: (visible: boolean) => void;
 }
 
 export default function InlineAdSection({
   placement = 'maintenanceHistory',
   className,
+  onVisibilityChange,
 }: InlineAdSectionProps) {
   return (
     <AdPlacement
@@ -16,6 +18,7 @@ export default function InlineAdSection({
       className={`my-0 ${className || ''}`}
       hideLabel
       surface="flat"
+      onVisibilityChange={onVisibilityChange}
     />
   );
 }

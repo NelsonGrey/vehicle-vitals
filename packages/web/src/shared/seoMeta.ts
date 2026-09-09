@@ -38,9 +38,14 @@ const organizationSchema = {
   url: APP_URL,
   logo: DEFAULT_OG_IMAGE,
   sameAs: [
-    'https://x.com/vehiclevitals',
-    'https://instagram.com/vehiclevitals',
-    'https://youtube.com/@vehiclevitals',
+    'https://www.threads.com/@vehicle.vitals',
+    'https://www.facebook.com/profile.php?id=61593861356748',
+    'https://www.instagram.com/vehicle.vitals/',
+    'https://www.reddit.com/r/VehicleVitals/',
+    'https://www.reddit.com/user/vehiclevitals/',
+    'https://www.tiktok.com/@vehicle.vitals',
+    'https://x.com/vehiclevitalapp',
+    'https://www.youtube.com/@vehicle-vitals',
   ],
 };
 

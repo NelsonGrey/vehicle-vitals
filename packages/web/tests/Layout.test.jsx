@@ -58,10 +58,18 @@ describe('Layout Component', () => {
       </MemoryRouter>
     );
 
+    // Deliberately a fixed-height shell (h-dvh + overflow-hidden), not plain
+    // document-flow scrolling -- the footer and header must always stay on
+    // screen, with only <main> scrolling internally to accommodate longer
+    // content. An earlier attempt used min-h-[100dvh] (document-flow
+    // scrolling, footer pushed below the fold on long pages / floating with
+    // a gap on short ones) and was corrected back to this fixed-shell
+    // pattern 2026-09-09 after user testing showed the footer needs to
+    // always be visible; see Layout.tsx.
     const appRoot = container.firstChild;
-    expect(appRoot).toHaveClass('min-h-[100dvh]');
-    expect(appRoot).toHaveClass('lg:h-[100dvh]');
-    expect(appRoot).not.toHaveClass('overflow-hidden');
+    expect(appRoot).toHaveClass('h-dvh');
+    expect(appRoot).toHaveClass('overflow-hidden');
+    expect(appRoot).not.toHaveClass('min-h-[100dvh]');
 
     const mainContentContainer = container.querySelector('main > div');
     expect(mainContentContainer).toBeTruthy();

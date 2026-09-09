@@ -327,12 +327,12 @@ export default function SubscriptionPage() {
     <div className="marketing-pricing-page mx-auto w-full max-w-7xl px-5 py-6">
       <PageSEO meta={ROUTE_SEO['/subscription']} />
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+        <h1 className="content-h1">
           {isBillingRoute
             ? 'Subscriptions and billing'
             : 'Pricing for every kind of garage'}
         </h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        <p className="content-body mt-2">
           {isBillingRoute
             ? 'Choose the subscription tier that matches the job your garage needs to do. Capacity matters, but each plan also adds stronger planning, coordination, automation, and support.'
             : 'Free helps people learn and document. Pro helps them plan and coordinate. Premium adds forecasting and automation. Enterprise adds governance, integrations, and dedicated support.'}
@@ -365,15 +365,15 @@ export default function SubscriptionPage() {
         )}
 
         {isBillingRoute && summary && (
-          <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/30">
-            <p className="text-sm font-semibold text-teal-800 dark:text-teal-200">
+          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+            <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
               Current subscription: {getTierDisplayName(summary.tier)}
             </p>
-            <p className="mt-1 text-sm text-teal-900/90 dark:text-teal-100/90">
+            <p className="mt-1 text-sm text-blue-900/90 dark:text-blue-100/90">
               {summary.displayStatus}
             </p>
             {subscription && isInTrial(subscription) && (
-              <p className="mt-1 text-xs font-medium text-teal-900 dark:text-teal-100">
+              <p className="mt-1 text-xs font-medium text-blue-900 dark:text-blue-100">
                 Trial active. Billing begins automatically after trial ends.
               </p>
             )}
@@ -397,7 +397,7 @@ export default function SubscriptionPage() {
                       setIsOpeningPortal(false);
                     }
                   }}
-                  className="mt-3 inline-flex rounded-md border border-teal-700 bg-white px-4 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-teal-600 dark:bg-transparent dark:text-teal-200 dark:hover:bg-teal-950/30"
+                  className="mt-3 inline-flex rounded-md border border-blue-700 bg-white px-4 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-blue-600 dark:bg-transparent dark:text-blue-200 dark:hover:bg-blue-950/30"
                 >
                   {isOpeningPortal
                     ? 'Opening billing portal…'
@@ -491,14 +491,12 @@ export default function SubscriptionPage() {
               key={planTier}
               className={`rounded-xl border p-5 shadow-sm ${
                 isCurrent
-                  ? 'border-teal-500 bg-teal-50 dark:border-teal-500 dark:bg-teal-950/20'
+                  ? 'border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20'
                   : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
               }`}
             >
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                {getTierDisplayName(planTier)}
-              </h2>
-              <p className="mt-2 text-sm font-semibold text-teal-700 dark:text-teal-300">
+              <h2 className="ui-h2">{getTierDisplayName(planTier)}</h2>
+              <p className="mt-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
                 {positioning.audience}
               </p>
 
@@ -530,7 +528,7 @@ export default function SubscriptionPage() {
                   <li key={highlight} className="flex gap-2">
                     <span
                       aria-hidden="true"
-                      className="mt-1 size-1.5 rounded-full bg-teal-600"
+                      className="mt-1 size-1.5 rounded-full bg-blue-600"
                     />
                     <span>{highlight}</span>
                   </li>
@@ -628,7 +626,7 @@ export default function SubscriptionPage() {
                   className={`mt-4 w-full rounded-md px-4 py-2 text-sm font-semibold ${
                     isCurrent || isSubmittingTierChange || isAppOffline
                       ? 'cursor-not-allowed bg-slate-300 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
-                      : 'bg-teal-700 text-white hover:bg-teal-800'
+                      : 'bg-blue-700 text-white hover:bg-blue-800'
                   }`}
                 >
                   {isAppOffline && !isCurrent
@@ -638,7 +636,7 @@ export default function SubscriptionPage() {
               ) : planTier === 'enterprise' ? (
                 <Link
                   to="/support"
-                  className="mt-4 inline-flex w-full justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+                  className="mt-4 inline-flex w-full justify-center rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                 >
                   Contact Sales
                 </Link>
@@ -651,7 +649,7 @@ export default function SubscriptionPage() {
                   onClick={() =>
                     trackPricingPlanClick(planTier, billingPeriod, ctaText)
                   }
-                  className="mt-4 inline-flex w-full justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+                  className="mt-4 inline-flex w-full justify-center rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                   wrapperClassName="mt-4 inline-flex w-full flex-col items-center gap-1"
                 >
                   {ctaText}
@@ -664,9 +662,7 @@ export default function SubscriptionPage() {
 
       {!isBillingRoute && (
         <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            How to choose
-          </h2>
+          <h2 className="content-h3 mb-3">How to choose</h2>
           <div className="mt-3 grid gap-3 text-sm text-slate-600 dark:text-slate-300 md:grid-cols-3">
             <p>
               Choose Free when you need one reliable place to learn the habit,
@@ -686,10 +682,8 @@ export default function SubscriptionPage() {
       )}
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-          Value by tier
-        </h3>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+        <h3 className="content-h3 mb-2">Value by tier</h3>
+        <p className="content-body">
           Vehicle capacity still affects cost, but the upgrade reason should be
           the workflow value unlocked at each tier.
         </p>
@@ -736,9 +730,7 @@ export default function SubscriptionPage() {
       </div>
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-          Feature comparison
-        </h3>
+        <h3 className="content-h3 mb-2">Feature comparison</h3>
         <div className="mt-3 overflow-x-auto">
           <table className="min-w-full border-collapse text-sm">
             <thead>

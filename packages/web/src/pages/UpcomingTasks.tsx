@@ -830,10 +830,8 @@ export default function UpcomingTasks() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0 mb-2">
-            Maintenance Plan
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 m-0">
+          <h1 className="ui-h1 mb-2">Maintenance Plan</h1>
+          <p className="ui-body">
             Stay ahead of maintenance with upcoming service recommendations for
             all your vehicles.
           </p>

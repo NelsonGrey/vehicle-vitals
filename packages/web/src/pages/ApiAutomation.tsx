@@ -178,12 +178,12 @@ export function ApiAutomationContent() {
 
       {!hasApiAccess ? (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-3">
-          <p className="text-sm text-slate-700 dark:text-slate-300 m-0">
+          <p className="ui-body">
             Connect your garage to Zapier, IFTTT, or your own tools with a
             REST API key — automate reminders, sync service records, and
             build custom integrations.
           </p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+          <p className="ui-body">
             API access and Zapier integration are included with Premium and
             Enterprise plans.
           </p>
@@ -196,13 +196,13 @@ export function ApiAutomationContent() {
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-5">
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">
+          <p className="ui-body">
             Manage API access keys for integrations and automation tools.
           </p>
 
           {createdApiKeySecret && (
             <div className="rounded-lg border border-warning-300 dark:border-warning-700 bg-warning-50 dark:bg-warning-950/30 px-4 py-3">
-              <p className="text-xs text-warning-700 dark:text-warning-300 mt-0 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-warning-700 dark:text-warning-300 mb-1">
                 New API key (shown once)
               </p>
               <code className="text-sm break-all text-warning-900 dark:text-warning-200">
@@ -239,17 +239,13 @@ export function ApiAutomationContent() {
           </div>
 
           <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0 mb-0">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Active and historical keys
             </h3>
             {apiAccessLoading ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
-                Loading keys...
-              </p>
+              <p className="ui-body">Loading keys...</p>
             ) : apiAccessKeys.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
-                No API keys created yet.
-              </p>
+              <p className="ui-body">No API keys created yet.</p>
             ) : (
               <div className="space-y-2">
                 {apiAccessKeys.map(key => (
@@ -259,13 +255,13 @@ export function ApiAutomationContent() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-medium text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                        <p className="font-medium text-slate-900 dark:text-slate-100 mb-1">
                           {key.label || 'Untitled key'} ({key.keyPrefix}...)
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           Created: {formatTimestamp(key.createdAt)}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           Last used: {formatTimestamp(key.lastUsedAt)}
                         </p>
                       </div>
@@ -301,30 +297,32 @@ export function ApiAutomationContent() {
 
           {hasZapierIntegration && (
             <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-2">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0 mb-0">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Zapier webhook endpoint
               </h3>
               {zapierWebhookUrl ? (
-                <div className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-1">
-                    Webhook URL
-                  </p>
-                  <code className="text-sm break-all text-slate-900 dark:text-slate-100">
-                    {zapierWebhookUrl}
-                  </code>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 mb-0">
+                <div className="rounded-md border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                      Webhook URL
+                    </p>
+                    <code className="text-sm break-all text-slate-900 dark:text-slate-100">
+                      {zapierWebhookUrl}
+                    </code>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {zapierInstructions ||
                       'Use POST and send your API key in the x-api-key header.'}
                   </p>
                   {zapierRequiresSignature && (
-                    <p className="text-xs text-warning-600 dark:text-warning-400 mt-2 mb-0">
+                    <p className="text-xs text-warning-600 dark:text-warning-400">
                       This environment requires request signing via
                       x-vv-signature.
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
+                <p className="ui-body">
                   Webhook configuration will appear once it is available for
                   your environment.
                 </p>

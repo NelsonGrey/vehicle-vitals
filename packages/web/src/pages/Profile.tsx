@@ -64,10 +64,8 @@ export default function Profile() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-5">
       <div className="mb-6">
-        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-          Account
-        </h1>
-        <p className="text-slate-600 dark:text-slate-300 mt-2 mb-0">
+        <h1 className="ui-h1">Account</h1>
+        <p className="ui-body mt-2">
           Signed in as{' '}
           <strong className="text-slate-900 dark:text-slate-100">
             {user.email}
@@ -77,9 +75,7 @@ export default function Profile() {
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-          <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
-            Settings
-          </h2>
+          <h2 className="ui-h3 mb-3 px-1">Settings</h2>
           <div className="space-y-2">
             {sections.map(section => {
               const isSelected = section.key === selectedSection?.key;
@@ -109,17 +105,11 @@ export default function Profile() {
 
         <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           {!selectedSection ? (
-            <p className="text-slate-600 dark:text-slate-400 m-0">
-              Select a section to view details.
-            </p>
+            <p className="ui-body">Select a section to view details.</p>
           ) : (
             <>
-              <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
-                {selectedSection.title}
-              </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
-                {selectedSection.description}
-              </p>
+              <h2 className="ui-h2 mb-1">{selectedSection.title}</h2>
+              <p className="ui-body mb-4">{selectedSection.description}</p>
               <selectedSection.Content />
             </>
           )}

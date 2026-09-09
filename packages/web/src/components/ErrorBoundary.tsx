@@ -66,7 +66,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   />
                 </svg>
               </div>
-              <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+              <h1 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100">
                 Something went wrong
               </h1>
             </div>

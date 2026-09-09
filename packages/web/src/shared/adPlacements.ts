@@ -292,7 +292,7 @@ export function getAdDisplayConfig(
  * Environment variables required for ad system
  */
 export const REQUIRED_AD_ENV_VARS = [
-  'VITE_ADSENSE_PUBLISHER_ID',
+  'VITE_ADSENSE_CLIENT',
   'VITE_ADSENSE_SLOT',
   'VITE_ADSENSE_SLOT_HEADER',
   'VITE_ADSENSE_SLOT_SIDEBAR',
@@ -305,12 +305,15 @@ export const REQUIRED_AD_ENV_VARS = [
 ];
 
 /**
- * Check if ad system is properly configured
+ * Check if ad system is properly configured.
+ * A placement's slot can come from its own VITE_ADSENSE_SLOT_<PLACEMENT> var
+ * or from the shared VITE_ADSENSE_SLOT fallback, so "configured" means a
+ * client ID plus at least one resolved placement slot (see placementSlotMap).
  */
 export function isAdSystemConfigured(): boolean {
   return (
-    Boolean(import.meta.env.VITE_ADSENSE_PUBLISHER_ID) &&
-    Boolean(import.meta.env.VITE_ADSENSE_SLOT)
+    Boolean(import.meta.env.VITE_ADSENSE_CLIENT) &&
+    Object.values(placementSlotMap).some(Boolean)
   );
 }
 
@@ -325,7 +328,7 @@ export function getAdSystemStatus(): {
 } {
   return {
     configured: isAdSystemConfigured(),
-    publisherId: String(import.meta.env.VITE_ADSENSE_PUBLISHER_ID || 'NOT_SET'),
+    publisherId: String(import.meta.env.VITE_ADSENSE_CLIENT || 'NOT_SET'),
     placementsConfigured: {
       header: Boolean(placementSlotMap.header),
       sidebar: Boolean(placementSlotMap.sidebar),

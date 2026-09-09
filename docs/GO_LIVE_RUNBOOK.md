@@ -1,17 +1,32 @@
 # Vehicle-Vitals Go Live Runbook
 
-Last updated: September 1, 2026
-Current decision: **LAUNCHED** — iOS app 1.0 approved by Apple and eligible
-for distribution as of ~Sep 1, 2026 (submission `8b517b4f`, all 7 items —
-app version, non-consumable IAP, 4 subscriptions, subscription group —
-accepted). https://apps.apple.com/app/vehicle-vitals/id6783861086
-Release manager: Mark Nelson (interim)
+Last updated: September 8, 2026
+Current decision: **LAUNCHED — live in production.** iOS app 1.0 approved by
+Apple and eligible for distribution as of ~Sep 1, 2026 (submission
+`8b517b4f`, all 7 items — app version, non-consumable IAP, 4 subscriptions,
+subscription group — accepted). https://apps.apple.com/app/vehicle-vitals/id6783861086
+Web (https://vehicle-vitals.com) has also been serving the full app, not a
+coming-soon page, since the same date. Release manager: Mark Nelson (interim)
 
-> The gate-by-gate history below (originally tracked through a series of
-> NO-GO snapshots) is retained as the record of how launch readiness was
-> reached; it has not been rewritten gate-by-gate now that the decision is
-> LAUNCHED. Treat any "NO-GO" / "OPEN" status further down this file as
-> historical unless a section says otherwise.
+> **This document is now split in purpose.** Everything through the
+> "Go/No-Go Record" section (Phases 1-7) is a **historical record of how the
+> original launch decision was reached** — every checkbox, evidence table,
+> and dated instruction in that range reflects the state of the repo on the
+> date it was written and is not maintained further. Nothing in that range
+> is an active instruction: do not act on a Phase 1-7 checklist item, a
+> referenced PR number, or a "run this command" block as if it describes
+> current repo state — check current state directly instead. Individual
+> items *have* since been reopened and re-closed post-launch (branch
+> promotion, paid-subscription proof) — those are called out inline with a
+> "**Update, <date>**" note where that happened, but the surrounding
+> pre-launch checklist structure itself is frozen.
+>
+> **Phase 8 (Production Release) and Phase 9 (Rollback)** are the opposite —
+> genuinely live operational reference (deploy commands, rollback triggers
+> and options) that still applies post-launch and should be kept current.
+>
+> There is currently no separate "live operations" doc distinct from this
+> runbook — until one exists, Phase 8/9 here are it.
 
 ## Purpose
 
@@ -49,6 +64,8 @@ Out of scope unless explicitly re-approved:
   is not release-ready.
 
 ## Current Readiness Summary
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 As of July 16, 2026, Vehicle-Vitals is not ready for market launch.
 
@@ -137,11 +154,14 @@ explicit call was to mark P0-11 done/excused rather than chase live-money
 Stripe evidence. See the P0-11 row further down for the full record; this
 paragraph is left in place only for the historical narrative.
 
-The release is still blocked by unresolved R1 Gate 2 mobile/backend evidence,
-branch promotion divergence (now worse), subscription production proof, and
-remaining governance signoff outside the synchronized release docs.
+The release is still blocked by unresolved R1 Gate 2 mobile/backend evidence
+and remaining governance signoff outside the synchronized release docs.
+Branch promotion divergence and subscription production proof are both
+resolved as of 2026-09-08 — see the P0-09 and P0-11 rows below.
 
 ## Current Evidence Snapshot
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 Run date: July 9, 2026. Rows marked "re-verified July 9" were actually re-run
 this session; all other rows are the June 15/17 baseline and should be
@@ -171,13 +191,15 @@ re-run before a release cut.
 | GitHub CI            | Run `29034124504` for commit `27b4a12` (re-verified July 9)                                       | Quality Gate ✅, Build Web App ✅, Deploy Firebase ✅ (development environment) | `develop` is deployable to its own environment; iOS build not exercised this run (only triggers for staging/production). |
 | GitHub PR queue      | `gh pr list --state open` (re-verified after PR #123 merge)                                       | 0 open PRs. #103 and #120 both closed without merging along the way; **#123 merged** — first successful develop→staging promotion since #117 (July 6) | Queue is empty and promotion is current. |
 | Branch promotion     | `git rev-list --left-right --count origin/staging...origin/develop`; `git diff origin/develop origin/staging --stat` (re-verified after PR #123 merge) | Commit-graph shows staging ahead 1 / develop ahead 265, but `git diff --stat` between the two is **empty** — trees are identical | The ahead/behind count is a normal squash-merge artifact, not real drift. Staging is current with develop as of this promotion. |
-| Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging` (re-verified after PR #123 merge) | main ahead 20, staging ahead 605                                | Production promotion path is still not clean — next step after Gate 2/P0-11. |
+| Branch promotion     | `git rev-list --left-right --count origin/main...origin/staging`; `git diff --stat origin/main origin/staging` (re-verified 2026-09-08, PR #285) | **Resolved 2026-09-08.** Commit-graph still shows divergence (54 ahead / 1007 behind — same squash-merge-artifact pattern as the row above), but `git diff --stat` between `main` and `staging` is **empty** — trees are identical. `develop`/`staging`/`main` are all tree-identical as of this promotion. | Production promotion path is clean. Re-open only if real (non-squash-artifact) divergence is found in a future `git diff --stat` check. |
 | Staging rehearsal (Phase 7) | CI run `29047983380` on `staging`                                                          | Quality Gate ✅, Build Web App ✅, **Build iOS App ✅** (signed + uploaded to TestFlight, first since July 2), Deploy Firebase ✅ | First full green staging run since the Workspace SMTP migration and current iOS signing setup existed together. Phase 7 rehearsal is complete; only a manual smoke-test of the deployed site remains. |
 | Branch protection    | `gh api repos/mnelson3/vehicle-vitals/branches/{branch}/protection` (re-verified July 9)          | `develop` still lacks required status checks, reviews, and signed commits; `staging` is fully protected (1 required review, signed commits, enforced admins, required Pipeline Summary check) | Governance gap unchanged: `develop` and `main` protection needs decision before release freeze. Note: `staging`'s required review means I (Claude) can open the develop→staging PR but cannot merge it myself — Mark's review/approval is required. |
 | Security features    | `npm run security:audit` (repository security features)                                           | Dependabot security updates enabled; secret scanning enabled; push protection enabled (June 15/17 baseline) | Good posture. No open Dependabot security alerts.                                       |
 | Readiness report     | `bash scripts/staging-production-readiness-report.sh`                                             | NO-GO (last run June 15, not re-run this session)               | Re-run before release cut; `artifacts/release/staging-to-production-readiness-20260615T202036Z.md` is the latest artifact. |
 
 ## P0 Go-Live Blockers
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 No production launch, App Store submission, public marketing launch, or paid
 subscription launch may proceed until every P0 item is closed.
@@ -192,7 +214,7 @@ subscription launch may proceed until every P0 item is closed.
 | P0-06 | Open                   | R1 Gate 2 is still incomplete                            | Latest build and launch evidence is PASS (`artifacts/smoke/r1-mobile-build-20260615T154819Z.log`, `artifacts/smoke/r1-mobile-attached-run-udid-20260615T155826Z.log`); acceptance/backend artifacts remain PARTIAL/BLOCKED (`artifacts/smoke/r1-mobile-acceptance-20260601T221521Z.log`, `artifacts/smoke/r1-mobile-backend-traffic-20260601T221521Z.log`) | Gate 2 acceptance and backend evidence are PASS with artifacts under `artifacts/smoke/`.                                                                             |
 | P0-07 | Closed                 | Open high-severity CodeQL alert                          | CodeQL run for `ce6d530` succeeded and GitHub code scanning reports 0 open alerts                                                                                                                                                  | Alert is fixed and closed by CodeQL, dismissed with documented false-positive rationale, or accepted by risk owner before launch.                                     |
 | P0-08 | Closed                 | Dependabot PR queue is unstable                          | #115 (root-npm bump) merged July 9 — required fixing a `vite` override it introduced (see P0-09 evidence). 0 open PRs, 0 Dependabot security alerts. | ✅ Done. Monitor for new PRs through release freeze. |
-| P0-09 | Closed                 | Branch promotion path is stale/diverged                  | develop→staging re-promoted July 14 (PRs #128/#130/#132) after 339 commits accumulated since the July 9 promotion — required 3 rounds of isolated-worktree conflict resolution (`-X theirs`, tree verified byte-identical to `develop` each time) due to squash-merge history-loss, not real independent staging changes. Staging rehearsal fully green including Build iOS App/TestFlight and Deploy Firebase. `staging`→`main` is next (20 ahead / 608 behind) but not attempted yet — deliberately holding until Gate 2/P0-11 are further along. | ✅ Done for develop→staging. Re-open for staging→main when ready to promote to production. |
+| P0-09 | Closed                 | Branch promotion path is stale/diverged                  | develop→staging re-promoted July 14 (PRs #128/#130/#132) after 339 commits accumulated since the July 9 promotion — required 3 rounds of isolated-worktree conflict resolution (`-X theirs`, tree verified byte-identical to `develop` each time) due to squash-merge history-loss, not real independent staging changes. Staging rehearsal fully green including Build iOS App/TestFlight and Deploy Firebase. **Update 2026-09-08**: `develop` had drifted 1128 commits ahead of `main` again since (everything from this session's work plus the whole post-launch period never got promoted). Re-reconciled via the same isolated-worktree pattern: PR #284 (develop→staging) then PR #285 (staging→main), both tree-verified byte-identical to their source, both merged. Two real staleness issues were found and fixed along the way (not squash artifacts): `main` still had the old `_DebugFirebaseEnvBanner` widget removed from `develop` earlier the same session, and 4 marketing demo videos `develop` had already replaced with a YouTube link — both forced to match `develop`'s current content before merging. | ✅ Done. All three branches (`develop`/`staging`/`main`) tree-identical as of 2026-09-08. The recurring pattern here (branches drift again every time real work resumes without a promotion cadence) is worth a process fix — see the "Re-establish branch promotion policy" checklist item — rather than treating each reconciliation as a one-off. |
 | P0-10 | Closed locally         | Active deployment docs reference obsolete workflow names | `docs/DEPLOY.md` and `docs/PROD_SETUP_GUIDE.md` now reference `master-pipeline.yml`; pipeline deploy targets include Firestore, Storage, Functions, and Hosting                                                                    | Docs name `master-pipeline.yml`, correct workflow inputs, and correct deploy targets.                                                                                |
 | P0-11 | **Excused (2026-09-08)** | Subscription launch is not production-proven | Superseded by the actual go-live: both iOS (Apple-approved, live App Store IAP, 4 subscriptions accepted) and web (Stripe checkout, live since the Sept 1 go-live) are already serving real purchase options in production — the app is deliberately running in a "live test mode," not gated behind a pre-launch proof checklist. `vehicle-vitals-prod` now has all 8 Stripe secrets set (confirmed 2026-09-08, was 0/8 in this row's original July 9 finding) plus 2 more (`STRIPE_PORTAL_CONFIGURATION_ID`, `STRIPE_PORTAL_RETURN_URL`), so the deploy-time hard-fail risk this row originally flagged no longer applies either. A Firestore check of `vehicle-vitals-prod` the same day found 0 real Stripe subscribers (only the 2 seeded App Store/Play Store review-demo accounts have any `subscription/current` doc) — consistent with "live test mode," not evidence of a broken checkout. | **Mark's explicit call**: mark this requirement done/complete/excused rather than chase live-money Stripe proof (real Checkout Session completion, refund, failed-payment recovery, etc. all require real card charges in live mode — no test-mode equivalent exists). No code changes were made to either the iOS or web purchase flows as part of this decision. Revisit only if real paid-launch evidence becomes an actual business need later (e.g. investor/compliance ask), not as a pre-launch gate — the launch already happened. |
 | P0-12 | Partially open         | Release governance docs need final signoff               | This runbook is now current as of July 9; production release brief, R1 checklist, requirements, release scope, and next-features execution plan have not been re-synchronized this session                                          | `PROJECT_PLAN`, `PRODUCTION_RELEASE_BRIEF`, `R1_COMPLETION_CHECKLIST`, and this runbook are synchronized and signed off.                                             |
@@ -202,6 +224,8 @@ subscription launch may proceed until every P0 item is closed.
 | P0-16 | Closed (new, was a live gap) | Staging was never actually isolated from dev — the web build's `VITE_FIREBASE_*_STAGING` GitHub secrets were never set, so `master-pipeline.yml`'s staging fallback chain silently used `_DEVELOPMENT` values for every staging web deploy since the pipeline existed. `vehicle-vitals-staging` had **0 Auth users** despite the site being live at `vehicle-vitals-staging.web.app` since P0-09's rehearsal. Discovered 2026-07-16 while diagnosing a HADES login failure: user could sign in on the "staging" site but not on a dev-pointed iOS build with the same credentials — both were actually hitting `vehicle-vitals-dev`. Confirmed via the deployed bundle's inlined `VITE_ENVIRONMENT`/`VITE_FIREBASE_PROJECT_ID` literals. | Set all 7 missing `VITE_FIREBASE_*_STAGING` secrets (values pulled from `vehicle-vitals-staging`'s live Hosting `__/firebase/init.json`) and re-ran the staging pipeline (run `29531508281`, full green). Verified the redeployed bundle now inlines `VITE_ENVIRONMENT: staging` and `VITE_FIREBASE_PROJECT_ID: vehicle-vitals-staging`. **Consequence**: `vehicle-vitals-staging` now starts genuinely empty (0 users/data) — any prior "staging" testing was actually exercising dev's data and does not carry over. Every staging rehearsal claim before this date (including P0-09's "Staging rehearsal fully green") verified CI job success, not that the deployed site was talking to the right backend — worth keeping in mind when reading past evidence. |
 
 ## P1 Market Readiness Gaps
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 These do not necessarily block a limited beta, but they block a confident public
 market launch unless formally deferred.
@@ -217,9 +241,11 @@ market launch unless formally deferred.
 | Marketing           | Launch messaging claims web+iOS parity and paid tiers, but release evidence does not yet support that claim                   | Align public copy to actual signed-off scope.                                     |
 | iOS store readiness | App Store Connect metadata, screenshots, privacy answers, test account, signing, and submission checklist need final evidence | Complete TestFlight/App Store packet and link evidence.                           |
 | Android             | Android is disabled/on hold                                                                                                   | Do not include Android in launch copy or store plans.                             |
-| App Check           | No client (web or mobile) implements Firebase App Check; enforcement in `vehicle-vitals-prod` was disabled as an emergency mitigation for P0-15 (see P0 table) rather than fixed at the root | Implement App Check on web (reCAPTCHA v3/Enterprise) and mobile (DeviceCheck/App Attest, Play Integrity if Android ships), verify tokens are accepted, then re-enable enforcement — do not re-enable without this in place first. |
+| App Check           | No client (web or mobile) implements Firebase App Check; enforcement in `vehicle-vitals-prod` was disabled as an emergency mitigation for P0-15 (see P0 table) rather than fixed at the root. **Update 2026-09-08**: client integration was built (debug provider for dev, real reCAPTCHA v3/App Attest+DeviceCheck/Play Integrity providers for staging/prod), then fully reverted at Mark's request via honest revert commits (not force-push) — net no-op, this row's status is unchanged from before that attempt. Along the way a real CSP bug blocking reCAPTCHA from loading was found and fixed; that fix was reverted too, along with everything else, since it existed only to support the now-reverted App Check code. The pre-existing server-side provider secrets in Firebase Console (registered before this attempt) were left in place, untouched, inert — no delete API exists for them. | Implement App Check on web (reCAPTCHA v3/Enterprise) and mobile (DeviceCheck/App Attest, Play Integrity if Android ships), verify tokens are accepted, then re-enable enforcement — do not re-enable without this in place first. |
 
 ## Definition of Go Live Ready
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 The release is go-live ready only when all of the following are true:
 
@@ -237,6 +263,8 @@ The release is go-live ready only when all of the following are true:
 - Support, incident, privacy, billing, and rollback owners have signed off.
 
 ## Phase 1: Stabilize the Release Candidate
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 Owner: Release manager
 
@@ -270,6 +298,8 @@ Evidence:
 - Link to CodeQL alert closure or risk acceptance.
 
 ## Phase 2: Local Validation Gate
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 Owner: Engineering
 
@@ -325,6 +355,8 @@ Evidence (June 17, 2026):
 | Firebase rules emulator                                     | Pass                                                 |
 
 ## Phase 3: Security and Privacy Gate
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 Owner: Security/release manager
 
@@ -397,6 +429,8 @@ Evidence:
 - Branch protection: `staging` is fully protected; `develop` and `main` gaps documented above.
 
 ## Phase 4: Product and Monetization Gate
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 Owner: Product/release manager
 
@@ -496,6 +530,8 @@ Evidence:
 
 ## Phase 5: R1 Mobile Runtime Gate
 
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
+
 Owner: Mobile lead
 
 Current status: Not complete. Release-like iOS build and HADES launch are PASS
@@ -576,6 +612,8 @@ Exit criteria:
 
 ## Phase 6: Branch and CI Gate
 
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
+
 Owner: Release manager
 
 Current Dependabot disposition (June 17, 2026):
@@ -627,6 +665,8 @@ Exit criteria:
 - [ ] Readiness report returns GO.
 
 ## Phase 7: Staging Rehearsal
+
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
 
 Owner: Release manager
 
@@ -784,6 +824,11 @@ client. Google Ads additionally requires a developer token application
 through Google.
 
 ## Rollback
+
+> 📜 **Historical** — despite the title, this is a staging-deploy
+> verification checklist (Phase 7 continuation), not the actual rollback
+> plan — see Phase 9 below for that. Not an active instruction; see the
+> banner at the top of this file.
 
 - [ ] Confirm deploy targets included Hosting, Firestore, Storage, Functions, and Firestore indexes.
   - Note: the pipeline's `deploy_only` action skips Functions for production. Use
@@ -944,6 +989,8 @@ Rollback checklist:
 
 ## Go/No-Go Record
 
+> 📜 **Historical** — reflects repo state on the date shown; not an active instruction. See the banner at the top of this file.
+
 Complete this section during the final release meeting.
 
 Review date:
@@ -1000,111 +1047,58 @@ After each readiness state change, update these files as needed:
 - [ ] `docs/PROD_SETUP_GUIDE.md`
 - [ ] `README.md`
 
-## Immediate Next Execution Order
+## Post-Launch Status
 
-As of July 14, 2026 (updated after the capability/information-architecture
-refactor landed and was promoted, a broken FlutterFire release was found and
-fixed, and a new CodeQL alert was triaged).
+*(Through July 14, 2026 this section was called "Immediate Next Execution
+Order" and ended with "Hold go/no-go review" as its final action item —
+renamed and rewritten 2026-09-08 since that decision was made a week
+earlier. The July 14 content is preserved in git history if the pre-launch
+detail is ever needed; it isn't reproduced here since none of it describes
+current state.)*
 
-**Completed this session:**
-- ✅ Capability/information-architecture refactor (nav metadata, route
-  consolidation, SEO fixes, analytics `capability_id`, mobile Shops &
-  Services discoverability, `performedBy` taxonomy) fully landed on
-  `develop` — every commit's own push-triggered CI green.
-- ✅ SEO: wired `PageSEO` into `Help`/`Support`/`Privacy`/`Terms` (previously
-  dead config — no canonical tags, meta, or JSON-LD ever reached those
-  pages); fixed `sitemap.xml` to list `/support` instead of the legacy
-  `/contact`.
-- ✅ Analytics: added a real `purchase`/conversion event on confirmed Stripe
-  checkout return — the funnel previously stopped measuring at
-  `begin_checkout`.
-- ✅ **P0-09 re-closed**: develop→staging re-promoted (PRs #128/#130/#132)
-  after 339 commits accumulated since July 9. `develop`/`staging` trees
-  confirmed byte-identical again. Required 3 rounds of isolated-worktree
-  conflict resolution (squash-merge history-loss, not real staging drift)
-  and 3 temporary `enforce_admins` disable/re-enable cycles (each
-  user-approved, each confirmed re-enabled immediately after) since Mark
-  can't approve his own PR and `staging` requires 1 review.
-- ✅ **P0-14 (new, closed)**: found and fixed a coordinated broken
-  FlutterFire release (5 plugins, same-day publishes) that broke every real
-  iOS archive build — invisible to `flutter analyze`/`flutter test`, only
-  surfaced via the staging rehearsal's actual `Build iOS App` step. See P0
-  table above for detail.
-- ✅ **Staging rehearsal fully green** including Build iOS App (signed +
-  TestFlight upload) and Deploy Firebase — run confirms the FlutterFire fix
-  actually resolved the iOS build.
-- ⚠️ **New CodeQL alert #40** (`js/clear-text-storage-of-sensitive-data`)
-  surfaced from this session's own purchase-event code; reduced (removed
-  the `amount` field from sessionStorage) but not eliminated — the
-  remaining flag on `tier`/`billingPeriod` is assessed as a false positive,
-  same as pre-existing alerts #38/#39. #39 dismissed; #38 and #40 await your
-  explicit sign-off to dismiss (a permission gate requires naming the exact
-  alert, not just approving a summary).
-- ✅ Runbook fully refreshed with July 14 evidence (this update).
+The app has been live in production (web + iOS) since ~Sept 1, 2026. This
+runbook has no active "next execution order" anymore — there's no gate left
+to close before launch, because launch already happened. What follows is
+the actual current state of items that came up post-launch, verified as of
+2026-09-08:
 
-**Remaining — requires your action:**
+**Resolved post-launch (see the P0 table and inline updates above for full detail):**
+- Branch promotion (P0-09) — `develop`/`staging`/`main` reconciled and
+  tree-identical again as of 2026-09-08 (they'd drifted 1128 commits since
+  the pre-launch state this section used to describe).
+- Paid-subscription production proof (P0-11) — excused; both purchase
+  surfaces are live, Mark's explicit call not to chase live-money Stripe
+  evidence.
+- CodeQL alerts #38/#39/#40 referenced in the old version of this section —
+  confirmed 0 open as of 2026-09-08 (`gh api
+  repos/NelsonGrey/vehicle-vitals/code-scanning/alerts?state=open`); one
+  unrelated new alert (#43, `actions/missing-workflow-permissions`) exists
+  and hasn't been triaged.
 
-0. **Confirm CodeQL alert dismissals**: say "dismiss CodeQL alert #38 as a
-   false positive" (and #40, once you've reviewed the reasoning above) if
-   you agree with the assessment — I can't dismiss security-tool findings
-   without you naming them explicitly.
+**Still genuinely open:**
+- **Branch protection on `develop` and `main`** — neither has required
+  status checks, PR reviews, or signed commits (`staging` does). See Phase 3
+  for the `gh api` command template. This is a real, current gap, not a
+  historical one.
+- **CodeQL alert #43** (`actions/missing-workflow-permissions`) — not yet
+  triaged.
+- **R1 Gate 2 mobile acceptance evidence** (P0-06) — the formal
+  acceptance-capture script (`./scripts/smoke-r1-mobile-acceptance-capture.sh`)
+  was never run to completion pre-launch. Given the app has since been
+  through Apple's own review process and is live with real usage, this is
+  arguably moot as a *launch gate* — but the underlying question ("does the
+  documented mobile acceptance evidence exist anywhere") is still
+  technically unanswered. Worth an explicit decision (run it retroactively,
+  or formally mark it not-applicable-post-launch) rather than leaving it
+  silently open.
+- **Broader documentation sync** (P0-12) — this runbook is current as of
+  2026-09-08; `docs/PRODUCTION_RELEASE_BRIEF.md`, `docs/R1_COMPLETION_CHECKLIST.md`,
+  and `docs/PROJECT_PLAN.md` were retired at launch rather than
+  synchronized, per the Go/No-Go Record below — so there's nothing left to
+  sync them *with*, but worth confirming no other doc still points at them.
+- **P1 gaps** (see that table above) — performance/chunk-size,
+  observability alert routing, and support/incident runbook ownership were
+  all still open at launch and haven't been revisited since.
 
-1. ~~Review and merge staging promotion PRs~~ — ✅ Done. ~~Run staging
-   rehearsal~~ — ✅ Done, full green including iOS build/TestFlight upload
-   (see above).
-
-2. **Close R1 Gate 2** (P0-06) — CRITICAL BLOCKER, still open since June 15:
-   - Enable Developer Mode on HADES and trust the host Mac.
-   - Run the full 7-phase acceptance checklist (auth → vehicle CRUD → maintenance
-     CRUD → reminders → export → backend verification → performance).
-   - Capture results:
-     ```bash
-     AUTH_RESULT=PASS \
-     VEHICLE_CRUD_RESULT=PASS \
-     MAINTENANCE_CRUD_RESULT=PASS \
-     REMINDER_ACTIONS_RESULT=PASS \
-     EXPORT_RESULT=PASS \
-     FIRESTORE_WRITES_OBSERVED=YES \
-     FUNCTIONS_INVOCATIONS_OBSERVED=YES \
-     AUTH_EVENTS_OBSERVED=YES \
-     FIREBASE_PROJECT=vehicle-vitals-dev \
-     TESTER="Mark Nelson" \
-     REVIEWER="Mark Nelson" \
-     SCREENSHOT_EVIDENCE="<paths>" \
-     FIRESTORE_EVIDENCE_REF="<console-path>" \
-     FUNCTIONS_LOG_REF="<log-link>" \
-     AUTH_EVENT_REF="<auth-log-link>" \
-     ./scripts/smoke-r1-mobile-acceptance-capture.sh
-     ```
-   - Update `docs/R1_COMPLETION_CHECKLIST.md`, `docs/PRODUCTION_RELEASE_BRIEF.md`,
-     and this runbook when Gate 2 is PASS.
-
-3. **Manual smoke-test** `vehicle-vitals-staging.web.app` — CI green doesn't
-   substitute for a human actually clicking through the deployed staging
-   site once after a promotion this large (339 squash-commits worth of
-   change since the last one, per this update).
-
-4. **Apply branch protection** to `develop` and `main` (P1 gap, unchanged):
-   - See Phase 3 checklist for the `gh api` command template.
-   - Decision: match `staging`'s protection (Pipeline Summary check, enforce_admins,
-     signed commits) or apply a lighter policy appropriate for the development branch.
-
-5. ~~**Prove or defer paid subscription launch behavior**~~ (P0-11) — **excused,
-   2026-09-08.** This whole item predates the actual go-live (Sept 1) and no
-   longer describes reality: the 8 Stripe secrets it called for already exist
-   in `vehicle-vitals-prod` (confirmed 2026-09-08, plus 2 more added since),
-   and both iOS (Apple-approved IAP) and web (Stripe checkout) are already
-   live in production, deliberately run as "live test mode" rather than
-   gated behind this proof checklist. Mark's explicit call: mark this done
-   rather than chase live-money Stripe evidence (real Checkout Session
-   completion, refund, failed-payment recovery all require real card
-   charges in live mode — there is no test-mode equivalent once the deploy
-   is genuinely live). No code changes were made to either purchase flow as
-   part of this decision. See the P0-11 row above for the full record.
-
-6. **Readiness report**: re-run after staging rehearsal passes:
-   ```bash
-   bash scripts/staging-production-readiness-report.sh
-   ```
-
-7. **Hold go/no-go review** and complete the Go/No-Go Record section.
+For anything not listed here, treat this runbook as silent on it rather than
+assuming it's resolved — check current state directly.

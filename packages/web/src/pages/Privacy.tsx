@@ -3,14 +3,14 @@ import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
 
 const sectionClass =
-  'font-serif text-xl sm:text-2xl text-slate-900 dark:text-slate-100 mb-3';
+  'content-h2 mb-3';
 
 export default function Privacy() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-5 sm:py-8">
       <PageSEO meta={ROUTE_SEO['/privacy']} />
       <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-        <h1 className="mb-2 font-serif text-3xl text-slate-900 dark:text-slate-100 sm:text-4xl">
+        <h1 className="content-h1 mb-2">
           Privacy Policy
         </h1>
         <p className="mb-6 text-slate-600 dark:text-slate-400">

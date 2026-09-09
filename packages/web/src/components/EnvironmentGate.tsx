@@ -1,12 +1,16 @@
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../shared/AuthContext';
-import { auth } from '../shared/firebaseConfig';
+import { useCallback, useMemo, useState } from 'react';
+import { gateAuth } from '../shared/firebaseConfig';
 
 interface EnvironmentGateProps {
   children: React.ReactNode;
   environment: string;
 }
+
+// This gate's own "authorized" state is tracked here, deliberately separate
+// from Firebase Auth's `user` -- see the note in handleSignIn for why.
+const GATE_SESSION_KEY = 'vv_env_gate_authorized';
+const GATE_EMAIL_KEY = 'vv_env_gate_email';
 
 /**
  * OAuth-based environment gate using Firebase Auth + Google Sign-In.
@@ -27,14 +31,44 @@ interface EnvironmentGateProps {
  * original wiring placed it *outside* <AuthProvider>, so its useAuth() call
  * never saw a signed-in user. This restore renders it *inside*
  * <AuthProvider> instead (see App.tsx) so `user` is actually populated.
+ *
+ * 2026-09-09: stopped using AuthContext's `user`/`onAuthStateChanged`, and
+ * stopped using the app's own Firebase Auth instance entirely, for the
+ * gate's own authorized state. The gate's Google Sign-In originally shared
+ * the exact same Firebase Auth instance as the app's real login -- passing
+ * the gate was silently also signing the visitor into the app itself (as
+ * that Google account), and App.tsx's MarketingRoute then redirected them
+ * straight to /app, so they never actually saw the marketing pages at all.
+ * A first fix tried signing back out of that shared instance right after
+ * confirming the email, but that had a race: AuthContext's
+ * onAuthStateChanged fires with the new user before the sign-out call
+ * resolves, which was long enough for MarketingRoute's redirect to fire
+ * anyway. The gate now signs in through `gateAuth`, a second, fully
+ * independent Firebase App instance (see firebaseConfig.ts) that
+ * AuthContext never observes at all -- no shared state, no race. "This tab
+ * passed the gate" is remembered via sessionStorage, so passing the gate
+ * no longer implies being logged into the app. Logging into the app is a
+ * separate, deliberate step via the normal Login page, unaffected by this
+ * gate.
  */
 export default function EnvironmentGate({
   children,
   environment,
 }: EnvironmentGateProps) {
-  const { user } = useAuth();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(() => {
+    try {
+      return sessionStorage.getItem(GATE_SESSION_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [authorizedEmail, setAuthorizedEmail] = useState(() => {
+    try {
+      return sessionStorage.getItem(GATE_EMAIL_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -94,40 +128,6 @@ export default function EnvironmentGate({
     [allowedConfig]
   );
 
-  // Monitor auth state and check authorization
-  useEffect(() => {
-    if (!requiresAuth) {
-      setIsAuthorized(true);
-      setIsLoading(false);
-      setError('');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
-    if (!user) {
-      setIsAuthorized(false);
-      setIsLoading(false);
-      return;
-    }
-
-    // Check if user is authorized
-    if (isEmailAuthorized(user.email)) {
-      setIsAuthorized(true);
-      setError('');
-    } else {
-      setIsAuthorized(false);
-      setError(
-        `Your email (${user.email}) is not authorized to access this environment.`
-      );
-      // Auto sign out unauthorized users
-      void signOut(auth).catch(() => {});
-    }
-
-    setIsLoading(false);
-  }, [isEmailAuthorized, requiresAuth, user]);
-
   // Handle Google Sign-In
   const handleSignIn = async () => {
     setError('');
@@ -136,8 +136,32 @@ export default function EnvironmentGate({
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, provider);
-      // Authorization check happens in useEffect above
+      // gateAuth is a Firebase App instance the app's own auth/AuthContext
+      // never observes -- see the class doc comment for why that isolation
+      // matters here.
+      const credential = await signInWithPopup(gateAuth, provider);
+      const signedInEmail = credential.user.email;
+
+      if (isEmailAuthorized(signedInEmail)) {
+        try {
+          sessionStorage.setItem(GATE_SESSION_KEY, '1');
+          sessionStorage.setItem(GATE_EMAIL_KEY, signedInEmail || '');
+        } catch {
+          // sessionStorage unavailable (private mode, etc.) -- gate still
+          // works for this render, just won't survive a reload.
+        }
+        setAuthorizedEmail(signedInEmail || '');
+        setIsAuthorized(true);
+        setError('');
+      } else {
+        setError(
+          `Your email (${signedInEmail}) is not authorized to access this environment.`
+        );
+      }
+
+      // Tidy up gateAuth's own session -- it isn't observed by anything
+      // else, so this is just hygiene, not a fix for anything.
+      await signOut(gateAuth).catch(() => {});
     } catch (err) {
       const error = err as { code?: string; message?: string };
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -148,14 +172,16 @@ export default function EnvironmentGate({
     }
   };
 
-  // Handle Sign Out
-  const handleSignOut = async () => {
+  // Handle Sign Out (of the gate itself, not the app)
+  const handleSignOut = () => {
     try {
-      await signOut(auth);
-      setIsAuthorized(false);
-    } catch (err) {
-      setError('Failed to sign out. Please try again.');
+      sessionStorage.removeItem(GATE_SESSION_KEY);
+      sessionStorage.removeItem(GATE_EMAIL_KEY);
+    } catch {
+      // ignore
     }
+    setAuthorizedEmail('');
+    setIsAuthorized(false);
   };
 
   if (!requiresAuth) {
@@ -167,35 +193,21 @@ export default function EnvironmentGate({
     return (
       <div>
         {children}
-        {/* Subtle indicator showing authorized email with sign out button */}
+        {/* Subtle indicator showing gate-authorized email with revoke button */}
         <div className="fixed bottom-4 right-4 z-50">
           <button
             onClick={handleSignOut}
             className="text-xs px-3 py-2 bg-slate-700 dark:bg-slate-600 text-white rounded hover:bg-slate-800 dark:hover:bg-slate-500 transition-colors shadow-lg"
-            title={`Signed in as ${user?.email}`}
+            title={`Team access granted to ${authorizedEmail}`}
           >
-            {user?.email} (Sign out)
+            {authorizedEmail} (Revoke access)
           </button>
         </div>
       </div>
     );
   }
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">
-            Checking authorization...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Gate screen - not authenticated or not authorized
+  // Gate screen - not authorized for this tab/session
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
@@ -215,7 +227,7 @@ export default function EnvironmentGate({
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+          <h1 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 mb-2">
             {environment.charAt(0).toUpperCase() + environment.slice(1)}{' '}
             Environment
           </h1>

@@ -340,7 +340,7 @@ export default function AdminSupport() {
     <main className="min-h-[calc(100dvh-6rem)] bg-slate-50 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-5">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700 dark:text-teal-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700 dark:text-blue-400">
             Super-administrator
           </p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-50">
@@ -566,7 +566,7 @@ export default function AdminSupport() {
               </div>
               <button
                 type="submit"
-                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={
                   financeLoading || !supportAccess?.isSuperAdmin || !orgId
                 }
@@ -648,7 +648,7 @@ export default function AdminSupport() {
               </div>
               <button
                 type="submit"
-                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={
                   financeLoading || !supportAccess?.isSuperAdmin || !orgId
                 }
@@ -743,11 +743,11 @@ export default function AdminSupport() {
               value={query}
               onChange={event => setQuery(event.target.value)}
               placeholder="Search by email, UID, or name"
-              className="min-h-11 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-950"
+              className="min-h-11 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-950"
             />
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={loading || !supportAccess?.isSuperAdmin}
             >
               {loading ? 'Searching...' : 'Search users'}

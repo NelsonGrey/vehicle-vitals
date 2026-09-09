@@ -149,10 +149,8 @@ export function MaintenanceAlertsContent() {
       )}
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6 space-y-6">
-        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
-          Maintenance Alert Preferences
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 mt-0">
+        <h2 className="ui-h2">Maintenance Alert Preferences</h2>
+        <p className="ui-body">
           Control whether maintenance reminders are generated and when they
           should appear before service is due.
         </p>
@@ -177,7 +175,7 @@ export function MaintenanceAlertsContent() {
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
             Preferred reminder lead time (days)
           </label>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+          <p className="ui-hint mb-2">
             Example: 14 means the app starts showing work about two weeks before
             it estimates the service will be due.
           </p>
@@ -198,7 +196,7 @@ export function MaintenanceAlertsContent() {
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 mt-4">
             Average driving distance (miles/day)
           </label>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2">
+          <p className="ui-hint mb-2">
             This helps convert mileage-based schedules into a practical reminder
             window. If you usually drive 35 miles a day, a 14-day lead time
             shows tasks roughly 490 miles before they are due.
@@ -232,10 +230,8 @@ export function MaintenanceAlertsContent() {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-4">
-        <h2 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 m-0">
-          Push Notifications
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">
+        <h2 className="ui-h2">Push Notifications</h2>
+        <p className="ui-body">
           Receive push notifications in this browser when maintenance reminders
           are due.
         </p>
@@ -291,9 +287,7 @@ export default function MaintenanceAlerts() {
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-5 py-5">
       <div className="flex items-start justify-between gap-4 mb-6">
-        <h1 className="font-serif font-bold text-4xl text-slate-900 dark:text-slate-100 m-0">
-          Maintenance Alerts
-        </h1>
+        <h1 className="ui-h1">Maintenance Alerts</h1>
         <Link
           to="/app/profile"
           className="inline-block px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg no-underline text-slate-900 dark:text-slate-100"

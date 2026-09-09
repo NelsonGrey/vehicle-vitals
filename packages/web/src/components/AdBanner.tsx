@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { enableAds } from '../shared/environment';
 
 // Declare AdSense global
@@ -13,26 +13,54 @@ declare global {
 // - VITE_ADSENSE_SLOT: numeric string for the ad slot
 // You can override slot per-instance via the `slot` prop.
 
+// AdSense marks a slot it couldn't fill by setting data-ad-status="unfilled"
+// on the <ins> element once it finishes processing the push() call -- but it
+// only does this if its own script actually loads and runs at all. An ad
+// blocker (extremely common) prevents that script from ever loading, so
+// data-ad-status never gets set either way. Without a timeout, a blocked ad
+// would sit in this "still deciding" state forever, keeping its reserved
+// space. FILL_TIMEOUT_MS treats "no verdict after this long" the same as
+// "unfilled" -- fine for a real slow-loading ad too, since AdSense normally
+// resolves in well under a second once its script is present.
+const FILL_TIMEOUT_MS = 4000;
+
 interface AdBannerProps {
   style?: React.CSSProperties;
   className?: string;
   slot?: string;
+  /** Called whenever this instance's actual fill status changes. Parents
+   * use this to collapse their own wrapper (padding, "Sponsored" label,
+   * etc.) when nothing actually rendered, instead of just hiding the ad
+   * unit itself and leaving a blank gap behind. */
+  onFillStatusChange?: (filled: boolean) => void;
 }
 
 export default function AdBanner({
   style,
   className,
   slot: slotOverride,
+  onFillStatusChange,
 }: AdBannerProps) {
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLModElement | null>(null);
   const client = import.meta?.env?.VITE_ADSENSE_CLIENT;
   const slot = slotOverride || import.meta?.env?.VITE_ADSENSE_SLOT;
 
   // Fallback placeholder when ads are disabled or env is not configured
   const renderPlaceholder = !enableAds || !client || !slot;
 
+  // Real AdSense units start "unfilled" (nothing to show yet) and flip to
+  // filled only once AdSense confirms it actually has an ad for this slot.
+  // Placeholders (dev/disabled) are always "filled" from a layout
+  // perspective -- they're an intentional, static block, not something that
+  // should collapse.
+  const [filled, setFilled] = useState(renderPlaceholder);
+
   useEffect(() => {
-    if (renderPlaceholder) return;
+    onFillStatusChange?.(filled);
+  }, [filled, onFillStatusChange]);
+
+  useEffect(() => {
+    if (renderPlaceholder) return undefined;
 
     // Ensure the AdSense script is loaded once
     const SCRIPT_SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(
@@ -61,9 +89,45 @@ export default function AdBanner({
       }
     };
 
-    // Push after mount
-    const id = setTimeout(tryPush, 0);
-    return () => clearTimeout(id);
+    const pushId = setTimeout(tryPush, 0);
+
+    const insEl = containerRef.current;
+    const checkStatus = () => {
+      const status = insEl?.getAttribute('data-ad-status');
+      if (status === 'filled') {
+        setFilled(true);
+        return true;
+      }
+      if (status === 'unfilled') {
+        setFilled(false);
+        return true;
+      }
+      return false;
+    };
+
+    let observer: MutationObserver | undefined;
+    if (insEl && typeof MutationObserver === 'function') {
+      observer = new MutationObserver(() => {
+        checkStatus();
+      });
+      observer.observe(insEl, {
+        attributes: true,
+        attributeFilter: ['data-ad-status'],
+      });
+    }
+
+    // Covers both a genuinely blocked/failed script (data-ad-status never
+    // appears at all) and belt-and-suspenders in case the MutationObserver
+    // somehow misses the attribute change.
+    const timeoutId = setTimeout(() => {
+      checkStatus();
+    }, FILL_TIMEOUT_MS);
+
+    return () => {
+      clearTimeout(pushId);
+      clearTimeout(timeoutId);
+      observer?.disconnect();
+    };
   }, [client, slot, renderPlaceholder]);
 
   if (renderPlaceholder) {
@@ -83,10 +147,18 @@ export default function AdBanner({
     );
   }
 
-  // AdSense unit
+  // AdSense unit. Kept mounted (not conditionally rendered) even while
+  // unfilled so the same <ins> element stays alive for AdSense's script to
+  // populate/report status on -- only the reserved layout space (the `my-3`
+  // margin) is conditional; the parent chain hides the rest once
+  // onFillStatusChange reports false.
   return (
-    <div style={style} className={`my-3 ${className || ''}`} ref={containerRef}>
+    <div
+      style={style}
+      className={`${filled ? 'my-3' : 'my-0 h-0 overflow-hidden'} ${className || ''}`}
+    >
       <ins
+        ref={containerRef}
         className="adsbygoogle block"
         data-ad-client={client}
         data-ad-slot={slot}

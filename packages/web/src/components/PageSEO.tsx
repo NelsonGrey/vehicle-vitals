@@ -94,7 +94,7 @@ export default function PageSEO({ meta }: PageSEOProps) {
     setMetaByName('twitter:card', twitterCard);
     setMetaByName('twitter:title', ogTitle);
     setMetaByName('twitter:description', ogDescription);
-    setMetaByName('twitter:site', '@vehiclevitals');
+    setMetaByName('twitter:site', '@vehiclevitalapp');
     if (meta.ogImage) {
       setMetaByName('twitter:image', meta.ogImage);
     }

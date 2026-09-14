@@ -1,9 +1,11 @@
 # Vehicle-Vitals — Design System & Color Palettes
 
-Status as of **2026-09-14**: shipped on both web and mobile — a shared
-typography/spacing/component vocabulary, plus a 5-palette color switcher
-with a picker UI on both platforms. One deploy step is still outstanding
-(§7) and a short list of deliberate scope limits is called out in §6.
+Status as of **2026-09-14**: shipped and deployed on both web and mobile —
+a shared typography/spacing/component vocabulary, plus a 5-palette color
+switcher with a picker UI on both platforms. A short list of deliberate
+scope limits is called out in §6, and §7 documents a real, unrelated
+Firestore rules bug this work found and fixed along the way (deployed to
+dev/staging/prod the same day, re-verified live).
 
 This doc is the reference for how it's built and *why* — several of the
 decisions below only look obvious in hindsight because a live bug proved
@@ -254,7 +256,7 @@ palette-invariant with no exception.
 
 ---
 
-## 7. CRITICAL — a real, pre-existing bug was found and fixed, but is NOT yet deployed
+## 7. A real, pre-existing bug was found, fixed, and deployed
 
 While wiring the web palette picker, saving a preference failed with
 `FirebaseError: Missing or insufficient permissions`. Root cause, verified
@@ -290,12 +292,11 @@ Verified via `@firebase/rules-unit-testing` against the real rules file:
 plus the pre-existing `firestoreRules.quotaSubscription.test.js` (5 tests,
 confirming no regression to the protection those carve-outs exist for).
 
-**This fix is committed but not deployed to any environment.** Until
-`firebase deploy --only firestore:rules` runs against dev/staging/prod,
-both the palette feature and the email-reminder toggle stay broken
-wherever the old rules are still live. (Firebase CLI credentials were not
-available in the session that found this — `firebase login --reauth`
-needed first.)
+**Deployed to dev, staging, and prod on 2026-09-14**
+(`firebase deploy --only firestore:rules`) and re-verified live against
+the real `vehicle-vitals-dev` project immediately after — signed up a
+fresh test account, saved a palette preference through the actual running
+app, zero permission errors.
 
 ---
 

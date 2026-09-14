@@ -42,6 +42,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [paletteId, setPaletteIdState] = useState<PaletteId>('current');
   const [linked, setLinkedState] = useState(false);
   const lastSyncedUidRef = useRef<string | null | undefined>(undefined);
+  // Set as soon as the user makes a local edit, so a slower in-flight
+  // initial-sync read can't resolve afterward and clobber it with stale
+  // server data (setPalette/setLinked have already queued the write that
+  // will make the server catch up).
+  const hasLocalEditRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.dataset.palette = paletteId;
@@ -53,6 +58,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       return;
     }
     lastSyncedUidRef.current = uid;
+    hasLocalEditRef.current = false;
 
     if (!uid) {
       setPaletteIdState('current');
@@ -64,7 +70,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     void (async () => {
       try {
         const snap = await getDoc(doc(db, `users/${uid}`));
-        if (!isActive) return;
+        if (!isActive || hasLocalEditRef.current) return;
         const data = snap.data() ?? {};
         setPaletteIdState(paletteIdFromValue(data.paletteWeb));
         setLinkedState(Boolean(data.paletteLinked));
@@ -81,6 +87,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const setPalette = useCallback(
     (id: PaletteId) => {
+      hasLocalEditRef.current = true;
       setPaletteIdState(id);
 
       const uid = user?.uid;
@@ -100,6 +107,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const setLinked = useCallback(
     (value: boolean) => {
+      hasLocalEditRef.current = true;
       setLinkedState(value);
 
       const uid = user?.uid;

@@ -150,10 +150,26 @@ String _resolveInitialRoute() {
   return routeName;
 }
 
-class VehicleVitalsApp extends StatelessWidget {
+class VehicleVitalsApp extends StatefulWidget {
   final NotificationService notificationService;
 
   const VehicleVitalsApp({super.key, required this.notificationService});
+
+  @override
+  State<VehicleVitalsApp> createState() => _VehicleVitalsAppState();
+}
+
+class _VehicleVitalsAppState extends State<VehicleVitalsApp> {
+  // Built once and reused for the app's lifetime -- AuthService and
+  // OnboardingService are stable instances (the ProxyProviders below always
+  // reuse the existing service rather than swapping in a new one), and
+  // GoRouter's own `refreshListenable` re-runs `redirect` whenever either
+  // notifies. Recreating the whole router on every rebuild (as this used to)
+  // meant an unrelated PaletteService change -- picking a color palette --
+  // replaced the active GoRouter and reset navigation back to
+  // `_resolveInitialRoute()`, kicking a signed-in user out of whatever
+  // screen they were on.
+  GoRouter? _router;
 
   @override
   Widget build(BuildContext context) {
@@ -162,9 +178,9 @@ class VehicleVitalsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthService()),
         Provider(create: (context) => FirestoreService()),
         ChangeNotifierProxyProvider<AuthService, NotificationService>(
-          create: (context) => notificationService,
+          create: (context) => widget.notificationService,
           update: (context, authService, service) {
-            final resolved = service ?? notificationService;
+            final resolved = service ?? widget.notificationService;
             unawaited(resolved.syncForAuthUser(authService.currentUser?.uid));
             return resolved;
           },
@@ -198,6 +214,7 @@ class VehicleVitalsApp extends StatelessWidget {
       child: Consumer3<AuthService, OnboardingService, PaletteService>(
         builder:
             (context, authService, onboardingService, paletteService, child) {
+              _router ??= _createRouter(authService, onboardingService);
               return ErrorWidgetWrapper(
                 child: MaterialApp.router(
                   title: 'Garage',
@@ -205,7 +222,7 @@ class VehicleVitalsApp extends StatelessWidget {
                   theme: AppTheme.lightTheme(paletteService.paletteId),
                   darkTheme: AppTheme.darkTheme(paletteService.paletteId),
                   themeMode: ThemeMode.system,
-                  routerConfig: _createRouter(authService, onboardingService),
+                  routerConfig: _router!,
                   builder: (context, child) => child ?? const SizedBox.shrink(),
                 ),
               );
@@ -220,6 +237,7 @@ class VehicleVitalsApp extends StatelessWidget {
   ) {
     return GoRouter(
       initialLocation: _resolveInitialRoute(),
+      refreshListenable: Listenable.merge([authService, onboardingService]),
       redirect: (context, state) {
         final isLoggedIn = authService.currentUser != null;
         final isLoading = authService.isLoading;

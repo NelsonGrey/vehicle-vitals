@@ -93,10 +93,8 @@ class HealthComponentCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final color = component.status == 'overdue'
         ? colorScheme.error
-        : component.status == 'service soon'
+        : component.status == 'service soon' || component.status == 'watch'
         ? colorScheme.tertiary
-        : component.status == 'watch'
-        ? Colors.amber
         : AppDesignTokens.success;
 
     final remainingPercent = component.remainingPercent;
@@ -126,19 +124,28 @@ class HealthComponentCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 component.status,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 6),
               Text(_formatDue(component), style: const TextStyle(fontSize: 12)),
               const SizedBox(height: 4),
               Text(
                 formatCurrencyRange(component.costLow, component.costHigh),
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 component.confidence,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

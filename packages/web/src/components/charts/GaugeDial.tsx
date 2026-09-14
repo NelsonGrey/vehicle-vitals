@@ -41,9 +41,9 @@ function describeArc(cx: number, cy: number, r: number, startAngle: number, endA
 }
 
 function zoneColor(value: number) {
-  if (value < 40) return '#e11d48'; // rose-600 (danger)
-  if (value < 70) return '#f59e0b'; // amber-500 (warning)
-  return '#16a34a'; // green-600 (accent)
+  if (value < 40) return '#ef4444'; // danger-500 — matches tailwind.config.js and mobile's AppDesignTokens.danger
+  if (value < 70) return '#f59e0b'; // warning-500 — matches tailwind.config.js and mobile's AppDesignTokens.warning
+  return '#22c55e'; // accent-500 — matches tailwind.config.js and mobile's AppDesignTokens.success
 }
 
 export default function GaugeDial({

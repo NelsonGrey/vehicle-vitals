@@ -588,7 +588,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
     return BrandScaffold(
       title: const Text('Vehicle Records'),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           children: [
             Align(
@@ -610,8 +610,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: AppDesignTokens.space2,
+                        vertical: AppDesignTokens.space1,
                       ),
                       decoration: BoxDecoration(
                         color: Theme.of(
@@ -633,8 +633,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: AppDesignTokens.space2,
+                        vertical: AppDesignTokens.space1,
                       ),
                       decoration: BoxDecoration(
                         color: Theme.of(
@@ -678,7 +678,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
                       ? AppDesignTokens.success
                       : hasProgress
                       ? colorScheme.tertiary
-                      : Colors.grey;
+                      : colorScheme.onSurfaceVariant;
                   final statusIcon = isComplete
                       ? Icons.check_circle
                       : hasProgress
@@ -686,7 +686,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
                       : Icons.radio_button_unchecked;
 
                   return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(
+                      bottom: AppDesignTokens.space3,
+                    ),
                     child: ListTile(
                       onTap: () => _openCategory(categoryIndex),
                       leading: Icon(statusIcon, color: statusColor),
@@ -713,7 +715,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
               child: ElevatedButton(
                 onPressed: _isSaving || hasUploadInFlight ? null : _save,
                 child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      )
                     : hasUploadInFlight
                     ? const Text('Complete uploads to save')
                     : const Text('Save Records'),

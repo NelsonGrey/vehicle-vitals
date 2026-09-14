@@ -137,11 +137,11 @@ class _HouseholdGarageScreenState extends State<HouseholdGarageScreen> {
       title: const Text('Household Garage'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDesignTokens.space4),
           child: _statusLoading
               ? const Center(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 40),
+                    padding: EdgeInsets.only(top: AppDesignTokens.space10),
                     child: CircularProgressIndicator(),
                   ),
                 )
@@ -172,7 +172,7 @@ class _HouseholdGarageScreenState extends State<HouseholdGarageScreen> {
                     else
                       Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppDesignTokens.space4),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -194,12 +194,14 @@ class _HouseholdGarageScreenState extends State<HouseholdGarageScreen> {
                               ElevatedButton(
                                 onPressed: _promoting ? null : _promote,
                                 child: _promoting
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         height: 20,
                                         width: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.white,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary,
                                         ),
                                       )
                                     : const Text('Create Household Garage'),
@@ -230,7 +232,7 @@ class _HouseholdStatusCard extends StatelessWidget {
         : 'Household garage (migration in progress)';
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -275,7 +277,10 @@ class _InfoBanner extends StatelessWidget {
     final color = isError ? colorScheme.error : AppDesignTokens.success;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDesignTokens.space3,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),

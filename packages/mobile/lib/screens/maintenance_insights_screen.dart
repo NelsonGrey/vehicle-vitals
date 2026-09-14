@@ -3,6 +3,7 @@ import '../components/brand_scaffold.dart';
 import 'package:provider/provider.dart';
 
 import '../services/firestore_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/maintenance_insights.dart';
 import '../utils/number_format.dart';
 import '../utils/user_facing_error.dart';
@@ -65,7 +66,7 @@ class _MaintenanceInsightsScreenState extends State<MaintenanceInsightsScreen> {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppDesignTokens.space4),
                 children: _buildSections(context, _insights!),
               ),
             ),
@@ -74,14 +75,21 @@ class _MaintenanceInsightsScreenState extends State<MaintenanceInsightsScreen> {
 
   List<Widget> _buildSections(BuildContext context, MaintenanceInsights i) {
     if (i.totalEntries == 0) {
-      return const [
+      return [
         Padding(
-          padding: EdgeInsets.fromLTRB(8, 32, 8, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppDesignTokens.space2,
+            AppDesignTokens.space8,
+            AppDesignTokens.space2,
+            0,
+          ),
           child: Text(
             'Add maintenance entries — with photos or receipts attached — '
             'to see spend breakdowns and trends here.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ];
@@ -124,7 +132,7 @@ class _SummaryCard extends StatelessWidget {
     final coveragePercent = (insights.documentationCoverage * 100).round();
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -191,7 +199,7 @@ class _SpendBreakdownCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -210,7 +218,7 @@ class _SpendBreakdownCard extends StatelessWidget {
                   ? (entry.amount / totalSpend).clamp(0.0, 1.0)
                   : 0.0;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: AppDesignTokens.space2),
                 child: Row(
                   children: [
                     SizedBox(
@@ -276,7 +284,7 @@ class _SpendTrendCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -353,7 +361,7 @@ class _NeedsReviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

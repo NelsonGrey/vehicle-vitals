@@ -865,13 +865,13 @@ export default function Records() {
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="ui-hint">
                   Maintenance spend captured
                 </div>
                 <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
                   {formatCurrency(insights.maintenanceTotalCost)}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <div className="ui-hint mt-1">
                   {insights.maintenanceDocsCount} docs • Avg{' '}
                   {formatCurrency(insights.maintenanceAverageCost)}
                   {insights.latestServiceDate
@@ -885,7 +885,7 @@ export default function Records() {
               </div>
 
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="ui-hint">
                   Estimated monthly payment
                 </div>
                 <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
@@ -893,13 +893,13 @@ export default function Records() {
                     ? formatCurrency(insights.estimatedMonthlyPayment)
                     : 'Add finance docs'}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <div className="ui-hint mt-1">
                   Finance docs detected: {insights.financeDocsCount}
                 </div>
               </div>
 
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="ui-hint">
                   Value realized vs depreciation
                 </div>
                 <div className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
@@ -907,7 +907,7 @@ export default function Records() {
                     ? `${formatCurrency(insights.estimatedValueRealized)} realized`
                     : 'Need principal doc'}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <div className="ui-hint mt-1">
                   {typeof insights.estimatedCurrentValue === 'number'
                     ? `Est. current value ${formatCurrency(insights.estimatedCurrentValue)}`
                     : 'Upload purchase/loan principal to unlock estimate'}
@@ -942,7 +942,7 @@ export default function Records() {
                   <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                     Payment Calendar Projection
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">
+                  <div className="ui-hint mt-1 mb-2">
                     Upcoming monthly obligations from extracted finance records.
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
@@ -961,7 +961,7 @@ export default function Records() {
                     ))}
                   </div>
                   {typeof insights.estimatedPaidToDate === 'number' && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                    <div className="ui-hint mt-2">
                       Estimated paid to date:{' '}
                       {formatCurrency(insights.estimatedPaidToDate)}
                     </div>
@@ -975,7 +975,7 @@ export default function Records() {
                   <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                     Turn Insights Into Actions
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <div className="ui-hint mt-1">
                     Save reminder records or add projected obligations to your
                     calendar.
                   </div>
@@ -983,7 +983,7 @@ export default function Records() {
                 <div className="flex items-center gap-2">
                   <label
                     htmlFor="recordsCalendarTarget"
-                    className="text-xs text-slate-500 dark:text-slate-400"
+                    className="ui-hint"
                   >
                     Calendar target
                   </label>
@@ -1070,7 +1070,7 @@ export default function Records() {
               </div>
 
               {insightActionMessage && (
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-3">
+                <div className="ui-hint mt-3">
                   {insightActionMessage}
                 </div>
               )}
@@ -1083,7 +1083,7 @@ export default function Records() {
                         <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                           Scheduled Insight Actions
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <div className="ui-hint mt-1">
                           These reminders are already saved for this vehicle.
                         </div>
                       </div>
@@ -1108,16 +1108,16 @@ export default function Records() {
                           key={reminder.id}
                           className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
                         >
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="ui-hint">
                             {INSIGHT_ACTION_LABELS[action]}
                           </div>
                           <div className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-1">
                             {reminder.title}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="ui-hint mt-1">
                             Status: {reminder.status}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="ui-hint">
                             Due:{' '}
                             {formatInsightDueDate(
                               reminder.nextDueDate || reminder.dueDate
@@ -1215,10 +1215,10 @@ export default function Records() {
         {flattenedItems.length > 0 && (
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
             <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-              <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-1 px-1">
+              <h2 className="ui-h3 mt-0 mb-1 px-1">
                 Record List
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-3 px-1">
+              <p className="ui-hint mt-0 mb-3 px-1">
                 Search and filter this vehicle's document portfolio.
               </p>
               <div className="mb-3 space-y-2">
@@ -1280,7 +1280,7 @@ export default function Records() {
                           {statusLabelMap[entry.item.status]}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                      <div className="ui-hint line-clamp-1">
                         {entry.categoryTitle} •{' '}
                         {entry.item.required ? 'Required' : 'Optional'} •{' '}
                         {fileCount} file{fileCount === 1 ? '' : 's'}
@@ -1305,10 +1305,10 @@ export default function Records() {
                 <>
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                      <h2 className="ui-h2 mt-0 mb-1">
                         {selectedEntry.item.title}
                       </h2>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-2">
+                      <p className="ui-body mt-0 mb-2">
                         {selectedEntry.categoryTitle} •{' '}
                         {selectedEntry.item.required ? 'Required' : 'Optional'}
                       </p>

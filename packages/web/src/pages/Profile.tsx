@@ -6,6 +6,7 @@ import { AccountSecurityContent } from './AccountSecurity';
 import { MaintenanceAlertsContent } from './MaintenanceAlerts';
 import { AccountConsolidationContent } from './AccountConsolidation';
 import { ApiAutomationContent } from './ApiAutomation';
+import { AppearanceContent } from './Appearance';
 import { DataPrivacyContent } from './DataPrivacy';
 
 interface ProfileSection {
@@ -52,6 +53,12 @@ export default function Profile() {
       title: 'Data & Privacy',
       description: 'Export your data or request account deletion.',
       Content: DataPrivacyContent,
+    },
+    {
+      key: 'appearance',
+      title: 'Appearance',
+      description: 'Pick a color palette for web and mobile.',
+      Content: AppearanceContent,
     },
   ];
 

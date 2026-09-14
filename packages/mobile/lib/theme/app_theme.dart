@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'design_tokens.dart';
+import 'palettes.dart';
 
 /// App theme configuration using Tailwind-inspired design tokens
 class AppTheme {
-  static ThemeData lightTheme() {
-    final colors = AppDesignTokens.colorScheme(Brightness.light);
+  static ThemeData lightTheme([PaletteId paletteId = PaletteId.current]) {
+    final colors = AppDesignTokens.colorScheme(Brightness.light, paletteId);
+    final palette = kPalettes[paletteId]!;
 
     return ThemeData(
       useMaterial3: true,
@@ -33,7 +35,7 @@ class AppTheme {
 
       // App bar
       appBarTheme: AppBarTheme(
-        backgroundColor: AppDesignTokens.headerColor,
+        backgroundColor: palette.header,
         foregroundColor: Colors.white,
         toolbarHeight: AppDesignTokens.headerToolbarHeight,
         elevation: 0,
@@ -232,8 +234,9 @@ class AppTheme {
     );
   }
 
-  static ThemeData darkTheme() {
-    final colors = AppDesignTokens.colorScheme(Brightness.dark);
+  static ThemeData darkTheme([PaletteId paletteId = PaletteId.current]) {
+    final colors = AppDesignTokens.colorScheme(Brightness.dark, paletteId);
+    final palette = kPalettes[paletteId]!;
 
     return ThemeData(
       useMaterial3: true,
@@ -260,7 +263,7 @@ class AppTheme {
 
       // App bar
       appBarTheme: AppBarTheme(
-        backgroundColor: AppDesignTokens.headerColor,
+        backgroundColor: palette.header,
         foregroundColor: Colors.white,
         toolbarHeight: AppDesignTokens.headerToolbarHeight,
         elevation: 0,

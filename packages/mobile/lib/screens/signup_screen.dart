@@ -9,6 +9,7 @@ import '../components/app_logo.dart';
 import '../components/password_requirements_checklist.dart';
 import '../services/auth_service.dart';
 import '../services/password_policy_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -184,7 +185,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       title: const Text('Create Account'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDesignTokens.space5),
           child: Form(
             key: _formKey,
             child: Column(
@@ -204,7 +205,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 20),
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.only(
+                    bottom: AppDesignTokens.space5,
+                  ),
                   child: Center(
                     child: AppLogo(size: 72, showText: false, full: true),
                   ),
@@ -212,7 +215,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppDesignTokens.space4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -295,12 +298,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ElevatedButton(
                           onPressed: _isLoading ? null : _signUp,
                           child: _isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
                                   ),
                                 )
                               : const Text('Create Account'),
@@ -325,9 +330,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Text(
                           'By creating an account or continuing with ${Platform.isAndroid ? 'Google' : 'Apple'}, you agree to the Terms of Use and acknowledge the Privacy Policy.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.black54,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         Wrap(

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../components/app_logo.dart';
 import '../services/auth_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -137,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
       title: const Text('Sign In'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDesignTokens.space5),
           child: Form(
             key: _formKey,
             child: Column(
@@ -157,7 +158,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.only(
+                    bottom: AppDesignTokens.space5,
+                  ),
                   child: Center(
                     child: AppLogo(size: 72, showText: false, full: true),
                   ),
@@ -165,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppDesignTokens.space4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -227,12 +230,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ElevatedButton(
                           onPressed: _isLoading ? null : _signIn,
                           child: _isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
                                   ),
                                 )
                               : const Text('Sign In'),

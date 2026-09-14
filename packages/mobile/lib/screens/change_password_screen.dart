@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../components/password_requirements_checklist.dart';
 import '../services/auth_service.dart';
 import '../services/password_policy_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -121,7 +122,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       title: const Text('Change Password'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppDesignTokens.space5),
           child: Form(
             key: _formKey,
             child: Column(
@@ -142,7 +143,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 20),
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppDesignTokens.space4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -236,12 +237,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         ElevatedButton(
                           onPressed: _isLoading ? null : _submit,
                           child: _isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
                                   ),
                                 )
                               : const Text('Update Password'),

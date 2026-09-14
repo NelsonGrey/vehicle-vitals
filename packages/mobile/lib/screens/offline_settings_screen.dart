@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../components/safe_back_button.dart';
 import '../services/offline_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class OfflineSettingsScreen extends StatefulWidget {
@@ -26,13 +27,13 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
       body: Consumer<OfflineService>(
         builder: (context, offlineService, child) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(AppDesignTokens.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(AppDesignTokens.space4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -69,7 +70,7 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
 
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(AppDesignTokens.space4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -120,7 +121,7 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                 if (offlineService.isOfflineEnabled)
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(AppDesignTokens.space4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -147,7 +148,7 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                               label: const Text('Sync Pending Changes'),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: AppDesignTokens.space3,
                                 ),
                               ),
                             ),
@@ -163,7 +164,7 @@ class _OfflineSettingsScreenState extends State<OfflineSettingsScreen> {
                               label: const Text('Clear Local Cache'),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: AppDesignTokens.space3,
                                 ),
                               ),
                             ),

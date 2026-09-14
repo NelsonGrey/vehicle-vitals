@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../services/firestore_service.dart';
 import '../services/local_providers_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class ServiceProvidersScreen extends StatefulWidget {
@@ -307,11 +308,11 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
 
   Widget _buildSearchTab(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDesignTokens.space4),
       children: [
         if (_status.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppDesignTokens.space3),
             child: Text(
               _status,
               style: TextStyle(color: Theme.of(context).colorScheme.primary),
@@ -319,7 +320,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
           ),
         if (_error.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppDesignTokens.space3),
             child: Text(
               _error,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -327,7 +328,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
           ),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDesignTokens.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -341,7 +342,10 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
                 Text(
                   'Used to find nearby businesses — not shared or shown '
                   'publicly.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -537,19 +541,22 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
 
   Widget _buildPreferredTab(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDesignTokens.space4),
       children: [
         Text('Saved Places', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
         Text(
           'Save businesses you trust from search results or your service '
           'history so they\'re easy to find next time.',
-          style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 13,
+          ),
         ),
         const SizedBox(height: 12),
         if (_preferredProviders.isEmpty)
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: AppDesignTokens.space2),
             child: Text('No places saved yet.'),
           )
         else
@@ -591,17 +598,20 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
         Text(
           'Built from the shop or professional saved on maintenance records '
           'across your garage.',
-          style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 13,
+          ),
         ),
         const SizedBox(height: 12),
         if (_loadingPastProviders)
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: AppDesignTokens.space2),
             child: Text('Loading service history…'),
           )
         else if (_pastProviders.isEmpty)
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: AppDesignTokens.space2),
             child: Text(
               'No past businesses yet. Add a shop or professional the next '
               'time you log a maintenance entry.',
@@ -624,7 +634,10 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen>
                   '${lastDate != null ? ' • Last ${lastDate.month}/${lastDate.day}/${lastDate.year}' : ''}',
                 ),
                 trailing: isPreferred
-                    ? const Icon(Icons.star, color: Colors.grey)
+                    ? Icon(
+                        Icons.star,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      )
                     : IconButton(
                         icon: const Icon(Icons.star_border),
                         tooltip: 'Save this place',

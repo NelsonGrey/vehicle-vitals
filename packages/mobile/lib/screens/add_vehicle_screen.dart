@@ -17,6 +17,7 @@ import '../services/premium_service.dart';
 import '../services/record_storage_service.dart';
 import '../services/vehicle_photo_service.dart';
 import '../utils/vin_validation.dart' as vin_validation;
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 const List<String> _vehicleTypeOptions = [
@@ -543,7 +544,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       title: const Text('Add Vehicle'),
       leading: const SafeBackButton(),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Form(
           key: _formKey,
           child: Column(
@@ -554,8 +555,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     children: [
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(AppDesignTokens.space3),
+                        margin: const EdgeInsets.only(
+                          bottom: AppDesignTokens.space3,
+                        ),
                         decoration: BoxDecoration(
                           color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(8),
@@ -653,8 +656,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(AppDesignTokens.space3),
+                        margin: const EdgeInsets.only(
+                          bottom: AppDesignTokens.space4,
+                        ),
                         decoration: BoxDecoration(
                           color: colorScheme.secondary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -882,7 +887,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveVehicle,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDesignTokens.space4,
+                    ),
                   ),
                   child: _isLoading
                       ? CircularProgressIndicator(color: colorScheme.onPrimary)

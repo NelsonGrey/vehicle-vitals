@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../components/safe_back_button.dart';
 
 import '../services/firestore_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class ReminderPreferencesScreen extends StatefulWidget {
@@ -116,11 +117,11 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDesignTokens.space4),
               children: [
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppDesignTokens.space4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -154,7 +155,7 @@ class _ReminderPreferencesScreenState extends State<ReminderPreferencesScreen> {
                 const SizedBox(height: 12),
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppDesignTokens.space4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

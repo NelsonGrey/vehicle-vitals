@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class DataPrivacyScreen extends StatefulWidget {
@@ -141,13 +142,13 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       title: const Text('Data & Privacy'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDesignTokens.space4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppDesignTokens.space4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

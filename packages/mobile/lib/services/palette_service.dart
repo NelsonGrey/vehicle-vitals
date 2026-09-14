@@ -43,10 +43,10 @@ class PaletteService extends ChangeNotifier {
 
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
+      if (_lastSyncedUid != uid) return;
       final data = doc.data() ?? <String, dynamic>{};
       final paletteId = paletteIdFromName(data['paletteMobile'] as String?);
       final linked = (data['paletteLinked'] as bool?) ?? false;
-      _applyLocally(paletteId, linked);
     } catch (_) {
       // Non-fatal: keep whatever was showing (the baseline palette on a
       // fresh install) rather than blocking the app on a failed read.

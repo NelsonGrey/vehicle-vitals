@@ -2,6 +2,126 @@
 @config "../tailwind.config.js";
 @source "./**/*.{js,ts,jsx,tsx}";
 
+/* ─── Color palettes ──────────────────────────────────────────────────────
+ * The Tailwind color STEPS that carry brand meaning (slate-50/200/500/700/
+ * 900, blue-600/700) are repointed at CSS variables here via
+ * tailwind.config.js; every other step, and every non-brand color, stays
+ * literal Tailwind, untouched by palette selection.
+ *
+ * Each variable has a light-mode value (driven by the [data-palette]
+ * attribute ThemeContext sets on <html>) and a
+ * `@media (prefers-color-scheme: dark)` value. Dark mode stays 100% fixed
+ * at its pre-palette values for EVERY one of these steps, no exceptions.
+ * Two independent reasons converged on that, both found while
+ * implementing this rather than assumed up front:
+ *   1. slate-700/900 etc. are also reused for unrelated dark-mode-only
+ *      purposes elsewhere (`dark:bg-slate-700`, `dark:border-slate-700`,
+ *      `dark:text-slate-900`) -- a real, grep-confirmed collision (hundreds
+ *      of such usages) that would repaint those too if these steps varied
+ *      by palette in dark mode.
+ *   2. --vv-blue-600/700 have no such collision, so they looked safe to
+ *      vary in dark mode too -- but a WCAG contrast audit caught that
+ *      brandAccent is also used as bare link-text color directly on the
+ *      dark background elsewhere, and a color dark/saturated enough to
+ *      pair with white as a button/badge fill is, by definition, often too
+ *      dark to read as text on an equally-dark background: measured
+ *      contrast ranged as low as 3.13:1 (need 4.5:1) across the 5
+ *      palettes. Untangling "brandAccent as a fill" from "brandAccent as
+ *      bare text" would need call-site changes beyond this pass, so it's
+ *      pinned fixed too, matching mobile's AppColorScheme.dark (see that
+ *      file's doc comment for the fuller version of this same finding).
+ * Dark-mode BUTTON backgrounds specifically use a different,
+ * separately-collision-prone step (`dark:bg-slate-300`) and were already a
+ * deliberately deferred follow-up before this -- see
+ * project-global-stylesheet-todo memory.
+ *
+ * Keep in lockstep with packages/web/src/theme/palettes.ts and
+ * packages/mobile/lib/theme/palettes.dart -- same 5 ids, same hex, reviewed
+ * together whenever a palette value changes. Source: the published mockup
+ * canvas (https://claude.ai/code/artifact/c33697ec-ce29-4de3-8ab8-5beacf137d4f),
+ * approved by Mark 2026-09-14.
+ */
+:root {
+  /* Light-mode defaults = the "current" (baseline) palette. */
+  --vv-slate-50: #f8fafc;
+  --vv-slate-200: #e2e8f0;
+  --vv-slate-500: #64748b;
+  --vv-slate-600: color-mix(in srgb, var(--vv-slate-500) 74%, black);
+  --vv-slate-700: #334155;
+  --vv-slate-900: #0f172a;
+  --vv-blue-600: #2563eb;
+  --vv-blue-700: #1d4ed8;
+}
+
+[data-palette="cyanTeal"] {
+  --vv-slate-50: #fffaf3;
+  --vv-slate-200: #ddeef0;
+  --vv-slate-500: #64748b;
+  --vv-slate-700: #0e7490;
+  --vv-slate-900: #0f172a;
+  --vv-blue-600: #0d9488;
+  --vv-blue-700: #0d9488;
+}
+
+[data-palette="indigo"] {
+  --vv-slate-50: #f6f5ff;
+  --vv-slate-200: #e1dff7;
+  --vv-slate-500: #6b6b85;
+  --vv-slate-700: #4338ca;
+  --vv-slate-900: #1e1b2e;
+  --vv-blue-600: #7c3aed;
+  --vv-blue-700: #7c3aed;
+}
+
+[data-palette="forestCopper"] {
+  --vv-slate-50: #f7f5f0;
+  --vv-slate-200: #e5e0d5;
+  /* Nudged 2 units darker per channel from the mockup's #78716c -- that
+     exact value measured 4.40:1 against this palette's --vv-slate-50
+     (bg), just under WCAG AA's 4.5:1 floor for text. Imperceptible
+     visually; keep in lockstep with the same fix in
+     packages/mobile/lib/theme/palettes.dart and palettes.ts. */
+  --vv-slate-500: #766f6a;
+  --vv-slate-700: #166534;
+  --vv-slate-900: #1c1917;
+  --vv-blue-600: #c2410c;
+  --vv-blue-700: #c2410c;
+}
+
+[data-palette="warmGraphite"] {
+  --vv-slate-50: #fafaf9;
+  --vv-slate-200: #e7e5e4;
+  --vv-slate-500: #78716c;
+  --vv-slate-700: #44403c;
+  --vv-slate-900: #1c1917;
+  --vv-blue-600: #c2703d;
+  --vv-blue-700: #c2703d;
+}
+
+/* Pins every one of these steps to fixed, palette-independent values in
+ * dark mode -- deliberately declared LAST so it wins the cascade over the
+ * (equally-specific, unguarded) [data-palette="X"] blocks above once this
+ * media query is active. `@media` only gates whether a rule is a cascade
+ * candidate at all; it does NOT win ties on its own, so source order here
+ * is load-bearing, not cosmetic -- confirmed by a real regression during
+ * implementation where this block sat BEFORE the palette blocks and
+ * silently lost every time. See the big comment at the top of this
+ * section for why dark mode is fixed for every step, blue-600/700
+ * included.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vv-slate-50: #f8fafc;
+    --vv-slate-200: #e2e8f0;
+    --vv-slate-500: #64748b;
+    --vv-slate-600: #475569;
+    --vv-slate-700: #334155;
+    --vv-slate-900: #0f172a;
+    --vv-blue-600: #2563eb;
+    --vv-blue-700: #1d4ed8;
+  }
+}
+
 body {
   font-family:
     Inter,
@@ -57,13 +177,13 @@ select:focus-visible {
 }
 
 .ui-h1 {
-  @apply font-semibold text-2xl text-slate-900 dark:text-slate-100;
+  @apply font-sans font-semibold text-2xl text-slate-900 dark:text-slate-100;
 }
 .ui-h2 {
-  @apply font-semibold text-xl text-slate-900 dark:text-slate-100;
+  @apply font-sans font-semibold text-xl text-slate-900 dark:text-slate-100;
 }
 .ui-h3 {
-  @apply font-semibold text-lg text-slate-900 dark:text-slate-100;
+  @apply font-sans font-semibold text-lg text-slate-900 dark:text-slate-100;
 }
 .ui-label {
   @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;

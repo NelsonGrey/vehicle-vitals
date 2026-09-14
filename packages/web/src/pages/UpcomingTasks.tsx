@@ -861,10 +861,10 @@ export default function UpcomingTasks() {
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-          <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+          <h2 className="ui-h3 mt-0 mb-3 px-1">
             Planning Center
           </h2>
-          <p className="mb-3 px-1 text-sm text-slate-600 dark:text-slate-400">
+          <p className="ui-body mb-3 px-1">
             This page estimates when service should surface based on your lead
             time and average daily driving. You can still reveal everything and
             save a reminder early when you want more manual control.
@@ -872,7 +872,7 @@ export default function UpcomingTasks() {
 
           {vehicleList.length > 0 && (
             <div className="mb-3">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0 mb-2 px-1">
+              <p className="ui-hint mt-0 mb-2 px-1">
                 Vehicles
               </p>
               <div className="flex flex-wrap gap-2 mb-2 px-1">
@@ -985,7 +985,7 @@ export default function UpcomingTasks() {
               placeholder="you@example.com"
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
             />
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="ui-hint mt-1">
               Use this for one-time reminder emails when you choose Send Email
               Now. It does not start an automatic email campaign.
             </p>
@@ -1015,18 +1015,18 @@ export default function UpcomingTasks() {
               </button>
             ))}
           </div>
-          <p className="mb-0 px-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="ui-hint mb-0 px-1">
             {reminderFilterDescriptions[reminderFilter]}
           </p>
         </div>
 
         <div className="lg:col-span-8 lg:sticky lg:top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <p className="ui-label mb-3">
             Detail
           </p>
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
-              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <p className="ui-label m-0">
                 In range now
               </p>
               <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -1034,7 +1034,7 @@ export default function UpcomingTasks() {
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
-              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <p className="ui-label m-0">
                 Saved reminders
               </p>
               <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -1042,7 +1042,7 @@ export default function UpcomingTasks() {
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
-              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <p className="ui-label m-0">
                 Outside window
               </p>
               <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -1050,7 +1050,7 @@ export default function UpcomingTasks() {
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
-              <p className="m-0 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <p className="ui-label m-0">
                 Beyond plan horizon
               </p>
               <p className="m-0 mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -1058,7 +1058,7 @@ export default function UpcomingTasks() {
               </p>
               {planningHorizonUpgrade &&
                 recommendationsBeyondPlanWindow > 0 && (
-                  <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="ui-hint m-0 mt-1">
                     Past your {planningHorizonMonths}-month horizon.{' '}
                     <Link
                       to="/app/subscription"
@@ -1075,7 +1075,7 @@ export default function UpcomingTasks() {
           {timelineEntries.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">✅</div>
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              <h3 className="ui-h2 mb-2">
                 All caught up!
               </h3>
               <p className="text-slate-600 dark:text-slate-400">
@@ -1118,21 +1118,21 @@ export default function UpcomingTasks() {
             <>
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                  <h2 className="ui-h2 mt-0 mb-1">
                     Upcoming Timeline
                   </h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                  <p className="ui-body m-0">
                     {timelineEntries.length} item
                     {timelineEntries.length === 1 ? '' : 's'} — recommendations
                     and saved reminders, ordered by estimated due date
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="ui-hint mt-1">
                     Due dates are estimated from current mileage and your saved
                     driving pace. Save a reminder whenever you want a manual
                     follow-up point, even if the task is still far out.
                   </p>
                   {!hasAiPredictions && (
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="ui-hint mt-2">
                       AI predicted maintenance due-date insights are available
                       on Premium and Enterprise plans.
                     </p>
@@ -1141,7 +1141,7 @@ export default function UpcomingTasks() {
                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3">
                   <label
                     htmlFor="upcomingCalendarTarget"
-                    className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                    className="ui-label block"
                   >
                     Default calendar action
                   </label>
@@ -1210,7 +1210,7 @@ export default function UpcomingTasks() {
                                   </span>
                                 </div>
 
-                                <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                <div className="ui-body mb-3">
                                   <span className="font-medium">
                                     {entry.item.vehicle.year}{' '}
                                     {entry.item.vehicle.make}{' '}
@@ -1313,7 +1313,7 @@ export default function UpcomingTasks() {
                                       ? 'Adding...'
                                       : 'Add to Calendar'}
                                   </button>
-                                  <p className="m-0 text-xs text-slate-500 dark:text-slate-400 sm:text-right">
+                                  <p className="ui-hint m-0 sm:text-right">
                                     Save a reminder to keep this item tracked
                                     after you leave this page.
                                   </p>
@@ -1341,7 +1341,7 @@ export default function UpcomingTasks() {
                                   </span>
                                 </div>
 
-                                <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                <div className="ui-body mb-3">
                                   <span className="font-medium">
                                     {vehicleLookup[entry.item.vin]
                                       ? `${vehicleLookup[entry.item.vin].year} ${vehicleLookup[entry.item.vin].make} ${vehicleLookup[entry.item.vin].model}`
@@ -1475,7 +1475,7 @@ export default function UpcomingTasks() {
               </div>
 
               <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                <h4 className="font-semibold mb-2 mt-0">Legend</h4>
+                <h4 className="ui-h3 mb-2 mt-0">Legend</h4>
                 <div className="flex gap-4 text-sm flex-wrap">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-danger-200 rounded"></div>

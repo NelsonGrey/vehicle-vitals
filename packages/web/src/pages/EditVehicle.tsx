@@ -553,7 +553,7 @@ export default function EditVehicle() {
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
         {/* Left Column: Vehicle Edit Form */}
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4 px-0">
+          <h3 className="ui-h3 mt-0 mb-4 px-0">
             Vehicle Details
           </h3>
 
@@ -669,7 +669,7 @@ export default function EditVehicle() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+              <p className="ui-hint mt-1 mb-0">
                 Stored vehicles remain tracked but display separately from your
                 active garage.
               </p>
@@ -715,11 +715,11 @@ export default function EditVehicle() {
                 placeholder="VIN, HIN, or serial number"
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               />
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+              <p className="ui-hint mt-1">
                 Enter VIN and click Lookup to prefill compatible vehicle
                 details, or maintain this vehicle manually for non-VIN assets.
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+              <p className="ui-hint mt-1 mb-0">
                 Identifier type detected: {detectedIdentifierLabel}. Lookup
                 currently supports VIN only.
               </p>
@@ -805,7 +805,7 @@ export default function EditVehicle() {
                 placeholder="Recipient account email"
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-slate-100"
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">
+              <p className="ui-hint mt-1 mb-2">
                 Transfer moves this vehicle and its maintenance/reminder history
                 to another existing user account.
               </p>
@@ -831,7 +831,7 @@ export default function EditVehicle() {
                     className="h-28 w-full object-cover rounded"
                   />
                   {form.photoSource === 'wikimedia' && (
-                    <p className="m-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="ui-hint m-0 mt-1">
                       Source: Wikimedia
                     </p>
                   )}
@@ -854,7 +854,7 @@ export default function EditVehicle() {
                   Find Free Web Photo (Beta)
                 </button>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+              <p className="ui-hint mt-1 mb-0">
                 Public web matches may not always reflect exact trim or color.
               </p>
             </div>
@@ -886,12 +886,12 @@ export default function EditVehicle() {
 
         {/* Right Column: VIN Insights Display */}
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-4 px-0">
+          <h3 className="ui-h3 mt-0 mb-4 px-0">
             Vehicle Insights
           </h3>
 
           {!form.vehicleType ? (
-            <p className="text-slate-600 dark:text-slate-400 text-sm">
+            <p className="ui-body">
               Run VIN lookup to populate vehicle insights from NHTSA database
             </p>
           ) : (
@@ -939,7 +939,7 @@ export default function EditVehicle() {
                   </div>
 
                   {form.recallsSource && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                    <p className="ui-hint mb-3">
                       Source: {form.recallsSource}
                     </p>
                   )}
@@ -992,7 +992,7 @@ export default function EditVehicle() {
               )}
 
               {form.insightsUpdatedAt && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 pt-3 mt-4">
+                <p className="ui-hint border-t border-slate-200 dark:border-slate-700 pt-3 mt-4">
                   Last updated:{' '}
                   {new Date(form.insightsUpdatedAt).toLocaleDateString()}
                 </p>
@@ -1004,7 +1004,7 @@ export default function EditVehicle() {
 
       {/* Maintenance Section */}
       <div className="mt-8">
-        <h3 className="font-serif font-bold text-2xl text-slate-800 dark:text-slate-100 mb-4">
+        <h3 className="ui-h2 mb-4">
           Maintenance
         </h3>
         {vin && <MaintenanceList vin={vin} prefill={maintenancePrefill} />}
@@ -1690,7 +1690,7 @@ function MaintenanceList({
       {vehicle && (
         <div className="mb-6 border-b border-slate-200 dark:border-slate-600 pb-4">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <h4 className="font-serif font-bold text-xl text-slate-800 dark:text-slate-100">
+            <h4 className="ui-h2">
               Recommended Maintenance
             </h4>
             <div className="flex items-center gap-2">
@@ -1722,7 +1722,7 @@ function MaintenanceList({
               Calendar sync is available on Pro and Premium plans.
             </p>
           )}
-          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+          <p className="ui-body mb-3">
             {vehicle.make} {vehicle.model} ({vehicle.year}) • Current mileage:{' '}
             {vehicle.mileage}
           </p>
@@ -1745,13 +1745,13 @@ function MaintenanceList({
                         <div className="font-medium text-slate-800 dark:text-slate-100">
                           {item.description}
                         </div>
-                        <div className="text-sm text-slate-600 dark:text-slate-300">
+                        <div className="ui-body">
                           Due: {item.nextDueMileage} miles ({item.milesUntilDue}{' '}
                           miles)
                         </div>
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 text-right">
+                    <div className="ui-hint text-right">
                       <div>{item.frequency}</div>
                       <button
                         onClick={() => handleAddToCalendar(item)}
@@ -1772,7 +1772,7 @@ function MaintenanceList({
       )}
 
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-serif font-bold text-xl text-slate-800 dark:text-slate-100">
+        <h3 className="ui-h2">
           Maintenance History
         </h3>
         <div className="flex gap-2">
@@ -1805,17 +1805,17 @@ function MaintenanceList({
               <strong className="text-slate-800 dark:text-slate-100">
                 {e.title}
               </strong>
-              <span className="text-sm text-slate-600 dark:text-slate-300">
+              <span className="ui-body">
                 {e.date?.split('T')[0]}
               </span>
             </div>
-            <div className="text-sm text-slate-600 dark:text-slate-300 mb-1">
+            <div className="ui-body mb-1">
               ${e.cost}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="ui-hint">
               {formatPerformedBy(e.performedBy)} • {formatCoverage(e.coverage)}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="ui-hint">
               {e.notes}
             </div>
           </li>
@@ -1826,7 +1826,7 @@ function MaintenanceList({
         ref={addEntryRef}
         className="border-t border-slate-200 dark:border-slate-600 pt-4"
       >
-        <h4 className="font-serif font-bold text-xl text-slate-800 dark:text-slate-100 mb-4">
+        <h4 className="ui-h2 mb-4">
           Add Entry
         </h4>
         {prefill && !prefillDismissed && (
@@ -1936,7 +1936,7 @@ function MaintenanceList({
                     aria-label="Shop or professional"
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100"
                   />
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="ui-hint mt-1">
                     Shown in Shops &amp; Services under "Places You've Used."
                   </p>
                 </div>
@@ -1973,12 +1973,12 @@ function MaintenanceList({
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-slate-700 dark:text-slate-100 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
             />
             {uploading && (
-              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+              <p className="ui-body mt-1">
                 Uploading attachments...
               </p>
             )}
             {analysisBusy && (
-              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+              <p className="ui-body mt-1">
                 Rechecking attachment analysis...
               </p>
             )}

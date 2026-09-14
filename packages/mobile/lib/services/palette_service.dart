@@ -43,9 +43,26 @@ class PaletteService extends ChangeNotifier {
 
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
+
+      // A newer call may have already retargeted this service at a
+      // different user (or signed out) while this read was in flight --
+      // applying a stale response now would show user A's palette in
+      // user B's session.
+      if (uid != _lastSyncedUid) {
+        return;
+      }
+
       final data = doc.data() ?? <String, dynamic>{};
-      final paletteId = paletteIdFromName(data['paletteMobile'] as String?);
-      final linked = (data['paletteLinked'] as bool?) ?? false;
+      // Firestore has no schema, so type each field independently rather
+      // than an unconditional `as` cast -- a malformed value in one field
+      // (e.g. from a bad write elsewhere) shouldn't throw and discard an
+      // otherwise-readable document via the catch below.
+      final rawPalette = data['paletteMobile'];
+      final paletteId = paletteIdFromName(
+        rawPalette is String ? rawPalette : null,
+      );
+      final rawLinked = data['paletteLinked'];
+      final linked = rawLinked is bool ? rawLinked : false;
       _applyLocally(paletteId, linked);
     } catch (_) {
       // Non-fatal: keep whatever was showing (the baseline palette on a

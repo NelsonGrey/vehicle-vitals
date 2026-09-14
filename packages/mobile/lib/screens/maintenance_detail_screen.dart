@@ -663,41 +663,6 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Attachments',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  ...?_entry?.attachments.map(
-                    (attachment) => _AttachmentTile(
-                      attachment: attachment,
-                      busy: _attachmentBusy,
-                      onRemove: () => _removeAttachment(attachment),
-                      onOpen: () => _recordStorageService.openVehicleRecordFile(
-                        attachment.url,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _attachmentBusy ? null : _pickPhoto,
-                          icon: const Icon(Icons.add_a_photo_outlined),
-                          label: const Text('Add Photo'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _attachmentBusy ? null : _pickDocument,
-                          icon: const Icon(Icons.attach_file),
-                          label: const Text('Add Document'),
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 16),
                   Row(
                     children: [

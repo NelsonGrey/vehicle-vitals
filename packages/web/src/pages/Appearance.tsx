@@ -53,10 +53,7 @@ export function AppearanceContent() {
                 {palette.label}
               </span>
               {isSelected && (
-                <span
-                  className="text-sm font-medium"
-                  style={{ color: palette.primary }}
-                >
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                   Selected
                 </span>
               )}

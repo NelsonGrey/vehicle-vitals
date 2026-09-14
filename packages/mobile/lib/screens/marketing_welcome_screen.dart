@@ -16,7 +16,7 @@ class WelcomeScreen extends StatelessWidget {
     return BrandScaffold(
       title: const Text('Vehicle-Vitals'),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(AppDesignTokens.space5),
         child: ListView(
           children: [
             const SizedBox(height: 8),

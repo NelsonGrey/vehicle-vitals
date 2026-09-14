@@ -64,7 +64,7 @@ List<({String value, String label, Color color, IconData icon})> _statusOptions(
   (
     value: 'missing',
     label: 'Missing',
-    color: Colors.grey,
+    color: colorScheme.onSurfaceVariant,
     icon: Icons.radio_button_unchecked,
   ),
   (
@@ -113,7 +113,7 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
     return BrandScaffold(
       title: Text((item['title'] ?? '').toString()),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         children: [
           // Overview
           Row(
@@ -127,11 +127,14 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDesignTokens.space2,
+                  vertical: AppDesignTokens.space1,
+                ),
                 decoration: BoxDecoration(
                   color: required
                       ? colorScheme.error.withValues(alpha: 0.1)
-                      : Colors.grey.withValues(alpha: 0.15),
+                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -139,7 +142,9 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: required ? colorScheme.error : Colors.grey[700],
+                    color: required
+                        ? colorScheme.error
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -224,7 +229,7 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
           ),
           if ((failedUploads?.length ?? 0) > 0)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppDesignTokens.space2),
               child: Row(
                 children: [
                   Expanded(
@@ -253,7 +258,7 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
             ),
           if (isUploadingThis)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppDesignTokens.space2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -276,7 +281,7 @@ class _RecordItemScreenState extends State<RecordItemScreen> {
           if (files.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDesignTokens.space4),
               decoration: BoxDecoration(
                 border: Border.all(color: Theme.of(context).dividerColor),
                 borderRadius: BorderRadius.circular(8),
@@ -367,7 +372,7 @@ class _FileAttachmentTile extends StatelessWidget {
         extracted['mileage'] != null;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: AppDesignTokens.space1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -397,7 +402,7 @@ class _FileAttachmentTile extends StatelessWidget {
           ),
           if (analysis != null) ...[
             Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: AppDesignTokens.space1),
               child: Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 spacing: 6,
@@ -405,7 +410,7 @@ class _FileAttachmentTile extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
+                      horizontal: AppDesignTokens.space2,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
@@ -427,7 +432,10 @@ class _FileAttachmentTile extends StatelessWidget {
             ),
             if (hasExtractedFields)
               Padding(
-                padding: const EdgeInsets.only(left: 4, top: 4),
+                padding: const EdgeInsets.only(
+                  left: AppDesignTokens.space1,
+                  top: AppDesignTokens.space1,
+                ),
                 child: PlusMinusExpansionTile(
                   tilePadding: EdgeInsets.zero,
                   title: Text(
@@ -438,7 +446,9 @@ class _FileAttachmentTile extends StatelessWidget {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-                  childrenPadding: const EdgeInsets.only(bottom: 8),
+                  childrenPadding: const EdgeInsets.only(
+                    bottom: AppDesignTokens.space2,
+                  ),
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,

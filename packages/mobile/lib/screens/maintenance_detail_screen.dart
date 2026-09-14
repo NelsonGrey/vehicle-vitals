@@ -13,6 +13,7 @@ import '../services/attachment_analysis_service.dart';
 import '../services/firestore_service.dart';
 import '../services/premium_service.dart';
 import '../services/record_storage_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/number_format.dart';
 import '../utils/user_facing_error.dart';
 
@@ -511,7 +512,7 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDesignTokens.space4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -533,9 +534,11 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(AppDesignTokens.space3),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -621,7 +624,44 @@ class _MaintenanceDetailScreenState extends State<MaintenanceDetailScreen> {
                     _providerNameController.text.trim().isNotEmpty
                         ? '${_performedByLabel(_performedBy)} (${_providerNameController.text.trim()}) • ${_coverageLabel(_coverage)}'
                         : '${_performedByLabel(_performedBy)} • ${_coverageLabel(_coverage)}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Attachments',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  ...?_entry?.attachments.map(
+                    (attachment) => _AttachmentTile(
+                      attachment: attachment,
+                      busy: _attachmentBusy,
+                      onRemove: () => _removeAttachment(attachment),
+                      onOpen: () => _recordStorageService.openVehicleRecordFile(
+                        attachment.url,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _attachmentBusy ? null : _pickPhoto,
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: const Text('Add Photo'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _attachmentBusy ? null : _pickDocument,
+                          icon: const Icon(Icons.attach_file),
+                          label: const Text('Add Document'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -718,7 +758,7 @@ class _AttachmentTile extends StatelessWidget {
     final extracted = attachment.analysis?.extracted;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: AppDesignTokens.space2),
       child: ListTile(
         onTap: onOpen,
         leading: isImage
@@ -747,9 +787,12 @@ class _AttachmentTile extends StatelessWidget {
                   fontStyle: FontStyle.italic,
                 ),
               )
-            : const Text(
+            : Text(
                 'No data extracted from this file.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
         trailing: IconButton(
           tooltip: 'Remove attachment',

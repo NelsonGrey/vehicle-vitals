@@ -7,6 +7,7 @@ import '../components/app_bottom_nav.dart';
 import '../models/maintenance.dart';
 import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/number_format.dart';
 import '../utils/user_facing_error.dart';
 
@@ -131,7 +132,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
         title: const Text('Service History'),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppDesignTokens.space6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -169,7 +170,7 @@ class _TimelineDashboardScreenState extends State<TimelineDashboardScreen> {
         IconButton(onPressed: _loadTimeline, icon: const Icon(Icons.refresh)),
       ],
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -323,7 +324,7 @@ class _SummaryCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDesignTokens.space3),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),

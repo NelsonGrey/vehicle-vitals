@@ -632,9 +632,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
         children: [
           // Add new entry form
           Card(
-            margin: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(AppDesignTokens.space4),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDesignTokens.space4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -661,9 +661,11 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(AppDesignTokens.space3),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -852,9 +854,11 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           // Manufacturer schedules section
           if (!_loadingVehicle && _vehicle != null) ...[
             Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(
+                horizontal: AppDesignTokens.space4,
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppDesignTokens.space4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -865,18 +869,23 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '${_vehicle!.make} ${_vehicle!.model} (${_vehicle!.year})',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
                         final plan = _maintenancePlan;
                         if (plan == null || plan.items.isEmpty) {
-                          return const Text(
+                          return Text(
                             'No maintenance schedule available for this vehicle.',
                             style: TextStyle(
                               fontStyle: FontStyle.italic,
-                              color: Colors.grey,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           );
                         }
@@ -890,14 +899,18 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (!plan.modelSpecific)
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: AppDesignTokens.space2,
+                                ),
                                 child: Text(
                                   'No manufacturer data for this vehicle — showing a generic estimate.',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontStyle: FontStyle.italic,
-                                    color: Colors.grey,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ),
@@ -934,23 +947,36 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
           // Entries list
           if (_loading)
             const Padding(
-              padding: EdgeInsets.all(32),
+              padding: EdgeInsets.all(AppDesignTokens.space8),
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_entries.isEmpty)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 16, 24, 32),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDesignTokens.space6,
+                AppDesignTokens.space4,
+                AppDesignTokens.space6,
+                AppDesignTokens.space8,
+              ),
               child: Text(
                 'No maintenance entries yet.\nAdd one using the form above.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             )
           else
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: const EdgeInsets.fromLTRB(
+                AppDesignTokens.space4,
+                0,
+                AppDesignTokens.space4,
+                AppDesignTokens.space6,
+              ),
               itemCount: _entries.length,
               itemBuilder: (context, index) {
                 final entry = _entries[index];
@@ -969,7 +995,7 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                       'gif',
                     ].contains(firstAttachment.type.toLowerCase());
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: AppDesignTokens.space2),
                   child: ListTile(
                     leading: firstAttachment == null
                         ? null
@@ -997,7 +1023,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                               : '${_performedByLabel(entry.performedBy)} • ${_coverageLabel(entry.coverage)}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1006,7 +1034,9 @@ class _MaintenanceListScreenState extends State<MaintenanceListScreen> {
                           '${entry.attachments.length > 1 ? ' • ${entry.attachments.length} attachments' : ''}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1060,7 +1090,7 @@ class _PendingAttachmentTile extends StatelessWidget {
     final extracted = pending.uploaded?.analysis?.extracted;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: AppDesignTokens.space2),
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Row(
@@ -1093,7 +1123,7 @@ class _PendingAttachmentTile extends StatelessWidget {
                   ),
                   if (pending.busy)
                     const Padding(
-                      padding: EdgeInsets.only(top: 4),
+                      padding: EdgeInsets.only(top: AppDesignTokens.space1),
                       child: Row(
                         children: [
                           SizedBox(
@@ -1111,7 +1141,9 @@ class _PendingAttachmentTile extends StatelessWidget {
                     )
                   else if (pending.error != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.only(
+                        top: AppDesignTokens.space1,
+                      ),
                       child: Text(
                         pending.error!,
                         style: TextStyle(
@@ -1122,7 +1154,9 @@ class _PendingAttachmentTile extends StatelessWidget {
                     )
                   else if (extracted != null && !extracted.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.only(
+                        top: AppDesignTokens.space1,
+                      ),
                       child: Text(
                         'Detected: '
                         '${extracted.totalCost != null ? formatCurrencyAmount(extracted.totalCost!) : '—'}'
@@ -1136,14 +1170,16 @@ class _PendingAttachmentTile extends StatelessWidget {
                     )
                   else if (!pending.busy && pending.error == null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.only(
+                        top: AppDesignTokens.space1,
+                      ),
                       child: Text(
                         pending.notEntitled
                             ? 'AI extraction requires Pro or Premium. The attachment is still saved.'
                             : 'No data could be extracted from this file.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),

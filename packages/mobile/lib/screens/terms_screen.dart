@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../components/brand_scaffold.dart';
+import '../theme/design_tokens.dart';
 import 'package:go_router/go_router.dart';
 
 class TermsScreen extends StatelessWidget {
@@ -10,11 +11,13 @@ class TermsScreen extends StatelessWidget {
     return BrandScaffold(
       title: const Text('Terms of Use'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         children: [
-          const Text(
+          Text(
             'Last updated: July 29, 2026',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 12),
           const _TermsSection(
@@ -86,7 +89,7 @@ class _TermsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.only(top: AppDesignTokens.space5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

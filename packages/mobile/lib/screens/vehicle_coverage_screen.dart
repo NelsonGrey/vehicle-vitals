@@ -8,6 +8,7 @@ import '../models/vehicle.dart';
 import '../services/firestore_service.dart';
 import '../services/manuals_service.dart';
 import '../services/warranty_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class VehicleCoverageScreen extends StatefulWidget {
@@ -94,7 +95,7 @@ class _VehicleCoverageScreenState extends State<VehicleCoverageScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
           ? Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppDesignTokens.space6),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -118,7 +119,7 @@ class _VehicleCoverageScreenState extends State<VehicleCoverageScreen> {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppDesignTokens.space4),
                 children: [
                   if (_vehicle != null) ...[
                     Text(
@@ -150,7 +151,7 @@ class _WarrantyCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -164,8 +165,8 @@ class _WarrantyCard extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: AppDesignTokens.space2,
+                    vertical: AppDesignTokens.space1,
                   ),
                   decoration: BoxDecoration(
                     color: (isActive ? colorScheme.primary : colorScheme.error)
@@ -197,7 +198,7 @@ class _WarrantyCard extends StatelessWidget {
             const SizedBox(height: 12),
             ...warranty.coverages.map(
               (coverage) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: AppDesignTokens.space3),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -269,7 +270,7 @@ class _ManualsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

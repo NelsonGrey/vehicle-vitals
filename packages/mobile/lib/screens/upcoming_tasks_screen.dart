@@ -641,7 +641,7 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
     final missingScheduleData = _unsupportedVehicles.isNotEmpty;
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppDesignTokens.space6),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -674,7 +674,9 @@ class _UpcomingTasksScreenState extends State<UpcomingTasksScreen> {
             if (missingScheduleData) ...[
               const SizedBox(height: 12),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDesignTokens.space6,
+                ),
                 child: Text(
                   "We don't have manufacturer maintenance data for "
                   '${_unsupportedVehicles.map((v) => '${v.year} ${v.make} ${v.model}').join(', ')}, '

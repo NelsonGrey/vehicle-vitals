@@ -44,7 +44,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
             backgroundColor: isSelected
                 ? Theme.of(context).primaryColor
                 : Colors.transparent,
-            foregroundColor: isSelected ? Colors.white : Colors.black87,
+            foregroundColor: isSelected
+                ? Theme.of(context).colorScheme.onPrimary
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -55,9 +57,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppDesignTokens.space1),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade400),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -74,12 +76,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final tierLabel = _tierDisplayName(premiumService.subscriptionTier);
 
     return ListView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(AppDesignTokens.space4),
       children: [
         Card(
           color: AppDesignTokens.success.withValues(alpha: 0.08),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(AppDesignTokens.space4),
             child: Row(
               children: [
                 Icon(
@@ -146,7 +148,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
         ),
         Text(
           '$tierLabel entitlements synchronize across supported devices.',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -163,7 +168,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
           onPressed: () => context.push('/app/terms'),
           child: const Text('Terms of Use', style: TextStyle(fontSize: 12)),
         ),
-        const Text('•', style: TextStyle(color: Colors.grey)),
+        Text(
+          '•',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         TextButton(
           onPressed: () => context.push('/app/privacy'),
           child: const Text('Privacy Policy', style: TextStyle(fontSize: 12)),
@@ -176,7 +186,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final tierLabel = _tierDisplayName(premiumService.subscriptionTier);
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(AppDesignTokens.space4),
       child: ListView(
         children: [
           const SizedBox(height: 8),
@@ -190,7 +200,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
           const SizedBox(height: 8),
           Text(
             'Current tier: $tierLabel • Vehicle limit: ${premiumService.vehicleLimit}',
-            style: const TextStyle(fontSize: 15, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 15,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -205,9 +218,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
             child: const Text('Restore Previous Purchase'),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Payment is processed through Apple in-app purchase.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
@@ -258,7 +274,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
       return DataCell(
         Icon(
           available ? Icons.check_circle : Icons.cancel,
-          color: available ? AppDesignTokens.success : Colors.grey,
+          color: available
+              ? AppDesignTokens.success
+              : Theme.of(context).colorScheme.onSurfaceVariant,
           size: 18,
         ),
       );
@@ -318,12 +336,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
     required bool isActive,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: AppDesignTokens.space2),
       child: Row(
         children: [
           Icon(
             icon,
-            color: isActive ? AppDesignTokens.success : Colors.grey,
+            color: isActive
+                ? AppDesignTokens.success
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             size: 24,
           ),
           const SizedBox(width: 16),
@@ -336,12 +356,17 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: isActive ? Colors.black : Colors.grey,
+                    color: isActive
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
                   description,
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -483,9 +508,9 @@ class PremiumPlanCatalog extends StatelessWidget {
     }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppDesignTokens.space3),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -512,17 +537,20 @@ class PremiumPlanCatalog extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               _tierTagline(tier),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 fontStyle: FontStyle.italic,
-                color: Colors.black54,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               _tierVehicleLimitLabel(tier),
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 12),
             Align(

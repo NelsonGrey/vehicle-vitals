@@ -755,11 +755,15 @@ export default function Home() {
                             computeVehiclePortfolioProgress(v);
                           return (() => {
                             const vinText = String(v.vin ?? '').trim();
-                            const makeText = String(v.make ?? '').trim();
-                            const modelText = String(v.model ?? '').trim();
-                            const yearText = String(v.year ?? '').trim();
-                            const isPhantom =
-                              !vinText || !makeText || !modelText || !yearText;
+                            // VIN is the document's primary key and the only
+                            // field the Add Vehicle form actually requires
+                            // (year/make/model can be filled in later via
+                            // VIN lookup or manual edit) -- a vehicle with
+                            // blank year/make/model is incomplete, not
+                            // corrupted, and VehicleListItem already renders
+                            // it fine. Only a missing VIN indicates a
+                            // genuinely broken document.
+                            const isPhantom = !vinText;
 
                             if (isPhantom) {
                               return (
@@ -776,7 +780,7 @@ export default function Home() {
                                     ID: {vinText || 'Missing document ID'}
                                   </div>
                                   <div className="text-xs text-danger-600 dark:text-danger-400 mb-2">
-                                    Missing vehicle year/make/model fields
+                                    Missing vehicle identifier (VIN)
                                   </div>
                                   <button
                                     type="button"

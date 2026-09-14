@@ -90,7 +90,7 @@ class _RecordCategoryScreenState extends State<RecordCategoryScreen> {
     return BrandScaffold(
       title: Text(widget.categoryTitle),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         itemCount: items.length,
         itemBuilder: (context, itemIndex) {
           final item = Map<String, dynamic>.from(items[itemIndex] as Map);
@@ -113,14 +113,16 @@ class _RecordCategoryScreenState extends State<RecordCategoryScreen> {
               statusIcon = Icons.hourglass_bottom;
               break;
             default:
-              statusColor = required ? colorScheme.error : Colors.grey;
+              statusColor = required
+                  ? colorScheme.error
+                  : colorScheme.onSurfaceVariant;
               statusIcon = required
                   ? Icons.error_outline
                   : Icons.radio_button_unchecked;
           }
 
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: AppDesignTokens.space3),
             child: ListTile(
               onTap: () => _openItem(itemIndex),
               leading: Icon(statusIcon, color: statusColor),

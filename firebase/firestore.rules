@@ -75,6 +75,23 @@ service cloud.firestore {
     }
 
     // Authenticated user data - users can only access their own data.
+    //
+    // The top-level users/{userId} document itself (displayName,
+    // emailRemindersEnabled, paletteWeb/paletteMobile/paletteLinked, etc.)
+    // gets its own unconditional rule, split out from the recursive one
+    // below: a `{document=**}` wildcard capture is empty for that exact
+    // path, and calling `.size()` on that empty capture throws a runtime
+    // "Function not found" error in both the emulator and (confirmed via
+    // this exact write pattern) production — which denies the write
+    // outright rather than merely skipping the quota/subscription check it
+    // was meant to gate. That silently broke every direct write to this
+    // document, including the already-shipped email-reminder toggle
+    // (EmailReminderService.updateEmailPreferences), until this fix.
+    match /users/{userId} {
+      allow read, write: if isSelf(userId);
+    }
+
+    // Everything under users/{userId}/** (vehicles, preferences, etc.).
     // quotas/ and subscription/ are carved out of write access below: they
     // are server-computed (AI-analysis usage limits, premium tier/billing
     // state) and must never be directly writable by the client SDK — a

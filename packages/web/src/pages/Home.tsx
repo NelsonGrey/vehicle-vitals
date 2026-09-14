@@ -598,10 +598,10 @@ export default function Home() {
         </div>
         {vehicles.length === 0 ? (
           <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 my-4">
-            <h3 className="font-serif font-semibold text-xl text-slate-900 dark:text-slate-100 mb-2">
+            <h3 className="ui-h2 mb-2">
               No vehicles yet
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-3">
+            <p className="ui-body mb-3">
               Get started by adding your first vehicle. We can look up details
               for some vehicles to make setup quicker.
             </p>
@@ -699,7 +699,7 @@ export default function Home() {
                       : `all ${garageHealthSummary.total} vehicle${garageHealthSummary.total === 1 ? '' : 's'} looking good`}
                   </span>
                 </div>
-                <p className="mb-0 mt-1 px-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="ui-hint mb-0 mt-1 px-1">
                   Each score estimates remaining life on key maintenance items
                   (oil, brakes, tires, fluids) from mileage and logged service
                   history — a vehicle needs attention below a score of 80.
@@ -711,7 +711,7 @@ export default function Home() {
             <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Left Column: Vehicle List */}
               <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-                <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+                <h2 className="ui-h3 mt-0 mb-3 px-1">
                   Vehicles
                 </h2>
                 <div className="mb-3">
@@ -741,10 +741,10 @@ export default function Home() {
                   ].map(section => (
                     <div key={section.key}>
                       <div className="px-1 pb-2 pt-1">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <div className="ui-label">
                           {section.title}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <div className="ui-hint mt-0.5">
                           {section.description}
                         </div>
                       </div>
@@ -755,11 +755,15 @@ export default function Home() {
                             computeVehiclePortfolioProgress(v);
                           return (() => {
                             const vinText = String(v.vin ?? '').trim();
-                            const makeText = String(v.make ?? '').trim();
-                            const modelText = String(v.model ?? '').trim();
-                            const yearText = String(v.year ?? '').trim();
-                            const isPhantom =
-                              !vinText || !makeText || !modelText || !yearText;
+                            // VIN is the document's primary key and the only
+                            // field the Add Vehicle form actually requires
+                            // (year/make/model can be filled in later via
+                            // VIN lookup or manual edit) -- a vehicle with
+                            // blank year/make/model is incomplete, not
+                            // corrupted, and VehicleListItem already renders
+                            // it fine. Only a missing VIN indicates a
+                            // genuinely broken document.
+                            const isPhantom = !vinText;
 
                             if (isPhantom) {
                               return (
@@ -776,7 +780,7 @@ export default function Home() {
                                     ID: {vinText || 'Missing document ID'}
                                   </div>
                                   <div className="text-xs text-danger-600 dark:text-danger-400 mb-2">
-                                    Missing vehicle year/make/model fields
+                                    Missing vehicle identifier (VIN)
                                   </div>
                                   <button
                                     type="button"
@@ -882,18 +886,18 @@ export default function Home() {
                               )}
                             </div>
                             <div>
-                              <h3 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                              <h3 className="ui-h2 mt-0 mb-1">
                                 {selectedVehicle.year} {selectedVehicle.make}{' '}
                                 {selectedVehicle.model}
                               </h3>
-                              <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                              <p className="ui-body m-0">
                                 VIN: {selectedVehicle.vin}
                                 {selectedVehicle.mileage
                                   ? ` • ${selectedVehicle.mileage} mi`
                                   : ''}
                               </p>
                               {selectedVehicle.photoSource === 'wikimedia' && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                                <p className="ui-hint mt-1 mb-0">
                                   Image source: Wikimedia
                                   {selectedVehicle.photoAttributionUrl && (
                                     <>
@@ -1014,7 +1018,7 @@ export default function Home() {
 
                         {/* Cost of Ownership */}
                         <div className="mb-1">
-                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+                          <p className="ui-label mb-2">
                             Cost of Ownership
                           </p>
                           <CostAnalysisReportlet vehicle={selectedVehicle} />

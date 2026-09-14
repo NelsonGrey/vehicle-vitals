@@ -18,6 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';
 import AdminSupport from './pages/AdminSupport';
 import { AuthProvider, useAuth } from './shared/AuthContext';
+import { ThemeProvider } from './shared/ThemeContext';
 import {
   DEFAULT_APP_REDIRECT,
   getRedirectQueryParam,
@@ -288,7 +289,10 @@ function App() {
       <AuthProvider>
         {/* Inside AuthProvider (not outside it) so useAuth() inside the gate
             actually sees the signed-in user -- the pre-2026-07 wiring had
-            this outside AuthProvider, which meant the gate never worked. */}
+            this outside AuthProvider, which meant the gate never worked.
+            ThemeProvider is also inside AuthProvider for the same reason --
+            it reads useAuth()'s user to load/save the palette preference. */}
+        <ThemeProvider>
         <EnvironmentGate environment={environment}>
         <AppAnalytics />
         <AppNotificationBridge />
@@ -545,6 +549,7 @@ function App() {
           </Routes>
         </Suspense>
         </EnvironmentGate>
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   );

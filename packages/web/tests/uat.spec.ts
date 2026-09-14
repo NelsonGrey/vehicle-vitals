@@ -31,9 +31,18 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
   ): Promise<boolean> => {
     await page.goto(`${BASE_URL}/auth/login`);
 
+    // This is a client-rendered SPA: `goto()` resolving (the 'load' event)
+    // only means the initial HTML/JS shell arrived, not that React has
+    // mounted the login route or that Firebase auth has initialized --
+    // checking .isVisible() immediately after goto() is a real, reliably
+    // reproducible race that reports "unavailable" every time even when
+    // the auth UI is genuinely there a moment later (confirmed manually:
+    // the same check succeeds well within 2s). Wait for the fields instead
+    // of sampling their state once.
     const emailVisible = await page
       .locator('#email')
-      .isVisible()
+      .waitFor({ state: 'visible', timeout: 8000 })
+      .then(() => true)
       .catch(() => false);
     const passwordVisible = await page
       .locator('#password')
@@ -98,7 +107,13 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
     await page.goto(`${BASE_URL}/app/add-vehicle`);
 
     const vinField = page.locator('#vin');
-    if (!(await vinField.isVisible().catch(() => false))) {
+    // Same SPA-hydration race as isAuthUiAvailable above -- wait for the
+    // field rather than sampling its state immediately after goto().
+    const vinFieldVisible = await vinField
+      .waitFor({ state: 'visible', timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!vinFieldVisible) {
       return null;
     }
     await vinField.fill(vin);
@@ -200,9 +215,13 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       await page.locator('#password').fill('WrongPassword123');
       await page.getByRole('button', { name: /Sign In/i }).click();
 
-      // Should show error message and stay on login page
+      // Should show error message and stay on login page. Copy is
+      // "The email or password was not recognized..." -- match on
+      // "recognized" (and the older wording, in case it's ever reverted)
+      // rather than the exact string, and keep both regexes here as
+      // documentation of what's actually been shown historically.
       await expect(
-        page.getByText(/error|incorrect|invalid|failed/i)
+        page.getByText(/error|incorrect|invalid|failed|not recognized/i)
       ).toBeVisible({ timeout: 5000 });
       expect(page.url()).toContain('/auth/login');
     });
@@ -364,8 +383,15 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       const insightsToggle = page.getByRole('button', {
         name: /ownership insights/i,
       });
+      // Same SPA-hydration race as isAuthUiAvailable above -- wait for the
+      // page to settle before deciding the section is really absent
+      // (vs. still loading the vehicle/portfolio data it depends on).
+      const insightsToggleVisible = await insightsToggle
+        .waitFor({ state: 'visible', timeout: 8000 })
+        .then(() => true)
+        .catch(() => false);
       test.skip(
-        !(await insightsToggle.isVisible().catch(() => false)),
+        !insightsToggleVisible,
         'Ownership Insights section is not visible in this deployment target.'
       );
 
@@ -835,22 +861,29 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       await page.goto(BASE_URL);
 
       const header = page.locator('header').first();
+      // Same SPA-hydration race as isAuthUiAvailable above.
       const marketingHeaderAvailable = await header
         .getByRole('link', { name: /Login \/ Sign Up/i })
-        .isVisible()
+        .waitFor({ state: 'visible', timeout: 8000 })
+        .then(() => true)
         .catch(() => false);
       test.skip(
         !marketingHeaderAvailable,
         'Marketing header is not directly visible in this deployment target.'
       );
 
-      // Logged-out header shows persona nav (not Pricing/Product Tour —
-      // those live in the footer and authenticated header, not here).
+      // Persona pages live behind the "Use cases" dropdown, not inline.
       await expect(
         header.getByRole('link', { name: /Ownership Records/i })
+      ).toHaveCount(0);
+
+      await header.getByRole('button', { name: /Use cases/i }).click();
+
+      await expect(
+        header.getByRole('link', { name: /^Ownership Records$/i })
       ).toBeVisible();
       await expect(
-        header.getByRole('link', { name: /Shared Garage/i })
+        header.getByRole('link', { name: /^Household Vehicles$/i })
       ).toBeVisible();
 
       await expect(
@@ -861,9 +894,6 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       ).toHaveCount(0);
       await expect(
         header.getByRole('link', { name: /VIN Lookup/i })
-      ).toHaveCount(0);
-      await expect(
-        header.getByRole('link', { name: /Getting Started/i })
       ).toHaveCount(0);
       await expect(
         header.getByRole('link', { name: /Subscriptions/i })
@@ -997,7 +1027,12 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       await page.goto(`${BASE_URL}/app/add-vehicle`);
 
       const statusSelect = page.getByLabel(/Location Status/i);
-      if (!(await statusSelect.isVisible().catch(() => false))) {
+      // Same SPA-hydration race as isAuthUiAvailable above.
+      const statusSelectVisible = await statusSelect
+        .waitFor({ state: 'visible', timeout: 8000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!statusSelectVisible) {
         test.skip(
           true,
           'Location status control is not visible in this deployment target.'
@@ -1079,7 +1114,7 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
       await expect(
         page.getByRole('heading', { name: /account consolidation/i })
       ).toBeVisible({ timeout: 15000 });
-      await expect(page.getByLabel(/source account uid/i)).toBeVisible({
+      await expect(page.getByLabel(/other account support id/i)).toBeVisible({
         timeout: 15000,
       });
 
@@ -1088,7 +1123,7 @@ test.describe('Vehicle-Vitals - User Acceptance Testing', () => {
         'Current user UID is not visible on the account security page.'
       );
 
-      await page.getByLabel(/source account uid/i).fill(currentUid);
+      await page.getByLabel(/other account support id/i).fill(currentUid);
       await page
         .getByRole('button', { name: /send verification code/i })
         .click();

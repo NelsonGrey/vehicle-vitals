@@ -15,6 +15,7 @@ import 'components/error_boundary.dart';
 import 'firebase_options.dart';
 import 'screens/account_screen.dart';
 import 'screens/add_vehicle_screen.dart';
+import 'screens/appearance_settings_screen.dart';
 import 'screens/calendar_preferences_screen.dart';
 import 'screens/change_password_screen.dart';
 import 'screens/data_privacy_screen.dart';
@@ -49,8 +50,10 @@ import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
 import 'services/offline_service.dart';
 import 'services/onboarding_service.dart';
+import 'services/palette_service.dart';
 import 'services/premium_service.dart';
 import 'theme/app_theme.dart';
+import 'theme/design_tokens.dart';
 
 const bool _screenshotMode = bool.fromEnvironment('VV_SCREENSHOT_MODE');
 
@@ -91,7 +94,11 @@ void main() async {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: AppDesignTokens.danger,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Something went wrong',
@@ -143,10 +150,26 @@ String _resolveInitialRoute() {
   return routeName;
 }
 
-class VehicleVitalsApp extends StatelessWidget {
+class VehicleVitalsApp extends StatefulWidget {
   final NotificationService notificationService;
 
   const VehicleVitalsApp({super.key, required this.notificationService});
+
+  @override
+  State<VehicleVitalsApp> createState() => _VehicleVitalsAppState();
+}
+
+class _VehicleVitalsAppState extends State<VehicleVitalsApp> {
+  // Built once and reused for the app's lifetime -- AuthService and
+  // OnboardingService are stable instances (the ProxyProviders below always
+  // reuse the existing service rather than swapping in a new one), and
+  // GoRouter's own `refreshListenable` re-runs `redirect` whenever either
+  // notifies. Recreating the whole router on every rebuild (as this used to)
+  // meant an unrelated PaletteService change -- picking a color palette --
+  // replaced the active GoRouter and reset navigation back to
+  // `_resolveInitialRoute()`, kicking a signed-in user out of whatever
+  // screen they were on.
+  GoRouter? _router;
 
   @override
   Widget build(BuildContext context) {
@@ -155,9 +178,9 @@ class VehicleVitalsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthService()),
         Provider(create: (context) => FirestoreService()),
         ChangeNotifierProxyProvider<AuthService, NotificationService>(
-          create: (context) => notificationService,
+          create: (context) => widget.notificationService,
           update: (context, authService, service) {
-            final resolved = service ?? notificationService;
+            final resolved = service ?? widget.notificationService;
             unawaited(resolved.syncForAuthUser(authService.currentUser?.uid));
             return resolved;
           },
@@ -178,22 +201,32 @@ class VehicleVitalsApp extends StatelessWidget {
             return service;
           },
         ),
+        ChangeNotifierProxyProvider<AuthService, PaletteService>(
+          create: (context) => PaletteService(),
+          update: (context, authService, paletteService) {
+            final service = paletteService ?? PaletteService();
+            unawaited(service.syncForAuthUser(authService.currentUser?.uid));
+            return service;
+          },
+        ),
         ChangeNotifierProvider(create: (context) => OfflineService()),
       ],
-      child: Consumer2<AuthService, OnboardingService>(
-        builder: (context, authService, onboardingService, child) {
-          return ErrorWidgetWrapper(
-            child: MaterialApp.router(
-              title: 'Garage',
-              debugShowCheckedModeBanner: !_screenshotMode,
-              theme: AppTheme.lightTheme(),
-              darkTheme: AppTheme.darkTheme(),
-              themeMode: ThemeMode.system,
-              routerConfig: _createRouter(authService, onboardingService),
-              builder: (context, child) => child ?? const SizedBox.shrink(),
-            ),
-          );
-        },
+      child: Consumer3<AuthService, OnboardingService, PaletteService>(
+        builder:
+            (context, authService, onboardingService, paletteService, child) {
+              _router ??= _createRouter(authService, onboardingService);
+              return ErrorWidgetWrapper(
+                child: MaterialApp.router(
+                  title: 'Garage',
+                  debugShowCheckedModeBanner: !_screenshotMode,
+                  theme: AppTheme.lightTheme(paletteService.paletteId),
+                  darkTheme: AppTheme.darkTheme(paletteService.paletteId),
+                  themeMode: ThemeMode.system,
+                  routerConfig: _router!,
+                  builder: (context, child) => child ?? const SizedBox.shrink(),
+                ),
+              );
+            },
       ),
     );
   }
@@ -204,6 +237,7 @@ class VehicleVitalsApp extends StatelessWidget {
   ) {
     return GoRouter(
       initialLocation: _resolveInitialRoute(),
+      refreshListenable: Listenable.merge([authService, onboardingService]),
       redirect: (context, state) {
         final isLoggedIn = authService.currentUser != null;
         final isLoading = authService.isLoading;
@@ -362,6 +396,10 @@ class VehicleVitalsApp extends StatelessWidget {
         GoRoute(
           path: '/app/email-preferences',
           builder: (context, state) => const EmailPreferencesScreen(),
+        ),
+        GoRoute(
+          path: '/app/appearance',
+          builder: (context, state) => const AppearanceSettingsScreen(),
         ),
         GoRoute(
           path: '/app/support',

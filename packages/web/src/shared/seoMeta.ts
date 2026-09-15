@@ -15,7 +15,11 @@ const APP_URL = (
 
 const SITE_NAME = 'Vehicle-Vitals';
 
-const DEFAULT_OG_IMAGE = `${APP_URL}/android-chrome-512x512.png`;
+const DEFAULT_OG_IMAGE = `${APP_URL}/images/og/og-default.png`;
+// Organization.logo (schema.org / Google's rich-result guidance) wants a
+// roughly-square mark, not a wide social share card -- keep it separate from
+// DEFAULT_OG_IMAGE so a future change to one doesn't silently break the other.
+const ORG_LOGO_IMAGE = `${APP_URL}/android-chrome-512x512.png`;
 
 export interface SeoMeta {
   title: string;
@@ -36,7 +40,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: SITE_NAME,
   url: APP_URL,
-  logo: DEFAULT_OG_IMAGE,
+  logo: ORG_LOGO_IMAGE,
   sameAs: [
     'https://www.threads.com/@vehicle.vitals',
     'https://www.facebook.com/profile.php?id=61593861356748',
@@ -127,11 +131,54 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
     ogType: 'website',
   },
 
+  // Legacy alias -- same Instructions component, same content as
+  // /getting-started. Canonical still points at /getting-started so search
+  // engines converge on the one path.
+  '/instructions': {
+    title: `Getting Started — ${SITE_NAME}`,
+    description:
+      "Start in three simple steps: add your vehicle, track service and costs, stay on top of what's next. See how Vehicle-Vitals turns scattered receipts into a trusted ownership record.",
+    canonical: `${APP_URL}/getting-started`,
+    ogType: 'website',
+  },
+
   '/product-tour': {
     title: `Product Tour — ${SITE_NAME}`,
     description:
       'A current screen-by-screen tour of Vehicle-Vitals: Garage, service records, Service History, Maintenance Plan, and Shops & Services.',
     canonical: `${APP_URL}/product-tour`,
+    ogType: 'website',
+  },
+
+  '/vin-lookup-demo': {
+    title: `VIN Lookup Demo — ${SITE_NAME}`,
+    description:
+      'See how we turn a raw VIN into a structured vehicle profile in seconds, and how quick add reduces setup friction.',
+    canonical: `${APP_URL}/vin-lookup-demo`,
+    ogType: 'website',
+  },
+
+  '/maintenance-planning-demo': {
+    title: `Maintenance Planning Demo — ${SITE_NAME}`,
+    description:
+      'See how service planning becomes visible, organized, and predictable, and how the timeline and upcoming tasks connect.',
+    canonical: `${APP_URL}/maintenance-planning-demo`,
+    ogType: 'website',
+  },
+
+  '/cross-platform-access-demo': {
+    title: `Cross Platform Access Demo — ${SITE_NAME}`,
+    description:
+      'See how the same garage data follows users across devices, with secure sign-in and shared data on web and iPhone.',
+    canonical: `${APP_URL}/cross-platform-access-demo`,
+    ogType: 'website',
+  },
+
+  '/ownership-history-demo': {
+    title: `Ownership History Demo — ${SITE_NAME}`,
+    description:
+      'See how long-term maintenance records become a single source of truth for resale and ownership confidence.',
+    canonical: `${APP_URL}/ownership-history-demo`,
     ogType: 'website',
   },
 
@@ -216,4 +263,4 @@ export function getPersonaSeoMeta(personaId: string): SeoMeta {
   };
 }
 
-export { APP_URL, SITE_NAME };
+export { APP_URL, SITE_NAME, DEFAULT_OG_IMAGE };

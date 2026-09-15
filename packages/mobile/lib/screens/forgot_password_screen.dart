@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/app_logo.dart';
 import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -64,13 +65,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return BrandScaffold(
       title: const Text('Forgot Password'),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppDesignTokens.space5),
+                child: Center(
+                  child: AppLogo(size: 72, showText: false, full: true),
+                ),
+              ),
               if (_emailSent) ...[
                 Card(
                   color: AppDesignTokens.success.withValues(alpha: 0.1),

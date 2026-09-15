@@ -10,11 +10,12 @@
   },
   "hosting": {
     "public": "packages/web/dist",
+    "cleanUrls": true,
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
-        "destination": "/index.html"
+        "destination": "/app-shell.html"
       }
     ],
     "headers": [
@@ -52,7 +53,7 @@
         ]
       },
       {
-        "source": "/index.html",
+        "source": "/{index,app-shell}.html",
         "headers": [
           {
             "key": "Cache-Control",

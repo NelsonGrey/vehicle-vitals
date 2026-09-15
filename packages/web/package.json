@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "./scripts/vite-sanitized-env.sh dev development",
     "build": "./scripts/vite-sanitized-env.sh build production",
+    "postbuild": "node scripts/prerender-seo.mjs production",
     "build:staging": "./scripts/vite-sanitized-env.sh build staging",
+    "postbuild:staging": "node scripts/prerender-seo.mjs staging",
     "build:development": "./scripts/vite-sanitized-env.sh build development",
+    "postbuild:development": "node scripts/prerender-seo.mjs development",
     "build:production": "./scripts/vite-sanitized-env.sh build production",
+    "postbuild:production": "node scripts/prerender-seo.mjs production",
     "preview": "./scripts/vite-sanitized-env.sh preview production",
     "preview:development": "./scripts/vite-sanitized-env.sh preview development",
     "uat:serve": "npm run build:development && npm run preview:development -- --port 4173 --strictPort",

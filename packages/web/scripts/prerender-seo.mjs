@@ -91,9 +91,13 @@ function renderHead(meta) {
     `<meta name="twitter:site" content="@vehiclevitalapp" />`,
     `<meta name="twitter:image" content="${escapeHtml(ogImage)}" />`,
     `<link rel="canonical" href="${escapeHtml(meta.canonical)}" />`,
+    // data-vv-jsonld matches the marker PageSEO.tsx's injectJsonLd() uses to
+    // find and remove schemas on route change -- without it, hydration/
+    // client-side navigation would leave this prerendered schema in the
+    // document forever instead of replacing or clearing it.
     ...schemas.map(
       schema =>
-        `<script type="application/ld+json">${JSON.stringify(schema)}</script>`
+        `<script type="application/ld+json" data-vv-jsonld>${JSON.stringify(schema)}</script>`
     ),
   ];
 
@@ -146,6 +150,16 @@ async function main() {
     global.__DEFAULT_OG_IMAGE__ = seoModule.DEFAULT_OG_IMAGE;
 
     const template = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
+
+    // Firebase's catch-all rewrite ("**" -> a fallback file) is what serves
+    // every path with no matching static file, chiefly /app/* and /auth/*.
+    // That fallback must stay generic -- write it BEFORE index.html gets
+    // overwritten with the homepage's own title/OG/JSON-LD below, otherwise
+    // every authenticated app route's raw HTML (and initial document.title)
+    // would expose the marketing homepage's metadata instead of a neutral
+    // shell. firebase*.json's rewrite destination must point here, not at
+    // /index.html.
+    fs.writeFileSync(path.join(distDir, 'app-shell.html'), template);
 
     let written = 0;
 

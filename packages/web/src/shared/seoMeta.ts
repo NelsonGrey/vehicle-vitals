@@ -15,7 +15,11 @@ const APP_URL = (
 
 const SITE_NAME = 'Vehicle-Vitals';
 
-const DEFAULT_OG_IMAGE = `${APP_URL}/android-chrome-512x512.png`;
+const DEFAULT_OG_IMAGE = `${APP_URL}/images/og/og-default.png`;
+// Organization.logo (schema.org / Google's rich-result guidance) wants a
+// roughly-square mark, not a wide social share card -- keep it separate from
+// DEFAULT_OG_IMAGE so a future change to one doesn't silently break the other.
+const ORG_LOGO_IMAGE = `${APP_URL}/android-chrome-512x512.png`;
 
 export interface SeoMeta {
   title: string;
@@ -36,7 +40,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: SITE_NAME,
   url: APP_URL,
-  logo: DEFAULT_OG_IMAGE,
+  logo: ORG_LOGO_IMAGE,
   sameAs: [
     'https://www.threads.com/@vehicle.vitals',
     'https://www.facebook.com/profile.php?id=61593861356748',
@@ -216,4 +220,4 @@ export function getPersonaSeoMeta(personaId: string): SeoMeta {
   };
 }
 
-export { APP_URL, SITE_NAME };
+export { APP_URL, SITE_NAME, DEFAULT_OG_IMAGE };

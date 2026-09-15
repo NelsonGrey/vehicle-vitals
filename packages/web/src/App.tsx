@@ -315,6 +315,7 @@ function App() {
                 path="vin-lookup-demo"
                 element={
                   <FeatureDemo
+                    path="/vin-lookup-demo"
                     title="VIN Lookup"
                     subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
                     marketingBullets={[
@@ -331,6 +332,7 @@ function App() {
                 path="maintenance-planning-demo"
                 element={
                   <FeatureDemo
+                    path="/maintenance-planning-demo"
                     title="Maintenance Planning"
                     subtitle="See how service planning becomes visible, organized, and predictable."
                     marketingBullets={[
@@ -347,6 +349,7 @@ function App() {
                 path="cross-platform-access-demo"
                 element={
                   <FeatureDemo
+                    path="/cross-platform-access-demo"
                     title="Cross Platform Access"
                     subtitle="See how the same garage data follows users across devices."
                     marketingBullets={[
@@ -363,6 +366,7 @@ function App() {
                 path="ownership-history-demo"
                 element={
                   <FeatureDemo
+                    path="/ownership-history-demo"
                     title="Ownership History"
                     subtitle="See how long-term maintenance records become a single source of truth."
                     marketingBullets={[

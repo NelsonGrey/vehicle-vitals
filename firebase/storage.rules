@@ -22,15 +22,48 @@ service firebase.storage {
         && firestore.get(orgMemberDoc(orgId)).data.role != 'read_only';
     }
 
+    // Uploads had no size or content-type limit at all -- any authenticated
+    // user could push arbitrarily large or arbitrary-type files into their
+    // own storage (a cost-abuse / storage-quota vector, and a way to use the
+    // bucket as an unrelated file host). 25MB comfortably covers a
+    // high-resolution phone photo or a scanned multi-page PDF receipt.
+    // The content-type list is deliberately not narrowed to just
+    // images+PDF: mobile's document attachment picker (FileType.any) and
+    // fileUtils.ts's own file-type map both treat Office docs/text/CSV as
+    // legitimate maintenance-record attachments, not just receipts scanned
+    // as images or PDFs.
+    function isValidAttachmentUpload() {
+      return request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType.matches(
+          'image/.*'
+          + '|application/pdf'
+          + '|application/msword'
+          + '|application/vnd[.]openxmlformats-officedocument[.].*'
+          + '|application/vnd[.]ms-excel'
+          + '|application/rtf'
+          + '|text/plain'
+          + '|text/csv'
+        );
+    }
+
     // App attachments live under users/{uid}/... and are private to the owner.
+    // Split from a single `allow write` because delete requests carry no
+    // request.resource -- referencing it there would throw and deny the
+    // delete outright (the same class of bug fixed in firestore.rules for
+    // an empty wildcard capture).
     match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && isValidAttachmentUpload();
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // Household/shared-garage attachments are private to active org members.
     match /orgs/{orgId}/vehicles/{allPaths=**} {
       allow read: if isActiveOrgMember(orgId);
-      allow write: if canWriteOrgVehicles(orgId);
+      allow create, update: if canWriteOrgVehicles(orgId) && isValidAttachmentUpload();
+      allow delete: if canWriteOrgVehicles(orgId);
     }
 
     // Optional public assets path.

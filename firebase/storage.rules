@@ -22,15 +22,58 @@ service firebase.storage {
         && firestore.get(orgMemberDoc(orgId)).data.role != 'read_only';
     }
 
+    // Uploads had no size or content-type limit at all -- any authenticated
+    // user could push arbitrarily large or arbitrary-type files into their
+    // own storage (a cost-abuse / storage-quota vector, and a way to use the
+    // bucket as an unrelated file host). 25MB comfortably covers a
+    // high-resolution phone photo or a scanned multi-page PDF receipt.
+    // The content-type list matches fileUtils.ts's full supported file-type
+    // map exactly (documents, images, video, audio, archives) -- Records/
+    // maintenance attachments on both platforms have never been restricted
+    // to just images+PDF, so narrowing to that would have silently broken
+    // previously-working video/audio/archive attachment uploads.
+    function isValidAttachmentUpload() {
+      return request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType.matches(
+          'image/.*'
+          + '|video/.*'
+          + '|audio/.*'
+          + '|application/pdf'
+          + '|application/msword'
+          + '|application/vnd[.]openxmlformats-officedocument[.].*'
+          + '|application/vnd[.]ms-excel'
+          + '|application/rtf'
+          + '|text/plain'
+          + '|text/csv'
+          + '|application/zip'
+          + '|application/x-zip-compressed'
+          + '|application/x-rar-compressed'
+          + '|application/vnd[.]rar'
+          + '|application/x-7z-compressed'
+          + '|application/x-tar'
+          + '|application/gzip'
+          + '|application/x-gzip'
+        );
+    }
+
     // App attachments live under users/{uid}/... and are private to the owner.
+    // Split from a single `allow write` because delete requests carry no
+    // request.resource -- referencing it there would throw and deny the
+    // delete outright (the same class of bug fixed in firestore.rules for
+    // an empty wildcard capture).
     match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && isValidAttachmentUpload();
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // Household/shared-garage attachments are private to active org members.
     match /orgs/{orgId}/vehicles/{allPaths=**} {
       allow read: if isActiveOrgMember(orgId);
-      allow write: if canWriteOrgVehicles(orgId);
+      allow create, update: if canWriteOrgVehicles(orgId) && isValidAttachmentUpload();
+      allow delete: if canWriteOrgVehicles(orgId);
     }
 
     // Optional public assets path.

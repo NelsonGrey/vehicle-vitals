@@ -27,15 +27,17 @@ service firebase.storage {
     // own storage (a cost-abuse / storage-quota vector, and a way to use the
     // bucket as an unrelated file host). 25MB comfortably covers a
     // high-resolution phone photo or a scanned multi-page PDF receipt.
-    // The content-type list is deliberately not narrowed to just
-    // images+PDF: mobile's document attachment picker (FileType.any) and
-    // fileUtils.ts's own file-type map both treat Office docs/text/CSV as
-    // legitimate maintenance-record attachments, not just receipts scanned
-    // as images or PDFs.
+    // The content-type list matches fileUtils.ts's full supported file-type
+    // map exactly (documents, images, video, audio, archives) -- Records/
+    // maintenance attachments on both platforms have never been restricted
+    // to just images+PDF, so narrowing to that would have silently broken
+    // previously-working video/audio/archive attachment uploads.
     function isValidAttachmentUpload() {
       return request.resource.size < 25 * 1024 * 1024
         && request.resource.contentType.matches(
           'image/.*'
+          + '|video/.*'
+          + '|audio/.*'
           + '|application/pdf'
           + '|application/msword'
           + '|application/vnd[.]openxmlformats-officedocument[.].*'
@@ -43,6 +45,14 @@ service firebase.storage {
           + '|application/rtf'
           + '|text/plain'
           + '|text/csv'
+          + '|application/zip'
+          + '|application/x-zip-compressed'
+          + '|application/x-rar-compressed'
+          + '|application/vnd[.]rar'
+          + '|application/x-7z-compressed'
+          + '|application/x-tar'
+          + '|application/gzip'
+          + '|application/x-gzip'
         );
     }
 

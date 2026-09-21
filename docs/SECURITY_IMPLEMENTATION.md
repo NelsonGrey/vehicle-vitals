@@ -991,13 +991,13 @@ npm outdated
 
 **Security Team**:
 
-- **Email**: security@vehicle-vitals.com
+- **Email**: support@vehicle-vitals.com
 - **On-Call**: [PagerDuty/Phone Number]
 - **Slack**: #security-incidents
 
 **Reporting Security Issues**:
 
-- Email: security@vehicle-vitals.com
+- Email: support@vehicle-vitals.com
 - Subject: [SECURITY] Brief description
 - Include: Steps to reproduce, impact assessment
 
@@ -1048,4 +1048,4 @@ npm outdated
 **Maintained By**: Mark Nelson (Security Lead)  
 **Review Cycle**: Quarterly or after security incidents  
 **Next Review**: May 16, 2026  
-**Feedback**: Email security@vehicle-vitals.com
+**Feedback**: Email support@vehicle-vitals.com

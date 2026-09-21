@@ -29,7 +29,7 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const FRAME_RATE = 30;
 
-const DEMO_EMAIL = process.env.VV_DEMO_EMAIL || 'demo.user@vehiclevitals.dev';
+const DEMO_EMAIL = process.env.VV_DEMO_EMAIL || 'demo.user@vehicle-vitals.com';
 const DEMO_PASSWORD = process.env.VV_DEMO_PASSWORD || 'DemoPassword123!';
 const GATE_PASSWORD = process.env.VV_MARKETING_GATE_PASSWORD || '';
 

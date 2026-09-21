@@ -12,7 +12,7 @@ Last updated: 2026-09-03
 
 | Platform | Handle | URL |
 |---|---|---|
-| Email | — | social@vehicle-vitals.com |
+| Email | — | support@vehicle-vitals.com |
 | X | @vehiclevitalapp | https://x.com/vehiclevitalapp |
 | Instagram | @vehicle.vitals | https://instagram.com/vehicle.vitals/ |
 | Threads | @vehicle.vitals | https://www.threads.com/@vehicle.vitals |
@@ -110,7 +110,7 @@ and it helps SEO). Order:
 3. See how it works → product tour
 4. Find your plan → pricing
 5. Help center → help
-6. Contact → social@vehicle-vitals.com
+6. Contact → support@vehicle-vitals.com
 
 Tag every outbound link with UTMs so you can tell what works:
 `https://vehicle-vitals.com/?utm_source=instagram&utm_medium=social&utm_campaign=bio`

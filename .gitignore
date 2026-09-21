@@ -399,3 +399,7 @@ packages/mobile/ios/fastlane/fastlane/
 
 stripe_dev
 stripe_staging
+
+# Local secrets scratch folder (Firebase/ASC/Play service keys, provisioning
+# profiles, signing keys) - never commit, lives outside the repo ideally
+/json/

@@ -172,4 +172,3 @@ Android is on hold. The CI pipeline skips Android jobs. Do not include Android i
 ## Support
 
 - User support: support@vehicle-vitals.com
-- Sales: sales@vehicle-vitals.com

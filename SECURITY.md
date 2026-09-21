@@ -15,7 +15,7 @@ This repository holds the Vehicle-Vitals web and mobile client. Only the code cu
 This repository doesn't have a public issue tracker, so please don't report security concerns that way. Use one of:
 
 - GitHub's [private vulnerability reporting](https://github.com/NelsonGrey/vehicle-vitals/security/advisories/new) (enabled on this repo), or
-- Email **security@vehicle-vitals.com** (or **support@vehicle-vitals.com**)
+- Email **support@vehicle-vitals.com**
 
 Either way, include:
 

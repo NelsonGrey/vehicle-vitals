@@ -4,6 +4,69 @@ One garage for every vehicle record, reminder, and repair cost.
 
 Vehicle-Vitals is a cross-platform vehicle management application — web (React) and iOS (Flutter) — backed by Firebase. It lets owners track service history, plan upcoming maintenance, and build a credible ownership record across personal vehicles, shared household vehicles, and light business fleets.
 
+## Demo
+
+### Architecture
+
+```mermaid
+graph LR
+    subgraph Clients
+        Web["Web app<br/>(packages/web, React 18 + Vite)"]
+        Mobile["iOS app<br/>(packages/mobile, Flutter)"]
+    end
+
+    subgraph Firebase["Firebase (per-environment: dev / staging / prod)"]
+        Auth["Firebase Auth<br/>(email/password, Google, Apple)"]
+        Firestore[("Firestore<br/>users/{uid}/vehicles/{vin}<br/>.../maintenance, .../reminders<br/>orgs/{orgId}/vehicles/{vin}")]
+        Storage["Cloud Storage<br/>(vehicle photos, attachments)"]
+        Functions["Cloud Functions<br/>(NelsonGrey/vehicle-vitals-functions, private repo)"]
+    end
+
+    Stripe["Stripe<br/>(Checkout + billing webhooks)"]
+    NHTSA["NHTSA VPIC API<br/>(VIN decode)"]
+
+    Web -- "firebase/firestore, firebase/auth" --> Auth
+    Web -- "firebase/firestore" --> Firestore
+    Web -- "firebase/storage" --> Storage
+    Web -- "httpsCallable(...)" --> Functions
+    Mobile -- "cloud_firestore, firebase_auth" --> Auth
+    Mobile -- "cloud_firestore" --> Firestore
+    Mobile -- "cloud_functions" --> Functions
+    Functions -- "vinLookupCallable /<br/>getVehicleInsightsCallable" --> NHTSA
+    Functions -- "createSubscriptionCheckoutSessionCallable,<br/>webhooks" --> Stripe
+    Functions -- "admin SDK writes<br/>(entitlements, subscription docs)" --> Firestore
+```
+
+There is **no custom REST/GraphQL server** — both clients talk to Firebase directly for reads/writes, and route anything that needs a secret (VIN decoding, Stripe checkout, entitlement grants) through callable Cloud Functions in the companion `vehicle-vitals-functions` repo (kept private because this repo is public).
+
+### Walkthrough: adding a vehicle by VIN
+
+1. User submits a VIN on `packages/web/src/pages/AddVehicle.tsx`, which calls `lookupVin(vin)` in `packages/web/src/utils/vehicleService.js`.
+2. `lookupVin` invokes the `getVehicleInsightsCallable` Cloud Function (`firebaseService.httpsCallable(functions, 'getVehicleInsightsCallable')`), which in turn calls the NHTSA VPIC decode API server-side and returns profile data plus recall info:
+
+   ```json
+   // getVehicleInsightsCallable response (fields used by buildPersistedVinInsights)
+   {
+     "success": true,
+     "free": {
+       "vinProfile": {
+         "make": "Honda",
+         "model": "Accord",
+         "year": "2021",
+         "engineType": "I4",
+         "bodyClass": "Sedan/Saloon",
+         "trim": "EX-L"
+       },
+       "recalls": { "count": 1, "source": "NHTSA", "items": [ /* ... */ ] }
+     }
+   }
+   ```
+
+3. `AddVehicle.tsx` merges that with user-entered fields (mileage, purchase date, photo) starting from `defaultVehicle` (`packages/shared/src/types.js`), then calls `addOrUpdateVehicle(vehicle)` from `packages/shared/src/firestoreServiceFactory.js`.
+4. `addOrUpdateVehicle` resolves whether the vehicle belongs to the user's personal garage or a household/org garage (`resolveVehicleScope`) and writes to `users/{uid}/vehicles/{vin}` (or `orgs/{orgId}/vehicles/{vin}` for shared garages), stamping `createdAt`/`updatedAt`.
+5. Logging a repair later calls `addMaintenanceEntry(vin, entry)`, which writes to the `.../vehicles/{vin}/maintenance` subcollection; setting a reminder calls `addReminder(vin, reminder)`, writing to `.../vehicles/{vin}/reminders` with a `status` of `active`/`snoozed`/`dismissed`/`completed` managed by `completeReminder`/`snoozeReminder`/`dismissReminder`.
+6. Upgrading tiers (Free → Pro → Premium, see the pricing table below) calls `createSubscriptionCheckoutSession()` in `packages/web/src/shared/entitlementsService.ts`, which invokes `createSubscriptionCheckoutSessionCallable` and either redirects to Stripe Checkout or returns an already-activated entitlement; the resulting subscription state is read back client-side (read-only) from `users/{uid}/subscription/current` in `packages/web/src/shared/subscriptionService.ts` — Firestore rules block clients from writing that document directly, since tier changes are only granted server-side.
+
 ## Who it's for
 
 | Persona | Need | Recommended tier |

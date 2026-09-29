@@ -1,5 +1,28 @@
 # Vehicle-Vitals
 
+[![CI](https://github.com/NelsonGrey/vehicle-vitals/actions/workflows/master-pipeline.yml/badge.svg?branch=develop)](https://github.com/NelsonGrey/vehicle-vitals/actions/workflows/master-pipeline.yml) [![License](https://img.shields.io/badge/license-proprietary-lightgrey.svg)](https://github.com/NelsonGrey/vehicle-vitals/blob/develop/LICENSE)
+
+## Contents
+
+- [Demo](#demo)
+  - [Architecture](#architecture)
+  - [Walkthrough: adding a vehicle by VIN](#walkthrough-adding-a-vehicle-by-vin)
+- [Who it's for](#who-its-for)
+- [Subscription tiers](#subscription-tiers)
+- [Repository structure](#repository-structure)
+- [Documentation](#documentation)
+- [Quick start](#quick-start)
+  - [Web](#web)
+  - [Mobile (iOS)](#mobile-ios)
+  - [Functions (local emulator)](#functions-local-emulator)
+- [Testing](#testing)
+- [Environments](#environments)
+- [CI/CD](#cicd)
+- [Conventions](#conventions)
+- [iOS app distribution](#ios-app-distribution)
+- [Android status](#android-status)
+- [Support](#support)
+
 One garage for every vehicle record, reminder, and repair cost.
 
 Vehicle-Vitals is a cross-platform vehicle management application — web (React) and iOS (Flutter) — backed by Firebase. It lets owners track service history, plan upcoming maintenance, and build a credible ownership record across personal vehicles, shared household vehicles, and light business fleets.

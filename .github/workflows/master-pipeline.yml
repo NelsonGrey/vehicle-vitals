@@ -294,10 +294,14 @@ jobs:
   web-uat-tests:
     name: Web UAT (${{ matrix.browser }})
     needs: [load-config, web-unit-tests]
+    # Manual runs only. UAT signs up real users against the dev Firebase
+    # project (the local preview is built with dev config), so running it on
+    # every push/PR (Dependabot included) accumulated ~1,000 test accounts.
     if: |
-      needs.load-config.outputs.trigger_context == 'test_all' ||
-      needs.load-config.outputs.trigger_context == 'build_all' ||
-      needs.load-config.outputs.trigger_context == 'build_and_deploy'
+      github.event_name == 'workflow_dispatch' &&
+      (needs.load-config.outputs.trigger_context == 'test_all' ||
+       needs.load-config.outputs.trigger_context == 'build_all' ||
+       needs.load-config.outputs.trigger_context == 'build_and_deploy')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -383,7 +387,8 @@ jobs:
             exit 1
           fi
 
-          if [ "${{ needs.web-uat-tests.result }}" != "success" ]; then
+          # UAT is manual-only, so "skipped" is expected on push/PR runs.
+          if [ "${{ needs.web-uat-tests.result }}" != "success" ] && [ "${{ needs.web-uat-tests.result }}" != "skipped" ]; then
             echo "::error::Web UAT matrix did not pass"
             exit 1
           fi

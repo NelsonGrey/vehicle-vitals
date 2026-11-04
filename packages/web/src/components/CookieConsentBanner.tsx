@@ -1,15 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { denyConsent, grantConsent, hasDecided } from '../shared/consent';
 
 export default function CookieConsentBanner() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!hasDecided()) {
-      setVisible(true);
-    }
-  }, []);
+  const [visible, setVisible] = useState(() => !hasDecided());
 
   if (!visible) return null;
 

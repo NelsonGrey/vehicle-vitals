@@ -44,17 +44,14 @@ export function useSubscription(): {
   const [subscription, setSubscription] = useState<SubscriptionData | null>(
     null
   );
-  const [isLoading, setIsLoading] = useState(true);
+  // Loading until the first snapshot arrives for the current user.
+  const [loadedUid, setLoadedUid] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!user) {
-      setSubscription(null);
-      setIsLoading(false);
       return;
     }
-
-    setIsLoading(true);
 
     // Ensure a personal organization exists for enterprise-ready entitlements.
     void bootstrapEnterpriseContext().catch(() => {
@@ -64,7 +61,7 @@ export function useSubscription(): {
     // Watch subscription in real-time
     const unsubscribe = watchSubscription(user.uid, sub => {
       setSubscription(sub);
-      setIsLoading(false);
+      setLoadedUid(user.uid);
       setError(null);
     });
 
@@ -72,10 +69,14 @@ export function useSubscription(): {
     return unsubscribe;
   }, [user]);
 
+  // With no signed-in user there is nothing to show or wait for, regardless of
+  // what a previous user's subscription left in state.
+  const activeSubscription = user ? subscription : null;
+
   return {
-    subscription,
-    tier: subscription?.tier || 'free',
-    isLoading,
+    subscription: activeSubscription,
+    tier: activeSubscription?.tier || 'free',
+    isLoading: user ? loadedUid !== user.uid : false,
     error,
   };
 }
@@ -90,7 +91,9 @@ export function useEffectiveEntitlements(): {
   const { user } = useAuth();
   const [entitlements, setEntitlements] =
     useState<EffectiveEntitlements | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Key (user + refresh counter) of the last completed fetch; loading while it
+  // differs from the key currently wanted.
+  const [settledKey, setSettledKey] = useState<string | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
 
   useEffect(() => {
@@ -136,13 +139,11 @@ export function useEffectiveEntitlements(): {
 
   useEffect(() => {
     if (!user) {
-      setEntitlements(null);
-      setIsLoading(false);
       return;
     }
 
     let isActive = true;
-    setIsLoading(true);
+    const fetchKey = `${user.uid}:${refreshSignal}`;
 
     void getEffectiveEntitlements()
       .then(nextEntitlements => {
@@ -161,7 +162,7 @@ export function useEffectiveEntitlements(): {
       })
       .finally(() => {
         if (isActive) {
-          setIsLoading(false);
+          setSettledKey(fetchKey);
         }
       });
 
@@ -170,7 +171,10 @@ export function useEffectiveEntitlements(): {
     };
   }, [user, refreshSignal]);
 
-  return { entitlements, isLoading };
+  return {
+    entitlements: user ? entitlements : null,
+    isLoading: user ? settledKey !== `${user.uid}:${refreshSignal}` : false,
+  };
 }
 
 /**
@@ -184,20 +188,19 @@ export function useFeatureFlag(
   const { tier } = useSubscription();
   const { entitlements } = useEffectiveEntitlements();
   const { user } = useAuth();
-  const [isEnabled, setIsEnabled] = useState(false);
+  const isEnabled =
+    entitlements?.features?.[featureName] ??
+    isFeatureEnabled(featureName, tier);
 
   useEffect(() => {
-    const enabled =
-      entitlements?.features?.[featureName] ??
-      isFeatureEnabled(featureName, tier);
-    setIsEnabled(enabled);
+    const enabled = isEnabled;
 
     // Track if user is denied access
     if (!enabled && user) {
       trackFeatureDenied(featureName, tier, tier);
       options?.onDenied?.();
     }
-  }, [featureName, tier, user, options, entitlements]);
+  }, [featureName, tier, user, options, isEnabled]);
 
   return isEnabled;
 }

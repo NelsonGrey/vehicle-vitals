@@ -3,6 +3,9 @@ name: "Check App Store Connect subscription status (one-off)"
 on:
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   status:
     runs-on: macos-latest

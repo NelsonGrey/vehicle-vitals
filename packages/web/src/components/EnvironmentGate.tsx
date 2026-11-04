@@ -1,6 +1,7 @@
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { useCallback, useMemo, useState } from 'react';
 import { gateAuth } from '../shared/firebaseConfig';
+import StackedVLogo from './StackedVLogo';
 
 interface EnvironmentGateProps {
   children: React.ReactNode;
@@ -212,20 +213,8 @@ export default function EnvironmentGate({
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-slate-600 dark:text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
+          <div className="flex justify-center mb-5">
+            <StackedVLogo size={56} compact />
           </div>
           <h1 className="font-serif font-bold text-2xl text-slate-900 dark:text-slate-100 mb-2">
             {environment.charAt(0).toUpperCase() + environment.slice(1)}{' '}
@@ -246,7 +235,7 @@ export default function EnvironmentGate({
         <button
           onClick={handleSignIn}
           disabled={isSigningIn}
-          className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 text-slate-900 dark:text-white font-medium py-3 px-6 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

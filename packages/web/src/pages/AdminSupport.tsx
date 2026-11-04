@@ -55,6 +55,9 @@ const ORG_ROLES = [
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
+const EMPTY_MEMBERS: OrganizationMember[] = [];
+const EMPTY_DRAFTS: FinanceDraft[] = [];
+
 export default function AdminSupport() {
   const { user, supportAccess } = useAuth();
   const [query, setQuery] = useState('');
@@ -66,11 +69,15 @@ export default function AdminSupport() {
   const [orgId, setOrgId] = useState('');
   const [retentionDays, setRetentionDays] = useState(365);
   const [membersLoading, setMembersLoading] = useState(false);
-  const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const [loadedMembers, setMembers] = useState<OrganizationMember[]>([]);
   const [financeLoading, setFinanceLoading] = useState(false);
   const [financeError, setFinanceError] = useState('');
   const [financeStatus, setFinanceStatus] = useState('');
-  const [financeDrafts, setFinanceDrafts] = useState<FinanceDraft[]>([]);
+  const [loadedFinanceDrafts, setFinanceDrafts] = useState<FinanceDraft[]>([]);
+  // Data only applies while an org is selected by a super admin.
+  const hasOrgAccess = Boolean(supportAccess?.isSuperAdmin && orgId);
+  const members = hasOrgAccess ? loadedMembers : EMPTY_MEMBERS;
+  const financeDrafts = hasOrgAccess ? loadedFinanceDrafts : EMPTY_DRAFTS;
   const [invoiceCustomerName, setInvoiceCustomerName] = useState('');
   const [invoiceIssueDate, setInvoiceIssueDate] = useState(TODAY);
   const [invoiceDueDate, setInvoiceDueDate] = useState('');
@@ -122,7 +129,6 @@ export default function AdminSupport() {
 
   useEffect(() => {
     if (!supportAccess?.isSuperAdmin || !orgId) {
-      setMembers([]);
       return;
     }
 
@@ -149,7 +155,6 @@ export default function AdminSupport() {
 
   useEffect(() => {
     if (!supportAccess?.isSuperAdmin || !orgId) {
-      setFinanceDrafts([]);
       return;
     }
 

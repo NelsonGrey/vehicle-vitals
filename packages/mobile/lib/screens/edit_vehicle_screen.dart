@@ -16,6 +16,7 @@ import '../services/record_storage_service.dart';
 import '../services/vehicle_photo_service.dart';
 import '../services/vehicle_transfer_service.dart';
 import '../utils/vin_validation.dart' as vin_validation;
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 const List<String> _vehicleTypeOptions = [
@@ -682,7 +683,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: AppDesignTokens.space1),
       child: Text(
         '$label: $value',
         style: TextStyle(
@@ -715,7 +716,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         ),
       ],
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Form(
           key: _formKey,
           child: Column(
@@ -758,7 +759,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                         const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppDesignTokens.space3),
                           decoration: BoxDecoration(
                             color: colorScheme.secondary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -1008,7 +1009,9 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _saveVehicle,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDesignTokens.space4,
+                    ),
                   ),
                   child: _isSaving
                       ? CircularProgressIndicator(color: colorScheme.onPrimary)

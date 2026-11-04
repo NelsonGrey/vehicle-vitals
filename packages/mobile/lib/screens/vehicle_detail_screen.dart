@@ -123,13 +123,13 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           placeholder: (context, url) => Container(
             width: width,
             height: 52,
-            color: Colors.grey.shade200,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: const Icon(Icons.directions_car, size: 20),
           ),
           errorWidget: (context, url, error) => Container(
             width: width,
             height: 52,
-            color: Colors.grey.shade200,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: const Icon(Icons.directions_car, size: 20),
           ),
         ),
@@ -140,7 +140,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       width: width,
       height: 52,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Icon(Icons.directions_car, size: 20),
@@ -187,7 +187,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         // merge on packages/web's VehicleHealthPanel.
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppDesignTokens.space3),
           decoration: BoxDecoration(
             border: Border.all(color: colorScheme.outlineVariant),
             borderRadius: BorderRadius.circular(8),
@@ -353,20 +353,20 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               ? colorScheme.error
               : isSoon
               ? colorScheme.tertiary
-              : Colors.grey.shade400;
+              : colorScheme.outline;
           final labelColor = isUrgent
               ? colorScheme.error
               : isSoon
               ? colorScheme.tertiary
-              : Colors.grey.shade600;
+              : colorScheme.onSurfaceVariant;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.only(bottom: AppDesignTokens.space1),
             child: Row(
               children: [
                 Container(
                   width: 8,
                   height: 8,
-                  margin: const EdgeInsets.only(right: 8),
+                  margin: const EdgeInsets.only(right: AppDesignTokens.space2),
                   decoration: BoxDecoration(
                     color: dotColor,
                     shape: BoxShape.circle,
@@ -411,7 +411,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         title: const Text('Vehicle'),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppDesignTokens.space6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -441,7 +441,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     return BrandScaffold(
       title: Text('${vehicle.year} ${vehicle.make} ${vehicle.model}'),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -457,7 +457,10 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             Text('Mileage: ${vehicle.mileage} miles'),
             const SizedBox(height: 4),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: AppDesignTokens.space1,
+              ),
               decoration: BoxDecoration(
                 color: _isStored(vehicle)
                     ? colorScheme.surfaceContainerHighest

@@ -18,6 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';
 import AdminSupport from './pages/AdminSupport';
 import { AuthProvider, useAuth } from './shared/AuthContext';
+import { ThemeProvider } from './shared/ThemeContext';
 import {
   DEFAULT_APP_REDIRECT,
   getRedirectQueryParam,
@@ -288,7 +289,10 @@ function App() {
       <AuthProvider>
         {/* Inside AuthProvider (not outside it) so useAuth() inside the gate
             actually sees the signed-in user -- the pre-2026-07 wiring had
-            this outside AuthProvider, which meant the gate never worked. */}
+            this outside AuthProvider, which meant the gate never worked.
+            ThemeProvider is also inside AuthProvider for the same reason --
+            it reads useAuth()'s user to load/save the palette preference. */}
+        <ThemeProvider>
         <EnvironmentGate environment={environment}>
         <AppAnalytics />
         <AppNotificationBridge />
@@ -311,6 +315,7 @@ function App() {
                 path="vin-lookup-demo"
                 element={
                   <FeatureDemo
+                    path="/vin-lookup-demo"
                     title="VIN Lookup"
                     subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
                     marketingBullets={[
@@ -327,6 +332,7 @@ function App() {
                 path="maintenance-planning-demo"
                 element={
                   <FeatureDemo
+                    path="/maintenance-planning-demo"
                     title="Maintenance Planning"
                     subtitle="See how service planning becomes visible, organized, and predictable."
                     marketingBullets={[
@@ -343,6 +349,7 @@ function App() {
                 path="cross-platform-access-demo"
                 element={
                   <FeatureDemo
+                    path="/cross-platform-access-demo"
                     title="Cross Platform Access"
                     subtitle="See how the same garage data follows users across devices."
                     marketingBullets={[
@@ -359,6 +366,7 @@ function App() {
                 path="ownership-history-demo"
                 element={
                   <FeatureDemo
+                    path="/ownership-history-demo"
                     title="Ownership History"
                     subtitle="See how long-term maintenance records become a single source of truth."
                     marketingBullets={[
@@ -545,6 +553,7 @@ function App() {
           </Routes>
         </Suspense>
         </EnvironmentGate>
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   );

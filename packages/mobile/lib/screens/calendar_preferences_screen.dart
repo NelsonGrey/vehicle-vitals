@@ -219,14 +219,14 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
           ),
       ],
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Permissions status
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppDesignTokens.space4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -267,9 +267,12 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                       ),
                     ],
                     if (_hasPermissions)
-                      const Text(
+                      Text(
                         'Calendar is connected through backend event links.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 ),
@@ -282,7 +285,7 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
               // Calendar sync toggle
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(AppDesignTokens.space4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -291,9 +294,12 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Automatically sync upcoming maintenance reminders to your calendar.',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       SwitchListTile(
@@ -351,7 +357,9 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppDesignTokens.warning,
                       foregroundColor: AppDesignTokens.onWarning,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppDesignTokens.space4,
+                      ),
                     ),
                   ),
                 ),
@@ -359,9 +367,12 @@ class _CalendarPreferencesScreenState extends State<CalendarPreferencesScreen> {
               const Spacer(),
 
               // Information text
-              const Text(
+              Text(
                 'Use Maintenance Plan to create calendar events with your selected target.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

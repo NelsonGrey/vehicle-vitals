@@ -173,13 +173,11 @@ See [`docs/MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md) for detailed ad 
 
 ### Visual Language
 
-**Color Palette**:
-
-- Primary: Navy Blue (#1E3A8A) - trust, stability
-- Success: Green (#10B981) - maintenance complete, safe to drive
-- Alert: Amber (#F59E0B) - maintenance due soon
-- Critical: Red (#EF4444) - urgent attention required, do not delay
-- Neutral: Gray (#6B7280) - archive, history, past records
+**Color Palette**: see [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) for the
+current, code-verified palette system (5 user-selectable palettes plus the
+fixed semantic status colors) — the values previously listed here were
+stale (this doc predates the palette switcher and never matched the
+shipped app).
 
 **Typography**:
 

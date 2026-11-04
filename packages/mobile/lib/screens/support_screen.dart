@@ -98,7 +98,7 @@ class _SupportScreenState extends State<SupportScreen> {
       title: const Text('Support'),
       leading: const SafeBackButton(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -201,7 +201,7 @@ class _SupportScreenState extends State<SupportScreen> {
                     if (_error != null) ...[
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppDesignTokens.space3),
                         decoration: BoxDecoration(
                           color: Theme.of(
                             context,
@@ -222,12 +222,14 @@ class _SupportScreenState extends State<SupportScreen> {
                       child: ElevatedButton(
                         onPressed: _submitting ? null : _submit,
                         child: _submitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
                                 ),
                               )
                             : const Text('Send Message'),

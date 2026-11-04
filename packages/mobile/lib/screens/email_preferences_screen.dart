@@ -145,14 +145,14 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
         ),
       ],
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Email address display
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppDesignTokens.space4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -180,7 +180,7 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
             // Email reminders toggle
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppDesignTokens.space4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -227,7 +227,9 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppDesignTokens.warning,
                     foregroundColor: AppDesignTokens.onWarning,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDesignTokens.space4,
+                    ),
                   ),
                 ),
               ),
@@ -235,9 +237,12 @@ class _EmailPreferencesScreenState extends State<EmailPreferencesScreen> {
             const Spacer(),
 
             // Information text
-            const Text(
+            Text(
               'Email reminders are sent daily at 9 AM for maintenance items due within 30 days. You can disable this at any time.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

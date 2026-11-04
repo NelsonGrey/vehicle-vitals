@@ -157,8 +157,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final isUrgent = miles <= 1000;
     final urgencyColor = isUrgent ? colorScheme.error : colorScheme.tertiary;
     return Container(
-      margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      margin: const EdgeInsets.only(top: AppDesignTokens.space1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDesignTokens.space2,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: urgencyColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(99),
@@ -185,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppDesignTokens.space6),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -269,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
               .length;
 
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDesignTokens.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -277,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: AppDesignTokens.space3,
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
@@ -403,8 +406,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ]) ...[
                               Padding(
                                 padding: const EdgeInsets.only(
-                                  bottom: 8,
-                                  top: 4,
+                                  bottom: AppDesignTokens.space2,
+                                  top: AppDesignTokens.space1,
                                 ),
                                 child: Text(
                                   section.$1,
@@ -417,8 +420,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               if (section.$2.isEmpty)
                                 Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  padding: const EdgeInsets.all(12),
+                                  margin: const EdgeInsets.only(
+                                    bottom: AppDesignTokens.space2,
+                                  ),
+                                  padding: const EdgeInsets.all(
+                                    AppDesignTokens.space3,
+                                  ),
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: colorScheme.outline,
@@ -433,7 +440,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               for (final vehicle in section.$2)
                                 Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
+                                  margin: const EdgeInsets.only(
+                                    bottom: AppDesignTokens.space2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: colorScheme.surface,
                                     borderRadius: BorderRadius.circular(10),
@@ -516,8 +525,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                           const SizedBox(height: 4),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
+                                              horizontal:
+                                                  AppDesignTokens.space2,
+                                              vertical: AppDesignTokens.space1,
                                             ),
                                             decoration: BoxDecoration(
                                               color: colorScheme.secondary

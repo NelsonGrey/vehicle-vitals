@@ -9,6 +9,101 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'garage_scope.dart';
 
+// Mirrors packages/web/src/shared/fileUtils.ts's supported file-type map, so
+// mobile and web recognize (and, via storage.rules' isValidAttachmentUpload,
+// accept) exactly the same attachment types. Without an explicit
+// SettableMetadata.contentType, ref.putData() defaults to
+// application/octet-stream, which storage.rules' size/content-type
+// validation correctly rejects as an unidentifiable upload -- so every
+// extension the app claims to support here must resolve to a real MIME type.
+String _mimeTypeForExtension(String extension) {
+  switch (extension.toLowerCase()) {
+    // Documents
+    case 'pdf':
+      return 'application/pdf';
+    case 'doc':
+      return 'application/msword';
+    case 'docx':
+      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    case 'xls':
+      return 'application/vnd.ms-excel';
+    case 'xlsx':
+      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    case 'txt':
+      return 'text/plain';
+    case 'rtf':
+      return 'application/rtf';
+    case 'csv':
+      return 'text/csv';
+    // Images
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'svg':
+      return 'image/svg+xml';
+    case 'bmp':
+      return 'image/bmp';
+    case 'tiff':
+      return 'image/tiff';
+    case 'ico':
+      return 'image/x-icon';
+    case 'heic':
+      return 'image/heic';
+    case 'heif':
+      return 'image/heif';
+    // Video
+    case 'mp4':
+      return 'video/mp4';
+    case 'avi':
+      return 'video/x-msvideo';
+    case 'mov':
+      return 'video/quicktime';
+    case 'mkv':
+      return 'video/x-matroska';
+    case 'wmv':
+      return 'video/x-ms-wmv';
+    case 'flv':
+      return 'video/x-flv';
+    case 'webm':
+      return 'video/webm';
+    // Audio
+    case 'mp3':
+      return 'audio/mpeg';
+    case 'wav':
+      return 'audio/wav';
+    case 'aac':
+      return 'audio/aac';
+    case 'flac':
+      return 'audio/flac';
+    case 'm4a':
+      return 'audio/mp4';
+    case 'ogg':
+      return 'audio/ogg';
+    // Archives
+    case 'zip':
+      return 'application/zip';
+    case 'rar':
+      return 'application/vnd.rar';
+    case '7z':
+      return 'application/x-7z-compressed';
+    case 'tar':
+      return 'application/x-tar';
+    case 'gz':
+      return 'application/gzip';
+    default:
+      // Falls back to the true "unknown binary" type -- storage.rules
+      // deliberately does not allowlist this, so an unrecognized extension
+      // is rejected server-side rather than silently accepted.
+      return 'application/octet-stream';
+  }
+}
+
 class RecordStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -61,6 +156,7 @@ class RecordStorageService {
         '${buildVehicleStorageBasePath(context, vin)}/records/$recordId/${DateTime.now().millisecondsSinceEpoch}.$extension';
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
+      contentType: _mimeTypeForExtension(extension),
       customMetadata: {
         'originalName': file.name,
         'extension': extension,
@@ -103,6 +199,7 @@ class RecordStorageService {
         '${buildVehicleStorageBasePath(context, vin)}/photo/${DateTime.now().millisecondsSinceEpoch}.$extension';
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
+      contentType: _mimeTypeForExtension(extension),
       customMetadata: {
         'originalName': file.name,
         'extension': extension,
@@ -153,6 +250,7 @@ class RecordStorageService {
         '${buildVehicleStorageBasePath(context, vin)}/maintenance/$entryId/${DateTime.now().millisecondsSinceEpoch}.$extension';
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
+      contentType: _mimeTypeForExtension(extension),
       customMetadata: {
         'originalName': file.name,
         'extension': extension,

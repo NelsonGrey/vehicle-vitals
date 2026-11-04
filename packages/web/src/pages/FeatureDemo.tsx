@@ -1,5 +1,7 @@
 import AppEntryLink from '../components/AppEntryLink';
+import PageSEO from '../components/PageSEO';
 import { useAuth } from '../shared/AuthContext';
+import { ROUTE_SEO } from '../shared/seoMeta';
 
 interface FeatureDemoProps {
   title: string;
@@ -7,6 +9,10 @@ interface FeatureDemoProps {
   marketingBullets: string[];
   appRoute: string;
   appCtaLabel: string;
+  /** Route path (e.g. "/vin-lookup-demo") used to look up this page's
+   * static SEO metadata in ROUTE_SEO -- keeps the prerender script's static
+   * data and this component's runtime metadata from drifting apart. */
+  path: string;
 }
 
 const mediaByFeature: Record<
@@ -56,6 +62,7 @@ export default function FeatureDemo({
   marketingBullets,
   appRoute,
   appCtaLabel,
+  path,
 }: FeatureDemoProps) {
   const { user } = useAuth();
   const media = mediaByFeature[title] ?? {
@@ -66,9 +73,11 @@ export default function FeatureDemo({
       '/images/features/current/settings.png',
     ],
   };
+  const seoMeta = ROUTE_SEO[path];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-8 space-y-6">
+      {seoMeta && <PageSEO meta={seoMeta} />}
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
         <img
           src={media.hero}

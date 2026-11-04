@@ -7,32 +7,45 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Slate Auto - Primary color palette
+        // Slate Auto - Primary color palette. Steps 50/200/500/600/700/900
+        // carry brand meaning (background/border/muted/primary/text) and
+        // are repointed at the palette CSS variables defined in styles.css
+        // -- every other step stays literal Tailwind, unaffected by the
+        // active palette. See styles.css's "Color palettes" comment block
+        // for the full rationale (in particular why dark:*-slate-700 etc.
+        // elsewhere in the app are unaffected by this).
         slate: {
-          50: '#f8fafc',
+          50: 'var(--vv-slate-50)',
           100: '#f1f5f9',
-          200: '#e2e8f0',
+          200: 'var(--vv-slate-200)',
           300: '#cbd5e1',
           400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
+          500: 'var(--vv-slate-500)',
+          600: 'var(--vv-slate-600)',
+          700: 'var(--vv-slate-700)',
           800: '#1e293b',
-          900: '#0f172a',
+          900: 'var(--vv-slate-900)',
           950: '#020617',
+        },
+        // Brand accent -- Tailwind's default blue scale, except the two
+        // steps actually used as solid accent color (600/700), which
+        // follow the palette the same way slate-700 does above.
+        blue: {
+          600: 'var(--vv-blue-600)',
+          700: 'var(--vv-blue-700)',
         },
         // Semantic colors using slate palette
         primary: {
-          50: '#f8fafc',
+          50: 'var(--vv-slate-50)',
           100: '#f1f5f9',
-          200: '#e2e8f0',
+          200: 'var(--vv-slate-200)',
           300: '#cbd5e1',
           400: '#94a3b8',
-          500: '#64748b', // Main primary
-          600: '#475569',
-          700: '#334155',
+          500: 'var(--vv-slate-500)', // Main primary
+          600: 'var(--vv-slate-600)',
+          700: 'var(--vv-slate-700)',
           800: '#1e293b',
-          900: '#0f172a',
+          900: 'var(--vv-slate-900)',
         },
         // Accent colors
         accent: {
@@ -75,20 +88,6 @@ export default {
           900: '#7f1d1d',
           950: '#450a0a',
         },
-        // Custom brand colors
-        cream: '#fef7ed', // warm cream
-        'deep-brown': '#2d1810', // deep brown
-        'light-cream': '#fef7ed', // light cream
-        parchment: '#fef7ed', // parchment
-        'dark-card': '#2d1810', // dark card
-        'dark-border': '#5d4037', // dark border
-        tan: '#d2b48c', // tan
-        'warm-gray': '#a1887f', // warm gray
-        'light-gray': '#d7ccc8', // light gray
-        charcoal: '#3e2723', // charcoal
-        oxblood: '#722f37', // oxblood
-        rust: '#8d4f3f', // rust
-        gold: '#d4af37', // gold
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],

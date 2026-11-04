@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/app_logo.dart';
 import '../components/brand_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -64,18 +65,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return BrandScaffold(
       title: const Text('Forgot Password'),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppDesignTokens.space5),
+                child: Center(
+                  child: AppLogo(size: 72, showText: false, full: true),
+                ),
+              ),
               if (_emailSent) ...[
                 Card(
                   color: AppDesignTokens.success.withValues(alpha: 0.1),
                   child: const Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: EdgeInsets.all(AppDesignTokens.space4),
                     child: Text(
                       'Reset email sent. Check your inbox and spam or junk folder. The link may expire, so open it promptly. If it does not arrive, confirm the address or contact Support.',
                       textAlign: TextAlign.center,
@@ -113,7 +120,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading || _emailSent ? null : _submit,
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        )
                       : const Text('Send Reset Link'),
                 ),
               ),

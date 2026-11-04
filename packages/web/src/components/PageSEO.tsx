@@ -11,7 +11,7 @@
 
 import { useEffect } from 'react';
 import type { SeoMeta } from '../shared/seoMeta';
-import { SITE_NAME } from '../shared/seoMeta';
+import { DEFAULT_OG_IMAGE, SITE_NAME } from '../shared/seoMeta';
 
 // ─── Helper: get-or-create a <meta> element ───────────────────────────────────
 
@@ -71,6 +71,7 @@ export default function PageSEO({ meta }: PageSEOProps) {
     const ogTitle = meta.ogTitle ?? meta.title;
     const ogDescription = meta.ogDescription ?? meta.description;
     const twitterCard = meta.twitterCard ?? 'summary_large_image';
+    const ogImage = meta.ogImage ?? DEFAULT_OG_IMAGE;
 
     document.title = meta.title;
 
@@ -86,18 +87,14 @@ export default function PageSEO({ meta }: PageSEOProps) {
     setMetaByProperty('og:url', meta.canonical);
     setMetaByProperty('og:type', meta.ogType ?? 'website');
     setMetaByProperty('og:site_name', SITE_NAME);
-    if (meta.ogImage) {
-      setMetaByProperty('og:image', meta.ogImage);
-    }
+    setMetaByProperty('og:image', ogImage);
 
     // Twitter Card
     setMetaByName('twitter:card', twitterCard);
     setMetaByName('twitter:title', ogTitle);
     setMetaByName('twitter:description', ogDescription);
     setMetaByName('twitter:site', '@vehiclevitalapp');
-    if (meta.ogImage) {
-      setMetaByName('twitter:image', meta.ogImage);
-    }
+    setMetaByName('twitter:image', ogImage);
 
     // JSON-LD structured data
     if (meta.jsonLd) {

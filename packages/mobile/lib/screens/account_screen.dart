@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../components/app_bottom_nav.dart';
 import '../services/auth_service.dart';
+import '../theme/design_tokens.dart';
 import '../utils/user_facing_error.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -173,13 +174,13 @@ class _AccountScreenState extends State<AccountScreen> {
       title: const Text('Account'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppDesignTokens.space4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppDesignTokens.space4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -238,9 +239,14 @@ class _AccountScreenState extends State<AccountScreen> {
                           icon: const Icon(Icons.copy),
                           label: const Text('Copy Support ID'),
                         ),
-                        const Text(
+                        Text(
                           'Include this ID only when Vehicle-Vitals Support asks for it. Your account data synchronizes automatically when you use the same sign-in on web and iPhone.',
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ] else ...[
                         const Text('Not signed in'),
@@ -252,7 +258,7 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 24),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppDesignTokens.space4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -289,7 +295,7 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 24),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppDesignTokens.space4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -335,7 +341,7 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 24),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppDesignTokens.space4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

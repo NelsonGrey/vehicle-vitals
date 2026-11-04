@@ -19,8 +19,20 @@ export default defineConfig({
     rollupOptions: {
       output: {
         format: 'es', // Use ES modules for better tree shaking
+        // Only group node_modules into stable vendor chunks here (rarely
+        // changes, so it stays cached across app deploys). Deliberately do
+        // NOT force-group src/pages or src/components: 24 of 25 pages in
+        // App.tsx are already React.lazy()-imported specifically for
+        // per-route code splitting, but grouping every file under pages/
+        // or components/ into one shared chunk regardless of import style
+        // silently merged all of them back into two ~800-970KB chunks,
+        // so a first-time visitor to the marketing homepage downloaded
+        // essentially the whole app (Records, EditVehicle, Admin,
+        // Subscription, etc.) before seeing anything. Leaving pages/
+        // components unlisted lets Rollup's own automatic chunking do
+        // what it's designed for: a separate chunk per lazy-loaded route,
+        // with genuinely shared modules split into their own common chunks.
         manualChunks: id => {
-          // Vendor chunks for better caching
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom')) {
               return 'react-vendor';
@@ -32,13 +44,6 @@ export default defineConfig({
               return 'utils-vendor';
             }
             return 'vendor';
-          }
-          // Feature-based chunks
-          if (id.includes('pages/')) {
-            return 'pages';
-          }
-          if (id.includes('components/')) {
-            return 'components';
           }
         },
       },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../components/brand_scaffold.dart';
+import '../theme/design_tokens.dart';
 import 'package:go_router/go_router.dart';
 
 class InstructionsScreen extends StatelessWidget {
@@ -61,7 +62,7 @@ class InstructionsScreen extends StatelessWidget {
     return BrandScaffold(
       title: const Text('Help'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         children: [
           Text(
             'Follow the labels you see in the app',
@@ -74,11 +75,16 @@ class InstructionsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           ..._topics.map(
             (topic) => Card(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: AppDesignTokens.space3),
               child: ExpansionTile(
                 leading: Icon(topic.icon),
                 title: Text(topic.title),
-                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                childrenPadding: const EdgeInsets.fromLTRB(
+                  AppDesignTokens.space4,
+                  0,
+                  AppDesignTokens.space4,
+                  AppDesignTokens.space4,
+                ),
                 expandedCrossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(width: double.infinity, child: Text(topic.content)),
@@ -89,7 +95,7 @@ class InstructionsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDesignTokens.space4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

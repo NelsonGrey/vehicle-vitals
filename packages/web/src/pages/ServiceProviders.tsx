@@ -428,7 +428,7 @@ export default function ServiceProviders() {
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-          <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mt-0 mb-3 px-1">
+          <h2 className="ui-h3 mt-0 mb-3 px-1">
             Menu
           </h2>
           <div className="space-y-2">
@@ -449,7 +449,7 @@ export default function ServiceProviders() {
                   <div className="font-medium text-slate-900 dark:text-slate-100">
                     {item.title}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <div className="ui-hint mt-1">
                     {item.description}
                   </div>
                 </button>
@@ -462,10 +462,10 @@ export default function ServiceProviders() {
           {activeTab === 'search' ? (
             <>
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-                <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
+                <h2 className="ui-h2 mt-0 mb-4">
                   Search Preferences
                 </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+                <p className="ui-body mt-0 mb-4">
                   Save your home-area search settings here, then rerun the
                   search any time you want fresh local results.
                 </p>
@@ -593,23 +593,23 @@ export default function ServiceProviders() {
                   </button>
                 </div>
 
-                <p className="text-xs text-slate-500 mt-3 mb-0">
+                <p className="ui-hint mt-3 mb-0">
                   Query: {locationSearchQuery || 'Enter address to search'}
                 </p>
               </div>
 
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-4">
+                  <h2 className="ui-h2 mt-0 mb-4">
                     Results
                   </h2>
-                  <span className="text-xs text-slate-500 mb-4">
+                  <span className="ui-hint mb-4">
                     Source: {lookupSource}
                   </span>
                 </div>
 
                 {providers.length === 0 ? (
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
+                  <p className="ui-body mt-0">
                     No results yet. Run a search to view local options.
                   </p>
                 ) : (
@@ -624,7 +624,7 @@ export default function ServiceProviders() {
                             <h3 className="font-semibold text-base m-0 text-slate-900 dark:text-slate-100">
                               {provider.name}
                             </h3>
-                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 mb-0">
+                            <p className="ui-body mt-1 mb-0">
                               {provider.address}
                             </p>
                           </div>
@@ -633,7 +633,7 @@ export default function ServiceProviders() {
                               'Vehicle service'}
                           </span>
                         </div>
-                        <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        <div className="ui-body mt-2">
                           <p className="m-0">
                             {provider.distanceMiles} miles away
                           </p>
@@ -692,16 +692,16 @@ export default function ServiceProviders() {
           ) : (
             <>
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-                <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                <h2 className="ui-h2 mt-0 mb-1">
                   Saved Places
                 </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+                <p className="ui-body mt-0 mb-4">
                   Save businesses you trust from search results or your service
                   history so they are easy to find next time.
                 </p>
 
                 {preferredProviders.length === 0 ? (
-                  <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                  <p className="ui-body m-0">
                     No places saved yet. Search nearby or check your service
                     history below to save one.
                   </p>
@@ -716,7 +716,7 @@ export default function ServiceProviders() {
                           <div className="font-medium text-slate-900 dark:text-slate-100">
                             ★ {provider.name}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <div className="ui-hint mt-0.5">
                             {providerTypeLabels[provider.type] ||
                               'Vehicle service'}
                             {provider.address ? ` • ${provider.address}` : ''}
@@ -739,10 +739,10 @@ export default function ServiceProviders() {
               </div>
 
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-                <h2 className="font-semibold text-xl text-slate-900 dark:text-slate-100 mt-0 mb-1">
+                <h2 className="ui-h2 mt-0 mb-1">
                   Places You&apos;ve Used
                 </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0 mb-4">
+                <p className="ui-body mt-0 mb-4">
                   Built from the shop/mechanic name saved on maintenance records
                   across your garage.
                 </p>
@@ -752,7 +752,7 @@ export default function ServiceProviders() {
                     Loading service history…
                   </p>
                 ) : pastProviders.length === 0 ? (
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0">
+                  <p className="ui-body mt-0">
                     No past businesses yet. Add a "Shop or professional" the
                     next time you log a maintenance record.
                   </p>
@@ -772,7 +772,7 @@ export default function ServiceProviders() {
                             <div className="font-medium text-slate-900 dark:text-slate-100">
                               {provider.name}
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="ui-hint mt-0.5">
                               {provider.serviceCount} service
                               {provider.serviceCount === 1 ? '' : 's'}
                               {provider.lastServiceDate

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
 import '../services/onboarding_service.dart';
 import '../services/premium_service.dart';
+import '../theme/design_tokens.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -88,7 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return BrandScaffold(
       title: const Text('Getting Started'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDesignTokens.space4),
         children: [
           Text(
             'Add a vehicle → Log service records → Stay on top of what\'s next',
@@ -163,9 +164,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 20),
           Text(
             'More setup (optional)',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: Colors.black54),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 6),
           Card(
@@ -222,12 +223,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ElevatedButton(
             onPressed: _submitting ? null : _completeSetup,
             child: _submitting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
                   )
                 : const Text('Start using Garage'),
@@ -280,8 +281,8 @@ class _PrimaryStepCard extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.primary,
               child: Text(
                 '$stepNumber',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),

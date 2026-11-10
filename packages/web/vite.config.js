@@ -15,7 +15,10 @@ export default defineConfig({
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   build: {
-    target: 'es2015',
+    // es2015 pulled a ~600KB core-js polyfill chunk into every page, which
+    // current Chrome and Safari never execute. es2022 matches the browsers
+    // this app already ships to (including iOS WKWebView).
+    target: 'es2022',
     rollupOptions: {
       output: {
         format: 'es', // Use ES modules for better tree shaking
@@ -33,18 +36,30 @@ export default defineConfig({
         // what it's designed for: a separate chunk per lazy-loaded route,
         // with genuinely shared modules split into their own common chunks.
         manualChunks: id => {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('firebase')) {
-              return 'firebase-vendor';
-            }
-            if (id.includes('jspdf') || id.includes('papaparse')) {
-              return 'utils-vendor';
-            }
-            return 'vendor';
+          if (!id.includes('node_modules')) {
+            return undefined;
           }
+          const normalized = id.replace(/\\/g, '/');
+          // Only group modules the marketing shell always needs. A catch-all
+          // vendor chunk was pulling jspdf's core-js (and the rest of the
+          // app's node_modules) into the homepage preload.
+          if (
+            normalized.includes('/firebase/auth/') ||
+            normalized.includes('@firebase/auth') ||
+            normalized.includes('/firebase/app/') ||
+            normalized.includes('@firebase/app')
+          ) {
+            return 'firebase-auth';
+          }
+          if (
+            normalized.includes('/react-dom/') ||
+            normalized.includes('/node_modules/react/') ||
+            normalized.includes('react-router') ||
+            normalized.includes('/scheduler/')
+          ) {
+            return 'react-vendor';
+          }
+          return undefined;
         },
       },
     },

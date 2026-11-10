@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import AppStoreCallout from '../components/AppStoreCallout';
+import MarketingImage from '../components/MarketingImage';
 import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
@@ -138,11 +139,13 @@ export default function Instructions() {
               className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/40 sm:flex-row"
             >
               <div className="relative h-56 overflow-hidden sm:h-auto sm:w-72 sm:shrink-0">
-                <img
+                <MarketingImage
                   src={item.image}
                   alt={`${item.title} capability preview`}
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                   loading="lazy"
+                  width={720}
+                  height={1564}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent sm:bg-linear-to-r" />
                 <div className="absolute bottom-3 left-3 rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-slate-900">

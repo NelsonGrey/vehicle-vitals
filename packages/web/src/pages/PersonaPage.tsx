@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import AppEntryLink from '../components/AppEntryLink';
+import MarketingImage from '../components/MarketingImage';
 import PageSEO from '../components/PageSEO';
 import { getPersonaById, personaPages } from '../data/personas';
 import {
@@ -32,10 +33,15 @@ export default function PersonaPage() {
       <PageSEO meta={meta} />
 
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">
-        <img
+        <MarketingImage
           src={persona.image}
           alt={`${persona.label} product workflow`}
           className="absolute inset-0 h-full w-full object-cover opacity-45"
+          loading="eager"
+          fetchPriority="high"
+          decoding="sync"
+          width={720}
+          height={1564}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/75 to-slate-900/50" />
         <div className="marketing-hero-content relative grid gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-12 lg:py-14">

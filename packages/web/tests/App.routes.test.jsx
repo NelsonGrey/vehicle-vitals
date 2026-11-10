@@ -49,6 +49,11 @@ describe('App.tsx route table', () => {
     expect(appSource).toMatch(/path="product-tour"\s+element=\{<ProductTour/);
   });
 
+  it('renders unknown URLs as a not-found page instead of the homepage', () => {
+    expect(appSource).toMatch(/path="\*"\s+element=\{<NotFound/);
+    expect(appSource).not.toMatch(/path="\*"\s+element=\{<Navigate to="\/"/);
+  });
+
   it('no longer imports the deleted StartSteps/EverydayScreens/ShortVideoTours page components', () => {
     expect(appSource).not.toMatch(/from '\.\/pages\/StartSteps'/);
     expect(appSource).not.toMatch(/from '\.\/pages\/EverydayScreens'/);

@@ -1,31 +1,26 @@
 #!/usr/bin/env node
 /**
- * Post-build step: bakes real per-route <title>/description/canonical/
- * Open Graph/Twitter Card/JSON-LD tags into static HTML files in dist/,
- * so link-preview and search-engine crawlers that don't execute JavaScript
- * (Facebook, X/Twitter, LinkedIn, Slack, Discord, iMessage, WhatsApp, and
- * some SEO tools) see the real per-page metadata instead of the single
- * generic <title>/description in index.html.
+ * Post-build step: writes one static HTML file per public marketing route.
  *
- * Without this, PageSEO.tsx's useEffect only ever updates the DOM after
- * React mounts -- fine for Googlebot's second rendering pass, invisible to
- * every crawler that only reads the raw HTML response.
+ * Each file keeps the built bundle's hashed asset tags and also contains:
+ * - real per-route <title>/description/canonical/Open Graph/Twitter/JSON-LD
+ * - the server-rendered H1 and body copy inside <div id="root">
  *
- * How it works: builds src/shared/seoMeta.ts and src/data/personas.ts as
- * small SSR-format ES modules (via Vite's own build() API, so
- * import.meta.env.VITE_APP_URL resolves exactly as it does in the real app
- * build for this mode), imports the compiled route metadata, then writes
- * one static HTML file per route into dist/ as a modified copy of the
- * already-built dist/index.html (same hashed asset references, so the SPA
- * still boots and hydrates identically once a crawler's initial HTML parse
- * is done).
+ * Crawlers that do not execute JavaScript therefore see the page, not an
+ * empty shell. The client bundle still boots from the same script tags and
+ * replaces #root once it runs.
  *
  * Output paths are flat (dist/subscription.html, dist/personas/owners.html)
  * to match Firebase Hosting's `cleanUrls` rewriting of `/subscription` ->
  * `/subscription.html`. Requires `cleanUrls: true` in firebase*.json.
+ *
+ * Firebase's catch-all must NOT rewrite every path to one shell. Unknown
+ * paths fall through to dist/404.html (HTTP 404). /app and /auth keep a
+ * neutral app-shell.html rewrite. That shell is copied from the generic
+ * Vite index BEFORE the homepage metadata and body are applied.
  */
 
-import { build } from 'vite';
+import { createServer } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,30 +29,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const mode = process.argv[2] || 'production';
 const distDir = path.join(root, 'dist');
-const tmpDir = path.join(root, '.seo-prerender-tmp');
-
-async function buildSsrModule(entry, outFile) {
-  await build({
-    root,
-    mode,
-    configFile: path.join(root, 'vite.config.js'),
-    logLevel: 'warn',
-    build: {
-      ssr: entry,
-      outDir: tmpDir,
-      emptyOutDir: false,
-      write: true,
-      minify: false,
-      rollupOptions: {
-        output: { format: 'es', entryFileNames: outFile },
-      },
-    },
-  });
-  const mod = await import(
-    `${path.join(tmpDir, outFile)}?t=${Date.now()}`
-  );
-  return mod;
-}
+const HERO_PRELOAD =
+  '<link rel="preload" as="image" href="/images/hero-garage.webp" type="image/webp" fetchpriority="high" />';
 
 function escapeHtml(value) {
   return String(value)
@@ -104,7 +77,7 @@ function renderHead(meta) {
   return tags.join('\n    ');
 }
 
-function applyMetaToHtml(template, meta) {
+function applyMetaToHtml(template, meta, bodyHtml, { preloadHero = false } = {}) {
   let html = template;
 
   html = html.replace(
@@ -117,9 +90,52 @@ function applyMetaToHtml(template, meta) {
     `<meta name="description" content="${escapeHtml(meta.description)}" />`
   );
 
-  html = html.replace('</head>', `    ${renderHead(meta)}\n  </head>`);
+  const headExtras = `${preloadHero ? `${HERO_PRELOAD}\n    ` : ''}${renderHead(meta)}`;
+  html = html.replace('</head>', `    ${headExtras}\n  </head>`);
+
+  if (bodyHtml) {
+    if (!html.includes('<div id="root"></div>')) {
+      throw new Error('Built index.html is missing <div id="root"></div>');
+    }
+    html = html.replace(
+      '<div id="root"></div>',
+      `<div id="root">${bodyHtml}</div>`
+    );
+  }
 
   return html;
+}
+
+function visibleWordCount(html) {
+  const body = html.split(/<body/i)[1] || html;
+  const text = body
+    // `[^>]*` before `>` so end tags such as `</script >`, `</script foo="bar">`,
+    // and `</script\t\n bar>` are removed. This only counts words in our own
+    // build output; it is not a sanitizer.
+    .replace(/<script[^>]*>[\s\S]*?<\/script[^>]*>/gi, ' ')
+    .replace(/<style[^>]*>[\s\S]*?<\/style[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ');
+  return text.split(/\s+/).filter(word => /[A-Za-z0-9]/.test(word)).length;
+}
+
+function assertCrawlable(routePath, html) {
+  const body = html.split(/<body/i)[1] || '';
+  // Staging/dev environment gate and the coming-soon flag replace the
+  // marketing page on purpose. Production must ship the real copy.
+  const gated = /restricted .+ environment/i.test(body);
+  const comingSoon = /coming soon/i.test(body);
+  if (gated || comingSoon) {
+    return;
+  }
+  if (!/<h1[\s>]/i.test(body)) {
+    throw new Error(`[prerender-seo] ${routePath} body is missing an <h1>`);
+  }
+  const words = visibleWordCount(html);
+  if (words < 40) {
+    throw new Error(
+      `[prerender-seo] ${routePath} body has only ${words} words; expected the rendered page.`
+    );
+  }
 }
 
 function routeToOutputPath(routePath) {
@@ -129,21 +145,28 @@ function routeToOutputPath(routePath) {
 }
 
 async function main() {
+  process.env.NODE_ENV = 'production';
   if (!fs.existsSync(distDir)) {
     console.error(`[prerender-seo] dist/ not found at ${distDir} -- run vite build first.`);
     process.exit(1);
   }
 
-  fs.mkdirSync(tmpDir, { recursive: true });
+  const vite = await createServer({
+    root,
+    mode,
+    configFile: path.join(root, 'vite.config.js'),
+    server: { middlewareMode: true, hmr: false },
+    appType: 'custom',
+    logLevel: 'warn',
+    // Avoid crawling the shared package's Expo entry during this Node render.
+    optimizeDeps: { noDiscovery: true, include: [] },
+  });
 
   try {
-    const seoModule = await buildSsrModule(
-      path.join(root, 'src/shared/seoMeta.ts'),
-      'seoMeta.mjs'
-    );
-    const personasModule = await buildSsrModule(
-      path.join(root, 'src/data/personas.ts'),
-      'personas.mjs'
+    const seoModule = await vite.ssrLoadModule('/src/shared/seoMeta.ts');
+    const personasModule = await vite.ssrLoadModule('/src/data/personas.ts');
+    const renderer = await vite.ssrLoadModule(
+      '/src/prerender/renderMarketingHtml.tsx'
     );
 
     global.__SITE_NAME__ = seoModule.SITE_NAME;
@@ -151,36 +174,53 @@ async function main() {
 
     const template = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
 
-    // Firebase's catch-all rewrite ("**" -> a fallback file) is what serves
-    // every path with no matching static file, chiefly /app/* and /auth/*.
-    // That fallback must stay generic -- write it BEFORE index.html gets
-    // overwritten with the homepage's own title/OG/JSON-LD below, otherwise
-    // every authenticated app route's raw HTML (and initial document.title)
-    // would expose the marketing homepage's metadata instead of a neutral
-    // shell. firebase*.json's rewrite destination must point here, not at
-    // /index.html.
+    // /app and /auth have no static file. Their rewrite target must stay
+    // generic -- write it BEFORE index.html is overwritten with the
+    // homepage's title, JSON-LD, and body. firebase*.json must point here,
+    // not at /index.html.
     fs.writeFileSync(path.join(distDir, 'app-shell.html'), template);
+
+    const renderedByPath = new Map();
+    for (const routePath of renderer.MARKETING_PRERENDER_PATHS) {
+      renderedByPath.set(routePath, await renderer.renderMarketingHtml(routePath));
+    }
 
     let written = 0;
 
     for (const [routePath, meta] of Object.entries(seoModule.ROUTE_SEO)) {
+      const bodyHtml = renderedByPath.get(routePath);
+      if (!bodyHtml) {
+        throw new Error(`[prerender-seo] no rendered body for ${routePath}`);
+      }
+      const html = applyMetaToHtml(template, meta, bodyHtml, {
+        preloadHero: routePath === '/',
+      });
+      assertCrawlable(routePath, html);
       const outPath = routeToOutputPath(routePath);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, applyMetaToHtml(template, meta));
+      fs.writeFileSync(outPath, html);
       written += 1;
     }
 
     for (const persona of personasModule.personaPages) {
       const meta = seoModule.getPersonaSeoMeta(persona.id);
+      const bodyHtml = renderedByPath.get(persona.path);
+      if (!bodyHtml) {
+        throw new Error(`[prerender-seo] no rendered body for ${persona.path}`);
+      }
+      const html = applyMetaToHtml(template, meta, bodyHtml);
+      assertCrawlable(persona.path, html);
       const outPath = routeToOutputPath(persona.path);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, applyMetaToHtml(template, meta));
+      fs.writeFileSync(outPath, html);
       written += 1;
     }
 
-    console.log(`[prerender-seo] wrote ${written} static HTML files with real per-route meta tags.`);
+    console.log(
+      `[prerender-seo] wrote ${written} static HTML files with per-route meta tags and body copy.`
+    );
   } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    await vite.close();
   }
 }
 

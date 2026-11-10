@@ -1,6 +1,6 @@
-// Production logging utilities with Firebase integration
-import { getApp } from 'firebase/app';
-import { getPerformance } from 'firebase/performance';
+// Production logging utilities with Firebase integration.
+// Performance Monitoring is loaded after idle so it is not in the marketing
+// critical path. Nothing in this module reads traces synchronously.
 
 // GA4 events go through GTM/gtag only (see firebaseConfig.ts) — never
 // through the Firebase Analytics SDK, which would independently
@@ -55,13 +55,25 @@ class Logger {
     this.sessionId = this.generateSessionId();
     this.isProduction = import.meta.env.PROD;
 
-    // Initialize Firebase Performance Monitoring in production
-    if (this.isProduction) {
-      try {
-        const app = getApp();
-        this.performance = getPerformance(app);
-      } catch (error) {
-        console.warn('Failed to initialize Firebase Performance:', error);
+    // Initialize Firebase Performance Monitoring after first paint. getPerformance
+    // starts automatic page-load collection; deferring the import keeps that
+    // SDK off the LCP path without dropping the collection.
+    if (this.isProduction && typeof window !== 'undefined') {
+      const initPerformance = () => {
+        void import('firebase/performance')
+          .then(({ getPerformance }) =>
+            import('firebase/app').then(({ getApp }) => {
+              this.performance = getPerformance(getApp());
+            })
+          )
+          .catch(error => {
+            console.warn('Failed to initialize Firebase Performance:', error);
+          });
+      };
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(initPerformance, { timeout: 4000 });
+      } else {
+        setTimeout(initPerformance, 1);
       }
     }
   }

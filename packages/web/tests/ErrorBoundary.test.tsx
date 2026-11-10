@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import ErrorBoundary from '../src/components/ErrorBoundary';
 
-vi.mock('../src/shared/firebaseConfig', () => ({
+vi.mock('../src/shared/firebaseCore', () => ({
   trackEvent: vi.fn(),
 }));
 

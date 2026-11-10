@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AppEntryLink from '../components/AppEntryLink';
 import HeaderAdBar from '../components/HeaderAdBar';
 import InlineAdSection from '../components/InlineAdSection';
+import MarketingImage from '../components/MarketingImage';
 import PageSEO from '../components/PageSEO';
 import SiteFooter from '../components/SiteFooter';
 import SiteHeader from '../components/SiteHeader';
@@ -72,23 +73,29 @@ export default function Landing() {
         <section className="marketing-page-section py-8 sm:py-10 lg:py-12">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-5">
             <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">
-              <img
+              <MarketingImage
                 src="/images/hero-garage.jpg"
                 alt="Organized garage workspace demonstrating vehicle record keeping"
                 className="absolute inset-0 h-full w-full object-cover opacity-45"
                 loading="eager"
+                fetchPriority="high"
+                decoding="sync"
+                width={512}
+                height={512}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/75 to-blue-950/60" />
               <div className="marketing-hero-content relative grid gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-[1.1fr_0.9fr] lg:px-12 lg:py-16">
                 <div>
                   <div className="flex items-center gap-4">
-                    <img
+                    <MarketingImage
                       src="/android-chrome-512x512.png"
                       alt=""
-                      aria-hidden="true"
                       width={160}
                       height={160}
                       className="marketing-hero-logo h-30 w-30 rounded-2xl shadow-lg ring-1 ring-white/20 sm:h-40 sm:w-40"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
                     />
                     <span className="text-sm font-semibold uppercase tracking-wide text-slate-100">
                       Vehicle-Vitals
@@ -166,11 +173,13 @@ export default function Landing() {
                   >
                     <div className="grid min-h-full grid-cols-1 md:grid-cols-[0.9fr_1.1fr]">
                       <div className="relative min-h-56 overflow-hidden">
-                        <img
+                        <MarketingImage
                           src={item.image}
                           alt={`${item.title} product preview`}
                           className="absolute inset-0 h-full w-full object-cover"
                           loading="lazy"
+                          width={720}
+                          height={1564}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/20 to-transparent" />
                         <div className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import MarketingImage from '../components/MarketingImage';
 import MarketingVideoPanel from '../components/MarketingVideoPanel';
 import PageSEO from '../components/PageSEO';
 import { ROUTE_SEO } from '../shared/seoMeta';
@@ -193,11 +194,13 @@ export default function ProductTour() {
               key={screen.title}
               className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50"
             >
-              <img
+              <MarketingImage
                 src={screen.image}
                 alt={`${screen.title} product screen`}
                 className="h-80 w-full bg-slate-100 object-contain dark:bg-slate-950"
                 loading="lazy"
+                width={720}
+                height={1564}
               />
               <div className="p-4">
                 <h3 className="font-serif text-lg text-slate-900 dark:text-slate-100">

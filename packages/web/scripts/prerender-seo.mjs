@@ -109,8 +109,10 @@ function applyMetaToHtml(template, meta, bodyHtml, { preloadHero = false } = {})
 function visibleWordCount(html) {
   const body = html.split(/<body/i)[1] || html;
   const text = body
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    // `\s*` before `>` so end tags like `</script >` are removed too.
+    // This only counts words in our own build output; it is not a sanitizer.
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ');
   return text.split(/\s+/).filter(word => /[A-Za-z0-9]/.test(word)).length;
 }

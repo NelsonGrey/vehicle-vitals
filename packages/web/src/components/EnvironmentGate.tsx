@@ -1,6 +1,6 @@
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { useCallback, useMemo, useState } from 'react';
-import { gateAuth } from '../shared/firebaseConfig';
+import { gateAuth } from '../shared/firebaseCore';
 import StackedVLogo from './StackedVLogo';
 
 interface EnvironmentGateProps {

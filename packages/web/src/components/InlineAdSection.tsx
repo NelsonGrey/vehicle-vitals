@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import type { WebAdPlacement } from '../shared/adPlacements';
-import AdPlacement from './AdPlacement';
+import { scheduleIdle } from '../shared/scheduleIdle';
 
 interface InlineAdSectionProps {
   placement?: WebAdPlacement;
@@ -12,6 +13,27 @@ export default function InlineAdSection({
   className,
   onVisibilityChange,
 }: InlineAdSectionProps) {
+  const [AdPlacement, setAdPlacement] = useState<
+    typeof import('./AdPlacement').default | null
+  >(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const cancelIdle = scheduleIdle(() => {
+      void import('./AdPlacement').then(mod => {
+        if (!cancelled) setAdPlacement(() => mod.default);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelIdle();
+    };
+  }, []);
+
+  if (!AdPlacement) {
+    return null;
+  }
+
   return (
     <AdPlacement
       placement={placement}

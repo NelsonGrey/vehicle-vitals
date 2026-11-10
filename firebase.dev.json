@@ -11,7 +11,65 @@
   "hosting": {
     "public": "packages/web/dist",
     "cleanUrls": true,
+    "trailingSlash": false,
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "redirects": [
+      {
+        "source": "/start-steps",
+        "destination": "/getting-started",
+        "type": 301
+      },
+      {
+        "source": "/everyday-screens",
+        "destination": "/product-tour",
+        "type": 301
+      },
+      {
+        "source": "/short-video-tours",
+        "destination": "/product-tour",
+        "type": 301
+      },
+      {
+        "source": "/login",
+        "destination": "/auth/login",
+        "type": 301
+      },
+      {
+        "source": "/signup",
+        "destination": "/auth/signup",
+        "type": 301
+      },
+      {
+        "source": "/forgot-password",
+        "destination": "/auth/forgot-password",
+        "type": 301
+      },
+      {
+        "source": "/add-vehicle",
+        "destination": "/app/add-vehicle",
+        "type": 301
+      },
+      {
+        "source": "/providers",
+        "destination": "/app/providers",
+        "type": 301
+      },
+      {
+        "source": "/profile",
+        "destination": "/app/profile",
+        "type": 301
+      },
+      {
+        "source": "/timeline",
+        "destination": "/app/timeline",
+        "type": 301
+      },
+      {
+        "source": "/upcoming",
+        "destination": "/app/upcoming",
+        "type": 301
+      }
+    ],
     "rewrites": [
       {
         "source": "/api/webhooks/stripe",
@@ -21,7 +79,23 @@
         }
       },
       {
-        "source": "**",
+        "source": "/app",
+        "destination": "/app-shell.html"
+      },
+      {
+        "source": "/app/**",
+        "destination": "/app-shell.html"
+      },
+      {
+        "source": "/auth",
+        "destination": "/app-shell.html"
+      },
+      {
+        "source": "/auth/**",
+        "destination": "/app-shell.html"
+      },
+      {
+        "source": "/edit-vehicle/**",
         "destination": "/app-shell.html"
       }
     ],

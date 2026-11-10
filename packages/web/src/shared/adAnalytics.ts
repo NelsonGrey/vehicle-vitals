@@ -5,7 +5,7 @@
  */
 
 import type { UserTier } from './featureFlags';
-import { trackEvent } from './firebaseConfig';
+import { trackEvent } from './firebaseCore';
 
 export type AdPlacement =
   | 'header'

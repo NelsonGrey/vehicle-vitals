@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchAllMakes, fetchModelsForMakeYear, getYearOptions } from '../utils/vpicService';
 
+const EMPTY_MODELS = [];
+
 export default function useVehicleOptions({ year, make }) {
   const [makes, setMakes] = useState([]);
   const [models, setModels] = useState([]);
@@ -31,7 +33,6 @@ export default function useVehicleOptions({ year, make }) {
   useEffect(() => {
     let alive = true;
     if (!year || !make) {
-      setModels([]);
       return () => { alive = false; };
     }
     (async () => {
@@ -50,5 +51,5 @@ export default function useVehicleOptions({ year, make }) {
     };
   }, [year, make]);
 
-  return { years, makes, models, loadingMakes, loadingModels, error };
+  return { years, makes, models: year && make ? models : EMPTY_MODELS, loadingMakes, loadingModels, error };
 }

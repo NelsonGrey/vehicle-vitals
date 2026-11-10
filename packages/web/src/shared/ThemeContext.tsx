@@ -48,6 +48,19 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // will make the server catch up).
   const hasLocalEditRef = useRef(false);
 
+  // Signing out drops back to the baseline palette. Done while rendering (the
+  // React-recommended way to reset state on a prop change) rather than in an
+  // effect, which would cause a cascading re-render.
+  const currentUid = user?.uid ?? null;
+  const [prevUid, setPrevUid] = useState(currentUid);
+  if (prevUid !== currentUid) {
+    setPrevUid(currentUid);
+    if (!currentUid) {
+      setPaletteIdState('current');
+      setLinkedState(false);
+    }
+  }
+
   useEffect(() => {
     document.documentElement.dataset.palette = paletteId;
   }, [paletteId]);
@@ -61,8 +74,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     hasLocalEditRef.current = false;
 
     if (!uid) {
-      setPaletteIdState('current');
-      setLinkedState(false);
       return;
     }
 

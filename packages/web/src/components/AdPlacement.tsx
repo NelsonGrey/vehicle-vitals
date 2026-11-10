@@ -47,7 +47,9 @@ export default function AdPlacement({
 }: AdPlacementProps) {
   const { tier } = useSubscription();
   const [isMobile, setIsMobile] = useState(isMobileViewport());
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(
+    () => typeof IntersectionObserver !== 'function'
+  );
   const [dismissed, setDismissed] = useState(false);
   const [adFilled, setAdFilled] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -75,7 +77,6 @@ export default function AdPlacement({
     }
 
     if (typeof IntersectionObserver !== 'function') {
-      setIsVisible(true);
       return;
     }
 
@@ -103,9 +104,18 @@ export default function AdPlacement({
     hasTrackedImpressionRef.current = true;
   }, [adConfig.shouldShow, advertiserId, isVisible, placement, tier]);
 
-  useEffect(() => {
+  // Reset dismissal when the ad stops showing (adjust state during render,
+  // rather than in an effect, to avoid a cascading re-render).
+  const [prevShouldShow, setPrevShouldShow] = useState(adConfig.shouldShow);
+  if (prevShouldShow !== adConfig.shouldShow) {
+    setPrevShouldShow(adConfig.shouldShow);
     if (!adConfig.shouldShow) {
       setDismissed(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!adConfig.shouldShow) {
       hasTrackedImpressionRef.current = false;
     }
   }, [adConfig.shouldShow]);

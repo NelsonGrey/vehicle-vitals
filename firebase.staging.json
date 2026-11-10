@@ -14,6 +14,13 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
+        "source": "/api/webhooks/stripe",
+        "function": {
+          "functionId": "stripeSubscriptionWebhook",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/app-shell.html"
       }

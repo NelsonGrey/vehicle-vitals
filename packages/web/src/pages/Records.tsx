@@ -205,6 +205,12 @@ function formatInsightDueDate(value?: string): string {
   return parsed.toLocaleDateString();
 }
 
+const SNOOZE_DAYS = 14;
+
+function snoozeUntilIso(): string {
+  return new Date(Date.now() + SNOOZE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+}
+
 export default function Records() {
   const { vin } = useParams();
   const navigate = useNavigate();
@@ -213,7 +219,9 @@ export default function Records() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
-  const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null);
+  const [selectedItemKeyChoice, setSelectedItemKey] = useState<string | null>(
+    null
+  );
   const [savedInsightActions, setSavedInsightActions] = useState<Set<string>>(
     () => new Set()
   );
@@ -561,19 +569,13 @@ export default function Records() {
     return filterMatch && searchMatch;
   });
 
-  useEffect(() => {
-    if (filteredItems.length === 0) {
-      setSelectedItemKey(null);
-      return;
-    }
-
-    const hasSelected = filteredItems.some(
-      entry => entry.key === selectedItemKey
-    );
-    if (!hasSelected) {
-      setSelectedItemKey(filteredItems[0].key);
-    }
-  }, [filteredItems, selectedItemKey]);
+  // Fall back to the first visible item when the chosen one is filtered out.
+  const selectedItemKey =
+    filteredItems.length === 0
+      ? null
+      : filteredItems.some(entry => entry.key === selectedItemKeyChoice)
+        ? selectedItemKeyChoice
+        : filteredItems[0].key;
 
   const selectedEntry = filteredItems.find(
     entry => entry.key === selectedItemKey
@@ -732,9 +734,7 @@ export default function Records() {
       }
 
       if (operation === 'snooze') {
-        const snoozedUntil = new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1000
-        ).toISOString();
+        const snoozedUntil = snoozeUntilIso();
         await snoozeReminder(vin, reminder.id, snoozedUntil);
         updateSavedInsightReminder(action, current => ({
           ...current,

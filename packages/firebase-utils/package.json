@@ -41,6 +41,9 @@
     "firebase": "^12.19.0"
   },
   "overrides": {
-    "uuid": "11.1.1"
+    "uuid": "11.1.1",
+    "@grpc/grpc-js": "1.14.5",
+    "minimatch": "^11.0.1",
+    "glob": "^14.0.2"
   }
 }

@@ -44,14 +44,14 @@
     "screenshots:capture:ios": "bash scripts/capture-ios-deliverable-screenshots.sh"
   },
   "devDependencies": {
-    "@firebase/app-compat": "^0.5.20",
+    "@firebase/app-compat": "^0.5.21",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.33.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "openai": "^6.49.0",
-    "playwright": "^1.64.1",
+    "playwright": "^1.65.0",
     "prettier": "^3.9.10",
     "sharp": "^0.35.5",
     "turbo": "^2.11.10",

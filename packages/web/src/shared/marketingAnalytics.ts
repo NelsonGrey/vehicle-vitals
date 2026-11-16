@@ -10,7 +10,7 @@
  * attribution is available in GA4 reports without extra configuration.
  */
 
-import { trackEvent } from './firebaseConfig';
+import { trackEvent } from './firebaseCore';
 import { isProductionEnvironment } from './environment';
 
 // ─── UTM capture ─────────────────────────────────────────────────────────────

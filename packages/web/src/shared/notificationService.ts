@@ -1,11 +1,5 @@
-import {
-  onMessage as firebaseOnMessage,
-  getMessaging,
-  getToken,
-  Messaging,
-} from 'firebase/messaging';
-import { app } from './firebaseConfig';
-import type { MessagePayload } from 'firebase/messaging';
+import type { MessagePayload, Messaging } from 'firebase/messaging';
+import { app } from './firebaseCore';
 
 // Notification service for Firebase Cloud Messaging
 
@@ -15,6 +9,7 @@ const initializeMessaging = async (): Promise<Messaging | null> => {
     return null;
 
   try {
+    const { getMessaging } = await import('firebase/messaging');
     const messaging: Messaging = getMessaging(app);
 
     // Register service worker for background messages
@@ -52,6 +47,7 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
     if (permission === 'granted') {
       const messaging = await initializeMessaging();
       if (messaging) {
+        const { getToken } = await import('firebase/messaging');
         const token = await getToken(messaging, {
           vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
         });
@@ -74,6 +70,7 @@ export const subscribeToForegroundMessages = async (
       return () => {};
     }
 
+    const { onMessage: firebaseOnMessage } = await import('firebase/messaging');
     return firebaseOnMessage(messaging, (payload: MessagePayload) => {
       onMessage(payload);
     });
@@ -91,6 +88,7 @@ export const onMessageListener = async (): Promise<MessagePayload | null> => {
       return null;
     }
 
+    const { onMessage: firebaseOnMessage } = await import('firebase/messaging');
     return await new Promise(resolve => {
       const unsubscribe = firebaseOnMessage(messaging, (payload: MessagePayload) => {
         unsubscribe();

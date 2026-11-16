@@ -25,14 +25,11 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  consolidateAccountData,
+import type {
   ConsolidationCodeRequestResult,
   ConsolidationResult,
-  requestAccountConsolidation,
 } from '../utils/accountConsolidationService';
-import { getSupportAccessContext } from '../utils/supportAdminService';
-import { auth } from './firebaseConfig';
+import { auth } from './firebaseCore';
 
 export interface SupportAccessContext {
   isSuperAdmin: boolean;
@@ -146,6 +143,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSupportAccessLoading(true);
 
       try {
+        const { getSupportAccessContext } = await import(
+          '../utils/supportAdminService'
+        );
         const access = await getSupportAccessContext();
 
         if (!isActive) {
@@ -344,13 +344,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       reauthenticateWithApple: () =>
         reauthenticateCurrentUserWithProvider(appleProvider),
       resetPassword: (email: string) => sendPasswordResetEmail(auth, email),
-      requestAccountConsolidation: (sourceUid: string) =>
-        requestAccountConsolidation(sourceUid),
-      consolidateAccountData: (params: {
+      requestAccountConsolidation: async (sourceUid: string) => {
+        const { requestAccountConsolidation } = await import(
+          '../utils/accountConsolidationService'
+        );
+        return requestAccountConsolidation(sourceUid);
+      },
+      consolidateAccountData: async (params: {
         sourceUid: string;
         verificationCode: string;
         idempotencyKey?: string;
-      }) => consolidateAccountData(params),
+      }) => {
+        const { consolidateAccountData } = await import(
+          '../utils/accountConsolidationService'
+        );
+        return consolidateAccountData(params);
+      },
     };
   }, [user, loading, supportAccess, supportAccessLoading]);
 

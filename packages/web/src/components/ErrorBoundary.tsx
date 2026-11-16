@@ -1,5 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { trackEvent } from '../shared/firebaseConfig';
+import { trackEvent } from '../shared/firebaseCore';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

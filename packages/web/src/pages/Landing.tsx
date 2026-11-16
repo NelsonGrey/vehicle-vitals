@@ -152,7 +152,10 @@ export default function Landing() {
               </div>
             </section>
 
-            <section className="marketing-section mt-10 sm:mt-12">
+            <section
+              id="personas"
+              className="marketing-section mt-10 sm:mt-12"
+            >
               <div className="mb-5 max-w-3xl">
                 <h2 className="content-h2">
                   Choose the path that matches your garage

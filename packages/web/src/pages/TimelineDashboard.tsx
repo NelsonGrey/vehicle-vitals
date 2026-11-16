@@ -251,7 +251,8 @@ export default function TimelineDashboard() {
     timeFilter,
   ]);
 
-  const now = Date.now();
+  // Captured once per mount so render stays pure.
+  const [now] = useState(() => Date.now());
   const filteredEntries = maintenanceEntries.filter(entry => {
     const vehicleMatch = selectedVehicleVins.includes(entry.vehicle.vin);
 

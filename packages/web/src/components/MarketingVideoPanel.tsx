@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import MarketingImage, { webpVariant } from './MarketingImage';
 import { useAppOffline } from '../shared/useAppOffline';
 
 interface MarketingVideoPanelProps {
@@ -64,7 +65,7 @@ export default function MarketingVideoPanel({
               className="group h-full w-full"
               aria-label={`Play ${title}`}
             >
-              <img
+              <MarketingImage
                 src={poster}
                 alt={`${title} video poster`}
                 className="h-full w-full object-cover"
@@ -90,14 +91,14 @@ export default function MarketingVideoPanel({
             playsInline
             muted
             preload="metadata"
-            poster={poster}
+            poster={webpVariant(poster)}
             onError={() => setVideoFailed(true)}
           >
             <source src={videoPath} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         ) : (
-          <img
+          <MarketingImage
             src={poster}
             alt={`${title} video poster`}
             className="h-full w-full object-cover"

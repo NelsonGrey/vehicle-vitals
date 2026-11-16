@@ -16,7 +16,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';
-import AdminSupport from './pages/AdminSupport';
+import { featureDemoRoutes } from './data/featureDemos';
 import { AuthProvider, useAuth } from './shared/AuthContext';
 import { ThemeProvider } from './shared/ThemeContext';
 import {
@@ -181,6 +181,7 @@ const Login = lazy(() => import('./pages/Login'));
 const SignUp = lazy(() => import('./pages/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const FeatureDemo = lazy(() => import('./pages/FeatureDemo'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 const Instructions = lazy(() => import('./pages/Instructions'));
 const Help = lazy(() => import('./pages/Help'));
 const ProductTour = lazy(() => import('./pages/ProductTour'));
@@ -202,6 +203,7 @@ const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const TimelineDashboard = lazy(() => import('./pages/TimelineDashboard'));
 const UpcomingTasks = lazy(() => import('./pages/UpcomingTasks'));
 const DevSeed = lazy(() => import('./pages/DevSeed'));
+const AdminSupport = lazy(() => import('./pages/AdminSupport'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -213,11 +215,10 @@ const LoadingSpinner = () => (
 function MarketingRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (user && !user.isAnonymous) {
+  // Render the public page immediately. Waiting on Auth used to replace the
+  // prerendered hero with a spinner and pushed LCP until Firebase answered.
+  // A signed-in visitor is redirected once auth resolves.
+  if (!loading && user && !user.isAnonymous) {
     return <Navigate to={DEFAULT_APP_REDIRECT} replace />;
   }
 
@@ -311,74 +312,22 @@ function App() {
 
             {/* Marketing and user-app routes with main layout */}
             <Route path="/" element={<Layout />}>
-              <Route
-                path="vin-lookup-demo"
-                element={
-                  <FeatureDemo
-                    path="/vin-lookup-demo"
-                    title="VIN Lookup"
-                    subtitle="See how we turn a raw VIN into a structured vehicle profile in seconds."
-                    marketingBullets={[
-                      'Enter a VIN and preview looked-up year, make, and model.',
-                      'Understand how quick add reduces setup friction.',
-                      'See the path from initial lookup to saved vehicle records.',
-                    ]}
-                    appRoute="/app/add-vehicle"
-                    appCtaLabel="Open VIN Add Flow"
-                  />
-                }
-              />
-              <Route
-                path="maintenance-planning-demo"
-                element={
-                  <FeatureDemo
-                    path="/maintenance-planning-demo"
-                    title="Maintenance Planning"
-                    subtitle="See how service planning becomes visible, organized, and predictable."
-                    marketingBullets={[
-                      'Preview scheduled maintenance workflows and reminders.',
-                      'Understand how timeline and upcoming tasks connect.',
-                      'See how service history supports long-term ownership.',
-                    ]}
-                    appRoute="/app/upcoming"
-                    appCtaLabel="Open Maintenance Plan"
-                  />
-                }
-              />
-              <Route
-                path="cross-platform-access-demo"
-                element={
-                  <FeatureDemo
-                    path="/cross-platform-access-demo"
-                    title="Cross Platform Access"
-                    subtitle="See how the same garage data follows users across devices."
-                    marketingBullets={[
-                      'Understand web and mobile continuity from one account.',
-                      'Preview secure sign-in and shared data behavior.',
-                      'See where users continue work from any platform.',
-                    ]}
-                    appRoute="/app"
-                    appCtaLabel="Open Garage Dashboard"
-                  />
-                }
-              />
-              <Route
-                path="ownership-history-demo"
-                element={
-                  <FeatureDemo
-                    path="/ownership-history-demo"
-                    title="Ownership History"
-                    subtitle="See how long-term maintenance records become a single source of truth."
-                    marketingBullets={[
-                      'Preview complete vehicle history and service chronology.',
-                      'Understand resale and ownership confidence benefits.',
-                      'See where records are maintained behind secure access.',
-                    ]}
-                    appRoute="/app/timeline"
-                    appCtaLabel="Open Service History"
-                  />
-                }
-              />
+              {featureDemoRoutes.map(demo => (
+                <Route
+                  key={demo.path}
+                  path={demo.path.replace(/^\//, '')}
+                  element={
+                    <FeatureDemo
+                      path={demo.path}
+                      title={demo.title}
+                      subtitle={demo.subtitle}
+                      marketingBullets={demo.marketingBullets}
+                      appRoute={demo.appRoute}
+                      appCtaLabel={demo.appCtaLabel}
+                    />
+                  }
+                />
+              ))}
 
               <Route path="instructions" element={<Instructions />} />
               <Route path="getting-started" element={<Instructions />} />
@@ -548,8 +497,9 @@ function App() {
               </Route>
             )}
 
-            {/* Catch-all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Unknown URLs. Hosting returns HTTP 404 for direct requests;
+                this covers client-side navigations. */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
         </EnvironmentGate>

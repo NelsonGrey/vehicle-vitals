@@ -43,7 +43,7 @@ const organizationSchema = {
   logo: ORG_LOGO_IMAGE,
   sameAs: [
     'https://www.threads.com/@vehicle.vitals',
-    'https://www.facebook.com/profile.php?id=61593861356748',
+    'https://www.facebook.com/profile.php?id=61596157685972',
     'https://www.instagram.com/vehicle.vitals/',
     'https://www.reddit.com/r/VehicleVitals/',
     'https://www.reddit.com/user/vehiclevitals/',

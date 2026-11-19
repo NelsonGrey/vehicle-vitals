@@ -102,7 +102,7 @@ export default function Home() {
   const [isBackfillingInsights, setIsBackfillingInsights] = useState(false);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
   const [isSeedingDemo, setIsSeedingDemo] = useState(false);
-  const [selectedVin, setSelectedVin] = useState<string | null>(null);
+  const [selectedVinChoice, setSelectedVin] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [vehicleAlerts, setVehicleAlerts] = useState<
     Record<string, VehicleAlert>
@@ -110,7 +110,6 @@ export default function Home() {
   const [maintenanceEntriesByVin, setMaintenanceEntriesByVin] = useState<
     Record<string, MaintenanceEntry[]>
   >({});
-  const [loadingHealthVin, setLoadingHealthVin] = useState<string | null>(null);
   const [householdName, setHouseholdName] = useState<string | null>(null);
   // Cap on how many vehicles get a fetched health badge per Home load, same
   // "reasonable effort" cap used on mobile -- large garages shouldn't
@@ -290,21 +289,14 @@ export default function Home() {
     };
   }, [vehicles]);
 
-  useEffect(() => {
-    if (vehicles.length === 0) {
-      if (selectedVin !== null) {
-        setSelectedVin(null);
-      }
-      return;
-    }
-
-    const hasSelectedVehicle = filteredVehicles.some(
-      vehicle => vehicle.vin === selectedVin
-    );
-    if (!hasSelectedVehicle) {
-      setSelectedVin(filteredVehicles[0]?.vin || null);
-    }
-  }, [filteredVehicles, selectedVin, vehicles.length]);
+  // The effective selection falls back to the first visible vehicle whenever the
+  // user's choice is absent from the (filtered) list.
+  const selectedVin =
+    vehicles.length === 0
+      ? null
+      : filteredVehicles.some(vehicle => vehicle.vin === selectedVinChoice)
+        ? selectedVinChoice
+        : filteredVehicles[0]?.vin || null;
 
   useEffect(() => {
     if (!selectedVin || maintenanceEntriesByVin[selectedVin]) {
@@ -312,7 +304,6 @@ export default function Home() {
     }
 
     let isActive = true;
-    setLoadingHealthVin(selectedVin);
 
     void getMaintenanceEntries(selectedVin)
       .then(entries => {
@@ -334,13 +325,6 @@ export default function Home() {
           ...current,
           [selectedVin]: [],
         }));
-      })
-      .finally(() => {
-        if (isActive) {
-          setLoadingHealthVin(current =>
-            current === selectedVin ? null : current
-          );
-        }
       });
 
     return () => {
@@ -863,7 +847,6 @@ export default function Home() {
                     const healthEntries =
                       maintenanceEntriesByVin[selectedVehicle.vin] ?? [];
                     const isLoadingHealth =
-                      loadingHealthVin === selectedVehicle.vin &&
                       !maintenanceEntriesByVin[selectedVehicle.vin];
 
                     return (

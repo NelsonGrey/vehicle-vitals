@@ -141,6 +141,9 @@ export default function UpcomingTasks() {
 
   const searchParams = new URLSearchParams(location.search);
   const selectedVin = searchParams.get('vin')?.trim().toUpperCase();
+  // The initial load only honours the VIN present on first render; later
+  // changes are handled elsewhere, so the load effect must not re-run for them.
+  const [initialSelectedVin] = useState(selectedVin);
   const openedFromPush = searchParams.get('source') === 'push';
 
   const formatDateLabel = (value?: string) => {
@@ -208,8 +211,8 @@ export default function UpcomingTasks() {
         });
         setVehicleList(nextVehicleList);
         setSelectedVehicleVins(current => {
-          if (selectedVin) {
-            return [selectedVin];
+          if (initialSelectedVin) {
+            return [initialSelectedVin];
           }
           if (current.length > 0) {
             return current;
@@ -331,7 +334,7 @@ export default function UpcomingTasks() {
     };
 
     void loadUpcomingTasks();
-  }, []);
+  }, [initialSelectedVin]);
 
   const handleSaveReminder = async (item: UpcomingItem) => {
     if (!alertsEnabled) {

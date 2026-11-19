@@ -1,4 +1,3 @@
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import {
   createContext,
   useCallback,
@@ -10,7 +9,14 @@ import {
 } from 'react';
 import { PaletteId, paletteIdFromValue } from '../theme/palettes';
 import { useAuth } from './AuthContext';
-import { db } from './firebaseConfig';
+
+async function loadFirestore() {
+  const [{ db }, firestore] = await Promise.all([
+    import('./firebaseConfig'),
+    import('firebase/firestore'),
+  ]);
+  return { db, ...firestore };
+}
 
 interface ThemeContextType {
   paletteId: PaletteId;
@@ -48,6 +54,19 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // will make the server catch up).
   const hasLocalEditRef = useRef(false);
 
+  // Signing out drops back to the baseline palette. Done while rendering (the
+  // React-recommended way to reset state on a prop change) rather than in an
+  // effect, which would cause a cascading re-render.
+  const currentUid = user?.uid ?? null;
+  const [prevUid, setPrevUid] = useState(currentUid);
+  if (prevUid !== currentUid) {
+    setPrevUid(currentUid);
+    if (!currentUid) {
+      setPaletteIdState('current');
+      setLinkedState(false);
+    }
+  }
+
   useEffect(() => {
     document.documentElement.dataset.palette = paletteId;
   }, [paletteId]);
@@ -61,14 +80,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     hasLocalEditRef.current = false;
 
     if (!uid) {
-      setPaletteIdState('current');
-      setLinkedState(false);
       return;
     }
 
     let isActive = true;
     void (async () => {
       try {
+        const { db, doc, getDoc } = await loadFirestore();
         const snap = await getDoc(doc(db, `users/${uid}`));
         if (!isActive || hasLocalEditRef.current) return;
         const data = snap.data() ?? {};
@@ -93,14 +111,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       const uid = user?.uid;
       if (!uid) return;
 
-      const update: Record<string, unknown> = {
-        paletteWeb: id,
-        updatedAt: serverTimestamp(),
-      };
-      if (linked) {
-        update.paletteMobile = id;
-      }
-      void setDoc(doc(db, `users/${uid}`), update, { merge: true });
+      void (async () => {
+        const { db, doc, serverTimestamp, setDoc } = await loadFirestore();
+        const update: Record<string, unknown> = {
+          paletteWeb: id,
+          updatedAt: serverTimestamp(),
+        };
+        if (linked) {
+          update.paletteMobile = id;
+        }
+        await setDoc(doc(db, `users/${uid}`), update, { merge: true });
+      })();
     },
     [user, linked]
   );
@@ -113,14 +134,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       const uid = user?.uid;
       if (!uid) return;
 
-      const update: Record<string, unknown> = {
-        paletteLinked: value,
-        updatedAt: serverTimestamp(),
-      };
-      if (value) {
-        update.paletteMobile = paletteId;
-      }
-      void setDoc(doc(db, `users/${uid}`), update, { merge: true });
+      void (async () => {
+        const { db, doc, serverTimestamp, setDoc } = await loadFirestore();
+        const update: Record<string, unknown> = {
+          paletteLinked: value,
+          updatedAt: serverTimestamp(),
+        };
+        if (value) {
+          update.paletteMobile = paletteId;
+        }
+        await setDoc(doc(db, `users/${uid}`), update, { merge: true });
+      })();
     },
     [user, paletteId]
   );

@@ -9,11 +9,10 @@
 let env = (typeof process !== 'undefined' && process.env) ? { ...process.env } : {};
 try {
   // Lazy require to avoid bundling in web
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Constants = require('expo-constants');
   const extra = (Constants?.expoConfig?.extra) || (Constants?.manifest?.extra) || {};
   env = { ...env, ...extra };
-} catch (_) {
+} catch {
   // Not running under Expo; ignore
 }
 
@@ -40,7 +39,7 @@ try {
   // If you need push notifications on native, set up the native SDKs and export a native-capable messaging instance.
   // The web app can still import firebase/messaging directly if needed.
   // Placeholder: messaging stays null for native.
-} catch (err) {
+} catch {
   // noop
 }
 

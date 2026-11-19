@@ -1,4 +1,5 @@
 import AppEntryLink from '../components/AppEntryLink';
+import MarketingImage from '../components/MarketingImage';
 import PageSEO from '../components/PageSEO';
 import { useAuth } from '../shared/AuthContext';
 import { ROUTE_SEO } from '../shared/seoMeta';
@@ -79,11 +80,15 @@ export default function FeatureDemo({
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-5 py-8 space-y-6">
       {seoMeta && <PageSEO meta={seoMeta} />}
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-        <img
+        <MarketingImage
           src={media.hero}
           alt={`${title} hero preview`}
           className="absolute inset-0 h-full w-full object-cover"
           loading="eager"
+          fetchPriority="high"
+          decoding="sync"
+          width={720}
+          height={1564}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/75 to-slate-900/55" />
         <div className="relative p-6 sm:p-8 lg:p-10">
@@ -112,11 +117,13 @@ export default function FeatureDemo({
               rel="noreferrer"
               className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
             >
-              <img
+              <MarketingImage
                 src={imagePath}
                 alt={`${title} gallery preview ${index + 1}`}
                 className="h-64 sm:h-72 w-full object-cover"
                 loading="lazy"
+                width={720}
+                height={1564}
               />
             </a>
           ))}

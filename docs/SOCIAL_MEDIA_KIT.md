@@ -17,7 +17,7 @@ Last updated: 2026-09-03
 | Instagram | @vehicle.vitals | https://instagram.com/vehicle.vitals/ |
 | Threads | @vehicle.vitals | https://www.threads.com/@vehicle.vitals |
 | TikTok | @vehicle.vitals | https://www.tiktok.com/@vehicle.vitals |
-| Facebook | Page 61593861356748 | https://www.facebook.com/profile.php?id=61593861356748 |
+| Facebook | Page 61596157685972 | https://www.facebook.com/profile.php?id=61596157685972 |
 | YouTube | @vehicle-vitals | https://www.youtube.com/@vehicle-vitals |
 | Reddit (community) | r/VehicleVitals | https://www.reddit.com/r/VehicleVitals/ |
 | Reddit (team user) | u/vehiclevitals | https://www.reddit.com/user/vehiclevitals/ |

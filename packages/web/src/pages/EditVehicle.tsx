@@ -1036,9 +1036,9 @@ function MaintenanceList({
   const [prefillDismissed, setPrefillDismissed] = useState(false);
   const addEntryRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
-    title: '',
+    title: prefill?.title || '',
     notes: '',
-    cost: '',
+    cost: prefill?.cost || '',
     performedBy: 'repair_shop',
     providerName: '',
     coverage: 'parts_and_labor',
@@ -1062,9 +1062,14 @@ function MaintenanceList({
     }>,
   });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [upcomingMaintenancePlan, setUpcomingMaintenancePlan] = useState<{
+  const [loadedMaintenancePlan, setUpcomingMaintenancePlan] = useState<{
     items: MaintenancePlanItem[];
   } | null>(null);
+  // The plan only applies while the vehicle has the details it was built from.
+  const upcomingMaintenancePlan =
+    vehicle?.make && vehicle?.model && vehicle?.mileage
+      ? loadedMaintenancePlan
+      : null;
   const [calendarTarget, setCalendarTarget] = useState<
     'google' | 'apple' | 'ics'
   >('google');
@@ -1178,7 +1183,6 @@ function MaintenanceList({
 
   useEffect(() => {
     if (!vehicle?.make || !vehicle?.model || !vehicle?.mileage) {
-      setUpcomingMaintenancePlan(null);
       return;
     }
     let isActive = true;
@@ -1197,11 +1201,7 @@ function MaintenanceList({
 
   useEffect(() => {
     if (!prefill) return;
-    setForm(p => ({
-      ...p,
-      title: prefill.title || p.title,
-      cost: prefill.cost || p.cost,
-    }));
+    // (Prefilled values are applied in the form's initial state.)
     // Scroll to the Add Entry form so the user sees the pre-filled values
     const timer = setTimeout(() => {
       addEntryRef.current?.scrollIntoView({

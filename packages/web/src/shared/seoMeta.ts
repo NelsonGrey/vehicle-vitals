@@ -4,6 +4,9 @@
  * The canonical base URL is read from VITE_APP_URL at build time and falls
  * back to the production domain. Persona pages are resolved dynamically in
  * PageSEO.tsx because their paths include the persona ID.
+ *
+ * BreadcrumbList JSON-LD is attached here so both PageSEO (client navigation)
+ * and the post-build prerender (first HTML response) emit the same schema.
  */
 
 import { personaPages } from '../data/personas';
@@ -32,6 +35,48 @@ export interface SeoMeta {
   twitterCard?: 'summary' | 'summary_large_image';
   jsonLd?: object | object[];
 }
+
+interface BreadcrumbCrumb {
+  name: string;
+  path: string;
+}
+
+function appendJsonLd(meta: SeoMeta, schema: object): SeoMeta {
+  const existing =
+    meta.jsonLd == null
+      ? []
+      : Array.isArray(meta.jsonLd)
+        ? meta.jsonLd
+        : [meta.jsonLd];
+  return { ...meta, jsonLd: [...existing, schema] };
+}
+
+function breadcrumbList(crumbs: BreadcrumbCrumb[]) {
+  const trail: BreadcrumbCrumb[] = [{ name: 'Home', path: '/' }, ...crumbs];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((crumb, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: crumb.name,
+      item: `${APP_URL}${crumb.path}`,
+    })),
+  };
+}
+
+// Non-home marketing pages. Legacy aliases point their crumb at the canonical
+// URL so /instructions and /contact do not advertise a second address.
+const BREADCRUMB_CRUMBS: Record<string, BreadcrumbCrumb[]> = {
+  '/subscription': [{ name: 'Plans & Pricing', path: '/subscription' }],
+  '/getting-started': [{ name: 'Getting Started', path: '/getting-started' }],
+  '/instructions': [{ name: 'Getting Started', path: '/getting-started' }],
+  '/product-tour': [{ name: 'Product Tour', path: '/product-tour' }],
+  '/support': [{ name: 'Support', path: '/support' }],
+  '/contact': [{ name: 'Support', path: '/support' }],
+  '/privacy': [{ name: 'Privacy Policy', path: '/privacy' }],
+  '/terms': [{ name: 'Terms of Use', path: '/terms' }],
+};
 
 // ─── Shared JSON-LD schemas ───────────────────────────────────────────────────
 
@@ -223,6 +268,13 @@ export const ROUTE_SEO: Record<string, SeoMeta> = {
   },
 };
 
+for (const [route, crumbs] of Object.entries(BREADCRUMB_CRUMBS)) {
+  const meta = ROUTE_SEO[route];
+  if (meta) {
+    ROUTE_SEO[route] = appendJsonLd(meta, breadcrumbList(crumbs));
+  }
+}
+
 // ─── Dynamic persona metadata ─────────────────────────────────────────────────
 
 const personaDescriptions: Record<string, string> = {
@@ -253,13 +305,19 @@ export function getPersonaSeoMeta(personaId: string): SeoMeta {
     canonical: `${APP_URL}${persona.path}`,
     ogType: 'website',
     ogImage: DEFAULT_OG_IMAGE,
-    jsonLd: {
-      '@context': 'https://schema.org',
-      '@type': 'WebPage',
-      name: persona.title,
-      description,
-      url: `${APP_URL}${persona.path}`,
-    },
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: persona.title,
+        description,
+        url: `${APP_URL}${persona.path}`,
+      },
+      breadcrumbList([
+        { name: 'Personas', path: '/#personas' },
+        { name: persona.navLabel, path: persona.path },
+      ]),
+    ],
   };
 }
 
